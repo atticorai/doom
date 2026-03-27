@@ -523,13 +523,17 @@ const App=()=>{
   const[authInput,setAuthInput]=useState("");
 
   // ── FIRESTORE PERSISTENCE ────────────────────────────
+  const loadCompleteRef=React.useRef(false);
   const saveToDb=React.useCallback((col,data)=>{
+    if(!loadCompleteRef.current){console.warn("saveToDb BLOCKED (load incomplete):",col);return}
     try{db.collection("appData").doc(col).set({data:JSON.stringify(data),ts:Date.now()});setLastSynced(new Date())}catch(e){console.warn("Save failed:",col,e)}
   },[]);
   // Load all data on mount
   React.useEffect(()=>{
     const load=async()=>{
       try{
+        await window._firebaseReady;
+        if(!db)throw new Error("Firebase DB not available after init");
         const snap=await db.collection("appData").get();
         const docs={};snap.forEach(d=>{docs[d.id]=d.data()});
         if(docs.stations?.data){const d=JSON.parse(docs.stations.data);if(d.length){
@@ -600,7 +604,9 @@ const App=()=>{
         if(docs.plOohIscis?.data){const d=JSON.parse(docs.plOohIscis.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isci:d[p.unit]}:p))}
         if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}
         console.log("Firestore: loaded",Object.keys(docs).length,"collections");
-      }catch(e){console.warn("Firestore load failed, using defaults:",e);iscisLoadedRef.current=true;stationsLoadedRef.current=true;estimatesLoadedRef.current=true;trafficLoadedRef.current=true}
+        loadCompleteRef.current=true;
+      }catch(e){console.warn("Firestore load failed, using defaults:",e);iscisLoadedRef.current=true;stationsLoadedRef.current=true;estimatesLoadedRef.current=true;trafficLoadedRef.current=true;
+        console.error("⚠ SAVES BLOCKED — Firestore load failed. Default/seed data will NOT overwrite your database. Refresh to retry.")}
       setDbLoaded(true);
       // ── AUTO-RECOVER CREATIVE FILES ──────────────────────
       // Scan Firebase Storage for every ISCI missing a fileUrl and re-link
@@ -646,7 +652,7 @@ const App=()=>{
   const trafficLoadedRef=React.useRef(false);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current){saveRef.current=true;return;}if(stations.length>0&&stationsLoadedRef.current)saveToDb("stations",stations)},[stations,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(estimates.length>0&&estimatesLoadedRef.current)saveToDb("estimates",estimates)},[estimates,dbLoaded]);
-  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(iscis.length>0&&iscisLoadedRef.current&&iscis.length>=isciFbCountRef.current&&iscis.length!==isciFbCountRef.current){isciFbCountRef.current=iscis.length;saveToDb("iscis",iscis)}},[iscis,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(iscis.length>0&&iscisLoadedRef.current){isciFbCountRef.current=iscis.length;saveToDb("iscis",iscis)}},[iscis,dbLoaded]);
   const linksReady=React.useRef(false);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(!linksReady.current)return;if(Object.keys(staEstLinks).length>0)saveToDb("staEstLinks",staEstLinks)},[staEstLinks,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;const newLinks={};stations.forEach(s=>{const k=staKey(s);const existing=staEstLinks[k]||[];const matched=estimates.filter(e=>e.market===s.market&&e.brand===s.brand&&(s.media===e.media||(s.media==="TV"&&(e.media==="Cable"||e.media==="TV"))||(s.media==="Cable"&&e.media==="TV"))).map(e=>e.num);if(existing.length===0&&matched.length){newLinks[k]=matched}else if(existing.length>0){const missing=matched.filter(n=>!existing.includes(n));if(missing.length)newLinks[k]=[...existing,...missing]}});if(Object.keys(newLinks).length){setStaEstLinks(p=>({...p,...newLinks}))}linksReady.current=true},[stations,dbLoaded]);
@@ -5331,6 +5337,7 @@ Be direct and actionable. No generic advice.`;
     <div style={{fontSize:11,color:"#475569",marginTop:8}}>connecting...</div>
   </div></div>;
   return<div style={{display:"flex",height:"100vh",background:"#f1f5f9",overflow:"hidden"}}>
+    {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#dc2626",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
     <div style={{width:200,background:"#0f172a",display:"flex",flexDirection:"column",flexShrink:0}}>
       <div style={{padding:"12px 12px 10px",borderBottom:"1px solid #1e293b"}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:34,height:34,borderRadius:7,background:"#0f172a",border:"1.5px solid #7c3aed",display:"flex",alignItems:"center",justifyContent:"center"}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="url(#sflm)"/><defs><linearGradient id="sflm" x1="12" y1="3" x2="12" y2="22"><stop stopColor="#e9d5ff"/><stop offset=".35" stopColor="#c4b5fd"/><stop offset="1" stopColor="#7c3aed"/></linearGradient></defs></svg></div><div><div style={{fontSize:15,fontWeight:800,color:"#fff",lineHeight:1,letterSpacing:.5}}>ATTICOR</div><div style={{fontSize:7,color:"#64748b",fontWeight:600,letterSpacing:1.5}}>DOOM & DELIVERABLES</div></div></div></div>
       <div style={{padding:"6px 10px",position:"relative"}}><input value={globalSearch} onChange={e=>setGlobalSearch(e.target.value)} placeholder="Search ISCIs, markets..." style={{width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #e0d9f7",background:"#f5f3ff",color:"#a89ed4",fontSize:14,outline:"none"}}/>
