@@ -47,8 +47,13 @@ tr:nth-child(odd) td{background:rgba(15,23,42,.3)}
 </div>
 <div style="font-size:11px;color:#a78bfa;letter-spacing:3px;font-weight:600;margin-top:6px;animation:fadeUp .5s ease-out 1.4s both">ATTICOR MEDIA</div>
 <div style="width:200px;height:4px;background:#1e293b;border-radius:4px;overflow:hidden;margin:28px auto 0"><div style="height:100%;width:30%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#7c3aed);border-radius:4px;animation:ldbar 1.5s ease-in-out infinite"></div></div>
-<div id="doom-quip" style="margin-top:18px;font-size:14px;color:#a78bfa;font-style:italic;max-width:320px;margin-left:auto;margin-right:auto;animation:fadeUp .5s ease-out 1.8s both;opacity:0"></div>
-<div style="margin-top:8px;font-size:11px;color:#475569;animation:fadeUp .5s ease-out 2s both;opacity:0">connecting...</div>
+<div id="dd-status" style="margin-top:18px;font-size:14px;color:#a78bfa;font-style:italic;max-width:320px;margin-left:auto;margin-right:auto;animation:fadeUp .5s ease-out 1.8s both;opacity:0"></div>
+<div id="dd-login-form" style="display:none;margin-top:20px;animation:fadeUp .4s ease-out both">
+  <input type="password" id="dd-pw" placeholder="Password" style="width:100%;padding:14px 18px;border-radius:10px;border:2px solid #334155;background:#1e293b;color:#e2e8f0;font-size:16px;text-align:center;outline:none;margin-bottom:14px;letter-spacing:2px;font-family:'DM Sans',sans-serif"/>
+  <button id="dd-login-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;box-shadow:0 4px 16px rgba(124,58,237,.3);font-family:'DM Sans',sans-serif">Let Me In</button>
+  <div id="dd-login-error" style="display:none;margin-top:10px;font-size:13px;color:#f87171;font-weight:600"></div>
+</div>
+<div id="dd-loading-bar" style="display:none;width:200px;height:4px;background:#1e293b;border-radius:4px;overflow:hidden;margin:28px auto 0"><div style="height:100%;width:30%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#7c3aed);border-radius:4px;animation:ldbar 1.5s ease-in-out infinite"></div></div>
 </div>
 </div>
 <style>
@@ -83,42 +88,125 @@ tr:nth-child(odd) td{background:rgba(15,23,42,.3)}
 @keyframes ldbar{0%{width:10%;margin-left:0}50%{width:40%;margin-left:30%}100%{width:10%;margin-left:90%}}
 </style>
 <script>
-(function(){var q=["Reassembling this… try not to make it worse.","Putting everything back where it belongs… one second.","Untangling your decisions… almost there.","Running it through again. It'll behave.","Lining this up properly… because someone has to.","I'll take it from here.","Hold on. I'm fixing something.","Almost… don't touch anything.","One sec. Making this presentable."];var el=document.getElementById("doom-quip");if(el){el.textContent=q[Math.floor(Math.random()*q.length)];el.style.opacity="1";setInterval(function(){el.style.transition="opacity .3s";el.style.opacity="0";setTimeout(function(){el.textContent=q[Math.floor(Math.random()*q.length)];el.style.opacity="1"},400)},4000)}})();
+(function(){
+  var quips=["Reassembling this… try not to make it worse.","Putting everything back where it belongs… one second.","Untangling your decisions… almost there.","Running it through again. It'll behave.","Lining this up properly… because someone has to.","I'll take it from here.","Hold on. I'm fixing something.","Almost… don't touch anything.","One sec. Making this presentable."];
+  var loginQuips=["You again.","Let's get this over with.","Password. Now.","I was wondering when you'd show up.","Fine. Come in."];
+  var wrongQuips=["Wrong. Try again.","That's not it.","Nope.","I don't think so.","Really?"];
+  var pick=function(a){return a[Math.floor(Math.random()*a.length)]};
+
+  var status=document.getElementById("dd-status");
+  var loginForm=document.getElementById("dd-login-form");
+  var loadingBar=document.getElementById("dd-loading-bar");
+  var pwInput=document.getElementById("dd-pw");
+  var loginBtn=document.getElementById("dd-login-btn");
+  var loginError=document.getElementById("dd-login-error");
+
+  function showStatus(msg){status.textContent=msg;status.style.opacity="1"}
+  function showLogin(){
+    showStatus(pick(loginQuips));
+    loginForm.style.display="block";
+    loadingBar.style.display="none";
+    pwInput.focus();
+  }
+  function showLoading(){
+    loginForm.style.display="none";
+    showStatus(pick(quips));
+    loadingBar.style.display="block";
+    // Cycle quips while loading
+    var qi=setInterval(function(){status.style.transition="opacity .3s";status.style.opacity="0";setTimeout(function(){status.textContent=pick(quips);status.style.opacity="1"},400)},4000);
+    window._quipInterval=qi;
+  }
+
+  function loadScript(src,type){
+    return new Promise(function(resolve,reject){
+      var s=document.createElement("script");
+      if(type)s.type=type;
+      s.src=src;
+      s.onload=resolve;
+      s.onerror=function(){reject(new Error("Failed to load "+src))};
+      document.body.appendChild(s);
+    });
+  }
+
+  function loadApp(){
+    showLoading();
+    sessionStorage.setItem("dd_auth","1");
+
+    // CDN libraries (public, but loaded after auth so page stays light)
+    var cdnLibs=[
+      "https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js",
+      "https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js",
+      "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js",
+      "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js",
+      "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+    ];
+
+    // Source data files (protected by middleware)
+    var dataFiles=[
+      "data-isci.js","data-est-sta-cal.js","data-postings.js","data-postings-new.js",
+      "data-pop-images.js","data-pl-panels.js","data-logos.js","data-ooh-cal.js",
+      "data-traffic-history.js","data-ooh-contracts.js","data-pop-photos.js"
+    ];
+
+    // Load CDN libs sequentially (some depend on prior ones)
+    var chain=Promise.resolve();
+    cdnLibs.forEach(function(src){chain=chain.then(function(){return loadScript(src)})});
+
+    chain.then(function(){
+      // Init pdf.js worker + Firebase
+      pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      window.db=null;window.storage=null;
+      window._firebaseReady=fetch("/api/config").then(function(r){return r.json()}).then(function(cfg){
+        firebase.initializeApp(cfg);
+        window.db=firebase.firestore();
+        window.storage=firebase.storage();
+        console.log("Firebase initialized");
+      }).catch(function(e){console.error("Firebase init failed:",e)});
+
+      // Load all data files in parallel
+      return Promise.all(dataFiles.map(function(f){return loadScript(f)}));
+    }).then(function(){
+      // Add Babel-transpiled source files
+      var c=document.createElement("script");c.type="text/babel";c.src="config.js";c.setAttribute("data-type","module");document.body.appendChild(c);
+      var a=document.createElement("script");a.type="text/babel";a.src="app.js";a.setAttribute("data-type","module");document.body.appendChild(a);
+      // Trigger Babel to transform and execute
+      Babel.transformScriptTags();
+    }).catch(function(e){
+      console.error("App load failed:",e);
+      showStatus("Failed to load. Try refreshing.");
+      loadingBar.style.display="none";
+    });
+  }
+
+  function doLogin(){
+    var pw=pwInput.value;
+    if(!pw)return;
+    loginBtn.disabled=true;loginBtn.textContent="Checking...";
+    loginError.style.display="none";
+    fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pw,type:"login"})})
+      .then(function(r){return r.json()})
+      .then(function(d){
+        if(d.success){loadApp()}
+        else{loginBtn.disabled=false;loginBtn.textContent="Let Me In";pwInput.value="";loginError.textContent=pick(wrongQuips);loginError.style.display="block";pwInput.focus()}
+      }).catch(function(){loginBtn.disabled=false;loginBtn.textContent="Let Me In";loginError.textContent="Connection error. Try again.";loginError.style.display="block"});
+  }
+
+  loginBtn.addEventListener("click",doLogin);
+  pwInput.addEventListener("keydown",function(e){if(e.key==="Enter")doLogin()});
+
+  // On load: check if already authenticated
+  showStatus("connecting...");
+  fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"check"})})
+    .then(function(r){return r.json()})
+    .then(function(d){if(d.authenticated){loadApp()}else{showLogin()}})
+    .catch(function(){showLogin()});
+})();
 </script></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script>
-pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-var db;
-var storage;
-var _firebaseReady=fetch("/api/config").then(function(r){return r.json()}).then(function(cfg){
-  firebase.initializeApp(cfg);
-  db=firebase.firestore();
-  storage=firebase.storage();
-  console.log("Firebase initialized");
-}).catch(function(e){console.error("Firebase init failed:",e)});
-</script>
-<script src="data-isci.js"></script>
-<script src="data-est-sta-cal.js"></script>
-<script src="data-postings.js"></script>
-<script src="data-postings-new.js"></script>
-<script src="data-pop-images.js"></script>
-<script src="data-pl-panels.js"></script>
-<script src="data-logos.js"></script>
-<script src="data-ooh-cal.js"></script>
-<script src="data-traffic-history.js"></script>
-<script src="data-ooh-contracts.js"></script>
-<script src="data-pop-photos.js"></script>
-<script type="text/babel" src="config.js"></script>
-<script type="text/babel" src="app.js"></script>
 </body></html>
