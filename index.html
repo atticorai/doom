@@ -92,7 +92,6 @@ tr:nth-child(odd) td{background:rgba(15,23,42,.3)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
@@ -100,15 +99,14 @@ tr:nth-child(odd) td{background:rgba(15,23,42,.3)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-emailjs.init("wUgB3FzeLXzKRP-Lw");
 var db;
 var storage;
-try{
-  firebase.initializeApp({apiKey:"AIzaSyBd9CHdf-pORi7lbaEzNRqbkTFQ0eZBzoE",authDomain:"cacnorm.firebaseapp.com",projectId:"cacnorm",storageBucket:"cacnorm.firebasestorage.app",messagingSenderId:"608422450474",appId:"1:608422450474:web:d674f96ada20e5d5ff3a53"});
+var _firebaseReady=fetch("/api/config").then(function(r){return r.json()}).then(function(cfg){
+  firebase.initializeApp(cfg);
   db=firebase.firestore();
   storage=firebase.storage();
   console.log("Firebase initialized");
-}catch(e){console.error("Firebase init failed:",e)}
+}).catch(function(e){console.error("Firebase init failed:",e)});
 </script>
 <script src="data-isci.js"></script>
 <script src="data-est-sta-cal.js"></script>

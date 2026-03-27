@@ -1,5 +1,14 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 
+// Server-side auth verification
+const verifyAuth=async(password,type)=>{
+  try{const r=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password,type})});const d=await r.json();return d.success===true}catch(e){console.error("Auth check failed:",e);return false}
+};
+// Server-side email sending
+const sendEmailServer=async(params)=>{
+  const r=await fetch("/api/email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(params)});if(!r.ok){const d=await r.json();throw{text:d.error||"Send failed"}}return r.json();
+};
+
 // Sparkline mini-chart component
 const Sparkline=({data,color,width=60,height=20})=>{
   if(!data||data.length<2)return null;
@@ -707,7 +716,7 @@ const App=()=>{
         const resp=await fetch("https://doomndeliverables.app.n8n.cloud/webhook/9661ec80-6bd8-4cf5-acca-90f2547a75eb",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:r.emails.join(","),cc:[BUYER_EMAILS[r.h.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj,message:body,pdfBase64:pdfB64,pdfName:pdfName})});
         if(resp.ok){newReminders[r.rKey]={ts:now,to:r.emails.join(",")};sent++;log("Confirm Reminder",r.call+" — Est "+r.h.est+" "+r.h.market+" "+r.h.media)}
       }catch(e){
-        try{await emailjs.send("service_5gnwynh","template_45vaj9v",{to_email:r.emails.join(","),subject:subj,message:body,name:"Atticor"});newReminders[r.rKey]={ts:now,to:r.emails.join(",")};sent++;log("Confirm Reminder",r.call+" — Est "+r.h.est+" (emailjs fallback)")}catch(e2){failed++}
+        try{await sendEmailServer({to_email:r.emails.join(","),subject:subj,message:body,name:"Atticor"});newReminders[r.rKey]={ts:now,to:r.emails.join(",")};sent++;log("Confirm Reminder",r.call+" — Est "+r.h.est+" (emailjs fallback)")}catch(e2){failed++}
       }
     }
     if(Object.keys(newReminders).length>0)setConfirmRemindersSent(p=>({...p,...newReminders}));
@@ -1353,7 +1362,7 @@ const App=()=>{
             <option value="">—</option>{(customFields[i.brand]?.vos||[]).map(t=><option key={t} value={t}>{t}</option>)}<option value="__add__">＋</option>
           </select></TD>
           <TD>{i.active?<B l="Active" c="#16a34a"/>:<B l="Off" c="#9ca3af"/>}</TD>
-          <TD><div style={{display:"flex",gap:2}}><button onClick={()=>setModal({t:"editIsci",isci:i,idx:gi})} style={{padding:"2px 6px",borderRadius:4,border:"none",background:isIsciSent(i.code)?"#fef2f2":"#f0f9ff",color:isIsciSent(i.code)?"#dc2626":"#2563eb",fontSize:14,fontWeight:600,cursor:"pointer"}}>{isIsciSent(i.code)?"🔒":"✎"}</button>{!isIsciSent(i.code)&&<button onClick={()=>{setIscis(p=>p.map((x,j)=>j===gi?{...x,active:!x.active}:x));log(i.active?"Deactivated":"Activated",i.code);notify(`${i.code} ${i.active?"off":"on"}`)}} style={{padding:"2px 6px",borderRadius:4,border:"none",background:i.active?"#fef2f2":"#f0fdf4",color:i.active?"#dc2626":"#16a34a",fontSize:14,fontWeight:600,cursor:"pointer"}}>{i.active?"⏸":"▶"}</button>}{!isIsciSent(i.code)&&<button onClick={()=>{const pw=prompt("Admin password:");if(pw!=="1234")return;if(!confirm("Delete "+i.code+"?"))return;setIscis(p=>p.filter((_,j)=>j!==gi));log("ISCI Deleted",i.code+" — "+i.title);notify(i.code+" deleted")}} style={{padding:"2px 6px",borderRadius:4,border:"none",background:"transparent",color:"#f87171",fontSize:14,fontWeight:600,cursor:"pointer"}}>🗑</button>}</div></TD>
+          <TD><div style={{display:"flex",gap:2}}><button onClick={()=>setModal({t:"editIsci",isci:i,idx:gi})} style={{padding:"2px 6px",borderRadius:4,border:"none",background:isIsciSent(i.code)?"#fef2f2":"#f0f9ff",color:isIsciSent(i.code)?"#dc2626":"#2563eb",fontSize:14,fontWeight:600,cursor:"pointer"}}>{isIsciSent(i.code)?"🔒":"✎"}</button>{!isIsciSent(i.code)&&<button onClick={()=>{setIscis(p=>p.map((x,j)=>j===gi?{...x,active:!x.active}:x));log(i.active?"Deactivated":"Activated",i.code);notify(`${i.code} ${i.active?"off":"on"}`)}} style={{padding:"2px 6px",borderRadius:4,border:"none",background:i.active?"#fef2f2":"#f0fdf4",color:i.active?"#dc2626":"#16a34a",fontSize:14,fontWeight:600,cursor:"pointer"}}>{i.active?"⏸":"▶"}</button>}{!isIsciSent(i.code)&&<button onClick={async()=>{const pw=prompt("Admin password:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Wrong password");if(!confirm("Delete "+i.code+"?"))return;setIscis(p=>p.filter((_,j)=>j!==gi));log("ISCI Deleted",i.code+" — "+i.title);notify(i.code+" deleted")}} style={{padding:"2px 6px",borderRadius:4,border:"none",background:"transparent",color:"#f87171",fontSize:14,fontWeight:600,cursor:"pointer"}}>🗑</button>}</div></TD>
         </tr>})}</tbody></table></div></Cd>
     </div>;
   };
@@ -1739,7 +1748,7 @@ const App=()=>{
               if(resp.ok){sent+=grpStations.length}else throw new Error("n8n "+resp.status)
             }catch(fnErr){
               console.warn("n8n failed for "+grpName+":",fnErr);
-              try{await emailjs.send("service_5gnwynh","template_45vaj9v",{to_email:allEmails,subject:subj,body:body,name:"Atticor",message:body});sent+=grpStations.length}
+              try{await sendEmailServer({to_email:allEmails,subject:subj,body:body,name:"Atticor",message:body});sent+=grpStations.length}
               catch(err){failed+=grpStations.length;notify("FAIL: "+grpName+" — "+(err?.text||err?.message||"unknown"))}
             }
           }
@@ -3401,13 +3410,13 @@ const App=()=>{
           <div style={{fontSize:13,color:"#a89ed4",marginBottom:8}}>To revise this ISCI, enter the admin password:</div>
           <div style={{display:"flex",gap:6,justifyContent:"center",alignItems:"center"}}>
             <input type="password" value={pw} onChange={e=>{setPw(e.target.value);setPwError(false)}} placeholder="Admin password" 
-              onKeyDown={e=>{if(e.key==="Enter"){if(pw==="1234"){setUnlocked(true);log("Admin Unlock","🔓 ISCI "+isci.code+" unlocked for editing")}else setPwError(true)}}}
+              onKeyDown={async e=>{if(e.key==="Enter"){const ok=await verifyAuth(pw,"admin");if(ok){setUnlocked(true);log("Admin Unlock","🔓 ISCI "+isci.code+" unlocked for editing")}else setPwError(true)}}}
               style={{padding:"6px 10px",borderRadius:6,border:pwError?"2px solid #dc2626":"1px solid #d1d5db",fontSize:13,width:140,textAlign:"center"}}/>
-            <Btn primary color="#dc2626" onClick={()=>{if(pw==="1234"){setUnlocked(true);log("Admin Unlock","🔓 ISCI "+isci.code+" unlocked for editing")}else setPwError(true)}}>Unlock</Btn>
+            <Btn primary color="#dc2626" onClick={async()=>{const ok=await verifyAuth(pw,"admin");if(ok){setUnlocked(true);log("Admin Unlock","🔓 ISCI "+isci.code+" unlocked for editing")}else setPwError(true)}}>Unlock</Btn>
           </div>
           {pwError&&<div style={{fontSize:13,color:"#dc2626",fontWeight:600,marginTop:6}}>Incorrect password</div>}
         </div>
-        <div style={{display:"flex",gap:6}}><Btn onClick={()=>setModal(null)}>Cancel</Btn><div style={{marginLeft:"auto"}}><Btn danger onClick={()=>{if(locked){alert("Cannot delete \u2014 this ISCI has been sent in traffic.");return}const pw=prompt("Admin password:");if(pw!=="1234")return alert("Wrong password");if(!confirm("Permanently delete "+isci.code+"?"))return;setIscis(p=>p.filter((_,j)=>j!==idx));log("ISCI Deleted",isci.code);notify(isci.code+" deleted");setModal(null)}}>\ud83d\uddd1 Delete</Btn></div></div>
+        <div style={{display:"flex",gap:6}}><Btn onClick={()=>setModal(null)}>Cancel</Btn><div style={{marginLeft:"auto"}}><Btn danger onClick={async()=>{if(locked){alert("Cannot delete \u2014 this ISCI has been sent in traffic.");return}const pw=prompt("Admin password:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Wrong password");if(!confirm("Permanently delete "+isci.code+"?"))return;setIscis(p=>p.filter((_,j)=>j!==idx));log("ISCI Deleted",isci.code);notify(isci.code+" deleted");setModal(null)}}>\ud83d\uddd1 Delete</Btn></div></div>
       </div>:<div>
       {locked&&unlocked&&<div style={{background:"#fffbeb",border:"2px solid #f59e0b",borderRadius:6,padding:8,marginBottom:10,fontSize:13,color:"#92400e",fontWeight:700}}>⚠ ADMIN EDIT — This ISCI is live in traffic. All changes are logged as revisions and flagged in the audit trail.</div>}
       {!locked&&<div style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:6,padding:8,marginBottom:10,fontSize:13,color:"#92400e"}}>Editing ISCI codes directly. Changes are logged to audit trail.</div>}
@@ -3442,7 +3451,7 @@ const App=()=>{
       <div style={{display:"flex",gap:6}}>
         <Btn primary color={locked?"#dc2626":"#2563eb"} onClick={()=>{const changes=[];if(ef.code!==isci.code)changes.push(`code: ${isci.code}→${ef.code}`);if(ef.title!==isci.title)changes.push(`title: ${isci.title}→${ef.title}`);if(ef.dur!==isci.dur)changes.push(`dur: ${isci.dur}→${ef.dur}`);if(ef.media!==isci.media)changes.push(`media: ${isci.media}→${ef.media}`);if(ef.dma!==isci.dma)changes.push(`dma: ${isci.dma}→${ef.dma}`);if(ef.fileUrl!==(isci.fileUrl||""))changes.push(`fileUrl: ${ef.fileUrl?"uploaded":"removed"}`);setIscis(prev=>{const updated=prev.map((x,j)=>j===idx?{...x,...ef}:x);saveToDb("iscis",updated);return updated});log(locked?"⚠ ADMIN ISCI REVISION":"ISCI Edited",`${isci.code}: ${changes.join(", ")||"no changes"}`);notify(`${ef.code} updated${locked?" (admin revision)":""}`);setModal(null)}}>{locked?"⚠ Save Revision":"Save Changes"}</Btn>
         <Btn onClick={()=>setModal(null)}>Cancel</Btn>
-        <div style={{marginLeft:"auto"}}><Btn danger onClick={()=>{if(locked){alert("Cannot delete — this ISCI has been sent in traffic.");return}const pw=prompt("Admin password:");if(pw!=="1234")return alert("Wrong password");if(!confirm("Permanently delete "+isci.code+"?"))return;setIscis(p=>p.filter((_,j)=>j!==idx));log("ISCI Deleted",isci.code+" — "+isci.title);notify(isci.code+" deleted");setModal(null)}}>🗑 Delete</Btn></div>
+        <div style={{marginLeft:"auto"}}><Btn danger onClick={async()=>{if(locked){alert("Cannot delete — this ISCI has been sent in traffic.");return}const pw=prompt("Admin password:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Wrong password");if(!confirm("Permanently delete "+isci.code+"?"))return;setIscis(p=>p.filter((_,j)=>j!==idx));log("ISCI Deleted",isci.code+" — "+isci.title);notify(isci.code+" deleted");setModal(null)}}>🗑 Delete</Btn></div>
       </div>
       </div>}
 
@@ -3483,7 +3492,7 @@ const App=()=>{
                       const emails=oohEmailRecipients.split(/[;,]/).map(e=>e.trim()).filter(Boolean);
                       if(!emails.length){notify("No recipient emails");return}
                       const urgency=urgent?"URGENT":"HEADS UP";
-                      emailjs.send("service_5gnwynh","template_45vaj9v",{
+                      sendEmailServer({
                         to_email:emails.join(","),subject:urgency+" - OOH Creative Due: "+c.brand+" "+c.market+" "+c.media+" ("+c.due+")",
                         message:"Creative deadline approaching for "+c.brand+" "+c.market+" "+c.media+".\n\nDue Date: "+c.due+"\nPosting: "+c.start+" to "+c.end+"\nVendor: "+c.vendor+"\nContract: "+c.contract+"\nUnits: "+c.units+"\nSize: "+c.size+(c.spec?"\nSpec: "+c.spec:"")+"\n\nPlease ensure creative materials are submitted by the deadline."
                       }).then(()=>{
@@ -3906,7 +3915,7 @@ ${fullText.substring(0,3000)}`}]
     const[sending,setSending]=useState(false);const[sendResult,setSendResult]=useState(null);
     // Send email via EmailJS
     const sendEmail=async(toEmail,subject,body)=>{
-      return emailjs.send("service_5gnwynh","template_45vaj9v",{to_email:toEmail,subject:subject,body:body,name:"Atticor Media",message:body});
+      return sendEmailServer({to_email:toEmail,subject:subject,body:body,name:"Atticor Media",message:body});
     };
     const sendToAll=async(emails,subject,body)=>{
       setSending(true);setSendResult(null);let sent=0;let failed=0;const errors=[];
@@ -4561,7 +4570,7 @@ ${fullText.substring(0,3000)}`}]
         return{est,brand,market:dma,media,buyer,month,version:parseInt(version),stations:[],ts:Date.now(),comments:comments||versionRaw,isRevision:false,combined:false,iscis,flight};
       }catch(e){console.error("Parse error:",e);return null}
     };
-    const doImport=()=>{if(!importPreview)return;const pw=prompt("Admin password to import:");if(pw!=="1234")return alert("Incorrect password");setTrafficHistory(p=>[...p,importPreview]);log("Traffic Import",importPreview.brand+" "+importPreview.market+" "+importPreview.month+" "+importPreview.media);notify(doomPick(DOOM.importClean)+" Imported: "+importPreview.market+" "+importPreview.month);setImportText("");setImportPreview(null);setShowImport(false)};
+    const doImport=async()=>{if(!importPreview)return;const pw=prompt("Admin password to import:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Incorrect password");setTrafficHistory(p=>[...p,importPreview]);log("Traffic Import",importPreview.brand+" "+importPreview.market+" "+importPreview.month+" "+importPreview.media);notify(doomPick(DOOM.importClean)+" Imported: "+importPreview.market+" "+importPreview.month);setImportText("");setImportPreview(null);setShowImport(false)};
     const brands=[...new Set(trafficHistory.map(h=>h.brand))].sort();
     const mkts=[...new Set(trafficHistory.map(h=>h.market))].sort();
     const medias=[...new Set(trafficHistory.map(h=>h.media))].sort();
@@ -4887,7 +4896,7 @@ ${fullText.substring(0,3000)}`}]
                           if(sent4>0)setTrafficHistory(p=>p.map((r,ri)=>ri===gIdx?{...r,status:failed3?"partial":"sent",statusNote:sent4+" sent"+(failed3?" · "+failed3+" failed":"")}:r));
                         }
                       }} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #16a34a",background:"rgba(22,163,98,.1)",color:"#4ade80",fontSize:12,fontWeight:600,cursor:"pointer"}}>Send</button>
-                      <button onClick={()=>{const pw=prompt("Admin password:");if(pw!=="1234")return;if(!confirm("Delete "+h.market+" "+h.media+" "+h.month+"?"))return;setTrafficHistory(p=>p.filter((_,idx)=>idx!==gIdx));log("DELETE",h.brand+" "+h.market+" "+h.month+" "+h.media);notify("Deleted")}} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #fecaca",color:"#f87171",fontSize:12,fontWeight:600,cursor:"pointer",background:"transparent"}}>Del</button>
+                      <button onClick={async()=>{const pw=prompt("Admin password:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Wrong password");if(!confirm("Delete "+h.market+" "+h.media+" "+h.month+"?"))return;setTrafficHistory(p=>p.filter((_,idx)=>idx!==gIdx));log("DELETE",h.brand+" "+h.market+" "+h.month+" "+h.media);notify("Deleted")}} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #fecaca",color:"#f87171",fontSize:12,fontWeight:600,cursor:"pointer",background:"transparent"}}>Del</button>
                       <select onChange={e=>{if(!e.target.value)return;const newMonth=e.target.value;const cm=CALENDAR.find(c=>c.month===newMonth);const newFlight=cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):"";
                         // For WK monthly estimates, swap to the correct month's estimate number
                         const WK_MONTH_EST={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};
@@ -5172,7 +5181,7 @@ Be direct and actionable. No generic advice.`;
       {title:"Digital Records",text:"ESPN/GKBPS records render with separate ESPN Video (blue), GKBPS Video (purple), and Display Banner sections — matching the original traffic sheet format with correct UTM URLs per section."},
       {title:"Resend",text:"Green 'Resend' button on every record. For ESPN/GKBPS, it sends one email to all three vendor contacts with a prompt for an optional note. For stations, it resends per-station with PDF attached."},
       {title:"Print",text:"'Print' opens the traffic sheet in a new window for printing."},
-      {title:"Delete",text:"'Del' requires admin password (1234) and confirmation before removing a record."},
+      {title:"Delete",text:"'Del' requires the admin password and confirmation before removing a record."},
     ]},
     {section:"OOH (Out of Home)",meg:"That didn't handle itself, unfortunately.",items:[
       {title:"WK OOH",text:"Wettermark Keith billboard/poster inventory. Map view, creative calendar, traffic generation per vendor/DMA. Supports board switches, going dark, and launch dates."},
@@ -5184,7 +5193,7 @@ Be direct and actionable. No generic advice.`;
       {title:"Firebase Sync",text:"All data syncs to Firebase Firestore in real-time. Changes are saved automatically when you modify ISCIs, stations, estimates, traffic history, or any other data."},
       {title:"Audit Log",text:"Every action is logged with timestamp, action type, and details. View in the Audit Log page. Tracks traffic sends, ISCI changes, imports, deletes, and email activity."},
       {title:"Light Mode",text:"Toggle in the sidebar footer (sun/moon icon). Inverts the color scheme. Persists to localStorage. Dark is default."},
-      {title:"Admin Password",text:"Some actions (delete traffic, bulk operations) require the admin password: 1234."},
+      {title:"Admin Password",text:"Some actions (delete traffic, bulk operations) require the admin password. Contact your administrator if you need access."},
       {title:"Drag & Drop",text:"Supported on: bulk creative upload, CSV import, ISCI registration, edit ISCI modal, companion banner upload, and OOH photo upload."},
     ]},
   ];
@@ -5306,8 +5315,8 @@ Be direct and actionable. No generic advice.`;
     <div style={{fontSize:28,fontWeight:800,color:"#7c3aed",letterSpacing:2,textShadow:"0 0 20px rgba(124,58,237,.4),0 0 40px rgba(124,58,237,.15)"}}>DOOM & DELIVERABLES</div>
     <div style={{fontSize:11,fontWeight:600,color:"#a78bfa",letterSpacing:3,marginTop:4}}>ATTICOR MEDIA</div>
     <div style={{fontSize:13,color:"#7c6bc4",marginTop:20,marginBottom:24,fontStyle:"italic"}}>{doomPick(DOOM.login)}</div>
-    <input type="password" value={authInput} onChange={e=>setAuthInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){if(authInput==="6246DnD2614"){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthInput("");notify(doomPick(["Wrong. Try again.","That's not it.","Nope.","I don't think so.","Really?"]))}}}} placeholder="Password" style={{width:"100%",padding:"14px 18px",borderRadius:10,border:"2px solid #334155",background:"#1e293b",color:"#e2e8f0",fontSize:16,textAlign:"center",outline:"none",marginBottom:14,letterSpacing:2}}/>
-    <button onClick={()=>{if(authInput==="6246DnD2614"){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthInput("");notify(doomPick(["Wrong. Try again.","That's not it.","Nope.","I don't think so.","Really?"]))}}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#7c3aed,#a78bfa)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(124,58,237,.3)"}}>Let Me In</button>
+    <input type="password" value={authInput} onChange={e=>setAuthInput(e.target.value)} onKeyDown={async e=>{if(e.key==="Enter"){const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthInput("");notify(doomPick(["Wrong. Try again.","That's not it.","Nope.","I don't think so.","Really?"]))}}}} placeholder="Password" style={{width:"100%",padding:"14px 18px",borderRadius:10,border:"2px solid #334155",background:"#1e293b",color:"#e2e8f0",fontSize:16,textAlign:"center",outline:"none",marginBottom:14,letterSpacing:2}}/>
+    <button onClick={async()=>{const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthInput("");notify(doomPick(["Wrong. Try again.","That's not it.","Nope.","I don't think so.","Really?"]))}}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#7c3aed,#a78bfa)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(124,58,237,.3)"}}>Let Me In</button>
   </div></div>;
   if(!dbLoaded)return<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0f172a 0%,#1a1040 50%,#0f172a 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center"}}>
     <div style={{width:88,height:88,display:"inline-flex",alignItems:"center",justifyContent:"center",position:"relative",marginBottom:28}}>
@@ -5447,7 +5456,7 @@ Be direct and actionable. No generic advice.`;
               });
               if(!resp.ok)throw new Error("n8n failed");
             }catch(fnErr){
-              try{await emailjs.send("service_5gnwynh","template_45vaj9v",{to_email:email,subject:subj,body:body,name:"Atticor",message:body})}
+              try{await sendEmailServer({to_email:email,subject:subj,body:body,name:"Atticor",message:body})}
               catch(e2){console.warn("EmailJS also failed:",e2)}
             }
           }
