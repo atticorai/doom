@@ -1,5 +1,6 @@
 node_modules/
 migrate.js
 fix-iscis.js
+fix-titles.js
 package.json
 package-lock.json
