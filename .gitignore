@@ -1,2 +1,4 @@
 node_modules/
 migrate.js
+package.json
+package-lock.json
