@@ -564,13 +564,12 @@ const App=()=>{
         if(docs.iscis?.data){const d=JSON.parse(docs.iscis.data);console.log("Firestore ISCIs: "+d.length+" records, ISCIS_INIT has "+ISCIS_INIT.length);
           // Clean codes
           const cleaned=(d.length?d:[]).map(i=>{if(i.code&&/^[A-Z]{3,4}[A-Z]{2}\d/.test(i.code)){const dashMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*[-–—:]+\s*(.+)$/);if(dashMatch)return{...i,code:dashMatch[1].trim(),title:dashMatch[2].trim()||i.title};const spaceMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s{2,}(.+)$/);if(spaceMatch)return{...i,code:spaceMatch[1].trim(),title:spaceMatch[2].trim()||i.title};if(i.code.length>16){const coreMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*(.*)$/);if(coreMatch&&coreMatch[2])return{...i,code:coreMatch[1].trim(),title:coreMatch[2].trim()||i.title}}}return i});
-          // ISCIS_INIT is source of truth for fileUrls ONLY. Firestore wins for everything else (active, title, tags, etc.)
+          // Merge: Firestore wins for user edits, but never overwrite a good title/fileUrl with empty
           const fbMap=new Map(cleaned.map(i=>[i.code,i]));
           const seedMap=new Map(ISCIS_INIT.map(i=>[i.code,i]));
-          // Start from ISCIS_INIT, overlay ALL Firestore user edits, but restore seed fileUrl if Firestore lost it
           const merged=ISCIS_INIT.map(init=>{
             const fb=fbMap.get(init.code);
-            if(fb){return{...init,...fb,fileUrl:fb.fileUrl||init.fileUrl||""}}
+            if(fb){return{...init,...fb,title:fb.title||init.title||"",fileUrl:fb.fileUrl||init.fileUrl||"",media:fb.media||init.media||"",brand:fb.brand||init.brand||"",dma:fb.dma||init.dma||"",dur:fb.dur||init.dur||""}}
             return init;
           });
           // Keep user-added ISCIs not in seed
