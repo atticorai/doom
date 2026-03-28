@@ -1372,7 +1372,7 @@ const App=()=>{
       <div style={{display:"flex",gap:5,alignItems:"end",flexWrap:"wrap"}}>
         <input placeholder="Search..." value={isciSearch} onChange={e=>setIsciSearch(e.target.value)} style={{width:180,padding:"6px 9px",borderRadius:5,border:"1px solid #4a3870",fontSize:13,outline:"none",background:"#1a1030",color:"#ede4f5"}}/>
         <Sel options={BRANDS.map(b=>({v:b.name,l:b.name}))} value={sf.brand} onChange={v=>setF("brand",v)} placeholder="All Brands"/>
-        <Sel options={DL.map(d=>({v:d.code,l:`${d.code} - ${d.name}`}))} value={sf.dma} onChange={v=>setF("dma",v)} placeholder="All DMAs"/>
+        <Sel options={(sf.brand?DL.filter(d=>(sf.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"]).includes(d.code)):DL).map(d=>({v:d.code,l:`${d.code} - ${d.name}`}))} value={sf.dma} onChange={v=>setF("dma",v)} placeholder="All DMAs"/>
         <label style={{fontSize:14,display:"flex",alignItems:"center",gap:3,cursor:"pointer"}}><input type="checkbox" checked={showOff} onChange={e=>setShowOff(e.target.checked)}/> Inactive</label>
         {(sf.brand||sf.media||sf.dma||isciSearch)&&<Btn small onClick={()=>{setSf({brand:"",media:"",dma:"",search:"",estGroup:""});setIsciSearch("")}}>Clear</Btn>}
       </div>
@@ -2350,7 +2350,7 @@ const App=()=>{
     </table></div></Cd></div>};
 
   // ── STATIONS ──────────────────────────────────────────
-  const StaPg=()=>{const[sm,setSm]=useState("");const[so,setSo]=useState("");const mkts=[...new Set(stations.map(s=>s.market))].sort();const ow=[...new Set(stations.map(s=>s.ownership).filter(Boolean))].sort();
+  const StaPg=()=>{const[sm,setSm]=useState("");const[so,setSo]=useState("");const mkts=[...new Set(stations.filter(s=>!sf.brand||s.brand===sf.brand).map(s=>s.market))].sort();const ow=[...new Set(stations.map(s=>s.ownership).filter(Boolean))].sort();
     const[editIdx,setEditIdx]=useState(null);const[editRow,setEditRow]=useState({});const[showAdd,setShowAdd]=useState(false);const[newRow,setNewRow]=useState({market:"",call:"",media:"",ownership:"",contact:"",brand:"",buyer:""});
     const fl=sortRows("sta",stations.filter(s=>(sm?s.market===sm:true)&&(so?s.ownership===so:true)&&(sf.brand?s.brand===sf.brand:true)),{call:r=>r.call,market:r=>r.market,media:r=>r.media,ownership:r=>r.ownership||"",brand:r=>r.brand||"",contact:r=>r.contact||""});
     const startEdit=(i,s)=>{setEditIdx(i);setEditRow({...s})};
