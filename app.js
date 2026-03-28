@@ -40,8 +40,10 @@ const autoCase=(title)=>{
 
 const ISCIS_INIT=(()=>{const seen=new Set();return D_I.filter(r=>{if(seen.has(r[0]))return false;seen.add(r[0]);return true}).map(r=>({code:r[0],title:r[1],media:r[2],brand:r[3],dma:r[4],dur:r[5],suffix:r[6],active:r[7]!==false,caseType:r[8]||autoCase(r[1]),category:r[8]||autoCase(r[1]),valueProp:"",vo:"",fileUrl:r[9]||"",sentAt:null,sentInEst:null}))})();
 const ESTIMATES=(()=>{
-  const base=D_E.map(r=>({num:r[0],market:r[1],media:r[2],group:r[3],campaign:r[4],buyer:r[5],brand:r[6]}));
-  // WK 2026 estimates patch
+  // Filter out old 4-digit WK estimates — replaced by 3-digit monthly system
+  const OLD_WK_NUMS=new Set(["2633","2634","2635","2636","2637","2638","2639","2640","2641","2642","2643","2644","2645","2646","2647","2648","2649","2650","2651","2652","2653","2654","2655","2656","2657","2658","2659","2660"]);
+  const base=D_E.map(r=>({num:r[0],market:r[1],media:r[2],group:r[3],campaign:r[4],buyer:r[5],brand:r[6]})).filter(e=>!(e.brand==="Wettermark Keith"&&OLD_WK_NUMS.has(e.num)));
+  // WK 2026 estimates — 3-digit monthly system
   const WK_EST_NEW=[
     ["210","TV","Base"],["211","TV","Base"],["212","TV","Base"],["213","TV","Base"],["214","TV","Base"],["215","TV","Base"],
     ["216","Radio","Base"],["217","TV","UD/AV"],["218","TV","Base"],["219","TV","Sports"],
@@ -567,10 +569,13 @@ const App=()=>{
           setStations([...updated,...missing]);stationsLoadedRef.current=true
         }}else{stationsLoadedRef.current=true}
         if(docs.estimates?.data){const d=JSON.parse(docs.estimates.data);if(d.length){
+          // Filter out old 4-digit WK estimates from Firestore data too
+          const OLD_WK_NUMS=new Set(["2633","2634","2635","2636","2637","2638","2639","2640","2641","2642","2643","2644","2645","2646","2647","2648","2649","2650","2651","2652","2653","2654","2655","2656","2657","2658","2659","2660"]);
+          const cleaned=d.filter(e=>!(e.brand==="Wettermark Keith"&&OLD_WK_NUMS.has(e.num)));
           // Merge with patched estimates — add any new ones not in Firebase
-          const fbNums=new Set(d.map(e=>e.num+"|"+e.market));
+          const fbNums=new Set(cleaned.map(e=>e.num+"|"+e.market));
           const missing=ESTIMATES.filter(e=>!fbNums.has(e.num+"|"+e.market));
-          setEstimates([...d,...missing]);estimatesLoadedRef.current=true
+          setEstimates([...cleaned,...missing]);estimatesLoadedRef.current=true
         }}else{estimatesLoadedRef.current=true}
         if(docs.iscis?.data){const d=JSON.parse(docs.iscis.data);console.log("Firestore ISCIs: "+d.length+" records, ISCIS_INIT has "+ISCIS_INIT.length);
           // Clean codes
