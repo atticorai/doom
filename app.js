@@ -2373,12 +2373,90 @@ const App=()=>{
             var videoSel3=sel.filter(function(r){return r.isci.suffix!=="B"});
             var displaySel3=sel.filter(function(r){return r.isci.suffix==="B"});
             var dmaList3=[...new Set(videoSel3.map(function(r){return r.isci.dma}))].sort();
-            var campSuffix3=utmCampaign.replace(dmaPrefix,"");
             try{
-              var pdfUri3=generateDigitalTrafficPdf({buyer:est.buyer,market:est.market,flight:flightDates,version:version,estimate:est.num,month:workMonth,baseUrl:baseUrl,utmSource:utmSource,campSuffix:campSuffix3,dmas:dmaList3,videoSel:videoSel3,displaySel:displaySel3});
+              var pdfUri3=generateDigitalTrafficPdf({buyer:est.buyer,market:est.market,flight:flightDates,version:version,estimate:est.num,month:workMonth,baseUrl:baseUrl,utmSource:"ESPN",campSuffix:espnCampaign,dmas:dmaList3,videoSel:videoSel3,displaySel:displaySel3});
               var a=document.createElement("a");a.href=pdfUri3;a.download="Traffic_PostmanLaw_Digital_ESPN_GKBPS_"+workMonth.replace(/\s/g,"")+"_v"+version+".pdf";a.click();
               notify(doomPick(DOOM.success));
             }catch(pe){console.warn("PDF gen failed:",pe);notify("PDF generation failed")}
+          }else if(vendorMode==="Pandora"){
+            // Generate Pandora PDF with per-ISCI URLs for all PL markets
+            var{jsPDF:JP2}=window.jspdf;var ppdf=new JP2("p","mm","a4");
+            var ppw=210;var pph=297;var pmx=12;var pcw=ppw-2*pmx;var py=14;
+            var pCheckPage=function(need){if(py+need>pph-12){ppdf.addPage();py=12}};
+            ppdf.setFont("helvetica","bold");ppdf.setFontSize(14);ppdf.setTextColor(124,58,237);
+            ppdf.text("POSTMAN LAW",ppw/2,py,{align:"center"});py+=5;
+            ppdf.setFontSize(8);ppdf.setTextColor(100,100,100);
+            ppdf.text("PANDORA / SIRIUSXM STREAMING AUDIO TRAFFIC",ppw/2,py,{align:"center"});py+=7;
+            ppdf.setFontSize(8);ppdf.setTextColor(0,0,0);
+            var phdr=function(l,v){ppdf.setFont("helvetica","bold");ppdf.setTextColor(100,100,100);ppdf.text(l+":",pmx,py);ppdf.setFont("helvetica","normal");ppdf.setTextColor(0,0,0);ppdf.text(v,pmx+30,py);py+=3.8};
+            phdr("Agency","Atticor Media");phdr("Client","Postman Law");phdr("Buyer",est.buyer);
+            phdr("Month",workMonth);phdr("Flight",flightDates);phdr("Version","V"+version);
+            if(comments)phdr("Comments",comments);
+            py+=3;
+            PL_MKTS_ALL.forEach(function(mkt){
+              var mktDma=Object.entries(DM).find(function(e){return e[1]===mkt});var dma=mktDma?mktDma[0]:"";
+              var mktIscis=sel.filter(function(r){return r.isci.dma===dma});
+              if(!mktIscis.length)return;
+              pCheckPage(20);
+              ppdf.setDrawColor(8,145,178);ppdf.setLineWidth(0.5);ppdf.line(pmx,py,pmx+pcw,py);py+=5;
+              ppdf.setFont("helvetica","bold");ppdf.setFontSize(10);ppdf.setTextColor(8,145,178);
+              ppdf.text(mkt.toUpperCase()+" ("+dma+")",pmx,py);py+=5;
+              // Audio table
+              ppdf.setFont("helvetica","bold");ppdf.setFontSize(7);ppdf.setTextColor(5,150,105);
+              ppdf.text("AUDIO — AudioSelect",pmx,py);py+=4;
+              ppdf.setFontSize(6.5);ppdf.setTextColor(100,100,100);
+              ppdf.text("UTM_Content",pmx,py);ppdf.text("Title",pmx+35,py);ppdf.text("Dur",pmx+80,py);ppdf.text("Rot%",pmx+90,py);ppdf.text("Full URL",pmx+100,py);py+=3.5;
+              ppdf.setFont("helvetica","normal");ppdf.setFontSize(7);
+              mktIscis.forEach(function(r){
+                pCheckPage(5);
+                ppdf.setTextColor(0,0,0);ppdf.setFont("helvetica","bold");
+                ppdf.text(r.isci.code,pmx,py);ppdf.setFont("helvetica","normal");
+                ppdf.text(r.isci.title.substring(0,30),pmx+35,py);
+                ppdf.text(":"+r.isci.dur,pmx+80,py);
+                ppdf.text((r.pct||"")+"%",pmx+90,py);
+                var pUrl=pandoraUrl(mkt,r.isci.code,"AudioSelect");
+                ppdf.setTextColor(37,99,235);
+                ppdf.textWithLink("Click",pmx+100,py,{url:pUrl});
+                py+=3.5;
+              });
+              // Companion banners
+              var comps2=pandoraCompanions.filter(function(c){return c.name.trim()});
+              if(comps2.length){
+                py+=2;pCheckPage(10);
+                ppdf.setFont("helvetica","bold");ppdf.setFontSize(7);ppdf.setTextColor(8,145,178);
+                ppdf.text("COMPANION — CompanionBanners",pmx,py);py+=4;
+                ppdf.setFont("helvetica","normal");ppdf.setFontSize(7);
+                comps2.forEach(function(c){
+                  pCheckPage(4);ppdf.setTextColor(0,0,0);
+                  ppdf.text(c.name.substring(0,50)+" ("+c.size+")",pmx,py);
+                  var cUrl=pandoraUrl(mkt,c.name.trim(),"CompanionBanners");
+                  ppdf.setTextColor(37,99,235);ppdf.textWithLink("URL",pmx+pcw-10,py,{url:cUrl});py+=3.5;
+                });
+              }
+              // Display banners
+              var disps2=pandoraDisplays.filter(function(d){return d.name.trim()});
+              if(disps2.length){
+                py+=2;pCheckPage(10);
+                ppdf.setFont("helvetica","bold");ppdf.setFontSize(7);ppdf.setTextColor(236,72,153);
+                ppdf.text("DISPLAY — DisplayBanners",pmx,py);py+=4;
+                ppdf.setFont("helvetica","normal");ppdf.setFontSize(7);
+                disps2.forEach(function(d){
+                  pCheckPage(4);ppdf.setTextColor(0,0,0);
+                  ppdf.text(d.name.substring(0,50)+" ("+d.size+")",pmx,py);
+                  var dUrl=pandoraUrl(mkt,d.name.trim(),"DisplayBanners");
+                  ppdf.setTextColor(37,99,235);ppdf.textWithLink("URL",pmx+pcw-10,py,{url:dUrl});py+=3.5;
+                });
+              }
+              py+=4;
+            });
+            // Signature
+            py+=4;pCheckPage(10);
+            ppdf.setDrawColor(124,58,237);ppdf.setLineWidth(0.5);ppdf.line(pmx,py,pmx+pcw,py);py+=5;
+            ppdf.setFont("helvetica","bold");ppdf.setFontSize(8);ppdf.setTextColor(0,0,0);
+            ppdf.text("Accepted by: _________________________",pmx,py);ppdf.text("Date: _______________",pmx+pcw-60,py);
+            var pdfUri4=ppdf.output("datauristring");
+            var a2=document.createElement("a");a2.href=pdfUri4;a2.download="Traffic_PostmanLaw_Pandora_"+workMonth.replace(/\s/g,"")+"_v"+version+".pdf";a2.click();
+            notify(doomPick(DOOM.success));
           }else{
             printStream();notify("Use browser Print > Save as PDF");
           }
