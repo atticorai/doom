@@ -1444,11 +1444,9 @@ const App=()=>{
           const linkedSta=getEstStations(e);
           const airing=nowAiring[e.num];
           const conf=getConfirmed(e.num);const sentStas=airing?.stations||[];const confCount=sentStas.filter(c=>conf[c]?.confirmed).length;const totalSent=sentStas.length;
-          const brandBg=e.brand==="Postman Law"?"rgba(220,38,38,.06)":e.brand==="Wettermark Keith"?"rgba(37,99,235,.06)":"";
-          const brandBorder=e.brand==="Postman Law"?"#dc2626":e.brand==="Wettermark Keith"?"#2563eb":"#4a3870";
-          return<tr key={e.num+e.brand+e.market} style={{background:isSel?"#eff6ff":brandBg,borderLeft:"3px solid "+brandBorder}}>
+          return<tr key={e.num+e.brand+e.market} style={{background:isSel?"#eff6ff":""}}>
             {combineMode&&<TD a="center"><input type="checkbox" checked={isSel} onChange={()=>toggleCombine(e)}/></TD>}
-            <TD m b>{e.num}</TD><TD><span style={{color:e.brand==="Postman Law"?"#dc2626":"#2563eb",fontWeight:600}}>{e.brand}</span></TD><TD b>{e.market}</TD><TD><B l={e.media} c={mc(e.media)}/></TD><TD>{e.group}</TD><TD>{e.buyer}</TD>
+            <TD m b>{e.num}</TD><TD><span style={{fontWeight:600}}>{e.brand}</span></TD><TD b>{e.market}</TD><TD><B l={e.media} c={mc(e.media)}/></TD><TD>{e.group}</TD><TD>{e.buyer}</TD>
             <TD a="center" b c={linkedSta.length?"#059669":"#dc2626"}><span title={linkedSta.map(s=>s.call).join(", ")} style={{cursor:"help"}}>{linkedSta.length}</span></TD>
             <TD a="center" b c={mi.length?"#2563eb":"#dc2626"}>{mi.length}</TD>
             <TD a="center">{airing?<span title={`v${airing.version} · ${airing.iscis.length} ISCIs · ${airing.month}`} style={{cursor:"help",fontSize:13,padding:"2px 5px",borderRadius:8,background:"#dcfce7",color:"#16a34a",fontWeight:600}}>v{airing.version}</span>:<span style={{fontSize:13,color:"#a89ed4"}}>—</span>}</TD>
