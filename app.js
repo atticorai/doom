@@ -346,16 +346,17 @@ const Mod=({title,onClose,children,wide})=><div style={{position:"fixed",inset:0
 const StatC=({label,value,sub,color,onClick})=><div onClick={onClick} style={{background:"#251d3d",border:"1px solid #4a3870",borderRadius:9,padding:"10px 12px",cursor:onClick?"pointer":"default",position:"relative",overflow:"hidden"}}><div style={{position:"absolute",top:0,left:0,right:0,height:3,background:color}}/><div style={{fontSize:10,fontWeight:600,color:"#a89ed4",textTransform:"uppercase",letterSpacing:.5}}>{label}</div><div style={{fontSize:24,fontWeight:700,color:"#f3edf9",marginTop:1}}>{value}</div>{sub&&<div style={{fontSize:10,color:"#a89ed4",marginTop:1}}>{sub}</div>}</div>;
 
 // Drag-and-drop wrapper: wraps any upload zone, calls onFiles(FileList) on drop
-const DropZone=({onFiles,accept,multiple,children,style:sx,disabled})=>{const[over,setOver]=useState(false);const inputRef=useRef(null);
-  const handleDrop=e=>{e.preventDefault();e.stopPropagation();setOver(false);if(disabled)return;const files=e.dataTransfer.files;if(files.length)onFiles(multiple?files:[files[0]])};
-  const handleDragOver=e=>{e.preventDefault();e.stopPropagation();if(!disabled)setOver(true)};
-  const handleDragLeave=e=>{e.preventDefault();e.stopPropagation();setOver(false)};
+const DropZone=({onFiles,accept,multiple,children,style:sx,disabled})=>{const[over,setOver]=useState(false);const inputRef=useRef(null);const dragCounter=useRef(0);
+  const handleDrop=e=>{e.preventDefault();e.stopPropagation();dragCounter.current=0;setOver(false);if(disabled)return;const files=e.dataTransfer.files;if(files.length)onFiles(multiple?files:[files[0]])};
+  const handleDragEnter=e=>{e.preventDefault();e.stopPropagation();dragCounter.current++;if(!disabled)setOver(true)};
+  const handleDragOver=e=>{e.preventDefault();e.stopPropagation()};
+  const handleDragLeave=e=>{e.preventDefault();e.stopPropagation();dragCounter.current--;if(dragCounter.current<=0){dragCounter.current=0;setOver(false)}};
   const handleClick=()=>{if(!disabled&&inputRef.current)inputRef.current.click()};
   const handleChange=e=>{const files=e.target.files;if(files&&files.length)onFiles(multiple?files:[files[0]]);if(inputRef.current)inputRef.current.value=""};
-  return<div onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onClick={handleClick}
+  return<div onDrop={handleDrop} onDragEnter={handleDragEnter} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onClick={handleClick}
     style={{border:"2px dashed "+(over?"#3b82f6":"#7c6bc4"),borderRadius:8,padding:16,textAlign:"center",cursor:disabled?"not-allowed":"pointer",background:over?"rgba(59,130,246,.12)":"rgba(124,59,237,.05)",transition:"all .15s",position:"relative",...(sx||{})}}>
     <input ref={inputRef} type="file" accept={accept||"*/*"} multiple={!!multiple} onChange={handleChange} style={{display:"none"}}/>
-    {over&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(59,130,246,.08)",borderRadius:6,zIndex:1}}><div style={{fontSize:16,fontWeight:700,color:"#3b82f6"}}>Drop files here</div></div>}
+    {over&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(59,130,246,.08)",borderRadius:6,zIndex:1,pointerEvents:"none"}}><div style={{fontSize:16,fontWeight:700,color:"#3b82f6"}}>Drop files here</div></div>}
     {children}
   </div>};
 
@@ -3684,8 +3685,11 @@ const App=()=>{
         </div>:
         <div style={{border:"2px dashed #c4b5fd",borderRadius:8,padding:10,textAlign:"center",background:"#162032"}}>
           {f2.uploading?<div><div style={{fontSize:14,fontWeight:600,color:"#2563eb"}}>Uploading... {f2.uploadPct||0}%</div><div style={{height:4,background:"#ede4f5",borderRadius:2,marginTop:4}}><div style={{height:4,background:"#2563eb",borderRadius:2,width:(f2.uploadPct||0)+"%"}}/></div></div>:
-          <DropZone accept="*/*" style={{border:"none",padding:0,background:"transparent"}} onFiles={(fileList)=>{
-              var file=fileList[0];if(!file){notify("No file selected");return}if(!storage){notify("Storage not loaded");return}
+          <DropZone accept="*/*" multiple={false} style={{border:"none",padding:0,background:"transparent"}} onFiles={(fileList)=>{
+              var file=fileList instanceof FileList?fileList[0]:Array.isArray(fileList)?fileList[0]:fileList;
+              if(!file){notify("No file selected");return}
+              if(!storage){notify("Storage not loaded — try refreshing");return}
+              if(!f2.dmas.length){notify("Select at least one DMA first");return}
               notify("Starting upload: "+file.name);
               u2("uploading",true);u2("uploadPct",0);
               var ext=file.name.split(".").pop();
@@ -4137,9 +4141,11 @@ ${fullText.substring(0,3000)}`}]
       return{type:"excel",client,sheets,panels:allPanels,totalPanels:allPanels.length};
     };
 
-    const onDrop=(e)=>{e.preventDefault();setDragOver(false);if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files)};
-    const onDragOver=(e)=>{e.preventDefault();setDragOver(true)};
-    const onDragLeave=()=>setDragOver(false);
+    const dragCtr=useRef(0);
+    const onDrop=(e)=>{e.preventDefault();e.stopPropagation();dragCtr.current=0;setDragOver(false);if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files)};
+    const onDragEnter=(e)=>{e.preventDefault();e.stopPropagation();dragCtr.current++;setDragOver(true)};
+    const onDragOver=(e)=>{e.preventDefault();e.stopPropagation()};
+    const onDragLeave=(e)=>{e.preventDefault();e.stopPropagation();dragCtr.current--;if(dragCtr.current<=0){dragCtr.current=0;setDragOver(false)}};
 
     const totalParsed=results.filter(r=>r.status==="success").reduce((a,r)=>a+(r.panels?.length||0),0);
 
@@ -4149,7 +4155,7 @@ ${fullText.substring(0,3000)}`}]
       </div>
 
       {/* Drop zone */}
-      <div onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave} onClick={()=>document.getElementById('fileInput').click()}
+      <div onDrop={onDrop} onDragEnter={onDragEnter} onDragOver={onDragOver} onDragLeave={onDragLeave} onClick={()=>document.getElementById('fileInput').click()}
         style={{border:`2px dashed ${dragOver?"#3b82f6":"#d4c9e0"}`,borderRadius:12,padding:"40px 20px",textAlign:"center",cursor:"pointer",background:dragOver?"#eff6ff":"#f8fafc",transition:"all .2s"}}>
         <div style={{fontSize:28,marginBottom:8}}>{dragOver?"📂":"📁"}</div>
         <div style={{fontSize:14,fontWeight:700,color:"#a89ed4"}}>Drop files here or click to browse</div>
