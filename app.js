@@ -578,27 +578,27 @@ const App=()=>{
           setEstimates([...cleaned,...missing]);estimatesLoadedRef.current=true
         }}else{estimatesLoadedRef.current=true}
         if(docs.iscis?.data){const d=JSON.parse(docs.iscis.data);console.log("Firestore ISCIs: "+d.length+" records, ISCIS_INIT has "+ISCIS_INIT.length);
-          // Clean codes
+          // Clean codes (fix malformed ISCI codes with titles stuck in them)
           const cleaned=(d.length?d:[]).map(i=>{if(i.code&&/^[A-Z]{3,4}[A-Z]{2}\d/.test(i.code)){const dashMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*[-–—:]+\s*(.+)$/);if(dashMatch)return{...i,code:dashMatch[1].trim(),title:dashMatch[2].trim()||i.title};const spaceMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s{2,}(.+)$/);if(spaceMatch)return{...i,code:spaceMatch[1].trim(),title:spaceMatch[2].trim()||i.title};if(i.code.length>16){const coreMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*(.*)$/);if(coreMatch&&coreMatch[2])return{...i,code:coreMatch[1].trim(),title:coreMatch[2].trim()||i.title}}}return i});
-          // ISCIS_INIT is source of truth for fileUrls ONLY. Firestore wins for everything else (active, title, tags, etc.)
-          const fbMap=new Map(cleaned.map(i=>[i.code,i]));
-          const seedMap=new Map(ISCIS_INIT.map(i=>[i.code,i]));
-          // Start from ISCIS_INIT, overlay ALL Firestore user edits, but restore seed fileUrl if Firestore lost it
-          const merged=ISCIS_INIT.map(init=>{
-            const fb=fbMap.get(init.code);
-            if(fb){return{...init,...fb,fileUrl:fb.fileUrl||init.fileUrl||""}}
-            return init;
+          // ═══ MERGE RULES ═══
+          // 1. Firestore wins for user edits (active, title, tags, category, etc.)
+          // 2. Seed restores fileUrls if Firestore lost them
+          // 3. Missing seed ISCIs always get added back (better to have extras than lose data)
+          // 4. User-added ISCIs (not in seed) are always kept
+          // Use code+dma as composite key for same code in different markets
+          const fbMap=new Map(cleaned.map(i=>[i.code+"|"+(i.dma||""),i]));
+          const seedMap=new Map(ISCIS_INIT.map(i=>[i.code+"|"+(i.dma||""),i]));
+          // Start from Firestore — restore fileUrls from seed if lost
+          const enhanced=cleaned.map(fb=>{
+            const seed=seedMap.get(fb.code+"|"+(fb.dma||""));
+            if(seed&&!fb.fileUrl&&seed.fileUrl)return{...fb,fileUrl:seed.fileUrl};
+            return fb;
           });
-          // Keep user-added ISCIs not in seed
-          const extras=cleaned.filter(i=>!seedMap.has(i.code));
-          const all=[...merged,...extras];
-          // Only write back if ISCIs were actually missing (restored from seed)
-          const restoredCount=ISCIS_INIT.filter(init=>!fbMap.has(init.code)).length;
-          if(restoredCount>0){
-            console.warn("ISCI AUTO-HEAL: Restored "+restoredCount+" missing ISCIs. Writing to Firestore.");
-            try{db.collection("appData").doc("iscis").set({data:JSON.stringify(all),ts:Date.now()})}catch(he){console.warn("ISCI heal write failed:",he)}
-          }
-          console.log("ISCI load: "+merged.length+" seed + "+extras.length+" user-added = "+all.length+" total"+(restoredCount?" ("+restoredCount+" restored)":""));
+          // Always add back missing seed ISCIs — better to recover than lose
+          const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||"")));
+          const all=[...enhanced,...missing];
+          if(missing.length>0)console.warn("ISCI RESTORE: "+missing.length+" seed ISCIs were missing from Firestore — restored");
+          console.log("ISCI load: "+enhanced.length+" from Firestore + "+missing.length+" restored = "+all.length+" total");
           setIscis(all);isciFbCountRef.current=all.length;iscisLoadedRef.current=true
         }else{
           // No Firestore data at all — write seed as initial data
@@ -702,7 +702,14 @@ const App=()=>{
   const trafficLoadedRef=React.useRef(false);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current){saveRef.current=true;return;}if(stations.length>0&&stationsLoadedRef.current)saveToDb("stations",stations)},[stations,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(estimates.length>0&&estimatesLoadedRef.current)saveToDb("estimates",estimates)},[estimates,dbLoaded]);
-  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(iscis.length>0&&iscisLoadedRef.current){isciFbCountRef.current=iscis.length;saveToDb("iscis",iscis)}},[iscis,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(iscis.length>0&&iscisLoadedRef.current){
+    // SAFEGUARD: if ISCI count drops by more than 20% from what Firestore had, block the save
+    if(isciFbCountRef.current>50&&iscis.length<isciFbCountRef.current*0.8){
+      console.error("ISCI SAVE BLOCKED: count dropped from "+isciFbCountRef.current+" to "+iscis.length+" (>20% loss). This looks like a bug, not user action.");
+      return;
+    }
+    isciFbCountRef.current=iscis.length;saveToDb("iscis",iscis)
+  }},[iscis,dbLoaded]);
   const linksReady=React.useRef(false);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(!linksReady.current)return;if(Object.keys(staEstLinks).length>0)saveToDb("staEstLinks",staEstLinks)},[staEstLinks,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;const newLinks={};stations.forEach(s=>{const k=staKey(s);const existing=staEstLinks[k]||[];const matched=estimates.filter(e=>e.market===s.market&&e.brand===s.brand&&(s.media===e.media||(s.media==="TV"&&(e.media==="Cable"||e.media==="TV"))||(s.media==="Cable"&&e.media==="TV"))).map(e=>e.num);if(existing.length===0&&matched.length){newLinks[k]=matched}else if(existing.length>0){const missing=matched.filter(n=>!existing.includes(n));if(missing.length)newLinks[k]=[...existing,...missing]}});if(Object.keys(newLinks).length){setStaEstLinks(p=>({...p,...newLinks}))}linksReady.current=true},[stations,dbLoaded]);
