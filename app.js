@@ -1533,7 +1533,7 @@ const App=()=>{
     const[customSched,setCustomSched]=useState("");
     const[version,setVersion]=useState(_revise?String(parseInt(_revise.version||"1")+1):"1");
     const[comments,setComments]=useState(_revise?`Revision of v${_revise.version}`:"")
-    const linkedSta=est._combined?est._combined.flatMap(ce=>getEstStations(ce)):getEstStations(est);
+    const linkedSta=est._combined?(()=>{const all=est._combined.flatMap(ce=>getEstStations(ce));const seen=new Set();return all.filter(s=>{const k=s.call+"|"+s.market;if(seen.has(k))return false;seen.add(k);return true})})():getEstStations(est);
     const[sendStations,setSendStations]=useState(()=>linkedSta.map(s=>s.call));
 
     const sel=rows.filter(r=>r.selected);
