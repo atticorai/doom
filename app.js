@@ -333,15 +333,15 @@ const DOOM={
 const doomPick=(arr)=>arr[Math.floor(Math.random()*arr.length)];
 // UI atoms
 const B=({l,c})=><span style={{display:"inline-flex",padding:"2px 6px",borderRadius:99,fontSize:14,fontWeight:600,background:c+"14",color:c,border:`1px solid ${c}30`,whiteSpace:"nowrap"}}>{l}</span>;
-const Btn=({children,onClick,primary,small,disabled,color,danger})=><button disabled={disabled} onClick={onClick} style={{display:"inline-flex",alignItems:"center",gap:4,padding:small?"4px 8px":"8px 14px",borderRadius:6,border:primary||danger?"none":"1px solid #d1d5db",background:disabled?"#ede4f5":danger?"#dc2626":primary?color||"#1c1528":"#fff",color:disabled?"#94a3b8":primary||danger?"#fff":"#453960",fontSize:small?11:13,fontWeight:600,cursor:disabled?"not-allowed":"pointer"}}>{children}</button>;
+const Btn=({children,onClick,primary,small,disabled,color,danger})=><button disabled={disabled} onClick={onClick} style={{display:"inline-flex",alignItems:"center",gap:4,padding:small?"4px 8px":"8px 14px",borderRadius:6,border:primary||danger?"none":"1px solid #d1d5db",background:disabled?"#ede4f5":danger?"#dc2626":primary?color||"#1a1030":"#fff",color:disabled?"#94a3b8":primary||danger?"#fff":"#4a3870",fontSize:small?11:13,fontWeight:600,cursor:disabled?"not-allowed":"pointer"}}>{children}</button>;
 const Inp=({label,...p})=><div style={{display:"flex",flexDirection:"column",gap:2,flex:1}}>{label&&<label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>{label}</label>}<input {...p} style={{padding:"6px 9px",borderRadius:5,border:"1px solid #d1d5db",fontSize:13,outline:"none",width:"100%",...(p.style||{})}}/></div>;
-const Sel=({label,options,value,onChange,placeholder})=><div style={{display:"flex",flexDirection:"column",gap:2,flex:1}}>{label&&<label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>{label}</label>}<select value={value} onChange={e=>onChange(e.target.value)} style={{padding:"6px 9px",borderRadius:5,border:"1px solid #d1d5db",fontSize:13,background:"#1c1528",color:"#ede4f5"}}>{placeholder&&<option value="">{placeholder}</option>}{options.map(o=><option key={typeof o==="string"?o:o.v} value={typeof o==="string"?o:o.v}>{typeof o==="string"?o:o.l}</option>)}</select></div>;
-const TH=({children,a,w})=><th style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #453960",textAlign:a||"left",whiteSpace:"nowrap",position:"sticky",top:0,background:"#2a2240",zIndex:1,width:w||"auto"}}>{children}</th>;
-const TD=({children,m,b,c,a})=><td style={{padding:"5px 7px",fontSize:13,color:c||"#453960",fontFamily:m?"monospace":"inherit",borderBottom:"1px solid #f3edf9",whiteSpace:"nowrap",fontWeight:b?600:400,textAlign:a||"left"}}>{children}</td>;
-const Cd=({children,style:sx})=><div style={{background:"#2a2240",border:"1px solid #453960",borderRadius:9,overflow:"hidden",...(sx||{})}}>{children}</div>;
+const Sel=({label,options,value,onChange,placeholder})=><div style={{display:"flex",flexDirection:"column",gap:2,flex:1}}>{label&&<label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>{label}</label>}<select value={value} onChange={e=>onChange(e.target.value)} style={{padding:"6px 9px",borderRadius:5,border:"1px solid #d1d5db",fontSize:13,background:"#1a1030",color:"#ede4f5"}}>{placeholder&&<option value="">{placeholder}</option>}{options.map(o=><option key={typeof o==="string"?o:o.v} value={typeof o==="string"?o:o.v}>{typeof o==="string"?o:o.l}</option>)}</select></div>;
+const TH=({children,a,w})=><th style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #4a3870",textAlign:a||"left",whiteSpace:"nowrap",position:"sticky",top:0,background:"#251d3d",zIndex:1,width:w||"auto"}}>{children}</th>;
+const TD=({children,m,b,c,a})=><td style={{padding:"5px 7px",fontSize:13,color:c||"#4a3870",fontFamily:m?"monospace":"inherit",borderBottom:"1px solid #f3edf9",whiteSpace:"nowrap",fontWeight:b?600:400,textAlign:a||"left"}}>{children}</td>;
+const Cd=({children,style:sx})=><div style={{background:"#251d3d",border:"1px solid #4a3870",borderRadius:9,overflow:"hidden",...(sx||{})}}>{children}</div>;
 const Pill=({l,a:ac,c,n,onClick})=><button onClick={onClick} style={{padding:"3px 8px",borderRadius:99,border:ac?`2px solid ${c}`:"1px solid #ede4f5",background:ac?c+"10":"#fff",color:ac?c:"#64748b",fontSize:14,fontWeight:600,cursor:"pointer",display:"inline-flex",gap:3,alignItems:"center"}}>{l}{n!=null&&<span style={{background:ac?c+"22":"#f3edf9",padding:"0 4px",borderRadius:99,fontSize:13}}>{n}</span>}</button>;
-const Mod=({title,onClose,children,wide})=><div style={{position:"fixed",inset:0,background:"rgba(15,23,42,.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1e3,backdropFilter:"blur(2px)"}}><div onClick={e=>e.stopPropagation()} style={{background:"#2a2240",borderRadius:12,padding:18,border:"1px solid #453960",width:wide?900:540,maxWidth:"96vw",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 50px rgba(0,0,0,.12)"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><h3 style={{margin:0,fontSize:16,fontWeight:700}}>{title}</h3><button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",fontSize:15,color:"#94a3b8"}}>✕</button></div>{children}</div></div>;
-const StatC=({label,value,sub,color,onClick})=><div onClick={onClick} style={{background:"#2a2240",border:"1px solid #453960",borderRadius:9,padding:"10px 12px",cursor:onClick?"pointer":"default",position:"relative",overflow:"hidden"}}><div style={{position:"absolute",top:0,left:0,right:0,height:3,background:color}}/><div style={{fontSize:10,fontWeight:600,color:"#a89ed4",textTransform:"uppercase",letterSpacing:.5}}>{label}</div><div style={{fontSize:24,fontWeight:700,color:"#f3edf9",marginTop:1}}>{value}</div>{sub&&<div style={{fontSize:10,color:"#a89ed4",marginTop:1}}>{sub}</div>}</div>;
+const Mod=({title,onClose,children,wide})=><div style={{position:"fixed",inset:0,background:"rgba(15,23,42,.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1e3,backdropFilter:"blur(2px)"}}><div onClick={e=>e.stopPropagation()} style={{background:"#251d3d",borderRadius:12,padding:18,border:"1px solid #4a3870",width:wide?900:540,maxWidth:"96vw",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 50px rgba(0,0,0,.12)"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><h3 style={{margin:0,fontSize:16,fontWeight:700}}>{title}</h3><button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",fontSize:15,color:"#94a3b8"}}>✕</button></div>{children}</div></div>;
+const StatC=({label,value,sub,color,onClick})=><div onClick={onClick} style={{background:"#251d3d",border:"1px solid #4a3870",borderRadius:9,padding:"10px 12px",cursor:onClick?"pointer":"default",position:"relative",overflow:"hidden"}}><div style={{position:"absolute",top:0,left:0,right:0,height:3,background:color}}/><div style={{fontSize:10,fontWeight:600,color:"#a89ed4",textTransform:"uppercase",letterSpacing:.5}}>{label}</div><div style={{fontSize:24,fontWeight:700,color:"#f3edf9",marginTop:1}}>{value}</div>{sub&&<div style={{fontSize:10,color:"#a89ed4",marginTop:1}}>{sub}</div>}</div>;
 
 // Drag-and-drop wrapper: wraps any upload zone, calls onFiles(FileList) on drop
 const DropZone=({onFiles,accept,multiple,children,style:sx,disabled})=>{const[over,setOver]=useState(false);const inputRef=useRef(null);
@@ -465,92 +465,62 @@ const App=()=>{
     if(lightMode){
       document.documentElement.classList.add("dd-light");
       s.textContent=`
-        /* ═══ OLYMPUS — Meg bathed in golden light ═══ */
-        html.dd-light, html.dd-light body {
-          background: linear-gradient(160deg, #faf6ef 0%, #f5ede0 50%, #faf6ef 100%) !important;
-        }
+        /* ═══ OLYMPUS — Meg in golden radiance ═══ */
 
-        /* Nuclear reset: all divs with dark backgrounds → parchment */
-        html.dd-light div[style*="background: rgb(28"],
-        html.dd-light div[style*="background: rgb(42"],
+        /* Force EVERY dark background light — catch all rgb() variants React renders */
+        html.dd-light div[style*="background: rgb(26"],
         html.dd-light div[style*="background: rgb(37"],
-        html.dd-light div[style*="background: rgb(69"],
+        html.dd-light div[style*="background: rgb(45"],
+        html.dd-light div[style*="background: rgb(74"],
         html.dd-light div[style*="background: rgb(15"],
         html.dd-light div[style*="background: rgb(30"],
-        html.dd-light div[style*="background: rgb(20"] { background: #f3ebe0 !important; }
+        html.dd-light div[style*="background: rgb(20"],
+        html.dd-light div[style*="background: rgb(42"],
+        html.dd-light div[style*="background: rgb(28"],
+        html.dd-light div[style*="background: rgb(69"],
+        html.dd-light div[style*="background: rgb(0, 0"] { background: transparent !important; }
 
-        /* Sidebar + nav area */
-        html.dd-light #R > div > div:first-child { background: #f3ebe0 !important; }
-        html.dd-light nav { background: transparent !important; }
-        html.dd-light nav button { background: transparent !important; }
-        html.dd-light nav button[style*="background: rgb(42"] { background: rgba(124,58,237,.08) !important; }
+        /* Nav active state */
+        html.dd-light nav button[style*="background: rgb(37"] { background: rgba(124,58,237,.08) !important; }
 
-        /* Cards — cream with warm border */
-        html.dd-light div[style*="border-radius: 9px"],
-        html.dd-light div[style*="border-radius: 12px"],
-        html.dd-light div[style*="border-radius: 16px"],
-        html.dd-light div[style*="borderRadius"] { border-color: #e0d4bf !important; }
-
-        /* Main content area */
+        /* Main content scroll area */
         html.dd-light div[style*="overflow-y: auto"],
-        html.dd-light div[style*="overflowY"] { background: #faf6ef !important; }
+        html.dd-light div[style*="overflow: hidden"] { background: transparent !important; }
 
-        /* Force all text to warm dark */
+        /* Force ALL text warm */
         html.dd-light div, html.dd-light span, html.dd-light p,
-        html.dd-light label, html.dd-light h1, html.dd-light h2,
-        html.dd-light h3, html.dd-light h4 { color: #2d2418 !important; }
+        html.dd-light label, html.dd-light a { color: #2d2418 !important; }
+        html.dd-light h1, html.dd-light h2, html.dd-light h3, html.dd-light h4 { color: #1a1008 !important; }
 
-        /* Meg's purple stays purple — she is herself */
-        html.dd-light [style*="color: rgb(124, 58, 237)"] { color: #7c3aed !important; }
+        /* Meg's purple STAYS — she glows against the gold */
+        html.dd-light [style*="color: rgb(124, 58, 237)"] { color: #6d28d9 !important; }
         html.dd-light [style*="color: rgb(167, 139, 250)"] { color: #7c3aed !important; }
         html.dd-light [style*="color: rgb(124, 107, 196)"] { color: #6b5a8a !important; }
 
-        /* Semantic colors preserved */
-        html.dd-light [style*="color: rgb(220, 38, 38)"] { color: #dc2626 !important; }
-        html.dd-light [style*="color: rgb(22, 163, 74)"] { color: #16a34a !important; }
-        html.dd-light [style*="color: rgb(37, 99, 235)"] { color: #2563eb !important; }
-        html.dd-light [style*="color: rgb(217, 119, 6)"] { color: #d97706 !important; }
-        html.dd-light [style*="color: rgb(248, 113, 113)"] { color: #dc2626 !important; }
+        /* Semantic colors */
+        html.dd-light [style*="color: rgb(220, 38"] { color: #b91c1c !important; }
+        html.dd-light [style*="color: rgb(22, 163"] { color: #15803d !important; }
+        html.dd-light [style*="color: rgb(37, 99"] { color: #1d4ed8 !important; }
+        html.dd-light [style*="color: rgb(217, 119"] { color: #b45309 !important; }
+        html.dd-light [style*="color: rgb(248, 113"] { color: #b91c1c !important; }
+        html.dd-light [style*="color: rgb(156, 163"] { color: #78716c !important; }
 
-        /* White text on colored buttons stays white */
-        html.dd-light button[style*="background: linear-gradient"] { color: #fff !important; }
+        /* White-on-colored buttons stay white */
+        html.dd-light button[style*="linear-gradient"] { color: #fff !important; }
         html.dd-light button[style*="background: rgb(124"] { color: #fff !important; }
         html.dd-light button[style*="background: rgb(37, 99"] { color: #fff !important; }
         html.dd-light button[style*="background: rgb(220, 38"] { color: #fff !important; }
-        html.dd-light button[style*="background: rgb(71, 85"] { color: #fff !important; }
+        html.dd-light button[style*="background: rgb(71"] { color: #fff !important; }
+        html.dd-light button[style*="background: rgb(217"] { color: #fff !important; }
 
-        /* Inputs — warm parchment */
-        html.dd-light input, html.dd-light select, html.dd-light textarea {
-          background: #fefcf7 !important; color: #2d2418 !important;
-          border-color: #d4c4a8 !important;
-        }
-
-        /* Tables */
-        html.dd-light th { background: #f3ebe0 !important; color: #5b4e7a !important; border-color: #e0d4bf !important; }
-        html.dd-light td { color: #3d3246 !important; border-color: #ede2d0 !important; background: transparent !important; }
-        html.dd-light tr:nth-child(even) td { background: rgba(243, 235, 224, .4) !important; }
-        html.dd-light tr:nth-child(odd) td { background: transparent !important; }
-
-        /* All borders → warm tan */
-        html.dd-light [style*="border-color: rgb(69"],
-        html.dd-light [style*="border-color: rgb(53"],
-        html.dd-light [style*="border: 1px solid rgb(69"],
-        html.dd-light [style*="border: 1px solid rgb(53"] { border-color: #e0d4bf !important; }
-        html.dd-light button { border-color: #d4c4a8 !important; }
-
-        /* Active sidebar indicator stays purple */
-        html.dd-light [style*="border-left: 3px solid rgb(59, 130, 246)"] { border-left-color: #7c3aed !important; }
-
-        /* Scrollbar */
-        html.dd-light ::-webkit-scrollbar-thumb { background: #d4c4a8 !important; }
-        html.dd-light ::-webkit-scrollbar-track { background: #f3ebe0 !important; }
-
-        /* Badge pills keep their colors */
+        /* Badges/pills keep their own color */
         html.dd-light span[style*="border-radius: 99px"] { color: inherit !important; }
         html.dd-light span[style*="border-radius: 8px"] { color: #fff !important; }
 
-        /* Gradients on page bg → golden light */
-        html.dd-light div[style*="linear-gradient(160deg"] { background: linear-gradient(160deg, #faf6ef 0%, #f5ede0 50%, #faf6ef 100%) !important; }
+        /* All gradients on page → golden light */
+        html.dd-light div[style*="linear-gradient(160deg"] {
+          background: linear-gradient(160deg, #fdf8ef 0%, #f7edd8 30%, #faf0e0 60%, #fdf8ef 100%) !important;
+        }
       `;
     }else{
       document.documentElement.classList.remove("dd-light");
@@ -926,11 +896,11 @@ const App=()=>{
   let confirmJsx=null;if(confirmMode){
     const{estNum,sta,est,airing,brand}=confirmMode;
     // Wait for data to load
-    if(!dbLoaded){confirmJsx=<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1c1528 0%,#251a3a 50%,#1c1528 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center"}}><div style={{width:72,height:72,borderRadius:16,background:"linear-gradient(135deg,#7c3aed,#a78bfa)",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:20,boxShadow:"0 8px 32px rgba(124,58,237,.4)",animation:"pulse 2s ease-in-out infinite"}}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff" opacity=".9"/><path d="M12 5l6 3v8l-6 3-6-3V8l6-3z" fill="#7c3aed"/><path d="M12 8l3 1.5v5L12 16l-3-1.5v-5L12 8z" fill="#fff"/></svg></div><div style={{fontSize:24,fontWeight:800,color:"#fff",letterSpacing:1}}>ATTICOR</div><div style={{fontSize:12,fontWeight:600,color:"#a78bfa",letterSpacing:2,marginTop:4}}>MEDIA SERVICES</div><div style={{marginTop:28,width:180,height:3,background:"#2a2240",borderRadius:2,overflow:"hidden",margin:"0 auto"}}><div style={{width:"40%",height:"100%",background:"linear-gradient(90deg,#7c3aed,#a78bfa)",borderRadius:2,animation:"loadBar 1.5s ease-in-out infinite"}}></div></div><div style={{fontSize:13,color:"#64748b",marginTop:16}}>Loading traffic details...</div></div></div>;}else{
+    if(!dbLoaded){confirmJsx=<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1a1030 0%,#2d1f4e 50%,#1a1030 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center"}}><div style={{width:72,height:72,borderRadius:16,background:"linear-gradient(135deg,#7c3aed,#a78bfa)",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:20,boxShadow:"0 8px 32px rgba(124,58,237,.4)",animation:"pulse 2s ease-in-out infinite"}}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff" opacity=".9"/><path d="M12 5l6 3v8l-6 3-6-3V8l6-3z" fill="#7c3aed"/><path d="M12 8l3 1.5v5L12 16l-3-1.5v-5L12 8z" fill="#fff"/></svg></div><div style={{fontSize:24,fontWeight:800,color:"#fff",letterSpacing:1}}>ATTICOR</div><div style={{fontSize:12,fontWeight:600,color:"#a78bfa",letterSpacing:2,marginTop:4}}>MEDIA SERVICES</div><div style={{marginTop:28,width:180,height:3,background:"#251d3d",borderRadius:2,overflow:"hidden",margin:"0 auto"}}><div style={{width:"40%",height:"100%",background:"linear-gradient(90deg,#7c3aed,#a78bfa)",borderRadius:2,animation:"loadBar 1.5s ease-in-out infinite"}}></div></div><div style={{fontSize:13,color:"#64748b",marginTop:16}}>Loading traffic details...</div></div></div>;}else{
     const alreadyConfirmed=confirmations[estNum]?.[sta]?.confirmed;
     // Show full traffic sheet view
     if(showSheet&&sheetHtml){confirmJsx=<div style={{minHeight:"100vh",background:"#fff"}}>
-      <div style={{background:"#1c1528",padding:"10px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}}>
+      <div style={{background:"#1a1030",padding:"10px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}}>
         <span style={{color:"#fff",fontSize:14,fontWeight:700}}>Traffic Sheet — Est {estNum} · {sta}</span>
         <div style={{display:"flex",gap:8}}>
           <button onClick={()=>{const w=window.open('','','width=850,height=950');w.document.write(sheetHtml);w.document.close();w.print()}} style={{padding:"6px 14px",borderRadius:6,border:"none",background:"#2563eb",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>🖨 Print</button>
@@ -939,8 +909,8 @@ const App=()=>{
       </div>
       <iframe srcDoc={sheetHtml} sandbox="allow-same-origin" style={{width:"100%",height:"calc(100vh - 50px)",border:"none"}}/>
     </div>;} else {
-    confirmJsx=<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1c1528 0%,#251a3a 50%,#1c1528 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div style={{background:"#2a2240",borderRadius:20,boxShadow:"0 8px 40px rgba(0,0,0,.3)",maxWidth:520,width:"100%",overflow:"hidden",border:"1px solid #453960"}}>
+    confirmJsx=<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1a1030 0%,#2d1f4e 50%,#1a1030 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{background:"#251d3d",borderRadius:20,boxShadow:"0 8px 40px rgba(0,0,0,.3)",maxWidth:520,width:"100%",overflow:"hidden",border:"1px solid #4a3870"}}>
         <div style={{background:brand?.code==="PL"?"linear-gradient(135deg,#a855f7,#7c3aed)":"linear-gradient(135deg,#818cf8,#6366f1)",padding:"28px 28px 24px",color:"#fff",position:"relative",overflow:"hidden"}}>
           <div style={{position:"absolute",top:-20,right:-20,width:120,height:120,background:"rgba(255,255,255,.08)",borderRadius:"50%"}}/>
           <div style={{position:"relative",zIndex:1}}>
@@ -961,7 +931,7 @@ const App=()=>{
               ["Broadcast Month",airing?.month||trafficHistory.find(h=>h.est===estNum)?.month||workMonth||""],
               ...(airing?.version?[["Version","v"+airing.version]]:[]),
               ["Agency","Atticor"]
-            ].map(([label,val],i)=><div key={i} style={{background:"#1c1528",borderRadius:10,padding:"10px 14px",border:"1px solid #453960"}}>
+            ].map(([label,val],i)=><div key={i} style={{background:"#1a1030",borderRadius:10,padding:"10px 14px",border:"1px solid #4a3870"}}>
               <div style={{fontSize:10,color:"#64748b",fontWeight:600,textTransform:"uppercase",letterSpacing:.5}}>{label}</div>
               <div style={{fontSize:14,fontWeight:700,color:"#f3edf9",marginTop:2}}>{val}</div>
             </div>)}
@@ -971,7 +941,7 @@ const App=()=>{
           </button>}
           {airing?.iscis&&<div style={{marginBottom:20}}>
             <div style={{fontSize:13,fontWeight:700,color:"#a89ed4",textTransform:"uppercase",marginBottom:6}}>Rotation ({airing.iscis.length} spots)</div>
-            <div style={{background:"#1c1528",borderRadius:8,padding:10,maxHeight:160,overflowY:"auto"}}>
+            <div style={{background:"#1a1030",borderRadius:8,padding:10,maxHeight:160,overflowY:"auto"}}>
               {airing.iscis.map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid #ede9fe",fontSize:14}}>
                 <span style={{fontFamily:"monospace",fontWeight:600}}>{r.code}</span>
                 <span style={{color:"#a89ed4"}}>{r.title} :{r.dur} {r.pct?r.pct+"%":""}</span>
@@ -986,13 +956,13 @@ const App=()=>{
             </div>:
             <div>
             {/* Email Management Section */}
-            <div style={{background:"#1c1528",borderRadius:10,padding:14,marginBottom:14}}>
+            <div style={{background:"#1a1030",borderRadius:10,padding:14,marginBottom:14}}>
               <div style={{fontSize:13,fontWeight:700,color:"#a89ed4",marginBottom:8}}>📧 Station Contact Management</div>
               {/* Add Email */}
               <div style={{marginBottom:10}}>
                 <div style={{fontSize:12,color:"#64748b",marginBottom:4}}>Add an email address to receive future traffic for {sta}:</div>
                 <div style={{display:"flex",gap:6}}>
-                  <input value={portalAddEmail} onChange={e=>setPortalAddEmail(e.target.value)} placeholder="email@station.com" style={{flex:1,padding:"8px 10px",borderRadius:6,border:"1px solid #453960",background:"#2a2240",color:"#ede4f5",fontSize:13,outline:"none"}}/>
+                  <input value={portalAddEmail} onChange={e=>setPortalAddEmail(e.target.value)} placeholder="email@station.com" style={{flex:1,padding:"8px 10px",borderRadius:6,border:"1px solid #4a3870",background:"#251d3d",color:"#ede4f5",fontSize:13,outline:"none"}}/>
                   <button disabled={!portalAddEmail.includes("@")||portalEmailSaved} onClick={()=>{
                     const stObj=stations.find(s=>s.call===sta);
                     if(stObj){
@@ -1013,11 +983,11 @@ const App=()=>{
               <div>
                 <div style={{fontSize:12,color:"#64748b",marginBottom:4}}>Need to remove a contact? Leave a note for the traffic coordinator:</div>
                 <div style={{display:"flex",gap:6}}>
-                  <input value={portalRemoveNote} onChange={e=>setPortalRemoveNote(e.target.value)} placeholder="e.g., Please remove jsmith@station.com — no longer with us" style={{flex:1,padding:"8px 10px",borderRadius:6,border:"1px solid #453960",background:"#2a2240",color:"#ede4f5",fontSize:13,outline:"none"}}/>
+                  <input value={portalRemoveNote} onChange={e=>setPortalRemoveNote(e.target.value)} placeholder="e.g., Please remove jsmith@station.com — no longer with us" style={{flex:1,padding:"8px 10px",borderRadius:6,border:"1px solid #4a3870",background:"#251d3d",color:"#ede4f5",fontSize:13,outline:"none"}}/>
                   <button disabled={!portalRemoveNote.trim()||portalNoteSaved} onClick={()=>{
                     log("Station Remove Request",sta+" — "+portalRemoveNote.trim());
                     setPortalNoteSaved(true);
-                  }} style={{padding:"8px 14px",borderRadius:6,border:"none",background:portalNoteSaved?"#16a34a":"#f59e0b",color:portalNoteSaved?"#fff":"#1c1528",fontSize:13,fontWeight:700,cursor:portalNoteSaved?"default":"pointer",opacity:!portalRemoveNote.trim()?0.5:1}}>
+                  }} style={{padding:"8px 14px",borderRadius:6,border:"none",background:portalNoteSaved?"#16a34a":"#f59e0b",color:portalNoteSaved?"#fff":"#1a1030",fontSize:13,fontWeight:700,cursor:portalNoteSaved?"default":"pointer",opacity:!portalRemoveNote.trim()?0.5:1}}>
                     {portalNoteSaved?"✓ Sent":"Send"}
                   </button>
                 </div>
@@ -1036,7 +1006,7 @@ const App=()=>{
               return<div style={{background:"rgba(124,59,237,.1)",border:"1px solid #7c3aed",borderRadius:10,padding:14,marginBottom:14}}>
                 <div style={{fontSize:13,fontWeight:700,color:"#a89ed4",marginBottom:6}}>🏢 {stObj.ownership} Group — {pendingGroup.length} other station{pendingGroup.length>1?"s":""} pending</div>
                 <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:8}}>
-                  {pendingGroup.map(gs=><span key={gs.call} style={{fontSize:12,padding:"3px 8px",borderRadius:6,background:"#2a2240",color:"#a89ed4",fontWeight:600}}>{gs.call} · {gs.market}</span>)}
+                  {pendingGroup.map(gs=><span key={gs.call} style={{fontSize:12,padding:"3px 8px",borderRadius:6,background:"#251d3d",color:"#a89ed4",fontWeight:600}}>{gs.call} · {gs.market}</span>)}
                 </div>
                 <button onClick={()=>{
                   confirmStation(estNum,sta);
@@ -1058,7 +1028,7 @@ const App=()=>{
             </div>
           }
         </div>
-        <div style={{padding:"14px 28px",background:"#1c1528",borderTop:"1px solid #453960",textAlign:"center"}}>
+        <div style={{padding:"14px 28px",background:"#1a1030",borderTop:"1px solid #4a3870",textAlign:"center"}}>
           <div style={{fontSize:14,fontWeight:700,color:"#64748b",letterSpacing:1}}>ATTICOR</div>
           <div style={{fontSize:11,color:"#5a4d6b",marginTop:2}}>Media Services · Traffic Coordination</div>
         </div>
@@ -1253,7 +1223,7 @@ const App=()=>{
     const sentCount=trafficHistory.filter(h=>h.status==="sent"||h.status==="partial").length;
     return<div style={{display:"flex",flexDirection:"column",gap:12}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}><h1 style={{fontSize:24,fontWeight:800}}>Command Center</h1><span style={{fontSize:13,color:"#a78bfa",fontStyle:"italic"}}>{doomPick(DOOM.sprinkle)}</span></div>
-    <div style={{background:"#2a2240",borderRadius:8,padding:"6px 0",overflow:"hidden",border:"1px solid #453960"}}>
+    <div style={{background:"#251d3d",borderRadius:8,padding:"6px 0",overflow:"hidden",border:"1px solid #4a3870"}}>
       <div style={{display:"flex",width:"200%"}} className="kpi-ticker">
         {[...Array(2)].map((_,rep)=><React.Fragment key={rep}>
           <span style={{fontSize:12,fontWeight:700,color:"#a89ed4",display:"flex",alignItems:"center",gap:4}}>📡 <span style={{color:"#f3edf9"}}>{sentCount}</span> Traffic Sent</span>
@@ -1286,7 +1256,7 @@ const App=()=>{
       </table></Cd>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
       <Cd style={{padding:10}}><div style={{fontSize:13,fontWeight:700,marginBottom:6}}>Recent Activity</div>
-        {auditLog.length?auditLog.slice(0,8).map((l,i)=><div key={i} style={{display:"flex",gap:6,padding:"3px 0",borderBottom:"1px solid #453960",fontSize:14,alignItems:"center"}}>
+        {auditLog.length?auditLog.slice(0,8).map((l,i)=><div key={i} style={{display:"flex",gap:6,padding:"3px 0",borderBottom:"1px solid #4a3870",fontSize:14,alignItems:"center"}}>
           <span style={{color:"#a89ed4",fontFamily:"monospace",fontSize:14,width:50,flexShrink:0}}>{new Date(l.ts).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</span>
           <span style={{padding:"1px 4px",borderRadius:3,background:l.a.includes("ADMIN")?"#fef2f2":l.a.includes("Email")||l.a.includes("Reminder")?"#eff6ff":l.a.includes("Import")?"#f0fdf4":"#f8fafc",color:l.a.includes("ADMIN")?"#dc2626":l.a.includes("Email")||l.a.includes("Reminder")?"#2563eb":l.a.includes("Import")?"#16a34a":"#5a4d6b",fontSize:14,fontWeight:700,whiteSpace:"nowrap"}}>{l.a}</span>
           <span style={{color:"#a89ed4",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.d}</span>
@@ -1295,10 +1265,10 @@ const App=()=>{
       </Cd>
       <Cd style={{padding:10}}><div style={{fontSize:13,fontWeight:700,marginBottom:6}}>Quick Actions</div>
         <div style={{display:"flex",flexDirection:"column",gap:4}}>
-          <button onClick={()=>setPg("traf")} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,border:"1px solid #453960",background:"#1c1528",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:13}}>▶</span><div><div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>Build Traffic Rotation</div><div style={{fontSize:13,color:"#a89ed4"}}>Generate sheets for {workMonth}</div></div></button>
-          <button onClick={()=>setPg("sta")} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,border:"1px solid #453960",background:"#1c1528",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:13}}>⊞</span><div><div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>Manage Stations</div><div style={{fontSize:13,color:"#a89ed4"}}>{stations.length} stations configured</div></div></button>
-          <button onClick={()=>navigateHash("ooh/pl")} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,border:"1px solid #453960",background:"#1c1528",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:13}}>📋</span><div><div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>OOH Creative Deadlines</div><div style={{fontSize:13,color:"#a89ed4"}}>{OOH_CREATIVE_CAL.filter(c=>new Date(c.due+"T00:00:00")>=today).length} upcoming</div></div></button>
-          <button onClick={()=>setPg("metrics")} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,border:"1px solid #453960",background:"#1c1528",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:13}}>📊</span><div><div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>View Metrics</div><div style={{fontSize:13,color:"#a89ed4"}}>Creative mix & time savings</div></div></button>
+          <button onClick={()=>setPg("traf")} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,border:"1px solid #4a3870",background:"#1a1030",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:13}}>▶</span><div><div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>Build Traffic Rotation</div><div style={{fontSize:13,color:"#a89ed4"}}>Generate sheets for {workMonth}</div></div></button>
+          <button onClick={()=>setPg("sta")} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,border:"1px solid #4a3870",background:"#1a1030",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:13}}>⊞</span><div><div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>Manage Stations</div><div style={{fontSize:13,color:"#a89ed4"}}>{stations.length} stations configured</div></div></button>
+          <button onClick={()=>navigateHash("ooh/pl")} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,border:"1px solid #4a3870",background:"#1a1030",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:13}}>📋</span><div><div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>OOH Creative Deadlines</div><div style={{fontSize:13,color:"#a89ed4"}}>{OOH_CREATIVE_CAL.filter(c=>new Date(c.due+"T00:00:00")>=today).length} upcoming</div></div></button>
+          <button onClick={()=>setPg("metrics")} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,border:"1px solid #4a3870",background:"#1a1030",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:13}}>📊</span><div><div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>View Metrics</div><div style={{fontSize:13,color:"#a89ed4"}}>Creative mix & time savings</div></div></button>
         </div>
       </Cd>
     </div>
@@ -1349,7 +1319,7 @@ const App=()=>{
               {!(bf[key]||[]).length&&<span style={{fontSize:11,color:"#64748b",fontStyle:"italic"}}>None yet</span>}
             </div>
             <div style={{display:"flex",gap:3}}>
-              <input id={"nf_"+brand.replace(/\s/g,"")+"_"+key} placeholder={"New "+label.toLowerCase().slice(0,-1)+"..."} style={{padding:"3px 6px",borderRadius:3,border:"1px solid #7c6bc4",fontSize:11,background:"#1c1528",color:"#ede4f5",width:150}}/>
+              <input id={"nf_"+brand.replace(/\s/g,"")+"_"+key} placeholder={"New "+label.toLowerCase().slice(0,-1)+"..."} style={{padding:"3px 6px",borderRadius:3,border:"1px solid #7c6bc4",fontSize:11,background:"#1a1030",color:"#ede4f5",width:150}}/>
               <button onClick={()=>{const inp=document.getElementById("nf_"+brand.replace(/\s/g,"")+"_"+key);const v=inp?.value?.trim();if(!v)return;if((bf[key]||[]).includes(v)){notify("Already exists");return}setCustomFields(p=>({...p,[brand]:{...p[brand],[key]:[...(p[brand]?.[key]||[]),v]}}));inp.value="";notify("Added: "+v)}} style={{padding:"3px 8px",borderRadius:3,border:"none",background:color,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>+</button>
             </div>
           </div>)}
@@ -1409,11 +1379,11 @@ const App=()=>{
           <DropZone accept=".csv,.tsv,.txt,.xlsx,.xls" style={{flex:"0 0 auto",padding:"12px 20px"}} onFiles={(fileList)=>{handleBulkFile(fileList)}}>
             <div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>📁 Drop or click CSV / Excel</div><div style={{fontSize:11,color:"#64748b"}}>.csv, .tsv, .xlsx</div>
           </DropZone>
-          <textarea value={bulkText} onChange={e=>handleBulkPaste(e.target.value)} placeholder={"CHIPL2630001T, Harvard :30, TV, Postman Law, CHI, 30, T\nCHIPL2615001S, Harvard :15, Streaming Audio, Postman Law, CHI, 15, S"} style={{flex:1,minHeight:60,fontSize:12,fontFamily:"monospace",padding:6,borderRadius:5,border:"1px solid #453960",background:"#1c1528",color:"#ede4f5"}}/>
+          <textarea value={bulkText} onChange={e=>handleBulkPaste(e.target.value)} placeholder={"CHIPL2630001T, Harvard :30, TV, Postman Law, CHI, 30, T\nCHIPL2615001S, Harvard :15, Streaming Audio, Postman Law, CHI, 15, S"} style={{flex:1,minHeight:60,fontSize:12,fontFamily:"monospace",padding:6,borderRadius:5,border:"1px solid #4a3870",background:"#1a1030",color:"#ede4f5"}}/>
         </div>
         {bulkPreview.length>0&&<div>
           <div style={{fontSize:13,fontWeight:700,color:"#4ade80",marginBottom:4}}>✓ {bulkPreview.length} ISCIs ready to import</div>
-          <div style={{maxHeight:150,overflowY:"auto",border:"1px solid #453960",borderRadius:5}}>
+          <div style={{maxHeight:150,overflowY:"auto",border:"1px solid #4a3870",borderRadius:5}}>
             <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>Code</TH><TH>Title</TH><TH>Media</TH><TH>Brand</TH><TH>DMA</TH><TH>Dur</TH></tr></thead>
               <tbody>{bulkPreview.slice(0,20).map((r,i)=><tr key={i}><TD m b>{r.code}</TD><TD>{r.title}</TD><TD><B l={r.media} c={mc(r.media)}/></TD><TD>{r.brand}</TD><TD>{r.dma}</TD><TD>{r.dur}</TD></tr>)}</tbody>
             </table>
@@ -1425,7 +1395,7 @@ const App=()=>{
       </Cd>}
       <div style={{display:"flex",gap:3}}>{MEDIA.map(m=>{const count=iscis.filter(i=>i.media===m&&i.active).length;return<button key={m} onClick={()=>setF("media",sf.media===m?"":m)} style={{flex:1,padding:"4px",borderRadius:6,border:sf.media===m?`2px solid ${mc(m)}`:"1px solid #ede4f5",background:sf.media===m?mc(m)+"18":"#fff",cursor:"pointer",textAlign:"center",opacity:count?1:0.5}}><div style={{fontSize:14,fontWeight:700,color:mc(m)}}>{m}</div><div style={{fontSize:13,fontWeight:800}}>{count}</div></button>})}</div>
       <div style={{display:"flex",gap:5,alignItems:"end",flexWrap:"wrap"}}>
-        <input placeholder="Search..." value={isciSearch} onChange={e=>setIsciSearch(e.target.value)} style={{width:180,padding:"6px 9px",borderRadius:5,border:"1px solid #453960",fontSize:13,outline:"none",background:"#1c1528",color:"#ede4f5"}}/>
+        <input placeholder="Search..." value={isciSearch} onChange={e=>setIsciSearch(e.target.value)} style={{width:180,padding:"6px 9px",borderRadius:5,border:"1px solid #4a3870",fontSize:13,outline:"none",background:"#1a1030",color:"#ede4f5"}}/>
         <Sel options={BRANDS.map(b=>({v:b.name,l:b.name}))} value={sf.brand} onChange={v=>setF("brand",v)} placeholder="All Brands"/>
         <Sel options={DL.map(d=>({v:d.code,l:`${d.code} - ${d.name}`}))} value={sf.dma} onChange={v=>setF("dma",v)} placeholder="All DMAs"/>
         <label style={{fontSize:14,display:"flex",alignItems:"center",gap:3,cursor:"pointer"}}><input type="checkbox" checked={showOff} onChange={e=>setShowOff(e.target.checked)}/> Inactive</label>
@@ -1434,13 +1404,13 @@ const App=()=>{
       <Cd><div style={{overflowX:"auto",maxHeight:"calc(100vh - 320px)"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><STH tbl="isci" col="code">ISCI</STH><STH tbl="isci" col="title">Title</STH><STH tbl="isci" col="media">Media</STH><STH tbl="isci" col="brand">Brand</STH><STH tbl="isci" col="dma">DMA</STH><STH tbl="isci" col="dur">Dur</STH><STH tbl="isci" col="category">Category</STH><STH tbl="isci" col="valueProp">Value Prop</STH><STH tbl="isci" col="vo">VO</STH><STH tbl="isci" col="status">Status</STH><TH w="60">Actions</TH></tr></thead>
         <tbody>{fl.slice(0,250).map((i,idx)=>{const gi=iscis.findIndex(x=>x.code===i.code&&x.dma===i.dma&&x.media===i.media);return<tr key={i.code+i.dma+i.media} style={{opacity:i.active?1:.45}}>
           <TD m b><span style={{cursor:"pointer",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"editIsci",isci:i,idx:gi})}>{i.code}</span>{isIsciSent(i.code)&&<span title="Locked — sent in traffic" style={{marginLeft:3,fontSize:13,color:"#dc2626"}}>🔒</span>}{i.fileUrl&&<a href={i.fileUrl} target="_blank" rel="noopener" download title="Download creative" style={{marginLeft:3,fontSize:13,color:"#16a34a",textDecoration:"none"}}>📁</a>}</TD><TD>{i.title}</TD><TD><B l={i.media} c={mc(i.media)}/></TD><TD>{i.brand}</TD><TD>{DM[i.dma]||i.dma}</TD><TD>{i.media==="OOH"?(OOH_TYPE_MAP[i.dur]||i.dur):i.media==="Display"?(DISPLAY_TYPE_MAP[i.dur]||i.dur):i.dur?`:${i.dur}`:""}</TD>
-          <TD><select value={i.category||i.caseType||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New category:");if(!n||!n.trim())return;const t=n.trim();setCustomFields(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),categories:[...(p[i.brand]?.categories||[]).filter(x=>x!==t),t]}}));setIscis(p=>p.map((x,j)=>j===gi?{...x,category:t}:x))}else setIscis(p=>p.map((x,j)=>j===gi?{...x,category:v}:x))}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #e0d9f7",background:i.category||i.caseType?"#dbeafe":"#f8fafc",color:"#453960",fontWeight:600,maxWidth:100}}>
+          <TD><select value={i.category||i.caseType||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New category:");if(!n||!n.trim())return;const t=n.trim();setCustomFields(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),categories:[...(p[i.brand]?.categories||[]).filter(x=>x!==t),t]}}));setIscis(p=>p.map((x,j)=>j===gi?{...x,category:t}:x))}else setIscis(p=>p.map((x,j)=>j===gi?{...x,category:v}:x))}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #e0d9f7",background:i.category||i.caseType?"#dbeafe":"#f8fafc",color:"#4a3870",fontWeight:600,maxWidth:100}}>
             <option value="">—</option>{(customFields[i.brand]?.categories||[]).map(t=><option key={t} value={t}>{t}</option>)}<option value="__add__">＋</option>
           </select></TD>
-          <TD><select value={i.valueProp||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New value prop:");if(!n||!n.trim())return;const t=n.trim();setCustomFields(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),valueProps:[...(p[i.brand]?.valueProps||[]).filter(x=>x!==t),t]}}));setIscis(p=>p.map((x,j)=>j===gi?{...x,valueProp:t}:x))}else setIscis(p=>p.map((x,j)=>j===gi?{...x,valueProp:v}:x))}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #e0d9f7",background:i.valueProp?"#dcfce7":"#f8fafc",color:"#453960",fontWeight:600,maxWidth:100}}>
+          <TD><select value={i.valueProp||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New value prop:");if(!n||!n.trim())return;const t=n.trim();setCustomFields(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),valueProps:[...(p[i.brand]?.valueProps||[]).filter(x=>x!==t),t]}}));setIscis(p=>p.map((x,j)=>j===gi?{...x,valueProp:t}:x))}else setIscis(p=>p.map((x,j)=>j===gi?{...x,valueProp:v}:x))}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #e0d9f7",background:i.valueProp?"#dcfce7":"#f8fafc",color:"#4a3870",fontWeight:600,maxWidth:100}}>
             <option value="">—</option>{(customFields[i.brand]?.valueProps||[]).map(t=><option key={t} value={t}>{t}</option>)}<option value="__add__">＋</option>
           </select></TD>
-          <TD><select value={i.vo||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New VO:");if(!n||!n.trim())return;const t=n.trim();setCustomFields(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),vos:[...(p[i.brand]?.vos||[]).filter(x=>x!==t),t]}}));setIscis(p=>p.map((x,j)=>j===gi?{...x,vo:t}:x))}else setIscis(p=>p.map((x,j)=>j===gi?{...x,vo:v}:x))}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #e0d9f7",background:i.vo?"#fef3c7":"#f8fafc",color:"#453960",fontWeight:600,maxWidth:100}}>
+          <TD><select value={i.vo||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New VO:");if(!n||!n.trim())return;const t=n.trim();setCustomFields(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),vos:[...(p[i.brand]?.vos||[]).filter(x=>x!==t),t]}}));setIscis(p=>p.map((x,j)=>j===gi?{...x,vo:t}:x))}else setIscis(p=>p.map((x,j)=>j===gi?{...x,vo:v}:x))}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #e0d9f7",background:i.vo?"#fef3c7":"#f8fafc",color:"#4a3870",fontWeight:600,maxWidth:100}}>
             <option value="">—</option>{(customFields[i.brand]?.vos||[]).map(t=><option key={t} value={t}>{t}</option>)}<option value="__add__">＋</option>
           </select></TD>
           <TD>{i.active?<B l="Active" c="#16a34a"/>:<B l="Off" c="#9ca3af"/>}</TD>
@@ -1506,7 +1476,7 @@ const App=()=>{
           const airing=nowAiring[e.num];
           const conf=getConfirmed(e.num);const sentStas=airing?.stations||[];const confCount=sentStas.filter(c=>conf[c]?.confirmed).length;const totalSent=sentStas.length;
           const brandBg=e.brand==="Postman Law"?"rgba(220,38,38,.06)":e.brand==="Wettermark Keith"?"rgba(37,99,235,.06)":"";
-          const brandBorder=e.brand==="Postman Law"?"#dc2626":e.brand==="Wettermark Keith"?"#2563eb":"#453960";
+          const brandBorder=e.brand==="Postman Law"?"#dc2626":e.brand==="Wettermark Keith"?"#2563eb":"#4a3870";
           return<tr key={e.num+e.brand+e.market} style={{background:isSel?"#eff6ff":brandBg,borderLeft:"3px solid "+brandBorder}}>
             {combineMode&&<TD a="center"><input type="checkbox" checked={isSel} onChange={()=>toggleCombine(e)}/></TD>}
             <TD m b>{e.num}</TD><TD><span style={{color:e.brand==="Postman Law"?"#dc2626":"#2563eb",fontWeight:600}}>{e.brand}</span></TD><TD b>{e.market}</TD><TD><B l={e.media} c={mc(e.media)}/></TD><TD>{e.group}</TD><TD>{e.buyer}</TD>
@@ -1618,7 +1588,7 @@ const App=()=>{
         if(stas.length)h+=hdr("Stations ("+stas.length+")",stas.map(s=>s.call).join(", "));
       }
       h+=hdr("Broadcast Month",curMonth?.month||"",bc);
-      h+=hdr("Flight Dates",flight,"#1c1528");
+      h+=hdr("Flight Dates",flight,"#1a1030");
       h+=hdr("Version/ Links","Version "+version+" / "+est.market+" Assets");
       if(comments)h+=hdr("Comments",comments);
       h+='<table><thead><tr><th>Flight Dates</th><th>ISCI Codes & Title:</th><th>Length:</th><th>%</th><th>Notes:</th></tr></thead><tbody>';
@@ -1719,7 +1689,7 @@ const App=()=>{
       </div>
       <div style={{overflowX:"auto",maxHeight:360,border:"1px solid #e0d9f7",borderRadius:7}}>
         <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
-          <TH w="30">{"✓"}</TH><th onClick={function(){if(sortCol==="code"){setSortDir(sortDir==="asc"?"desc":"asc")}else{setSortCol("code");setSortDir("asc")}}} style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:sortCol==="code"?"#2563eb":"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #453960",textAlign:"left",position:"sticky",top:0,background:"#2a2240",zIndex:1,cursor:"pointer"}}>{"ISCI Code"}{sortCol==="code"?(sortDir==="asc"?" ▲":" ▼"):""}</th><th onClick={function(){if(sortCol==="title"){setSortDir(sortDir==="asc"?"desc":"asc")}else{setSortCol("title");setSortDir("asc")}}} style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:sortCol==="title"?"#2563eb":"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #453960",textAlign:"left",position:"sticky",top:0,background:"#2a2240",zIndex:1,cursor:"pointer"}}>{"Title"}{sortCol==="title"?(sortDir==="asc"?" ▲":" ▼"):""}</th><th onClick={function(){if(sortCol==="dur"){setSortDir(sortDir==="asc"?"desc":"asc")}else{setSortCol("dur");setSortDir("desc")}}} style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:sortCol==="dur"?"#2563eb":"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #453960",textAlign:"left",position:"sticky",top:0,background:"#2a2240",zIndex:1,cursor:"pointer",width:40}}>{"Dur"}{sortCol==="dur"?(sortDir==="asc"?" ▲":" ▼"):""}</th><TH w="55">%</TH><TH w="120">Schedule</TH><TH w="110">Bookend</TH>
+          <TH w="30">{"✓"}</TH><th onClick={function(){if(sortCol==="code"){setSortDir(sortDir==="asc"?"desc":"asc")}else{setSortCol("code");setSortDir("asc")}}} style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:sortCol==="code"?"#2563eb":"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #4a3870",textAlign:"left",position:"sticky",top:0,background:"#251d3d",zIndex:1,cursor:"pointer"}}>{"ISCI Code"}{sortCol==="code"?(sortDir==="asc"?" ▲":" ▼"):""}</th><th onClick={function(){if(sortCol==="title"){setSortDir(sortDir==="asc"?"desc":"asc")}else{setSortCol("title");setSortDir("asc")}}} style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:sortCol==="title"?"#2563eb":"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #4a3870",textAlign:"left",position:"sticky",top:0,background:"#251d3d",zIndex:1,cursor:"pointer"}}>{"Title"}{sortCol==="title"?(sortDir==="asc"?" ▲":" ▼"):""}</th><th onClick={function(){if(sortCol==="dur"){setSortDir(sortDir==="asc"?"desc":"asc")}else{setSortCol("dur");setSortDir("desc")}}} style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:sortCol==="dur"?"#2563eb":"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #4a3870",textAlign:"left",position:"sticky",top:0,background:"#251d3d",zIndex:1,cursor:"pointer",width:40}}>{"Dur"}{sortCol==="dur"?(sortDir==="asc"?" ▲":" ▼"):""}</th><TH w="55">%</TH><TH w="120">Schedule</TH><TH w="110">Bookend</TH>
         </tr></thead>
         <tbody>{sorted.map((r,idx)=>{
           const ri=rows.indexOf(r);
@@ -1958,7 +1928,7 @@ const App=()=>{
     const printStream=function(){
       var vLabel=vendorMode;
       var w=window.open("","","width=1000,height=900");
-      w.document.write("<html><head><title>"+mediaLabel+" Traffic - "+est.market+" - "+vLabel+"</title><style>body{font-family:Arial,sans-serif;margin:30px;font-size:12px;background:#fff;color:#1c1528}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#dc2626}.grn{color:#16a34a}.blu{color:#2563eb}.amb{color:#d97706}.url{font-size:9px;word-break:break-all;color:#2563eb;font-family:monospace}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}.section{margin-top:16px;padding-top:8px;border-top:2px solid #ede4f5;font-size:13px;font-weight:700}@media print{body{margin:20px}}</style></head><body>");
+      w.document.write("<html><head><title>"+mediaLabel+" Traffic - "+est.market+" - "+vLabel+"</title><style>body{font-family:Arial,sans-serif;margin:30px;font-size:12px;background:#fff;color:#1a1030}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#dc2626}.grn{color:#16a34a}.blu{color:#2563eb}.amb{color:#d97706}.url{font-size:9px;word-break:break-all;color:#2563eb;font-family:monospace}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}.section{margin-top:16px;padding-top:8px;border-top:2px solid #ede4f5;font-size:13px;font-weight:700}@media print{body{margin:20px}}</style></head><body>");
       w.document.write('<div style="text-align:center;margin-bottom:20px"><img src="'+brand.logo+'" style="height:48px;margin-bottom:8px"/><h2 style="margin:0;letter-spacing:2px">'+est.brand.toUpperCase()+'</h2><div style="font-size:11px;color:#555;margin-top:4px">'+mediaLabel.toUpperCase()+' TRAFFIC INSTRUCTIONS</div></div>');
       var hd=function(l,v,c){return '<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+v+'</span></div>'};
       w.document.write(hd("Agency","Atticor Media"));w.document.write(hd("Client","Postman Law","red"));
@@ -2071,10 +2041,10 @@ const App=()=>{
     };
     return<Mod title={mediaLabel+" Traffic - "+est.market} onClose={()=>setModal(null)} wide>
       <div style={{display:"flex",gap:4,marginBottom:10}}>
-        {vendorList.map(v=><button key={v} onClick={()=>switchVendor(v)} style={{padding:"5px 14px",borderRadius:6,border:vendorMode===v?"2px solid #0891b2":"1px solid #453960",background:vendorMode===v?"rgba(8,145,178,.15)":"transparent",color:vendorMode===v?"#22d3ee":"#94a3b8",fontSize:13,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
+        {vendorList.map(v=><button key={v} onClick={()=>switchVendor(v)} style={{padding:"5px 14px",borderRadius:6,border:vendorMode===v?"2px solid #0891b2":"1px solid #4a3870",background:vendorMode===v?"rgba(8,145,178,.15)":"transparent",color:vendorMode===v?"#22d3ee":"#94a3b8",fontSize:13,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
       </div>
       <div style={{display:"grid",gridTemplateColumns:isPlatform?"1fr 1fr":"1fr",gap:8,marginBottom:10}}>
-        <div style={{background:"#1c1528",border:"1px solid #453960",borderRadius:6,padding:8}}>
+        <div style={{background:"#1a1030",border:"1px solid #4a3870",borderRadius:6,padding:8}}>
           <div style={{fontSize:12,fontWeight:700,color:"#93c5fd",marginBottom:6}}>CAMPAIGN INFO</div>
           <Inp label="Flight Dates" value={flightDates} onChange={e=>setFlightDates(e.target.value)}/>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,marginTop:4}}>
@@ -2082,11 +2052,11 @@ const App=()=>{
             <Inp label="Comments" value={comments} onChange={e=>setComments(e.target.value)} placeholder="Optional"/>
           </div>
         </div>
-        {isPlatform&&<div style={{background:"#1c1528",border:"1px solid #453960",borderRadius:6,padding:8}}>
+        {isPlatform&&<div style={{background:"#1a1030",border:"1px solid #4a3870",borderRadius:6,padding:8}}>
           <div style={{fontSize:12,fontWeight:700,color:"#fbbf24",marginBottom:6}}>UTM PARAMETERS</div>
           {isDigital&&vendorMode==="ESPN"&&<div style={{marginBottom:6}}>
             <div style={{fontSize:11,color:"#94a3b8",marginBottom:4}}>Quick Presets:</div>
-            <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{ESPN_PRESETS.map(function(p,i){return<button key={i} onClick={function(){applyPreset(p)}} style={{padding:"3px 8px",borderRadius:4,border:utmCampaign===p.campaign&&utmMedium===p.medium&&utmPlacement===p.placement?"2px solid #fbbf24":"1px solid #453960",background:utmCampaign===p.campaign&&utmMedium===p.medium&&utmPlacement===p.placement?"rgba(251,191,36,.15)":"transparent",color:utmCampaign===p.campaign&&utmMedium===p.medium&&utmPlacement===p.placement?"#fbbf24":"#94a3b8",fontSize:10,fontWeight:600,cursor:"pointer"}}>{p.label}</button>})}</div>
+            <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{ESPN_PRESETS.map(function(p,i){return<button key={i} onClick={function(){applyPreset(p)}} style={{padding:"3px 8px",borderRadius:4,border:utmCampaign===p.campaign&&utmMedium===p.medium&&utmPlacement===p.placement?"2px solid #fbbf24":"1px solid #4a3870",background:utmCampaign===p.campaign&&utmMedium===p.medium&&utmPlacement===p.placement?"rgba(251,191,36,.15)":"transparent",color:utmCampaign===p.campaign&&utmMedium===p.medium&&utmPlacement===p.placement?"#fbbf24":"#94a3b8",fontSize:10,fontWeight:600,cursor:"pointer"}}>{p.label}</button>})}</div>
           </div>}
           <Inp label="Base URL" value={baseUrl} onChange={e=>setBaseUrl(e.target.value)}/>
           <div style={{display:"grid",gridTemplateColumns:isDigital?"1fr 1fr 1fr 1fr":"1fr 1fr 1fr",gap:4,marginTop:4}}>
@@ -2114,13 +2084,13 @@ const App=()=>{
         {Object.entries(durGroups).map(([key,g])=>{var dmaName=DM[g.dma]||g.dma;return<div key={key} style={{padding:"3px 8px",borderRadius:5,border:"1px solid "+(Math.abs(g.total-100)<0.5?"#4ade80":"#f87171"),fontSize:12,fontWeight:700,color:Math.abs(g.total-100)<0.5?"#4ade80":"#f87171"}}>{dmaName} :{g.dur} = {g.total}%{Math.abs(g.total-100)<0.5?" \u2713":" (need 100%)"}</div>})}
       </div>}
       <div style={{fontSize:12,fontWeight:700,color:"#a89ed4",marginBottom:4}}>{mediaLabel.toUpperCase()} {isDigital?"CREATIVES":"ROTATION + COMPANION BANNERS"} ({pool.length} available{isDigital?" across "+[...new Set(pool.map(function(i){return i.dma}))].length+" markets":""})</div>
-      <div style={{maxHeight:350,overflowY:"auto",border:"1px solid #453960",borderRadius:6}}>
-        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{position:"sticky",top:0,background:"#2a2240",zIndex:1}}>
+      <div style={{maxHeight:350,overflowY:"auto",border:"1px solid #4a3870",borderRadius:6}}>
+        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{position:"sticky",top:0,background:"#251d3d",zIndex:1}}>
           <TH w="30">{"✓"}</TH>
-          {isDigital&&<th onClick={function(){if(sSortCol==="dma"){setSSortDir(sSortDir==="asc"?"desc":"asc")}else{setSSortCol("dma");setSSortDir("asc")}}} style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:sSortCol==="dma"?"#2563eb":"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #453960",textAlign:"left",position:"sticky",top:0,background:"#2a2240",zIndex:1,cursor:"pointer",width:40}}>{"DMA"}{sSortCol==="dma"?(sSortDir==="asc"?" ▲":" ▼"):""}</th>}
-          <th onClick={function(){if(sSortCol==="code"){setSSortDir(sSortDir==="asc"?"desc":"asc")}else{setSSortCol("code");setSSortDir("asc")}}} style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:sSortCol==="code"?"#2563eb":"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #453960",textAlign:"left",position:"sticky",top:0,background:"#2a2240",zIndex:1,cursor:"pointer"}}>{"ISCI"}{sSortCol==="code"?(sSortDir==="asc"?" ▲":" ▼"):""}</th>
-          <th onClick={function(){if(sSortCol==="title"){setSSortDir(sSortDir==="asc"?"desc":"asc")}else{setSSortCol("title");setSSortDir("asc")}}} style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:sSortCol==="title"?"#2563eb":"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #453960",textAlign:"left",position:"sticky",top:0,background:"#2a2240",zIndex:1,cursor:"pointer"}}>{"Title"}{sSortCol==="title"?(sSortDir==="asc"?" ▲":" ▼"):""}</th>
-          {isDigital?<TH w="50">Type</TH>:<th onClick={function(){if(sSortCol==="dur"){setSSortDir(sSortDir==="asc"?"desc":"asc")}else{setSSortCol("dur");setSSortDir("desc")}}} style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:sSortCol==="dur"?"#2563eb":"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #453960",textAlign:"left",position:"sticky",top:0,background:"#2a2240",zIndex:1,cursor:"pointer",width:35}}>{"Dur"}{sSortCol==="dur"?(sSortDir==="asc"?" ▲":" ▼"):""}</th>}
+          {isDigital&&<th onClick={function(){if(sSortCol==="dma"){setSSortDir(sSortDir==="asc"?"desc":"asc")}else{setSSortCol("dma");setSSortDir("asc")}}} style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:sSortCol==="dma"?"#2563eb":"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #4a3870",textAlign:"left",position:"sticky",top:0,background:"#251d3d",zIndex:1,cursor:"pointer",width:40}}>{"DMA"}{sSortCol==="dma"?(sSortDir==="asc"?" ▲":" ▼"):""}</th>}
+          <th onClick={function(){if(sSortCol==="code"){setSSortDir(sSortDir==="asc"?"desc":"asc")}else{setSSortCol("code");setSSortDir("asc")}}} style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:sSortCol==="code"?"#2563eb":"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #4a3870",textAlign:"left",position:"sticky",top:0,background:"#251d3d",zIndex:1,cursor:"pointer"}}>{"ISCI"}{sSortCol==="code"?(sSortDir==="asc"?" ▲":" ▼"):""}</th>
+          <th onClick={function(){if(sSortCol==="title"){setSSortDir(sSortDir==="asc"?"desc":"asc")}else{setSSortCol("title");setSSortDir("asc")}}} style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:sSortCol==="title"?"#2563eb":"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #4a3870",textAlign:"left",position:"sticky",top:0,background:"#251d3d",zIndex:1,cursor:"pointer"}}>{"Title"}{sSortCol==="title"?(sSortDir==="asc"?" ▲":" ▼"):""}</th>
+          {isDigital?<TH w="50">Type</TH>:<th onClick={function(){if(sSortCol==="dur"){setSSortDir(sSortDir==="asc"?"desc":"asc")}else{setSSortCol("dur");setSSortDir("desc")}}} style={{padding:"4px 6px",fontSize:10,fontWeight:600,color:sSortCol==="dur"?"#2563eb":"#64748b",textTransform:"uppercase",letterSpacing:.4,borderBottom:"2px solid #4a3870",textAlign:"left",position:"sticky",top:0,background:"#251d3d",zIndex:1,cursor:"pointer",width:35}}>{"Dur"}{sSortCol==="dur"?(sSortDir==="asc"?" ▲":" ▼"):""}</th>}
           {isDigital&&<TH w="70">Size</TH>}
           <TH w="45">Rot%</TH><TH w="85">Schedule</TH><TH w="85">Flight</TH>
           {isDigital&&<TH w="45">File</TH>}
@@ -2135,12 +2105,12 @@ const App=()=>{
             <TD m b>{r.isci.code}</TD><TD>{r.isci.title}</TD>
             {isDigital?<TD><span style={{fontSize:10,padding:"1px 4px",borderRadius:3,background:isB?"rgba(236,72,153,.12)":"rgba(37,99,235,.12)",color:isB?"#ec4899":"#60a5fa",fontWeight:600}}>{isB?"Display":"Video"}</span></TD>:<TD>{r.isci.dur?":"+r.isci.dur:""}</TD>}
             {isDigital&&<TD style={{fontSize:10,color:"#94a3b8"}}>{isB?(DISPLAY_TYPE_MAP[r.isci.displayType]||r.isci.displayType||""):r.isci.dur?":"+r.isci.dur:""}</TD>}
-            <TD><input value={r.pct} onChange={e=>updRow(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"2px 4px",border:"1px solid #453960",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1c1528",color:"#ede4f5"}}/></TD>
-            <TD><select value={r.sched} onChange={e=>updRow(i,"sched",e.target.value)} style={{width:"100%",fontSize:10,padding:"2px 2px",border:"1px solid #453960",borderRadius:3,background:"#1c1528",color:"#ede4f5"}}>{SCHED_ORDER.map(s=><option key={s} value={s}>{s}</option>)}</select></TD>
-            <TD><input value={r.flight} onChange={e=>updRow(i,"flight",e.target.value)} style={{width:"100%",padding:"2px 4px",border:"1px solid #453960",borderRadius:3,fontSize:10,background:"#1c1528",color:"#ede4f5"}}/></TD>
+            <TD><input value={r.pct} onChange={e=>updRow(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"2px 4px",border:"1px solid #4a3870",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1a1030",color:"#ede4f5"}}/></TD>
+            <TD><select value={r.sched} onChange={e=>updRow(i,"sched",e.target.value)} style={{width:"100%",fontSize:10,padding:"2px 2px",border:"1px solid #4a3870",borderRadius:3,background:"#1a1030",color:"#ede4f5"}}>{SCHED_ORDER.map(s=><option key={s} value={s}>{s}</option>)}</select></TD>
+            <TD><input value={r.flight} onChange={e=>updRow(i,"flight",e.target.value)} style={{width:"100%",padding:"2px 4px",border:"1px solid #4a3870",borderRadius:3,fontSize:10,background:"#1a1030",color:"#ede4f5"}}/></TD>
             {isDigital&&<TD>{r.isci.fileUrl?<a href={r.isci.fileUrl} target="_blank" rel="noopener" style={{color:"#4ade80",fontSize:10,fontWeight:600}}>DL</a>:<span style={{color:"#f87171",fontSize:10}}>TBD</span>}</TD>}
             {isDigital&&<TD><span style={{fontSize:9,fontFamily:"monospace",color:"#fbbf24"}}>{utmCampaign.replace(dmaPrefix,r.isci.dma)}</span></TD>}
-            {isDigital&&<TD><select value={r.placement} onChange={e=>updRow(i,"placement",e.target.value)} style={{width:"100%",fontSize:9,padding:"2px 2px",border:"1px solid #453960",borderRadius:3,background:"#1c1528",color:r.placement==="GKBPS"?"#a78bfa":"#ede4f5",fontWeight:600}}><option value="ESPNweb">ESPNweb</option><option value="GKBPS">GKBPS</option></select></TD>}
+            {isDigital&&<TD><select value={r.placement} onChange={e=>updRow(i,"placement",e.target.value)} style={{width:"100%",fontSize:9,padding:"2px 2px",border:"1px solid #4a3870",borderRadius:3,background:"#1a1030",color:r.placement==="GKBPS"?"#a78bfa":"#ede4f5",fontWeight:600}}><option value="ESPNweb">ESPNweb</option><option value="GKBPS">GKBPS</option></select></TD>}
             {isPlatform&&!isDigital&&<TD>{r.isci.fileUrl?<a href={r.isci.fileUrl} target="_blank" rel="noopener" style={{color:"#4ade80",fontSize:10,fontWeight:600}}>DL</a>:<span style={{color:"#f87171",fontSize:10}}>TBD</span>}</TD>}
             {isPlatform&&!isDigital&&<TD>{r.companionUrl?<div style={{display:"flex",gap:3,alignItems:"center"}}><a href={r.companionUrl} target="_blank" rel="noopener" style={{color:"#22d3ee",fontSize:10,fontWeight:600}}>View</a><button onClick={()=>{updRow(i,"companionUrl","");updRow(i,"companionName","")}} style={{fontSize:9,border:"none",background:"transparent",color:"#f87171",cursor:"pointer"}}>x</button></div>:<label style={{cursor:"pointer",fontSize:10,color:"#0891b2",fontWeight:600,display:"block"}} onDrop={e=>{e.preventDefault();e.stopPropagation();uploadCompanion(i,{target:{files:e.dataTransfer.files}})}} onDragOver={e=>{e.preventDefault();e.stopPropagation()}}>Drop or click<input type="file" accept="image/*" onChange={e=>uploadCompanion(i,e)} style={{display:"none"}}/></label>}</TD>}
           </tr>})}</tbody>
@@ -2155,8 +2125,8 @@ const App=()=>{
           <div style={{fontSize:12,fontWeight:700,color:"#ec4899"}}>DISPLAY BANNERS (from ISCI Registry)</div>
           {displayIscis.length===0&&<span style={{fontSize:11,color:"#f87171"}}>No Display ISCIs registered for {dc}. Register them in ISCI Registry with media "Display".</span>}
         </div>
-        {displayIscis.length>0&&<div style={{border:"1px solid #453960",borderRadius:6,overflow:"hidden"}}>
-          <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{background:"#2a2240"}}><TH>ISCI</TH><TH>Title</TH><TH>File</TH><TH>UTM</TH></tr></thead>
+        {displayIscis.length>0&&<div style={{border:"1px solid #4a3870",borderRadius:6,overflow:"hidden"}}>
+          <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{background:"#251d3d"}}><TH>ISCI</TH><TH>Title</TH><TH>File</TH><TH>UTM</TH></tr></thead>
             <tbody>{displayIscis.map(d=><tr key={d.code}>
               <TD m b>{d.code}</TD>
               <TD>{d.title}</TD>
@@ -2169,14 +2139,14 @@ const App=()=>{
       </div>})()}
       {isPlatform&&<div style={{marginTop:8}}>
         <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",marginBottom:3}}>EMAIL NOTE (optional — included in email body)</div>
-        <textarea value={emailNote} onChange={e=>setEmailNote(e.target.value)} placeholder="e.g., Resending due to updated creative files, Please disregard previous version..." style={{width:"100%",minHeight:36,padding:"6px 8px",borderRadius:5,border:"1px solid #453960",background:"#1c1528",color:"#ede4f5",fontSize:12,fontFamily:"inherit",resize:"vertical"}}/>
+        <textarea value={emailNote} onChange={e=>setEmailNote(e.target.value)} placeholder="e.g., Resending due to updated creative files, Please disregard previous version..." style={{width:"100%",minHeight:36,padding:"6px 8px",borderRadius:5,border:"1px solid #4a3870",background:"#1a1030",color:"#ede4f5",fontSize:12,fontFamily:"inherit",resize:"vertical"}}/>
       </div>}
       {!isPlatform&&<div style={{marginTop:8}}>
         <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",marginBottom:3}}>SEND TO (comma or semicolon separated emails)</div>
-        <input value={customRecipients} onChange={function(e){setCustomRecipients(e.target.value)}} placeholder="email1@example.com; email2@example.com" style={{width:"100%",padding:"6px 8px",borderRadius:5,border:"1px solid #453960",background:"#1c1528",color:"#ede4f5",fontSize:12}}/>
+        <input value={customRecipients} onChange={function(e){setCustomRecipients(e.target.value)}} placeholder="email1@example.com; email2@example.com" style={{width:"100%",padding:"6px 8px",borderRadius:5,border:"1px solid #4a3870",background:"#1a1030",color:"#ede4f5",fontSize:12}}/>
         <div style={{marginTop:4}}>
           <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",marginBottom:3}}>EMAIL NOTE (optional)</div>
-          <textarea value={emailNote} onChange={e=>setEmailNote(e.target.value)} placeholder="Optional note..." style={{width:"100%",minHeight:36,padding:"6px 8px",borderRadius:5,border:"1px solid #453960",background:"#1c1528",color:"#ede4f5",fontSize:12,fontFamily:"inherit",resize:"vertical"}}/>
+          <textarea value={emailNote} onChange={e=>setEmailNote(e.target.value)} placeholder="Optional note..." style={{width:"100%",minHeight:36,padding:"6px 8px",borderRadius:5,border:"1px solid #4a3870",background:"#1a1030",color:"#ede4f5",fontSize:12,fontFamily:"inherit",resize:"vertical"}}/>
         </div>
       </div>}
       <div style={{display:"flex",gap:6,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
@@ -2194,7 +2164,7 @@ const App=()=>{
           setTrafficHistory(function(p){return [{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+(isPlatform?" | Vendor: "+vendorMode+(isDigital?" / GKBPS":""):""),iscis:allIscis2,stations:isDigital?["ESPN_GKBPS"]:[],isOoh:false,status:"saved",isDigitalEspn:isDigital}].concat(p)});
           notify(doomPick(DOOM.success));log("Traffic Saved",est.market+" "+est.media+" "+workMonth+" v"+version);
         }} disabled={sel.length===0}>Save to Library</Btn>
-        {isPlatform&&<Btn primary color="#1c1528" disabled={sel.length===0} onClick={()=>{
+        {isPlatform&&<Btn primary color="#1a1030" disabled={sel.length===0} onClick={()=>{
           if(isDigital||vendorMode==="ESPN"){
             var videoSel3=sel.filter(function(r){return r.isci.suffix!=="B"});
             var displaySel3=sel.filter(function(r){return r.isci.suffix==="B"});
@@ -2222,7 +2192,7 @@ const App=()=>{
               pdfB64=pdfUri4.split(",")[1]||"";
             }catch(pe){notify("PDF generation failed: "+(pe.message||pe));return}
           }else{
-            var ph3="<html><head><style>body{font-family:Arial,sans-serif;margin:30px;font-size:12px;background:#fff;color:#1c1528}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.section{margin-top:16px;padding-top:8px;border-top:2px solid #ede4f5;font-size:13px;font-weight:700}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}</style></head><body>";
+            var ph3="<html><head><style>body{font-family:Arial,sans-serif;margin:30px;font-size:12px;background:#fff;color:#1a1030}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.section{margin-top:16px;padding-top:8px;border-top:2px solid #ede4f5;font-size:13px;font-weight:700}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}</style></head><body>";
             var hd4=function(l,v){return '<div class="h"><b>'+l+':</b> '+v+'</div>'};
             ph3+='<div style="text-align:center;margin-bottom:20px"><img src="'+brand.logo+'" style="height:48px;margin-bottom:8px"/><h2 style="margin:0;letter-spacing:2px">POSTMAN LAW</h2><div style="font-size:11px;color:#555">STREAMING AUDIO TRAFFIC INSTRUCTIONS</div></div>';
             ph3+=hd4("Agency","Atticor Media")+hd4("Client","Postman Law")+hd4("Market",est.market)+hd4("Vendor",vendorMode)+hd4("Buyer",est.buyer)+hd4("Media","Streaming Audio")+hd4("Month",workMonth)+hd4("Flight",flightDates)+hd4("Estimate",est.num)+hd4("Version","V"+version);
@@ -2267,7 +2237,7 @@ const App=()=>{
           if(!rcpts.length){notify("Enter at least one email address");return}
           notify(doomPick(DOOM.send));
           var pdfB64="";var pdfName="Traffic_"+est.brand.replace(/\s/g,"")+"_Generic_"+(est.market||"").replace(/[\s\/]/g,"")+"_"+workMonth.replace(/\s/g,"")+"_v"+version+".pdf";
-          var ph="<html><head><style>body{font-family:Arial,sans-serif;margin:30px;font-size:12px;background:#fff;color:#1c1528}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}</style></head><body>";
+          var ph="<html><head><style>body{font-family:Arial,sans-serif;margin:30px;font-size:12px;background:#fff;color:#1a1030}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}</style></head><body>";
           var hd=function(l,v){return'<div class="h"><b>'+l+':</b> '+v+'</div>'};
           ph+='<div style="text-align:center;margin-bottom:20px"><img src="'+brand.logo+'" style="height:48px;margin-bottom:8px"/><h2 style="margin:0;letter-spacing:2px">'+est.brand.toUpperCase()+'</h2><div style="font-size:11px;color:#555">STREAMING AUDIO TRAFFIC INSTRUCTIONS</div></div>';
           ph+=hd("Agency","Atticor Media")+hd("Client",est.brand)+hd("Market",est.market||"")+hd("Buyer",est.buyer)+hd("Month",workMonth)+hd("Flight",flightDates)+hd("Estimate",est.num)+hd("Version","V"+version);
@@ -2378,8 +2348,8 @@ const App=()=>{
               <span style={{fontSize:14,fontWeight:600,color:sel?"#2563eb":"#9ca3af"}}>{sel?"Linked":"Link"}</span>
             </div>})}
           </div>
-        </div>:<div style={{padding:16,textAlign:"center",color:"#a89ed4",fontSize:13,background:"#1c1528",borderRadius:6,marginBottom:10}}>No matching stations found. You can link stations later.</div>}
-        <div style={{padding:"8px 10px",borderRadius:6,background:"#1c1528",border:"1px solid #e0d9f7",marginBottom:8}}>
+        </div>:<div style={{padding:16,textAlign:"center",color:"#a89ed4",fontSize:13,background:"#1a1030",borderRadius:6,marginBottom:10}}>No matching stations found. You can link stations later.</div>}
+        <div style={{padding:"8px 10px",borderRadius:6,background:"#1a1030",border:"1px solid #e0d9f7",marginBottom:8}}>
           <div style={{fontSize:14,fontWeight:700,color:"#a89ed4",marginBottom:4}}>Summary</div>
           <div style={{fontSize:14}}>Est {nr.num} - {nr.brand} | {nr.market} | <B l={nr.media} c={mc(nr.media)}/> | {nr.group} | {nr.buyer}</div>
           <div style={{fontSize:14,color:"#a89ed4",marginTop:2}}>{selStations.length} stations will be linked{nr.reason?" | "+nr.reason:""}</div>
@@ -2390,7 +2360,7 @@ const App=()=>{
         </div>
       </div>}
     </Cd>}
-    <div style={{display:"flex",gap:3,flexWrap:"wrap"}}><Pill l="All" ac={!sf.estGroup} n={estimates.length} c="#1c1528" onClick={()=>setF("estGroup","")}/>{EG2.map(g=><Pill key={g} l={g} ac={sf.estGroup===g} n={estimates.filter(e=>e.group===g).length} c="#7c3aed" onClick={()=>setF("estGroup",sf.estGroup===g?"":g)}/>)}</div>
+    <div style={{display:"flex",gap:3,flexWrap:"wrap"}}><Pill l="All" ac={!sf.estGroup} n={estimates.length} c="#1a1030" onClick={()=>setF("estGroup","")}/>{EG2.map(g=><Pill key={g} l={g} ac={sf.estGroup===g} n={estimates.filter(e=>e.group===g).length} c="#7c3aed" onClick={()=>setF("estGroup",sf.estGroup===g?"":g)}/>)}</div>
     <Sel options={BRANDS.map(b=>({v:b.name,l:b.name}))} value={sf.brand} onChange={v=>setF("brand",v)} placeholder="All Brands"/>
     <Cd><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><STH tbl="est" col="num">Est#</STH><STH tbl="est" col="brand">Brand</STH><STH tbl="est" col="market">Market</STH><STH tbl="est" col="media">Media</STH><STH tbl="est" col="group">Buy Type</STH><STH tbl="est" col="campaign">Campaign</STH><STH tbl="est" col="buyer">Buyer</STH><TH w={50}>Actions</TH></tr></thead>
       <tbody>{fl.map((e,i)=>{const ai=estimates.indexOf(e);return editIdx===ai?<tr key={ai} style={{background:"rgba(37,99,235,.15)"}}>
@@ -2421,7 +2391,7 @@ const App=()=>{
       setShowAdd(false);setNewRow({market:"",call:"",media:"",ownership:"",contact:"",brand:"",buyer:""});};
     const delSta=(i)=>{const s=stations[i];setStations(p=>p.filter((_,j)=>j!==i));log("Station Delete",`${s.call} removed`);notify("Station removed")};
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><h1 style={{fontSize:24,fontWeight:800}}>Stations</h1><div style={{display:"flex",gap:6}}><button onClick={()=>{const rows=[["Call Letters","Market","Media","Ownership","Contact Emails","Brand","Buyer"].join(","),...stations.map(s=>[s.call,s.market,s.media,s.ownership||"",'"'+(s.contact||"").replace(/"/g,'""')+'"',s.brand||"",s.buyer||""].join(","))];const blob=new Blob([rows.join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="station_contacts_"+new Date().toISOString().slice(0,10)+".csv";a.click();notify("Exported "+stations.length+" stations")}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #7c6bc4",background:"#1c1528",fontSize:13,fontWeight:700,cursor:"pointer",color:"#a89ed4"}}>📥 Export Contacts</button><Btn primary onClick={()=>setShowAdd(!showAdd)}>+ Add Station</Btn></div></div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><h1 style={{fontSize:24,fontWeight:800}}>Stations</h1><div style={{display:"flex",gap:6}}><button onClick={()=>{const rows=[["Call Letters","Market","Media","Ownership","Contact Emails","Brand","Buyer"].join(","),...stations.map(s=>[s.call,s.market,s.media,s.ownership||"",'"'+(s.contact||"").replace(/"/g,'""')+'"',s.brand||"",s.buyer||""].join(","))];const blob=new Blob([rows.join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="station_contacts_"+new Date().toISOString().slice(0,10)+".csv";a.click();notify("Exported "+stations.length+" stations")}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #7c6bc4",background:"#1a1030",fontSize:13,fontWeight:700,cursor:"pointer",color:"#a89ed4"}}>📥 Export Contacts</button><Btn primary onClick={()=>setShowAdd(!showAdd)}>+ Add Station</Btn></div></div>
       {showAdd&&<Cd style={{padding:10}}><div style={{fontSize:14,fontWeight:700,marginBottom:6}}>New Station</div>
         <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"end"}}>
           <Inp placeholder="Call Letters" value={newRow.call} onChange={e=>setNewRow(p=>({...p,call:e.target.value}))} style={{width:80}}/>
@@ -2525,7 +2495,7 @@ const App=()=>{
       onDragOver={e=>{e.preventDefault();e.stopPropagation();if(!uploading)setDragOver(true)}}
       onDragLeave={e=>{e.preventDefault();e.stopPropagation();setDragOver(false)}}>
       <input ref={inputRef} type="file" accept="image/*" multiple onChange={handleFile} style={{display:"none"}}/>
-      <button onClick={()=>inputRef.current?.click()} disabled={uploading} style={{padding:"3px 8px",borderRadius:4,border:dragOver?"2px solid #3b82f6":"1px solid #7c6bc4",background:dragOver?"rgba(59,130,246,.15)":uploading?"#453960":"#1c1528",color:dragOver?"#3b82f6":"#a89ed4",fontSize:12,fontWeight:600,cursor:uploading?"wait":"pointer",display:"inline-flex",alignItems:"center",gap:3,transition:"all .15s"}}>
+      <button onClick={()=>inputRef.current?.click()} disabled={uploading} style={{padding:"3px 8px",borderRadius:4,border:dragOver?"2px solid #3b82f6":"1px solid #7c6bc4",background:dragOver?"rgba(59,130,246,.15)":uploading?"#4a3870":"#1a1030",color:dragOver?"#3b82f6":"#a89ed4",fontSize:12,fontWeight:600,cursor:uploading?"wait":"pointer",display:"inline-flex",alignItems:"center",gap:3,transition:"all .15s"}}>
         {uploading?"⏳ Uploading...":dragOver?"Drop photos here":"📷 Add Photos"}
       </button>
     </span>;
@@ -2550,14 +2520,14 @@ const App=()=>{
     const all=[...hardcoded,...photos];
     if(!all.length&&compact)return null;
     if(!all.length)return<OohPhotoUpload id={id}/>;
-    if(compact)return<div style={{marginTop:6,borderTop:"1px solid #453960",paddingTop:6}}>
+    if(compact)return<div style={{marginTop:6,borderTop:"1px solid #4a3870",paddingTop:6}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
         <div style={{fontSize:12,fontWeight:600,color:"#2563eb",textTransform:"uppercase"}}>📸 {all.length} Photo{all.length>1?"s":""}</div>
         <OohPhotoUpload id={id}/>
       </div>
       <div style={{display:"grid",gridTemplateColumns:all.length===1?"1fr":"1fr 1fr",gap:4}}>
         {all.slice(0,4).map((ph,i)=><div key={i} style={{position:"relative"}}>
-          <img src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #453960",cursor:"pointer"}} onClick={()=>setModal({type:"oohPhoto",id,photos:all,startIdx:i})}/>
+          <img src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3870",cursor:"pointer"}} onClick={()=>setModal({type:"oohPhoto",id,photos:all,startIdx:i})}/>
           {ph.label&&<div style={{position:"absolute",bottom:2,left:2,background:"rgba(0,0,0,0.7)",color:"#fff",padding:"1px 4px",borderRadius:3,fontSize:10}}>{ph.label}</div>}
           {!ph.hardcoded&&<button onClick={(e)=>{e.stopPropagation();if(confirm("Delete this photo?"))deleteOohPhoto(id,i-hardcoded.length)}} style={{position:"absolute",top:2,right:2,background:"rgba(220,38,38,0.85)",color:"#fff",border:"none",borderRadius:"50%",width:18,height:18,fontSize:11,fontWeight:800,cursor:"pointer",lineHeight:"18px",padding:0}}>×</button>}
         </div>)}
@@ -2598,7 +2568,7 @@ const App=()=>{
         <div onClick={e=>e.stopPropagation()} style={{background:"#f5f3ff",borderRadius:12,padding:16,maxWidth:820,width:"100%",maxHeight:"90vh",overflow:"auto"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:12}}>
             <div>
-              <div style={{fontSize:13,fontWeight:800,color:"#2a2240"}}>Panel {p.panel} — {p.submarket}</div>
+              <div style={{fontSize:13,fontWeight:800,color:"#251d3d"}}>Panel {p.panel} — {p.submarket}</div>
               <div style={{fontSize:13,color:"#a89ed4"}}>{p.location}</div>
               <div style={{fontSize:13,color:"#a89ed4"}}>TAB# {p.tab} · Contract {p.contract} · Installed {p.installDate}</div>
               <div style={{fontSize:14,fontWeight:700,color:"#d97706",marginTop:4}}>{p.impressions.toLocaleString()} weekly impressions</div>
@@ -2623,16 +2593,16 @@ const App=()=>{
             <img src={heroImg} style={{width:"100%",height:"100%",objectFit:"cover"}} alt={p.panel}/>
             <div style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.7)",color:"#fff",padding:"2px 8px",borderRadius:12,fontSize:13}}>📷 {allPhotosForCard.length} photo{allPhotosForCard.length>1?"s":""}</div>
             <div style={{position:"absolute",bottom:6,left:6,background:"rgba(0,0,0,0.7)",color:"#fff",padding:"2px 8px",borderRadius:12,fontSize:14,fontWeight:700}}>{p.impressions.toLocaleString()} wkly</div>
-          </div>:<div style={{padding:"8px 10px",background:"#1c1528",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          </div>:<div style={{padding:"8px 10px",background:"#1a1030",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <span style={{fontSize:12,color:"#64748b"}}>No photos yet</span>
             <OohPhotoUpload id={p.boardId}/>
           </div>}
-          {hasAnyPhoto&&<div style={{display:"flex",justifyContent:"flex-end",padding:"3px 8px",background:"#1c1528"}} onClick={e=>e.stopPropagation()}><OohPhotoUpload id={p.boardId}/></div>}
+          {hasAnyPhoto&&<div style={{display:"flex",justifyContent:"flex-end",padding:"3px 8px",background:"#1a1030"}} onClick={e=>e.stopPropagation()}><OohPhotoUpload id={p.boardId}/></div>}
           <div style={{padding:10}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
               <div>
                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
-                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#2a2240"}}>Panel {p.panel}</span>
+                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#251d3d"}}>Panel {p.panel}</span>
                   <B l={p.dma} c={c}/>
                   <B l={p.facing} c="#6366f1"/>
                 </div>
@@ -2641,7 +2611,7 @@ const App=()=>{
               <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.bg})(),color:(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.color})()}}>{(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.label})()}</span>{p.isci&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#dbeafe",color:"#2563eb",fontWeight:600,marginLeft:3}}>ISCI ✓</span>}
             </div>
             <div style={{fontSize:14,color:"#a89ed4",marginTop:4}}>{p.location}</div>
-            <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #453960"}}>
+            <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #4a3870"}}>
               <div><div style={{fontSize:14,fontWeight:600,color:"#a89ed4",textTransform:"uppercase"}}>Installed</div><div style={{fontSize:14,fontWeight:600,color:"#a89ed4"}}>{p.installDate}</div></div>
               <div><div style={{fontSize:14,fontWeight:600,color:"#a89ed4",textTransform:"uppercase"}}>TAB#</div><div style={{fontSize:14,fontWeight:600,color:"#a89ed4"}}>{p.tab}</div></div>
               <div><div style={{fontSize:14,fontWeight:600,color:"#a89ed4",textTransform:"uppercase"}}>Contract</div><div style={{fontSize:14,fontWeight:600,color:"#a89ed4"}}>{p.contract}</div></div>
@@ -2784,15 +2754,15 @@ const App=()=>{
             <div style={{fontSize:14,fontWeight:800}}>📡 OOH Traffic Instructions — {dmaLabel}</div>
             <div style={{display:"flex",gap:4,alignItems:"center"}}>
               <span style={{fontSize:11,color:"#94a3b8"}}>Vendor:</span>
-              {vendors.map(v=><button key={v} onClick={()=>setOVend(oVend===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:oVend===v?"2px solid #d97706":"1px solid #453960",background:oVend===v?"rgba(217,119,6,.15)":"transparent",color:oVend===v?"#fbbf24":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
+              {vendors.map(v=><button key={v} onClick={()=>setOVend(oVend===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:oVend===v?"2px solid #d97706":"1px solid #4a3870",background:oVend===v?"rgba(217,119,6,.15)":"transparent",color:oVend===v?"#fbbf24":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
             </div>
           </div>
           <div style={{display:"flex",gap:4,marginBottom:8}}>
-            <button onClick={()=>setTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:trafficMode==="units"?"2px solid #16a34a":"1px solid #453960",background:trafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:trafficMode==="units"?"#4ade80":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
-            <button onClick={()=>setTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:trafficMode==="panels"?"2px solid #2563eb":"1px solid #453960",background:trafficMode==="panels"?"rgba(37,99,235,.15)":"transparent",color:trafficMode==="panels"?"#60a5fa":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
+            <button onClick={()=>setTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:trafficMode==="units"?"2px solid #16a34a":"1px solid #4a3870",background:trafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:trafficMode==="units"?"#4ade80":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
+            <button onClick={()=>setTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:trafficMode==="panels"?"2px solid #2563eb":"1px solid #4a3870",background:trafficMode==="panels"?"rgba(37,99,235,.15)":"transparent",color:trafficMode==="panels"?"#60a5fa":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
             <div style={{marginLeft:"auto",display:"flex",gap:3,alignItems:"center"}}>
               <span style={{fontSize:11,color:"#94a3b8"}}>Type:</span>
-              {(()=>{const types=[...new Set(vendorBoards.map(p=>p.type).filter(Boolean))].sort();return types.map(t=><button key={t} onClick={()=>setOohTypeF&&setOohTypeF(oohTypeF===t?"":t)} style={{padding:"2px 6px",borderRadius:4,border:oohTypeF===t?"2px solid #0891b2":"1px solid #453960",background:oohTypeF===t?"rgba(8,145,178,.15)":"transparent",color:oohTypeF===t?"#22d3ee":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{OOH_TYPE_MAP[t]||t}</button>)})()}
+              {(()=>{const types=[...new Set(vendorBoards.map(p=>p.type).filter(Boolean))].sort();return types.map(t=><button key={t} onClick={()=>setOohTypeF&&setOohTypeF(oohTypeF===t?"":t)} style={{padding:"2px 6px",borderRadius:4,border:oohTypeF===t?"2px solid #0891b2":"1px solid #4a3870",background:oohTypeF===t?"rgba(8,145,178,.15)":"transparent",color:oohTypeF===t?"#22d3ee":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{OOH_TYPE_MAP[t]||t}</button>)})()}
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
@@ -2803,7 +2773,7 @@ const App=()=>{
           <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {dmaLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} panels | Broadcast: {workMonth}</div>
           {usePanelMode&&oLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(37,99,235,.08)",borderRadius:5,border:"1px solid rgba(37,99,235,.2)"}}>
             <span style={{fontSize:11,color:"#93c5fd"}}>Quick assign creative to all {oLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
-            {oohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #453960",borderRadius:3,background:"#1c1528",color:"#ede4f5"}}><option value="">-- select --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #453960",borderRadius:3,background:"#1c1528",color:"#ede4f5",width:200}}/>}
+            {oohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #4a3870",borderRadius:3,background:"#1a1030",color:"#ede4f5"}}><option value="">-- select --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #4a3870",borderRadius:3,background:"#1a1030",color:"#ede4f5",width:200}}/>}
           </div>}
           <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
             <TH w="90">Flight</TH>
@@ -2815,13 +2785,13 @@ const App=()=>{
             <TH>Notes</TH><TH w="30"/>
           </tr></thead>
             <tbody>{oLines.map((l,i)=>{const bd=usePanelMode?vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel):null;return<tr key={i}>
-              <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={oPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #453960",borderRadius:3,fontSize:12,background:"#1c1528",color:"#ede4f5"}}/></TD>
-              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #453960",borderRadius:3,background:"#1c1528",color:"#ede4f5"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.dma} - {p.sub} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #453960",borderRadius:3,background:"#1c1528",color:"#ede4f5"}}><option value="">-- select creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #453960",borderRadius:3,fontSize:12,background:"#1c1528",color:"#ede4f5"}}/>}</TD>}
-              {usePanelMode&&<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #453960",borderRadius:3,background:"#1c1528",color:"#ede4f5"}}><option value="">-- creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #453960",borderRadius:3,fontSize:11,background:"#1c1528",color:"#ede4f5"}}/>}</TD>}
-              {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #453960",borderRadius:3,background:"#1c1528",color:"#ede4f5"}}><option value="">All</option>{dmas.map(d=><option key={d} value={d}>{d}</option>)}</select></TD>}
-              {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #453960",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1c1528",color:"#ede4f5"}}/></TD>}
-              {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #453960",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1c1528",color:"#ede4f5"}}/></TD>}
-              <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #453960",borderRadius:3,fontSize:12,background:"#1c1528",color:"#ede4f5"}}/></TD>
+              <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={oPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3870",borderRadius:3,fontSize:12,background:"#1a1030",color:"#ede4f5"}}/></TD>
+              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3870",borderRadius:3,background:"#1a1030",color:"#ede4f5"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.dma} - {p.sub} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3870",borderRadius:3,background:"#1a1030",color:"#ede4f5"}}><option value="">-- select creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3870",borderRadius:3,fontSize:12,background:"#1a1030",color:"#ede4f5"}}/>}</TD>}
+              {usePanelMode&&<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3870",borderRadius:3,background:"#1a1030",color:"#ede4f5"}}><option value="">-- creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #4a3870",borderRadius:3,fontSize:11,background:"#1a1030",color:"#ede4f5"}}/>}</TD>}
+              {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3870",borderRadius:3,background:"#1a1030",color:"#ede4f5"}}><option value="">All</option>{dmas.map(d=><option key={d} value={d}>{d}</option>)}</select></TD>}
+              {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #4a3870",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1a1030",color:"#ede4f5"}}/></TD>}
+              {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3870",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1a1030",color:"#ede4f5"}}/></TD>}
+              <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3870",borderRadius:3,fontSize:12,background:"#1a1030",color:"#ede4f5"}}/></TD>
               <TD>{oLines.length>1&&<button onClick={()=>delL(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#ef4444"}}>✕</button>}</TD>
             </tr>})}</tbody>
           </table>
@@ -2853,7 +2823,7 @@ const App=()=>{
                   </div>
                   <div style={{fontSize:14,color:"#a89ed4",marginTop:3}}>{c.vendor||"Lamar Advertising"} · {c.brand||"Wettermark Keith"}</div>
                 </div>
-                {editContract===cNum?<div style={{padding:12,background:"#1c1528",display:"flex",flexDirection:"column",gap:6}}>
+                {editContract===cNum?<div style={{padding:12,background:"#1a1030",display:"flex",flexDirection:"column",gap:6}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
                     <div><label style={{fontSize:13,fontWeight:600,color:"#a89ed4"}}>Start Date</label><input type="date" value={editDates.startDate} onChange={e=>setEditDates(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #7c6bc4",borderRadius:4,fontSize:13}}/></div>
                     <div><label style={{fontSize:13,fontWeight:600,color:"#a89ed4"}}>End Date</label><input type="date" value={editDates.endDate} onChange={e=>setEditDates(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #7c6bc4",borderRadius:4,fontSize:13}}/></div>
@@ -2887,7 +2857,7 @@ const App=()=>{
             })}
           </div>
           {/* Contract timeline bar */}
-          <div style={{marginTop:14,padding:12,background:"#1c1528",borderRadius:8,border:"1px solid #e0d9f7"}}>
+          <div style={{marginTop:14,padding:12,background:"#1a1030",borderRadius:8,border:"1px solid #e0d9f7"}}>
             <div style={{fontSize:13,fontWeight:700,marginBottom:8}}>Contract Timeline</div>
             {uniqueContracts.map(cNum=>{const c=oohContracts[cNum]||{};const cs=contractStatus(c);if(!c.startDate||!c.endDate)return null;
               const start=new Date(c.startDate);const end=new Date(c.endDate);const rangeStart=new Date("2025-10-01");const rangeEnd=new Date("2026-12-31");const total=rangeEnd-rangeStart;
@@ -2897,7 +2867,7 @@ const App=()=>{
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#a89ed4"}}><span style={{fontWeight:700,fontFamily:"monospace"}}>{cNum}</span><span>{cs.label}</span></div>
                 <div style={{position:"relative",height:14,background:"#ede4f5",borderRadius:4,overflow:"hidden"}}>
                   <div style={{position:"absolute",left:left+"%",width:width+"%",height:"100%",background:cs.color+"60",borderRadius:4}}/>
-                  <div style={{position:"absolute",left:nowPos+"%",width:1,height:"100%",background:"#1c1528"}}/>
+                  <div style={{position:"absolute",left:nowPos+"%",width:1,height:"100%",background:"#1a1030"}}/>
                 </div>
               </div>;
             })}
@@ -2974,9 +2944,9 @@ const App=()=>{
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
               <div>
                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
-                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#2a2240"}}>{p.unit}</span>
+                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#251d3d"}}>{p.unit}</span>
                   <B l={p.market} c={c}/>
-                  {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#1c1528",color:"#a89ed4",fontWeight:600}}>INHERITED</span>}
+                  {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#1a1030",color:"#a89ed4",fontWeight:600}}>INHERITED</span>}
                   {pop&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#dbeafe",color:"#2563eb",fontWeight:600}}>PoP ✓</span>}
                 </div>
                 <div style={{fontSize:14,color:"#a89ed4",marginTop:2}}>{p.media} · {p.size} · {p.vendor}</div>
@@ -2984,31 +2954,31 @@ const App=()=>{
               <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#16a34a":"#d97706"}}>{p.status}</span>
             </div>
             <div style={{fontSize:14,color:"#a89ed4",marginTop:6}}>{p.location}</div>
-            <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #453960"}}>
+            <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #4a3870"}}>
               <div><div style={{fontSize:14,fontWeight:600,color:"#a89ed4",textTransform:"uppercase"}}>Flight</div><div style={{fontSize:14,fontWeight:600,color:"#a89ed4"}}>{flightClean||"TBD"}</div></div>
               <div><div style={{fontSize:14,fontWeight:600,color:"#a89ed4",textTransform:"uppercase"}}>Cycles</div><div style={{fontSize:14,fontWeight:600,color:"#a89ed4"}}>{p.cycles||"—"}</div></div>
               <div><div style={{fontSize:14,fontWeight:600,color:"#a89ed4",textTransform:"uppercase"}}>Impr/Wk</div><div style={{fontSize:14,fontWeight:700,color:c}}>{(p.impressions*p.numUnits).toLocaleString()}</div></div>
               {p.facing&&p.facing!=="N/A"&&p.facing!=="Various"&&<div><div style={{fontSize:14,fontWeight:600,color:"#a89ed4",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#6366f1"/></div></div>}
               {pop&&<div><div style={{fontSize:14,fontWeight:600,color:"#a89ed4",textTransform:"uppercase"}}>PoP Date</div><div style={{fontSize:14,fontWeight:600,color:"#2563eb"}}>{pop.popDate}</div></div>}
             </div>
-            {POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #453960",paddingTop:6}}>
+            {POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3870",paddingTop:6}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
                 <div style={{fontSize:12,fontWeight:600,color:"#2563eb",textTransform:"uppercase"}}>📸 {1+(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length?"s":""}</div>
                 <OohPhotoUpload id={p.unit}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length?"1fr 1fr":"1fr",gap:4}}>
-                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #453960",cursor:"pointer"}} onClick={()=>{const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:0})}}/>
-                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #453960",cursor:"pointer"}} onClick={()=>{const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:pi+1})}}/>)}
+                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3870",cursor:"pointer"}} onClick={()=>{const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:0})}}/>
+                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3870",cursor:"pointer"}} onClick={()=>{const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:pi+1})}}/>)}
               </div>
             </div>}
-            {!POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #453960",paddingTop:6}}>
+            {!POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3870",paddingTop:6}}>
               {(oohPhotos[p.unit]||[]).length?<div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
                   <div style={{fontSize:12,fontWeight:600,color:"#2563eb",textTransform:"uppercase"}}>📸 {(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length>1?"s":""}</div>
                   <OohPhotoUpload id={p.unit}/>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length>1?"1fr 1fr":"1fr",gap:4}}>
-                  {(oohPhotos[p.unit]||[]).slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #453960",cursor:"pointer"}} onClick={()=>setModal({type:"oohPhoto",id:p.unit,photos:oohPhotos[p.unit],startIdx:pi})}/>)}
+                  {(oohPhotos[p.unit]||[]).slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3870",cursor:"pointer"}} onClick={()=>setModal({type:"oohPhoto",id:p.unit,photos:oohPhotos[p.unit],startIdx:pi})}/>)}
                 </div>
               </div>:<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <span style={{fontSize:12,color:"#64748b"}}>No PoP photos</span>
@@ -3155,15 +3125,15 @@ const App=()=>{
             <div style={{fontSize:14,fontWeight:800}}>📡 OOH Traffic Instructions — PL {mktLabel}</div>
             <div style={{display:"flex",gap:4,alignItems:"center"}}>
               <span style={{fontSize:11,color:"#94a3b8"}}>Vendor:</span>
-              {plVendors.map(v=><button key={v} onClick={()=>setVendF(vendF===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:vendF===v?"2px solid #7c3aed":"1px solid #453960",background:vendF===v?"rgba(124,59,237,.15)":"transparent",color:vendF===v?"#c4b5fd":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
+              {plVendors.map(v=><button key={v} onClick={()=>setVendF(vendF===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:vendF===v?"2px solid #7c3aed":"1px solid #4a3870",background:vendF===v?"rgba(124,59,237,.15)":"transparent",color:vendF===v?"#c4b5fd":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
             </div>
           </div>
           <div style={{display:"flex",gap:4,marginBottom:8}}>
-            <button onClick={()=>setPlOohTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:plOohTrafficMode==="units"?"2px solid #16a34a":"1px solid #453960",background:plOohTrafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:plOohTrafficMode==="units"?"#4ade80":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
-            <button onClick={()=>setPlOohTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:plOohTrafficMode==="panels"?"2px solid #7c3aed":"1px solid #453960",background:plOohTrafficMode==="panels"?"rgba(124,59,237,.15)":"transparent",color:plOohTrafficMode==="panels"?"#c4b5fd":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
+            <button onClick={()=>setPlOohTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:plOohTrafficMode==="units"?"2px solid #16a34a":"1px solid #4a3870",background:plOohTrafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:plOohTrafficMode==="units"?"#4ade80":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
+            <button onClick={()=>setPlOohTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:plOohTrafficMode==="panels"?"2px solid #7c3aed":"1px solid #4a3870",background:plOohTrafficMode==="panels"?"rgba(124,59,237,.15)":"transparent",color:plOohTrafficMode==="panels"?"#c4b5fd":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
             <div style={{marginLeft:"auto",display:"flex",gap:3,alignItems:"center"}}>
               <span style={{fontSize:11,color:"#94a3b8"}}>Type:</span>
-              {(()=>{const types=[...new Set(vendorUnits.map(p=>p.media||p.type).filter(Boolean))].sort();return types.map(t=><button key={t} onClick={()=>setPlOohTypeF(plOohTypeF===t?"":t)} style={{padding:"2px 6px",borderRadius:4,border:plOohTypeF===t?"2px solid #7c3aed":"1px solid #453960",background:plOohTypeF===t?"rgba(124,59,237,.15)":"transparent",color:plOohTypeF===t?"#c4b5fd":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t}</button>)})()}
+              {(()=>{const types=[...new Set(vendorUnits.map(p=>p.media||p.type).filter(Boolean))].sort();return types.map(t=><button key={t} onClick={()=>setPlOohTypeF(plOohTypeF===t?"":t)} style={{padding:"2px 6px",borderRadius:4,border:plOohTypeF===t?"2px solid #7c3aed":"1px solid #4a3870",background:plOohTypeF===t?"rgba(124,59,237,.15)":"transparent",color:plOohTypeF===t?"#c4b5fd":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t}</button>)})()}
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
@@ -3174,7 +3144,7 @@ const App=()=>{
           <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {mktLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} units | Buyer: Ken Lazar | Broadcast: {workMonth}</div>
           {usePanelMode&&plOLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(124,59,237,.08)",borderRadius:5,border:"1px solid rgba(124,59,237,.2)"}}>
             <span style={{fontSize:11,color:"#c4b5fd"}}>Quick assign creative to all {plOLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
-            {plOohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #453960",borderRadius:3,background:"#1c1528",color:"#ede4f5"}}><option value="">-- select --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #453960",borderRadius:3,background:"#1c1528",color:"#ede4f5",width:200}}/>}
+            {plOohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #4a3870",borderRadius:3,background:"#1a1030",color:"#ede4f5"}}><option value="">-- select --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #4a3870",borderRadius:3,background:"#1a1030",color:"#ede4f5",width:200}}/>}
           </div>}
           <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
             <TH w="90">Flight</TH>
@@ -3187,14 +3157,14 @@ const App=()=>{
             <TH>Notes</TH><TH w="30"/>
           </tr></thead>
             <tbody>{plOLines.map((l,i)=>{const bd=usePanelMode?vendorPanels.find(p=>p.panel===l.panel):null;return<tr key={i}>
-              <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={plOPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #453960",borderRadius:3,fontSize:12,background:"#1c1528",color:"#ede4f5"}}/></TD>
-              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #453960",borderRadius:3,background:"#1c1528",color:"#ede4f5"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.mkt} - {p.vendor} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #453960",borderRadius:3,background:"#1c1528",color:"#ede4f5"}}><option value="">-- select creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #453960",borderRadius:3,fontSize:12,background:"#1c1528",color:"#ede4f5"}}/>}</TD>}
-              {usePanelMode&&<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #453960",borderRadius:3,background:"#1c1528",color:"#ede4f5"}}><option value="">-- creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #453960",borderRadius:3,fontSize:11,background:"#1c1528",color:"#ede4f5"}}/>}</TD>}
-              {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #453960",borderRadius:3,background:"#1c1528",color:"#ede4f5"}}><option value="">All</option>{mkts.map(m=><option key={m} value={m}>{m}</option>)}</select></TD>}
-              {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #453960",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1c1528",color:"#ede4f5"}}/></TD>}
-              {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #453960",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1c1528",color:"#ede4f5"}}/></TD>}
-              <TD>{viewChiFaces.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:3,maxWidth:220}}>{viewChiFaces.map(f=>{const sel=(l.faces||[]).includes(f);return<span key={f} onClick={()=>{const cur=l.faces||[];upL(i,"faces",sel?cur.filter(x=>x!==f):[...cur,f])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",fontFamily:"monospace",fontWeight:sel?700:400,background:sel?"#7c3aed":"#2a2240",color:sel?"#fff":"#a89ed4",border:"1px solid "+(sel?"#7c3aed":"#453960"),userSelect:"none"}}>{f}</span>})}<span onClick={()=>{const allSel=viewChiFaces.every(f=>(l.faces||[]).includes(f));upL(i,"faces",allSel?[]:[...viewChiFaces])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",background:"#1c1528",color:"#a89ed4",border:"1px solid #453960",userSelect:"none"}}>{viewChiFaces.every(f=>(l.faces||[]).includes(f))?"none":"all"}</span></div>:<span style={{fontSize:12,color:"#5a4d6b"}}>--</span>}</TD>
-              <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #453960",borderRadius:3,fontSize:12,background:"#1c1528",color:"#ede4f5"}}/></TD>
+              <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={plOPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3870",borderRadius:3,fontSize:12,background:"#1a1030",color:"#ede4f5"}}/></TD>
+              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3870",borderRadius:3,background:"#1a1030",color:"#ede4f5"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.mkt} - {p.vendor} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3870",borderRadius:3,background:"#1a1030",color:"#ede4f5"}}><option value="">-- select creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3870",borderRadius:3,fontSize:12,background:"#1a1030",color:"#ede4f5"}}/>}</TD>}
+              {usePanelMode&&<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3870",borderRadius:3,background:"#1a1030",color:"#ede4f5"}}><option value="">-- creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #4a3870",borderRadius:3,fontSize:11,background:"#1a1030",color:"#ede4f5"}}/>}</TD>}
+              {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3870",borderRadius:3,background:"#1a1030",color:"#ede4f5"}}><option value="">All</option>{mkts.map(m=><option key={m} value={m}>{m}</option>)}</select></TD>}
+              {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #4a3870",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1a1030",color:"#ede4f5"}}/></TD>}
+              {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3870",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1a1030",color:"#ede4f5"}}/></TD>}
+              <TD>{viewChiFaces.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:3,maxWidth:220}}>{viewChiFaces.map(f=>{const sel=(l.faces||[]).includes(f);return<span key={f} onClick={()=>{const cur=l.faces||[];upL(i,"faces",sel?cur.filter(x=>x!==f):[...cur,f])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",fontFamily:"monospace",fontWeight:sel?700:400,background:sel?"#7c3aed":"#251d3d",color:sel?"#fff":"#a89ed4",border:"1px solid "+(sel?"#7c3aed":"#4a3870"),userSelect:"none"}}>{f}</span>})}<span onClick={()=>{const allSel=viewChiFaces.every(f=>(l.faces||[]).includes(f));upL(i,"faces",allSel?[]:[...viewChiFaces])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",background:"#1a1030",color:"#a89ed4",border:"1px solid #4a3870",userSelect:"none"}}>{viewChiFaces.every(f=>(l.faces||[]).includes(f))?"none":"all"}</span></div>:<span style={{fontSize:12,color:"#5a4d6b"}}>--</span>}</TD>
+              <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3870",borderRadius:3,fontSize:12,background:"#1a1030",color:"#ede4f5"}}/></TD>
               <TD>{plOLines.length>1&&<button onClick={()=>delL(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#ef4444"}}>✕</button>}</TD>
             </tr>})}</tbody>
           </table>
@@ -3264,7 +3234,7 @@ const App=()=>{
                     {e.size&&<span style={{fontSize:14,padding:"1px 5px",borderRadius:4,background:"#f0f9ff",color:"#2563eb",fontWeight:600,border:"1px solid #bfdbfe"}}>{e.size}</span>}
                     {e.spec&&<span style={{fontSize:13,color:"#a89ed4"}}>{e.spec}</span>}
                   </div>
-                  {e.units&&<div style={{fontSize:13,color:"#a89ed4",marginTop:2,fontFamily:"monospace",background:"#1c1528",padding:"2px 6px",borderRadius:3,border:"1px solid #e0d9f7"}}>📋 {e.units}</div>}
+                  {e.units&&<div style={{fontSize:13,color:"#a89ed4",marginTop:2,fontFamily:"monospace",background:"#1a1030",padding:"2px 6px",borderRadius:3,border:"1px solid #e0d9f7"}}>📋 {e.units}</div>}
                   {e.start&&<div style={{fontSize:14,color:"#16a34a",marginTop:1}}>▶ Posts {new Date(e.start+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</div>}
                 </div>
                 <div style={{textAlign:"right",flexShrink:0}}>
@@ -3298,7 +3268,7 @@ const App=()=>{
                   </div>
                   <div style={{fontSize:14,color:"#a89ed4",marginTop:3}}>{c.vendor||"Wilkins Media"} · {c.brand||"Postman Law"}</div>
                 </div>
-                {plEditContract===cNum?<div style={{padding:12,background:"#1c1528",display:"flex",flexDirection:"column",gap:6}}>
+                {plEditContract===cNum?<div style={{padding:12,background:"#1a1030",display:"flex",flexDirection:"column",gap:6}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
                     <div><label style={{fontSize:13,fontWeight:600,color:"#a89ed4"}}>Start Date</label><input type="date" value={plEditDates.startDate} onChange={e=>setPlEditDates(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #7c6bc4",borderRadius:4,fontSize:13}}/></div>
                     <div><label style={{fontSize:13,fontWeight:600,color:"#a89ed4"}}>End Date</label><input type="date" value={plEditDates.endDate} onChange={e=>setPlEditDates(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #7c6bc4",borderRadius:4,fontSize:13}}/></div>
@@ -3332,7 +3302,7 @@ const App=()=>{
             })}
           </div>
           {/* Contract timeline bar */}
-          <div style={{marginTop:14,padding:12,background:"#1c1528",borderRadius:8,border:"1px solid #e0d9f7"}}>
+          <div style={{marginTop:14,padding:12,background:"#1a1030",borderRadius:8,border:"1px solid #e0d9f7"}}>
             <div style={{fontSize:13,fontWeight:700,marginBottom:8}}>Contract Timeline</div>
             {plContracts.map(cNum=>{const c=oohContracts[cNum]||{};const cs=contractStatus(c);if(!c.startDate||!c.endDate)return null;
               const start=new Date(c.startDate);const end=new Date(c.endDate);const rangeStart=new Date("2025-10-01");const rangeEnd=new Date("2026-12-31");const total=rangeEnd-rangeStart;
@@ -3342,7 +3312,7 @@ const App=()=>{
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#a89ed4"}}><span style={{fontWeight:700,fontFamily:"monospace"}}>{cNum}</span><span>{cs.label}</span></div>
                 <div style={{position:"relative",height:14,background:"#ede4f5",borderRadius:4,overflow:"hidden"}}>
                   <div style={{position:"absolute",left:left+"%",width:width+"%",height:"100%",background:cs.color+"60",borderRadius:4}}/>
-                  <div style={{position:"absolute",left:nowPos+"%",width:1,height:"100%",background:"#1c1528"}}/>
+                  <div style={{position:"absolute",left:nowPos+"%",width:1,height:"100%",background:"#1a1030"}}/>
                 </div>
               </div>;
             })}
@@ -3395,7 +3365,7 @@ const App=()=>{
     return<Mod title="Register ISCI (Uniform)" onClose={()=>setModal(null)} wide>
       <div style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:7,padding:8,marginBottom:10}}>
         <div style={{fontSize:13,fontWeight:600,color:"#0369a1"}}>AUTO-GENERATED</div>
-        <div style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#1c1528"}}>{prev.length?prev.join(", "):("[DMA]"+f2.brand+yr+durField.padStart(2,"0")+nxt+suf)}</div>
+        <div style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#1a1030"}}>{prev.length?prev.join(", "):("[DMA]"+f2.brand+yr+durField.padStart(2,"0")+nxt+suf)}</div>
         {isOoh&&<div style={{fontSize:14,color:"#0369a1",marginTop:3}}>Format: [DMA][Brand][Year][BoardType][Seq]O</div>}
         {isDisplay&&<div style={{fontSize:14,color:"#ec4899",marginTop:3}}>Format: [DMA][Brand][Year][BannerSize][Seq]B — e.g., CHIPL26MR001B</div>}
         {existingSeq&&<div style={{fontSize:12,color:"#16a34a",marginTop:3,fontWeight:600}}>✓ Title match found — reusing sequence #{existingSeq} ({existingWithTitle.map(i=>i.dma).join(", ")} already registered)</div>}
@@ -3915,7 +3885,7 @@ ${fullText.substring(0,3000)}`}]
                   background:r.status==="success"?"#dcfce7":"#fee2e2",
                   color:r.status==="success"?"#16a34a":"#dc2626"
                 }}>{r.status}</span>
-                {r.type&&<span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:"#1c1528",color:"#a89ed4"}}>{r.type}</span>}
+                {r.type&&<span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:"#1a1030",color:"#a89ed4"}}>{r.type}</span>}
               </div>
               {r.client&&<div style={{fontSize:14,color:"#a89ed4",marginTop:2}}>Client: {r.client}{r.vendor?" · Vendor: "+r.vendor:""}{r.contractNum?" · #"+r.contractNum:""}{r.market?" · "+r.market:""}{r.campaign?" · "+r.campaign:""}</div>}
               {r.error&&<div style={{fontSize:14,color:"#dc2626",marginTop:2}}>{r.error}</div>}
@@ -4140,7 +4110,7 @@ ${fullText.substring(0,3000)}`}]
         {(()=>{const emails=getEstEmailsUnique(draftEst);const linked=getEstStations(draftEst);return<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
           <Cd style={{padding:12}}>
             <div style={{fontSize:14,fontWeight:700,color:"#a89ed4",marginBottom:6}}>RECIPIENTS ({emails.length})</div>
-            <div style={{padding:"6px 8px",background:"#1c1528",borderRadius:6,marginBottom:8,maxHeight:120,overflowY:"auto"}}>
+            <div style={{padding:"6px 8px",background:"#1a1030",borderRadius:6,marginBottom:8,maxHeight:120,overflowY:"auto"}}>
               {emails.map(e=><div key={e} style={{fontSize:14,fontFamily:"monospace",padding:"2px 0"}}>{e}</div>)}
             </div>
             <div style={{display:"flex",gap:4}}>
@@ -4156,7 +4126,7 @@ ${fullText.substring(0,3000)}`}]
             </div>
             <div style={{marginBottom:6}}>
               <div style={{fontSize:14,fontWeight:700,color:"#a89ed4",marginBottom:2}}>BODY</div>
-              <div style={{padding:"10px 12px",borderRadius:5,border:"1px solid #7c6bc4",background:"#fff",minHeight:150,maxHeight:300,overflowY:"auto",fontSize:13,color:"#1c1528",lineHeight:1.6}} dangerouslySetInnerHTML={{__html:(typeof DOMPurify!=='undefined'?DOMPurify.sanitize(draftBody):draftBody.replace(/</g,'&lt;').replace(/>/g,'&gt;'))}}/>
+              <div style={{padding:"10px 12px",borderRadius:5,border:"1px solid #7c6bc4",background:"#fff",minHeight:150,maxHeight:300,overflowY:"auto",fontSize:13,color:"#1a1030",lineHeight:1.6}} dangerouslySetInnerHTML={{__html:(typeof DOMPurify!=='undefined'?DOMPurify.sanitize(draftBody):draftBody.replace(/</g,'&lt;').replace(/>/g,'&gt;'))}}/>
             </div>
             <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
               <Btn small onClick={()=>{copyText(draftSubj,"subject")}}>Copy Subject</Btn>
@@ -4192,7 +4162,7 @@ ${fullText.substring(0,3000)}`}]
       {viewMode==="byEst"&&<Cd style={{padding:10}}>
         <div style={{fontSize:14,fontWeight:700,marginBottom:6}}>Quick Copy by Market</div>
         <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-          {[...new Set(stations.map(s=>s.brand+"|"+s.market))].sort().map(key=>{const[brand,market]=key.split("|");const mStations=stations.filter(s=>s.brand===brand&&s.market===market);const mEmails=[...new Set(mStations.flatMap(s=>parseEmails(s.contact)))];return mEmails.length>0&&<button key={key} onClick={()=>copyText(mEmails.join("; "),brand+" "+market+" ("+mEmails.length+")")} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #7c6bc4",background:"#1c1528",fontSize:14,fontWeight:600,cursor:"pointer",color:"#a89ed4"}}>{brand==="Postman Law"?"PL":"WK"} {market} <span style={{color:"#3b82f6"}}>({mEmails.length})</span></button>})}
+          {[...new Set(stations.map(s=>s.brand+"|"+s.market))].sort().map(key=>{const[brand,market]=key.split("|");const mStations=stations.filter(s=>s.brand===brand&&s.market===market);const mEmails=[...new Set(mStations.flatMap(s=>parseEmails(s.contact)))];return mEmails.length>0&&<button key={key} onClick={()=>copyText(mEmails.join("; "),brand+" "+market+" ("+mEmails.length+")")} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #7c6bc4",background:"#1a1030",fontSize:14,fontWeight:600,cursor:"pointer",color:"#a89ed4"}}>{brand==="Postman Law"?"PL":"WK"} {market} <span style={{color:"#3b82f6"}}>({mEmails.length})</span></button>})}
         </div>
       </Cd>}
     </div>;
@@ -4317,7 +4287,7 @@ ${fullText.substring(0,3000)}`}]
 
     const FiltSel=({label,value,onChange,options})=><div style={{display:"flex",flexDirection:"column",gap:2}}>
       <label style={{fontSize:14,fontWeight:700,color:"#a89ed4",textTransform:"uppercase",letterSpacing:.5}}>{label}</label>
-      <select value={value} onChange={e=>onChange(e.target.value)} style={{padding:"4px 6px",borderRadius:5,border:"1px solid #7c6bc4",fontSize:13,fontWeight:600,background:"#1c1528",color:"#a89ed4"}}>
+      <select value={value} onChange={e=>onChange(e.target.value)} style={{padding:"4px 6px",borderRadius:5,border:"1px solid #7c6bc4",fontSize:13,fontWeight:600,background:"#1a1030",color:"#a89ed4"}}>
         <option value="all">All</option>
         {options.map(o=><option key={o} value={o}>{o}</option>)}
       </select>
@@ -4328,15 +4298,15 @@ ${fullText.substring(0,3000)}`}]
         <div><h1 style={{fontSize:24,fontWeight:800,margin:0}}>Metrics</h1><div style={{fontSize:13,color:"#a89ed4"}}>Creative Intelligence · Traffic Tracking · Performance</div></div>
         <div style={{display:"flex",gap:4}}>
           {[["mix","Creative Mix"],["tracking","Traffic Tracking"],["savings","Time Savings"]].map(([k,l])=>
-            <button key={k} onClick={()=>setView(k)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(view===k?"#2563eb":"#ede4f5"),background:view===k?"#2563eb":"#2a2240",color:view===k?"#fff":"#453960",fontSize:13,fontWeight:700,cursor:"pointer"}}>{l}</button>
+            <button key={k} onClick={()=>setView(k)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(view===k?"#2563eb":"#ede4f5"),background:view===k?"#2563eb":"#251d3d",color:view===k?"#fff":"#4a3870",fontSize:13,fontWeight:700,cursor:"pointer"}}>{l}</button>
           )}
         </div>
       </div>
 
       {/* BRAND TABS */}
       <div style={{display:"flex",gap:0,marginBottom:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=fBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";const ct=trackingData.filter(d=>d.brand===b).length;return<button key={b} onClick={()=>{setFBrand(b);setFMarket("all");setFMedia("all");setFMonth("all")}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#453960"),borderBottom:active?"none":"2px solid #453960",background:active?"#2a2240":"#1c1528",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b==="Postman Law"?"PL":"WK"} — {b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
-        <div style={{flex:1,borderBottom:"2px solid #453960"}}/>
+        {["Postman Law","Wettermark Keith"].map(b=>{const active=fBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";const ct=trackingData.filter(d=>d.brand===b).length;return<button key={b} onClick={()=>{setFBrand(b);setFMarket("all");setFMedia("all");setFMonth("all")}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b==="Postman Law"?"PL":"WK"} — {b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
+        <div style={{flex:1,borderBottom:"2px solid #4a3870"}}/>
       </div>
       {/* FILTERS */}
       <Cd style={{padding:10,marginBottom:12,borderRadius:"0 8px 8px 8px",borderTop:"2px solid "+(fBrand==="Postman Law"?"#dc2626":"#2563eb")}}>
@@ -4344,7 +4314,7 @@ ${fullText.substring(0,3000)}`}]
           <FiltSel label="Market" value={fMarket} onChange={setFMarket} options={markets}/>
           <FiltSel label="Media" value={fMedia} onChange={setFMedia} options={medias}/>
           <FiltSel label="Month" value={fMonth} onChange={setFMonth} options={months}/>
-          <button onClick={()=>{setFMarket("all");setFMedia("all");setFMonth("all")}} style={{padding:"4px 10px",borderRadius:5,border:"1px solid #e0d9f7",background:"#1c1528",fontSize:14,fontWeight:600,cursor:"pointer",color:"#a89ed4",alignSelf:"end"}}>Clear</button>
+          <button onClick={()=>{setFMarket("all");setFMedia("all");setFMonth("all")}} style={{padding:"4px 10px",borderRadius:5,border:"1px solid #e0d9f7",background:"#1a1030",fontSize:14,fontWeight:600,cursor:"pointer",color:"#a89ed4",alignSelf:"end"}}>Clear</button>
           <div style={{marginLeft:"auto",fontSize:14,color:"#a89ed4",alignSelf:"end"}}>{filtered.length} records</div>
         </div>
       </Cd>
@@ -4369,7 +4339,7 @@ ${fullText.substring(0,3000)}`}]
               const pct=totalMix>0?Math.round((m.count/totalMix)*100):0;
               return<div key={m.tag} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
                 <div style={{width:130,fontSize:13,fontWeight:700,color:"#a89ed4",textAlign:"right",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.tag}</div>
-                <div style={{flex:1,height:22,background:"#1c1528",borderRadius:6,overflow:"hidden",position:"relative"}}>
+                <div style={{flex:1,height:22,background:"#1a1030",borderRadius:6,overflow:"hidden",position:"relative"}}>
                   <div style={{height:"100%",width:pct+"%",background:colors[i%colors.length],borderRadius:6,transition:"width .5s",minWidth:pct>0?2:0}}/>
                   {pct>8&&<span style={{position:"absolute",left:8,top:3,fontSize:15,fontWeight:800,color:"#fff"}}>{pct}%</span>}
                 </div>
@@ -4386,7 +4356,7 @@ ${fullText.substring(0,3000)}`}]
               {Object.entries(byMarket).sort().map(([mkt,tags])=>{
                 const mktTotal=Object.values(tags).reduce((s,v)=>s+v,0);
                 const sorted=Object.entries(tags).sort((a,b)=>b[1]-a[1]);
-                return<div key={mkt} style={{background:"#1c1528",borderRadius:8,padding:10,border:"1px solid #e0d9f7"}}>
+                return<div key={mkt} style={{background:"#1a1030",borderRadius:8,padding:10,border:"1px solid #e0d9f7"}}>
                   <div style={{fontSize:14,fontWeight:800,marginBottom:6}}>{DM[mkt]||mkt}</div>
                   {sorted.slice(0,5).map(([tag,cnt],i)=>{
                     const p=Math.round((cnt/mktTotal)*100);
@@ -4470,7 +4440,7 @@ ${fullText.substring(0,3000)}`}]
                         {/* Stations row */}
                         {stas.length>0?<div style={{display:"flex",gap:3,flexWrap:"wrap",marginTop:4}}>
                           <span style={{fontSize:10,color:"#64748b",fontWeight:600,alignSelf:"center"}}>{confCount}/{stas.length} confirmed →</span>
-                          {stas.map(call=>{const ok=conf[call]?.confirmed;return<span key={call} title={ok?"Confirmed "+new Date(conf[call].ts).toLocaleString():call+" — pending"} style={{fontSize:11,fontWeight:600,padding:"1px 5px",borderRadius:3,background:ok?"rgba(22,163,98,.12)":"rgba(100,116,139,.08)",color:ok?"#4ade80":"#94a3b8",border:ok?"1px solid #16a34a33":"1px solid #45396044",cursor:"help"}}>{ok?"✓":"○"} {call}</span>})}
+                          {stas.map(call=>{const ok=conf[call]?.confirmed;return<span key={call} title={ok?"Confirmed "+new Date(conf[call].ts).toLocaleString():call+" — pending"} style={{fontSize:11,fontWeight:600,padding:"1px 5px",borderRadius:3,background:ok?"rgba(22,163,98,.12)":"rgba(100,116,139,.08)",color:ok?"#4ade80":"#94a3b8",border:ok?"1px solid #16a34a33":"1px solid #4a387044",cursor:"help"}}>{ok?"✓":"○"} {call}</span>})}
                         </div>:<div style={{fontSize:11,color:"#64748b",marginTop:3,fontStyle:"italic"}}>{h.status==="imported"?"Imported — no stations assigned yet":"No stations"}</div>}
                         {/* ISCIs summary */}
                         <div style={{fontSize:11,color:"#64748b",marginTop:3}}>{(h.iscis||[]).length} ISCIs{h.buyer?" · "+h.buyer:""}{h.ts?" · "+new Date(h.ts).toLocaleDateString():""}</div>
@@ -4490,7 +4460,7 @@ ${fullText.substring(0,3000)}`}]
       })()}
       {/* TIME SAVINGS VIEW */}
       {view==="savings"&&<div>
-        <Cd style={{padding:24,marginBottom:14,background:"linear-gradient(135deg,#1c1528,#1e3a5f)",color:"#fff",border:"none"}}>
+        <Cd style={{padding:24,marginBottom:14,background:"linear-gradient(135deg,#1a1030,#1e3a5f)",color:"#fff",border:"none"}}>
           <div style={{fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:1.5,color:"#a89ed4",marginBottom:14}}>⏱ Estimated Time Savings</div>
           <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
             <div><div style={{fontSize:48,fontWeight:900,color:"#4ade80",lineHeight:1}}>{savedHrs}<span style={{fontSize:20}}>hrs</span></div><div style={{fontSize:13,color:"#a89ed4",marginTop:4}}>time saved</div></div>
@@ -4676,14 +4646,14 @@ ${fullText.substring(0,3000)}`}]
     const bldHtml=(h)=>{
       const bc=h.brand==="Postman Law"?"#dc2626":"#2563eb";
       const lg=h.brand==="Postman Law"?LOGO_PL:LOGO_WK;
-      let x='<html><head><style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}body{padding:28px;background:#fff;color:#1c1528}table{width:100%;border-collapse:collapse;margin-top:14px}th{background:#f3edf9;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#5a4d6b}td{padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)}.grp{font-weight:700;font-size:11px;text-transform:uppercase;padding:5px 9px;color:#333}.sig{margin-top:36px;border-top:2px solid '+bc+';padding-top:8px}.note{background:#fef2f2;padding:7px;font-size:10px;color:#dc2626;margin-top:6px}</style></head><body>';
+      let x='<html><head><style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}body{padding:28px;background:#fff;color:#1a1030}table{width:100%;border-collapse:collapse;margin-top:14px}th{background:#f3edf9;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#5a4d6b}td{padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)}.grp{font-weight:700;font-size:11px;text-transform:uppercase;padding:5px 9px;color:#333}.sig{margin-top:36px;border-top:2px solid '+bc+';padding-top:8px}.note{background:#fef2f2;padding:7px;font-size:10px;color:#dc2626;margin-top:6px}</style></head><body>';
       const hd=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+v+'</span></div>';
       x+='<div style="text-align:center;margin-bottom:14px"><img src="'+lg+'" style="height:48px"/></div>';
       x+=hd("Agency",h.brand==="Wettermark Keith"?"WK Advertising Solutions":h.brand==="Postman Law"?"Blackacre Services":"Atticor");
       x+=hd("Client",h.brand,bc);x+=hd("Market",(DM[normMkt(h.market)]||h.market)+(normMkt(h.market)?" ("+normMkt(h.market)+")":""));x+=hd("Buyer",h.buyer,"#d97706");
       x+=hd("Media",h.media,h.isOoh?"#d97706":"#2563eb");x+=hd("Broadcast Month",h.month,"#dc2626");
-      if(h.isOoh&&h.postDates)x+=hd("Post Dates",h.postDates,"#1c1528");
-      else if(h.flight)x+=hd("Flight Dates",h.flight,"#1c1528");
+      if(h.isOoh&&h.postDates)x+=hd("Post Dates",h.postDates,"#1a1030");
+      else if(h.flight)x+=hd("Flight Dates",h.flight,"#1a1030");
       if(h.isOoh&&h.versionLinks)x+=hd("Version/ Links",h.versionLinks);
       else x+=hd("Version/ Links","Version "+h.version+" / "+h.market+" Assets");
       if(h.comments)x+=hd("Comments",h.comments);
@@ -4730,7 +4700,7 @@ ${fullText.substring(0,3000)}`}]
         });
         x+='</tbody></table>';
         if(displayIscis.length>0){
-          x+='<div style="border-top:2px solid #1c1528;padding-top:8px;margin-top:14px"><b style="font-size:13px">DISPLAY BANNERS</b> <span style="font-size:9px;color:#555">(Placement: ESPNweb)</span></div>';
+          x+='<div style="border-top:2px solid #1a1030;padding-top:8px;margin-top:14px"><b style="font-size:13px">DISPLAY BANNERS</b> <span style="font-size:9px;color:#555">(Placement: ESPNweb)</span></div>';
           var dispDmas2=[...new Set(displayIscis.map(function(r){var m=r.code?r.code.match(/^([A-Z]{3})/):null;return m?m[1]:""}).filter(Boolean))].sort();
           dispDmas2.forEach(function(d){
             var dmaName=DM[d]||d;
@@ -4829,7 +4799,7 @@ ${fullText.substring(0,3000)}`}]
           {r.parsed&&<span style={{fontSize:12,color:"#a89ed4",marginLeft:8}}>{r.parsed.brand} · {r.parsed.market} · {r.parsed.media} · {r.parsed.month} · {r.parsed.iscis.length} ISCIs</span>}
           {r.status==="duplicate"&&r.existing&&<span style={{fontSize:11,color:"#d97706",marginLeft:8}}>Already exists as v{r.existing.version}</span>}
           {!r.parsed&&<span style={{fontSize:12,color:"#dc2626",marginLeft:8}}>Could not parse</span>}</div>
-          {r.text&&<details style={{marginTop:4}}><summary style={{fontSize:11,color:"#64748b",cursor:"pointer"}}>Show extracted text</summary><pre style={{fontSize:10,color:"#64748b",background:"#1c1528",padding:6,borderRadius:4,maxHeight:200,overflow:"auto",whiteSpace:"pre-wrap",marginTop:4}}>{r.text}</pre></details>}
+          {r.text&&<details style={{marginTop:4}}><summary style={{fontSize:11,color:"#64748b",cursor:"pointer"}}>Show extracted text</summary><pre style={{fontSize:10,color:"#64748b",background:"#1a1030",padding:6,borderRadius:4,maxHeight:200,overflow:"auto",whiteSpace:"pre-wrap",marginTop:4}}>{r.text}</pre></details>}
         </div>)}
       </div>}
     </div>;
@@ -4837,7 +4807,7 @@ ${fullText.substring(0,3000)}`}]
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
         <div><h1 style={{fontSize:24,fontWeight:800,margin:0}}>Traffic Library</h1><div style={{fontSize:13,color:"#a89ed4"}}>{trafficHistory.length} instructions · {[...new Set(trafficHistory.map(h=>h.brand))].length} brands · {[...new Set(trafficHistory.map(h=>normMkt(h.market)||h.market))].length} markets</div></div>
         <div style={{display:"flex",gap:6}}>
-          <button onClick={()=>{const rows=[["Brand","Market","Media","Month","Version","Buyer","ISCI","Title","Duration","Pct","Schedule","Bookend","Units"].join(","),...trafficHistory.flatMap(h=>(h.iscis||[]).map(r=>[h.brand,h.market,h.media,h.month,h.version,h.buyer,r.code,r.title,r.dur,r.pct,r.sched,r.bookend||"",r.units||""].join(",")))];const blob=new Blob([rows.join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="traffic_library_"+new Date().toISOString().slice(0,10)+".csv";a.click()}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #7c6bc4",background:"#1c1528",fontSize:13,fontWeight:700,cursor:"pointer",color:"#a89ed4"}}>Export CSV</button>
+          <button onClick={()=>{const rows=[["Brand","Market","Media","Month","Version","Buyer","ISCI","Title","Duration","Pct","Schedule","Bookend","Units"].join(","),...trafficHistory.flatMap(h=>(h.iscis||[]).map(r=>[h.brand,h.market,h.media,h.month,h.version,h.buyer,r.code,r.title,r.dur,r.pct,r.sched,r.bookend||"",r.units||""].join(",")))];const blob=new Blob([rows.join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="traffic_library_"+new Date().toISOString().slice(0,10)+".csv";a.click()}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #7c6bc4",background:"#1a1030",fontSize:13,fontWeight:700,cursor:"pointer",color:"#a89ed4"}}>Export CSV</button>
           <button onClick={sendConfirmReminders} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #f59e0b",background:"rgba(245,158,11,.12)",fontSize:13,fontWeight:700,cursor:"pointer",color:"#f59e0b"}}>🔔 Send Reminders</button>
           <button onClick={()=>setShowImport(!showImport)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(showImport?"#dc2626":"#7c3aed"),background:showImport?"#fef2f2":"#f5f3ff",color:showImport?"#dc2626":"#7c3aed",fontSize:13,fontWeight:700,cursor:"pointer"}}>{showImport?"Cancel":"+ Import"}</button>
         </div>
@@ -4848,14 +4818,14 @@ ${fullText.substring(0,3000)}`}]
       </Cd>}
       {/* Brand Tabs */}
       <div style={{display:"flex",gap:0,marginBottom:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=libBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";const ct=trafficHistory.filter(h=>h.brand===b).length;return<button key={b} onClick={()=>setLibBrand(b)} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#453960"),borderBottom:active?"none":"2px solid #453960",background:active?"#2a2240":"#1c1528",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b==="Postman Law"?"PL":"WK"} — {b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
-        <div style={{flex:1,borderBottom:"2px solid #453960"}}/>
+        {["Postman Law","Wettermark Keith"].map(b=>{const active=libBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";const ct=trafficHistory.filter(h=>h.brand===b).length;return<button key={b} onClick={()=>setLibBrand(b)} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b==="Postman Law"?"PL":"WK"} — {b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
+        <div style={{flex:1,borderBottom:"2px solid #4a3870"}}/>
       </div>
       {/* Search + archive bar */}
       <Cd style={{padding:10,marginBottom:12,borderRadius:"0 8px 8px 8px",borderTop:"2px solid "+bc2}}>
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-          <input value={libSearch} onChange={e=>setLibSearchLocal(e.target.value)} placeholder="Search ISCIs, markets, buyers..." style={{padding:"4px 10px",borderRadius:5,border:"1px solid #7c6bc4",fontSize:13,background:"#1c1528",color:"#ede4f5",outline:"none",flex:"1 1 200px"}}/>
-          <button onClick={()=>setShowArchived(!showArchived)} style={{padding:"3px 10px",borderRadius:5,border:"1px solid "+(showArchived?"#f59e0b":"#453960"),background:showArchived?"rgba(245,158,11,.12)":"transparent",fontSize:12,fontWeight:600,cursor:"pointer",color:showArchived?"#f59e0b":"#64748b"}}>📦 {showArchived?"Archived ("+archivedCount+")":archivedCount+" archived"}</button>
+          <input value={libSearch} onChange={e=>setLibSearchLocal(e.target.value)} placeholder="Search ISCIs, markets, buyers..." style={{padding:"4px 10px",borderRadius:5,border:"1px solid #7c6bc4",fontSize:13,background:"#1a1030",color:"#ede4f5",outline:"none",flex:"1 1 200px"}}/>
+          <button onClick={()=>setShowArchived(!showArchived)} style={{padding:"3px 10px",borderRadius:5,border:"1px solid "+(showArchived?"#f59e0b":"#4a3870"),background:showArchived?"rgba(245,158,11,.12)":"transparent",fontSize:12,fontWeight:600,cursor:"pointer",color:showArchived?"#f59e0b":"#64748b"}}>📦 {showArchived?"Archived ("+archivedCount+")":archivedCount+" archived"}</button>
           <span style={{fontSize:13,color:"#a89ed4"}}>{searched.length} shown</span>
         </div>
       </Cd>
@@ -4873,7 +4843,7 @@ ${fullText.substring(0,3000)}`}]
                 if(!moMkData.length)return null;
                 const mediaHave=moMkData.map(h=>h.media);
                 const mediaMissing=allBrandMedias.filter(med=>!mediaHave.includes(med));
-                return<div key={mo} style={{marginBottom:4,paddingBottom:4,borderBottom:"1px solid #2a2240"}}>
+                return<div key={mo} style={{marginBottom:4,paddingBottom:4,borderBottom:"1px solid #251d3d"}}>
                   <div style={{fontSize:11,fontWeight:700,color:"#ede4f5"}}>{mo}</div>
                   <div style={{display:"flex",gap:3,flexWrap:"wrap",marginTop:2}}>
                     {allBrandMedias.map(med=>{const has=mediaHave.includes(med);return<span key={med} style={{fontSize:10,padding:"1px 4px",borderRadius:3,background:has?"rgba(74,222,128,.15)":"rgba(248,113,113,.15)",color:has?"#4ade80":"#f87171",fontWeight:600}}>{has?"✓":"✗"} {med}</span>})}
@@ -4901,7 +4871,7 @@ ${fullText.substring(0,3000)}`}]
                 const gIdx=trafficHistory.findIndex(orig=>orig.ts===h.ts&&orig.est===h.est&&(normMkt(orig.market)||orig.market)===h.market&&orig.month===h.month&&orig.media===h.media);
                 const isOpen=historyPreviewIdx===gIdx;
                 const isTTWN=(h.est||"").includes("TTWN")||h.media==="Streaming Audio"&&(h.iscis||[]).some(r=>(r.code||"").includes("TTWN"));
-                return<div key={hi} style={{padding:"6px 0 6px 12px",borderBottom:"1px solid #2a2240"}}>
+                return<div key={hi} style={{padding:"6px 0 6px 12px",borderBottom:"1px solid #251d3d"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div style={{display:"flex",gap:8,alignItems:"center",flex:1,flexWrap:"wrap"}}>
                       <span style={{fontSize:13,fontWeight:800,color:MC[h.market]||"#ede4f5",minWidth:36}}>{h.market}</span>
@@ -4920,7 +4890,7 @@ ${fullText.substring(0,3000)}`}]
                     <div style={{display:"flex",gap:4}}>
                       <button onClick={()=>setEditTrafficIdx(gIdx)} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #d97706",background:"rgba(217,119,6,.1)",color:"#fbbf24",fontSize:12,fontWeight:600,cursor:"pointer"}}>Edit</button>
                       <button onClick={()=>setHistoryPreviewIdx(isOpen?null:gIdx)} style={{padding:"2px 8px",borderRadius:4,border:"none",background:isOpen?"#dc2626":"#2563eb",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>{isOpen?"Close":"View"}</button>
-                      <button onClick={()=>{const html=bldHtml(h);const w=window.open("","","width=850,height=950");w.document.write(html);w.document.close();w.print()}} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #7c6bc4",background:"#1c1528",color:"#a89ed4",fontSize:12,fontWeight:600,cursor:"pointer"}}>Print</button>
+                      <button onClick={()=>{const html=bldHtml(h);const w=window.open("","","width=850,height=950");w.document.write(html);w.document.close();w.print()}} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #7c6bc4",background:"#1a1030",color:"#a89ed4",fontSize:12,fontWeight:600,cursor:"pointer"}}>Print</button>
                       <button onClick={async()=>{
                         var isCopied=h.status==="copied";
                         var resendNote=isCopied?"":prompt("Add a note to this email (optional):")||"";
@@ -4988,7 +4958,7 @@ ${fullText.substring(0,3000)}`}]
                         const copy={...h,ts:new Date().toISOString(),est:newEst,month:newMonth,flight:newFlight,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:"Copied from "+h.month};setTrafficHistory(p=>[copy,...p]);log("Traffic Copied",h.brand+" "+h.market+" "+h.media+" "+h.month+" → "+newMonth+" (Est "+newEst+")");notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);e.target.value=""}} style={{padding:"2px 4px",borderRadius:4,border:"1px solid #d97706",background:"rgba(217,119,6,.1)",color:"#fbbf24",fontSize:11,fontWeight:600,cursor:"pointer"}}><option value="">Copy to...</option>{CALENDAR.map(c=><option key={c.month} value={c.month}>{c.month}</option>)}</select>
                     </div>
                   </div>
-                  {isOpen&&<div style={{marginTop:8,border:"1px solid #453960",borderRadius:6,overflow:"hidden"}}><iframe srcDoc={bldHtml(h)} style={{width:"100%",height:500,border:"none",background:"#fff"}}/></div>}
+                  {isOpen&&<div style={{marginTop:8,border:"1px solid #4a3870",borderRadius:6,overflow:"hidden"}}><iframe srcDoc={bldHtml(h)} style={{width:"100%",height:500,border:"none",background:"#fff"}}/></div>}
                 </div>
               })}
             </div>
@@ -5139,8 +5109,8 @@ Be direct and actionable. No generic advice.`;
       </div>
       {/* Brand Tabs */}
       <div style={{display:"flex",gap:0,marginBottom:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";return<button key={b} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null)}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#453960"),borderBottom:active?"none":"2px solid #453960",background:active?"#2a2240":"#1c1528",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b==="Postman Law"?"PL":"WK"} — {b}</button>})}
-        <div style={{flex:1,borderBottom:"2px solid #453960"}}/>
+        {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";return<button key={b} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null)}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b==="Postman Law"?"PL":"WK"} — {b}</button>})}
+        <div style={{flex:1,borderBottom:"2px solid #4a3870"}}/>
       </div>
       <Cd style={{padding:16,borderRadius:"0 8px 8px 8px",borderTop:"2px solid "+bc}}>
         {/* Quick stats */}
@@ -5159,11 +5129,11 @@ Be direct and actionable. No generic advice.`;
             <div style={{padding:"8px 14px",borderRadius:6,background:bc+"12",flex:1,minWidth:120}}><div style={{fontSize:20,fontWeight:800,color:tagged===bi.length?"#16a34a":"#f59e0b"}}>{tagged}/{bi.length}</div><div style={{fontSize:11,color:"#a89ed4"}}>ISCIs Tagged</div></div>
           </div>
         })()}
-        <button onClick={runPlanner} disabled={planLoading} style={{padding:"10px 24px",borderRadius:8,border:"none",background:planLoading?"#453960":bc,color:"#fff",fontSize:14,fontWeight:800,cursor:planLoading?"wait":"pointer",marginBottom:14}}>
+        <button onClick={runPlanner} disabled={planLoading} style={{padding:"10px 24px",borderRadius:8,border:"none",background:planLoading?"#4a3870":bc,color:"#fff",fontSize:14,fontWeight:800,cursor:planLoading?"wait":"pointer",marginBottom:14}}>
           {planLoading?"🔄 Analyzing...":"🧠 Run AI Analysis for "+planBrand}
         </button>
         {planError&&<div style={{padding:10,borderRadius:6,background:"#fef2f2",color:"#dc2626",fontSize:13,marginBottom:12}}>Error: {planError}</div>}
-        {planResult&&<div style={{padding:16,borderRadius:8,background:"#1c1528",border:"1px solid #453960",whiteSpace:"pre-wrap",fontSize:13,lineHeight:1.6,color:"#ede4f5",maxHeight:"calc(100vh - 400px)",overflowY:"auto"}}>
+        {planResult&&<div style={{padding:16,borderRadius:8,background:"#1a1030",border:"1px solid #4a3870",whiteSpace:"pre-wrap",fontSize:13,lineHeight:1.6,color:"#ede4f5",maxHeight:"calc(100vh - 400px)",overflowY:"auto"}}>
           {planResult.split("\n").map((line,i)=>{
             if(line.startsWith("# "))return<div key={i} style={{fontSize:18,fontWeight:800,color:"#f3edf9",marginTop:16,marginBottom:4}}>{line.replace(/^#+\s*/,"")}</div>;
             if(line.startsWith("## "))return<div key={i} style={{fontSize:15,fontWeight:700,color:bc,marginTop:12,marginBottom:4}}>{line.replace(/^#+\s*/,"")}</div>;
@@ -5231,15 +5201,15 @@ Be direct and actionable. No generic advice.`;
       </div>;
     };
     const calAlerts=(()=>{const now=new Date();const wk=new Date(now.getTime()+7*864e5);return OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length})();
-    return<div style={{display:"flex",height:"100vh",background:"#1c1528",color:"#ede4f5"}}>
-      <div style={{width:200,background:"#1c1528",borderRight:"1px solid #2a2240",display:"flex",flexDirection:"column",flexShrink:0}}>
-        <div style={{padding:"14px 11px",borderBottom:"1px solid #2a2240"}}>
+    return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1a1030 0%,#2d1f4e 50%,#1a1030 100%)",color:"#ede4f5"}}>
+      <div style={{width:200,background:"linear-gradient(180deg,#1a1030 0%,#201540 50%,#1a1030 100%)",borderRight:"1px solid rgba(124,58,237,.12)",display:"flex",flexDirection:"column",flexShrink:0}}>
+        <div style={{padding:"14px 11px",borderBottom:"1px solid #251d3d"}}>
           <div style={{fontSize:16,fontWeight:800,letterSpacing:1,color:"#d97706"}}>OOH HUB</div>
           <div style={{fontSize:11,color:"#a89ed4",letterSpacing:2,fontWeight:600}}>OUTDOOR MEDIA</div>
         </div>
-        <nav style={{flex:1,padding:"3px 0"}}>{oohNav.map(n=>{const a=subRoute===n.id;const badge=n.id==="pl"&&calAlerts?calAlerts:null;return<button key={n.id} onClick={()=>navigateHash("ooh/"+n.id)} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"6px 11px",border:"none",background:a?"#2a2240":"transparent",color:a?"#fff":"#9ca3af",fontSize:13,fontWeight:a?600:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #d97706":"3px solid transparent",position:"relative"}}><span style={{fontSize:13}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:14,fontWeight:800,padding:"1px 5px",borderRadius:8,background:"#f59e0b",color:"#fff"}}>{badge}</span>}</button>})}</nav>
-        <div style={{padding:"8px 11px",borderTop:"1px solid #2a2240"}}>
-          <button onClick={()=>{navigateHash("");setPg("dash")}} style={{display:"flex",alignItems:"center",gap:6,width:"100%",padding:"6px 8px",border:"1px solid #453960",borderRadius:6,background:"transparent",color:"#a89ed4",fontSize:13,fontWeight:600,cursor:"pointer"}}>← Back to D&D</button>
+        <nav style={{flex:1,padding:"3px 0"}}>{oohNav.map(n=>{const a=subRoute===n.id;const badge=n.id==="pl"&&calAlerts?calAlerts:null;return<button key={n.id} onClick={()=>navigateHash("ooh/"+n.id)} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"6px 11px",border:"none",background:a?"#251d3d":"transparent",color:a?"#fff":"#9ca3af",fontSize:13,fontWeight:a?600:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #d97706":"3px solid transparent",position:"relative"}}><span style={{fontSize:13}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:14,fontWeight:800,padding:"1px 5px",borderRadius:8,background:"#f59e0b",color:"#fff"}}>{badge}</span>}</button>})}</nav>
+        <div style={{padding:"8px 11px",borderTop:"1px solid #251d3d"}}>
+          <button onClick={()=>{navigateHash("");setPg("dash")}} style={{display:"flex",alignItems:"center",gap:6,width:"100%",padding:"6px 8px",border:"1px solid #4a3870",borderRadius:6,background:"transparent",color:"#a89ed4",fontSize:13,fontWeight:600,cursor:"pointer"}}>← Back to D&D</button>
         </div>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:16}}>
@@ -5261,20 +5231,20 @@ Be direct and actionable. No generic advice.`;
         <div style={{fontSize:14,color:"#a89ed4"}}>{auditLog.length} entries</div>
       </div>
       <Cd style={{padding:0,overflow:"hidden"}}>
-        <div style={{padding:"10px 16px",borderBottom:"1px solid #e0d9f7",background:"#1c1528",display:"flex",gap:16,fontSize:14,color:"#a89ed4"}}>
+        <div style={{padding:"10px 16px",borderBottom:"1px solid #e0d9f7",background:"#1a1030",display:"flex",gap:16,fontSize:14,color:"#a89ed4"}}>
           <span>Admin: <b style={{color:"#dc2626"}}>{auditLog.filter(l=>l.a.includes("ADMIN")).length}</b></span>
           <span>Emails: <b style={{color:"#2563eb"}}>{auditLog.filter(l=>l.a.includes("Email")||l.a.includes("Reminder")).length}</b></span>
           <span>Imports: <b style={{color:"#16a34a"}}>{auditLog.filter(l=>l.a.includes("Import")||l.a.includes("Bulk")).length}</b></span>
           <span>Edits: <b style={{color:"#7c3aed"}}>{auditLog.filter(l=>l.a.includes("Edit")||l.a.includes("Revised")).length}</b></span>
         </div>
         <div style={{maxHeight:600,overflowY:"auto"}}>
-          {auditLog.length?auditLog.slice(0,200).map((l,i)=><div key={i} style={{display:"flex",gap:10,padding:"7px 16px",borderBottom:"1px solid #453960",alignItems:"center",fontSize:13}}>
+          {auditLog.length?auditLog.slice(0,200).map((l,i)=><div key={i} style={{display:"flex",gap:10,padding:"7px 16px",borderBottom:"1px solid #4a3870",alignItems:"center",fontSize:13}}>
             <span style={{color:"#a89ed4",fontFamily:"monospace",fontSize:13,width:85,flexShrink:0}}>{new Date(l.ts).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span>
             <span style={{padding:"1px 6px",borderRadius:4,background:l.a.includes("ADMIN")?"#fef2f2":l.a.includes("Email")||l.a.includes("Reminder")?"#eff6ff":l.a.includes("Import")||l.a.includes("Bulk")?"#f0fdf4":"#f8fafc",color:l.a.includes("ADMIN")?"#dc2626":l.a.includes("Email")||l.a.includes("Reminder")?"#2563eb":l.a.includes("Import")||l.a.includes("Bulk")?"#16a34a":"#5a4d6b",fontSize:13,fontWeight:700,whiteSpace:"nowrap"}}>{l.a}</span>
             <span style={{color:"#a89ed4",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.d}</span>
           </div>):<div style={{padding:30,textAlign:"center",color:"#a89ed4",fontSize:14,fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div>}
         </div>
-        {auditLog.length>200&&<div style={{padding:8,textAlign:"center",fontSize:13,color:"#a89ed4",borderTop:"1px solid #453960"}}>Showing 200 of {auditLog.length}</div>}
+        {auditLog.length>200&&<div style={{padding:8,textAlign:"center",fontSize:13,color:"#a89ed4",borderTop:"1px solid #4a3870"}}>Showing 200 of {auditLog.length}</div>}
       </Cd>
     </div>};
 
@@ -5352,14 +5322,14 @@ Be direct and actionable. No generic advice.`;
     const filtered=q?DOCS.map(s=>({...s,items:s.items.filter(i=>i.title.toLowerCase().includes(q)||i.text.toLowerCase().includes(q)||s.section.toLowerCase().includes(q))})).filter(s=>s.items.length>0):DOCS;
     return<div style={{display:"flex",flexDirection:"column",gap:12}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}><h1 style={{fontSize:24,fontWeight:800}}>Help & Docs</h1><span style={{fontSize:13,color:"#a78bfa",fontStyle:"italic"}}>{doomPick(DOOM.sprinkle)}</span></div>
-      <input value={docsSearch} onChange={e=>setDocsSearch(e.target.value)} placeholder="Search docs..." style={{padding:"8px 12px",borderRadius:6,border:"1px solid #7c6bc4",background:"#1c1528",color:"#ede4f5",fontSize:14,outline:"none",width:"100%",maxWidth:400}}/>
+      <input value={docsSearch} onChange={e=>setDocsSearch(e.target.value)} placeholder="Search docs..." style={{padding:"8px 12px",borderRadius:6,border:"1px solid #7c6bc4",background:"#1a1030",color:"#ede4f5",fontSize:14,outline:"none",width:"100%",maxWidth:400}}/>
       {filtered.length===0&&<Cd style={{padding:20,textAlign:"center"}}><div style={{fontSize:14,color:"#a78bfa",fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div></Cd>}
       {filtered.map((s,si)=><Cd key={si} style={{padding:14}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
           <div style={{fontSize:16,fontWeight:800,color:"#f3edf9"}}>{s.section}</div>
           <div style={{fontSize:12,color:"#7c6bc4",fontStyle:"italic",maxWidth:250,textAlign:"right"}}>{s.meg}</div>
         </div>
-        {s.items.map((item,ii)=><div key={ii} style={{padding:"8px 0",borderTop:ii>0?"1px solid #453960":"none"}}>
+        {s.items.map((item,ii)=><div key={ii} style={{padding:"8px 0",borderTop:ii>0?"1px solid #4a3870":"none"}}>
           <div style={{fontSize:14,fontWeight:700,color:"#a78bfa",marginBottom:3}}>{item.title}</div>
           <div style={{fontSize:13,color:"#d4c9e0",lineHeight:1.6}}>{item.text}</div>
         </div>)}
@@ -5389,7 +5359,7 @@ Be direct and actionable. No generic advice.`;
     const allPhotos=[];
     if(isWK){POSTINGS.forEach(p=>{const imgs=POP_IMGS||{};if(p.closeImg&&imgs[p.closeImg])allPhotos.push({id:p.boardId,url:imgs[p.closeImg],market:p.dma});const up=oohPhotos[p.boardId]||[];up.forEach(ph=>allPhotos.push({id:p.boardId,url:ph.url,market:p.dma}))})}
     else{PL_PANELS.forEach(p=>{if(POP_PHOTOS&&POP_PHOTOS[p.unit])allPhotos.push({id:p.unit,url:POP_PHOTOS[p.unit],market:p.market});const up=oohPhotos[p.unit]||[];up.forEach(ph=>allPhotos.push({id:p.unit,url:ph.url,market:p.market}))})}
-    return<div style={{minHeight:"100vh",background:"#1c1528",color:"#ede4f5",fontFamily:"DM Sans,sans-serif"}}>
+    return<div style={{minHeight:"100vh",background:"#1a1030",color:"#ede4f5",fontFamily:"DM Sans,sans-serif"}}>
       {/* Header */}
       <div style={{background:`linear-gradient(135deg,${brandColor},${brandColor}cc)`,padding:"32px 40px",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:0,right:0,width:300,height:300,background:"rgba(255,255,255,.05)",borderRadius:"50%",transform:"translate(100px,-100px)"}}/>
@@ -5400,13 +5370,13 @@ Be direct and actionable. No generic advice.`;
         </div>
       </div>
       {/* KPI Bar */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:0,borderBottom:"1px solid #453960"}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:0,borderBottom:"1px solid #4a3870"}}>
         {[
           {label:"Total Placements",value:totalBoards,icon:"📍"},
           {label:"Weekly Impressions",value:(totalImpr/1e6).toFixed(1)+"M",icon:"👁"},
           {label:"Markets",value:markets.length,icon:"🗺"},
           {label:"Photo Coverage",value:allPhotos.length+" photos",icon:"📸"}
-        ].map((k,i)=><div key={i} style={{padding:"18px 24px",borderRight:i<3?"1px solid #453960":"none",background:"#2a2240"}}>
+        ].map((k,i)=><div key={i} style={{padding:"18px 24px",borderRight:i<3?"1px solid #4a3870":"none",background:"#251d3d"}}>
           <div style={{fontSize:11,color:"#a89ed4",textTransform:"uppercase",fontWeight:600,letterSpacing:1}}>{k.icon} {k.label}</div>
           <div style={{fontSize:28,fontWeight:800,color:"#f3edf9",marginTop:2}}>{k.value}</div>
         </div>)}
@@ -5428,7 +5398,7 @@ Be direct and actionable. No generic advice.`;
           {markets.map(m=>{
             const mPanels=isWK?POSTINGS.filter(p=>p.dma===m):PL_PANELS.filter(p=>p.market===m);
             const mImpr=isWK?mPanels.reduce((a,p)=>a+p.impressions,0):mPanels.reduce((a,p)=>a+(p.impressions||0)*(p.numUnits||1),0);
-            return<div key={m} style={{background:"#2a2240",borderRadius:10,padding:14,borderLeft:"4px solid "+(colorMap[m]||"#64748b")}}>
+            return<div key={m} style={{background:"#251d3d",borderRadius:10,padding:14,borderLeft:"4px solid "+(colorMap[m]||"#64748b")}}>
               <div style={{fontSize:16,fontWeight:800,color:colorMap[m]||"#64748b"}}>{m}</div>
               <div style={{fontSize:22,fontWeight:700,marginTop:2}}>{mPanels.length} <span style={{fontSize:12,color:"#a89ed4"}}>boards</span></div>
               <div style={{fontSize:13,color:"#a89ed4"}}>{(mImpr/1e6).toFixed(2)}M weekly impr</div>
@@ -5440,7 +5410,7 @@ Be direct and actionable. No generic advice.`;
       {allPhotos.length>0&&<div style={{padding:"0 40px 32px"}}>
         <div style={{fontSize:16,fontWeight:700,marginBottom:10}}>📸 Proof of Posting Gallery</div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:8}}>
-          {allPhotos.slice(0,24).map((ph,i)=><div key={i} style={{position:"relative",borderRadius:8,overflow:"hidden",border:"1px solid #453960"}}>
+          {allPhotos.slice(0,24).map((ph,i)=><div key={i} style={{position:"relative",borderRadius:8,overflow:"hidden",border:"1px solid #4a3870"}}>
             <img src={ph.url} style={{width:"100%",height:120,objectFit:"cover",display:"block"}}/>
             <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"4px 8px",background:"rgba(0,0,0,.7)",fontSize:11,fontWeight:600}}>
               <span style={{color:colorMap[ph.market]||"#a89ed4"}}>{ph.market}</span> · {ph.id}
@@ -5450,13 +5420,13 @@ Be direct and actionable. No generic advice.`;
         {allPhotos.length>24&&<div style={{textAlign:"center",fontSize:13,color:"#a89ed4",marginTop:8}}>+{allPhotos.length-24} more photos</div>}
       </div>}
       {/* Footer */}
-      <div style={{padding:"20px 40px",borderTop:"1px solid #453960",textAlign:"center"}}>
+      <div style={{padding:"20px 40px",borderTop:"1px solid #4a3870",textAlign:"center"}}>
         <div style={{fontSize:18,fontWeight:800,letterSpacing:2,color:"#a89ed4"}}>ATTICOR</div>
         <div style={{fontSize:11,color:"#64748b",marginTop:2}}>Doom & Deliverables · OOH Media Report · Confidential</div>
       </div>
     </div>;
   }
-  if(!authed)return<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1c1528 0%,#251a3a 50%,#1c1528 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center",width:380}}>
+  if(!authed)return<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1a1030 0%,#2d1f4e 50%,#1a1030 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center",width:380}}>
     <div style={{width:88,height:88,display:"inline-flex",alignItems:"center",justifyContent:"center",position:"relative",marginBottom:24}}>
       
       <div style={{position:"absolute",width:120,height:120,borderRadius:"50%",background:"radial-gradient(circle,rgba(124,58,237,.35) 0%,rgba(124,58,237,.12) 40%,transparent 70%)",animation:"breathe 3s ease-in-out infinite"}}/>
@@ -5468,7 +5438,7 @@ Be direct and actionable. No generic advice.`;
     <input type="password" value={authInput} onChange={e=>setAuthInput(e.target.value)} onKeyDown={async e=>{if(e.key==="Enter"){const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}}} placeholder="Password" style={{width:"100%",padding:"14px 18px",borderRadius:10,border:"2px solid rgba(124,58,237,.35)",background:"rgba(20,15,30,.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",color:"#ede4f5",fontSize:16,textAlign:"center",outline:"none",marginBottom:14,letterSpacing:2}}/>
     <button onClick={async()=>{const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#7c3aed,#a78bfa)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(124,58,237,.3)"}}>Let Me In</button>
   </div></div>;
-  if(!dbLoaded)return<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1c1528 0%,#251a3a 50%,#1c1528 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center"}}>
+  if(!dbLoaded)return<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1a1030 0%,#2d1f4e 50%,#1a1030 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center"}}>
     <div style={{width:88,height:88,display:"inline-flex",alignItems:"center",justifyContent:"center",position:"relative",marginBottom:28}}>
       
       <div style={{position:"absolute",width:120,height:120,borderRadius:"50%",background:"radial-gradient(circle,rgba(124,58,237,.35) 0%,rgba(124,58,237,.12) 40%,transparent 70%)",animation:"breathe 3s ease-in-out infinite"}}/>
@@ -5476,7 +5446,7 @@ Be direct and actionable. No generic advice.`;
     </div>
     <div style={{fontSize:30,fontWeight:800,color:"#7c3aed",letterSpacing:3,textShadow:"0 0 20px rgba(124,58,237,.4),0 0 40px rgba(124,58,237,.15)"}}>DOOM & DELIVERABLES</div>
     <div style={{fontSize:11,fontWeight:600,color:"#a78bfa",letterSpacing:3,marginTop:6}}>ATTICOR MEDIA</div>
-    <div style={{marginTop:28,width:200,height:4,background:"#2a2240",borderRadius:4,overflow:"hidden",margin:"28px auto 0"}}><div style={{width:"30%",height:"100%",background:"linear-gradient(90deg,#7c3aed,#a78bfa,#7c3aed)",borderRadius:4,animation:"ldbar 1.5s ease-in-out infinite"}}/></div>
+    <div style={{marginTop:28,width:200,height:4,background:"#251d3d",borderRadius:4,overflow:"hidden",margin:"28px auto 0"}}><div style={{width:"30%",height:"100%",background:"linear-gradient(90deg,#7c3aed,#a78bfa,#7c3aed)",borderRadius:4,animation:"ldbar 1.5s ease-in-out infinite"}}/></div>
     <div style={{fontSize:14,color:"#a78bfa",marginTop:18,fontStyle:"italic",maxWidth:320,margin:"18px auto 0"}}>{doomPick(DOOM.loading)}</div>
     <div style={{fontSize:11,color:"#5a4d6b",marginTop:8}}>connecting...</div>
   </div></div>;
@@ -5484,24 +5454,24 @@ Be direct and actionable. No generic advice.`;
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#dc2626",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
     <OohHub/>
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
-    {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#2a2240",color:"#ede4f5",padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.3)",zIndex:9999,border:"1px solid #453960"}}>{toast}</div>}
+    {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#251d3d",color:"#ede4f5",padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.3)",zIndex:9999,border:"1px solid #4a3870"}}>{toast}</div>}
   </React.Fragment>;
-  return<div style={{display:"flex",height:"100vh",background:"#f3edf9",overflow:"hidden"}}>
+  return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1a1030 0%,#2d1f4e 50%,#1a1030 100%)",overflow:"hidden"}}>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#dc2626",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
-    <div style={{width:200,background:"#1c1528",display:"flex",flexDirection:"column",flexShrink:0}}>
-      <div style={{padding:"12px 12px 10px",borderBottom:"1px solid #2a2240"}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:34,height:34,borderRadius:7,background:"#1c1528",border:"1.5px solid #7c3aed",display:"flex",alignItems:"center",justifyContent:"center"}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="url(#sflm)"/><defs><linearGradient id="sflm" x1="12" y1="3" x2="12" y2="22"><stop stopColor="#e9d5ff"/><stop offset=".35" stopColor="#c4b5fd"/><stop offset="1" stopColor="#7c3aed"/></linearGradient></defs></svg></div><div><div style={{fontSize:15,fontWeight:800,color:"#fff",lineHeight:1,letterSpacing:.5}}>ATTICOR</div><div style={{fontSize:7,color:"#64748b",fontWeight:600,letterSpacing:1.5}}>DOOM & DELIVERABLES</div></div></div></div>
+    <div style={{width:200,background:"linear-gradient(180deg,#1a1030 0%,#201540 50%,#1a1030 100%)",borderRight:"1px solid rgba(124,58,237,.12)",display:"flex",flexDirection:"column",flexShrink:0}}>
+      <div style={{padding:"12px 12px 10px",borderBottom:"1px solid #251d3d"}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:34,height:34,borderRadius:7,background:"#1a1030",border:"1.5px solid #7c3aed",display:"flex",alignItems:"center",justifyContent:"center"}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="url(#sflm)"/><defs><linearGradient id="sflm" x1="12" y1="3" x2="12" y2="22"><stop stopColor="#e9d5ff"/><stop offset=".35" stopColor="#c4b5fd"/><stop offset="1" stopColor="#7c3aed"/></linearGradient></defs></svg></div><div><div style={{fontSize:15,fontWeight:800,color:"#fff",lineHeight:1,letterSpacing:.5}}>ATTICOR</div><div style={{fontSize:7,color:"#64748b",fontWeight:600,letterSpacing:1.5}}>DOOM & DELIVERABLES</div></div></div></div>
       <div style={{padding:"6px 10px",position:"relative"}}><input value={globalSearch} onChange={e=>setGlobalSearch(e.target.value)} placeholder="Search ISCIs, markets..." style={{width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #e0d9f7",background:"#f5f3ff",color:"#a89ed4",fontSize:14,outline:"none"}}/>
-        {globalSearch.length>=2&&(()=>{const q=globalSearch.toLowerCase();const isciHits=iscis.filter(i=>(i.code+" "+i.title+" "+i.dma+" "+i.brand+" "+i.media).toLowerCase().includes(q)).slice(0,8);const staHits=stations.filter(s=>(s.call+" "+s.market+" "+s.brand+" "+s.ownership).toLowerCase().includes(q)).slice(0,4);const estHits=estimates.filter(e=>(e.num+" "+e.market+" "+e.brand+" "+e.buyer).toLowerCase().includes(q)).slice(0,4);if(!isciHits.length&&!staHits.length&&!estHits.length)return null;return<div style={{position:"absolute",top:"100%",left:10,right:10,background:"#2a2240",border:"1px solid #453960",borderRadius:6,maxHeight:250,overflowY:"auto",zIndex:50,boxShadow:"0 4px 12px rgba(0,0,0,.4)"}}>
+        {globalSearch.length>=2&&(()=>{const q=globalSearch.toLowerCase();const isciHits=iscis.filter(i=>(i.code+" "+i.title+" "+i.dma+" "+i.brand+" "+i.media).toLowerCase().includes(q)).slice(0,8);const staHits=stations.filter(s=>(s.call+" "+s.market+" "+s.brand+" "+s.ownership).toLowerCase().includes(q)).slice(0,4);const estHits=estimates.filter(e=>(e.num+" "+e.market+" "+e.brand+" "+e.buyer).toLowerCase().includes(q)).slice(0,4);if(!isciHits.length&&!staHits.length&&!estHits.length)return null;return<div style={{position:"absolute",top:"100%",left:10,right:10,background:"#251d3d",border:"1px solid #4a3870",borderRadius:6,maxHeight:250,overflowY:"auto",zIndex:50,boxShadow:"0 4px 12px rgba(0,0,0,.4)"}}>
           {isciHits.length>0&&<div style={{padding:"4px 8px",fontSize:14,color:"#a89ed4",fontWeight:700,textTransform:"uppercase",borderBottom:"1px solid #e0d9f7"}}>ISCIs</div>}
-          {isciHits.map(i=><div key={i.code} onClick={()=>{setGlobalSearch("");setPg("isci")}} style={{padding:"5px 8px",fontSize:14,color:"#a89ed4",cursor:"pointer",borderBottom:"1px solid #2e2663"}} onMouseEnter={e=>e.target.style.background="#453960"} onMouseLeave={e=>e.target.style.background="transparent"}><span style={{fontFamily:"monospace",fontWeight:700}}>{i.code}</span> <span style={{color:"#a89ed4"}}>{i.title}</span></div>)}
+          {isciHits.map(i=><div key={i.code} onClick={()=>{setGlobalSearch("");setPg("isci")}} style={{padding:"5px 8px",fontSize:14,color:"#a89ed4",cursor:"pointer",borderBottom:"1px solid #2e2663"}} onMouseEnter={e=>e.target.style.background="#4a3870"} onMouseLeave={e=>e.target.style.background="transparent"}><span style={{fontFamily:"monospace",fontWeight:700}}>{i.code}</span> <span style={{color:"#a89ed4"}}>{i.title}</span></div>)}
           {staHits.length>0&&<div style={{padding:"4px 8px",fontSize:14,color:"#a89ed4",fontWeight:700,textTransform:"uppercase",borderBottom:"1px solid #e0d9f7"}}>Stations</div>}
-          {staHits.map(s=><div key={s.call} onClick={()=>{setGlobalSearch("");setPg("sta")}} style={{padding:"5px 8px",fontSize:14,color:"#a89ed4",cursor:"pointer",borderBottom:"1px solid #2e2663"}} onMouseEnter={e=>e.target.style.background="#453960"} onMouseLeave={e=>e.target.style.background="transparent"}><span style={{fontWeight:700}}>{s.call}</span> <span style={{color:"#a89ed4"}}>{s.market}</span></div>)}
+          {staHits.map(s=><div key={s.call} onClick={()=>{setGlobalSearch("");setPg("sta")}} style={{padding:"5px 8px",fontSize:14,color:"#a89ed4",cursor:"pointer",borderBottom:"1px solid #2e2663"}} onMouseEnter={e=>e.target.style.background="#4a3870"} onMouseLeave={e=>e.target.style.background="transparent"}><span style={{fontWeight:700}}>{s.call}</span> <span style={{color:"#a89ed4"}}>{s.market}</span></div>)}
           {estHits.length>0&&<div style={{padding:"4px 8px",fontSize:14,color:"#a89ed4",fontWeight:700,textTransform:"uppercase",borderBottom:"1px solid #e0d9f7"}}>Estimates</div>}
-          {estHits.map(e=><div key={e.num} onClick={()=>{setGlobalSearch("");setPg("est")}} style={{padding:"5px 8px",fontSize:14,color:"#a89ed4",cursor:"pointer",borderBottom:"1px solid #2e2663"}} onMouseEnter={e=>e.target.style.background="#453960"} onMouseLeave={e=>e.target.style.background="transparent"}><span style={{fontWeight:700}}>{e.num}</span> <span style={{color:"#a89ed4"}}>{e.market}</span></div>)}
+          {estHits.map(e=><div key={e.num} onClick={()=>{setGlobalSearch("");setPg("est")}} style={{padding:"5px 8px",fontSize:14,color:"#a89ed4",cursor:"pointer",borderBottom:"1px solid #2e2663"}} onMouseEnter={e=>e.target.style.background="#4a3870"} onMouseLeave={e=>e.target.style.background="transparent"}><span style={{fontWeight:700}}>{e.num}</span> <span style={{color:"#a89ed4"}}>{e.market}</span></div>)}
         </div>})()}
       </div>
-      <nav style={{flex:1,padding:"3px 0"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:(pg===n.id&&!isOohHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"6px 11px",border:"none",background:a?"#2a2240":"transparent",color:a?"#fff":"#9ca3af",fontSize:13,fontWeight:a?600:500,cursor:"pointer",textAlign:"left",borderLeft:a?(n.id==="oohHub"?"3px solid #d97706":"3px solid #3b82f6"):"3px solid transparent",position:"relative"}}><span style={{fontSize:13}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:14,fontWeight:800,padding:"1px 5px",borderRadius:8,background:typeof badge==="number"?"#dc2626":"#f59e0b",color:"#fff"}}>{badge}</span>}</button>})}</nav>
-      <div style={{padding:"8px 11px",borderTop:"1px solid #2a2240",fontSize:13,color:"#a89ed4"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:600,color:"#a89ed4"}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #453960",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#a89ed4",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:"#16a34a"}}>Synced {Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago"}</span>}</div></div>
+      <nav style={{flex:1,padding:"3px 0"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:(pg===n.id&&!isOohHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"6px 11px",border:"none",background:a?"#251d3d":"transparent",color:a?"#fff":"#9ca3af",fontSize:13,fontWeight:a?600:500,cursor:"pointer",textAlign:"left",borderLeft:a?(n.id==="oohHub"?"3px solid #d97706":"3px solid #3b82f6"):"3px solid transparent",position:"relative"}}><span style={{fontSize:13}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:14,fontWeight:800,padding:"1px 5px",borderRadius:8,background:typeof badge==="number"?"#dc2626":"#f59e0b",color:"#fff"}}>{badge}</span>}</button>})}</nav>
+      <div style={{padding:"8px 11px",borderTop:"1px solid #251d3d",fontSize:13,color:"#a89ed4"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:600,color:"#a89ed4"}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #4a3870",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#a89ed4",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:"#16a34a"}}>Synced {Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago"}</span>}</div></div>
     </div>
     <div style={{flex:1,overflowY:"auto",padding:16}}>
       <div>
@@ -5537,18 +5507,18 @@ Be direct and actionable. No generic advice.`;
           <Inp label="Version" value={editMeta.version} onChange={e=>setEditMeta(p=>({...p,version:e.target.value}))} style={{width:50}}/>
         </div>
         <Inp label="Comments" value={editMeta.comments} onChange={e=>setEditMeta(p=>({...p,comments:e.target.value}))}/>
-        <div style={{overflowX:"auto",maxHeight:400,marginTop:8,border:"1px solid #453960",borderRadius:7}}>
+        <div style={{overflowX:"auto",maxHeight:400,marginTop:8,border:"1px solid #4a3870",borderRadius:7}}>
           <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
             <TH w="140">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="50">%</TH><TH w="130">Schedule</TH><TH w="100">Bookend</TH><TH w="30">✕</TH>
           </tr></thead><tbody>
           {editIscis.map((r,idx)=><tr key={idx}>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2a2240"}}><input value={r.code} onChange={e=>updI(idx,"code",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #453960",fontSize:12,fontFamily:"monospace",background:"#1c1528",color:"#ede4f5"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2a2240"}}><input value={r.title} onChange={e=>updI(idx,"title",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #453960",fontSize:12,background:"#1c1528",color:"#ede4f5"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2a2240"}}><input value={r.dur} onChange={e=>updI(idx,"dur",e.target.value)} style={{width:35,padding:"2px",borderRadius:3,border:"1px solid #453960",fontSize:12,textAlign:"center",background:"#1c1528",color:"#ede4f5"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2a2240"}}><input value={r.pct} onChange={e=>updI(idx,"pct",e.target.value.replace(/[^0-9.]/g,""))} data-pct-input="true" onKeyDown={e=>{if(e.key==="Tab"||e.key==="Enter"){e.preventDefault();const all=[...document.querySelectorAll('[data-pct-input]')];const ci=all.indexOf(e.target);if(ci>-1&&ci<all.length-1)all[ci+1].focus()}}} style={{width:40,padding:"2px",borderRadius:3,border:"1px solid #453960",fontSize:12,textAlign:"center",background:"#1c1528",color:"#ede4f5"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2a2240"}}><select value={r.sched} onChange={e=>updI(idx,"sched",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #453960",fontSize:11,background:"#1c1528",color:"#ede4f5"}}>{SCHED_OPTS.map(s=><option key={s}>{s}</option>)}</select></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2a2240"}}><input value={r.bookend||""} onChange={e=>updI(idx,"bookend",e.target.value)} placeholder="e.g. Bookend :15 A" style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #453960",fontSize:11,background:"#1c1528",color:"#ede4f5"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2a2240",textAlign:"center"}}><button onClick={()=>delRow(idx)} style={{background:"none",border:"none",color:"#f87171",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button></td>
+            <td style={{padding:"2px 4px",borderBottom:"1px solid #251d3d"}}><input value={r.code} onChange={e=>updI(idx,"code",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3870",fontSize:12,fontFamily:"monospace",background:"#1a1030",color:"#ede4f5"}}/></td>
+            <td style={{padding:"2px 4px",borderBottom:"1px solid #251d3d"}}><input value={r.title} onChange={e=>updI(idx,"title",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3870",fontSize:12,background:"#1a1030",color:"#ede4f5"}}/></td>
+            <td style={{padding:"2px 4px",borderBottom:"1px solid #251d3d"}}><input value={r.dur} onChange={e=>updI(idx,"dur",e.target.value)} style={{width:35,padding:"2px",borderRadius:3,border:"1px solid #4a3870",fontSize:12,textAlign:"center",background:"#1a1030",color:"#ede4f5"}}/></td>
+            <td style={{padding:"2px 4px",borderBottom:"1px solid #251d3d"}}><input value={r.pct} onChange={e=>updI(idx,"pct",e.target.value.replace(/[^0-9.]/g,""))} data-pct-input="true" onKeyDown={e=>{if(e.key==="Tab"||e.key==="Enter"){e.preventDefault();const all=[...document.querySelectorAll('[data-pct-input]')];const ci=all.indexOf(e.target);if(ci>-1&&ci<all.length-1)all[ci+1].focus()}}} style={{width:40,padding:"2px",borderRadius:3,border:"1px solid #4a3870",fontSize:12,textAlign:"center",background:"#1a1030",color:"#ede4f5"}}/></td>
+            <td style={{padding:"2px 4px",borderBottom:"1px solid #251d3d"}}><select value={r.sched} onChange={e=>updI(idx,"sched",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3870",fontSize:11,background:"#1a1030",color:"#ede4f5"}}>{SCHED_OPTS.map(s=><option key={s}>{s}</option>)}</select></td>
+            <td style={{padding:"2px 4px",borderBottom:"1px solid #251d3d"}}><input value={r.bookend||""} onChange={e=>updI(idx,"bookend",e.target.value)} placeholder="e.g. Bookend :15 A" style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3870",fontSize:11,background:"#1a1030",color:"#ede4f5"}}/></td>
+            <td style={{padding:"2px 4px",borderBottom:"1px solid #251d3d",textAlign:"center"}}><button onClick={()=>delRow(idx)} style={{background:"none",border:"none",color:"#f87171",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button></td>
           </tr>)}</tbody></table>
         </div>
         <div style={{display:"flex",gap:6,marginTop:8}}>
@@ -5618,7 +5588,7 @@ Be direct and actionable. No generic advice.`;
       };
       return<Mod title={`Station Confirmations — Est ${e.num} · v${airing?.version||"?"}`} onClose={()=>setModal(null)}>
         <div style={{fontSize:13,color:"#a89ed4",marginBottom:8}}>Send traffic emails individually or track confirmations. Stations can confirm via their unique link.</div>
-        {airing&&<div style={{fontSize:14,color:"#a89ed4",marginBottom:8,padding:"4px 8px",background:"#1c1528",borderRadius:4}}>{airing.month} · {airing.flight} · {airing.iscis.length} ISCIs</div>}
+        {airing&&<div style={{fontSize:14,color:"#a89ed4",marginBottom:8,padding:"4px 8px",background:"#1a1030",borderRadius:4}}>{airing.month} · {airing.flight} · {airing.iscis.length} ISCIs</div>}
         <div style={{display:"flex",flexDirection:"column",gap:4}}>
           {linked.map(s=>{const c=conf[s.call];const token=c?.token||genToken();const emails=parseEmails(s.contact);
             return<div key={s.call} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",borderRadius:6,border:c?.confirmed?"2px solid #16a34a":"1px solid #ede4f5",background:c?.confirmed?"#f0fdf4":"#fff"}}>
@@ -5630,7 +5600,7 @@ Be direct and actionable. No generic advice.`;
                 {c?.confirmed?<div style={{textAlign:"right"}}><span style={{fontSize:14,fontWeight:600,color:"#16a34a"}}>Confirmed</span><div style={{fontSize:13,color:"#a89ed4"}}>{new Date(c.ts).toLocaleString()}</div></div>:
                 <div style={{display:"flex",gap:3}}>
                   {emails.length>0&&<button onClick={()=>sendToStation(s)} style={{padding:"3px 8px",borderRadius:4,border:"none",background:"#2563eb",color:"#fff",fontSize:14,fontWeight:600,cursor:"pointer"}}>✉ Send</button>}
-                  <button onClick={()=>{const url=window.location.href.split("?")[0]+"?confirm="+e.num+"&sta="+s.call+"&tok="+token;navigator.clipboard?.writeText(url);notify("Link copied for "+s.call)}} style={{padding:"3px 8px",borderRadius:4,border:"1px solid #7c6bc4",background:"#1c1528",color:"#a89ed4",fontSize:14,fontWeight:600,cursor:"pointer"}}>Copy Link</button>
+                  <button onClick={()=>{const url=window.location.href.split("?")[0]+"?confirm="+e.num+"&sta="+s.call+"&tok="+token;navigator.clipboard?.writeText(url);notify("Link copied for "+s.call)}} style={{padding:"3px 8px",borderRadius:4,border:"1px solid #7c6bc4",background:"#1a1030",color:"#a89ed4",fontSize:14,fontWeight:600,cursor:"pointer"}}>Copy Link</button>
                   <button onClick={()=>{confirmStation(e.num,s.call);notify(s.call+" confirmed")}} style={{padding:"3px 8px",borderRadius:4,border:"1px solid #16a34a",background:"rgba(22,163,98,.15)",color:"#16a34a",fontSize:14,fontWeight:600,cursor:"pointer"}}>Mark</button>
                 </div>}
               </div>
@@ -5651,7 +5621,7 @@ Be direct and actionable. No generic advice.`;
       const ph=allPhotos[idx];
       const uploaded=oohPhotos[id]||[];
       return<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setModal(null)}>
-        <div onClick={e=>e.stopPropagation()} style={{background:"#2a2240",borderRadius:12,padding:16,maxWidth:900,width:"100%",maxHeight:"90vh",overflow:"auto"}}>
+        <div onClick={e=>e.stopPropagation()} style={{background:"#251d3d",borderRadius:12,padding:16,maxWidth:900,width:"100%",maxHeight:"90vh",overflow:"auto"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
             <div style={{fontSize:16,fontWeight:700,color:"#f3edf9"}}>{id} — Photos ({idx+1}/{allPhotos.length})</div>
             <div style={{display:"flex",gap:6,alignItems:"center"}}>
@@ -5660,7 +5630,7 @@ Be direct and actionable. No generic advice.`;
             </div>
           </div>
           <div style={{position:"relative"}}>
-            <img src={ph.url} style={{width:"100%",maxHeight:"60vh",objectFit:"contain",borderRadius:8,background:"#1c1528"}}/>
+            <img src={ph.url} style={{width:"100%",maxHeight:"60vh",objectFit:"contain",borderRadius:8,background:"#1a1030"}}/>
             {allPhotos.length>1&&<>
               <button onClick={()=>setIdx(i=>(i-1+allPhotos.length)%allPhotos.length)} style={{position:"absolute",left:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.7)",color:"#fff",border:"none",borderRadius:"50%",width:36,height:36,fontSize:18,cursor:"pointer"}}>◀</button>
               <button onClick={()=>setIdx(i=>(i+1)%allPhotos.length)} style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.7)",color:"#fff",border:"none",borderRadius:"50%",width:36,height:36,fontSize:18,cursor:"pointer"}}>▶</button>
@@ -5671,18 +5641,18 @@ Be direct and actionable. No generic advice.`;
             {!ph.hardcoded&&<button onClick={()=>{const uploadIdx=idx-(allPhotos.length-uploaded.length);if(uploadIdx>=0){deleteOohPhoto(id,uploadIdx);if(allPhotos.length<=1)setModal(null);else setIdx(i=>Math.min(i,allPhotos.length-2))}}} style={{padding:"3px 8px",borderRadius:4,border:"1px solid #dc2626",background:"transparent",color:"#dc2626",fontSize:12,cursor:"pointer"}}>🗑 Delete</button>}
           </div>
           {allPhotos.length>1&&<div style={{display:"flex",gap:4,marginTop:8,overflowX:"auto"}}>
-            {allPhotos.map((p,i)=><img key={i} src={p.url} onClick={()=>setIdx(i)} style={{width:60,height:45,objectFit:"cover",borderRadius:4,border:i===idx?"2px solid #3b82f6":"1px solid #453960",cursor:"pointer",opacity:i===idx?1:0.6}}/>)}
+            {allPhotos.map((p,i)=><img key={i} src={p.url} onClick={()=>setIdx(i)} style={{width:60,height:45,objectFit:"cover",borderRadius:4,border:i===idx?"2px solid #3b82f6":"1px solid #4a3870",cursor:"pointer",opacity:i===idx?1:0.6}}/>)}
           </div>}
         </div>
       </div>;
     })()}
-    {uploadTracker&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:2001,background:"#2a2240",borderBottom:"2px solid #2563eb",padding:"8px 16px",display:"flex",alignItems:"center",gap:12}}>
+    {uploadTracker&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:2001,background:"#251d3d",borderBottom:"2px solid #2563eb",padding:"8px 16px",display:"flex",alignItems:"center",gap:12}}>
       <div style={{fontSize:13,fontWeight:700,color:"#93c5fd"}}>{uploadTracker.label}</div>
-      <div style={{flex:1,height:6,background:"#453960",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",background:"linear-gradient(90deg,#2563eb,#7c3aed)",borderRadius:3,width:(uploadTracker.pct||0)+"%",transition:"width 0.3s"}}/></div>
+      <div style={{flex:1,height:6,background:"#4a3870",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",background:"linear-gradient(90deg,#2563eb,#7c3aed)",borderRadius:3,width:(uploadTracker.pct||0)+"%",transition:"width 0.3s"}}/></div>
       <div style={{fontSize:12,fontWeight:700,color:"#ede4f5",minWidth:50,textAlign:"right"}}>{uploadTracker.pct||0}%</div>
       {uploadTracker.current&&uploadTracker.total&&<div style={{fontSize:11,color:"#94a3b8"}}>{uploadTracker.current}/{uploadTracker.total}</div>}
     </div>}
-    {toast&&<div style={{position:"fixed",bottom:14,right:14,background:"linear-gradient(135deg,#2a2240,#1c1528)",color:"#ede4f5",padding:"10px 16px",borderRadius:8,fontSize:13,fontWeight:600,boxShadow:"0 8px 24px rgba(0,0,0,.3)",zIndex:2e3,borderLeft:"3px solid #7c3aed",maxWidth:400}}>{toast}</div>}
+    {toast&&<div style={{position:"fixed",bottom:14,right:14,background:"linear-gradient(135deg,#251d3d,#1a1030)",color:"#ede4f5",padding:"10px 16px",borderRadius:8,fontSize:13,fontWeight:600,boxShadow:"0 8px 32px rgba(124,58,237,.2),0 0 1px rgba(167,139,250,.3)",zIndex:2e3,borderLeft:"3px solid #a78bfa",maxWidth:400}}>{toast}</div>}
   </div>;
 };
 ReactDOM.createRoot(document.getElementById('R')).render(<App/>);
