@@ -1864,32 +1864,42 @@ const App=()=>{
     const brand=BRANDS.find(b=>b.name===est.brand);
     const curMonth=CALENDAR.find(c=>c.month===workMonth)||CALENDAR[1];
     const flight=curMonth?fDs(curMonth.bcStart)+" - "+fDs(curMonth.bcEnd):"";
-    const PL_URLS={"Chicago":"https://www.postmanlaw.com","Cincinnati":"https://www.postmanlaw.com","Denver":"https://www.postmanlaw.com","Minneapolis":"https://www.postmanlaw.com"};
-    const defaultUrl=PL_URLS[est.market]||"https://www.postmanlaw.com";
     const isDigital=est.media==="Digital";
     const mediaLabel=isDigital?"Digital Video":"Streaming Audio";
     const vendorList=isDigital?["ESPN","Generic"]:["Pandora","Spotify","Generic"];
     const defaultVendor=isDigital?"ESPN":"Pandora";
-    // DMA prefix for campaigns
+    const PL_MKTS_ALL=["Chicago","Cincinnati","Denver","Minneapolis"];
     const dc=Object.entries(DM).find(function(x){return x[1].toLowerCase()===est.market.toLowerCase()});
     const dmaPrefix=dc?dc[0]:"";
-    // ESPN campaign presets
-    const ESPN_PRESETS=[
-      {label:"ESPN Display March Madness",source:"ESPN",medium:"Display",campaign:dmaPrefix+"MarchMadness",placement:"ESPNweb"},
-      {label:"GKBPS Video March Madness",source:"ESPN",medium:"Video",campaign:dmaPrefix+"MarchMadness",placement:"GKBPS"},
-      {label:"ESPN Digital Video MLB",source:"ESPN",medium:"Video",campaign:dmaPrefix+"MLB",placement:"ESPNweb"},
-      {label:"ESPN Display MLB",source:"ESPN",medium:"Display",campaign:dmaPrefix+"MLB",placement:"ESPNweb"},
-      {label:"GKBPS Video MLB",source:"ESPN",medium:"Video",campaign:dmaPrefix+"MLB",placement:"GKBPS"}
-    ];
+    // Quarter calculation from work month
+    const QUARTER_MAP={January:"Q1",February:"Q1",March:"Q1",April:"Q2",May:"Q2",June:"Q2",July:"Q3",August:"Q3",September:"Q3",October:"Q4",November:"Q4",December:"Q4"};
+    const currentYear=new Date().getFullYear();
+    const currentQuarter=QUARTER_MAP[workMonth]||"Q2";
+    // ESPN campaign options
+    const ESPN_CAMPAIGNS=["MarchMadness","MLB","NFL","NBA","CFB","MMA","Golf"];
     const[vendorMode,setVendorMode]=useState(defaultVendor);
     const isPlatform=vendorMode!=="Generic";
-    const[rows,setRows]=useState(()=>pool.map(i=>({isci:i,selected:false,pct:"",sched:"All Week",flight:flight,companionUrl:"",companionName:""})));
-    const[baseUrl,setBaseUrl]=useState(defaultUrl);
-    const[utmSource,setUtmSource]=useState(isDigital?"ESPN":"pandora");
-    const[utmMedium,setUtmMedium]=useState(isDigital?"Video":"streaming_audio");
-    const[utmCampaign,setUtmCampaign]=useState(isDigital?dmaPrefix+"MarchMadness":"pandora");
-    const[utmPlacement,setUtmPlacement]=useState(isDigital?"ESPNweb":"");
+    const[rows,setRows]=useState(()=>pool.map(i=>({isci:i,selected:false,pct:"",sched:"All Week",flight:flight,companionUrl:"",companionName:"",companionBannerName:""})));
+    const baseUrl="https://www.postmanlaw.com";
+    // Pandora UTM builder
+    const pandoraUrl=(market,content,placement)=>{
+      const mktPath=market.toLowerCase().replace(/\s+/g,"");
+      return"https://www.postmandelivers.com/"+mktPath+"/?UTM_Source=SiriusXM&UTM_Medium=Streaming_Audio&UTM_Content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent("Blackacre_KellerPostman_PostmanLawPI-"+market+"_"+currentYear+currentQuarter);
+    };
+    // ESPN UTM builder — 3 URLs per campaign per market
+    const[espnCampaign,setEspnCampaign]=useState("MarchMadness");
+    const espnUrl=(dma,medium,placement)=>{
+      return baseUrl+"?UTM_Source=ESPN&UTM_Medium="+encodeURIComponent(medium)+"&UTM_Campaign="+encodeURIComponent(dma+espnCampaign)+"&Placement="+encodeURIComponent(placement);
+    };
+    // Legacy UTM fields for Generic/Spotify
+    const[utmSource,setUtmSource]=useState("pandora");
+    const[utmMedium,setUtmMedium]=useState("streaming_audio");
+    const[utmCampaign,setUtmCampaign]=useState("pandora");
+    const[utmPlacement,setUtmPlacement]=useState("");
     const[displayMedium,setDisplayMedium]=useState("Display");
+    // Pandora companion/display banner names
+    const[pandoraCompanions,setPandoraCompanions]=useState([{name:"",size:"350x250"}]);
+    const[pandoraDisplays,setPandoraDisplays]=useState([{name:"",size:"3250x250"},{name:"",size:"3250x250"}]);
     const[version,setVersion]=useState("1");
     const[flightDates,setFlightDates]=useState(flight);
     const[comments,setComments]=useState("");
@@ -1924,9 +1934,9 @@ const App=()=>{
     // Per-market (DMA) duration groups so each market validates its own rotation % — exclude Display banners (suffix B)
     const durGroups=(()=>{var g={};sel.filter(function(r){return r.isci.suffix!=="B"}).forEach(function(r){var dma=r.isci.dma||"ALL";var d=r.isci.dur||"?";var key=dma+":"+d;if(!g[key])g[key]={dma:dma,dur:d,items:[],total:0};g[key].items.push(r);g[key].total+=parseFloat(r.pct)||0});return g})();
     const rotValid=Object.values(durGroups).every(function(g){return Math.abs(g.total-100)<0.5})&&sel.length>0;
-    const switchVendor=function(v){setVendorMode(v);if(v!=="Generic"){setUtmSource(v==="ESPN"?"ESPN":v.toLowerCase());setUtmCampaign(v==="ESPN"?dmaPrefix+"MarchMadness":v.toLowerCase())}};
-    const applyPreset=function(p){setUtmSource(p.source);setUtmMedium(p.medium);setUtmCampaign(p.campaign);setUtmPlacement(p.placement)};
+    const switchVendor=function(v){setVendorMode(v);if(v==="Generic"){setUtmSource("generic");setUtmCampaign("generic")}else if(v==="Spotify"){setUtmSource("spotify");setUtmCampaign("spotify")}};
     const buildUtm=function(medium,isci,dma){
+      // Legacy builder for Generic/Spotify
       var dmaCamp=dma?utmCampaign.replace(dmaPrefix,dma):utmCampaign;
       var params="?UTM_Source="+encodeURIComponent(utmSource)+"&UTM_Medium="+encodeURIComponent(medium||utmMedium)+"&UTM_Campaign="+encodeURIComponent(dmaCamp);
       if(utmPlacement)params+="&Placement="+encodeURIComponent(utmPlacement);
@@ -2031,31 +2041,60 @@ const App=()=>{
           });
           w.document.write("</tbody></table>");
         }
-      }else{
-        w.document.write('<div class="section">'+mediaLabel.toUpperCase()+' ROTATION</div>');
-        w.document.write("<table><thead><tr><th>ISCI</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Schedule</th><th>Flight</th>"+(isPlatform?"<th>File</th><th>Companion</th>":"")+"</tr></thead><tbody>");
-        sel.forEach(function(r){
-          var file=r.isci.fileUrl?'<a href="'+r.isci.fileUrl+'" style="color:#2563eb;font-size:9px">Download</a>':"TBD";
-          var comp=r.companionUrl?'<a href="'+r.companionUrl+'" style="color:#2563eb;font-size:9px">Download</a>':"TBD";
-          w.document.write("<tr><td style='font-family:monospace;font-weight:700'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td style='text-align:center;font-weight:700'>"+(r.pct||"")+"%</td><td>"+r.sched+"</td><td>"+r.flight+"</td>"+(isPlatform?"<td>"+file+"</td><td>"+comp+"</td>":"")+"</tr>");
-        });
-      }
-      if(!isDigital)w.document.write("</tbody></table>");
-      if(!isDigital){Object.entries(durGroups).forEach(function(e){var g=e[1];var dmaName=DM[g.dma]||g.dma;w.document.write('<div style="margin-top:4px;font-size:10px;color:#555">'+dmaName+' :'+g.dur+' rotation: '+g.total+'%'+(Math.abs(g.total-100)<0.5?' \u2713':' \u26A0')+'</div>')})}
-      if(isPlatform){
-        if(!isDigital){
-          w.document.write(hd("Audio + Companion Click-Through",buildUtm(utmMedium),"blu"));
-          // Display banners from registry (Streaming Audio only)
-          var dc2=Object.entries(DM).find(function(e){return e[1].toLowerCase()===est.market.toLowerCase()});var dcCode=dc2?dc2[0]:"";
-          var dispIscis=iscis.filter(function(i){return i.suffix==="B"&&i.brand===est.brand&&i.dma===dcCode&&i.active});
-          if(dispIscis.length>0){
-            w.document.write('<div class="section">DISPLAY BANNERS</div>');
-            w.document.write("<table><thead><tr><th>ISCI</th><th>Title</th><th>File</th><th>Click-Through URL</th></tr></thead><tbody>");
-            dispIscis.forEach(function(d){var fileCol=d.fileUrl?'<a href="'+d.fileUrl+'" style="color:#2563eb;font-size:9px">Download</a>':"TBD";w.document.write("<tr><td style='font-family:monospace;font-weight:700'>"+d.code+"</td><td>"+d.title+"</td><td>"+fileCol+"</td><td class='url'>"+buildUtm("Display",d.code,dcCode)+"</td></tr>")});
+      }else if(vendorMode==="Pandora"){
+        // ═══ PANDORA: All PL markets, per-ISCI URLs ═══
+        PL_MKTS_ALL.forEach(function(mkt){
+          var mktDma=Object.entries(DM).find(function(e){return e[1]===mkt});var dma=mktDma?mktDma[0]:"";
+          var mktIscis=sel.filter(function(r){return r.isci.dma===dma});
+          if(!mktIscis.length)return;
+          w.document.write('<div class="section" style="border-top-color:#0891b2">'+mkt.toUpperCase()+' ('+dma+')</div>');
+          // Audio creatives
+          w.document.write('<div style="font-weight:700;font-size:11px;color:#059669;margin:8px 0 4px">AUDIO CREATIVES — Placement: AudioSelect</div>');
+          w.document.write("<table><thead><tr><th>UTM_Content</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Placement</th><th>Full URL</th></tr></thead><tbody>");
+          mktIscis.forEach(function(r){
+            var url=pandoraUrl(mkt,r.isci.code,"AudioSelect");
+            w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td style='text-align:center;font-weight:700'>"+(r.pct||"")+"%</td><td>AudioSelect</td><td class='url'><a href='"+url+"' style='color:#2563eb'>"+url+"</a></td></tr>");
+          });
+          w.document.write("</tbody></table>");
+          // Companion banners
+          var comps=pandoraCompanions.filter(function(c){return c.name.trim()});
+          if(comps.length){
+            w.document.write('<div style="font-weight:700;font-size:11px;color:#0891b2;margin:8px 0 4px">COMPANION BANNERS — Placement: CompanionBanners</div>');
+            w.document.write("<table><thead><tr><th>UTM_Content</th><th>Size</th><th>Placement</th><th>Full URL</th></tr></thead><tbody>");
+            comps.forEach(function(c){
+              // Replace market prefix in banner name for this market
+              var name=c.name.trim();
+              var url=pandoraUrl(mkt,name,"CompanionBanners");
+              w.document.write("<tr><td style='font-family:monospace;font-size:10px'>"+name+"</td><td>"+c.size+"</td><td>CompanionBanners</td><td class='url'><a href='"+url+"' style='color:#2563eb'>"+url+"</a></td></tr>");
+            });
             w.document.write("</tbody></table>");
           }
-          w.document.write(hd("Display Click-Through",buildUtm("Display","[ISCI]",dcCode),"blu"));
-          w.document.write('<div style="margin-top:12px;padding:8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:4px;font-size:10px"><b>UTM Summary:</b><br/>Audio: '+buildUtm(utmMedium)+'<br/>Display: '+buildUtm(displayMedium,"[ISCI]",dcCode)+"</div>");
+          // Display banners
+          var disps=pandoraDisplays.filter(function(d){return d.name.trim()});
+          if(disps.length){
+            w.document.write('<div style="font-weight:700;font-size:11px;color:#ec4899;margin:8px 0 4px">DISPLAY BANNERS — Placement: DisplayBanners</div>');
+            w.document.write("<table><thead><tr><th>UTM_Content</th><th>Size</th><th>Placement</th><th>Full URL</th></tr></thead><tbody>");
+            disps.forEach(function(d){
+              var name=d.name.trim();
+              var url=pandoraUrl(mkt,name,"DisplayBanners");
+              w.document.write("<tr><td style='font-family:monospace;font-size:10px'>"+name+"</td><td>"+d.size+"</td><td>DisplayBanners</td><td class='url'><a href='"+url+"' style='color:#2563eb'>"+url+"</a></td></tr>");
+            });
+            w.document.write("</tbody></table>");
+          }
+        });
+        // Rotation validation
+        Object.entries(durGroups).forEach(function(e){var g=e[1];var dmaName=DM[g.dma]||g.dma;w.document.write('<div style="margin-top:4px;font-size:10px;color:'+(Math.abs(g.total-100)<0.5?'#16a34a':'#dc2626')+'">'+dmaName+' :'+g.dur+' rotation: '+g.total+'%'+(Math.abs(g.total-100)<0.5?' \u2713':' \u26A0')+'</div>')});
+      }else{
+        // ═══ GENERIC / SPOTIFY: simple table ═══
+        w.document.write('<div class="section">'+mediaLabel.toUpperCase()+' ROTATION</div>');
+        w.document.write("<table><thead><tr><th>ISCI</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Schedule</th><th>Flight</th></tr></thead><tbody>");
+        sel.forEach(function(r){
+          w.document.write("<tr><td style='font-family:monospace;font-weight:700'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td style='text-align:center;font-weight:700'>"+(r.pct||"")+"%</td><td>"+r.sched+"</td><td>"+r.flight+"</td></tr>");
+        });
+        w.document.write("</tbody></table>");
+        Object.entries(durGroups).forEach(function(e){var g=e[1];var dmaName=DM[g.dma]||g.dma;w.document.write('<div style="margin-top:4px;font-size:10px;color:#555">'+dmaName+' :'+g.dur+' rotation: '+g.total+'%'+(Math.abs(g.total-100)<0.5?' \u2713':' \u26A0')+'</div>')});
+        if(vendorMode!=="Generic"){
+          w.document.write(hd("Click-Through URL",buildUtm(utmMedium),"blu"));
         }
       }
       w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
@@ -2090,32 +2129,43 @@ const App=()=>{
           </div>
         </div>
         {isPlatform&&<div style={{background:"#1a1030",border:"1px solid #4a3870",borderRadius:6,padding:8}}>
-          <div style={{fontSize:12,fontWeight:700,color:"#fbbf24",marginBottom:6}}>UTM PARAMETERS</div>
-          {isDigital&&vendorMode==="ESPN"&&<div style={{marginBottom:6}}>
-            <div style={{fontSize:11,color:"#94a3b8",marginBottom:4}}>Quick Presets:</div>
-            <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{ESPN_PRESETS.map(function(p,i){return<button key={i} onClick={function(){applyPreset(p)}} style={{padding:"3px 8px",borderRadius:4,border:utmCampaign===p.campaign&&utmMedium===p.medium&&utmPlacement===p.placement?"2px solid #fbbf24":"1px solid #4a3870",background:utmCampaign===p.campaign&&utmMedium===p.medium&&utmPlacement===p.placement?"rgba(251,191,36,.15)":"transparent",color:utmCampaign===p.campaign&&utmMedium===p.medium&&utmPlacement===p.placement?"#fbbf24":"#94a3b8",fontSize:10,fontWeight:600,cursor:"pointer"}}>{p.label}</button>})}</div>
+          <div style={{fontSize:12,fontWeight:700,color:"#fbbf24",marginBottom:6}}>UTM PARAMETERS {vendorMode==="Pandora"?"(auto-generated per ISCI)":vendorMode==="ESPN"?"(per campaign)":""}</div>
+          {vendorMode==="ESPN"&&<div style={{marginBottom:6}}>
+            <div style={{fontSize:11,color:"#94a3b8",marginBottom:4}}>Campaign:</div>
+            <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{ESPN_CAMPAIGNS.map(c=><button key={c} onClick={()=>setEspnCampaign(c)} style={{padding:"4px 10px",borderRadius:4,border:espnCampaign===c?"2px solid #fbbf24":"1px solid #4a3870",background:espnCampaign===c?"rgba(251,191,36,.15)":"transparent",color:espnCampaign===c?"#fbbf24":"#94a3b8",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c}</button>)}</div>
           </div>}
-          <Inp label="Base URL" value={baseUrl} onChange={e=>setBaseUrl(e.target.value)}/>
-          <div style={{display:"grid",gridTemplateColumns:isDigital?"1fr 1fr 1fr 1fr":"1fr 1fr 1fr",gap:4,marginTop:4}}>
+          {vendorMode==="Pandora"&&<div style={{fontSize:10,color:"#94a3b8"}}>
+            <div>Source: <b style={{color:"#ede4f5"}}>SiriusXM</b> · Medium: <b style={{color:"#ede4f5"}}>Streaming_Audio</b></div>
+            <div>Campaign: <b style={{color:"#fbbf24"}}>Blackacre_KellerPostman_PostmanLawPI-{"{Market}"}_{currentYear}{currentQuarter}</b></div>
+            <div style={{marginTop:4}}>Placements: <b style={{color:"#4ade80"}}>AudioSelect</b> · <b style={{color:"#22d3ee"}}>CompanionBanners</b> · <b style={{color:"#ec4899"}}>DisplayBanners</b></div>
+          </div>}
+          {vendorMode==="ESPN"&&<div style={{fontSize:10,color:"#94a3b8",marginTop:6}}>
+            <div><b style={{color:"#4ade80"}}>ESPN Video:</b> {espnUrl(dmaPrefix||"DMA","Video","ESPNweb")}</div>
+            <div><b style={{color:"#a78bfa"}}>GKBPS:</b> {espnUrl(dmaPrefix||"DMA","Video","GKBPS")}</div>
+            <div><b style={{color:"#ec4899"}}>Display:</b> {espnUrl(dmaPrefix||"DMA","Display","ESPNweb")}</div>
+          </div>}
+          {vendorMode!=="Pandora"&&vendorMode!=="ESPN"&&<div>
             <Inp label="UTM_Source" value={utmSource} onChange={e=>setUtmSource(e.target.value)}/>
-            <Inp label="UTM_Medium" value={utmMedium} onChange={e=>setUtmMedium(e.target.value)}/>
-            <Inp label="UTM_Campaign" value={utmCampaign} onChange={e=>setUtmCampaign(e.target.value)}/>
-            {isDigital&&<Inp label="Placement" value={utmPlacement} onChange={e=>setUtmPlacement(e.target.value)}/>}
-          </div>
-          {!isDigital&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,marginTop:4}}>
-            <Inp label="Display medium" value={displayMedium} onChange={e=>setDisplayMedium(e.target.value)}/>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,marginTop:4}}>
+              <Inp label="UTM_Medium" value={utmMedium} onChange={e=>setUtmMedium(e.target.value)}/>
+              <Inp label="UTM_Campaign" value={utmCampaign} onChange={e=>setUtmCampaign(e.target.value)}/>
+            </div>
           </div>}
         </div>}
       </div>
-      {isPlatform&&<div style={{marginBottom:8,padding:6,background:"rgba(37,99,235,.06)",borderRadius:5,border:"1px solid rgba(37,99,235,.15)",fontSize:10,fontFamily:"monospace"}}>
-        {isDigital?<div>
-          <span style={{color:"#fbbf24"}}>ESPN Video:</span> {buildUtm("Video","[ISCI]",dmaPrefix||"[DMA]")}<br/>
-          <span style={{color:"#a78bfa"}}>GKBPS Video:</span> {baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+(dmaPrefix||"[DMA]")+utmCampaign.replace(dmaPrefix,"")+"&Placement=GKBPS&utm_Content=[ISCI]"}<br/>
-          <span style={{color:"#93c5fd"}}>Display:</span> {buildUtm("Display","[ISCI]",dmaPrefix||"[DMA]")}
-        </div>:<div>
-          <span style={{color:"#93c5fd"}}>Audio+Companion:</span> {buildUtm(utmMedium)}<br/>
-          <span style={{color:"#fbbf24"}}>Display:</span> {buildUtm(displayMedium)}
-        </div>}
+      {vendorMode==="Pandora"&&<div style={{marginBottom:8,padding:6,background:"rgba(37,99,235,.06)",borderRadius:5,border:"1px solid rgba(37,99,235,.15)",fontSize:10,fontFamily:"monospace"}}>
+        <div><span style={{color:"#4ade80"}}>Audio:</span> {pandoraUrl(est.market,"{ISCI}","AudioSelect")}</div>
+        <div><span style={{color:"#22d3ee"}}>Companion:</span> {pandoraUrl(est.market,"{BannerName}","CompanionBanners")}</div>
+        <div><span style={{color:"#ec4899"}}>Display:</span> {pandoraUrl(est.market,"{BannerName}","DisplayBanners")}</div>
+        <div style={{marginTop:4,color:"#fbbf24"}}>All 4 PL markets generated on print</div>
+      </div>}
+      {vendorMode==="ESPN"&&<div style={{marginBottom:8,padding:6,background:"rgba(37,99,235,.06)",borderRadius:5,border:"1px solid rgba(37,99,235,.15)",fontSize:10,fontFamily:"monospace"}}>
+        {PL_MKTS_ALL.map(m=>{const d=Object.entries(DM).find(([_,n])=>n===m)?.[0]||"";return<div key={m} style={{marginBottom:4}}>
+          <div style={{fontWeight:700,color:"#ede4f5"}}>{m} ({d}):</div>
+          <div><span style={{color:"#4ade80"}}>Video:</span> {espnUrl(d,"Video","ESPNweb")}</div>
+          <div><span style={{color:"#a78bfa"}}>GKBPS:</span> {espnUrl(d,"Video","GKBPS")}</div>
+          <div><span style={{color:"#ec4899"}}>Display:</span> {espnUrl(d,"Display","ESPNweb")}</div>
+        </div>})}
       </div>}
       {sel.length>0&&<div style={{display:"flex",gap:8,marginBottom:6,flexWrap:"wrap"}}>
         {Object.entries(durGroups).map(([key,g])=>{var dmaName=DM[g.dma]||g.dma;return<div key={key} style={{padding:"3px 8px",borderRadius:5,border:"1px solid "+(Math.abs(g.total-100)<0.5?"#4ade80":"#f87171"),fontSize:12,fontWeight:700,color:Math.abs(g.total-100)<0.5?"#4ade80":"#f87171"}}>{dmaName} :{g.dur} = {g.total}%{Math.abs(g.total-100)<0.5?" \u2713":" (need 100%)"}</div>})}
@@ -2154,25 +2204,36 @@ const App=()=>{
         </table>
       </div>
       <div style={{display:"flex",gap:4,marginTop:4}}><Btn small onClick={()=>setRows(p=>p.map(r=>({...r,selected:true})))}>Select All</Btn><Btn small onClick={()=>setRows(p=>p.map(r=>({...r,selected:false})))}>Clear</Btn>{isDigital&&<Btn small onClick={()=>setRows(p=>p.map(r=>r.isci.suffix==="D"?{...r,selected:true}:r))}>Select Video</Btn>}{isDigital&&<Btn small onClick={()=>setRows(p=>p.map(r=>r.isci.suffix==="B"?{...r,selected:true}:r))}>Select Display</Btn>}{isDigital&&<Btn small color="#d97706" onClick={()=>setRows(p=>p.map(r=>r.selected?{...r,placement:"ESPNweb"}:r))}>Set ESPN</Btn>}{isDigital&&<Btn small color="#7c3aed" onClick={()=>setRows(p=>p.map(r=>r.selected&&r.isci.suffix!=="B"?{...r,placement:"GKBPS"}:r))}>Set GKBPS</Btn>}</div>
-      {isPlatform&&(()=>{
-        const dc=Object.entries(DM).find(([_,n])=>n.toLowerCase()===est.market.toLowerCase())?.[0]||"";
-        const displayIscis=iscis.filter(i=>i.suffix==="B"&&i.brand===est.brand&&i.dma===dc&&i.active);
+      {vendorMode==="Pandora"&&<div style={{marginTop:10}}>
+        <div style={{fontSize:12,fontWeight:700,color:"#22d3ee",marginBottom:6}}>COMPANION BANNERS (paired with audio creatives)</div>
+        {pandoraCompanions.map((c,ci)=><div key={ci} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
+          <input value={c.name} onChange={e=>{const v=e.target.value;setPandoraCompanions(p=>p.map((x,i)=>i===ci?{...x,name:v}:x))}} placeholder="e.g. Pandora_Banner_Ad_350x250_CHI_CityscapeIA_Let_us_Deliver_for_You" style={{flex:1,padding:"4px 8px",borderRadius:4,border:"1px solid #4a3870",background:"#1a1030",color:"#ede4f5",fontSize:11}}/>
+          <input value={c.size} onChange={e=>{const v=e.target.value;setPandoraCompanions(p=>p.map((x,i)=>i===ci?{...x,size:v}:x))}} style={{width:80,padding:"4px 6px",borderRadius:4,border:"1px solid #4a3870",background:"#1a1030",color:"#94a3b8",fontSize:11}} placeholder="Size"/>
+          {pandoraCompanions.length>1&&<button onClick={()=>setPandoraCompanions(p=>p.filter((_,i)=>i!==ci))} style={{border:"none",background:"transparent",color:"#f87171",cursor:"pointer",fontSize:14}}>✕</button>}
+        </div>)}
+        <button onClick={()=>setPandoraCompanions(p=>[...p,{name:"",size:"350x250"}])} style={{fontSize:11,padding:"2px 8px",borderRadius:4,border:"1px solid #4a3870",background:"transparent",color:"#22d3ee",cursor:"pointer",fontWeight:600}}>+ Add Companion</button>
+
+        <div style={{fontSize:12,fontWeight:700,color:"#ec4899",marginTop:10,marginBottom:6}}>DISPLAY BANNERS (A/B test — standalone ads)</div>
+        {pandoraDisplays.map((d,di)=><div key={di} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
+          <input value={d.name} onChange={e=>{const v=e.target.value;setPandoraDisplays(p=>p.map((x,i)=>i===di?{...x,name:v}:x))}} placeholder="e.g. Pandora_Banner_Ad_3250x250_CHI_AccidentIALogo_Contact_Us" style={{flex:1,padding:"4px 8px",borderRadius:4,border:"1px solid #4a3870",background:"#1a1030",color:"#ede4f5",fontSize:11}}/>
+          <input value={d.size} onChange={e=>{const v=e.target.value;setPandoraDisplays(p=>p.map((x,i)=>i===di?{...x,size:v}:x))}} style={{width:80,padding:"4px 6px",borderRadius:4,border:"1px solid #4a3870",background:"#1a1030",color:"#94a3b8",fontSize:11}} placeholder="Size"/>
+          {pandoraDisplays.length>1&&<button onClick={()=>setPandoraDisplays(p=>p.filter((_,i)=>i!==di))} style={{border:"none",background:"transparent",color:"#f87171",cursor:"pointer",fontSize:14}}>✕</button>}
+        </div>)}
+        <button onClick={()=>setPandoraDisplays(p=>[...p,{name:"",size:"3250x250"}])} style={{fontSize:11,padding:"2px 8px",borderRadius:4,border:"1px solid #4a3870",background:"transparent",color:"#ec4899",cursor:"pointer",fontWeight:600}}>+ Add Display Banner</button>
+      </div>}
+      {vendorMode==="ESPN"&&(()=>{
+        const allDmas=PL_MKTS_ALL.map(m=>Object.entries(DM).find(([_,n])=>n===m)?.[0]||"").filter(Boolean);
+        const displayIscis=iscis.filter(i=>i.suffix==="B"&&i.brand===est.brand&&allDmas.includes(i.dma)&&i.active);
         return<div style={{marginTop:10}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-          <div style={{fontSize:12,fontWeight:700,color:"#ec4899"}}>DISPLAY BANNERS (from ISCI Registry)</div>
-          {displayIscis.length===0&&<span style={{fontSize:11,color:"#f87171"}}>No Display ISCIs registered for {dc}. Register them in ISCI Registry with media "Display".</span>}
-        </div>
-        {displayIscis.length>0&&<div style={{border:"1px solid #4a3870",borderRadius:6,overflow:"hidden"}}>
-          <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{background:"#251d3d"}}><TH>ISCI</TH><TH>Title</TH><TH>File</TH><TH>UTM</TH></tr></thead>
+        <div style={{fontSize:12,fontWeight:700,color:"#ec4899",marginBottom:6}}>DISPLAY BANNERS (from ISCI Registry)</div>
+        {displayIscis.length>0?<div style={{border:"1px solid #4a3870",borderRadius:6,overflow:"hidden"}}>
+          <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{background:"#251d3d"}}><TH>ISCI</TH><TH>Title</TH><TH>Market</TH><TH>File</TH></tr></thead>
             <tbody>{displayIscis.map(d=><tr key={d.code}>
-              <TD m b>{d.code}</TD>
-              <TD>{d.title}</TD>
+              <TD m b>{d.code}</TD><TD>{d.title}</TD><TD>{DM[d.dma]||d.dma}</TD>
               <TD>{d.fileUrl?<a href={d.fileUrl} target="_blank" rel="noopener" style={{color:"#4ade80",fontSize:11,fontWeight:600}}>Download</a>:<span style={{color:"#f87171",fontSize:11}}>No file</span>}</TD>
-              <TD><span style={{fontSize:9,fontFamily:"monospace",color:"#fbbf24"}}>{buildUtm(displayMedium,d.code,dc)}</span></TD>
             </tr>)}</tbody>
           </table>
-        </div>}
-        <div style={{fontSize:10,color:"#64748b",marginTop:4}}>Display banners use utm_medium={displayMedium}. Upload creative files in the ISCI Registry.</div>
+        </div>:<span style={{fontSize:11,color:"#f87171"}}>No Display ISCIs registered. Register them in ISCI Registry with media "Display".</span>}
       </div>})()}
       {isPlatform&&<div style={{marginTop:8}}>
         <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",marginBottom:3}}>EMAIL NOTE (optional — included in email body)</div>
