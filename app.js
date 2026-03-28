@@ -1547,6 +1547,7 @@ const App=()=>{
     const[customSched,setCustomSched]=useState("");
     const[version,setVersion]=useState(_revise?String(parseInt(_revise.version||"1")+1):"1");
     const[comments,setComments]=useState(_revise?`Revision of v${_revise.version}`:"")
+    const[manualEmails,setManualEmails]=useState("");
     const linkedSta=(()=>{const raw=est._combined?est._combined.flatMap(ce=>getEstStations(ce)):getEstStations(est);const seen=new Set();return raw.filter(s=>{const k=s.call+"|"+s.market;if(seen.has(k))return false;seen.add(k);return true})})();
     const[sendStations,setSendStations]=useState(()=>linkedSta.map(s=>s.call));
 
@@ -1706,6 +1707,10 @@ const App=()=>{
         <div style={{fontSize:13,color:"#a89ed4",marginTop:3}}>{sendStations.length} of {linkedSta.length} selected for email</div>
       </div>
       <Inp label="Comments" value={comments} onChange={e=>setComments(e.target.value)} placeholder="e.g., No creative beside MSPPL2530006T..."/>
+      <div style={{marginTop:6}}>
+        <div style={{fontSize:11,fontWeight:700,color:"#94a3b8",marginBottom:3}}>ADDITIONAL RECIPIENTS (comma or semicolon separated — sent alongside station groups)</div>
+        <input value={manualEmails} onChange={e=>setManualEmails(e.target.value)} placeholder="email1@example.com; email2@example.com" style={{width:"100%",padding:"6px 8px",borderRadius:5,border:"1px solid #4a3870",background:"#1a1030",color:"#ede4f5",fontSize:12}}/>
+      </div>
       <div style={{height:6}}/>
 
       {/* Validation summary */}
@@ -1808,6 +1813,8 @@ const App=()=>{
           const buyerCc=BUYER_EMAILS[est.buyer]||"";
           const emmCc="emm.caban@atticor.ai";
           const ccList=[buyerCc,emmCc].filter(Boolean).join(",");
+          // Include manual email recipients as an additional send
+          const extraEmails=manualEmails.split(/[,;]/).map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
           let sent=0;let failed=0;
           for(const[grpName,grpStations]of Object.entries(ownershipGroups)){
             // Collect ALL unique emails across stations in this group
@@ -1842,6 +1849,15 @@ const App=()=>{
             }
           }
           log("Traffic Emailed",`Est ${est.num} · ${est.market} · v${version} · ${sent} sent${failed?" · "+failed+" failed":""} · ${sel.length} ISCIs`);
+          // Send to manual email recipients
+          if(extraEmails.length>0){
+            const subj="Atticor | "+est.brand+" "+est.market+" "+est.media+" Traffic Instructions | "+(curMonth?.month||"")+" | Est "+est.num;
+            const body="Hello,<br><br>Please find the attached traffic instructions for Est "+est.num+" — "+brand.name+", "+est.market+", "+est.media+".<br><br><b>Broadcast Month:</b> "+(curMonth?.month||"")+"<br><b>Flight Dates:</b> "+flight+"<br><b>Version:</b> "+version+creativeLinks+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
+            try{
+              const resp=await fetch("https://doomndeliverables.app.n8n.cloud/webhook/9661ec80-6bd8-4cf5-acca-90f2547a75eb",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:extraEmails.join(","),cc:ccList,subject:subj,message:body,pdfBase64:pdfB64,pdfName:pdfName})});
+              if(resp.ok){sent++;log("Manual Email",extraEmails.join(", ")+" — Est "+est.num)}else{failed++}
+            }catch(e){failed++}
+          }
           // Update record status based on send result
           const finalStatus=failed===0&&sent>0?"sent":sent===0?"failed":"partial";
           const failNote=failed>0?` · ${failed} of ${sent+failed} failed`:"";          
