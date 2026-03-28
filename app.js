@@ -439,10 +439,24 @@ if(!document.getElementById('dd-transitions')){
 
 const BUYER_EMAILS={"Ken Lazar":"ken.lazar@atticor.ai","Lynn Cortelezzi":"lynn.cortelezzi@atticor.ai","Amy Coffey":"acoffey@wkfirm.com","Jessica Flynn":"jessica.flynn@atticor.ai"};
 
+// ── HASH ROUTER ───────────────────────────────────────
+const useHash=()=>{
+  const[hash,setHash]=useState(()=>window.location.hash.replace('#','') || '');
+  useEffect(()=>{
+    const onHash=()=>setHash(window.location.hash.replace('#','') || '');
+    window.addEventListener('hashchange',onHash);
+    return()=>window.removeEventListener('hashchange',onHash);
+  },[]);
+  const navigate=(h)=>{window.location.hash=h;setHash(h)};
+  return[hash,navigate];
+};
+
 const App=()=>{
+  const[routeHash,navigateHash]=useHash();
+  const isOohHub=routeHash.startsWith('ooh');
   const[pg,setPgRaw]=useState("dash");
   const prevPgRef=React.useRef("dash");
-  const setPg=(p)=>{prevPgRef.current=pg;setPgRaw(p)};
+  const setPg=(p)=>{if(p==="oohHub"){navigateHash("ooh");return}prevPgRef.current=pg;setPgRaw(p)};
   const[lightMode,setLightMode]=useState(()=>localStorage.getItem("dd_light")==="1");
   useEffect(()=>{
     var s=document.getElementById("dd-theme-style");
@@ -1210,8 +1224,8 @@ const App=()=>{
       <StatC label="Active ISCIs" value={ai.length} sub={<><span>{iscis.length-ai.length} inactive</span><Sparkline data={iscisByMonth} color="#3b82f6"/></>} color="#2563eb" onClick={()=>setPg("isci")}/>
       <StatC label="Estimates" value={estimates.length} color="#7c3aed" onClick={()=>setPg("est")}/>
       <StatC label="Stations" value={stations.length} sub={<><span>{confirmedCount} confirmed</span><Sparkline data={confirmsByWeek} color="#059669"/></>} color="#059669" onClick={()=>setPg("sta")}/>
-      <StatC label="WK OOH" value={POSTINGS.length} sub={`${[...new Set(POSTINGS.map(p=>p.dma))].length} DMAs · WK Advtg`} color="#d97706" onClick={()=>setPg("ooh")}/>
-      <StatC label="PL OOH" value={PL_PANELS.length} sub={oohAlerts.length?`⚠ ${oohAlerts.length} due soon`:`${[...new Set(PL_PANELS.map(p=>p.market))].length} markets · Postman Law`} color="#7c3aed" onClick={()=>setPg("plooh")}/>
+      <StatC label="WK OOH" value={POSTINGS.length} sub={`${[...new Set(POSTINGS.map(p=>p.dma))].length} DMAs · WK Advtg`} color="#d97706" onClick={()=>navigateHash("ooh/wk")}/>
+      <StatC label="PL OOH" value={PL_PANELS.length} sub={oohAlerts.length?`⚠ ${oohAlerts.length} due soon`:`${[...new Set(PL_PANELS.map(p=>p.market))].length} markets · Postman Law`} color="#7c3aed" onClick={()=>navigateHash("ooh/pl")}/>
       <StatC label="Traffic Sent" value={sentCount} sub={<><span>{trafficHistory.length} total</span><Sparkline data={trafficByWeek} color="#0891b2"/></>} color="#0891b2" onClick={()=>setPg("library")}/>
     </div>
     <Cd style={{padding:10}}><div style={{fontSize:13,fontWeight:700,marginBottom:6}}>2026 Broadcast Calendar</div>
@@ -1230,8 +1244,8 @@ const App=()=>{
       <Cd style={{padding:10}}><div style={{fontSize:13,fontWeight:700,marginBottom:6}}>Quick Actions</div>
         <div style={{display:"flex",flexDirection:"column",gap:4}}>
           <button onClick={()=>setPg("traf")} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,border:"1px solid #334155",background:"#0f172a",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:13}}>▶</span><div><div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>Build Traffic Rotation</div><div style={{fontSize:13,color:"#a89ed4"}}>Generate sheets for {workMonth}</div></div></button>
-          <button onClick={()=>setPg("email")} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,border:"1px solid #334155",background:"#0f172a",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:13}}>✉</span><div><div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>Send Station Emails</div><div style={{fontSize:13,color:"#a89ed4"}}>{stations.length} stations configured</div></div></button>
-          <button onClick={()=>setPg("plooh")} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,border:"1px solid #334155",background:"#0f172a",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:13}}>📋</span><div><div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>OOH Creative Deadlines</div><div style={{fontSize:13,color:"#a89ed4"}}>{OOH_CREATIVE_CAL.filter(c=>new Date(c.due+"T00:00:00")>=today).length} upcoming</div></div></button>
+          <button onClick={()=>setPg("sta")} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,border:"1px solid #334155",background:"#0f172a",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:13}}>⊞</span><div><div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>Manage Stations</div><div style={{fontSize:13,color:"#a89ed4"}}>{stations.length} stations configured</div></div></button>
+          <button onClick={()=>navigateHash("ooh/pl")} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,border:"1px solid #334155",background:"#0f172a",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:13}}>📋</span><div><div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>OOH Creative Deadlines</div><div style={{fontSize:13,color:"#a89ed4"}}>{OOH_CREATIVE_CAL.filter(c=>new Date(c.due+"T00:00:00")>=today).length} upcoming</div></div></button>
           <button onClick={()=>setPg("metrics")} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:6,border:"1px solid #334155",background:"#0f172a",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:13}}>📊</span><div><div style={{fontSize:13,fontWeight:700,color:"#a89ed4"}}>View Metrics</div><div style={{fontSize:13,color:"#a89ed4"}}>Creative mix & time savings</div></div></button>
         </div>
       </Cd>
@@ -5118,9 +5132,77 @@ Be direct and actionable. No generic advice.`;
     </div>
   };
 
+  // ── OOH HUB (sub-app) ──────────────────────────────────
+  const OohHub=()=>{
+    const subRoute=routeHash.replace(/^ooh\/?/,'') || 'wk';
+    const oohNav=[
+      {id:"wk",l:"WK OOH",e:"🛣"},
+      {id:"pl",l:"PL OOH",e:"📋"},
+      {id:"isci",l:"OOH ISCI Registry",e:"◈"},
+      {id:"import",l:"Import / Upload",e:"📤"}
+    ];
+    const oohIsciPg=()=>{
+      const oohIscis=iscis.filter(i=>i.suffix==="O"&&i.active);
+      const inactiveOoh=iscis.filter(i=>i.suffix==="O"&&!i.active);
+      const[oohIsciFilter,setOohIsciFilter]=useState("");
+      const[oohBrandFilter,setOohBrandFilter]=useState("");
+      const filtered=oohIscis.filter(i=>{
+        if(oohBrandFilter&&i.brand!==oohBrandFilter)return false;
+        if(oohIsciFilter){const q=oohIsciFilter.toLowerCase();return(i.code||"").toLowerCase().includes(q)||(i.title||"").toLowerCase().includes(q)||(i.dma||"").toLowerCase().includes(q)}
+        return true;
+      });
+      return<div style={{display:"flex",flexDirection:"column",gap:12}}>
+        <div><h1 style={{fontSize:24,fontWeight:800}}>OOH ISCI Registry</h1>
+          <p style={{fontSize:13,color:"#a89ed4"}}>{oohIscis.length} active OOH ISCIs · {inactiveOoh.length} inactive</p>
+        </div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+          <Inp label="" placeholder="Search ISCIs..." value={oohIsciFilter} onChange={setOohIsciFilter} style={{width:220}}/>
+          <Sel label="" options={["","Wettermark Keith","Postman Law"]} value={oohBrandFilter} onChange={setOohBrandFilter} style={{width:160}}/>
+          <Btn small onClick={()=>{navigateHash("ooh");setPg("isci")}}>Full ISCI Registry</Btn>
+        </div>
+        <Cd style={{padding:0,overflow:"hidden"}}>
+          <div style={{maxHeight:600,overflowY:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>Code</TH><TH>Title</TH><TH>Brand</TH><TH>DMA</TH><TH>Duration</TH><TH>File</TH><TH>Status</TH></tr></thead>
+              <tbody>{filtered.map((ic,i)=><tr key={ic.code+i}>
+                <TD m b><span style={{cursor:"pointer",color:"#3b82f6"}} onClick={()=>setModal({t:"editIsci",isci:ic,idx:iscis.indexOf(ic)})}>{ic.code}</span></TD>
+                <TD>{ic.title}</TD>
+                <TD><B l={ic.brand==="Postman Law"?"PL":"WK"} c={ic.brand==="Postman Law"?"#7c3aed":"#d97706"}/></TD>
+                <TD>{ic.dma}</TD>
+                <TD>{ic.dur}s</TD>
+                <TD>{ic.fileUrl?<a href={ic.fileUrl} target="_blank" rel="noopener noreferrer" style={{color:"#3b82f6",fontSize:13}}>📁</a>:<span style={{color:"#dc2626"}}>—</span>}</TD>
+                <TD><B l="Active" c="#16a34a"/></TD>
+              </tr>)}</tbody>
+            </table>
+            {filtered.length===0&&<div style={{padding:20,textAlign:"center",color:"#a89ed4",fontSize:14}}>No OOH ISCIs found</div>}
+          </div>
+        </Cd>
+      </div>;
+    };
+    const calAlerts=(()=>{const now=new Date();const wk=new Date(now.getTime()+7*864e5);return OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length})();
+    return<div style={{display:"flex",height:"100vh",background:"#0f172a",color:"#e2e8f0"}}>
+      <div style={{width:200,background:"#0f172a",borderRight:"1px solid #1e293b",display:"flex",flexDirection:"column",flexShrink:0}}>
+        <div style={{padding:"14px 11px",borderBottom:"1px solid #1e293b"}}>
+          <div style={{fontSize:16,fontWeight:800,letterSpacing:1,color:"#d97706"}}>OOH HUB</div>
+          <div style={{fontSize:11,color:"#a89ed4",letterSpacing:2,fontWeight:600}}>OUTDOOR MEDIA</div>
+        </div>
+        <nav style={{flex:1,padding:"3px 0"}}>{oohNav.map(n=>{const a=subRoute===n.id;const badge=n.id==="pl"&&calAlerts?calAlerts:null;return<button key={n.id} onClick={()=>navigateHash("ooh/"+n.id)} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"6px 11px",border:"none",background:a?"#1e293b":"transparent",color:a?"#fff":"#9ca3af",fontSize:13,fontWeight:a?600:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #d97706":"3px solid transparent",position:"relative"}}><span style={{fontSize:13}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:14,fontWeight:800,padding:"1px 5px",borderRadius:8,background:"#f59e0b",color:"#fff"}}>{badge}</span>}</button>})}</nav>
+        <div style={{padding:"8px 11px",borderTop:"1px solid #1e293b"}}>
+          <button onClick={()=>{navigateHash("");setPg("dash")}} style={{display:"flex",alignItems:"center",gap:6,width:"100%",padding:"6px 8px",border:"1px solid #334155",borderRadius:6,background:"transparent",color:"#a89ed4",fontSize:13,fontWeight:600,cursor:"pointer"}}>← Back to D&D</button>
+        </div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:16}}>
+        {subRoute==="wk"&&OohPg()}
+        {subRoute==="pl"&&PlOohPg()}
+        {subRoute==="isci"&&oohIsciPg()}
+        {subRoute==="import"&&<UploadPg/>}
+        {!["wk","pl","isci","import"].includes(subRoute)&&OohPg()}
+      </div>
+    </div>;
+  };
+
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"ooh",l:"WK OOH",e:"🛣"},{id:"plooh",l:"PL OOH",e:"📋"},{id:"upload",l:"Import / Upload",e:"📤"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"email",l:"Email Manager",e:"✉"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},{id:"docs",l:"Help & Docs",e:"?"}];
-  const pages={dash:<Dash/>,traf:<TrafPg/>,ooh:<OohPg/>,plooh:<PlOohPg/>,upload:<UploadPg/>,est:<EstPg/>,sta:<StaPg/>,email:<EmailPg/>,metrics:<MetricsPg/>,library:<LibraryPg/>,notif:
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},{id:"docs",l:"Help & Docs",e:"?"}];
+  const pages={dash:<Dash/>,traf:<TrafPg/>,est:<EstPg/>,sta:<StaPg/>,metrics:<MetricsPg/>,library:<LibraryPg/>,notif:
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
         <div><h1 style={{fontSize:24,fontWeight:800,margin:0}}>Audit Log</h1><div style={{fontSize:13,color:"#a89ed4"}}>System activity and change tracking</div></div>
@@ -5346,6 +5428,12 @@ Be direct and actionable. No generic advice.`;
     <div style={{fontSize:14,color:"#a78bfa",marginTop:18,fontStyle:"italic",maxWidth:320,margin:"18px auto 0"}}>{doomPick(DOOM.loading)}</div>
     <div style={{fontSize:11,color:"#475569",marginTop:8}}>connecting...</div>
   </div></div>;
+  if(isOohHub)return<React.Fragment>
+    {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#dc2626",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
+    <OohHub/>
+    {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
+    {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#1e293b",color:"#e2e8f0",padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.3)",zIndex:9999,border:"1px solid #334155"}}>{toast}</div>}
+  </React.Fragment>;
   return<div style={{display:"flex",height:"100vh",background:"#f1f5f9",overflow:"hidden"}}>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#dc2626",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
     <div style={{width:200,background:"#0f172a",display:"flex",flexDirection:"column",flexShrink:0}}>
@@ -5360,20 +5448,16 @@ Be direct and actionable. No generic advice.`;
           {estHits.map(e=><div key={e.num} onClick={()=>{setGlobalSearch("");setPg("est")}} style={{padding:"5px 8px",fontSize:14,color:"#a89ed4",cursor:"pointer",borderBottom:"1px solid #2e2663"}} onMouseEnter={e=>e.target.style.background="#334155"} onMouseLeave={e=>e.target.style.background="transparent"}><span style={{fontWeight:700}}>{e.num}</span> <span style={{color:"#a89ed4"}}>{e.market}</span></div>)}
         </div>})()}
       </div>
-      <nav style={{flex:1,padding:"3px 0"}}>{nav.map(n=>{const a=pg===n.id;const badge=(()=>{if(n.id==="plooh"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"6px 11px",border:"none",background:a?"#1e293b":"transparent",color:a?"#fff":"#9ca3af",fontSize:13,fontWeight:a?600:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #3b82f6":"3px solid transparent",position:"relative"}}><span style={{fontSize:13}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:14,fontWeight:800,padding:"1px 5px",borderRadius:8,background:typeof badge==="number"?"#dc2626":"#f59e0b",color:"#fff"}}>{badge}</span>}</button>})}</nav>
-      <div style={{padding:"8px 11px",borderTop:"1px solid #1e293b",fontSize:13,color:"#a89ed4"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:600,color:"#a89ed4"}}>D&D v6.1</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #334155",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#a89ed4",padding:0}} title={lightMode?"Dark mode":"Light mode"}>{lightMode?"\u263D":"\u2600"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:"#16a34a"}}>Synced {Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago"}</span>}</div></div>
+      <nav style={{flex:1,padding:"3px 0"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:(pg===n.id&&!isOohHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"6px 11px",border:"none",background:a?"#1e293b":"transparent",color:a?"#fff":"#9ca3af",fontSize:13,fontWeight:a?600:500,cursor:"pointer",textAlign:"left",borderLeft:a?(n.id==="oohHub"?"3px solid #d97706":"3px solid #3b82f6"):"3px solid transparent",position:"relative"}}><span style={{fontSize:13}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:14,fontWeight:800,padding:"1px 5px",borderRadius:8,background:typeof badge==="number"?"#dc2626":"#f59e0b",color:"#fff"}}>{badge}</span>}</button>})}</nav>
+      <div style={{padding:"8px 11px",borderTop:"1px solid #1e293b",fontSize:13,color:"#a89ed4"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:600,color:"#a89ed4"}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #334155",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#a89ed4",padding:0}} title={lightMode?"Dark mode":"Light mode"}>{lightMode?"\u263D":"\u2600"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:"#16a34a"}}>Synced {Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago"}</span>}</div></div>
     </div>
     <div style={{flex:1,overflowY:"auto",padding:16}}>
       <div>
       {pg==="dash"&&<Dash/>}
       {pg==="traf"&&<TrafPg/>}
       {pg==="isci"&&IsciPg()}
-      {pg==="ooh"&&OohPg()}
-      {pg==="plooh"&&PlOohPg()}
-      {pg==="upload"&&<UploadPg/>}
       {pg==="est"&&<EstPg/>}
       {pg==="sta"&&<StaPg/>}
-      {pg==="email"&&<EmailPg/>}
       {pg==="metrics"&&<MetricsPg/>}
       {pg==="library"&&LibraryPg()}
       {pg==="planner"&&PlannerPg()}
