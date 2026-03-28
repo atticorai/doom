@@ -77,9 +77,22 @@ tr:nth-child(odd) td{background:rgba(28,21,40,.15)}
   background:linear-gradient(180deg,#1a1030 0%,#201540 50%,#1a1030 100%) !important;
   border-right:1px solid rgba(124,58,237,.15) !important;
 }
-/* Loader wrapper stays transparent — but don't nuke decorative children */
-#dd-loader{background:transparent !important;border:none !important;box-shadow:none !important}
-#dd-loader>div{background:transparent !important;border:none !important;box-shadow:none !important}
+/* Loader: NOTHING gets a background except the icon box */
+#dd-loader,
+#dd-loader>div,
+#dd-loader>div>div:not([style*="border:2px"]):not(.glow-ring):not(.glow-ambient),
+#dd-loader #dd-login-form,
+#dd-loader #dd-bar{
+  background:transparent !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+/* Re-apply icon box styling that the above might kill */
+#dd-loader div[style*="border:2px solid"]{
+  background:#1a1030 !important;
+  border-color:#7c3aed !important;
+}
+#R{background:transparent !important}
 /* Subtle purple tint on hover for interactive elements */
 button:hover:not([disabled]){filter:brightness(1.1)}
 /* Input focus glow */
