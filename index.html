@@ -63,40 +63,22 @@ div[style*="position: fixed"][style*="bottom"]{
   box-shadow:0 8px 32px rgba(124,58,237,.2),0 0 1px rgba(167,139,250,.3) !important;
 }
 
-/* ═══ OLYMPUS LIGHT (loaded via JS) ═══ */
-html.dd-light,html.dd-light body{
+/* ═══ OLYMPUS LIGHT — filter inversion with warm correction ═══ */
+html.dd-light body{
   background:linear-gradient(160deg,#fdf8ef 0%,#f7edd8 30%,#faf0e0 60%,#fdf8ef 100%) !important;
 }
-html.dd-light #R>div:not(#dd-loader)>div:first-child{
-  background:linear-gradient(180deg,#f5ecdb 0%,#f0e4ce 50%,#f5ecdb 100%) !important;
-  border-right:1px solid rgba(180,150,80,.2) !important;
+html.dd-light #R{
+  filter:invert(0.92) hue-rotate(180deg) saturate(1.4) brightness(1.05);
+  background:#faf6ef !important;
 }
-html.dd-light #R>div:not(#dd-loader) div[style*="border-radius: 9px"],
-html.dd-light #R>div:not(#dd-loader) div[style*="border-radius:9px"]{
-  box-shadow:0 2px 16px rgba(180,150,80,.1),0 0 1px rgba(200,170,90,.15) !important;
-  background:#fefcf5 !important;
-  border-color:#e6d5b0 !important;
+html.dd-light #R img,html.dd-light #R video,html.dd-light #R svg,
+html.dd-light #R canvas,html.dd-light #R iframe,
+html.dd-light #R [style*="linear-gradient(135deg"],
+html.dd-light .leaflet-container{
+  filter:invert(1) hue-rotate(180deg) saturate(0.7);
 }
-html.dd-light input,html.dd-light select,html.dd-light textarea{
-  background:#fefcf5 !important;color:#2d2418 !important;border-color:#d4c4a0 !important;
-}
-html.dd-light input:focus,html.dd-light select:focus{
-  box-shadow:0 0 0 2px rgba(124,58,237,.15),0 0 12px rgba(180,150,80,.12) !important;
-  border-color:rgba(124,58,237,.35) !important;
-}
-html.dd-light th{background:#f0e4ce !important;color:#5b4e7a !important;border-color:#e0d0b0 !important}
-html.dd-light td{color:#3d3246 !important;border-color:#ede0c8 !important}
-html.dd-light tr:nth-child(even) td{background:rgba(247,237,216,.4) !important}
-html.dd-light tr:nth-child(odd) td{background:transparent !important}
-html.dd-light button{border-color:#d4c4a0 !important}
 html.dd-light ::-webkit-scrollbar-thumb{background:#d4c0a0 !important}
 html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
-html.dd-light div[style*="position: fixed"][style*="bottom"]{
-  background:linear-gradient(135deg,#fefcf5,#f7edd8) !important;
-  box-shadow:0 8px 32px rgba(180,150,80,.15) !important;
-  border-left:3px solid #7c3aed !important;
-  color:#2d2418 !important;
-}
 </style></head><body style="background:linear-gradient(160deg,#1a1030 0%,#2d1f4e 50%,#1a1030 100%)"><div id="R"><div id="dd-loader" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:'DM Sans',Arial,sans-serif">
 <div style="text-align:center">
 <div style="width:88px;height:88px;border-radius:18px;background:transparent;display:inline-flex;align-items:center;justify-content:center;position:relative;margin-bottom:28px">

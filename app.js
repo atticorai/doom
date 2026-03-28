@@ -465,62 +465,29 @@ const App=()=>{
     if(lightMode){
       document.documentElement.classList.add("dd-light");
       s.textContent=`
-        /* ═══ OLYMPUS — Meg in golden radiance ═══ */
-
-        /* Force EVERY dark background light — catch all rgb() variants React renders */
-        html.dd-light div[style*="background: rgb(26"],
-        html.dd-light div[style*="background: rgb(37"],
-        html.dd-light div[style*="background: rgb(45"],
-        html.dd-light div[style*="background: rgb(74"],
-        html.dd-light div[style*="background: rgb(15"],
-        html.dd-light div[style*="background: rgb(30"],
-        html.dd-light div[style*="background: rgb(20"],
-        html.dd-light div[style*="background: rgb(42"],
-        html.dd-light div[style*="background: rgb(28"],
-        html.dd-light div[style*="background: rgb(69"],
-        html.dd-light div[style*="background: rgb(0, 0"] { background: transparent !important; }
-
-        /* Nav active state */
-        html.dd-light nav button[style*="background: rgb(37"] { background: rgba(124,58,237,.08) !important; }
-
-        /* Main content scroll area */
-        html.dd-light div[style*="overflow-y: auto"],
-        html.dd-light div[style*="overflow: hidden"] { background: transparent !important; }
-
-        /* Force ALL text warm */
-        html.dd-light div, html.dd-light span, html.dd-light p,
-        html.dd-light label, html.dd-light a { color: #2d2418 !important; }
-        html.dd-light h1, html.dd-light h2, html.dd-light h3, html.dd-light h4 { color: #1a1008 !important; }
-
-        /* Meg's purple STAYS — she glows against the gold */
-        html.dd-light [style*="color: rgb(124, 58, 237)"] { color: #6d28d9 !important; }
-        html.dd-light [style*="color: rgb(167, 139, 250)"] { color: #7c3aed !important; }
-        html.dd-light [style*="color: rgb(124, 107, 196)"] { color: #6b5a8a !important; }
-
-        /* Semantic colors */
-        html.dd-light [style*="color: rgb(220, 38"] { color: #b91c1c !important; }
-        html.dd-light [style*="color: rgb(22, 163"] { color: #15803d !important; }
-        html.dd-light [style*="color: rgb(37, 99"] { color: #1d4ed8 !important; }
-        html.dd-light [style*="color: rgb(217, 119"] { color: #b45309 !important; }
-        html.dd-light [style*="color: rgb(248, 113"] { color: #b91c1c !important; }
-        html.dd-light [style*="color: rgb(156, 163"] { color: #78716c !important; }
-
-        /* White-on-colored buttons stay white */
-        html.dd-light button[style*="linear-gradient"] { color: #fff !important; }
-        html.dd-light button[style*="background: rgb(124"] { color: #fff !important; }
-        html.dd-light button[style*="background: rgb(37, 99"] { color: #fff !important; }
-        html.dd-light button[style*="background: rgb(220, 38"] { color: #fff !important; }
-        html.dd-light button[style*="background: rgb(71"] { color: #fff !important; }
-        html.dd-light button[style*="background: rgb(217"] { color: #fff !important; }
-
-        /* Badges/pills keep their own color */
-        html.dd-light span[style*="border-radius: 99px"] { color: inherit !important; }
-        html.dd-light span[style*="border-radius: 8px"] { color: #fff !important; }
-
-        /* All gradients on page → golden light */
-        html.dd-light div[style*="linear-gradient(160deg"] {
+        /* ═══ OLYMPUS — CSS filter inversion + hue correction ═══ */
+        /* Invert the entire page, then hue-rotate to warm gold instead of cold blue */
+        html.dd-light #R {
+          filter: invert(0.92) hue-rotate(180deg) saturate(1.4) brightness(1.05);
+          background: #faf6ef !important;
+        }
+        /* Un-invert things that should keep original colors */
+        html.dd-light img,
+        html.dd-light video,
+        html.dd-light svg,
+        html.dd-light canvas,
+        html.dd-light iframe,
+        html.dd-light [style*="linear-gradient(135deg"],
+        html.dd-light .leaflet-container {
+          filter: invert(1) hue-rotate(180deg) saturate(0.7);
+        }
+        /* Body background → warm golden */
+        html.dd-light body {
           background: linear-gradient(160deg, #fdf8ef 0%, #f7edd8 30%, #faf0e0 60%, #fdf8ef 100%) !important;
         }
+        /* Scrollbar */
+        html.dd-light ::-webkit-scrollbar-thumb { background: #d4c0a0 !important; }
+        html.dd-light ::-webkit-scrollbar-track { background: #f0e4ce !important; }
       `;
     }else{
       document.documentElement.classList.remove("dd-light");
