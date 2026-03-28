@@ -588,11 +588,15 @@ const App=()=>{
           // Use code+dma as composite key for same code in different markets
           const fbMap=new Map(cleaned.map(i=>[i.code+"|"+(i.dma||""),i]));
           const seedMap=new Map(ISCIS_INIT.map(i=>[i.code+"|"+(i.dma||""),i]));
-          // Start from Firestore — restore fileUrls from seed if lost
+          // Start from Firestore — restore fileUrls AND titles from seed if Firestore lost them
           const enhanced=cleaned.map(fb=>{
             const seed=seedMap.get(fb.code+"|"+(fb.dma||""));
-            if(seed&&!fb.fileUrl&&seed.fileUrl)return{...fb,fileUrl:seed.fileUrl};
-            return fb;
+            if(!seed)return fb;
+            const fixes={};
+            if(!fb.fileUrl&&seed.fileUrl)fixes.fileUrl=seed.fileUrl;
+            if((!fb.title||fb.title===fb.code)&&seed.title)fixes.title=seed.title;
+            if((!fb.category&&!fb.caseType)&&seed.category)fixes.category=seed.category;
+            return Object.keys(fixes).length?{...fb,...fixes}:fb;
           });
           // Always add back missing seed ISCIs — better to recover than lose
           const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||"")));
