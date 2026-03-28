@@ -453,6 +453,8 @@ const useHash=()=>{
 };
 
 const App=()=>{
+  // Hide the HTML loader the moment React mounts
+  useEffect(()=>{const ld=document.getElementById('dd-loader');if(ld)ld.style.display='none';if(window._quipInterval){clearInterval(window._quipInterval);window._quipInterval=null}},[]);
   const[routeHash,navigateHash]=useHash();
   const isOohHub=routeHash.startsWith('ooh');
   const[pg,setPgRaw]=useState("dash");
@@ -5406,16 +5408,17 @@ Be direct and actionable. No generic advice.`;
     <button onClick={async()=>{const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#7c3aed,#a78bfa)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(124,58,237,.3)"}}>Let Me In</button>
   </div></div>;
   if(!dbLoaded)return<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1a1030 0%,#2d1f4e 50%,#1a1030 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center"}}>
-    <div style={{width:88,height:88,display:"inline-flex",alignItems:"center",justifyContent:"center",position:"relative",marginBottom:28}}>
-      
-      <div style={{position:"absolute",width:120,height:120,borderRadius:"50%",background:"radial-gradient(circle,rgba(124,58,237,.35) 0%,rgba(124,58,237,.12) 40%,transparent 70%)",animation:"breathe 3s ease-in-out infinite"}}/>
-      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" style={{position:"relative",zIndex:2}}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="url(#flm)"/><defs><linearGradient id="flm" x1="12" y1="3" x2="12" y2="22"><stop stopColor="#e9d5ff"/><stop offset=".35" stopColor="#c4b5fd"/><stop offset="1" stopColor="#7c3aed"/></linearGradient></defs></svg>
+    <div style={{width:88,height:88,borderRadius:18,background:"#1a1030",border:"2px solid #7c3aed",display:"inline-flex",alignItems:"center",justifyContent:"center",position:"relative",marginBottom:28}}>
+      <div className="glow-ring"/>
+      <div className="glow-ambient"/>
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" style={{position:"relative",zIndex:2}}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="url(#flm)"/><defs><linearGradient id="flm" x1="12" y1="3" x2="12" y2="22"><stop stopColor="#e9d5ff"/><stop offset=".35" stopColor="#c4b5fd"/><stop offset="1" stopColor="#7c3aed"/></linearGradient></defs></svg>
     </div>
-    <div style={{fontSize:30,fontWeight:800,color:"#7c3aed",letterSpacing:3,textShadow:"0 0 20px rgba(124,58,237,.4),0 0 40px rgba(124,58,237,.15)"}}>DOOM & DELIVERABLES</div>
+    <div className="doom-title" style={{fontSize:30,fontWeight:800,letterSpacing:3,overflow:"hidden",marginBottom:6}}>
+      <span className="doom-letter dl">D</span><span className="doom-letter dl">O</span><span className="doom-letter dl">O</span><span className="doom-letter dl">M</span><span className="doom-amp">&amp;</span><span className="doom-letter dd">D</span><span className="doom-letter dd">E</span><span className="doom-letter dd">L</span><span className="doom-letter dd">I</span><span className="doom-letter dd">V</span><span className="doom-letter dd">E</span><span className="doom-letter dd">R</span><span className="doom-letter dd">A</span><span className="doom-letter dd">B</span><span className="doom-letter dd">L</span><span className="doom-letter dd">E</span><span className="doom-letter dd">S</span>
+    </div>
     <div style={{fontSize:11,fontWeight:600,color:"#a78bfa",letterSpacing:3,marginTop:6}}>ATTICOR MEDIA</div>
-    <div style={{marginTop:28,width:200,height:4,background:"#251d3d",borderRadius:4,overflow:"hidden",margin:"28px auto 0"}}><div style={{width:"30%",height:"100%",background:"linear-gradient(90deg,#7c3aed,#a78bfa,#7c3aed)",borderRadius:4,animation:"ldbar 1.5s ease-in-out infinite"}}/></div>
     <div style={{fontSize:14,color:"#a78bfa",marginTop:18,fontStyle:"italic",maxWidth:320,margin:"18px auto 0"}}>{doomPick(DOOM.loading)}</div>
-    <div style={{fontSize:11,color:"#5a4d6b",marginTop:8}}>connecting...</div>
+    <div style={{marginTop:16,width:200,height:4,background:"#251d3d",borderRadius:4,overflow:"hidden",margin:"16px auto 0"}}><div style={{width:"30%",height:"100%",background:"linear-gradient(90deg,#7c3aed,#a78bfa,#7c3aed)",borderRadius:4,animation:"ldbar 1.5s ease-in-out infinite"}}/></div>
   </div></div>;
   if(isOohHub)return<React.Fragment>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#dc2626",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
