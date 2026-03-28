@@ -7,24 +7,24 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}html,body,#R{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background:transparent}
 #R{background:transparent !important}
-::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#4a3870;border-radius:3px}::-webkit-scrollbar-track{background:#1a1030}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#4a3565;border-radius:3px}::-webkit-scrollbar-track{background:#1e1233}
 @keyframes pulse{0%,100%{transform:translateX(-100%)}50%{transform:translateX(200%)}}
 table,button,select,input,textarea{font-family:'DM Sans',sans-serif}
 .leaflet-container{font-family:'DM Sans',sans-serif;border-radius:9px}
 
 /* === DARK THEME === */
 #dd-loader, #dd-loader>div{background:transparent !important;border:none !important;box-shadow:none !important}
-#R>div:not(#dd-loader)>div:last-child{background:#1a1030 !important;color:#ede4f5 !important}
+#R>div:not(#dd-loader)>div:last-child{background:#1e1233 !important;color:#E8DFF0 !important}
 #R>div>div:last-child div[style*="background: rgb(255, 255, 255)"],
 #R>div>div:last-child div[style*="background:#fff"],
-#R>div>div:last-child div[style*="background: white"]{background:#251d3d !important;border-color:#4a3870 !important;color:#ede4f5 !important}
-h1,h2,h3,h4{color:#f3edf9 !important}
-td{color:#d4c9e0 !important;border-color:#251d3d !important}
-th{background:#251d3d !important;color:#a89bb8 !important;border-color:#4a3870 !important}
+#R>div>div:last-child div[style*="background: white"]{background:#2d1f42 !important;border-color:#4a3565 !important;color:#E8DFF0 !important}
+h1,h2,h3,h4{color:#F0E8F8 !important}
+td{color:#D0C4DD !important;border-color:#2d1f42 !important}
+th{background:#2d1f42 !important;color:#9B8EAD !important;border-color:#4a3565 !important}
 /* Skip loader inputs from dark theme override */
-#R>div:not(#dd-loader) input,#R>div:not(#dd-loader) select,#R>div:not(#dd-loader) textarea{background:#1a1030 !important;color:#ede4f5 !important;border-color:#4a3870 !important}
-label{color:#a89bb8 !important}
-button{border-color:#4a3870 !important}
+#R>div:not(#dd-loader) input,#R>div:not(#dd-loader) select,#R>div:not(#dd-loader) textarea{background:#1e1233 !important;color:#E8DFF0 !important;border-color:#4a3565 !important}
+label{color:#9B8EAD !important}
+button{border-color:#4a3565 !important}
 tr:nth-child(even) td{background:rgba(42,34,64,.25)}
 tr:nth-child(odd) td{background:rgba(28,21,40,.15)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
@@ -35,13 +35,13 @@ tr:nth-child(odd) td{background:rgba(28,21,40,.15)}
 @keyframes sparkPulse{0%,100%{opacity:.7}50%{opacity:1}}
 
 /* ═══ LOADER ANIMATIONS (in <head> so React can't destroy them) ═══ */
-.glow-ring{position:absolute;inset:-4px;border-radius:22px;z-index:0;background:conic-gradient(from 0deg,transparent,#7c3aed,#a78bfa,#7c3aed,transparent);opacity:.6;animation:spin 4s linear infinite}
-.glow-ring::after{content:'';position:absolute;inset:3px;border-radius:18px;background:#1a1030}
-.glow-ambient{position:absolute;width:120px;height:120px;border-radius:50%;z-index:0;background:radial-gradient(circle,rgba(124,58,237,.35) 0%,rgba(124,58,237,.12) 40%,transparent 70%);animation:breathe 3s ease-in-out infinite}
+.glow-ring{position:absolute;inset:-4px;border-radius:22px;z-index:0;background:conic-gradient(from 0deg,transparent,#9b7bb0,#C4A0C8,#9b7bb0,transparent);opacity:.6;animation:spin 4s linear infinite}
+.glow-ring::after{content:'';position:absolute;inset:3px;border-radius:18px;background:#1e1233}
+.glow-ambient{position:absolute;width:120px;height:120px;border-radius:50%;z-index:0;background:radial-gradient(circle,rgba(155,123,176,.4) 0%,rgba(155,123,176,.12) 40%,transparent 70%);animation:breathe 3s ease-in-out infinite}
 .doom-letter{display:inline-block;animation:letterDrop .4s ease-out var(--d,.0s) both}
-.doom-letter.dl{color:#7c3aed;text-shadow:0 0 20px rgba(124,58,237,.5),0 0 40px rgba(124,58,237,.2)}
-.doom-letter.dd{color:#a78bfa;text-shadow:0 0 15px rgba(167,139,250,.4)}
-.doom-amp{display:inline-block;color:#475569;font-weight:400;margin:0 6px;animation:letterDrop .4s ease-out .35s both}
+.doom-letter.dl{color:#9b7bb0;text-shadow:0 0 20px rgba(155,123,176,.5),0 0 40px rgba(155,123,176,.2)}
+.doom-letter.dd{color:#C4A0C8;text-shadow:0 0 15px rgba(196,160,200,.4)}
+.doom-amp{display:inline-block;color:#6B5E80;font-weight:400;margin:0 6px;animation:letterDrop .4s ease-out .35s both}
 .doom-title{animation:nflick 4s ease-in-out 1.5s infinite}
 @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 @keyframes breathe{0%,100%{opacity:.5;transform:scale(.95)}50%{opacity:1;transform:scale(1.08)}}
@@ -64,18 +64,18 @@ tr:nth-child(odd) td{background:rgba(28,21,40,.15)}
 }
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes ldbar{0%{width:10%;margin-left:0}50%{width:40%;margin-left:30%}100%{width:10%;margin-left:90%}}
-#dd-pw:focus{border-color:rgba(124,58,237,.6);box-shadow:0 0 20px rgba(124,58,237,.15)}
+#dd-pw:focus{border-color:rgba(155,123,176,.6);box-shadow:0 0 20px rgba(155,123,176,.2)}
 
 /* ═══ UNDERWORLD ATMOSPHERE ═══ */
 /* Purple glow on cards — skip loader */
 #R>div:not(#dd-loader) div[style*="border-radius: 9px"],
 #R>div:not(#dd-loader) div[style*="border-radius:9px"]{
-  box-shadow:0 2px 16px rgba(124,58,237,.08),0 0 1px rgba(167,139,250,.15) !important;
+  box-shadow:0 2px 20px rgba(155,123,176,.1),0 0 1px rgba(196,160,200,.12) !important;
 }
 /* Sidebar ambient glow — skip the loader */
 #R>div:not(#dd-loader)>div:first-child{
-  background:linear-gradient(180deg,#1a1030 0%,#201540 50%,#1a1030 100%) !important;
-  border-right:1px solid rgba(124,58,237,.15) !important;
+  background:linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%) !important;
+  border-right:1px solid rgba(155,123,176,.15) !important;
 }
 /* Loader: NOTHING gets a background except the icon box */
 #dd-loader,
@@ -89,16 +89,16 @@ tr:nth-child(odd) td{background:rgba(28,21,40,.15)}
 }
 /* Re-apply icon box styling that the above might kill */
 #dd-loader div[style*="border:2px solid"]{
-  background:#1a1030 !important;
-  border-color:#7c3aed !important;
+  background:#1e1233 !important;
+  border-color:#9b7bb0 !important;
 }
 #R{background:transparent !important}
 /* Subtle purple tint on hover for interactive elements */
 button:hover:not([disabled]){filter:brightness(1.1)}
 /* Input focus glow */
 input:focus,select:focus,textarea:focus{
-  box-shadow:0 0 0 2px rgba(124,58,237,.2),0 0 16px rgba(124,58,237,.1) !important;
-  border-color:rgba(124,58,237,.4) !important;
+  box-shadow:0 0 0 2px rgba(155,123,176,.25),0 0 16px rgba(155,123,176,.1) !important;
+  border-color:rgba(155,123,176,.5) !important;
 }
 /* Toast notification glow */
 div[style*="position: fixed"][style*="bottom"]{
@@ -121,25 +121,25 @@ html.dd-light .leaflet-container{
 }
 html.dd-light ::-webkit-scrollbar-thumb{background:#d4c0a0 !important}
 html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
-</style></head><body style="background:linear-gradient(160deg,#1a1030 0%,#2d1f4e 50%,#1a1030 100%)"><div id="R"><div id="dd-loader" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:'DM Sans',Arial,sans-serif">
+</style></head><body style="background:linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)"><div id="R"><div id="dd-loader" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:'DM Sans',Arial,sans-serif">
 <div style="text-align:center">
-<div style="width:88px;height:88px;border-radius:18px;background:#1a1030;border:2px solid #7c3aed;display:inline-flex;align-items:center;justify-content:center;position:relative;margin-bottom:28px">
+<div style="width:88px;height:88px;border-radius:18px;background:#1e1233;border:2px solid #9b7bb0;display:inline-flex;align-items:center;justify-content:center;position:relative;margin-bottom:28px">
 <div class="glow-ring"></div>
 <div class="glow-ambient"></div>
 <svg width="44" height="44" viewBox="0 0 24 24" fill="none" style="position:relative;z-index:2">
 <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="url(#gcomb)"/>
-<defs><linearGradient id="gcomb" x1="12" y1="3" x2="12" y2="22"><stop stop-color="#e9d5ff"/><stop offset=".35" stop-color="#c4b5fd"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs>
+<defs><linearGradient id="gcomb" x1="12" y1="3" x2="12" y2="22"><stop stop-color="#E8DFF0"/><stop offset=".35" stop-color="#C4A0C8"/><stop offset="1" stop-color="#9b7bb0"/></linearGradient></defs>
 </svg>
 </div>
 <div class="doom-title" style="font-size:30px;font-weight:800;letter-spacing:3px;overflow:hidden">
 <span class="doom-letter dl" style="--d:0s">D</span><span class="doom-letter dl" style="--d:.07s">O</span><span class="doom-letter dl" style="--d:.14s">O</span><span class="doom-letter dl" style="--d:.21s">M</span><span class="doom-amp" style="animation:letterDrop .4s ease-out .35s both">&amp;</span><span class="doom-letter dd" style="--d:.49s">D</span><span class="doom-letter dd" style="--d:.55s">E</span><span class="doom-letter dd" style="--d:.61s">L</span><span class="doom-letter dd" style="--d:.67s">I</span><span class="doom-letter dd" style="--d:.73s">V</span><span class="doom-letter dd" style="--d:.79s">E</span><span class="doom-letter dd" style="--d:.85s">R</span><span class="doom-letter dd" style="--d:.91s">A</span><span class="doom-letter dd" style="--d:.97s">B</span><span class="doom-letter dd" style="--d:1.03s">L</span><span class="doom-letter dd" style="--d:1.09s">E</span><span class="doom-letter dd" style="--d:1.15s">S</span>
 </div>
-<div style="font-size:11px;color:#a78bfa;letter-spacing:3px;font-weight:600;margin-top:6px;animation:fadeUp .5s ease-out 1.4s both">ATTICOR MEDIA</div>
-<div id="dd-status" style="margin-top:18px;font-size:14px;color:#a78bfa;font-style:italic;max-width:320px;margin-left:auto;margin-right:auto;animation:fadeUp .5s ease-out 1.8s both;opacity:0;min-height:22px"></div>
-<div id="dd-bar" style="width:200px;height:4px;background:#251d3d;border-radius:4px;overflow:hidden;margin:16px auto 0"><div style="height:100%;width:30%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#7c3aed);border-radius:4px;animation:ldbar 1.5s ease-in-out infinite"></div></div>
+<div style="font-size:11px;color:#C4A0C8;letter-spacing:3px;font-weight:600;margin-top:6px;animation:fadeUp .5s ease-out 1.4s both">ATTICOR MEDIA</div>
+<div id="dd-status" style="margin-top:18px;font-size:14px;color:#C4A0C8;font-style:italic;max-width:320px;margin-left:auto;margin-right:auto;animation:fadeUp .5s ease-out 1.8s both;opacity:0;min-height:22px"></div>
+<div id="dd-bar" style="width:200px;height:4px;background:#2d1f42;border-radius:4px;overflow:hidden;margin:16px auto 0"><div style="height:100%;width:30%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#7c3aed);border-radius:4px;animation:ldbar 1.5s ease-in-out infinite"></div></div>
 <div id="dd-login-form" style="display:none;margin-top:20px;animation:fadeUp .4s ease-out both;max-width:320px;margin-left:auto;margin-right:auto">
-  <input type="password" id="dd-pw" placeholder="Password" style="width:100%;padding:14px 18px;border-radius:10px;border:2px solid rgba(124,58,237,.35);background:rgba(20,15,30,.4);color:#ede4f5;font-size:16px;text-align:center;outline:none;margin-bottom:14px;letter-spacing:2px;font-family:'DM Sans',sans-serif;backdrop-filter:blur(8px)"/>
-  <button id="dd-login-btn" style="width:100%;padding:14px;border-radius:10px;border:none !important;background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;box-shadow:0 4px 16px rgba(124,58,237,.3);font-family:'DM Sans',sans-serif">Let Me In</button>
+  <input type="password" id="dd-pw" placeholder="Password" style="width:100%;padding:14px 18px;border-radius:10px;border:2px solid rgba(155,123,176,.3);background:rgba(30,18,51,.5);color:#E8DFF0;font-size:16px;text-align:center;outline:none;margin-bottom:14px;letter-spacing:2px;font-family:'DM Sans',sans-serif;backdrop-filter:blur(8px)"/>
+  <button id="dd-login-btn" style="width:100%;padding:14px;border-radius:10px;border:none !important;background:linear-gradient(135deg,#9b7bb0,#C4A0C8);color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;box-shadow:0 4px 16px rgba(155,123,176,.3);font-family:'DM Sans',sans-serif">Let Me In</button>
   <div id="dd-login-error" style="display:none;margin-top:10px;font-size:13px;color:#f87171;font-weight:600"></div>
 </div>
 </div>
