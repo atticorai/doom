@@ -1372,7 +1372,7 @@ const App=()=>{
       </div>
       <Cd><div style={{overflowX:"auto",maxHeight:"calc(100vh - 320px)"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><STH tbl="isci" col="code">ISCI</STH><STH tbl="isci" col="title">Title</STH><STH tbl="isci" col="media">Media</STH><STH tbl="isci" col="brand">Brand</STH><STH tbl="isci" col="dma">DMA</STH><STH tbl="isci" col="dur">Dur</STH><STH tbl="isci" col="category">Category</STH><STH tbl="isci" col="valueProp">Value Prop</STH><STH tbl="isci" col="vo">VO</STH><STH tbl="isci" col="status">Status</STH><TH w="60">Actions</TH></tr></thead>
         <tbody>{fl.slice(0,250).map((i,idx)=>{const gi=iscis.findIndex(x=>x.code===i.code&&x.dma===i.dma&&x.media===i.media);return<tr key={i.code+i.dma+i.media} style={{opacity:i.active?1:.45}}>
-          <TD m b><span style={{cursor:"pointer",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"editIsci",isci:i,idx:gi})}>{i.code}</span>{isIsciSent(i.code)&&<span title="Locked — sent in traffic" style={{marginLeft:3,fontSize:13,color:"#dc2626"}}>🔒</span>}{i.fileUrl&&<a href={i.fileUrl} target="_blank" rel="noopener" download title="Download creative" style={{marginLeft:3,fontSize:13,color:"#16a34a",textDecoration:"none"}}>📁</a>}</TD><TD>{i.title}</TD><TD><B l={i.media} c={mc(i.media)}/></TD><TD>{i.brand}</TD><TD>{DM[i.dma]||i.dma}</TD><TD>{i.media==="OOH"?(OOH_TYPE_MAP[i.dur]||i.dur):i.media==="Display"?(DISPLAY_TYPE_MAP[i.dur]||i.dur):i.dur?`:${i.dur}`:""}</TD>
+          <TD m b><span style={{cursor:"pointer",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"editIsci",isci:i,idx:gi})}>{i.code}</span>{isIsciSent(i.code)&&<span title="Locked — sent in traffic" style={{marginLeft:3,fontSize:13,color:"#dc2626"}}>🔒</span>}{i.fileUrl&&<a href={i.fileUrl} target="_blank" rel="noopener" download title="Download creative" style={{marginLeft:3,fontSize:13,color:"#16a34a",textDecoration:"none"}}>📁</a>}</TD><TD>{i.title}</TD><TD><B l={i.media} c={mc(i.media)}/></TD><TD>{i.brand}</TD><TD>{i.dma}</TD><TD>{i.media==="OOH"?(OOH_TYPE_MAP[i.dur]||i.dur):i.media==="Display"?(DISPLAY_TYPE_MAP[i.dur]||i.dur):i.dur?`:${i.dur}`:""}</TD>
           <TD><select value={i.category||i.caseType||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New category:");if(!n||!n.trim())return;const t=n.trim();setCustomFields(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),categories:[...(p[i.brand]?.categories||[]).filter(x=>x!==t),t]}}));setIscis(p=>p.map((x,j)=>j===gi?{...x,category:t}:x))}else setIscis(p=>p.map((x,j)=>j===gi?{...x,category:v}:x))}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #e0d9f7",background:i.category||i.caseType?"#dbeafe":"#f8fafc",color:"#4a3870",fontWeight:600,maxWidth:100}}>
             <option value="">—</option>{(customFields[i.brand]?.categories||[]).map(t=><option key={t} value={t}>{t}</option>)}<option value="__add__">＋</option>
           </select></TD>
@@ -1446,7 +1446,7 @@ const App=()=>{
           const conf=getConfirmed(e.num);const sentStas=airing?.stations||[];const confCount=sentStas.filter(c=>conf[c]?.confirmed).length;const totalSent=sentStas.length;
           return<tr key={e.num+e.brand+e.market} style={{background:isSel?"#eff6ff":""}}>
             {combineMode&&<TD a="center"><input type="checkbox" checked={isSel} onChange={()=>toggleCombine(e)}/></TD>}
-            <TD m b>{e.num}</TD><TD><B l={e.brand==="Postman Law"?"PL":"WK"} c={e.brand==="Postman Law"?"#7c3aed":"#d97706"}/></TD><TD b>{e.market}</TD><TD><B l={e.media} c={mc(e.media)}/></TD><TD>{e.group}</TD><TD>{e.buyer}</TD>
+            <TD m b>{e.num}</TD><TD><B l={e.brand} c={e.brand==="Postman Law"?"#7c3aed":"#d97706"}/></TD><TD b>{e.market}</TD><TD><B l={e.media} c={mc(e.media)}/></TD><TD>{e.group}</TD><TD>{e.buyer}</TD>
             <TD a="center" b c={linkedSta.length?"#059669":"#dc2626"}><span title={linkedSta.map(s=>s.call).join(", ")} style={{cursor:"help"}}>{linkedSta.length}</span></TD>
             <TD a="center" b c={mi.length?"#2563eb":"#dc2626"}>{mi.length}</TD>
             <TD a="center">{airing?<span title={`v${airing.version} · ${airing.iscis.length} ISCIs · ${airing.month}`} style={{cursor:"help",fontSize:13,padding:"2px 5px",borderRadius:8,background:"#dcfce7",color:"#16a34a",fontWeight:600}}>v{airing.version}</span>:<span style={{fontSize:13,color:"#a89ed4"}}>—</span>}</TD>
@@ -2570,7 +2570,7 @@ const App=()=>{
               <div>
                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
                   <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#251d3d"}}>Panel {p.panel}</span>
-                  <B l={p.dma} c={c}/>
+                  <B l={DM[p.dma]||p.dma} c={c}/>
                   <B l={p.facing} c="#6366f1"/>
                 </div>
                 <div style={{fontSize:14,color:"#a89ed4",marginTop:2}}>{p.type} · {p.size} · {p.submarket}</div>
@@ -2662,7 +2662,7 @@ const App=()=>{
         </div>
         <div style={{overflowX:"auto",maxHeight:500}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Board ID</TH><TH>Panel</TH><TH>DMA</TH><TH>Vendor</TH><TH>Type</TH><TH>Size</TH><TH>Location</TH><TH>Impr/Wk</TH><TH>Installed</TH><TH>ISCI</TH><TH>Contract</TH><TH>TAB#</TH><TH>Coords</TH></tr></thead>
           <tbody>{fl.map((p,i)=>{const co=WK_COORDS[p.boardId];return<tr key={p.boardId}>
-            <TD b>{i+1}</TD><TD m b style={{fontSize:14}}>{p.boardId}</TD><TD m>{p.panel}</TD><TD><B l={p.dma} c={dmaColors[p.dma]||"#d97706"}/></TD>
+            <TD b>{i+1}</TD><TD m b style={{fontSize:14}}>{p.boardId}</TD><TD m>{p.panel}</TD><TD><B l={DM[p.dma]||p.dma} c={dmaColors[p.dma]||"#d97706"}/></TD>
             <TD><span style={{fontSize:14,fontWeight:600}}>{p.vendor}</span></TD><TD><span style={{fontSize:13}}>{p.type}</span></TD><TD>{p.size}</TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:180,display:"inline-block"}}>{p.location}</span></TD>
             <TD b>{p.impressions.toLocaleString()}</TD><TD>{p.installDate}</TD>
@@ -2850,7 +2850,7 @@ const App=()=>{
             <TD b>{i+1}</TD>
             <TD m b>{p.panel}</TD>
             <TD>{p.submarket}</TD>
-            <TD><B l={p.dma} c={dmaColors[p.dma]||"#d97706"}/></TD>
+            <TD><B l={DM[p.dma]||p.dma} c={dmaColors[p.dma]||"#d97706"}/></TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:200,display:"inline-block"}}>{p.location}</span></TD>
             <TD b>{p.impressions.toLocaleString()}</TD>
             <TD>{p.installDate}</TD>
@@ -4129,7 +4129,7 @@ ${fullText.substring(0,3000)}`}]
       {viewMode==="byEst"&&<Cd style={{padding:10}}>
         <div style={{fontSize:14,fontWeight:700,marginBottom:6}}>Quick Copy by Market</div>
         <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-          {[...new Set(stations.map(s=>s.brand+"|"+s.market))].sort().map(key=>{const[brand,market]=key.split("|");const mStations=stations.filter(s=>s.brand===brand&&s.market===market);const mEmails=[...new Set(mStations.flatMap(s=>parseEmails(s.contact)))];return mEmails.length>0&&<button key={key} onClick={()=>copyText(mEmails.join("; "),brand+" "+market+" ("+mEmails.length+")")} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #7c6bc4",background:"#1a1030",fontSize:14,fontWeight:600,cursor:"pointer",color:"#a89ed4"}}>{brand==="Postman Law"?"PL":"WK"} {market} <span style={{color:"#3b82f6"}}>({mEmails.length})</span></button>})}
+          {[...new Set(stations.map(s=>s.brand+"|"+s.market))].sort().map(key=>{const[brand,market]=key.split("|");const mStations=stations.filter(s=>s.brand===brand&&s.market===market);const mEmails=[...new Set(mStations.flatMap(s=>parseEmails(s.contact)))];return mEmails.length>0&&<button key={key} onClick={()=>copyText(mEmails.join("; "),brand+" "+market+" ("+mEmails.length+")")} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #7c6bc4",background:"#1a1030",fontSize:14,fontWeight:600,cursor:"pointer",color:"#a89ed4"}}>{brand} {market} <span style={{color:"#3b82f6"}}>({mEmails.length})</span></button>})}
         </div>
       </Cd>}
     </div>;
@@ -4272,7 +4272,7 @@ ${fullText.substring(0,3000)}`}]
 
       {/* BRAND TABS */}
       <div style={{display:"flex",gap:0,marginBottom:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=fBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";const ct=trackingData.filter(d=>d.brand===b).length;return<button key={b} onClick={()=>{setFBrand(b);setFMarket("all");setFMedia("all");setFMonth("all")}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b==="Postman Law"?"PL":"WK"} — {b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
+        {["Postman Law","Wettermark Keith"].map(b=>{const active=fBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";const ct=trackingData.filter(d=>d.brand===b).length;return<button key={b} onClick={()=>{setFBrand(b);setFMarket("all");setFMedia("all");setFMonth("all")}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
         <div style={{flex:1,borderBottom:"2px solid #4a3870"}}/>
       </div>
       {/* FILTERS */}
@@ -4785,7 +4785,7 @@ ${fullText.substring(0,3000)}`}]
       </Cd>}
       {/* Brand Tabs */}
       <div style={{display:"flex",gap:0,marginBottom:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=libBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";const ct=trafficHistory.filter(h=>h.brand===b).length;return<button key={b} onClick={()=>setLibBrand(b)} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b==="Postman Law"?"PL":"WK"} — {b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
+        {["Postman Law","Wettermark Keith"].map(b=>{const active=libBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";const ct=trafficHistory.filter(h=>h.brand===b).length;return<button key={b} onClick={()=>setLibBrand(b)} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
         <div style={{flex:1,borderBottom:"2px solid #4a3870"}}/>
       </div>
       {/* Search + archive bar */}
@@ -5076,7 +5076,7 @@ Be direct and actionable. No generic advice.`;
       </div>
       {/* Brand Tabs */}
       <div style={{display:"flex",gap:0,marginBottom:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";return<button key={b} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null)}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b==="Postman Law"?"PL":"WK"} — {b}</button>})}
+        {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";return<button key={b} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null)}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b}</button>})}
         <div style={{flex:1,borderBottom:"2px solid #4a3870"}}/>
       </div>
       <Cd style={{padding:16,borderRadius:"0 8px 8px 8px",borderTop:"2px solid "+bc}}>
@@ -5155,7 +5155,7 @@ Be direct and actionable. No generic advice.`;
               <tbody>{filtered.map((ic,i)=><tr key={ic.code+i}>
                 <TD m b><span style={{cursor:"pointer",color:"#3b82f6"}} onClick={()=>setModal({t:"editIsci",isci:ic,idx:iscis.indexOf(ic)})}>{ic.code}</span></TD>
                 <TD>{ic.title}</TD>
-                <TD><B l={ic.brand==="Postman Law"?"PL":"WK"} c={ic.brand==="Postman Law"?"#7c3aed":"#d97706"}/></TD>
+                <TD><B l={ic.brand} c={ic.brand==="Postman Law"?"#7c3aed":"#d97706"}/></TD>
                 <TD>{ic.dma}</TD>
                 <TD>{ic.dur}s</TD>
                 <TD>{ic.fileUrl?<a href={ic.fileUrl} target="_blank" rel="noopener noreferrer" style={{color:"#3b82f6",fontSize:13}}>📁</a>:<span style={{color:"#dc2626"}}>—</span>}</TD>
