@@ -4272,7 +4272,7 @@ ${fullText.substring(0,3000)}`}]
 
       {/* BRAND TABS */}
       <div style={{display:"flex",gap:0,marginBottom:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=fBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";const ct=trackingData.filter(d=>d.brand===b).length;return<button key={b} onClick={()=>{setFBrand(b);setFMarket("all");setFMedia("all");setFMonth("all")}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
+        {["Postman Law","Wettermark Keith"].map(b=>{const active=fBrand===b;const c=b==="Postman Law"?"#7c3aed":"#d97706";const ct=trackingData.filter(d=>d.brand===b).length;return<button key={b} onClick={()=>{setFBrand(b);setFMarket("all");setFMedia("all");setFMonth("all")}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
         <div style={{flex:1,borderBottom:"2px solid #4a3870"}}/>
       </div>
       {/* FILTERS */}
@@ -4785,7 +4785,7 @@ ${fullText.substring(0,3000)}`}]
       </Cd>}
       {/* Brand Tabs */}
       <div style={{display:"flex",gap:0,marginBottom:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=libBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";const ct=trafficHistory.filter(h=>h.brand===b).length;return<button key={b} onClick={()=>setLibBrand(b)} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
+        {["Postman Law","Wettermark Keith"].map(b=>{const active=libBrand===b;const c=b==="Postman Law"?"#7c3aed":"#d97706";const ct=trafficHistory.filter(h=>h.brand===b).length;return<button key={b} onClick={()=>setLibBrand(b)} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
         <div style={{flex:1,borderBottom:"2px solid #4a3870"}}/>
       </div>
       {/* Search + archive bar */}
@@ -4855,7 +4855,7 @@ ${fullText.substring(0,3000)}`}]
                     </div>
                     <div style={{display:"flex",gap:4}}>
                       <button onClick={()=>setEditTrafficIdx(gIdx)} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #d97706",background:"rgba(217,119,6,.1)",color:"#fbbf24",fontSize:12,fontWeight:600,cursor:"pointer"}}>Edit</button>
-                      <button onClick={()=>setHistoryPreviewIdx(isOpen?null:gIdx)} style={{padding:"2px 8px",borderRadius:4,border:"none",background:isOpen?"#dc2626":"#2563eb",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>{isOpen?"Close":"View"}</button>
+                      <button onClick={()=>setHistoryPreviewIdx(isOpen?null:gIdx)} style={{padding:"2px 8px",borderRadius:4,border:"none",background:isOpen?"#4a3870":"#7c3aed",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>{isOpen?"Close":"View"}</button>
                       <button onClick={()=>{const html=bldHtml(h);const w=window.open("","","width=850,height=950");w.document.write(html);w.document.close();w.print()}} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #7c6bc4",background:"#1a1030",color:"#a89ed4",fontSize:12,fontWeight:600,cursor:"pointer"}}>Print</button>
                       <button onClick={async()=>{
                         var isCopied=h.status==="copied";
@@ -5075,7 +5075,7 @@ Be direct and actionable. No generic advice.`;
       </div>
       {/* Brand Tabs */}
       <div style={{display:"flex",gap:0,marginBottom:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b;const c=b==="Postman Law"?"#dc2626":"#2563eb";return<button key={b} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null)}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b}</button>})}
+        {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b;const c=b==="Postman Law"?"#7c3aed":"#d97706";return<button key={b} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null)}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3870"),borderBottom:active?"none":"2px solid #4a3870",background:active?"#251d3d":"#1a1030",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b}</button>})}
         <div style={{flex:1,borderBottom:"2px solid #4a3870"}}/>
       </div>
       <Cd style={{padding:16,borderRadius:"0 8px 8px 8px",borderTop:"2px solid "+bc}}>
