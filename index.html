@@ -117,11 +117,12 @@ tr:nth-child(odd) td{background:rgba(15,23,42,.3)}
     window._quipInterval=qi;
   }
 
-  function loadScript(src,type){
+  function loadScript(src,type,integrity){
     return new Promise(function(resolve,reject){
       var s=document.createElement("script");
       if(type)s.type=type;
       s.src=src;
+      if(integrity){s.integrity=integrity;s.crossOrigin="anonymous"}
       s.onload=resolve;
       s.onerror=function(){reject(new Error("Failed to load "+src))};
       document.body.appendChild(s);

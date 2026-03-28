@@ -628,7 +628,7 @@ const App=()=>{
                   const ref=storage.ref("creative/"+isci.code+"."+ext);
                   const url=await ref.getDownloadURL();
                   updates[isci.code]=url;found++;break;
-                }catch(e){}
+                }catch(e){console.warn("Download URL lookup failed:",e.message)}
               }
             }
             if(found>0){
@@ -700,7 +700,7 @@ const App=()=>{
         if(confirmRemindersSent[rKey])return;
         const sta=stations.find(s=>s.call===call);
         if(!sta)return;
-        const emails=(sta.contact||"").split(";").map(e=>e.trim()).filter(e=>e.includes("@"));
+        const emails=(sta.contact||"").split(";").map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
         if(!emails.length)return;
         toRemind.push({h,call,sta,emails,rKey});
       });
@@ -712,7 +712,7 @@ const App=()=>{
     for(const r of toRemind){
       const subj="Reminder: Please Confirm Traffic Receipt — "+r.h.brand+" "+r.h.market+" "+r.h.media+" | Est "+(r.h.est||"");
       const baseUrl=window.location.href.split("?")[0];
-      const confirmUrl=baseUrl+"?confirm="+(r.h.est||"")+"&sta="+r.call+"&tok=auto";
+      const confirmUrl=baseUrl+"?confirm="+encodeURIComponent(r.h.est||"")+"&sta="+encodeURIComponent(r.call)+"&tok=auto";
       const isciObjs=(r.h.iscis||[]).map(ic=>{const full=iscis.find(i=>i.code===ic.code);return full?{code:ic.code,title:ic.title,fileUrl:full.fileUrl}:null}).filter(Boolean);
       const creativeLinks=isciObjs.filter(i=>i.fileUrl).length>0?"<br><br><b>Creative Files:</b><br>"+isciObjs.filter(i=>i.fileUrl).map(i=>'<a href="'+i.fileUrl+'">'+i.code+" — "+i.title+'</a>').join("<br>"):"";
       const body="Hello,<br><br>This is a reminder that you have not yet confirmed receipt of traffic instructions for <b>"+(r.h.est||"")+" — "+r.h.brand+", "+r.h.market+", "+r.h.media+"</b>.<br><br><b>Broadcast Month:</b> "+(r.h.month||"")+"<br><b>Flight Dates:</b> "+(r.h.flight||"")+"<br><b>Version:</b> "+r.h.version+"<br><b>Station:</b> "+r.call+creativeLinks+"<br><br>The traffic sheet is attached for your reference.<br><br>Please confirm receipt by clicking the link below:<br><a href=\""+confirmUrl+"\">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor";
@@ -763,13 +763,13 @@ const App=()=>{
   const[nowAiring,setNowAiring]=useState({});
   // ── STATION CONFIRMATION TRACKING ───────────────────────
   const[confirmations,setConfirmations]=useState({});
-  const genToken=()=>Math.random().toString(36).slice(2,10);
+  const genToken=()=>{const a=new Uint8Array(16);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('')};
   const confirmStation=(estNum,call)=>{
     const ts=new Date().toISOString();
     setConfirmations(p=>{
       const updated={...p,[estNum]:{...(p[estNum]||{}),[call]:{confirmed:true,ts}}};
       // Direct Firestore write to ensure persistence even from confirmation portal
-      try{db.collection("appData").doc("confirmations").set({data:JSON.stringify(updated),ts:Date.now()})}catch(e){}
+      try{db.collection("appData").doc("confirmations").set({data:JSON.stringify(updated),ts:Date.now()})}catch(e){console.warn("Failed to save confirmations:",e)}
       return updated;
     });
   };
@@ -839,10 +839,17 @@ const App=()=>{
       const est=estimates.find(e=>e.num===estNum);
       const airing=nowAiring[estNum];
       const brand=BRANDS.find(b=>b.name===est?.brand);
+      // Validate confirmation token before granting access
+      const storedToken=confirmations[estNum]?.[sta]?.token;
+      if(!tok||(!storedToken&&tok!=='auto')||(storedToken&&tok!==storedToken&&tok!=='auto')){
+        console.warn("Invalid or missing confirmation token for",estNum,sta);
+        setConfirmMode({estNum,sta,tok:null,est,airing,brand,invalidToken:true});
+        return;
+      }
       // Try to load saved traffic sheet from Firestore
       try{db.collection("trafficSheets").doc(estNum+"_"+sta).get().then(doc=>{
         if(doc.exists)setSheetHtml(doc.data().html);
-      }).catch(()=>{})}catch(e){}
+      }).catch(err=>{console.warn("Failed to load traffic sheet:",err)})}catch(e){console.warn("Traffic sheet load error:",e)}
       setConfirmMode({estNum,sta,tok,est,airing,brand});
     }
     // Report mode: ?report=wk or ?report=pl
@@ -864,7 +871,7 @@ const App=()=>{
           <button onClick={()=>setShowSheet(false)} style={{padding:"6px 14px",borderRadius:6,border:"none",background:"#475569",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>← Back</button>
         </div>
       </div>
-      <iframe srcDoc={sheetHtml} style={{width:"100%",height:"calc(100vh - 50px)",border:"none"}}/>
+      <iframe srcDoc={sheetHtml} sandbox="allow-same-origin" style={{width:"100%",height:"calc(100vh - 50px)",border:"none"}}/>
     </div>;} else {
     confirmJsx=<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0f172a 0%,#1a1040 50%,#0f172a 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
       <div style={{background:"#1e293b",borderRadius:20,boxShadow:"0 8px 40px rgba(0,0,0,.3)",maxWidth:520,width:"100%",overflow:"hidden",border:"1px solid #334155"}}>
@@ -996,7 +1003,9 @@ const App=()=>{
   const generatePdfBase64=async(html)=>{
     const iframe=document.createElement("iframe");
     iframe.style.cssText="position:fixed;left:-9999px;width:850px;height:1200px;border:none";
+    iframe.sandbox="allow-same-origin";
     document.body.appendChild(iframe);
+    try{
     iframe.contentDocument.open();iframe.contentDocument.write(html);iframe.contentDocument.close();
     await new Promise(r=>setTimeout(r,500));
     const canvas=await html2canvas(iframe.contentDocument.body,{scale:2,useCORS:true,width:850});
@@ -1007,6 +1016,7 @@ const App=()=>{
     const pageH=297;let y=0;
     while(y<imgH){if(y>0)pdf.addPage();pdf.addImage(canvas.toDataURL("image/jpeg",0.95),"JPEG",0,-y,imgW,imgH);y+=pageH;}
     return pdf.output("datauristring");
+    }catch(pdfErr){if(iframe.parentNode)document.body.removeChild(iframe);throw pdfErr;}
   };
   // Native jsPDF generator for digital traffic — produces clickable links
   const generateDigitalTrafficPdf=function(opts){
@@ -1696,7 +1706,7 @@ const App=()=>{
           if(!allValid||sel.length===0)return;
           notify(DOOM.anchor);
           const isciRec=sel.map(r=>({code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct,sched:r.sched,bookend:r.bookend}));
-          const parseEmails=(contact)=>{if(!contact)return[];return contact.split(";").map(e=>e.trim()).filter(e=>e.includes("@"))};
+          const parseEmails=(contact)=>{if(!contact)return[];return contact.split(";").map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))};
           const sendList=linkedSta.filter(s=>sendStations.includes(s.call));
           const sendable=sendList.filter(s=>parseEmails(s.contact).length>0);
           const skipped=sendList.filter(s=>parseEmails(s.contact).length===0);
@@ -1733,7 +1743,7 @@ const App=()=>{
             const staCalls=grpStations.map(s=>s.call);
             const confirmLinks=grpStations.map(s=>{
               const token=tokens[s.call]?.token||genToken();
-              const url=baseUrl+"?confirm="+est.num+"&sta="+s.call+"&tok="+token;
+              const url=baseUrl+"?confirm="+encodeURIComponent(est.num)+"&sta="+encodeURIComponent(s.call)+"&tok="+encodeURIComponent(token);
               return'<a href="'+url+'" style="display:inline-block;padding:6px 16px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:4px 2px">Confirm '+s.call+'</a>';
             }).join(" ");
             const subj="Atticor | "+est.brand+" "+est.market+" "+est.media+" Traffic Instructions | "+(curMonth?.month||"")+" | Est "+est.num;
@@ -3936,7 +3946,7 @@ ${fullText.substring(0,3000)}`}]
       notify(doomPick(DOOM.send)+" "+sent+" sent"+(failed?" ("+failed+" failed)":""));
     };
     // Parse all emails from stations
-    const parseEmails=(contact)=>{if(!contact)return[];return contact.split(";").map(e=>e.trim()).filter(e=>e.includes("@"))};
+    const parseEmails=(contact)=>{if(!contact)return[];return contact.split(";").map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))};
     const allContacts=stations.map(s=>({call:s.call,market:s.market,media:s.media,brand:s.brand,ownership:s.ownership,buyer:s.buyer,emails:parseEmails(s.contact),raw:s.contact||"",missing:!s.contact||!s.contact.includes("@"),truncated:s.contact&&s.contact.length>5&&!s.contact.match(/@[a-z0-9.-]+\.[a-z]{2,}$/i)}));
     const missingCount=allContacts.filter(c=>c.missing).length;
     const truncatedCount=allContacts.filter(c=>c.truncated&&!c.missing).length;
@@ -4080,7 +4090,7 @@ ${fullText.substring(0,3000)}`}]
             </div>
             <div style={{marginBottom:6}}>
               <div style={{fontSize:14,fontWeight:700,color:"#a89ed4",marginBottom:2}}>BODY</div>
-              <div style={{padding:"10px 12px",borderRadius:5,border:"1px solid #7c6bc4",background:"#fff",minHeight:150,maxHeight:300,overflowY:"auto",fontSize:13,color:"#0f172a",lineHeight:1.6}} dangerouslySetInnerHTML={{__html:draftBody}}/>
+              <div style={{padding:"10px 12px",borderRadius:5,border:"1px solid #7c6bc4",background:"#fff",minHeight:150,maxHeight:300,overflowY:"auto",fontSize:13,color:"#0f172a",lineHeight:1.6}} dangerouslySetInnerHTML={{__html:(typeof DOMPurify!=='undefined'?DOMPurify.sanitize(draftBody):draftBody.replace(/</g,'&lt;').replace(/>/g,'&gt;'))}}/>
             </div>
             <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
               <Btn small onClick={()=>{copyText(draftSubj,"subject")}}>Copy Subject</Btn>
@@ -5438,11 +5448,11 @@ Be direct and actionable. No generic advice.`;
       const brandObj=BRANDS.find(b=>b.name===e.brand);
       const cm=CALENDAR.find(c=>c.month===airing?.month)||CALENDAR[1];
       const flight=airing?.flight||"";
-      const parseEmails=(contact)=>{if(!contact)return[];return contact.split(";").map(em=>em.trim()).filter(em=>em.includes("@"))};
+      const parseEmails=(contact)=>{if(!contact)return[];return contact.split(";").map(em=>em.trim()).filter(em=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))};
       const sendToStation=async(s)=>{
         const emails=parseEmails(s.contact);if(!emails.length){notify("No email for "+s.call);return}
         const token=conf[s.call]?.token||genToken();
-        const confirmUrl=window.location.href.split("?")[0]+"?confirm="+e.num+"&sta="+s.call+"&tok="+token;
+        const confirmUrl=window.location.href.split("?")[0]+"?confirm="+encodeURIComponent(e.num)+"&sta="+encodeURIComponent(s.call)+"&tok="+encodeURIComponent(token);
         const subj="Atticor | "+e.brand+" "+e.market+" "+e.media+" Traffic Instructions | "+(airing?.month||"")+" | Est "+e.num;
         const body="Hello,<br><br>"+
           "Please find the attached traffic instructions for Est "+e.num+" — "+e.brand+", "+e.market+", "+e.media+".<br><br>"+

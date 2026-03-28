@@ -21,7 +21,7 @@ export default function middleware(request) {
 
   if (isProtected) {
     const cookie = request.headers.get('cookie') || '';
-    if (!cookie.includes('dd_session=')) {
+    if (!/dd_session=[a-f0-9]{64}/.test(cookie)) {
       return new Response('Unauthorized', { status: 401 });
     }
   }
