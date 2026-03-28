@@ -529,4 +529,12 @@ const D_I=[["CHIPL2515001T","Confident","TV","Postman Law","CHI","15","T",false,
 ["MSPPL2615011T","Justice & Representation_15","TV","Postman Law","MSP","15","T",true,"Brand",""],
 ["MSPPL2615012T","Legal Firepower_15","TV","Postman Law","MSP","15","T",true,"Brand",""],
 ["MSPPL2615013T","Local Lawyers_15","TV","Postman Law","MSP","15","T",true,"Brand",""],
-["MSPPL2615014T","Warren's Story_15","TV","Postman Law","MSP","15","T",true,"Testimonial",""]];
+["MSPPL2615014T","Warren's Story_15","TV","Postman Law","MSP","15","T",true,"Testimonial",""],
+["CHIPL2630007R","Catching Curveballs_30","Radio","Postman Law","CHI","30","R",true,"Brand",""],
+["CINPL2630007R","Catching Curveballs_30","Radio","Postman Law","CIN","30","R",true,"Brand",""],
+["DENPL2630007R","Catching Curveballs_30","Radio","Postman Law","DEN","30","R",true,"Brand",""],
+["MSPPL2630007R","Catching Curveballs_30","Radio","Postman Law","MSP","30","R",true,"Brand",""],
+["CHIPL2630007S","Catching Curveballs_30","Streaming Audio","Postman Law","CHI","30","S",true,"Brand",""],
+["CINPL2630007S","Catching Curveballs_30","Streaming Audio","Postman Law","CIN","30","S",true,"Brand",""],
+["DENPL2630007S","Catching Curveballs_30","Streaming Audio","Postman Law","DEN","30","S",true,"Brand",""],
+["MSPPL2630007S","Catching Curveballs_30","Streaming Audio","Postman Law","MSP","30","S",true,"Brand",""]];
