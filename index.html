@@ -35,14 +35,21 @@ tr:nth-child(odd) td{background:rgba(28,21,40,.15)}
 @keyframes sparkPulse{0%,100%{opacity:.7}50%{opacity:1}}
 
 /* ═══ UNDERWORLD ATMOSPHERE ═══ */
-/* Purple glow on cards */
-div[style*="border-radius: 9px"],div[style*="border-radius:9px"]{
+/* Purple glow on cards — skip loader */
+#R>div:not(#dd-loader) div[style*="border-radius: 9px"],
+#R>div:not(#dd-loader) div[style*="border-radius:9px"]{
   box-shadow:0 2px 16px rgba(124,58,237,.08),0 0 1px rgba(167,139,250,.15) !important;
 }
-/* Sidebar ambient glow */
-#R>div>div:first-child{
+/* Sidebar ambient glow — skip the loader */
+#R>div:not(#dd-loader)>div:first-child{
   background:linear-gradient(180deg,#1a1030 0%,#201540 50%,#1a1030 100%) !important;
   border-right:1px solid rgba(124,58,237,.15) !important;
+}
+/* Kill any box on the loader */
+#dd-loader, #dd-loader>div, #dd-loader div{
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
 }
 /* Subtle purple tint on hover for interactive elements */
 button:hover:not([disabled]){filter:brightness(1.1)}
@@ -60,11 +67,12 @@ div[style*="position: fixed"][style*="bottom"]{
 html.dd-light,html.dd-light body{
   background:linear-gradient(160deg,#fdf8ef 0%,#f7edd8 30%,#faf0e0 60%,#fdf8ef 100%) !important;
 }
-html.dd-light #R>div>div:first-child{
+html.dd-light #R>div:not(#dd-loader)>div:first-child{
   background:linear-gradient(180deg,#f5ecdb 0%,#f0e4ce 50%,#f5ecdb 100%) !important;
   border-right:1px solid rgba(180,150,80,.2) !important;
 }
-html.dd-light div[style*="border-radius: 9px"],html.dd-light div[style*="border-radius:9px"]{
+html.dd-light #R>div:not(#dd-loader) div[style*="border-radius: 9px"],
+html.dd-light #R>div:not(#dd-loader) div[style*="border-radius:9px"]{
   box-shadow:0 2px 16px rgba(180,150,80,.1),0 0 1px rgba(200,170,90,.15) !important;
   background:#fefcf5 !important;
   border-color:#e6d5b0 !important;
