@@ -4928,11 +4928,12 @@ ${fullText.substring(0,3000)}`}]
                           log("Traffic Sent",h.market+" "+h.media+" "+h.month);
                           setTrafficHistory(p=>p.map((r,ri)=>ri===gIdx?{...r,status:"sent",statusNote:"Sent "+new Date().toLocaleDateString()}:r));
                         }else{
-                          var parseEmails2=function(c){if(!c)return[];return c.split(";").map(function(e2){return e2.trim()}).filter(function(e2){return e2.includes("@")})};
+                          var parseEmails2=function(c){if(!c)return[];return c.split(";").map(function(e2){return e2.trim()}).filter(function(e2){return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e2)})};
                           // ALWAYS look up stations by market — never trust what's stored on the record
                           var mkt=normMkt(h.market)||h.market;
                           var staList=[];
-                          var marketStations=stations.filter(function(s){return s.brand===h.brand&&(normMkt(s.market)===mkt||s.market===h.market)&&(s.media===h.media||(s.media==='TV'&&(h.media==='TV'||h.media==='Cable')))});
+                          var mediaCompat=function(sMed,hMed){if(sMed===hMed)return true;if(sMed==='TV'&&['TV','Cable','Sports','Heavy Up','UD/AV','Sponsorship'].includes(hMed))return true;if(sMed==='Radio'&&hMed==='Radio')return true;return false};
+                          var marketStations=stations.filter(function(s){return s.brand===h.brand&&(normMkt(s.market)===mkt||s.market===h.market)&&mediaCompat(s.media,h.media)});
                           marketStations.forEach(function(s){if(staList.indexOf(s.call)===-1)staList.push(s.call)});
                           if(!staList.length){notify("No stations found for "+h.market+" "+h.media);return}
                           // Group by ownership
