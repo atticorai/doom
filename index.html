@@ -45,12 +45,9 @@ tr:nth-child(odd) td{background:rgba(28,21,40,.15)}
   background:linear-gradient(180deg,#1a1030 0%,#201540 50%,#1a1030 100%) !important;
   border-right:1px solid rgba(124,58,237,.15) !important;
 }
-/* Kill any box on the loader */
-#dd-loader, #dd-loader>div, #dd-loader div{
-  background:transparent !important;
-  border:none !important;
-  box-shadow:none !important;
-}
+/* Loader wrapper stays transparent — but don't nuke decorative children */
+#dd-loader{background:transparent !important;border:none !important;box-shadow:none !important}
+#dd-loader>div{background:transparent !important;border:none !important;box-shadow:none !important}
 /* Subtle purple tint on hover for interactive elements */
 button:hover:not([disabled]){filter:brightness(1.1)}
 /* Input focus glow */
@@ -81,7 +78,7 @@ html.dd-light ::-webkit-scrollbar-thumb{background:#d4c0a0 !important}
 html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
 </style></head><body style="background:linear-gradient(160deg,#1a1030 0%,#2d1f4e 50%,#1a1030 100%)"><div id="R"><div id="dd-loader" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:'DM Sans',Arial,sans-serif">
 <div style="text-align:center">
-<div style="width:88px;height:88px;border-radius:18px;background:transparent;display:inline-flex;align-items:center;justify-content:center;position:relative;margin-bottom:28px">
+<div style="width:88px;height:88px;border-radius:18px;background:#1a1030;border:2px solid #7c3aed;display:inline-flex;align-items:center;justify-content:center;position:relative;margin-bottom:28px">
 <div class="glow-ring"></div>
 <div class="glow-ambient"></div>
 <svg width="44" height="44" viewBox="0 0 24 24" fill="none" style="position:relative;z-index:2">
