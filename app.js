@@ -1547,7 +1547,7 @@ const App=()=>{
     const[customSched,setCustomSched]=useState("");
     const[version,setVersion]=useState(_revise?String(parseInt(_revise.version||"1")+1):"1");
     const[comments,setComments]=useState(_revise?`Revision of v${_revise.version}`:"")
-    const linkedSta=est._combined?(()=>{const all=est._combined.flatMap(ce=>getEstStations(ce));const seen=new Set();return all.filter(s=>{const k=s.call+"|"+s.market;if(seen.has(k))return false;seen.add(k);return true})})():getEstStations(est);
+    const linkedSta=(()=>{const raw=est._combined?est._combined.flatMap(ce=>getEstStations(ce)):getEstStations(est);const seen=new Set();return raw.filter(s=>{const k=s.call+"|"+s.market;if(seen.has(k))return false;seen.add(k);return true})})();
     const[sendStations,setSendStations]=useState(()=>linkedSta.map(s=>s.call));
 
     const sel=rows.filter(r=>r.selected);
@@ -1684,14 +1684,25 @@ const App=()=>{
             <button onClick={()=>setSendStations([])} style={{fontSize:13,padding:"1px 5px",borderRadius:3,border:"1px solid #dc2626",background:"rgba(220,38,38,.15)",color:"#dc2626",cursor:"pointer",fontWeight:600}}>None</button>
           </div>
         </div>
-        <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{linkedSta.length?linkedSta.map(function(s,j){
-          var on=sendStations.includes(s.call);
-          var hasEmail=s.contact&&s.contact.includes("@");
-          return React.createElement("div",{key:j,style:{display:"flex",alignItems:"center",gap:2}},
-            React.createElement("span",{onClick:function(){setSendStations(function(p){return on?p.filter(function(c){return c!==s.call}):[].concat(p,[s.call])})},style:{fontSize:14,padding:"2px 8px",borderRadius:4,background:on?"#dcfce7":"#fee2e2",border:on?"1px solid #16a34a":"1px solid #fca5a5",fontWeight:600,cursor:"pointer",color:on?"#16a34a":"#dc2626",transition:"all .15s"}},(on?"✓ ":"✕ ")+s.call),
-            !hasEmail?React.createElement("input",{placeholder:"Add email...",onBlur:function(e){if(e.target.value.includes("@")){var idx=stations.findIndex(function(st){return st.call===s.call&&st.brand===est.brand});if(idx>-1){setStations(function(p){return p.map(function(st,si){return si===idx?Object.assign({},st,{contact:e.target.value}):st})});notify("Contact added for "+s.call)}}},style:{fontSize:11,padding:"2px 4px",borderRadius:3,border:"1px solid #fde68a",background:"#fffbeb",width:160}}):null
-          )
-        }):<span style={{fontSize:14,color:"#a89ed4",fontStyle:"italic"}}>No stations linked — assign in Stations page</span>}</div>
+        {(()=>{
+          // Group stations by ownership — toggle entire group at once
+          const groups={};
+          linkedSta.forEach(s=>{const g=s.ownership||s.call;if(!groups[g])groups[g]=[];groups[g].push(s)});
+          return<div style={{display:"flex",flexDirection:"column",gap:4}}>{Object.entries(groups).length?Object.entries(groups).map(([grp,stas])=>{
+            const allOn=stas.every(s=>sendStations.includes(s.call));
+            const someOn=stas.some(s=>sendStations.includes(s.call));
+            const hasEmail=stas.some(s=>s.contact&&s.contact.includes("@"));
+            const toggleGrp=()=>{setSendStations(p=>{if(allOn)return p.filter(c=>!stas.some(s=>s.call===c));return[...new Set([...p,...stas.map(s=>s.call)])]})};
+            return<div key={grp} onClick={toggleGrp} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 10px",borderRadius:6,background:allOn?"rgba(22,163,98,.08)":someOn?"rgba(245,158,11,.08)":"rgba(220,38,38,.06)",border:allOn?"1px solid #16a34a":someOn?"1px solid #f59e0b":"1px solid #fca5a5",cursor:"pointer",transition:"all .15s"}}>
+              <span style={{fontSize:14,fontWeight:700,color:allOn?"#16a34a":someOn?"#f59e0b":"#dc2626",minWidth:16}}>{allOn?"✓":someOn?"◐":"✕"}</span>
+              <div style={{flex:1}}>
+                <span style={{fontSize:13,fontWeight:700,color:"#ede4f5"}}>{grp}</span>
+                <span style={{fontSize:12,color:"#a89ed4",marginLeft:6}}>{stas.map(s=>s.call).join(", ")}</span>
+              </div>
+              {!hasEmail&&<span style={{fontSize:11,color:"#f59e0b",fontWeight:600}}>⚠ no email</span>}
+            </div>
+          }):<span style={{fontSize:14,color:"#a89ed4",fontStyle:"italic"}}>No stations linked — assign in Stations page</span>}</div>
+        })()}
         <div style={{fontSize:13,color:"#a89ed4",marginTop:3}}>{sendStations.length} of {linkedSta.length} selected for email</div>
       </div>
       <Inp label="Comments" value={comments} onChange={e=>setComments(e.target.value)} placeholder="e.g., No creative beside MSPPL2530006T..."/>
