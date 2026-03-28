@@ -1275,7 +1275,7 @@ const App=()=>{
       <div style={{display:"flex",justifyContent:"space-between"}}><div><h1 style={{fontSize:24,fontWeight:800}}>ISCI Registry</h1><p style={{fontSize:13,color:"#a89ed4"}}>{iscis.filter(i=>i.active).length} active · {iscis.filter(i=>i.fileUrl).length} with creative · Click to toggle</p></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);saveToDb("iscis",updated);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#dc2626":"#7c3aed"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
       {showTagMgr&&<Cd style={{padding:14,marginTop:8}}>
         <div style={{fontSize:14,fontWeight:700,color:"#a89ed4",marginBottom:8}}>🏷 Manage Categories, Value Props & VOs</div>
-        {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?"#dc2626":"#2563eb";const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
+        {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?"#7c3aed":"#d97706";const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
           return<div key={brand} style={{marginBottom:16}}>
           <div style={{fontSize:13,fontWeight:800,color:bc,marginBottom:6}}>{brand}</div>
           {[{key:"categories",label:"Categories",color:"#2563eb"},{key:"valueProps",label:"Value Props",color:"#16a34a"},{key:"vos",label:"VOs",color:"#d97706"}].map(({key,label,color})=><div key={key} style={{marginBottom:8}}>
@@ -1532,12 +1532,12 @@ const App=()=>{
     const SCHED_COLORS={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#f0fdf4","Holiday Only":"#fee2e2"};
     const SCHED_ORDER=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
     const buildSheetHtml=()=>{
-      const bc=brand.code==="PL"?"#dc2626":"#2563eb";const bcBg=brand.code==="PL"?"#fef2f2":"#eff6ff";
+      const bc=brand.code==="PL"?"#7c3aed":"#d97706";const bcBg=brand.code==="PL"?"#f5f3ff":"#fffbeb";
       let h='<html><head><title>Traffic Instructions</title><style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}body{padding:28px}table{width:100%;border-collapse:collapse;margin-top:14px}th{background:#f3edf9;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#5a4d6b}td{padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)}.sig{margin-top:36px;border-top:2px solid '+bc+';padding-top:8px}.note{background:'+bcBg+';padding:7px;font-size:10px;color:'+bc+';margin-top:6px}.grp{padding:5px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid rgba(0,0,0,.1)}</style></head><body>';
       h+='<div style="text-align:center;margin-bottom:14px"><img src="'+brand.logo+'" style="height:48px"/></div>';
       const hdr=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+v+'</span></div>';
       h+=hdr("Agency","Atticor");
-      h+=hdr("Client",brand.name,brand.code==="PL"?"#dc2626":"#2563eb");
+      h+=hdr("Client",brand.name,brand.code==="PL"?"#7c3aed":"#d97706");
       h+=hdr("Market",est.market);
       h+=hdr("Buyer",est.buyer,"#d97706");
       h+=hdr("Estimate(s)",est._combined?est._combined.length+" combined estimates":est.num);
@@ -3495,7 +3495,7 @@ const App=()=>{
             {upcoming.slice(0,12).map((c,i)=>{
               const due=new Date(c.due+"T00:00:00");const urgent=due<=in7;const soon=due<=in14;
               const key=c.month+"-"+c.market+"-"+c.media;const sent=oohRemindersSent[key];
-              const bc=c.brand==="PL"?"#dc2626":"#2563eb";
+              const bc=c.brand==="PL"?"#7c3aed":"#d97706";
               return<Cd key={i} style={{padding:10,borderLeft:"3px solid "+(urgent?"#dc2626":soon?"#f59e0b":"#ede4f5")}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
                   <div>
@@ -4276,7 +4276,7 @@ ${fullText.substring(0,3000)}`}]
         <div style={{flex:1,borderBottom:"2px solid #4a3870"}}/>
       </div>
       {/* FILTERS */}
-      <Cd style={{padding:10,marginBottom:12,borderRadius:"0 8px 8px 8px",borderTop:"2px solid "+(fBrand==="Postman Law"?"#dc2626":"#2563eb")}}>
+      <Cd style={{padding:10,marginBottom:12,borderRadius:"0 8px 8px 8px",borderTop:"2px solid "+(fBrand==="Postman Law"?"#7c3aed":"#d97706")}}>
         <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"end"}}>
           <FiltSel label="Market" value={fMarket} onChange={setFMarket} options={markets}/>
           <FiltSel label="Media" value={fMedia} onChange={setFMedia} options={medias}/>
@@ -4606,12 +4606,12 @@ ${fullText.substring(0,3000)}`}]
     const archivedCount=brandData.filter(h=>isArch(h)).length;
     const visData=showArchived?brandData:brandData.filter(h=>!isArch(h));
     const searched=libSearch.trim()?visData.filter(h=>{const q=libSearch.toLowerCase();const mName=(DM[h.market]||h.market).toLowerCase();return(h.market||"").toLowerCase().includes(q)||mName.includes(q)||(h.media||"").toLowerCase().includes(q)||(h.est||"").toLowerCase().includes(q)||(h.buyer||"").toLowerCase().includes(q)||(h.month||"").toLowerCase().includes(q)||(h.iscis||[]).some(r=>(r.code||"").toLowerCase().includes(q)||(r.title||"").toLowerCase().includes(q))}):visData;
-    const bc2=libBrand==="Postman Law"?"#dc2626":"#2563eb";
+    const bc2=libBrand==="Postman Law"?"#7c3aed":"#d97706";
     // Manual form JSX
     const SCHED_COLORS_LIB={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#f0fdf4","Holiday Only":"#fee2e2"};
     const SCHED_ORDER_LIB=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
     const bldHtml=(h)=>{
-      const bc=h.brand==="Postman Law"?"#dc2626":"#2563eb";
+      const bc=h.brand==="Postman Law"?"#7c3aed":"#d97706";
       const lg=h.brand==="Postman Law"?LOGO_PL:LOGO_WK;
       let x='<html><head><style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}body{padding:28px;background:#fff;color:#1a1030}table{width:100%;border-collapse:collapse;margin-top:14px}th{background:#f3edf9;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#5a4d6b}td{padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)}.grp{font-weight:700;font-size:11px;text-transform:uppercase;padding:5px 9px;color:#333}.sig{margin-top:36px;border-top:2px solid '+bc+';padding-top:8px}.note{background:#fef2f2;padding:7px;font-size:10px;color:#dc2626;margin-top:6px}</style></head><body>';
       const hd=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+v+'</span></div>';
@@ -4804,7 +4804,7 @@ ${fullText.substring(0,3000)}`}]
         return<div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
           {allBrandMkts.map(m=>{
             return<Cd key={m} style={{padding:"10px 14px",flex:"1 1 180px",minWidth:180,borderLeft:"3px solid "+(MC[m]||"#64748b")}}>
-              <div style={{fontSize:15,fontWeight:800,color:MC[m]||"#ede4f5",marginBottom:4}}>{DM[m]||m} <span style={{fontSize:11,color:"#64748b",fontWeight:600}}>({m})</span></div>
+              <div style={{fontSize:15,fontWeight:800,color:MC[m]||"#ede4f5",marginBottom:4}}>{DM[m]||m}</div>
               {visMonths.map(mo=>{
                 const moMkData=searched.filter(h=>h.market===m&&h.month===mo);
                 if(!moMkData.length)return null;
@@ -4841,8 +4841,7 @@ ${fullText.substring(0,3000)}`}]
                 return<div key={hi} style={{padding:"6px 0 6px 12px",borderBottom:"1px solid #251d3d"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div style={{display:"flex",gap:8,alignItems:"center",flex:1,flexWrap:"wrap"}}>
-                      <span style={{fontSize:13,fontWeight:800,color:MC[h.market]||"#ede4f5",minWidth:36}}>{h.market}</span>
-                      <span style={{fontSize:11,color:"#94a3b8"}}>{DM[h.market]||""}</span>
+                      <span style={{fontSize:13,fontWeight:800,color:MC[h.market]||"#ede4f5"}}>{DM[h.market]||h.market}</span>
                       <span style={{fontSize:12,fontFamily:"monospace",fontWeight:700,padding:"1px 5px",borderRadius:3,background:"rgba(124,58,237,.15)",color:"#a78bfa"}}>Est {h.est}</span>
                       {h.group&&<span style={{fontSize:11,color:"#94a3b8"}}>{h.group}</span>}
                       {isTTWN&&<span style={{padding:"1px 5px",borderRadius:3,background:"rgba(139,92,246,.12)",color:"#a78bfa",fontSize:10,fontWeight:700}}>TTWN Network</span>}
@@ -5069,7 +5068,7 @@ Be direct and actionable. No generic advice.`;
   };
 
   const PlannerPg=()=>{
-    const bc=planBrand==="Postman Law"?"#dc2626":"#2563eb";
+    const bc=planBrand==="Postman Law"?"#7c3aed":"#d97706";
     return<div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
         <div><h1 style={{fontSize:24,fontWeight:800,margin:0}}>🧠 AI Rotation Planner</h1><div style={{fontSize:13,color:"#a89ed4"}}>Creative analysis, staleness detection, trend insights & rotation recommendations</div></div>
