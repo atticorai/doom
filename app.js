@@ -330,9 +330,31 @@ const DOOM={
   anchor:"I'll take it from here. I always do.",
   login:["Oh wonderful. You're back.","State your business, Wonderboy.","Let me guess — you forgot it again.","I was having such a nice time without you.","You've got about 10 seconds before I lose interest.","Well? I haven't got all day.","Oh great, it's you.","Don't make this weird. Just type the password.","The door doesn't open itself, hero.","*sigh* What's the password."],
   wrong:["Wrong. Shocking.","That's not it. Try using your brain.","Nope. Were you even trying?","Really? That was your best guess?","Swing and a miss, Wonderboy.","Not even close. I'm embarrassed for you.","Have you tried… the actual password?","At this rate, the sun will set before you get in.","You know, most people get this on the first try.","I'm not even going to dignify that with a real response."],
-  empty:["Nothing here. Don't look at me.","It's empty. Like my faith in this process.","No results. I'd say I'm surprised, but…","Blank. Just like the look on your face right now.","Wow, a whole lot of nothing. Impressive, really.","Did you expect something to just… appear? That's cute."]
+  empty:["Nothing here. Don't look at me.","It's empty. Like my faith in this process.","No results. I'd say I'm surprised, but…","Blank. Just like the look on your face right now.","Wow, a whole lot of nothing. Impressive, really.","Did you expect something to just… appear? That's cute."],
+  pg:{
+    dash:["I'm running the show. You're just watching.","Everything I've organized for you. You're welcome.","Your empire. Well… my empire. You just live here.","I've got it under control. As always.","All systems go. Not that I need your approval."],
+    traf:["Don't mess this up. I'm watching.","Build it right the first time. I'm not fixing it again.","Rotation time. Try not to overthink it.","You know the drill. Or do you need me to hold your hand?","I could do this in my sleep. And I have."],
+    isci:["All your precious creatives. Try not to lose them this time.","I organized this. You're welcome.","Touch something wrong and I'll know.","Go ahead. Register something. I dare you.","This is MY registry. You're just visiting."],
+    est:["Numbers. My favorite. Said no one ever.","At least these are organized. Unlike your desk.","Estimate numbers don't lie. Unlike some people.","I've counted more hydra heads than you have estimates."],
+    sta:["Your station contacts. Some of them even have emails.","I keep this list tighter than Hades keeps the Underworld.","Missing contacts? That's a you problem.","Don't blame me when you can't find an email."],
+    metrics:["Let's see how you've been doing. Spoiler: I already know.","The numbers don't lie, Wonderboy.","I ran the numbers. You should be concerned.","At least the data is honest."],
+    library:["Everything you've ever sent. Archived. By me. Obviously.","Your traffic history. Try not to cringe.","I remember every version. Every mistake.","It's all here. The good, the bad, and the questionable."],
+    planner:["Let me think for you. It's what I do best.","AI analysis. Because apparently you need help.","Fine. I'll figure out your rotation. Again.","You want recommendations? I have opinions."],
+    notif:["Every move you've made. Logged.","I see everything, Wonderboy. Everything.","Your audit trail. It tells quite a story.","Don't worry. I won't tell anyone about the 3am edits."],
+    docs:["You actually need help? That's… not surprising.","I'd explain it myself but I have better things to do.","Read the docs. Or don't. I'm not your mother.","Even Pegasus could figure this out. Probably."],
+    ooh:["Billboards. Because subtlety was never the goal.","Outdoor media. At least these can't reply to your emails.","OOH. Three letters. Still more organized than your inbox.","I manage 300+ boards. What do you manage?"]
+  }
 };
 const doomPick=(arr)=>arr[Math.floor(Math.random()*arr.length)];
+// Page header with Meg's voice
+const PageHead=({title,sub,pgKey,children})=><div style={{marginBottom:8}}>
+  <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:12}}>
+    <h1 style={{fontSize:26,fontWeight:700,margin:0,fontFamily:"'Cormorant Garamond',serif",background:"linear-gradient(90deg,#E8DFF0,#D4A040)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:1}}>{title}</h1>
+    <span style={{fontSize:13,color:"#C4A0C8",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",maxWidth:380,textAlign:"right",lineHeight:1.3}}>{pgKey&&DOOM.pg[pgKey]?doomPick(DOOM.pg[pgKey]):doomPick(DOOM.sprinkle)}</span>
+  </div>
+  {sub&&<div style={{fontSize:12,color:"#9B8EAD",marginTop:2}}>{sub}</div>}
+  {children&&<div style={{marginTop:6}}>{children}</div>}
+</div>;
 // UI atoms
 const B=({l,c})=><span style={{display:"inline-flex",padding:"2px 7px",borderRadius:99,fontSize:12,fontWeight:700,background:c+"18",color:c,border:`1px solid ${c}35`,whiteSpace:"nowrap",letterSpacing:.3}}>{l}</span>;
 const Btn=({children,onClick,primary,small,disabled,color,danger})=><button disabled={disabled} onClick={onClick} style={{display:"inline-flex",alignItems:"center",gap:4,padding:small?"4px 10px":"8px 16px",borderRadius:8,border:primary||danger?"none":"1px solid rgba(155,123,176,.25)",background:disabled?"rgba(155,123,176,.1)":danger?"linear-gradient(135deg,#E85A7A,#d44868)":primary?color?`linear-gradient(135deg,${color},${color}cc)`:"linear-gradient(135deg,#9b7bb0,#C4A0C8)":"rgba(45,31,66,.6)",color:disabled?"#6B5E80":primary||danger?"#fff":"#C4A0C8",fontSize:small?11:13,fontWeight:700,cursor:disabled?"not-allowed":"pointer",boxShadow:primary&&!disabled?"0 2px 12px rgba(155,123,176,.2)":"none",transition:"all .15s",letterSpacing:.3}}>{children}</button>;
@@ -1341,7 +1363,7 @@ const App=()=>{
     const confirmedCount=Object.values(confirmations).reduce((a,stns)=>a+Object.values(stns).filter(c=>c.confirmed).length,0);
     const sentCount=trafficHistory.filter(h=>h.status==="sent"||h.status==="partial").length;
     return<div style={{display:"flex",flexDirection:"column",gap:12}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4}}><h1 style={{fontSize:26,fontWeight:800,background:"linear-gradient(90deg,#E8DFF0,#D4A040)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Command Center</h1><span style={{fontSize:13,color:"#C4A0C8",fontStyle:"italic",maxWidth:350,textAlign:"right"}}>{doomPick(DOOM.sprinkle)}</span></div>
+    <PageHead title="Command Center" pgKey="dash"/>
     <div style={{background:"linear-gradient(90deg,rgba(212,160,64,.06),rgba(155,123,176,.06),rgba(212,160,64,.06))",borderRadius:10,padding:"7px 0",overflow:"hidden",border:"1px solid rgba(212,160,64,.12)"}}>
       <div style={{display:"flex",width:"200%"}} className="kpi-ticker">
         {[...Array(2)].map((_,rep)=><React.Fragment key={rep}>
@@ -1422,7 +1444,7 @@ const App=()=>{
 
     const fl=(()=>{const filtered=iscis.filter(i=>i.suffix!=="O"&&(sf.brand?i.brand===sf.brand:true)&&(sf.media?i.media===sf.media:true)&&(sf.dma?i.dma===sf.dma:true)&&(isciSearch?`${i.code} ${i.title} ${i.category||""} ${i.valueProp||""} ${i.vo||""}`.toLowerCase().includes(isciSearch.toLowerCase()):true)&&(showOff?true:i.active));return sortRows("isci",filtered,{code:r=>r.code,title:r=>r.title,media:r=>r.media,brand:r=>r.brand,dma:r=>r.dma,dur:r=>parseInt(r.dur)||0,category:r=>r.category||r.caseType||"",valueProp:r=>r.valueProp||"",vo:r=>r.vo||"",status:r=>r.active?"1":"0"})})();
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <div style={{display:"flex",justifyContent:"space-between"}}><div><h1 style={{fontSize:24,fontWeight:800}}>ISCI Registry</h1><p style={{fontSize:13,color:"#9B8EAD"}}>{iscis.filter(i=>i.active&&i.suffix!=="O").length} active · {iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length} with creative · OOH ISCIs in OOH Hub</p></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);saveToDb("iscis",updated);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
+      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);saveToDb("iscis",updated);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
       {showTagMgr&&<Cd style={{padding:14,marginTop:8}}>
         <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:8}}>🏷 Manage Categories, Value Props & VOs</div>
         {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?"#9b7bb0":"#D4A040";const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
@@ -1580,7 +1602,7 @@ const App=()=>{
       setModal({t:"buildRot",est:e,pool:mi,_revise:prev});
     };
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <h1 style={{fontSize:24,fontWeight:800}}>Traffic Center</h1>
+      <PageHead title="Traffic Center" pgKey="traf"/>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
         <span style={{fontSize:13,color:"#9B8EAD"}}>Working Month:</span>
         <select value={workMonth} onChange={e=>setWorkMonth(e.target.value)} style={{padding:"4px 8px",borderRadius:5,border:"2px solid #4AC8E8",fontSize:13,fontWeight:700,color:"#4AC8E8",background:"rgba(37,99,235,.15)"}}>{CALENDAR.map(c=><option key={c.month}>{c.month}</option>)}</select>
@@ -2589,7 +2611,7 @@ const App=()=>{
     const allMkts=[...new Set([...(BM[nr.brand]||[]),...estimates.filter(e=>e.brand===nr.brand).map(e=>e.market)])].sort();
     const isDup=nr.brand&&nr.market&&nr.media&&nr.group&&estimates.some(e=>e.brand===nr.brand&&e.market===nr.market&&e.media===nr.media&&e.group===nr.group);
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><h1 style={{fontSize:24,fontWeight:800}}>Estimates</h1><div style={{fontSize:13,color:"#9B8EAD"}}>{estimates.length} estimates across {[...new Set(estimates.map(e=>e.market))].length} markets</div></div><Btn primary onClick={openC}>+ Create Estimate</Btn></div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><PageHead title="Estimates" pgKey="est" sub={estimates.length+" estimates across "+[...new Set(estimates.map(e=>e.market))].length+" markets"}/><Btn primary onClick={openC}>+ Create Estimate</Btn></div>
     {showAdd&&<Cd style={{padding:14,borderLeft:"3px solid #4AC8E8",background:"#162032"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
         <div><div style={{fontSize:14,fontWeight:800}}>New Estimate</div><div style={{fontSize:14,color:"#9B8EAD"}}>Step {step} of 2</div></div>
@@ -2686,7 +2708,7 @@ const App=()=>{
       setShowAdd(false);setNewRow({market:"",call:"",media:"",ownership:"",contact:"",brand:"",buyer:""});};
     const delSta=(i)=>{const s=stations[i];setStations(p=>p.filter((_,j)=>j!==i));log("Station Delete",`${s.call} removed`);notify("Station removed")};
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><h1 style={{fontSize:24,fontWeight:800}}>Stations</h1><div style={{display:"flex",gap:6}}><button onClick={()=>{const rows=[["Call Letters","Market","Media","Ownership","Contact Emails","Brand","Buyer"].join(","),...stations.map(s=>[s.call,s.market,s.media,s.ownership||"",'"'+(s.contact||"").replace(/"/g,'""')+'"',s.brand||"",s.buyer||""].join(","))];const blob=new Blob([rows.join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="station_contacts_"+new Date().toISOString().slice(0,10)+".csv";a.click();notify("Exported "+stations.length+" stations")}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #9b7bb0",background:"#1e1233",fontSize:13,fontWeight:700,cursor:"pointer",color:"#9B8EAD"}}>📥 Export Contacts</button><Btn primary onClick={()=>setShowAdd(!showAdd)}>+ Add Station</Btn></div></div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><PageHead title="Stations" pgKey="sta"/><div style={{display:"flex",gap:6}}><button onClick={()=>{const rows=[["Call Letters","Market","Media","Ownership","Contact Emails","Brand","Buyer"].join(","),...stations.map(s=>[s.call,s.market,s.media,s.ownership||"",'"'+(s.contact||"").replace(/"/g,'""')+'"',s.brand||"",s.buyer||""].join(","))];const blob=new Blob([rows.join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="station_contacts_"+new Date().toISOString().slice(0,10)+".csv";a.click();notify("Exported "+stations.length+" stations")}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #9b7bb0",background:"#1e1233",fontSize:13,fontWeight:700,cursor:"pointer",color:"#9B8EAD"}}>📥 Export Contacts</button><Btn primary onClick={()=>setShowAdd(!showAdd)}>+ Add Station</Btn></div></div>
       {showAdd&&<Cd style={{padding:10}}><div style={{fontSize:14,fontWeight:700,marginBottom:6}}>New Station</div>
         <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"end"}}>
           <Inp placeholder="Call Letters" value={newRow.call} onChange={e=>setNewRow(p=>({...p,call:e.target.value}))} style={{width:80}}/>
@@ -2933,7 +2955,7 @@ const App=()=>{
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
       {photoPanel&&<PhotoModal p={photoPanel} onClose={()=>setPhotoPanel(null)}/>}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
-        <div><h1 style={{fontSize:24,fontWeight:800}}>WK Advertising — OOH Postings</h1>
+        <div><PageHead title="Wettermark Keith — OOH Postings" pgKey="ooh"/>
           <p style={{fontSize:13,color:"#9B8EAD"}}>{pops.length} Lamar panels · Contract 5030974 / 5060911 · {totalImpr.toLocaleString()} weekly impressions</p>
         </div>
         <div style={{display:"flex",gap:4}}>
@@ -3301,7 +3323,7 @@ const App=()=>{
 
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
-        <div><h1 style={{fontSize:24,fontWeight:800}}>Postman Law — OOH Media Plan</h1>
+        <div><PageHead title="Postman Law — OOH Media Plan" pgKey="ooh"/>
           <p style={{fontSize:13,color:"#9B8EAD"}}>2026 All Markets · {plPanels.length} placements across {mkts.length} DMAs · {plPanels.filter(p=>p.isci).length}/{plPanels.length} ISCI assigned</p>
         </div>
         <div style={{display:"flex",gap:4}}>
@@ -4150,7 +4172,7 @@ ${fullText.substring(0,3000)}`}]
     const totalParsed=results.filter(r=>r.status==="success").reduce((a,r)=>a+(r.panels?.length||0),0);
 
     return<div style={{display:"flex",flexDirection:"column",gap:12}}>
-      <div><h1 style={{fontSize:24,fontWeight:800}}>Import & Upload</h1>
+      <div><PageHead title="Import & Upload" pgKey="ooh"/>
         <p style={{fontSize:13,color:"#9B8EAD"}}>Drag & drop Lamar contracts, Excel media plans, or CSV exports to auto-parse panels</p>
       </div>
 
@@ -4595,7 +4617,7 @@ ${fullText.substring(0,3000)}`}]
 
     return<div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <div><h1 style={{fontSize:24,fontWeight:800,margin:0}}>Metrics</h1><div style={{fontSize:13,color:"#9B8EAD"}}>Creative Intelligence · Traffic Tracking · Performance</div></div>
+        <PageHead title="Metrics" pgKey="metrics" sub="Creative Intelligence · Traffic Tracking · Performance"/>
         <div style={{display:"flex",gap:4}}>
           {[["mix","Creative Mix"],["tracking","Traffic Tracking"],["savings","Time Savings"]].map(([k,l])=>
             <button key={k} onClick={()=>setView(k)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(view===k?"#4AC8E8":"#E8DFF0"),background:view===k?"#4AC8E8":"#2d1f42",color:view===k?"#fff":"#4a3565",fontSize:13,fontWeight:700,cursor:"pointer"}}>{l}</button>
@@ -5105,7 +5127,7 @@ ${fullText.substring(0,3000)}`}]
     </div>;
     return<div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <div><h1 style={{fontSize:24,fontWeight:800,margin:0}}>Traffic Library</h1><div style={{fontSize:13,color:"#9B8EAD"}}>{trafficHistory.length} instructions · {[...new Set(trafficHistory.map(h=>h.brand))].length} brands · {[...new Set(trafficHistory.map(h=>normMkt(h.market)||h.market))].length} markets</div></div>
+        <PageHead title="Traffic Library" pgKey="library" sub={trafficHistory.length+" instructions · "+[...new Set(trafficHistory.map(h=>h.brand))].length+" brands · "+[...new Set(trafficHistory.map(h=>normMkt(h.market)||h.market))].length+" markets"}/>
         <div style={{display:"flex",gap:6}}>
           <button onClick={()=>{const rows=[["Brand","Market","Media","Month","Version","Buyer","ISCI","Title","Duration","Pct","Schedule","Bookend","Units"].join(","),...trafficHistory.flatMap(h=>(h.iscis||[]).map(r=>[h.brand,h.market,h.media,h.month,h.version,h.buyer,r.code,r.title,r.dur,r.pct,r.sched,r.bookend||"",r.units||""].join(",")))];const blob=new Blob([rows.join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="traffic_library_"+new Date().toISOString().slice(0,10)+".csv";a.click()}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #9b7bb0",background:"#1e1233",fontSize:13,fontWeight:700,cursor:"pointer",color:"#9B8EAD"}}>Export CSV</button>
           <button onClick={sendConfirmReminders} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #D4A040",background:"rgba(245,158,11,.12)",fontSize:13,fontWeight:700,cursor:"pointer",color:"#D4A040"}}>🔔 Send Reminders</button>
@@ -5405,7 +5427,7 @@ Be direct and actionable. No generic advice.`;
     const bc=planBrand==="Postman Law"?"#9b7bb0":"#D4A040";
     return<div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <div><h1 style={{fontSize:24,fontWeight:800,margin:0}}>🧠 AI Rotation Planner</h1><div style={{fontSize:13,color:"#9B8EAD"}}>Creative analysis, staleness detection, trend insights & rotation recommendations</div></div>
+        <PageHead title="AI Rotation Planner" pgKey="planner" sub="Creative analysis, staleness detection, trend insights & rotation recommendations"/>
       </div>
       {/* Brand Tabs */}
       <div style={{display:"flex",gap:0,marginBottom:0}}>
@@ -5474,7 +5496,7 @@ Be direct and actionable. No generic advice.`;
         return true;
       });
       return<div style={{display:"flex",flexDirection:"column",gap:12}}>
-        <div><h1 style={{fontSize:24,fontWeight:800}}>OOH ISCI Registry</h1>
+        <div><PageHead title="OOH ISCI Registry" pgKey="ooh"/>
           <p style={{fontSize:13,color:"#9B8EAD"}}>{oohIscis.length} active OOH ISCIs · {inactiveOoh.length} inactive</p>
         </div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
@@ -5527,7 +5549,7 @@ Be direct and actionable. No generic advice.`;
   const pages={dash:<Dash/>,traf:<TrafPg/>,est:<EstPg/>,sta:<StaPg/>,metrics:<MetricsPg/>,library:<LibraryPg/>,notif:
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <div><h1 style={{fontSize:24,fontWeight:800,margin:0}}>Audit Log</h1><div style={{fontSize:13,color:"#9B8EAD"}}>System activity and change tracking</div></div>
+        <PageHead title="Audit Log" pgKey="notif" sub="System activity and change tracking"/>
         <div style={{fontSize:14,color:"#9B8EAD"}}>{auditLog.length} entries</div>
       </div>
       <Cd style={{padding:0,overflow:"hidden"}}>
@@ -5621,7 +5643,7 @@ Be direct and actionable. No generic advice.`;
     const q=docsSearch.toLowerCase().trim();
     const filtered=q?DOCS.map(s=>({...s,items:s.items.filter(i=>i.title.toLowerCase().includes(q)||i.text.toLowerCase().includes(q)||s.section.toLowerCase().includes(q))})).filter(s=>s.items.length>0):DOCS;
     return<div style={{display:"flex",flexDirection:"column",gap:12}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}><h1 style={{fontSize:24,fontWeight:800}}>Help & Docs</h1><span style={{fontSize:13,color:"#C4A0C8",fontStyle:"italic"}}>{doomPick(DOOM.sprinkle)}</span></div>
+      <PageHead title="Help & Docs" pgKey="docs"/>
       <input value={docsSearch} onChange={e=>setDocsSearch(e.target.value)} placeholder="Search docs..." style={{padding:"8px 12px",borderRadius:6,border:"1px solid #9b7bb0",background:"#1e1233",color:"#E8DFF0",fontSize:14,outline:"none",width:"100%",maxWidth:400}}/>
       {filtered.length===0&&<Cd style={{padding:20,textAlign:"center"}}><div style={{fontSize:14,color:"#C4A0C8",fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div></Cd>}
       {filtered.map((s,si)=><Cd key={si} style={{padding:14}}>
