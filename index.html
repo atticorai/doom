@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Atticor Doom &amp; Deliverables</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}html,body,#R{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background:transparent}
@@ -18,7 +18,7 @@ table,button,select,input,textarea{font-family:'DM Sans',sans-serif}
 #R>div>div:last-child div[style*="background: rgb(255, 255, 255)"],
 #R>div>div:last-child div[style*="background:#fff"],
 #R>div>div:last-child div[style*="background: white"]{background:#2d1f42 !important;border-color:#4a3565 !important;color:#E8DFF0 !important}
-h1,h2,h3,h4{color:#F0E8F8 !important}
+h1,h2,h3,h4{color:#F0E8F8 !important;font-family:'Cormorant Garamond','DM Sans',serif !important}
 td{color:#D0C4DD !important;border-color:#2d1f42 !important}
 th{background:#2d1f42 !important;color:#9B8EAD !important;border-color:#4a3565 !important}
 /* Skip loader inputs from dark theme override */
@@ -131,11 +131,11 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
 <defs><linearGradient id="gcomb" x1="12" y1="3" x2="12" y2="22"><stop stop-color="#E8DFF0"/><stop offset=".35" stop-color="#C4A0C8"/><stop offset="1" stop-color="#9b7bb0"/></linearGradient></defs>
 </svg>
 </div>
-<div class="doom-title" style="font-size:30px;font-weight:800;letter-spacing:3px;overflow:hidden">
+<div class="doom-title" style="font-size:32px;font-weight:700;letter-spacing:4px;overflow:hidden;font-family:'Cormorant Garamond',serif">
 <span class="doom-letter dl" style="--d:0s">D</span><span class="doom-letter dl" style="--d:.07s">O</span><span class="doom-letter dl" style="--d:.14s">O</span><span class="doom-letter dl" style="--d:.21s">M</span><span class="doom-amp" style="animation:letterDrop .4s ease-out .35s both">&amp;</span><span class="doom-letter dd" style="--d:.49s">D</span><span class="doom-letter dd" style="--d:.55s">E</span><span class="doom-letter dd" style="--d:.61s">L</span><span class="doom-letter dd" style="--d:.67s">I</span><span class="doom-letter dd" style="--d:.73s">V</span><span class="doom-letter dd" style="--d:.79s">E</span><span class="doom-letter dd" style="--d:.85s">R</span><span class="doom-letter dd" style="--d:.91s">A</span><span class="doom-letter dd" style="--d:.97s">B</span><span class="doom-letter dd" style="--d:1.03s">L</span><span class="doom-letter dd" style="--d:1.09s">E</span><span class="doom-letter dd" style="--d:1.15s">S</span>
 </div>
 <div style="font-size:11px;color:#C4A0C8;letter-spacing:3px;font-weight:600;margin-top:6px;animation:fadeUp .5s ease-out 1.4s both">ATTICOR MEDIA</div>
-<div id="dd-status" style="margin-top:18px;font-size:14px;color:#C4A0C8;font-style:italic;max-width:320px;margin-left:auto;margin-right:auto;animation:fadeUp .5s ease-out 1.8s both;opacity:0;min-height:22px"></div>
+<div id="dd-status" style="margin-top:18px;font-size:15px;color:#C4A0C8;font-style:italic;font-family:'Cormorant Garamond',serif;max-width:320px;margin-left:auto;margin-right:auto;animation:fadeUp .5s ease-out 1.8s both;opacity:0;min-height:22px"></div>
 <div id="dd-bar" style="width:200px;height:4px;background:#2d1f42;border-radius:4px;overflow:hidden;margin:16px auto 0"><div style="height:100%;width:30%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#7c3aed);border-radius:4px;animation:ldbar 1.5s ease-in-out infinite"></div></div>
 <div id="dd-login-form" style="display:none;margin-top:20px;animation:fadeUp .4s ease-out both;max-width:320px;margin-left:auto;margin-right:auto">
   <input type="password" id="dd-pw" placeholder="Password" style="width:100%;padding:14px 18px;border-radius:10px;border:2px solid rgba(155,123,176,.3);background:rgba(30,18,51,.5);color:#E8DFF0;font-size:16px;text-align:center;outline:none;margin-bottom:14px;letter-spacing:2px;font-family:'DM Sans',sans-serif;backdrop-filter:blur(8px)"/>
