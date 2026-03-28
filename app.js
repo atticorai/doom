@@ -808,22 +808,22 @@ const App=()=>{
     return stations.filter(s=>{if(est.market&&s.market!==est.market)return false;const linked=staEstLinks[staKey(s)]||[];return linked.includes(est.num)});
   };
 
-  // ── NOW AIRING TRACKER ─────────────────────────────────
-  // estNum -> {iscis:[{code,title,dur,pct,sched}], month, flight, version, ts, stations:[callLetters]}
+  // ── NOW AIRING / CONFIRMATIONS ──────────────────────────
+  // Key helper: WK 3-digit estimates shared across markets need market in key
   const[nowAiring,setNowAiring]=useState({});
-  // ── STATION CONFIRMATION TRACKING ───────────────────────
+  const ak=(est)=>(est.brand==="Wettermark Keith"&&est.num&&est.num.length<=3)?est.num+"|"+est.market:est.num;
+  const akFromHistory=(h)=>(h.brand==="Wettermark Keith"&&h.est&&h.est.length<=3)?h.est+"|"+h.market:h.est;
   const[confirmations,setConfirmations]=useState({});
   const genToken=()=>{const a=new Uint8Array(16);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('')};
-  const confirmStation=(estNum,call)=>{
+  const confirmStation=(key,call)=>{
     const ts=new Date().toISOString();
     setConfirmations(p=>{
-      const updated={...p,[estNum]:{...(p[estNum]||{}),[call]:{confirmed:true,ts}}};
-      // Direct Firestore write to ensure persistence even from confirmation portal
+      const updated={...p,[key]:{...(p[key]||{}),[call]:{confirmed:true,ts}}};
       try{db.collection("appData").doc("confirmations").set({data:JSON.stringify(updated),ts:Date.now()})}catch(e){console.warn("Failed to save confirmations:",e)}
       return updated;
     });
   };
-  const getConfirmed=(estNum)=>confirmations[estNum]||{};
+  const getConfirmed=(key)=>confirmations[key]||{};
 
   // ── CHECK URL FOR CONFIRMATION LINKS ──────────────────
   const[confirmMode,setConfirmMode]=useState(null);
@@ -887,10 +887,13 @@ const App=()=>{
     const estNum=params.get('confirm');const sta=params.get('sta');const tok=params.get('tok');
     if(estNum&&sta){
       const est=estimates.find(e=>e.num===estNum);
-      const airing=nowAiring[estNum];
       const brand=BRANDS.find(b=>b.name===est?.brand);
+      // For WK 3-digit estimates, find the market from the station
+      const staObj=stations.find(s=>s.call===sta);
+      const confirmKey=est&&est.brand==="Wettermark Keith"&&estNum.length<=3?estNum+"|"+(staObj?.market||est?.market||""):estNum;
+      const airing=nowAiring[confirmKey];
       // Validate confirmation token before granting access
-      const storedToken=confirmations[estNum]?.[sta]?.token;
+      const storedToken=confirmations[confirmKey]?.[sta]?.token;
       if(!tok||(!storedToken&&tok!=='auto')||(storedToken&&tok!==storedToken&&tok!=='auto')){
         console.warn("Invalid or missing confirmation token for",estNum,sta);
         setConfirmMode({estNum,sta,tok:null,est,airing,brand,invalidToken:true});
@@ -1023,8 +1026,8 @@ const App=()=>{
                   {pendingGroup.map(gs=><span key={gs.call} style={{fontSize:12,padding:"3px 8px",borderRadius:6,background:"#251d3d",color:"#a89ed4",fontWeight:600}}>{gs.call} · {gs.market}</span>)}
                 </div>
                 <button onClick={()=>{
-                  confirmStation(estNum,sta);
-                  pendingGroup.forEach(gs=>confirmStation(estNum,gs.call));
+                  confirmStation(confirmKey,sta);
+                  pendingGroup.forEach(gs=>confirmStation(confirmKey,gs.call));
                   setConfirmDone(true);
                   log("Batch Confirmed",sta+" + "+pendingGroup.map(g=>g.call).join(", ")+" — Est "+estNum+" ("+stObj.ownership+")");
                 }} style={{width:"100%",padding:"12px",borderRadius:8,border:"none",background:"#7c3aed",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>
@@ -1033,7 +1036,7 @@ const App=()=>{
               </div>;
             })()}
             <button onClick={()=>{
-              confirmStation(estNum,sta);
+              confirmStation(confirmKey,sta);
               setConfirmDone(true);
               log("Confirmed",sta+" confirmed Est "+estNum);
             }} style={{width:"100%",padding:"18px 24px",borderRadius:12,border:"none",background:"linear-gradient(135deg,#a855f7,#7c3aed)",color:"#fff",fontSize:16,fontWeight:800,cursor:"pointer"}}>
@@ -1438,7 +1441,18 @@ const App=()=>{
   const TrafPg=()=>{
     const[tb,setTb]=useState("");const[tm,setTm]=useState("");const[tMedia,setTMedia]=useState("");
     const[combineMode,setCombineMode]=useState(false);const[combineSet,setCombineSet]=useState([]);
-    const brandEsts=estimates.filter(e=>(tb?e.brand===tb:true)&&(tm?e.market===tm:true)&&(tMedia?e.media===tMedia:true)&&(!e.month||e.month===workMonth));
+    // WK monthly TV Base estimates: only show the one matching the current work month
+    const WK_MONTH_EST_MAP={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};
+    const WK_MONTHLY_NUMS=new Set(Object.values(WK_MONTH_EST_MAP));
+    const currentWkEst=WK_MONTH_EST_MAP[workMonth];
+    const brandEsts=estimates.filter(e=>{
+      if(tb&&e.brand!==tb)return false;
+      if(tm&&e.market!==tm)return false;
+      if(tMedia&&e.media!==tMedia)return false;
+      // Filter WK monthly estimates to current month only
+      if(e.brand==="Wettermark Keith"&&WK_MONTHLY_NUMS.has(e.num)&&e.num!==currentWkEst)return false;
+      return true;
+    });
     const mkts=[...new Set(estimates.filter(e=>!tb||e.brand===tb).map(e=>e.market))].sort();
     const mediaTypes=[...new Set(estimates.filter(e=>(!tb||e.brand===tb)&&(!tm||e.market===tm)).map(e=>e.media))].sort();
     const estKey=(e)=>e.num+"|"+e.market;
@@ -1460,7 +1474,7 @@ const App=()=>{
       setCombineMode(false);setCombineSet([]);
     };
     const launchRevise=(e,mi)=>{
-      const prev=nowAiring[e.num];
+      const prev=nowAiring[ak(e)];
       setModal({t:"buildRot",est:e,pool:mi,_revise:prev});
     };
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -1487,8 +1501,8 @@ const App=()=>{
           const mi=iscis.filter(i=>i.dma===dc&&i.brand===e.brand&&i.active&&(e.media==="TV"?i.suffix==="T":e.media==="Radio"?i.suffix==="R":e.media==="Streaming Audio"?i.suffix==="S":e.media==="OOH"?i.suffix==="O":e.media==="Digital"?i.suffix==="D":e.media==="Display"?i.suffix==="B":true));
           const isSel=combineSet.includes(estKey(e));
           const linkedSta=getEstStations(e);
-          const airing=nowAiring[e.num];
-          const conf=getConfirmed(e.num);const sentStas=airing?.stations||[];const confCount=sentStas.filter(c=>conf[c]?.confirmed).length;const totalSent=sentStas.length;
+          const airing=nowAiring[ak(e)];
+          const conf=getConfirmed(ak(e));const sentStas=airing?.stations||[];const confCount=sentStas.filter(c=>conf[c]?.confirmed).length;const totalSent=sentStas.length;
           return<tr key={e.num+e.brand+e.market} style={{background:isSel?"#eff6ff":""}}>
             {combineMode&&<TD a="center"><input type="checkbox" checked={isSel} onChange={()=>toggleCombine(e)}/></TD>}
             <TD m b>{e.num}</TD><TD><B l={e.brand} c={e.brand==="Postman Law"?"#7c3aed":"#d97706"}/></TD><TD b>{e.market}</TD><TD><B l={e.media} c={mc(e.media)}/></TD><TD>{e.group}</TD><TD>{e.buyer}</TD>
@@ -1743,8 +1757,8 @@ const App=()=>{
             iscis:isciRec,stations:staList,isRevision:!!_revise,prevVersion:_revise?.version||null,status:"print_only"};
           setTrafficHistory(p=>[rec,...p]);
           const airingRec={iscis:isciRec,month:curMonth?.month,flight,version,ts:new Date().toISOString(),stations:staList};
-          if(est._combined){est._combined.forEach(ce=>{setNowAiring(p=>({...p,[ce.num]:airingRec}));setConfirmations(p=>({...p,[ce.num]:tokens}))})}
-          else{setNowAiring(p=>({...p,[est.num]:airingRec}));setConfirmations(p=>({...p,[est.num]:tokens}))}
+          if(est._combined){est._combined.forEach(ce=>{const k=ak(ce);setNowAiring(p=>({...p,[k]:airingRec}));setConfirmations(p=>({...p,[k]:tokens}))})}
+          else{const k=ak(est);setNowAiring(p=>({...p,[k]:airingRec}));setConfirmations(p=>({...p,[k]:tokens}))}
           printSheet();saveSheetToFirestore(buildSheetHtml(),linkedSta.map(s=>s.call));
           // Lock sent ISCIs
           const now=new Date().toISOString();const sentCodes=sel.map(r=>r.isci.code);
@@ -1766,8 +1780,8 @@ const App=()=>{
             iscis:isciRec,stations:sendable.map(s=>s.call),isRevision:!!_revise,prevVersion:_revise?.version||null,status:"pending"};
           setTrafficHistory(p=>[rec,...p]);
           const airingRec={iscis:isciRec,month:curMonth?.month,flight,version,ts:new Date().toISOString(),stations:sendable.map(s=>s.call)};
-          if(est._combined){est._combined.forEach(ce=>{setNowAiring(p=>({...p,[ce.num]:airingRec}));setConfirmations(p=>({...p,[ce.num]:tokens}))})}
-          else{setNowAiring(p=>({...p,[est.num]:airingRec}));setConfirmations(p=>({...p,[est.num]:tokens}))}
+          if(est._combined){est._combined.forEach(ce=>{const k=ak(ce);setNowAiring(p=>({...p,[k]:airingRec}));setConfirmations(p=>({...p,[k]:tokens}))})}
+          else{const k=ak(est);setNowAiring(p=>({...p,[k]:airingRec}));setConfirmations(p=>({...p,[k]:tokens}))}
           const sheetHtml=buildSheetHtml();
           saveSheetToFirestore(sheetHtml,sendable.map(s=>s.call));
           let pdfB64="";
@@ -2417,7 +2431,7 @@ const App=()=>{
         </div></Cd>}
       <div style={{display:"flex",gap:5,flexWrap:"wrap"}}><Sel label="Market" options={mkts} value={sm} onChange={setSm} placeholder="All"/><Sel label="Ownership" options={ow} value={so} onChange={setSo} placeholder="All"/><Sel label="Brand" options={BRANDS.map(b=>({v:b.name,l:b.name}))} value={sf.brand} onChange={v=>setF("brand",v)} placeholder="All"/></div>
       <Cd><div style={{overflowX:"auto",maxHeight:480}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><STH tbl="sta" col="call">Station</STH><STH tbl="sta" col="market">Market</STH><STH tbl="sta" col="media">Media</STH><STH tbl="sta" col="ownership">Ownership</STH><STH tbl="sta" col="brand">Brand</STH><TH>Linked Ests</TH><TH>Now Airing</TH><STH tbl="sta" col="contact">Contact</STH><TH w={50}>Actions</TH></tr></thead>
-        <tbody>{fl.map((s,i)=>{const ai=stations.indexOf(s);const linked=getStaEsts(s);const airings=linked.map(n=>nowAiring[n]).filter(Boolean);return editIdx===ai?<tr key={ai} style={{background:"rgba(37,99,235,.15)"}}>
+        <tbody>{fl.map((s,i)=>{const ai=stations.indexOf(s);const linked=getStaEsts(s);const airings=linked.map(n=>{const k=(s.brand==="Wettermark Keith"&&n.length<=3)?n+"|"+s.market:n;return nowAiring[k]}).filter(Boolean);return editIdx===ai?<tr key={ai} style={{background:"rgba(37,99,235,.15)"}}>
           <TD><Inp value={editRow.call} onChange={ev=>setEditRow(p=>({...p,call:ev.target.value}))} style={{width:60,fontSize:13}}/></TD>
           <TD><Inp value={editRow.market} onChange={ev=>setEditRow(p=>({...p,market:ev.target.value}))} style={{width:70,fontSize:13}}/></TD>
           <TD><Sel options={MEDIA.map(m=>({v:m,l:m}))} value={editRow.media} onChange={v=>setEditRow(p=>({...p,media:v}))} style={{fontSize:14}}/></TD>
@@ -4021,7 +4035,7 @@ ${fullText.substring(0,3000)}`}]
       const flight=cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):"";
       const linked=getEstStations(est);
       const stationList=linked.map(s=>s.call).join(", ");
-      const airing=nowAiring[est.num];
+      const airing=nowAiring[ak(est)];
       setDraftEst(est);setSendResult(null);
       const subj=agency+" | "+est.brand+" "+est.market+" "+est.media+" Traffic Instructions | "+(cm?.month||workMonth)+" | Est "+est.num;
       setDraftSubj(subj);
@@ -5551,7 +5565,7 @@ Be direct and actionable. No generic advice.`;
         </div>
         <div style={{marginTop:10}}><Btn onClick={()=>setModal(null)}>Done</Btn></div>
       </Mod>})()}
-    {modal?.t==="confirmView"&&(()=>{const e=modal.est;const linked=getEstStations(e);const conf=getConfirmed(e.num);const airing=nowAiring[e.num];
+    {modal?.t==="confirmView"&&(()=>{const e=modal.est;const conf=getConfirmed(ak(e));const airing=nowAiring[ak(e)];const linked=getEstStations(e);
       const brandObj=BRANDS.find(b=>b.name===e.brand);
       const cm=CALENDAR.find(c=>c.month===airing?.month)||CALENDAR[1];
       const flight=airing?.flight||"";
