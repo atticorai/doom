@@ -766,7 +766,7 @@ const App=()=>{
       const isciObjs=(r.h.iscis||[]).map(ic=>{const full=iscis.find(i=>i.code===ic.code);return full?{code:ic.code,title:ic.title,fileUrl:full.fileUrl}:null}).filter(Boolean);
       const creativeLinks=isciObjs.filter(i=>i.fileUrl).length>0?"<br><br><b>Creative Files:</b><br>"+isciObjs.filter(i=>i.fileUrl).map(i=>'<a href="'+i.fileUrl+'">'+i.code+" — "+i.title+'</a>').join("<br>"):"";
       const body="Hello,<br><br>This is a reminder that you have not yet confirmed receipt of traffic instructions for <b>"+(r.h.est||"")+" — "+r.h.brand+", "+r.h.market+", "+r.h.media+"</b>.<br><br><b>Broadcast Month:</b> "+(r.h.month||"")+"<br><b>Flight Dates:</b> "+(r.h.flight||"")+"<br><b>Version:</b> "+r.h.version+"<br><b>Station:</b> "+r.call+creativeLinks+"<br><br>The traffic sheet is attached for your reference.<br><br>Please confirm receipt by clicking the link below:<br><a href=\""+confirmUrl+"\">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor";
-      let pdfB64="";try{const sheetHtml=bldHtml(r.h);const pdfUri=await generatePdfBase64(sheetHtml);pdfB64=pdfUri.split(",")[1]||""}catch(pe){}
+      let pdfB64="";try{const sheetHtml=bldHtml(r.h);const pdfUri=await generatePdfBase64(sheetHtml,r.h);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
       const pdfName="Traffic_"+r.h.brand.replace(/\s/g,"")+"_"+r.h.market+"_"+r.h.media+"_"+(r.h.month||"").replace(/\s/g,"")+"_v"+r.h.version+".pdf";
       try{
         const resp=await fetch("https://doomndeliverables.app.n8n.cloud/webhook/9661ec80-6bd8-4cf5-acca-90f2547a75eb",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:r.emails.join(","),cc:[BUYER_EMAILS[r.h.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj,message:body,pdfBase64:pdfB64,pdfName:pdfName})});
@@ -1053,23 +1053,113 @@ const App=()=>{
     </div>;}}
   }
   const notify=useCallback(m=>{setToast(m);setTimeout(()=>setToast(null),3e3)},[]);
-  const generatePdfBase64=async(html)=>{
-    const iframe=document.createElement("iframe");
-    iframe.style.cssText="position:fixed;left:-9999px;width:850px;height:1200px;border:none";
-    iframe.sandbox="allow-same-origin";
-    document.body.appendChild(iframe);
-    try{
-    iframe.contentDocument.open();iframe.contentDocument.write(html);iframe.contentDocument.close();
-    await new Promise(r=>setTimeout(r,500));
-    const canvas=await html2canvas(iframe.contentDocument.body,{scale:2,useCORS:true,width:850});
-    document.body.removeChild(iframe);
-    const{jsPDF}=window.jspdf;
-    const pdf=new jsPDF("p","mm","a4");
-    const imgW=210;const imgH=(canvas.height*imgW)/canvas.width;
-    const pageH=297;let y=0;
-    while(y<imgH){if(y>0)pdf.addPage();pdf.addImage(canvas.toDataURL("image/jpeg",0.95),"JPEG",0,-y,imgW,imgH);y+=pageH;}
+  // Generate PDF with clickable links using jsPDF text rendering (not html2canvas)
+  const generatePdfBase64=async(html,trafficRec)=>{
+    // If no traffic record passed, fall back to canvas method for non-traffic uses
+    if(!trafficRec){
+      const iframe=document.createElement("iframe");
+      iframe.style.cssText="position:fixed;left:-9999px;width:850px;height:1200px;border:none";
+      iframe.sandbox="allow-same-origin";
+      document.body.appendChild(iframe);
+      try{
+        iframe.contentDocument.open();iframe.contentDocument.write(html);iframe.contentDocument.close();
+        await new Promise(r=>setTimeout(r,500));
+        const canvas=await html2canvas(iframe.contentDocument.body,{scale:2,useCORS:true,width:850});
+        document.body.removeChild(iframe);
+        const{jsPDF}=window.jspdf;const pdf=new jsPDF("p","mm","a4");
+        const imgW=210;const imgH=(canvas.height*imgW)/canvas.width;
+        const pageH=297;let yy=0;
+        while(yy<imgH){if(yy>0)pdf.addPage();pdf.addImage(canvas.toDataURL("image/jpeg",0.95),"JPEG",0,-yy,imgW,imgH);yy+=pageH;}
+        return pdf.output("datauristring");
+      }catch(pdfErr){if(iframe.parentNode)document.body.removeChild(iframe);throw pdfErr;}
+    }
+    // ═══ Native jsPDF with clickable links ═══
+    const{jsPDF:JP}=window.jspdf;const pdf=new JP("p","mm","a4");
+    const pw=210;const ph=297;const mx=14;const cw=pw-2*mx;let y=16;
+    const S=v=>v==null?"":String(v);
+    const bc=trafficRec.brand==="Postman Law"?[124,58,237]:[217,119,6];
+    const checkPage=(need)=>{if(y+need>ph-14){pdf.addPage();y=14}};
+    // Header
+    pdf.setFont("helvetica","bold");pdf.setFontSize(14);pdf.setTextColor(bc[0],bc[1],bc[2]);
+    pdf.text(S(trafficRec.brand).toUpperCase(),pw/2,y,{align:"center"});y+=5;
+    pdf.setFontSize(8);pdf.setTextColor(100,100,100);
+    pdf.text((trafficRec.media||"TV").toUpperCase()+" TRAFFIC INSTRUCTIONS",pw/2,y,{align:"center"});y+=8;
+    // Info fields
+    const hdr=(label,value,color)=>{
+      checkPage(4);pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(100,100,100);
+      pdf.text(label+":",mx,y);pdf.setFont("helvetica","normal");
+      if(color)pdf.setTextColor(color[0],color[1],color[2]);else pdf.setTextColor(0,0,0);
+      pdf.text(S(value),mx+32,y);y+=4;
+    };
+    hdr("Agency","Atticor Media");hdr("Client",trafficRec.brand,bc);
+    hdr("Market",trafficRec.market);hdr("Buyer",trafficRec.buyer,[217,119,6]);
+    hdr("Estimate",trafficRec.est);hdr("Media",trafficRec.media,[37,99,235]);
+    hdr("Month",trafficRec.month,bc);hdr("Flight",trafficRec.flight);
+    hdr("Version","V"+S(trafficRec.version));
+    if(trafficRec.comments)hdr("Comments",trafficRec.comments);
+    y+=2;pdf.setDrawColor(bc[0],bc[1],bc[2]);pdf.setLineWidth(0.5);pdf.line(mx,y,mx+cw,y);y+=6;
+    // Rotation table header
+    checkPage(10);
+    const cols=[34,60,12,12,40];const colX=[mx];for(let i=1;i<cols.length;i++)colX.push(colX[i-1]+cols[i-1]);
+    pdf.setFillColor(243,237,249);pdf.rect(mx,y-3,cw,5,"F");
+    pdf.setFont("helvetica","bold");pdf.setFontSize(7);pdf.setTextColor(90,77,107);
+    ["FLIGHT","ISCI CODE & TITLE","DUR","ROT%","SCHEDULE"].forEach((h,i)=>{pdf.text(h,colX[i]+1,y)});
+    y+=4;pdf.setLineWidth(0.3);pdf.setDrawColor(0,0,0);pdf.line(mx,y,mx+cw,y);y+=4;
+    // ISCI rows grouped by schedule
+    const isciRows=trafficRec.iscis||[];
+    const schedGroups={};isciRows.forEach(r=>{const s=r.sched||"All Week";if(!schedGroups[s])schedGroups[s]=[];schedGroups[s].push(r)});
+    const SCHED_ORDER_PDF=["M-F Schedule","Weekend Schedule","All Week","M-F Bookend","Weekend Bookend","Holiday Only"];
+    const schedColors={"M-F Schedule":[219,234,254],"Weekend Schedule":[254,249,195],"All Week":[240,253,244],"M-F Bookend":[237,233,254],"Weekend Bookend":[255,237,213],"Holiday Only":[254,226,226]};
+    const allScheds=[...SCHED_ORDER_PDF.filter(s=>schedGroups[s]),...Object.keys(schedGroups).filter(s=>!SCHED_ORDER_PDF.includes(s))];
+    allScheds.forEach(sched=>{
+      const items=schedGroups[sched];if(!items)return;
+      checkPage(8);
+      const sc=schedColors[sched]||[248,250,252];
+      pdf.setFillColor(sc[0],sc[1],sc[2]);pdf.rect(mx,y-3,cw,4.5,"F");
+      pdf.setFont("helvetica","bold");pdf.setFontSize(7);pdf.setTextColor(60,60,60);
+      pdf.text(sched.toUpperCase(),mx+2,y);y+=5;
+      pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
+      items.sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0)).forEach(r=>{
+        checkPage(5);
+        pdf.setFillColor(sc[0],sc[1],sc[2],0.3);pdf.rect(mx,y-3,cw,4.5,"F");
+        pdf.text(S(trafficRec.flight),colX[0]+1,y);
+        pdf.setFont("helvetica","bold");pdf.text(S(r.code)+" - "+S(r.title),colX[1]+1,y,{maxWidth:cols[1]-2});
+        pdf.setFont("helvetica","normal");
+        pdf.text(r.bookend||":"+S(r.dur),colX[2]+1,y);
+        pdf.text(r.pct?S(r.pct).replace("%","")+"%":"",colX[3]+1,y);
+        pdf.text(sched,colX[4]+1,y);
+        y+=4.5;
+      });
+    });
+    // Creative file links (CLICKABLE)
+    const filesWithLinks=(trafficRec.iscis||[]).filter(r=>{const full=iscis.find(i=>i.code===r.code);return full&&full.fileUrl});
+    if(filesWithLinks.length>0){
+      y+=4;checkPage(12);
+      pdf.setFillColor(240,249,255);pdf.rect(mx,y-3,cw,4+filesWithLinks.length*4,"F");
+      pdf.setFont("helvetica","bold");pdf.setFontSize(7);pdf.setTextColor(3,105,161);
+      pdf.text("CREATIVE FILES — CLICK TO DOWNLOAD",mx+2,y);y+=4;
+      pdf.setFont("helvetica","normal");pdf.setFontSize(8);
+      filesWithLinks.forEach(r=>{
+        checkPage(5);
+        const full=iscis.find(i=>i.code===r.code);
+        if(full&&full.fileUrl){
+          pdf.setTextColor(37,99,235);
+          const linkText=S(r.code)+" — "+S(r.title);
+          pdf.textWithLink(linkText,mx+4,y,{url:full.fileUrl});
+          y+=4;
+        }
+      });
+      pdf.setTextColor(0,0,0);
+    }
+    // Signature
+    y+=8;checkPage(14);
+    pdf.setDrawColor(bc[0],bc[1],bc[2]);pdf.setLineWidth(0.5);pdf.line(mx,y,mx+cw,y);y+=5;
+    pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
+    pdf.text("Accepted by: _________________________",mx,y);pdf.text("Date: _______________",mx+cw-60,y);y+=6;
+    pdf.setFillColor(bc[0],bc[1],bc[2],0.08);pdf.rect(mx,y-3,cw,8,"F");
+    pdf.setFont("helvetica","normal");pdf.setFontSize(7);pdf.setTextColor(bc[0],bc[1],bc[2]);
+    pdf.text("Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.",mx+2,y);
     return pdf.output("datauristring");
-    }catch(pdfErr){if(iframe.parentNode)document.body.removeChild(iframe);throw pdfErr;}
   };
   // Native jsPDF generator for digital traffic — produces clickable links
   const generateDigitalTrafficPdf=function(opts){
@@ -1801,7 +1891,7 @@ const App=()=>{
           const sheetHtml=buildSheetHtml();
           saveSheetToFirestore(sheetHtml,sendable.map(s=>s.call));
           let pdfB64="";
-          try{const pdfUri=await generatePdfBase64(sheetHtml);pdfB64=pdfUri.split(",")[1]||""}catch(e){console.warn("PDF gen failed:",e);notify("PDF generation failed — sending without attachment")}
+          try{const pdfUri=await generatePdfBase64(sheetHtml,rec);pdfB64=pdfUri.split(",")[1]||""}catch(e){console.warn("PDF gen failed:",e);notify("PDF generation failed — sending without attachment")}
           const pdfName="Traffic_"+est.brand.replace(/\s/g,"")+"_"+est.market+"_"+est.media+"_"+(curMonth?.month||"").replace(/\s/g,"")+"_v"+version+".pdf";
           const filesWithUrls=sel.filter(r=>r.isci.fileUrl);
           const creativeLinks=filesWithUrls.length>0?
@@ -2358,7 +2448,8 @@ const App=()=>{
           ph+='<table><thead><tr><th>ISCI</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Schedule</th><th>Flight</th><th>File</th></tr></thead><tbody>';
           sel.forEach(function(r){var file=r.isci.fileUrl?'<a href="'+r.isci.fileUrl+'">DL</a>':"TBD";ph+="<tr><td style='font-family:monospace;font-weight:700'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td>"+(r.pct||"")+"%</td><td>"+r.sched+"</td><td>"+(r.flight||flightDates)+"</td><td>"+file+"</td></tr>"});
           ph+="</tbody></table></body></html>";
-          try{var pdfUri=await generatePdfBase64(ph);pdfB64=pdfUri.split(",")[1]||""}catch(pe){notify("PDF generation failed");return}
+          var streamRec={est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,iscis:sel.map(function(r){return{code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct,sched:r.sched}})};
+          try{var pdfUri=await generatePdfBase64(ph,streamRec);pdfB64=pdfUri.split(",")[1]||""}catch(pe){notify("PDF generation failed");return}
           var emailBody="Hello,<br><br>Please find the attached streaming audio traffic instructions for "+est.brand+" - "+(est.market||"")+" - "+workMonth+" V"+version+".<br><br>";
           if(emailNote.trim())emailBody+="<b>Note:</b> "+emailNote.trim()+"<br><br>";
           emailBody+="<b>Broadcast Month:</b> "+workMonth+"<br><b>Flight Dates:</b> "+flightDates+"<br><b>Estimate:</b> "+est.num+"<br><br>";
@@ -5009,7 +5100,7 @@ ${fullText.substring(0,3000)}`}]
                         var resendNote=isCopied?"":prompt("Add a note to this email (optional):")||"";
                         var sheetHtml=bldHtml(h);
                         var pdfB64="";
-                        try{var pdfUri=await generatePdfBase64(sheetHtml);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
+                        try{var pdfUri=await generatePdfBase64(sheetHtml,h);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
                         var pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+(h.market||"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
                         var buyerCcR=BUYER_EMAILS[h.buyer]||"";
                         var ccListR=[buyerCcR,"emm.caban@atticor.ai"].filter(Boolean).join(",");
@@ -5672,7 +5763,7 @@ Be direct and actionable. No generic advice.`;
           "<br><br>Thank you,<br><br>Emm Caban<br>Atticor";
         try{
           let sheetHtml="";let pdfB64="";
-          try{const sheetDoc=await db.collection("trafficSheets").doc(e.num+"_"+s.call).get();if(sheetDoc.exists){sheetHtml=sheetDoc.data().html;const pdfUri=await generatePdfBase64(sheetHtml);pdfB64=pdfUri.split(",")[1]||""}}catch(pe){console.warn("PDF gen failed:",pe)}
+          try{const sheetDoc=await db.collection("trafficSheets").doc(e.num+"_"+s.call).get();if(sheetDoc.exists){sheetHtml=sheetDoc.data().html;const tRec={est:e.num,brand:e.brand,market:e.market,media:e.media,buyer:e.buyer,month:airing?.month,flight:flight,version:airing?.version||"1",iscis:airing?.iscis||[]};const pdfUri=await generatePdfBase64(sheetHtml,tRec);pdfB64=pdfUri.split(",")[1]||""}}catch(pe){console.warn("PDF gen failed:",pe)}
           const pdfName="Traffic_"+e.brand.replace(/\s/g,"")+"_"+e.market+"_"+e.media+"_"+(airing?.month||"").replace(/\s/g,"")+".pdf";
           for(const email of emails){
             try{
