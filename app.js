@@ -606,8 +606,42 @@ const App=()=>{
           try{db.collection("appData").doc("iscis").set({data:JSON.stringify(ISCIS_INIT),ts:Date.now()})}catch(he){}
           iscisLoadedRef.current=true
         }
-        if(docs.staEstLinks?.data){const d=JSON.parse(docs.staEstLinks.data);if(Object.keys(d).length)setStaEstLinks(d)}
-        if(docs.nowAiring?.data){const d=JSON.parse(docs.nowAiring.data);setNowAiring(d)}
+        // Old 4-digit WK estimate numbers to clean from all data
+        const OLD_WK=new Set(["2633","2634","2635","2636","2637","2638","2639","2640","2641","2642","2643","2644","2645","2646","2647","2648","2649","2650","2651","2652","2653","2654","2655","2656","2657","2658","2659","2660"]);
+        if(docs.staEstLinks?.data){const d=JSON.parse(docs.staEstLinks.data);if(Object.keys(d).length){
+          // Migrate: remove old 4-digit WK estimate links and auto-link to new 3-digit ones
+          const WK_EST_NUMS=new Set(ESTIMATES.filter(e=>e.brand==="Wettermark Keith").map(e=>e.num));
+          const migrated={};let migCount=0;
+          Object.entries(d).forEach(([key,estNums])=>{
+            // key = "CALL|MARKET|BRAND"
+            const parts=key.split("|");const sBrand=parts[2]||"";const sMarket=parts[1]||"";const sCall=parts[0]||"";
+            if(sBrand==="Wettermark Keith"){
+              // Remove old 4-digit links
+              const cleaned=estNums.filter(n=>!OLD_WK.has(n));
+              // Find all WK estimates that match this station's market+media
+              const sta=stations.find(s=>s.call===sCall&&s.market===sMarket&&s.brand==="Wettermark Keith");
+              if(sta){
+                const mediaCompat=(sMed,eMed)=>{if(sMed===eMed)return true;if(sMed==="TV"&&(eMed==="Cable"||eMed==="Sports"||eMed==="Heavy Up"||eMed==="UD/AV"||eMed==="Sponsorship"||eMed==="TV"))return true;return false};
+                const shouldLink=ESTIMATES.filter(e=>e.brand==="Wettermark Keith"&&e.market===sMarket&&mediaCompat(sta.media,e.media)).map(e=>e.num);
+                const merged=[...new Set([...cleaned,...shouldLink])];
+                if(merged.length!==estNums.length||merged.some(n=>!estNums.includes(n)))migCount++;
+                migrated[key]=merged;
+              }else{
+                migrated[key]=cleaned;
+                if(cleaned.length!==estNums.length)migCount++;
+              }
+            }else{
+              migrated[key]=estNums;
+            }
+          });
+          if(migCount>0)console.log("Migrated "+migCount+" WK station-estimate links to 3-digit system");
+          setStaEstLinks(migrated);
+          linksReady.current=true;
+        }else{linksReady.current=true}}
+        if(docs.nowAiring?.data){const d=JSON.parse(docs.nowAiring.data);
+          // Remove old 4-digit WK estimate keys from nowAiring
+          const cleanedAiring={};Object.entries(d).forEach(([k,v])=>{if(!OLD_WK.has(k))cleanedAiring[k]=v});
+          setNowAiring(cleanedAiring)}
         if(docs.auditLog?.data){const d=JSON.parse(docs.auditLog.data);if(d.length)setAuditLog(d)}
         if(docs.trafficHistory?.data){const d=JSON.parse(docs.trafficHistory.data);if(d.length){setTrafficHistory(d);trafficFbCountRef.current=d.length}trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
         if(docs.workMonth?.data)setWorkMonth(JSON.parse(docs.workMonth.data));
