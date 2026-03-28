@@ -486,16 +486,14 @@ const App=()=>{
         html.dd-light [style*="color: #ede4f5"] { color: #3d3226 !important; }
         html.dd-light [style*="color: rgb(168, 158, 212)"],
         html.dd-light [style*="color:#a89ed4"],
-        html.dd-light [style*="color: #a89ed4"] { color: #7a6b4e !important; }
-        /* Purple accent → Olympus gold */
-        html.dd-light [style*="color:#7c3aed"],
-        html.dd-light [style*="color: #7c3aed"],
-        html.dd-light [style*="color: rgb(124, 58, 237)"] { color: #9b6b2f !important; }
+        html.dd-light [style*="color: #a89ed4"] { color: #6b5a8a !important; }
+        /* Meg's purple stays purple — she's herself, just lit by Olympus */
+        /* Muted text gets a warm-purple tint against the gold background */
         /* Inputs — parchment */
         html.dd-light input, html.dd-light select, html.dd-light textarea { background: #fefcf7 !important; color: #2d2418 !important; border-color: #ddd0b8 !important; }
         /* Table headers — warm stone */
-        html.dd-light th { background: #f5efe4 !important; color: #6b5a3e !important; border-color: #e0d4bf !important; }
-        html.dd-light td { color: #4a3d2e !important; border-color: #ede2d0 !important; }
+        html.dd-light th { background: #f5efe4 !important; color: #5b4e7a !important; border-color: #e0d4bf !important; }
+        html.dd-light td { color: #3d3246 !important; border-color: #ede2d0 !important; }
         /* Borders — warm tan */
         html.dd-light [style*="border-color: rgb(53, 42, 71)"],
         html.dd-light [style*="border:1px solid #352a47"],
