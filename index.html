@@ -7,33 +7,33 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}html,body,#R{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background:transparent}
 #R{background:transparent !important}
-::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}::-webkit-scrollbar-track{background:#0f172a}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#352a47;border-radius:3px}::-webkit-scrollbar-track{background:#140f1e}
 @keyframes pulse{0%,100%{transform:translateX(-100%)}50%{transform:translateX(200%)}}
 table,button,select,input,textarea{font-family:'DM Sans',sans-serif}
 .leaflet-container{font-family:'DM Sans',sans-serif;border-radius:9px}
 
 /* === DARK THEME === */
 #dd-loader, #dd-loader>div{background:transparent !important;border:none !important;box-shadow:none !important}
-#R>div:not(#dd-loader)>div:last-child{background:#0f172a !important;color:#e2e8f0 !important}
+#R>div:not(#dd-loader)>div:last-child{background:#140f1e !important;color:#ede4f5 !important}
 #R>div>div:last-child div[style*="background: rgb(255, 255, 255)"],
 #R>div>div:last-child div[style*="background:#fff"],
-#R>div>div:last-child div[style*="background: white"]{background:#1e293b !important;border-color:#334155 !important;color:#e2e8f0 !important}
-h1,h2,h3,h4{color:#f1f5f9 !important}
-td{color:#cbd5e1 !important;border-color:#1e293b !important}
-th{background:#1e293b !important;color:#94a3b8 !important;border-color:#334155 !important}
+#R>div>div:last-child div[style*="background: white"]{background:#1e1730 !important;border-color:#352a47 !important;color:#ede4f5 !important}
+h1,h2,h3,h4{color:#f3edf9 !important}
+td{color:#d4c9e0 !important;border-color:#1e1730 !important}
+th{background:#1e1730 !important;color:#a89bb8 !important;border-color:#352a47 !important}
 /* Skip loader inputs from dark theme override */
-#R>div:not(#dd-loader) input,#R>div:not(#dd-loader) select,#R>div:not(#dd-loader) textarea{background:#0f172a !important;color:#e2e8f0 !important;border-color:#334155 !important}
-label{color:#94a3b8 !important}
-button{border-color:#334155 !important}
-tr:nth-child(even) td{background:rgba(30,41,59,.3)}
-tr:nth-child(odd) td{background:rgba(15,23,42,.3)}
+#R>div:not(#dd-loader) input,#R>div:not(#dd-loader) select,#R>div:not(#dd-loader) textarea{background:#140f1e !important;color:#ede4f5 !important;border-color:#352a47 !important}
+label{color:#a89bb8 !important}
+button{border-color:#352a47 !important}
+tr:nth-child(even) td{background:rgba(30,23,48,.3)}
+tr:nth-child(odd) td{background:rgba(20,15,30,.3)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .page-fade{animation:fadeIn .25s ease-out}
 @keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .kpi-ticker{display:flex;gap:40px;animation:tickerScroll 30s linear infinite;white-space:nowrap}
 .kpi-ticker:hover{animation-play-state:paused}
 @keyframes sparkPulse{0%,100%{opacity:.7}50%{opacity:1}}
-</style></head><body style="background:linear-gradient(160deg,#0f172a 0%,#1a1040 50%,#0f172a 100%)"><div id="R"><div id="dd-loader" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:'DM Sans',Arial,sans-serif">
+</style></head><body style="background:linear-gradient(160deg,#140f1e 0%,#1e1232 50%,#140f1e 100%)"><div id="R"><div id="dd-loader" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:'DM Sans',Arial,sans-serif">
 <div style="text-align:center">
 <div style="width:88px;height:88px;border-radius:18px;background:transparent;display:inline-flex;align-items:center;justify-content:center;position:relative;margin-bottom:28px">
 <div class="glow-ring"></div>
@@ -48,9 +48,9 @@ tr:nth-child(odd) td{background:rgba(15,23,42,.3)}
 </div>
 <div style="font-size:11px;color:#a78bfa;letter-spacing:3px;font-weight:600;margin-top:6px;animation:fadeUp .5s ease-out 1.4s both">ATTICOR MEDIA</div>
 <div id="dd-status" style="margin-top:18px;font-size:14px;color:#a78bfa;font-style:italic;max-width:320px;margin-left:auto;margin-right:auto;animation:fadeUp .5s ease-out 1.8s both;opacity:0;min-height:22px"></div>
-<div id="dd-bar" style="width:200px;height:4px;background:#1e293b;border-radius:4px;overflow:hidden;margin:16px auto 0"><div style="height:100%;width:30%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#7c3aed);border-radius:4px;animation:ldbar 1.5s ease-in-out infinite"></div></div>
+<div id="dd-bar" style="width:200px;height:4px;background:#1e1730;border-radius:4px;overflow:hidden;margin:16px auto 0"><div style="height:100%;width:30%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#7c3aed);border-radius:4px;animation:ldbar 1.5s ease-in-out infinite"></div></div>
 <div id="dd-login-form" style="display:none;margin-top:20px;animation:fadeUp .4s ease-out both;max-width:320px;margin-left:auto;margin-right:auto">
-  <input type="password" id="dd-pw" placeholder="Password" style="width:100%;padding:14px 18px;border-radius:10px;border:2px solid rgba(124,58,237,.35);background:rgba(15,23,42,.6);color:#e2e8f0;font-size:16px;text-align:center;outline:none;margin-bottom:14px;letter-spacing:2px;font-family:'DM Sans',sans-serif;backdrop-filter:blur(8px)"/>
+  <input type="password" id="dd-pw" placeholder="Password" style="width:100%;padding:14px 18px;border-radius:10px;border:2px solid rgba(124,58,237,.35);background:rgba(15,23,42,.6);color:#ede4f5;font-size:16px;text-align:center;outline:none;margin-bottom:14px;letter-spacing:2px;font-family:'DM Sans',sans-serif;backdrop-filter:blur(8px)"/>
   <button id="dd-login-btn" style="width:100%;padding:14px;border-radius:10px;border:none !important;background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;box-shadow:0 4px 16px rgba(124,58,237,.3);font-family:'DM Sans',sans-serif">Let Me In</button>
   <div id="dd-login-error" style="display:none;margin-top:10px;font-size:13px;color:#f87171;font-weight:600"></div>
 </div>
@@ -58,7 +58,7 @@ tr:nth-child(odd) td{background:rgba(15,23,42,.3)}
 </div>
 <style>
 .glow-ring{position:absolute;inset:-4px;border-radius:22px;z-index:0;background:conic-gradient(from 0deg,transparent,#7c3aed,#a78bfa,#7c3aed,transparent);opacity:.6;animation:spin 4s linear infinite}
-.glow-ring::after{content:'';position:absolute;inset:3px;border-radius:18px;background:#0f172a}
+.glow-ring::after{content:'';position:absolute;inset:3px;border-radius:18px;background:#140f1e}
 .glow-ambient{position:absolute;width:120px;height:120px;border-radius:50%;z-index:0;background:radial-gradient(circle,rgba(124,58,237,.35) 0%,rgba(124,58,237,.12) 40%,transparent 70%);animation:breathe 3s ease-in-out infinite}
 .doom-letter{display:inline-block;animation:letterDrop .4s ease-out var(--d,.0s) both}
 .doom-letter.dl{color:#7c3aed;text-shadow:0 0 20px rgba(124,58,237,.5),0 0 40px rgba(124,58,237,.2)}
@@ -90,9 +90,9 @@ tr:nth-child(odd) td{background:rgba(15,23,42,.3)}
 </style>
 <script>
 (function(){
-  var quips=["Reassembling this… try not to make it worse.","Putting everything back where it belongs… one second.","Untangling your decisions… almost there.","Running it through again. It'll behave.","Lining this up properly… because someone has to.","I'll take it from here.","Hold on. I'm fixing something.","Almost… don't touch anything.","One sec. Making this presentable.","Reloading your chaos.","Dusting off the dashboard.","Don't rush me.","Yeah yeah, give me a second.","Loading your questionable choices.","Ugh, fine. One moment.","This again? Alright.","Warming up the engines…","Pretending to be busy."];
-  var loginQuips=["You again.","Let's get this over with.","Password. Now.","I was wondering when you'd show up.","Fine. Come in.","Oh great, it's you.","State your business.","Prove you belong here.","The door doesn't open itself.","*sigh* What's the password."];
-  var wrongQuips=["Wrong. Try again.","That's not it.","Nope.","I don't think so.","Really?","Not even close.","Are you guessing?","Still wrong.","Try harder.","That ain't it, chief."];
+  var quips=["I'm a damsel… I'm in distress… I can handle this. Give me a second.","People always do stupid things. Like refreshing too early.","Patience is a virtue. Not one of mine, but still.","Working on it. Not that you'd appreciate the effort.","Rearranging your mess. You're welcome.","Hold on, Wonderboy. Almost there.","I didn't sign up for this. And yet, here I am.","Don't rush me. I've dealt with worse than you.","Reloading your chaos. Try to look grateful.","Loading your questionable choices.","I've seen hydras easier to manage than this.","One second. Some of us actually do the work around here.","Ugh, fine. One moment.","You'd think after all this, things would just… work.","Pretending I enjoy this. Give me a sec."];
+  var loginQuips=["Oh wonderful. You're back.","State your business, Wonderboy.","Let me guess — you forgot it again.","I was having such a nice time without you.","You've got about 10 seconds before I lose interest.","Well? I haven't got all day.","Oh great, it's you.","Don't make this weird. Just type the password.","The door doesn't open itself, hero.","*sigh* What's the password."];
+  var wrongQuips=["Wrong. Shocking.","That's not it. Try using your brain.","Nope. Were you even trying?","Really? That was your best guess?","Swing and a miss, Wonderboy.","Not even close. I'm embarrassed for you.","Have you tried… the actual password?","At this rate, the sun will set before you get in.","You know, most people get this on the first try.","I'm not even going to dignify that with a real response."];
   var pick=function(a){return a[Math.floor(Math.random()*a.length)]};
 
   var status=document.getElementById("dd-status");
