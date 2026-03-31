@@ -108,10 +108,11 @@ Heading text:   #F0E8F8 (warm white)
 
 ## Outstanding Work
 - Pegasus SVG character for empty states, transitions, Help page
+- **AI Planner: The Muses UI** — the 5 Muses from Hercules narrate the AI analysis like they're telling a story. Each Muse could represent a different analysis angle (staleness, coverage, creative mix, market balance, recommendations). They present data as dramatic storytelling, interrupt each other, and have distinct personalities.
+- **Help & Docs: Book Tome UI** — user has a book tome UI from another project to port into the docs page
 - Page transition animations
 - Deeper atmospheric design (card hover glows, breathing effects)
 - OOH Hub feature parity with removed pages
-- Remaining feature bugs in individual pages
 - Olympus light mode needs tuning for new palette
 
 ## Traffic Tracker
