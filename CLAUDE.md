@@ -109,7 +109,7 @@ Heading text:   #F0E8F8 (warm white)
 ## Outstanding Work
 - Pegasus SVG character for empty states, transitions, Help page
 - **AI Planner: The Muses UI** — the 5 Muses from Hercules narrate the AI analysis like they're telling a story. Each Muse could represent a different analysis angle (staleness, coverage, creative mix, market balance, recommendations). They present data as dramatic storytelling, interrupt each other, and have distinct personalities.
-- **Help & Docs: Book Tome UI** — user has a book tome UI from another project to port into the docs page
+- **Help & Docs: Book Tome UI** — user has a book tome UI from another project to port into the docs page. Uses React + Tailwind + Framer Motion. Components: Book (page flipping with 3D transforms), BookCover (leather texture, Greek ornaments, Pegasus silhouette, clasp unlock), BookPage (parchment texture, corner ornaments, side runes, damage effects), DamageEffects (bite marks, hoof prints, burn marks, ink splatters, lipstick marks from Meg, drool stains), GreekOrnaments (Greek key borders/dividers, corner ornaments, rune accents, laurel accents, side runes), MarginNote (author-specific notes — Meg in purple italic, Muses in pink, Hades in dark), Pegasus (silhouette SVG, constellation animation, flying across screen), SoulParticles (floating particles + Greek text fragments). Needs: Tailwind Play CDN + Framer Motion CDN added to script chain, TypeScript components ported to Babel JSX. Full source code was provided in the session — check git history for the user's message with all component files.
 - Page transition animations
 - Deeper atmospheric design (card hover glows, breathing effects)
 - OOH Hub feature parity with removed pages
