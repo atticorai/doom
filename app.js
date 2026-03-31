@@ -5746,25 +5746,53 @@ Be direct and actionable. No generic advice.`;
 
   // ── NAV ───────────────────────────────────────────────
   const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},{id:"docs",l:"Help & Docs",e:"?"}];
+  const[auditFilter,setAuditFilter]=useState("all");
+  const[auditSearch,setAuditSearch]=useState("");
+  const categorizeLog=(a)=>{
+    if(!a)return"other";
+    const al=a.toLowerCase();
+    if(al.includes("admin")||al.includes("delete")||al.includes("DELETE"))return"admin";
+    if(al.includes("email")||al.includes("reminder")||al.includes("sent")||al.includes("manual email"))return"email";
+    if(al.includes("import")||al.includes("bulk")||al.includes("recovery")||al.includes("registered"))return"import";
+    if(al.includes("edit")||al.includes("revised")||al.includes("copied")||al.includes("activated")||al.includes("deactivated"))return"edit";
+    if(al.includes("traffic")||al.includes("generated")||al.includes("saved"))return"traffic";
+    if(al.includes("confirmed")||al.includes("confirm"))return"confirm";
+    return"other";
+  };
+  const AUDIT_CATS={all:{label:"All",color:"#E8DFF0"},traffic:{label:"Traffic",color:"#D4A040"},email:{label:"Emails",color:"#4AC8E8"},confirm:{label:"Confirmations",color:"#5BC4A0"},edit:{label:"Edits",color:"#9b7bb0"},import:{label:"Imports",color:"#C4A0C8"},admin:{label:"Admin",color:"#E85A7A"},other:{label:"Other",color:"#6B5E80"}};
+  const filteredLog=auditLog.filter(l=>{
+    if(auditFilter!=="all"&&categorizeLog(l.a)!==auditFilter)return false;
+    if(auditSearch){const q=auditSearch.toLowerCase();return(l.a||"").toLowerCase().includes(q)||(l.d||"").toLowerCase().includes(q)}
+    return true;
+  });
   const pages={dash:<Dash/>,traf:<TrafPg/>,est:<EstPg/>,sta:<StaPg/>,metrics:<MetricsPg/>,library:<LibraryPg/>,notif:
     <div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <PageHead title="Audit Log" pgKey="notif" sub="System activity and change tracking"/>
-        <div style={{fontSize:14,color:"#9B8EAD"}}>{auditLog.length} entries</div>
+      <PageHead title="Audit Log" pgKey="notif" sub={auditLog.length+" total entries"}/>
+      {/* Category filter pills */}
+      <div style={{display:"flex",gap:4,marginBottom:10,flexWrap:"wrap"}}>
+        {Object.entries(AUDIT_CATS).map(([key,cat])=>{
+          const count=key==="all"?auditLog.length:auditLog.filter(l=>categorizeLog(l.a)===key).length;
+          const active=auditFilter===key;
+          return<button key={key} onClick={()=>setAuditFilter(active&&key!=="all"?"all":key)} style={{padding:"4px 12px",borderRadius:8,border:active?"2px solid "+cat.color:"1px solid #4a3565",background:active?cat.color+"15":"transparent",color:active?cat.color:"#6B5E80",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",gap:4,alignItems:"center"}}>
+            {cat.label} <span style={{fontSize:11,opacity:.7}}>{count}</span>
+          </button>
+        })}
+      </div>
+      {/* Search */}
+      <div style={{marginBottom:10}}>
+        <input value={auditSearch} onChange={e=>setAuditSearch(e.target.value)} placeholder="Search actions, details..." style={{width:300,padding:"5px 10px",borderRadius:6,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:13,outline:"none"}}/>
+        {auditSearch&&<span style={{fontSize:12,color:"#6B5E80",marginLeft:8}}>{filteredLog.length} results</span>}
       </div>
       <Cd style={{padding:0,overflow:"hidden"}}>
-        <div style={{padding:"10px 16px",borderBottom:"1px solid #4a3565",background:"#1e1233",display:"flex",gap:16,fontSize:14,color:"#9B8EAD"}}>
-          <span>Admin: <b style={{color:"#E85A7A"}}>{auditLog.filter(l=>l.a.includes("ADMIN")).length}</b></span>
-          <span>Emails: <b style={{color:"#4AC8E8"}}>{auditLog.filter(l=>l.a.includes("Email")||l.a.includes("Reminder")).length}</b></span>
-          <span>Imports: <b style={{color:"#5BC4A0"}}>{auditLog.filter(l=>l.a.includes("Import")||l.a.includes("Bulk")).length}</b></span>
-          <span>Edits: <b style={{color:"#9b7bb0"}}>{auditLog.filter(l=>l.a.includes("Edit")||l.a.includes("Revised")).length}</b></span>
-        </div>
-        <div style={{maxHeight:600,overflowY:"auto"}}>
-          {auditLog.length?auditLog.slice(0,200).map((l,i)=><div key={i} style={{display:"flex",gap:10,padding:"7px 16px",borderBottom:"1px solid #4a3565",alignItems:"center",fontSize:13}}>
-            <span style={{color:"#9B8EAD",fontFamily:"monospace",fontSize:13,width:85,flexShrink:0}}>{new Date(l.ts).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span>
-            <span style={{padding:"1px 6px",borderRadius:4,background:l.a.includes("ADMIN")?"#3a1f35":l.a.includes("Email")||l.a.includes("Reminder")?"#1f2540":l.a.includes("Import")||l.a.includes("Bulk")?"#1f3530":"#2d1f42",color:l.a.includes("ADMIN")?"#E85A7A":l.a.includes("Email")||l.a.includes("Reminder")?"#4AC8E8":l.a.includes("Import")||l.a.includes("Bulk")?"#5BC4A0":"#6B5E80",fontSize:13,fontWeight:700,whiteSpace:"nowrap"}}>{l.a}</span>
-            <span style={{color:"#9B8EAD",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.d}</span>
-          </div>):<div style={{padding:30,textAlign:"center",color:"#9B8EAD",fontSize:14,fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div>}
+        <div style={{maxHeight:"calc(100vh - 280px)",overflowY:"auto"}}>
+          {filteredLog.length?filteredLog.slice(0,300).map((l,i)=>{
+            const cat=categorizeLog(l.a);
+            const catInfo=AUDIT_CATS[cat]||AUDIT_CATS.other;
+            return<div key={i} style={{display:"flex",gap:10,padding:"8px 16px",borderBottom:"1px solid rgba(74,53,101,.3)",alignItems:"start",fontSize:13}}>
+            <span style={{color:"#6B5E80",fontFamily:"monospace",fontSize:11,width:100,flexShrink:0,paddingTop:2}}>{new Date(l.ts).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span>
+            <span style={{padding:"2px 8px",borderRadius:6,background:catInfo.color+"15",color:catInfo.color,fontSize:11,fontWeight:700,whiteSpace:"nowrap",flexShrink:0,border:"1px solid "+catInfo.color+"30"}}>{l.a}</span>
+            <span style={{color:"#9B8EAD",flex:1,lineHeight:1.4}}>{l.d}</span>
+          </div>}):<div style={{padding:30,textAlign:"center",color:"#9B8EAD",fontSize:14,fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div>}
         </div>
         {auditLog.length>200&&<div style={{padding:8,textAlign:"center",fontSize:13,color:"#9B8EAD",borderTop:"1px solid #4a3565"}}>Showing 200 of {auditLog.length}</div>}
       </Cd>
