@@ -3,6 +3,7 @@
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Atticor Doom &amp; Deliverables</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Cinzel:wght@400;500;600;700;800;900&family=MedievalSharp&family=UnifrakturCook:wght@700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}html,body,#R{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background:transparent}
@@ -121,6 +122,26 @@ html.dd-light .leaflet-container{
 }
 html.dd-light ::-webkit-scrollbar-thumb{background:#d4c0a0 !important}
 html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
+
+/* ═══ BOOK TOME UI ═══ */
+.leather-texture{background:linear-gradient(135deg,#2a1b3d 0%,#160d20 100%);position:relative}
+.leather-texture::before{content:"";position:absolute;inset:0;opacity:.25;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");pointer-events:none;border-radius:inherit}
+.parchment-texture{background-color:#e8dcc4;position:relative}
+.parchment-texture::before{content:"";position:absolute;inset:0;opacity:.08;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.4' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");pointer-events:none;border-radius:inherit}
+@keyframes torch-flicker{0%{opacity:0}15%{opacity:.06}30%{opacity:0}45%{opacity:.08}60%{opacity:.02}75%{opacity:.07}90%{opacity:0}100%{opacity:0}}
+.torch-flicker{animation:torch-flicker 3s ease-in-out infinite}
+@keyframes clasp-glow{0%{box-shadow:0 0 8px 2px rgba(139,95,191,.3),inset 0 0 4px rgba(139,95,191,.2)}50%{box-shadow:0 0 16px 4px rgba(139,95,191,.6),inset 0 0 8px rgba(139,95,191,.4)}100%{box-shadow:0 0 8px 2px rgba(139,95,191,.3),inset 0 0 4px rgba(139,95,191,.2)}}
+.clasp-glow{animation:clasp-glow 2s ease-in-out infinite}
+/* Book page dark theme overrides — protect parchment text */
+.parchment-texture,.parchment-texture *{color:#2a1a1a !important}
+.parchment-texture h2{font-family:'Cinzel',serif !important}
+.parchment-texture p{font-family:'MedievalSharp',cursive !important}
+.parchment-texture button{border-color:transparent !important}
+.leather-texture,.leather-texture *{color:inherit !important}
+.leather-texture h1,.leather-texture h2{font-family:'Cinzel',serif !important}
+.leather-texture button{border-color:transparent !important}
+/* Book inner scroll */
+.book-inner-scroll::-webkit-scrollbar{width:4px}.book-inner-scroll::-webkit-scrollbar-thumb{background:rgba(139,115,85,.4);border-radius:2px}.book-inner-scroll::-webkit-scrollbar-track{background:transparent}
 </style></head><body style="background:linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)"><div id="R"><div id="dd-loader" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:'DM Sans',Arial,sans-serif">
 <div style="text-align:center">
 <div style="width:88px;height:88px;border-radius:18px;background:#1e1233;border:2px solid #9b7bb0;display:inline-flex;align-items:center;justify-content:center;position:relative;margin-bottom:28px">
@@ -216,7 +237,8 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
       "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js",
       "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js",
       "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
-      "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+      "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+      "https://cdn.tailwindcss.com"
     ];
 
     // Source data files (protected by middleware)
@@ -244,6 +266,38 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
       // Load all data files in parallel
       return Promise.all(dataFiles.map(function(f){return loadScript(f)}));
     }).then(function(){
+      // Import map: bridge UMD React globals to ESM bare specifiers
+      var im=document.createElement("script");
+      im.type="importmap";
+      im.textContent=JSON.stringify({imports:{
+        "react":"https://esm.sh/react@18.2.0",
+        "react-dom":"https://esm.sh/react-dom@18.2.0",
+        "react/jsx-runtime":"https://esm.sh/react@18.2.0/jsx-runtime"
+      }});
+      document.head.appendChild(im);
+      // Load Framer Motion via ESM, expose as window globals
+      return new Promise(function(resolve){
+        var fm=document.createElement("script");
+        fm.type="module";
+        fm.textContent=[
+          'import * as ReactESM from "https://esm.sh/react@18.2.0";',
+          'import * as ReactDOMESM from "https://esm.sh/react-dom@18.2.0";',
+          '// Sync UMD globals with ESM React so hooks share state',
+          'if(!window.React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED){',
+          '  Object.assign(window.React,ReactESM);',
+          '  Object.assign(window.ReactDOM,ReactDOMESM);',
+          '}',
+          'const FM=await import("https://esm.sh/framer-motion@11?external=react,react-dom");',
+          'window.FramerMotion={motion:FM.motion,AnimatePresence:FM.AnimatePresence};',
+          'window.dispatchEvent(new Event("framer-ready"));'
+        ].join("\n");
+        document.body.appendChild(fm);
+        window.addEventListener("framer-ready",function(){console.log("Framer Motion loaded");resolve()},{once:true});
+        setTimeout(function(){if(!window.FramerMotion){console.warn("Framer Motion timeout — CSS fallback active");window.FramerMotion={motion:null,AnimatePresence:null};resolve()}},8000);
+      });
+    }).then(function(){
+      // Configure Tailwind with Book theme
+      if(window.tailwind){tailwind.config={theme:{extend:{colors:{underworld:{900:"#160d20",800:"#1a1028",blue:"#8b5fbf",darkblue:"#6b3fa0",cyan:"#d4af37",glow:"rgba(139,95,191,0.5)"},parchment:{light:"#f4e4bc",DEFAULT:"#e8dcc4",dark:"#d4b872",burn:"#4a3320"},meg:{bg:"#160d20",card:"#201330",border:"#362252",accent:"#6b3fa0",text:"#d1c4e0",muted:"#9a86b3",rose:"#d48ba5",gold:"#d4af37",quote:"#b89cc7",pegasus:"#4a90e2"}},fontFamily:{title:['"UnifrakturCook"',"cursive"],heading:['"Cinzel"',"serif"],body:['"MedievalSharp"',"cursive"],handwriting:['"Caveat"',"cursive"]},boxShadow:{glow:"0 0 15px 2px rgba(139,95,191,0.4)","glow-lg":"0 0 30px 5px rgba(139,95,191,0.6)","glow-text":"0 0 10px rgba(139,95,191,0.8)","inner-dark":"inset 0 0 60px rgba(0,0,0,0.9)",parchment:"inset 0 0 50px rgba(100,70,30,0.6),inset 0 0 20px rgba(0,0,0,0.4),0 10px 25px rgba(0,0,0,0.8)",leather:"inset 0 0 40px rgba(0,0,0,0.9),0 20px 50px rgba(0,0,0,0.9)"},animation:{"pulse-glow":"pulse-glow 3s infinite alternate","fates-pulse":"fates-pulse 4s infinite alternate"},keyframes:{"pulse-glow":{"0%":{textShadow:"0 0 5px #8b5fbf,0 0 10px #8b5fbf",filter:"drop-shadow(0 0 5px #8b5fbf)"},"100%":{textShadow:"0 0 10px #8b5fbf,0 0 20px #8b5fbf,0 0 30px #8b5fbf",filter:"drop-shadow(0 0 15px #8b5fbf)"}},"fates-pulse":{"0%":{opacity:"0.7",textShadow:"0 0 5px #d4af37"},"100%":{opacity:"1",textShadow:"0 0 15px #d4af37,0 0 25px #d4af37"}}}}}}};
       // Add Babel-transpiled source files
       var c=document.createElement("script");c.type="text/babel";c.src="config.js";c.setAttribute("data-type","module");document.body.appendChild(c);
       var a=document.createElement("script");a.type="text/babel";a.src="app.js";a.setAttribute("data-type","module");document.body.appendChild(a);
