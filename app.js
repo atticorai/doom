@@ -5748,6 +5748,7 @@ Be direct and actionable. No generic advice.`;
   const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},{id:"docs",l:"Help & Docs",e:"?"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
+  const[auditBrand,setAuditBrand]=useState("all");
   const categorizeLog=(a)=>{
     if(!a)return"other";
     const al=a.toLowerCase();
@@ -5762,12 +5763,18 @@ Be direct and actionable. No generic advice.`;
   const AUDIT_CATS={all:{label:"All",color:"#E8DFF0"},traffic:{label:"Traffic",color:"#D4A040"},email:{label:"Emails",color:"#4AC8E8"},confirm:{label:"Confirmations",color:"#5BC4A0"},edit:{label:"Edits",color:"#9b7bb0"},import:{label:"Imports",color:"#C4A0C8"},admin:{label:"Admin",color:"#E85A7A"},other:{label:"Other",color:"#6B5E80"}};
   const filteredLog=auditLog.filter(l=>{
     if(auditFilter!=="all"&&categorizeLog(l.a)!==auditFilter)return false;
+    if(auditBrand!=="all"){const d=(l.d||"").toLowerCase();const matchPL=d.includes("postman")||d.includes("chipl")||d.includes("cinpl")||d.includes("denpl")||d.includes("msppl")||d.includes("chicago")||d.includes("cincinnati")||d.includes("denver")||d.includes("minneapolis");const matchWK=d.includes("wettermark")||d.includes("wk")||d.includes("birmingham")||d.includes("huntsville")||d.includes("knoxville")||d.includes("chattanooga")||d.includes("montgomery")||d.includes("dothan")||d.includes("brmwk")||d.includes("hsvwk")||d.includes("knxwk")||d.includes("chawk")||d.includes("mtgwk")||d.includes("dhnwk");if(auditBrand==="Postman Law"&&!matchPL)return false;if(auditBrand==="Wettermark Keith"&&!matchWK)return false}
     if(auditSearch){const q=auditSearch.toLowerCase();return(l.a||"").toLowerCase().includes(q)||(l.d||"").toLowerCase().includes(q)}
     return true;
   });
   const pages={dash:<Dash/>,traf:<TrafPg/>,est:<EstPg/>,sta:<StaPg/>,metrics:<MetricsPg/>,library:<LibraryPg/>,notif:
     <div>
       <PageHead title="Audit Log" pgKey="notif" sub={auditLog.length+" total entries"}/>
+      {/* Brand tabs */}
+      <div style={{display:"flex",gap:0,marginBottom:8}}>
+        {[{v:"all",l:"All Activity"},{v:"Postman Law",l:"Postman Law"},{v:"Wettermark Keith",l:"Wettermark Keith"}].map(b=>{const active=auditBrand===b.v;const c=b.v==="Postman Law"?"#9b7bb0":b.v==="Wettermark Keith"?"#D4A040":"#9B8EAD";return<button key={b.v} onClick={()=>setAuditBrand(b.v)} style={{padding:"6px 18px",fontSize:13,fontWeight:700,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#6B5E80",borderRadius:"8px 8px 0 0"}}>{b.l}</button>})}
+        <div style={{flex:1,borderBottom:"2px solid #4a3565"}}/>
+      </div>
       {/* Category filter pills */}
       <div style={{display:"flex",gap:4,marginBottom:10,flexWrap:"wrap"}}>
         {Object.entries(AUDIT_CATS).map(([key,cat])=>{
