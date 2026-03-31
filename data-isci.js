@@ -553,4 +553,7 @@ const D_I=[["CHIPL2515001T","Confident","TV","Postman Law","CHI","15","T",false,
 ["MSPPL2630008R","Peace of Mind – One Call for Everything_30","Radio","Postman Law","MSP","30","R",true,"Brand",""],
 ["MSPPL2630010R","Peace of Mind – One Stop Shop_30","Radio","Postman Law","MSP","30","R",true,"Brand",""],
 ["MSPPL2615005R","Peace of Mind – No More Chasing Insurance_15","Radio","Postman Law","MSP","15","R",true,"Brand",""],
-["MSPPL2615006R","Peace of Mind – We Handle it All_15","Radio","Postman Law","MSP","15","R",true,"Brand",""]];
+["MSPPL2615006R","Peace of Mind – We Handle it All_15","Radio","Postman Law","MSP","15","R",true,"Brand",""],
+["MSPPL26DB001O","PL Digital Bulletin - 208x720 - MSP - Cityscape - MinneapolisIA","OOH","Postman Law","MSP","DB","O",true,"Brand",""],
+["MSPPL26DB002O","PL Digital Bulletin - 208x720 - MSP - MascotTriangle - MinneapolisIA","OOH","Postman Law","MSP","DB","O",true,"Brand",""],
+["MSPPL26DB003O","PL Digital Bulletin - 208x720 - MSP - MascotTriangle - MinneapolisIALogo","OOH","Postman Law","MSP","DB","O",true,"Brand",""]];
