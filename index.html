@@ -151,6 +151,21 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
 .book-content-stagger>*:nth-child(5){animation:bookContentFadeIn .5s ease-out 1s both}
 /* Book scrollbar */
 .book-scroll::-webkit-scrollbar{width:4px}.book-scroll::-webkit-scrollbar-thumb{background:rgba(139,115,85,.4);border-radius:2px}.book-scroll::-webkit-scrollbar-track{background:transparent}
+/* ═══ BOOK TOME — protect from dark theme !important overrides ═══ */
+.book-parchment,.book-parchment *{color:#2a1a1a !important}
+.book-parchment h2{color:#8b5fbf !important;font-family:'Cormorant Garamond',serif !important}
+.book-parchment p{color:#2a1a1a !important;font-family:'DM Sans',sans-serif !important}
+.book-parchment .book-margin-meg{color:#8b5fbf !important}
+.book-parchment .book-margin-muses{color:#d48ba5 !important}
+.book-parchment .book-margin-hades{color:#1a1a3a !important}
+.book-leather,.book-leather *{color:inherit !important}
+.book-leather h1,.book-leather h2{color:#D4A040 !important;font-family:'Cormorant Garamond',serif !important}
+.book-leather p{font-family:'Cormorant Garamond',serif !important}
+.book-parchment input,.book-parchment select,.book-parchment textarea{background:#f0e8d8 !important;color:#2a1a1a !important;border-color:#c4b090 !important}
+.book-parchment button{border-color:transparent !important}
+.book-leather button{border-color:transparent !important}
+/* Soul particles and flying pegasus — always visible */
+.book-soul-particles,.book-soul-particles *{color:inherit !important;background:inherit !important}
 </style></head><body style="background:linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)"><div id="R"><div id="dd-loader" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:'DM Sans',Arial,sans-serif">
 <div style="text-align:center">
 <div style="width:88px;height:88px;border-radius:18px;background:#1e1233;border:2px solid #9b7bb0;display:inline-flex;align-items:center;justify-content:center;position:relative;margin-bottom:28px">
@@ -287,7 +302,7 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
       });
     }).then(function(){
       // Configure Tailwind for Doom palette
-      if(window.tailwind){tailwind.config={theme:{extend:{colors:{plum:{DEFAULT:"#9b7bb0",dark:"#2d1f42",edge:"#4a3565"},pegasus:"#4AC8E8",gold:"#D4A040",rose:"#E85A7A",teal:"#5BC4A0",orchid:{DEFAULT:"#1e1233",mid:"#2a1a3e",shadow:"#2d1f42"},lilac:{DEFAULT:"#C4A0C8",white:"#E8DFF0",bright:"#F0E8F8"},muted:"#9B8EAD",parchment:{DEFAULT:"#e8dcc4",dark:"#d4c4a0",light:"#f0e8d8"}},fontFamily:{heading:["Cormorant Garamond","serif"],body:["DM Sans","sans-serif"]}}}}};
+      if(window.tailwind){tailwind.config={theme:{extend:{colors:{plum:{DEFAULT:"#9b7bb0",dark:"#2d1f42",edge:"#4a3565"},pegasus:"#4AC8E8",gold:"#D4A040",rose:"#E85A7A",teal:"#5BC4A0",orchid:{DEFAULT:"#1e1233",mid:"#2a1a3e",shadow:"#2d1f42"},lilac:{DEFAULT:"#C4A0C8",white:"#E8DFF0",bright:"#F0E8F8"},muted:"#9B8EAD",parchment:{DEFAULT:"#e8dcc4",dark:"#d4c4a0",light:"#f0e8d8"}},fontFamily:{heading:['"Cormorant Garamond"',"serif"],body:['"DM Sans"',"sans-serif"]}}}}};
       // Add Babel-transpiled source files
       var c=document.createElement("script");c.type="text/babel";c.src="config.js";c.setAttribute("data-type","module");document.body.appendChild(c);
       var a=document.createElement("script");a.type="text/babel";a.src="app.js";a.setAttribute("data-type","module");document.body.appendChild(a);
