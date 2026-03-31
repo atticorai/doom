@@ -5187,7 +5187,13 @@ ${fullText.substring(0,3000)}`}]
       </Cd>
       {/* ═══ SUMMARY CARDS — per market, coverage across ALL months ═══ */}
       {(()=>{
-        const allBrandMkts=[...new Set(searched.map(h=>h.market))].sort();
+        // Normalize: multi-market records (like "Birmingham / Huntsville / ...") count as coverage for each individual market
+        const expandedMedia=[];
+        searched.forEach(h=>{
+          const mkts=(h.market||"").includes("/")?h.market.split("/").map(s=>s.trim()):[(normMkt(h.market)||h.market)];
+          mkts.forEach(m=>{if(m)expandedMedia.push({market:m,month:h.month,media:h.media})});
+        });
+        const allBrandMkts=[...new Set(expandedMedia.map(e=>e.market))].filter(m=>!m.includes("/")).sort();
         const visMonths=brandMonths.filter(mo=>searched.some(h=>h.month===mo));
         const allBrandMedias=(()=>{const raw=[...new Set(searched.map(h=>h.media))];return raw.sort((a,b)=>(MEDIA_ORDER.indexOf(a)===-1?99:MEDIA_ORDER.indexOf(a))-(MEDIA_ORDER.indexOf(b)===-1?99:MEDIA_ORDER.indexOf(b)))})();
         return<div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
@@ -5195,10 +5201,8 @@ ${fullText.substring(0,3000)}`}]
             return<Cd key={m} style={{padding:"10px 14px",flex:"1 1 180px",minWidth:180,borderLeft:"3px solid "+(MC[m]||"#64748b")}}>
               <div style={{fontSize:15,fontWeight:800,color:MC[m]||"#E8DFF0",marginBottom:4}}>{DM[m]||m}</div>
               {visMonths.map(mo=>{
-                const moMkData=searched.filter(h=>h.market===m&&h.month===mo);
-                if(!moMkData.length)return null;
-                const mediaHave=moMkData.map(h=>h.media);
-                const mediaMissing=allBrandMedias.filter(med=>!mediaHave.includes(med));
+                const mediaHave=[...new Set(expandedMedia.filter(e=>e.market===m&&e.month===mo).map(e=>e.media))];
+                if(!mediaHave.length)return null;
                 return<div key={mo} style={{marginBottom:4,paddingBottom:4,borderBottom:"1px solid #2d1f42"}}>
                   <div style={{fontSize:11,fontWeight:700,color:"#E8DFF0"}}>{mo}</div>
                   <div style={{display:"flex",gap:3,flexWrap:"wrap",marginTop:2}}>
@@ -5247,7 +5251,7 @@ ${fullText.substring(0,3000)}`}]
                       <button onClick={()=>setHistoryPreviewIdx(isOpen?null:gIdx)} style={{padding:"2px 8px",borderRadius:4,border:"none",background:isOpen?"#4a3565":"#9b7bb0",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>{isOpen?"Close":"View"}</button>
                       <button onClick={()=>{const html=bldHtml(h);const w=window.open("","","width=850,height=950");w.document.write(html);w.document.close();w.print()}} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #9b7bb0",background:"#1e1233",color:"#9B8EAD",fontSize:12,fontWeight:600,cursor:"pointer"}}>Print</button>
                       <button onClick={async()=>{
-                        if(!confirm("Send "+h.brand+" "+h.market+" "+(h.media||"")+" "+h.month+" traffic to stations?")){return}
+                        if(!confirm("Send traffic?\n\n"+h.brand+" · "+(DM[h.market]||h.market)+" · "+(h.media||"")+" · "+h.month+" · v"+(h.version||"1")+"\n"+(h.iscis||[]).length+" ISCIs\n\nThis will email all linked stations.")){return}
                         var isCopied=h.status==="copied";
                         var resendNote=isCopied?"":prompt("Add a note to this email (optional):")||"";
                         var sheetHtml=bldHtml(h);
