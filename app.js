@@ -342,6 +342,7 @@ const DOOM={
     planner:["Let me think for you. It's what I do best.","AI analysis. Because apparently you need help.","Fine. I'll figure out your rotation. Again.","You want recommendations? I have opinions."],
     notif:["Every move you've made. Logged.","I see everything, Wonderboy. Everything.","Your audit trail. It tells quite a story.","Don't worry. I won't tell anyone about the 3am edits."],
     docs:["You actually need help? That's… not surprising.","I'd explain it myself but I have better things to do.","Read the docs. Or don't. I'm not your mother.","Even Pegasus could figure this out. Probably."],
+    tracker:["I can see everything you haven't done.","This board doesn't lie. Unlike your excuses.","Green means done. See any? Exactly.","I keep score, Wonderboy. Always have.","Your progress — or lack thereof."],
     ooh:["Billboards. Because subtlety was never the goal.","Outdoor media. At least these can't reply to your emails.","OOH. Three letters. Still more organized than your inbox.","I manage 300+ boards. What do you manage?"]
   }
 };
@@ -5603,8 +5604,134 @@ Be direct and actionable. No generic advice.`;
     </div>;
   };
 
+  // ── TRAFFIC TRACKER ─────────────────────────────────
+  const TrackerPg=()=>{
+    const[trackerMonth,setTrackerMonth]=useState(workMonth);
+    const[trackerBrand,setTrackerBrand]=useState("Postman Law");
+    const isPL=trackerBrand==="Postman Law";
+    const mkts=isPL?["Chicago","Cincinnati","Denver","Minneapolis"]:["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan"];
+    const buyTypes=isPL?["TV Base","TV Sponsorship","TV UD/AV","TV Sports","Cable","Heavy Up","Radio","Streaming Audio","Digital","OOH"]:["TV Base","TV Sponsorship","TV UD/AV","Radio","Streaming Audio","OOH"];
+    // Map buy types to estimate groups for matching
+    const buyToGroup={"TV Base":"Base","TV Sponsorship":"Sponsorship","TV UD/AV":"UD/AV","TV Sports":"Sports","Cable":"Cable","Heavy Up":"Heavy Up","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
+    const buyToMedia={"TV Base":"TV","TV Sponsorship":"TV","TV UD/AV":"TV","TV Sports":"TV","Cable":"TV","Heavy Up":"TV","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
+    // Find traffic record for a market + buy type + month
+    const getStatus=(mkt,buyType)=>{
+      const media=buyToMedia[buyType];const group=buyToGroup[buyType];
+      const mktCode=Object.entries(DM).find(([_,n])=>n===mkt)?.[0]||"";
+      // Check traffic history
+      const rec=trafficHistory.find(h=>{
+        if(h.brand!==trackerBrand||h.month!==trackerMonth)return false;
+        // Match market (handle both code and full name, and multi-market records)
+        const hMkt=normMkt(h.market)||h.market;
+        const matchMkt=hMkt===mktCode||h.market===mkt||(h.market||"").includes(mkt);
+        if(!matchMkt)return false;
+        // For TV buy types, combined estimates cover all TV groups
+        if(media==="TV"&&h.media==="TV"&&h.combined)return true;
+        if(h.media===media){
+          if(!group||!h.group)return true;
+          if(h.group===group)return true;
+          if(h.combined)return true;
+        }
+        return false;
+      });
+      if(!rec)return{status:"empty",est:null,rec:null};
+      if(rec.status==="sent")return{status:"sent",est:rec.est,rec};
+      if(rec.status==="copied")return{status:"copied",est:rec.est,rec};
+      if(rec.status==="partial")return{status:"partial",est:rec.est,rec};
+      return{status:"built",est:rec.est,rec};
+    };
+    // Find estimate number for a market + buy type
+    const getEst=(mkt,buyType)=>{
+      const media=buyToMedia[buyType];const group=buyToGroup[buyType];
+      const est=estimates.find(e=>e.brand===trackerBrand&&e.market===mkt&&e.media===media&&(e.group===group||(!group)));
+      return est?est.num:"";
+    };
+    // Stats
+    const totalCells=mkts.length*buyTypes.length;
+    const sentCells=mkts.reduce((a,m)=>a+buyTypes.filter(bt=>getStatus(m,bt).status==="sent").length,0);
+    const builtCells=mkts.reduce((a,m)=>a+buyTypes.filter(bt=>getStatus(m,bt).status==="built").length,0);
+    const emptyCells=totalCells-sentCells-builtCells-mkts.reduce((a,m)=>a+buyTypes.filter(bt=>{const s=getStatus(m,bt).status;return s==="copied"||s==="partial"}).length,0);
+    const pct=totalCells?Math.round((sentCells/totalCells)*100):0;
+    // Smart alerts
+    const alerts=[];
+    mkts.forEach(mkt=>{
+      const missing=buyTypes.filter(bt=>getStatus(mkt,bt).status==="empty");
+      if(missing.length>0&&missing.length<buyTypes.length)alerts.push({mkt,msg:missing.length+" buy type"+(missing.length>1?"s":"")+" not trafficked",types:missing});
+    });
+    const statusColors={sent:"#5BC4A0",built:"#D4A040",copied:"#D4A040",partial:"#E85A7A",empty:"transparent"};
+    const statusBg={sent:"rgba(91,196,160,.12)",built:"rgba(212,160,64,.12)",copied:"rgba(212,160,64,.08)",partial:"rgba(232,90,122,.12)",empty:"rgba(75,53,101,.3)"};
+    const statusLabel={sent:"✓",built:"◐",copied:"↺",partial:"!",empty:""};
+    return<div style={{display:"flex",flexDirection:"column",gap:12}}>
+      <PageHead title="Traffic Tracker" pgKey="tracker" sub={"Mission control — "+trackerMonth+" "+trackerBrand}/>
+      {/* Brand + Month selector */}
+      <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+        {["Postman Law","Wettermark Keith"].map(b=><button key={b} onClick={()=>setTrackerBrand(b)} style={{padding:"6px 16px",borderRadius:8,border:trackerBrand===b?"2px solid "+(b==="Postman Law"?"#9b7bb0":"#D4A040"):"1px solid #4a3565",background:trackerBrand===b?"rgba(155,123,176,.1)":"transparent",color:trackerBrand===b?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:700,cursor:"pointer"}}>{b}</button>)}
+        <div style={{marginLeft:8,display:"flex",gap:3}}>{CALENDAR.map(c=><button key={c.month} onClick={()=>setTrackerMonth(c.month)} style={{padding:"4px 10px",borderRadius:6,border:trackerMonth===c.month?"2px solid #D4A040":"1px solid #4a3565",background:trackerMonth===c.month?"rgba(212,160,64,.12)":"transparent",color:trackerMonth===c.month?"#D4A040":"#6B5E80",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c.month.substring(0,3)}</button>)}</div>
+      </div>
+      {/* Progress bar */}
+      <Cd style={{padding:14}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <div>
+            <div style={{fontSize:22,fontWeight:800,color:"#E8DFF0"}}>{pct}% <span style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>trafficked for {trackerMonth}</span></div>
+            <div style={{fontSize:12,color:"#6B5E80"}}>{sentCells} sent · {builtCells} built · {emptyCells} remaining</div>
+          </div>
+          <div style={{fontSize:13,color:"#C4A0C8",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",maxWidth:300,textAlign:"right"}}>{pct===100?doomPick(DOOM.success):pct>75?doomPick(["Almost there. Don't get lazy now.","You're close. I'll give you that.","A few more and we're done. Focus."]):pct>50?doomPick(["Halfway. Pick up the pace.","You've done worse. Keep going.","I'm waiting on the other half."]):pct>0?doomPick(["You've barely started.","This is going to take a while, isn't it.","I've seen snails move faster."]):doomPick(["Nothing. You've done nothing.","Zero. Impressive commitment to inaction.","The month started. Did you notice?"])}</div>
+        </div>
+        <div style={{height:8,background:"#1e1233",borderRadius:4,overflow:"hidden"}}>
+          <div style={{height:"100%",width:pct+"%",background:"linear-gradient(90deg,#9b7bb0,#D4A040)",borderRadius:4,transition:"width .5s ease"}}/>
+        </div>
+      </Cd>
+      {/* Smart alerts */}
+      {alerts.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+        {alerts.slice(0,4).map((a,i)=><div key={i} style={{padding:"6px 12px",borderRadius:8,background:"rgba(232,90,122,.08)",border:"1px solid rgba(232,90,122,.15)",fontSize:12,color:"#E85A7A",fontWeight:600,cursor:"pointer"}} onClick={()=>{/* could scroll to market */}}>
+          <span style={{color:"#D4A040"}}>{a.mkt}:</span> {a.msg}
+        </div>)}
+        {alerts.length>4&&<span style={{fontSize:12,color:"#6B5E80",padding:"6px 0"}}>+{alerts.length-4} more</span>}
+      </div>}
+      {/* The Grid */}
+      <Cd style={{padding:0,overflow:"hidden"}}>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead><tr>
+              <th style={{padding:"8px 10px",fontSize:11,fontWeight:800,color:"#D4A040",textTransform:"uppercase",letterSpacing:1,borderBottom:"2px solid rgba(212,160,64,.2)",textAlign:"left",position:"sticky",left:0,background:"linear-gradient(180deg,#2d1f42,#261840)",zIndex:2,minWidth:120}}>Market</th>
+              {buyTypes.map(bt=><th key={bt} style={{padding:"6px 8px",fontSize:9,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase",letterSpacing:.5,borderBottom:"2px solid rgba(212,160,64,.2)",textAlign:"center",background:"linear-gradient(180deg,#2d1f42,#261840)",minWidth:70,whiteSpace:"nowrap"}}>{bt}</th>)}
+            </tr></thead>
+            <tbody>{mkts.map(mkt=>{
+              const dma=Object.entries(DM).find(([_,n])=>n===mkt)?.[0]||"";
+              const mktSent=buyTypes.filter(bt=>getStatus(mkt,bt).status==="sent").length;
+              const mktPct=buyTypes.length?Math.round((mktSent/buyTypes.length)*100):0;
+              return<tr key={mkt}>
+                <td style={{padding:"8px 10px",fontSize:13,fontWeight:700,color:"#E8DFF0",borderBottom:"1px solid rgba(155,123,176,.08)",position:"sticky",left:0,background:"#2d1f42",zIndex:1}}>
+                  <div>{mkt}</div>
+                  <div style={{fontSize:10,color:"#6B5E80"}}>{dma} · {mktPct}%</div>
+                </td>
+                {buyTypes.map(bt=>{
+                  const s=getStatus(mkt,bt);
+                  const est=s.est||getEst(mkt,bt);
+                  return<td key={bt} onClick={()=>{if(s.rec){setPg("library")}}} style={{padding:"6px 8px",textAlign:"center",borderBottom:"1px solid rgba(155,123,176,.08)",background:statusBg[s.status],cursor:s.rec?"pointer":"default",transition:"all .15s"}} onMouseEnter={e=>{if(s.status!=="empty")e.currentTarget.style.boxShadow="inset 0 0 12px "+statusColors[s.status]+"30"}} onMouseLeave={e=>{e.currentTarget.style.boxShadow="none"}}>
+                    {est?<div>
+                      <div style={{fontSize:12,fontWeight:700,fontFamily:"monospace",color:statusColors[s.status]||"#4a3565"}}>{statusLabel[s.status]} {est.length>10?est.substring(0,8)+"…":est}</div>
+                      {s.rec&&<div style={{fontSize:9,color:"#6B5E80"}}>v{s.rec.version}</div>}
+                    </div>:<div style={{fontSize:11,color:"#3a2955"}}>—</div>}
+                  </td>
+                })}
+              </tr>
+            })}</tbody>
+          </table>
+        </div>
+      </Cd>
+      {/* Legend */}
+      <div style={{display:"flex",gap:12,fontSize:11,color:"#6B5E80"}}>
+        <span><span style={{display:"inline-block",width:10,height:10,borderRadius:2,background:"rgba(91,196,160,.2)",border:"1px solid #5BC4A0",marginRight:4}}/>Sent</span>
+        <span><span style={{display:"inline-block",width:10,height:10,borderRadius:2,background:"rgba(212,160,64,.2)",border:"1px solid #D4A040",marginRight:4}}/>Built / Copied</span>
+        <span><span style={{display:"inline-block",width:10,height:10,borderRadius:2,background:"rgba(232,90,122,.2)",border:"1px solid #E85A7A",marginRight:4}}/>Partial</span>
+        <span><span style={{display:"inline-block",width:10,height:10,borderRadius:2,background:"rgba(75,53,101,.3)",border:"1px solid #4a3565",marginRight:4}}/>Not started</span>
+      </div>
+    </div>;
+  };
+
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},{id:"docs",l:"Help & Docs",e:"?"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},{id:"docs",l:"Help & Docs",e:"?"}];
   const pages={dash:<Dash/>,traf:<TrafPg/>,est:<EstPg/>,sta:<StaPg/>,metrics:<MetricsPg/>,library:<LibraryPg/>,notif:
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
@@ -5847,6 +5974,7 @@ Be direct and actionable. No generic advice.`;
       <div>
       {pg==="dash"&&<Dash/>}
       {pg==="traf"&&<TrafPg/>}
+      {pg==="tracker"&&<TrackerPg/>}
       {pg==="isci"&&IsciPg()}
       {pg==="est"&&<EstPg/>}
       {pg==="sta"&&<StaPg/>}
