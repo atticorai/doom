@@ -5247,6 +5247,7 @@ ${fullText.substring(0,3000)}`}]
                       <button onClick={()=>setHistoryPreviewIdx(isOpen?null:gIdx)} style={{padding:"2px 8px",borderRadius:4,border:"none",background:isOpen?"#4a3565":"#9b7bb0",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>{isOpen?"Close":"View"}</button>
                       <button onClick={()=>{const html=bldHtml(h);const w=window.open("","","width=850,height=950");w.document.write(html);w.document.close();w.print()}} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #9b7bb0",background:"#1e1233",color:"#9B8EAD",fontSize:12,fontWeight:600,cursor:"pointer"}}>Print</button>
                       <button onClick={async()=>{
+                        if(!confirm("Send "+h.brand+" "+h.market+" "+(h.media||"")+" "+h.month+" traffic to stations?")){return}
                         var isCopied=h.status==="copied";
                         var resendNote=isCopied?"":prompt("Add a note to this email (optional):")||"";
                         var sheetHtml=bldHtml(h);
