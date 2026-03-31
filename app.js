@@ -3662,7 +3662,7 @@ const App=()=>{
   };
 
   // ── NEW ISCI MODAL ────────────────────────────────────
-  const NewIsciMod=()=>{const[f2,setF2]=useState({brand:"PL",title:"",dur:"30",media:"TV",dmas:[],oohType:"SP",displayType:"MR"});const u2=(k,v)=>setF2(p=>({...p,[k]:v}));
+  const NewIsciMod=({defaultMedia})=>{const[f2,setF2]=useState({brand:"PL",title:"",dur:defaultMedia==="OOH"?"SP":"30",media:defaultMedia||"TV",dmas:[],oohType:"SP",displayType:"MR"});const u2=(k,v)=>setF2(p=>({...p,[k]:v}));
     const isOoh=f2.media==="OOH";
     const isDisplay=f2.media==="Display";
     const suf=SUFFIXES[f2.media]||"T";const bD=f2.brand==="PL"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"];
@@ -5486,38 +5486,55 @@ Be direct and actionable. No generic advice.`;
       {id:"import",l:"Import / Upload",e:"📤"}
     ];
     const oohIsciPg=()=>{
-      const oohIscis=iscis.filter(i=>i.suffix==="O"&&i.active);
-      const inactiveOoh=iscis.filter(i=>i.suffix==="O"&&!i.active);
+      const[showOohInactive,setShowOohInactive]=useState(false);
+      const allOoh=iscis.filter(i=>i.suffix==="O");
+      const oohIscis=showOohInactive?allOoh:allOoh.filter(i=>i.active);
+      const inactiveOoh=allOoh.filter(i=>!i.active);
       const[oohIsciFilter,setOohIsciFilter]=useState("");
       const[oohBrandFilter,setOohBrandFilter]=useState("");
+      const[oohDmaFilter,setOohDmaFilter]=useState("");
       const filtered=oohIscis.filter(i=>{
         if(oohBrandFilter&&i.brand!==oohBrandFilter)return false;
+        if(oohDmaFilter&&i.dma!==oohDmaFilter)return false;
         if(oohIsciFilter){const q=oohIsciFilter.toLowerCase();return(i.code||"").toLowerCase().includes(q)||(i.title||"").toLowerCase().includes(q)||(i.dma||"").toLowerCase().includes(q)}
         return true;
       });
+      const oohDmas=[...new Set(allOoh.map(i=>i.dma))].sort();
+      const toggleOohActive=(idx)=>{setIscis(p=>p.map((x,j)=>j===idx?{...x,active:!x.active}:x));const ic=iscis[idx];notify((ic.active?"Deactivated":"Activated")+" "+ic.code);log("ISCI "+(ic.active?"Deactivated":"Activated"),ic.code)};
       return<div style={{display:"flex",flexDirection:"column",gap:12}}>
-        <div><PageHead title="OOH ISCI Registry" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>{oohIscis.length} active OOH ISCIs · {inactiveOoh.length} inactive</p>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+          <div><PageHead title="OOH ISCI Registry" pgKey="ooh" sub={allOoh.filter(i=>i.active).length+" active · "+inactiveOoh.length+" inactive · "+allOoh.filter(i=>i.fileUrl).length+" with creative"}/></div>
+          <div style={{display:"flex",gap:4}}>
+            <Btn primary onClick={()=>setModal({t:"newIsci",defaultMedia:"OOH"})}>+ Register OOH ISCI</Btn>
+            <Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=allOoh.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active OOH ISCIs have files");return}notify("Scanning "+missing.length+" OOH ISCIs...");let found=0;const updates={};const exts=["jpg","png","pdf","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);saveToDb("iscis",updated);return updated});notify(found+" files recovered!");log("OOH Creative Recovery",found+" files")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn>
+          </div>
         </div>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-          <Inp label="" placeholder="Search ISCIs..." value={oohIsciFilter} onChange={setOohIsciFilter} style={{width:220}}/>
-          <Sel label="" options={["","Wettermark Keith","Postman Law"]} value={oohBrandFilter} onChange={setOohBrandFilter} style={{width:160}}/>
-          <Btn small onClick={()=>{navigateHash("ooh");setPg("isci")}}>Full ISCI Registry</Btn>
+        <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+          <input placeholder="Search OOH ISCIs..." value={oohIsciFilter} onChange={e=>setOohIsciFilter(e.target.value)} style={{width:200,padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
+          <Sel label="" options={[{v:"",l:"All Brands"},{v:"Wettermark Keith",l:"Wettermark Keith"},{v:"Postman Law",l:"Postman Law"}]} value={oohBrandFilter} onChange={setOohBrandFilter}/>
+          <Sel label="" options={[{v:"",l:"All DMAs"},...oohDmas.map(d=>({v:d,l:(DM[d]||d)+" ("+d+")"}))] } value={oohDmaFilter} onChange={setOohDmaFilter}/>
+          <label style={{fontSize:12,display:"flex",alignItems:"center",gap:3,cursor:"pointer",color:"#9B8EAD"}}><input type="checkbox" checked={showOohInactive} onChange={e=>setShowOohInactive(e.target.checked)}/> Show inactive</label>
+          {(oohIsciFilter||oohBrandFilter||oohDmaFilter)&&<Btn small onClick={()=>{setOohIsciFilter("");setOohBrandFilter("");setOohDmaFilter("")}}>Clear</Btn>}
+          <span style={{fontSize:12,color:"#6B5E80",marginLeft:"auto"}}>{filtered.length} shown</span>
         </div>
         <Cd style={{padding:0,overflow:"hidden"}}>
-          <div style={{maxHeight:600,overflowY:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>Code</TH><TH>Title</TH><TH>Brand</TH><TH>DMA</TH><TH>Duration</TH><TH>File</TH><TH>Status</TH></tr></thead>
-              <tbody>{filtered.map((ic,i)=><tr key={ic.code+i}>
-                <TD m b><span style={{cursor:"pointer",color:"#4AC8E8"}} onClick={()=>setModal({t:"editIsci",isci:ic,idx:iscis.indexOf(ic)})}>{ic.code}</span></TD>
+          <div style={{maxHeight:"calc(100vh - 260px)",overflowY:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>Code</TH><TH>Title</TH><TH>Brand</TH><TH>DMA</TH><TH>Type</TH><TH>File</TH><TH>Status</TH><TH w="60">Actions</TH></tr></thead>
+              <tbody>{filtered.map((ic,i)=>{const gi=iscis.findIndex(x=>x.code===ic.code&&x.dma===ic.dma);return<tr key={ic.code+ic.dma} style={{opacity:ic.active?1:.45}}>
+                <TD m b><span style={{cursor:"pointer",color:"#4AC8E8",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})}>{ic.code}</span></TD>
                 <TD>{ic.title}</TD>
                 <TD><B l={ic.brand} c={ic.brand==="Postman Law"?"#9b7bb0":"#D4A040"}/></TD>
-                <TD>{ic.dma}</TD>
-                <TD>{ic.dur}s</TD>
-                <TD>{ic.fileUrl?<a href={ic.fileUrl} target="_blank" rel="noopener noreferrer" style={{color:"#4AC8E8",fontSize:13}}>📁</a>:<span style={{color:"#E85A7A"}}>—</span>}</TD>
-                <TD><B l="Active" c="#5BC4A0"/></TD>
-              </tr>)}</tbody>
+                <TD>{DM[ic.dma]||ic.dma}</TD>
+                <TD>{ic.dur}</TD>
+                <TD>{ic.fileUrl?<a href={ic.fileUrl} target="_blank" rel="noopener noreferrer" style={{color:"#4AC8E8",fontSize:12,fontWeight:600}}>📁 View</a>:<span style={{color:"#E85A7A",fontSize:12}}>No file</span>}</TD>
+                <TD>{ic.active?<B l="Active" c="#5BC4A0"/>:<B l="Inactive" c="#E85A7A"/>}</TD>
+                <TD><div style={{display:"flex",gap:3}}>
+                  <button onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#4AC8E8"}}>✎</button>
+                  <button onClick={()=>toggleOohActive(gi)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:ic.active?"#D4A040":"#5BC4A0"}}>{ic.active?"⏸":"▶"}</button>
+                </div></TD>
+              </tr>})}</tbody>
             </table>
-            {filtered.length===0&&<div style={{padding:20,textAlign:"center",color:"#9B8EAD",fontSize:14}}>No OOH ISCIs found</div>}
+            {filtered.length===0&&<div style={{padding:30,textAlign:"center",color:"#9B8EAD",fontSize:14,fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div>}
           </div>
         </Cd>
       </div>;
@@ -5798,7 +5815,7 @@ Be direct and actionable. No generic advice.`;
       {pg==="docs"&&<DocsPg/>}
       </div>
     </div>
-    {modal==="newIsci"&&<NewIsciMod/>}
+    {(modal==="newIsci"||modal?.t==="newIsci")&&<NewIsciMod defaultMedia={modal?.defaultMedia||null}/>}
     {modal?.t==="buildRot"&&<RotBuilder est={modal.est} pool={modal.pool} workMonth={workMonth} _revise={modal._revise}/>}
     {modal?.t==="buildStream"&&<StreamBuilder est={modal.est} pool={modal.pool} workMonth={workMonth}/>}
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
