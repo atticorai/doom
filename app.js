@@ -347,6 +347,29 @@ const DOOM={
   }
 };
 const doomPick=(arr)=>arr[Math.floor(Math.random()*arr.length)];
+
+// ── MUSE CHARACTERS (AI Planner narrators) ───────────
+const MUSES=[
+  {name:"Calliope",role:"Coverage",color:"#E85A7A",icon:"🎭",voice:["Let me tell you a tale of market coverage…","Honey, your coverage has gaps wider than the Aegean.","Now THIS is a story worth telling.","The muse of eloquence sees… room for improvement."]},
+  {name:"Thalia",role:"Creative Mix",color:"#D4A040",icon:"🎪",voice:["Comedy and tragedy — your creative mix has both!","Too many :30s, not enough :15s. Classic mistake.","Your rotation is funnier than a satyr at a symposium.","Mix it up, darling. Variety is divine."]},
+  {name:"Melpomene",role:"Staleness",color:"#9b7bb0",icon:"🎻",voice:["*dramatic sigh* These creatives are getting old…","The tragedy! Same spots running for months.","Even the gods refresh their wardrobe, Wonderboy.","Stale creative is a tragedy I can't bear to watch."]},
+  {name:"Terpsichore",role:"Rotation Balance",color:"#4AC8E8",icon:"💃",voice:["The dance of percentages must be balanced!","Your rotation rhythm is… off-beat.","Let me choreograph something better.","50/50 is boring. Give me drama in the splits."]},
+  {name:"Clio",role:"History",color:"#5BC4A0",icon:"📜",voice:["The historical record shows… interesting patterns.","I've been keeping track. You should be concerned.","Let history guide your next move.","Your traffic history tells quite the epic."]}
+];
+const MuseCard=({muse,content,loading})=><div style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid "+muse.color+"30",borderRadius:12,padding:14,flex:"1 1 280px",minWidth:280,position:"relative",overflow:"hidden"}}>
+  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${muse.color},${muse.color}44)`}}/>
+  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+    <span style={{fontSize:20}}>{muse.icon}</span>
+    <div>
+      <div style={{fontSize:13,fontWeight:800,color:muse.color,fontFamily:"'Cormorant Garamond',serif"}}>{muse.name}</div>
+      <div style={{fontSize:10,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1}}>{muse.role}</div>
+    </div>
+  </div>
+  {loading?<div style={{fontSize:12,color:muse.color,fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif"}}>{doomPick(muse.voice)}</div>
+  :content?<div style={{fontSize:12,color:"#E8DFF0",lineHeight:1.5}}>{content}</div>
+  :<div style={{fontSize:12,color:"#6B5E80",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif"}}>{doomPick(muse.voice)}</div>}
+</div>;
+
 // Page header with Meg's voice
 const PageHead=({title,sub,pgKey,children})=><div style={{marginBottom:8}}>
   <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:12}}>
@@ -5468,54 +5491,81 @@ Be direct and actionable. No generic advice.`;
 
   const PlannerPg=()=>{
     const bc=planBrand==="Postman Law"?"#9b7bb0":"#D4A040";
-    return<div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <PageHead title="AI Rotation Planner" pgKey="planner" sub="Creative analysis, staleness detection, trend insights & rotation recommendations"/>
-      </div>
+    const brand=planBrand;
+    const bt=trafficHistory.filter(h=>h.brand===brand);
+    const bi=iscis.filter(i=>i.brand===brand&&i.active);
+    const months=[...new Set(bt.map(h=>h.month))];
+    const markets=[...new Set(bt.map(h=>h.market))];
+    const tagged=bi.filter(i=>i.category||i.caseType).length;
+    // Parse AI result into Muse sections
+    const parseMuseSections=(text)=>{
+      if(!text)return null;
+      const sections=text.split(/^##\s+/m).filter(Boolean);
+      return sections.map((s,i)=>{
+        const lines=s.trim().split("\n");
+        const title=lines[0]||"";
+        const body=lines.slice(1).join("\n").trim();
+        const muse=MUSES[i%MUSES.length];
+        return{title,body,muse};
+      });
+    };
+    const museSections=parseMuseSections(planResult);
+    return<div style={{display:"flex",flexDirection:"column",gap:12}}>
+      <PageHead title="The Muses — AI Rotation Planner" pgKey="planner"/>
+      <div style={{fontSize:13,color:"#C4A0C8",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",marginTop:-8,marginBottom:4}}>"We are the Muses, goddesses of the arts and proclaimers of heroes…"</div>
       {/* Brand Tabs */}
-      <div style={{display:"flex",gap:0,marginBottom:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b;const c=b==="Postman Law"?"#9b7bb0":"#D4A040";return<button key={b} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null)}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b}</button>})}
+      <div style={{display:"flex",gap:0}}>
+        {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b;const c=b==="Postman Law"?"#9b7bb0":"#D4A040";return<button key={b} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null)}} style={{padding:"8px 20px",fontSize:13,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#6B5E80",borderRadius:"8px 8px 0 0"}}>{b}</button>})}
         <div style={{flex:1,borderBottom:"2px solid #4a3565"}}/>
       </div>
-      <Cd style={{padding:16,borderRadius:"0 8px 8px 8px",borderTop:"2px solid "+bc}}>
-        {/* Quick stats */}
-        {(()=>{
-          const brand=planBrand;
-          const bt=trafficHistory.filter(h=>h.brand===brand);
-          const bi=iscis.filter(i=>i.brand===brand&&i.active);
-          const months=[...new Set(bt.map(h=>h.month))];
-          const markets=[...new Set(bt.map(h=>h.market))];
-          const tagged=bi.filter(i=>i.category||i.caseType).length;
-          return<div style={{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap"}}>
-            <div style={{padding:"8px 14px",borderRadius:6,background:bc+"12",flex:1,minWidth:120}}><div style={{fontSize:20,fontWeight:800,color:bc}}>{bi.length}</div><div style={{fontSize:11,color:"#9B8EAD"}}>Active ISCIs</div></div>
-            <div style={{padding:"8px 14px",borderRadius:6,background:bc+"12",flex:1,minWidth:120}}><div style={{fontSize:20,fontWeight:800,color:bc}}>{bt.length}</div><div style={{fontSize:11,color:"#9B8EAD"}}>Traffic Instructions</div></div>
-            <div style={{padding:"8px 14px",borderRadius:6,background:bc+"12",flex:1,minWidth:120}}><div style={{fontSize:20,fontWeight:800,color:bc}}>{markets.length}</div><div style={{fontSize:11,color:"#9B8EAD"}}>Markets</div></div>
-            <div style={{padding:"8px 14px",borderRadius:6,background:bc+"12",flex:1,minWidth:120}}><div style={{fontSize:20,fontWeight:800,color:bc}}>{months.length}</div><div style={{fontSize:11,color:"#9B8EAD"}}>Months of Data</div></div>
-            <div style={{padding:"8px 14px",borderRadius:6,background:bc+"12",flex:1,minWidth:120}}><div style={{fontSize:20,fontWeight:800,color:tagged===bi.length?"#5BC4A0":"#D4A040"}}>{tagged}/{bi.length}</div><div style={{fontSize:11,color:"#9B8EAD"}}>ISCIs Tagged</div></div>
+      {/* Muse stat cards — each Muse owns a stat */}
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",borderTop:"2px solid "+bc,paddingTop:14}}>
+        {[{muse:MUSES[0],val:markets.length,label:"Markets",sub:"coverage"},{muse:MUSES[1],val:bi.length,label:"Active ISCIs",sub:"creative mix"},{muse:MUSES[2],val:months.length,label:"Months of Data",sub:"staleness check"},{muse:MUSES[3],val:bt.length,label:"Instructions",sub:"rotation balance"},{muse:MUSES[4],val:tagged+"/"+bi.length,label:"ISCIs Tagged",sub:"historical context"}].map((s,i)=>
+          <div key={i} style={{flex:"1 1 140px",minWidth:140,background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid "+s.muse.color+"25",borderRadius:10,padding:"10px 12px",position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:s.muse.color}}/>
+            <div style={{fontSize:10,color:s.muse.color,fontWeight:700,textTransform:"uppercase",letterSpacing:.8}}>{s.muse.icon} {s.muse.name}</div>
+            <div style={{fontSize:22,fontWeight:800,color:"#E8DFF0",marginTop:2}}>{s.val}</div>
+            <div style={{fontSize:10,color:"#6B5E80"}}>{s.label} · {s.sub}</div>
           </div>
-        })()}
-        <button onClick={runPlanner} disabled={planLoading} style={{padding:"10px 24px",borderRadius:8,border:"none",background:planLoading?"#4a3565":bc,color:"#fff",fontSize:14,fontWeight:800,cursor:planLoading?"wait":"pointer",marginBottom:14}}>
-          {planLoading?"🔄 Analyzing...":"🧠 Run AI Analysis for "+planBrand}
-        </button>
-        {planError&&<div style={{padding:10,borderRadius:6,background:"#3a1f35",color:"#E85A7A",fontSize:13,marginBottom:12}}>Error: {planError}</div>}
-        {planResult&&<div style={{padding:16,borderRadius:8,background:"#1e1233",border:"1px solid #4a3565",whiteSpace:"pre-wrap",fontSize:13,lineHeight:1.6,color:"#E8DFF0",maxHeight:"calc(100vh - 400px)",overflowY:"auto"}}>
-          {planResult.split("\n").map((line,i)=>{
-            if(line.startsWith("# "))return<div key={i} style={{fontSize:18,fontWeight:800,color:"#F0E8F8",marginTop:16,marginBottom:4}}>{line.replace(/^#+\s*/,"")}</div>;
-            if(line.startsWith("## "))return<div key={i} style={{fontSize:15,fontWeight:700,color:bc,marginTop:12,marginBottom:4}}>{line.replace(/^#+\s*/,"")}</div>;
-            if(line.startsWith("### "))return<div key={i} style={{fontSize:13,fontWeight:700,color:"#9B8EAD",marginTop:8,marginBottom:2}}>{line.replace(/^#+\s*/,"")}</div>;
-            if(line.startsWith("- ")||line.startsWith("* "))return<div key={i} style={{paddingLeft:16,position:"relative"}}><span style={{position:"absolute",left:4,color:"#64748b"}}>•</span>{line.replace(/^[-*]\s*/,"")}</div>;
-            if(line.startsWith("**")&&line.endsWith("**"))return<div key={i} style={{fontWeight:700,color:"#F0E8F8",marginTop:6}}>{line.replace(/\*\*/g,"")}</div>;
-            if(line.match(/^\d+\./))return<div key={i} style={{paddingLeft:8,fontWeight:line.match(/^\d+\.\s\*\*/)?700:400}}>{line.replace(/\*\*/g,"")}</div>;
-            if(!line.trim())return<div key={i} style={{height:8}}/>;
-            return<div key={i}>{line.replace(/\*\*/g,"")}</div>;
-          })}
-        </div>}
-        {!planResult&&!planLoading&&!planError&&<div style={{padding:30,textAlign:"center",color:"#64748b"}}>
-          <div style={{fontSize:40,marginBottom:8}}>🧠</div>
-          <div style={{fontSize:14,fontWeight:600}}>Click "Run AI Analysis" to get rotation recommendations</div>
-          <div style={{fontSize:12,marginTop:4}}>The AI will analyze your traffic history, ISCI tags, market coverage, and creative staleness to recommend next month's rotation.</div>
-        </div>}
-      </Cd>
+        )}
+      </div>
+      {/* Run button */}
+      <button onClick={runPlanner} disabled={planLoading} style={{padding:"12px 28px",borderRadius:10,border:"none",background:planLoading?"#4a3565":"linear-gradient(135deg,"+MUSES.map(m=>m.color).join(",")+")",color:"#fff",fontSize:15,fontWeight:800,cursor:planLoading?"wait":"pointer",fontFamily:"'Cormorant Garamond',serif",letterSpacing:1,boxShadow:planLoading?"none":"0 4px 20px rgba(155,123,176,.3)",transition:"all .2s"}}>
+        {planLoading?"🎵 The Muses are deliberating...":"🎭 Summon the Muses — Analyze "+planBrand}
+      </button>
+      {planError&&<div style={{padding:12,borderRadius:8,background:"rgba(232,90,122,.1)",border:"1px solid rgba(232,90,122,.2)",color:"#E85A7A",fontSize:13}}>The Muses encountered an error: {planError}</div>}
+      {/* Results — each section narrated by a Muse */}
+      {museSections&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+        <div style={{fontSize:14,color:"#C4A0C8",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",padding:"8px 0"}}>"Listen well, for we sing of {planBrand}'s traffic rotation…"</div>
+        {museSections.map((s,i)=><MuseCard key={i} muse={s.muse} content={
+          <div>
+            <div style={{fontSize:14,fontWeight:800,color:s.muse.color,fontFamily:"'Cormorant Garamond',serif",marginBottom:6}}>{s.title}</div>
+            {s.body.split("\n").map((line,li)=>{
+              if(!line.trim())return<div key={li} style={{height:4}}/>;
+              if(line.startsWith("### "))return<div key={li} style={{fontSize:12,fontWeight:700,color:"#D4A040",marginTop:6}}>{line.replace(/^#+\s*/,"")}</div>;
+              if(line.startsWith("- ")||line.startsWith("* "))return<div key={li} style={{paddingLeft:12,position:"relative",fontSize:12}}><span style={{position:"absolute",left:2,color:s.muse.color}}>♪</span>{line.replace(/^[-*]\s*/,"").replace(/\*\*/g,"")}</div>;
+              if(line.startsWith("**"))return<div key={li} style={{fontWeight:700,color:"#E8DFF0",fontSize:12}}>{line.replace(/\*\*/g,"")}</div>;
+              return<div key={li} style={{fontSize:12}}>{line.replace(/\*\*/g,"")}</div>;
+            })}
+          </div>
+        }/>)}
+      </div>}
+      {/* Empty state — Muses waiting */}
+      {!planResult&&!planLoading&&!planError&&<div style={{padding:40,textAlign:"center"}}>
+        <div style={{display:"flex",justifyContent:"center",gap:12,marginBottom:16}}>
+          {MUSES.map((m,i)=><div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+            <div style={{width:48,height:48,borderRadius:"50%",background:"linear-gradient(135deg,"+m.color+"20,"+m.color+"08)",border:"2px solid "+m.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>{m.icon}</div>
+            <div style={{fontSize:10,fontWeight:700,color:m.color}}>{m.name}</div>
+            <div style={{fontSize:9,color:"#6B5E80"}}>{m.role}</div>
+          </div>)}
+        </div>
+        <div style={{fontSize:16,fontWeight:700,color:"#C4A0C8",fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic"}}>"Summon us, and we shall sing of your rotation's destiny."</div>
+        <div style={{fontSize:12,color:"#6B5E80",marginTop:6}}>The Muses will analyze traffic history, ISCI tags, market coverage, and creative staleness.</div>
+      </div>}
+      {/* Loading — Muses deliberating */}
+      {planLoading&&<div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        {MUSES.map((m,i)=><MuseCard key={i} muse={m} loading={true}/>)}
+      </div>}
     </div>
   };
 
