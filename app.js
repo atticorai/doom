@@ -5608,6 +5608,7 @@ Be direct and actionable. No generic advice.`;
   const TrackerPg=()=>{
     const[trackerMonth,setTrackerMonth]=useState(workMonth);
     const[trackerBrand,setTrackerBrand]=useState("Postman Law");
+    const[trackerExpanded,setTrackerExpanded]=useState(null);
     const isPL=trackerBrand==="Postman Law";
     const mkts=isPL?["Chicago","Cincinnati","Denver","Minneapolis"]:["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan"];
     const buyTypes=isPL?["TV Base","TV Sponsorship","TV UD/AV","TV Sports","Cable","Heavy Up","Radio","Streaming Audio","Digital","OOH"]:["TV Base","TV Sponsorship","TV UD/AV","Radio","Streaming Audio","OOH"];
@@ -5708,11 +5709,24 @@ Be direct and actionable. No generic advice.`;
                 {buyTypes.map(bt=>{
                   const s=getStatus(mkt,bt);
                   const est=s.est||getEst(mkt,bt);
-                  return<td key={bt} onClick={()=>{if(s.rec){setPg("library")}}} style={{padding:"6px 8px",textAlign:"center",borderBottom:"1px solid rgba(155,123,176,.08)",background:statusBg[s.status],cursor:s.rec?"pointer":"default",transition:"all .15s"}} onMouseEnter={e=>{if(s.status!=="empty")e.currentTarget.style.boxShadow="inset 0 0 12px "+statusColors[s.status]+"30"}} onMouseLeave={e=>{e.currentTarget.style.boxShadow="none"}}>
+                  const cellKey=mkt+"|"+bt;
+                  const isExpanded=trackerExpanded===cellKey;
+                  return<td key={bt} onClick={()=>{if(s.rec)setTrackerExpanded(isExpanded?null:cellKey)}} style={{padding:"8px 10px",textAlign:"center",borderBottom:"1px solid rgba(155,123,176,.08)",background:isExpanded?"rgba(155,123,176,.15)":statusBg[s.status],cursor:s.rec?"pointer":"default",transition:"all .15s",verticalAlign:"top",minWidth:90}} onMouseEnter={e=>{if(s.status!=="empty")e.currentTarget.style.boxShadow="inset 0 0 12px "+statusColors[s.status]+"30"}} onMouseLeave={e=>{e.currentTarget.style.boxShadow="none"}}>
                     {est?<div>
-                      <div style={{fontSize:12,fontWeight:700,fontFamily:"monospace",color:statusColors[s.status]||"#4a3565"}}>{statusLabel[s.status]} {est.length>10?est.substring(0,8)+"…":est}</div>
-                      {s.rec&&<div style={{fontSize:9,color:"#6B5E80"}}>v{s.rec.version}</div>}
-                    </div>:<div style={{fontSize:11,color:"#3a2955"}}>—</div>}
+                      <div style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:statusColors[s.status]||"#4a3565",letterSpacing:.5}}>{est}</div>
+                      <div style={{fontSize:10,color:statusColors[s.status]||"#4a3565",fontWeight:600,marginTop:1}}>{s.status==="sent"?"✓ Sent":s.status==="built"?"◐ Built":s.status==="copied"?"↺ Copied":s.status==="partial"?"⚠ Partial":""}</div>
+                      {s.rec&&<div style={{fontSize:9,color:"#6B5E80",marginTop:1}}>v{s.rec.version}{s.rec.iscis?" · "+s.rec.iscis.length+" ISCIs":""}</div>}
+                      {isExpanded&&s.rec&&<div style={{marginTop:6,textAlign:"left",background:"rgba(30,18,51,.6)",borderRadius:6,padding:6,border:"1px solid rgba(155,123,176,.15)"}}>
+                        <div style={{fontSize:10,fontWeight:700,color:"#D4A040",marginBottom:3}}>ROTATION</div>
+                        {(s.rec.iscis||[]).slice(0,8).map((ic,ii)=><div key={ii} style={{fontSize:9,color:"#E8DFF0",padding:"1px 0",borderBottom:"1px solid rgba(155,123,176,.06)"}}>
+                          <span style={{fontFamily:"monospace",fontWeight:600}}>{ic.code}</span> <span style={{color:"#9B8EAD"}}>{ic.pct}%</span>
+                        </div>)}
+                        {(s.rec.iscis||[]).length>8&&<div style={{fontSize:9,color:"#6B5E80"}}>+{s.rec.iscis.length-8} more</div>}
+                        <div style={{marginTop:4,display:"flex",gap:4}}>
+                          <button onClick={e=>{e.stopPropagation();setPg("library")}} style={{fontSize:9,padding:"2px 6px",borderRadius:3,border:"1px solid #4AC8E8",background:"transparent",color:"#4AC8E8",cursor:"pointer",fontWeight:600}}>Open in Library</button>
+                        </div>
+                      </div>}
+                    </div>:<div style={{fontSize:12,color:"#3a2955"}}>—</div>}
                   </td>
                 })}
               </tr>
