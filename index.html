@@ -238,6 +238,7 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
       "https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js",
+      "https://cdn.tailwindcss.com",
       "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js",
@@ -274,6 +275,19 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
       // Load all data files in parallel
       return Promise.all(dataFiles.map(function(f){return loadScript(f)}));
     }).then(function(){
+      // Load Framer Motion via ESM and expose as globals for Babel scripts
+      return new Promise(function(resolve){
+        var fm=document.createElement("script");
+        fm.type="module";
+        fm.textContent='import{motion,AnimatePresence,useAnimation,useInView}from"https://esm.sh/framer-motion@11?external=react,react-dom&bundle";window.FramerMotion={motion:motion,AnimatePresence:AnimatePresence,useAnimation:useAnimation,useInView:useInView};window.dispatchEvent(new Event("framer-ready"));';
+        document.body.appendChild(fm);
+        window.addEventListener("framer-ready",function(){console.log("Framer Motion loaded");resolve()},{once:true});
+        // Fallback timeout so app still loads if FM CDN fails
+        setTimeout(function(){if(!window.FramerMotion){console.warn("Framer Motion CDN timeout, using CSS fallback");window.FramerMotion={motion:null,AnimatePresence:null,useAnimation:null,useInView:null};resolve()}},8000);
+      });
+    }).then(function(){
+      // Configure Tailwind for Doom palette
+      if(window.tailwind){tailwind.config={theme:{extend:{colors:{plum:{DEFAULT:"#9b7bb0",dark:"#2d1f42",edge:"#4a3565"},pegasus:"#4AC8E8",gold:"#D4A040",rose:"#E85A7A",teal:"#5BC4A0",orchid:{DEFAULT:"#1e1233",mid:"#2a1a3e",shadow:"#2d1f42"},lilac:{DEFAULT:"#C4A0C8",white:"#E8DFF0",bright:"#F0E8F8"},muted:"#9B8EAD",parchment:{DEFAULT:"#e8dcc4",dark:"#d4c4a0",light:"#f0e8d8"}},fontFamily:{heading:["Cormorant Garamond","serif"],body:["DM Sans","sans-serif"]}}}}};
       // Add Babel-transpiled source files
       var c=document.createElement("script");c.type="text/babel";c.src="config.js";c.setAttribute("data-type","module");document.body.appendChild(c);
       var a=document.createElement("script");a.type="text/babel";a.src="app.js";a.setAttribute("data-type","module");document.body.appendChild(a);
