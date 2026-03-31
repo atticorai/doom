@@ -670,7 +670,16 @@ const App=()=>{
           const cleanedAiring={};Object.entries(d).forEach(([k,v])=>{if(!OLD_WK.has(k))cleanedAiring[k]=v});
           setNowAiring(cleanedAiring)}
         if(docs.auditLog?.data){const d=JSON.parse(docs.auditLog.data);if(d.length)setAuditLog(d)}
-        if(docs.trafficHistory?.data){const d=JSON.parse(docs.trafficHistory.data);if(d.length){setTrafficHistory(d);trafficFbCountRef.current=d.length}trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
+        if(docs.trafficHistory?.data){const d=JSON.parse(docs.trafficHistory.data);if(d.length){
+          // One-time cleanup: remove bad PL April records that were copied from March during Firestore recovery
+          const cleaned=d.filter(h=>{
+            if(h.brand==="Postman Law"&&h.month==="April"&&h.status==="copied"&&(h.statusNote||"").includes("March"))return false;
+            return true;
+          });
+          const removedCount=d.length-cleaned.length;
+          if(removedCount>0)console.warn("Traffic cleanup: removed "+removedCount+" bad PL April copied records");
+          setTrafficHistory(cleaned);trafficFbCountRef.current=cleaned.length
+        }trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
         if(docs.workMonth?.data)setWorkMonth(JSON.parse(docs.workMonth.data));
         if(docs.confirmations?.data){const d=JSON.parse(docs.confirmations.data);setConfirmations(d)}
         if(docs.oohRemindersSent?.data){const d=JSON.parse(docs.oohRemindersSent.data);setOohRemindersSent(d)}
@@ -5271,8 +5280,11 @@ ${fullText.substring(0,3000)}`}]
                         }
                       }} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #5BC4A0",background:"rgba(22,163,98,.1)",color:"#5BC4A0",fontSize:12,fontWeight:600,cursor:"pointer"}}>Send</button>
                       <button onClick={async()=>{const pw=prompt("Admin password:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Wrong password");if(!confirm("Delete "+h.market+" "+h.media+" "+h.month+"?"))return;setTrafficHistory(p=>p.filter((_,idx)=>idx!==gIdx));log("DELETE",h.brand+" "+h.market+" "+h.month+" "+h.media);notify("Deleted")}} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #fecaca",color:"#E85A7A",fontSize:12,fontWeight:600,cursor:"pointer",background:"transparent"}}>Del</button>
-                      <select onChange={e=>{if(!e.target.value)return;const newMonth=e.target.value;const cm=CALENDAR.find(c=>c.month===newMonth);const newFlight=cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):"";
-                        // For WK monthly estimates, swap to the correct month's estimate number
+                      <select onChange={e=>{if(!e.target.value)return;const newMonth=e.target.value;
+                        // Check if target month already has traffic for this market+media+brand
+                        const existing=trafficHistory.find(x=>x.brand===h.brand&&x.market===h.market&&x.media===h.media&&x.month===newMonth&&x.status!=="copied");
+                        if(existing&&!confirm(h.brand+" "+h.market+" "+h.media+" already has "+newMonth+" traffic (v"+existing.version+"). Copy anyway? This creates a new record — it won't overwrite.")){e.target.value="";return}
+                        const cm=CALENDAR.find(c=>c.month===newMonth);const newFlight=cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):"";
                         const WK_MONTH_EST={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};
                         const EST_TO_MONTH=Object.fromEntries(Object.entries(WK_MONTH_EST).map(([m,n])=>[n,m]));
                         let newEst=h.est;
