@@ -113,3 +113,6 @@ Heading text:   #F0E8F8 (warm white)
 - OOH Hub feature parity with removed pages
 - Remaining feature bugs in individual pages
 - Olympus light mode needs tuning for new palette
+
+## Traffic Tracker
+New page (📡 in nav). Mission control + grid showing traffic status per market × buy type for the current month. Auto-populated from traffic history. Color-coded: green=sent, gold=built, rose=partial, dark=empty. Handles combined estimates and multi-market records. Meg commentary based on completion percentage.
