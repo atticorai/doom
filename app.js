@@ -5795,7 +5795,7 @@ Be direct and actionable. No generic advice.`;
   };
 
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},{id:"docs",l:"Help & Docs",e:"?"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
@@ -6428,7 +6428,7 @@ Be direct and actionable. No generic advice.`;
 
   const DocsPg=()=>{
     return<div className="flex flex-col gap-3" style={{display:"flex",flexDirection:"column",gap:12}}>
-      <PageHead title="Help & Docs" pgKey="docs"/>
+      <PageHead title="Guide" pgKey="docs"/>
       <div className="relative flex flex-col items-center justify-center py-4 px-2 overflow-hidden" style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",paddingTop:16,paddingBottom:16,paddingLeft:8,paddingRight:8,overflow:"hidden",minHeight:"calc(100vh - 120px)"}}>
         <BookSoulParticles/>
         <BookFlyingPegasus/>
