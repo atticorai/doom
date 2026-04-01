@@ -689,13 +689,8 @@ const App=()=>{
                 if(cleaned.length!==estNums.length)migCount++;
               }
             }else{
-              // PL: rebuild from current media types so Cable↔TV links are correct
-              const sta=_loadedStations.find(s=>s.call===sCall&&s.market===sMarket&&s.brand===sBrand);
-              if(sta){
-                const fresh=ESTIMATES.filter(e=>e.market===sta.market&&e.brand===sta.brand&&sta.media===e.media).map(e=>e.num);
-                migrated[key]=fresh;
-                if(fresh.length!==estNums.length||fresh.some(n=>!estNums.includes(n)))migCount++;
-              }else{migrated[key]=estNums}
+              // PL: keep user's links as-is (Firestore is source of truth for edits)
+              migrated[key]=estNums;
             }
           });
           // Add links for new stations not yet in Firestore
