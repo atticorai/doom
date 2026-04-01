@@ -700,7 +700,7 @@ const App=()=>{
               if(migrated[key].length!==estNums.length)migCount++;
             }
           });
-          if(migCount>0)console.log("Migrated "+migCount+" WK station-estimate links to 3-digit system");
+          if(migCount>0){console.log("Migrated "+migCount+" station-estimate links (Cable separation)");try{db.collection("appData").doc("staEstLinks").set({data:JSON.stringify(migrated),ts:Date.now()})}catch(e){}}
           setStaEstLinks(migrated);
           linksReady.current=true;
         }else{linksReady.current=true}}
