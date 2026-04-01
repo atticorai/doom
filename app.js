@@ -596,6 +596,7 @@ const App=()=>{
         if(!db)throw new Error("Firebase DB not available after init");
         const snap=await db.collection("appData").get();
         const docs={};snap.forEach(d=>{docs[d.id]=d.data()});
+        let _loadedStations=stations; // Will be updated if Firestore has station data
         if(docs.stations?.data){const d=JSON.parse(docs.stations.data);if(d.length){
           // Apply authoritative station patches — filter out old stations, update contacts, add new
           const WK_AUTH=new Set(Object.keys(WK_STA_PATCH));
@@ -615,7 +616,8 @@ const App=()=>{
           // Add stations from STATIONS constant that aren't in Firebase
           const fbCalls=new Set(migSta.map(s=>s.call+"|"+s.market+"|"+s.brand));
           const missing=STATIONS.filter(s=>!fbCalls.has(s.call+"|"+s.market+"|"+s.brand));
-          setStations([...migSta,...missing]);stationsLoadedRef.current=true
+          _loadedStations=[...migSta,...missing];
+          setStations(_loadedStations);stationsLoadedRef.current=true
         }}else{stationsLoadedRef.current=true}
         if(docs.estimates?.data){const d=JSON.parse(docs.estimates.data);if(d.length){
           // Filter out old 4-digit WK estimates from Firestore data too
@@ -675,7 +677,7 @@ const App=()=>{
               // Remove old 4-digit links
               const cleaned=estNums.filter(n=>!OLD_WK.has(n));
               // Find all WK estimates that match this station's market+media
-              const sta=stations.find(s=>s.call===sCall&&s.market===sMarket&&s.brand==="Wettermark Keith");
+              const sta=_loadedStations.find(s=>s.call===sCall&&s.market===sMarket&&s.brand==="Wettermark Keith");
               if(sta){
                 const mediaCompat=(sMed,eMed)=>{if(sMed===eMed)return true;if(sMed==="TV"&&(eMed==="Cable"||eMed==="Sports"||eMed==="Heavy Up"||eMed==="UD/AV"||eMed==="Sponsorship"||eMed==="TV"))return true;return false};
                 const shouldLink=ESTIMATES.filter(e=>e.brand==="Wettermark Keith"&&e.market===sMarket&&mediaCompat(sta.media,e.media)).map(e=>e.num);
@@ -688,7 +690,7 @@ const App=()=>{
               }
             }else{
               // PL: rebuild from current media types so Cable↔TV links are correct
-              const sta=stations.find(s=>s.call===sCall&&s.market===sMarket&&s.brand===sBrand);
+              const sta=_loadedStations.find(s=>s.call===sCall&&s.market===sMarket&&s.brand===sBrand);
               if(sta){
                 const fresh=ESTIMATES.filter(e=>e.market===sta.market&&e.brand===sta.brand&&sta.media===e.media).map(e=>e.num);
                 migrated[key]=fresh;
@@ -697,14 +699,14 @@ const App=()=>{
             }
           });
           // Add links for new stations not yet in Firestore
-          const defaultLinks=buildDefaultLinks(stations,ESTIMATES);
+          const defaultLinks=buildDefaultLinks(_loadedStations,ESTIMATES);
           Object.entries(defaultLinks).forEach(([k,nums])=>{if(!migrated[k]){migrated[k]=nums;migCount++}});
           if(migCount>0){console.log("Migrated "+migCount+" station-estimate links");try{db.collection("appData").doc("staEstLinks").set({data:JSON.stringify(migrated),ts:Date.now()})}catch(e){}}
           setStaEstLinks(migrated);
           linksReady.current=true;
         }else{
           // No links in Firestore — build from scratch
-          const defaultLinks=buildDefaultLinks(stations,ESTIMATES);
+          const defaultLinks=buildDefaultLinks(_loadedStations,ESTIMATES);
           setStaEstLinks(defaultLinks);
           try{db.collection("appData").doc("staEstLinks").set({data:JSON.stringify(defaultLinks),ts:Date.now()})}catch(e){}
           linksReady.current=true;
