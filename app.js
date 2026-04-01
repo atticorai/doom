@@ -679,7 +679,7 @@ const App=()=>{
               // Find all WK estimates that match this station's market+media
               const sta=_loadedStations.find(s=>s.call===sCall&&s.market===sMarket&&s.brand==="Wettermark Keith");
               if(sta){
-                const mediaCompat=(sMed,eMed)=>{if(sMed===eMed)return true;if(sMed==="TV"&&(eMed==="Cable"||eMed==="Sports"||eMed==="Heavy Up"||eMed==="UD/AV"||eMed==="Sponsorship"||eMed==="TV"))return true;return false};
+                const mediaCompat=(sMed,eMed)=>{if(sMed===eMed)return true;if(sMed==="TV"&&(eMed==="Sports"||eMed==="Heavy Up"||eMed==="UD/AV"||eMed==="Sponsorship"||eMed==="TV"))return true;return false};
                 const shouldLink=ESTIMATES.filter(e=>e.brand==="Wettermark Keith"&&e.market===sMarket&&mediaCompat(sta.media,e.media)).map(e=>e.num);
                 const merged=[...new Set([...cleaned,...shouldLink])];
                 if(merged.length!==estNums.length||merged.some(n=>!estNums.includes(n)))migCount++;
@@ -2698,7 +2698,7 @@ const App=()=>{
     const BB={"Postman Law":["Ken Lazar","Lynn Cortelezzi","Hazel Wolf"],"Wettermark Keith":["Amy Coffey"]};
     const BUYER_EMAILS={"Ken Lazar":"ken.lazar@atticor.ai","Lynn Cortelezzi":"lynn.cortelezzi@atticor.ai","Amy Coffey":"acoffey@wkfirm.com","Jessica Flynn":"jessica.flynn@atticor.ai"};
     const BM={"Postman Law":["Chicago","Cincinnati","Denver","Minneapolis"],"Wettermark Keith":["Birmingham","Chattanooga","Dothan","Gadsden","Huntsville","Knoxville","Montgomery"]};
-    const findSta=()=>{if(!nr.market||!nr.brand||!nr.media)return[];return stations.filter(s=>s.market===nr.market&&s.brand===nr.brand&&(nr.media==="Cable"||nr.media==="Sports"||nr.media==="Heavy Up"?s.media==="TV":nr.media==="Streaming Audio"?s.media==="Radio":s.media===nr.media))};
+    const findSta=()=>{if(!nr.market||!nr.brand||!nr.media)return[];return stations.filter(s=>s.market===nr.market&&s.brand===nr.brand&&(nr.media==="Sports"||nr.media==="Heavy Up"?s.media==="TV":nr.media==="Streaming Audio"?s.media==="Radio":s.media===nr.media))};
     const openC=()=>{setShowAdd(true);setStep(1);setNr({num:nextNum(),market:"",media:"",group:"",campaign:"",buyer:"",brand:"",reason:""});setSugStations([]);setSelStations([])};
     const closeC=()=>{setShowAdd(false);setStep(1)};
     const goStep2=()=>{const found=findSta();setSugStations(found);setSelStations(found.map(s=>s.call));setStep(2)};
@@ -2797,7 +2797,7 @@ const App=()=>{
     const saveEdit=()=>{setStations(p=>p.map((s,i)=>i===editIdx?{...editRow}:s));setEditIdx(null);log("Station Edit",`${editRow.call} updated`);notify("Station updated")};
     const addSta=()=>{if(!newRow.call||!newRow.market)return;const s={...newRow};setStations(p=>[...p,s]);
       // Auto-link to matching estimates
-      const mediaCompat=(sMed,eMed)=>{if(sMed===eMed)return true;if(sMed==="TV"&&(eMed==="Cable"||eMed==="TV"))return true;if(sMed==="Cable"&&eMed==="TV")return true;return false};
+      const mediaCompat=(sMed,eMed)=>{if(sMed===eMed)return true;return false};
       const matched=estimates.filter(e=>e.market===s.market&&e.brand===s.brand&&mediaCompat(s.media,e.media)).map(e=>e.num);
       if(matched.length){const k=staKey(s);setStaEstLinks(p=>({...p,[k]:matched}));log("Station Add",`${s.call} · ${s.market} · auto-linked ${matched.length} estimates`);notify(`Station added + linked to ${matched.length} estimates`)}
       else{log("Station Add",`${s.call} · ${s.market}`);notify("Station added — open Linked Ests column to link estimates")}
@@ -5343,7 +5343,7 @@ ${fullText.substring(0,3000)}`}]
                           // ALWAYS look up stations by market — never trust what's stored on the record
                           var mkt=normMkt(h.market)||h.market;
                           var staList=[];
-                          var mediaCompat=function(sMed,hMed){if(sMed===hMed)return true;if(sMed==='TV'&&['TV','Cable','Sports','Heavy Up','UD/AV','Sponsorship'].includes(hMed))return true;if(sMed==='Radio'&&hMed==='Radio')return true;return false};
+                          var mediaCompat=function(sMed,hMed){if(sMed===hMed)return true;if(sMed==='TV'&&['TV','Sports','Heavy Up','UD/AV','Sponsorship'].includes(hMed))return true;if(sMed==='Radio'&&hMed==='Radio')return true;return false};
                           var marketStations=stations.filter(function(s){return s.brand===h.brand&&(normMkt(s.market)===mkt||s.market===h.market)&&mediaCompat(s.media,h.media)});
                           marketStations.forEach(function(s){if(staList.indexOf(s.call)===-1)staList.push(s.call)});
                           if(!staList.length){notify("No stations found for "+h.market+" "+h.media);return}
