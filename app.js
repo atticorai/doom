@@ -814,7 +814,7 @@ const App=()=>{
   }},[iscis,dbLoaded]);
   const linksReady=React.useRef(false);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(!linksReady.current)return;if(Object.keys(staEstLinks).length>0)saveToDb("staEstLinks",staEstLinks)},[staEstLinks,dbLoaded]);
-  React.useEffect(()=>{if(!dbLoaded)return;const newLinks={};stations.forEach(s=>{const k=staKey(s);const existing=staEstLinks[k]||[];const matched=estimates.filter(e=>e.market===s.market&&e.brand===s.brand&&(s.media===e.media||(s.media==="TV"&&(e.media==="Cable"||e.media==="TV"))||(s.media==="Cable"&&e.media==="TV"))).map(e=>e.num);if(existing.length===0&&matched.length){newLinks[k]=matched}else if(existing.length>0){const missing=matched.filter(n=>!existing.includes(n));if(missing.length)newLinks[k]=[...existing,...missing]}});if(Object.keys(newLinks).length){setStaEstLinks(p=>({...p,...newLinks}))}linksReady.current=true},[stations,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;const newLinks={};stations.forEach(s=>{const k=staKey(s);const existing=staEstLinks[k]||[];const matched=estimates.filter(e=>e.market===s.market&&e.brand===s.brand&&s.media===e.media).map(e=>e.num);if(existing.length===0&&matched.length){newLinks[k]=matched}});if(Object.keys(newLinks).length){setStaEstLinks(p=>({...p,...newLinks}))}linksReady.current=true},[stations,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(nowAiring).length>0)saveToDb("nowAiring",nowAiring)},[nowAiring,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(auditLog.length>0)saveToDb("auditLog",auditLog)},[auditLog,dbLoaded]);
   const trafficFbCountRef=React.useRef(0);
