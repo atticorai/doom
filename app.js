@@ -5855,102 +5855,521 @@ Be direct and actionable. No generic advice.`;
       </Cd>
     </div>};
 
-  // ── DOCS / HELP PAGE ─────────────────────────────────
-  const[docsSearch,setDocsSearch]=useState("");
-  const DOCS=[
-    {section:"Getting Started",meg:"I'll take it from here.",items:[
-      {title:"Logging In",text:"Enter the system password on the login screen and click 'Let Me In.' Session persists until you close the browser tab. The loader shows Meg's commentary while things load."},
-      {title:"Navigation",text:"Sidebar has all pages with badge alerts. Gold active indicator shows current page. Search bar searches ISCIs, stations, estimates, and markets. OOH Hub is a separate sub-app at #ooh."},
-      {title:"Broadcast Month",text:"Set in the Traffic Center header. Controls flight dates, rotation deadlines, and which WK monthly estimate appears. WK estimates change per month (213=April, 214=May). PL estimates stay the same all year."},
-      {title:"Theme",text:"Megara's Underworld — orchid dark mode with dusty plum, gold accents, Pegasus blue for interactive elements. Olympus light mode (sun icon in sidebar footer) inverts to warm parchment with golden light."},
-    ]},
-    {section:"Traffic Center",meg:"This is where the real work happens.",items:[
-      {title:"Building a Rotation",text:"Select an estimate and click 'Build.' Choose ISCIs, set rotation percentages per schedule (M-F, Weekend, All Week, Bookend). Each duration must total 100%. Stations are grouped by ownership — toggle entire groups on/off."},
-      {title:"Combined Estimates (Postman Law)",text:"PL has 6 TV buy types per market (Base, Sponsorship, UD/AV, Sports, Cable, Heavy Up). Select all 6 and click 'Combine & Build.' Creates one traffic sheet with one email per ownership group — not 6 separate emails."},
-      {title:"Wettermark Keith Estimates",text:"WK uses 3-digit monthly estimates shared across all markets (213=April TV for all 6 markets). Traffic is still built per market. The Traffic Center filters to only show the current month's WK estimates."},
-      {title:"Sending to Stations",text:"Click 'Email Stations' to generate a PDF with clickable creative links and send via n8n (Outlook). Grouped by ownership — one email per group. Buyer gets CC'd. Additional recipients field for manual email addresses."},
-      {title:"Confirmation Tracking",text:"After sending, each market tracks confirmations independently. WK uses estimate|market keys so Birmingham's confirmation status is separate from Chattanooga's even with the same estimate number."},
-    ]},
-    {section:"Traffic Tracker",meg:"I can see everything you haven't done.",items:[
-      {title:"Mission Control",text:"Shows overall progress for the selected brand and month. Progress bar with percentage, smart alerts for markets with missing buy types, and Meg's commentary on your pace."},
-      {title:"Status Grid",text:"Every market × every buy type. Cells show estimate numbers color-coded: green=sent, gold=built, rose=partial, dark=not started. Click a cell to expand inline and see the rotation ISCIs and percentages."},
-      {title:"Brand & Month",text:"Toggle between Postman Law and Wettermark Keith. Month tabs let you check any month's status. Combined TV estimates count as coverage for all TV buy types."},
-    ]},
-    {section:"ESPN / GKBPS Digital",meg:"The UTMs better be right.",items:[
-      {title:"Campaign Selector",text:"Click the campaign button (March Madness, MLB, NFL, etc.) to set UTM parameters automatically. No manual UTM entry needed — 3 URLs per market are auto-generated."},
-      {title:"Three URLs Per Market",text:"ESPN Video (Placement=ESPNweb), GKBPS (Placement=GKBPS), Display (Medium=Display). All use the same campaign string with the DMA prefix (CHIMarchMadness, MSPMarchMadness, etc.)."},
-      {title:"PDF with Clickable Links",text:"'Download PDF' generates a native jsPDF document where every URL and creative file link is clickable — not a screenshot image."},
-      {title:"Sending",text:"'Send to ESPN/GKBPS' emails jmondo@goodkarmabrands.com, mmetroka@goodkarmabrands.com, and jessica.flynn@atticor.ai with PDF attached."},
-    ]},
-    {section:"Pandora / SiriusXM Streaming",meg:"Same deal, different vendor.",items:[
-      {title:"Per-ISCI URLs",text:"Pandora generates unique URLs for each audio ISCI with UTM_Content={ISCI_CODE}, Placement=AudioSelect, UTM_Source=SiriusXM. Campaign format: Blackacre_KellerPostman_PostmanLawPI-{Market}_{Year}Q{Quarter}."},
-      {title:"All 4 PL Markets",text:"Print and PDF generate all 4 PL markets at once. Each market section shows audio ISCIs with clickable URLs, companion banners (CompanionBanners placement), and display banners (DisplayBanners placement)."},
-      {title:"Companion & Display Banners",text:"Add companion banner names (paired with audio) and display banner names (standalone A/B test) in text fields. Each gets its own URL with the appropriate Placement parameter."},
-      {title:"Spotify / Generic",text:"Spotify and Generic modes use manual UTM fields for full customization."},
-    ]},
-    {section:"ISCI Registry",meg:"This is MY registry. You're just visiting.",items:[
-      {title:"Registering ISCIs",text:"Click '+ Register ISCI' to add new codes. System auto-generates ISCI codes: DMA + brand + sequence + suffix. Select multiple DMAs to register across markets at once."},
-      {title:"OOH ISCIs",text:"OOH ISCIs (suffix O) only appear in the OOH Hub's dedicated OOH ISCI Registry — not in the main registry. Register OOH ISCIs from the OOH Hub."},
-      {title:"Creative Files",text:"Upload files directly per ISCI via drag-and-drop. Files stored in Firebase Storage. Download links appear in PDFs and emails — clickable in both."},
-      {title:"Data Protection",text:"Firestore is source of truth for user edits. Seed data restores missing titles and fileUrls. 20% drop safeguard blocks saves if ISCI count drops dramatically. ISCIs use code+dma composite key."},
-      {title:"Tags & Categories",text:"Manage categories, value props, and VOs per brand via the Tag Manager. Auto-tagging suggests categories based on ISCI titles."},
-    ]},
-    {section:"Stations & Contacts",meg:"I keep this list tighter than Hades keeps the Underworld.",items:[
-      {title:"Station List",text:"All TV and Radio stations with call letters, market, brand, ownership, and contact emails. Market filter cascades from brand — no Chicago in WK, no Birmingham in PL."},
-      {title:"Ownership Groups",text:"Stations with the same ownership group get one combined email when traffic is sent. The rotation builder shows stations grouped by ownership — toggle the whole group, not individual stations."},
-      {title:"Estimate Linking",text:"Stations auto-link to matching estimates by market+brand+media. WK stations are linked to all 3-digit monthly estimates for their media type. Click the + icon to manually link/unlink."},
-      {title:"Confirmation Portal",text:"Vendors click the Confirm Receipt link in their email. Opens a branded portal with traffic details. They can confirm, add email contacts, or request removal. Batch confirm by ownership group."},
-    ]},
-    {section:"OOH Hub",meg:"I manage 300+ boards. What do you manage?",items:[
-      {title:"Sub-App",text:"Separate app at #ooh with its own sidebar. Contains WK OOH, PL OOH, OOH ISCI Registry, and Import/Upload. Access via the OOH Hub nav item or dashboard stat cards."},
-      {title:"OOH ISCI Registry",text:"Full-featured registry for OOH ISCIs only (suffix O). Register, edit, activate/deactivate, search, filter by brand and DMA. Same capabilities as the main ISCI Registry."},
-      {title:"WK OOH",text:"Wettermark Keith billboard/poster inventory across 6 markets. Card view with photos, map view, contract tracking, traffic builder per vendor/DMA."},
-      {title:"PL OOH",text:"Postman Law OOH panels with creative calendar. Tracks creative due dates, board switches, flight dates. Calendar alerts show in dashboard and OOH Hub sidebar badge."},
-      {title:"Import/Upload",text:"Drag-and-drop PDF contract parser for Lamar, Reagan, Outfront, etc. Also parses Excel media plans and CSV exports. AI-assisted parsing for unknown formats."},
-    ]},
-    {section:"Traffic Library",meg:"I remember every version. Every mistake.",items:[
-      {title:"Brand Tabs",text:"Postman Law and Wettermark Keith tabs with per-market summary cards. Cards show media coverage per month — green check for sent, red X for missing. Multi-market records count for each individual market."},
-      {title:"Sending from Library",text:"Confirmation dialog shows full details before sending. Stations looked up by brand+market+media (not stored links). Grouped by ownership — one email per group."},
-      {title:"Copy to Month",text:"Dropdown copies traffic to another month. WK estimates auto-swap to the correct monthly number. Warns if target month already has traffic. PL estimates stay the same."},
-      {title:"PDF Downloads",text:"All PDFs generated with jsPDF text rendering — creative file links are clickable. Not canvas screenshots."},
-    ]},
-    {section:"Audit Log",meg:"I see everything, Wonderboy. Everything.",items:[
-      {title:"Brand Tabs",text:"Filter by All Activity, Postman Law, or Wettermark Keith. Matches brand names, market names, and DMA codes in log details."},
-      {title:"Category Filters",text:"Filter by: Traffic, Emails, Confirmations, Edits, Imports, Admin. Each shows a count. Combine with brand tabs and search for precise filtering."},
-      {title:"Search",text:"Free-text search across action names and details. Find specific stations, estimates, or ISCIs."},
-    ]},
-    {section:"Email System",meg:"It's out. Nothing left to second-guess.",items:[
-      {title:"n8n Webhook",text:"Primary email delivery via n8n webhook connected to Outlook (emm.caban@atticor.ai). Sends to station contacts, CC's buyer + emm.caban@atticor.ai. Falls back to EmailJS if n8n fails."},
-      {title:"Ownership Groups",text:"One email per ownership group per market. Sinclair stations get one email, Hearst gets another. Never individual emails per station. Combined PL estimates still send one email per group."},
-      {title:"Additional Recipients",text:"Manual email field in the rotation builder for extra recipients. Sent alongside ownership group emails with the same PDF attachment."},
-    ]},
-    {section:"System",meg:"Lining this up properly… because someone has to.",items:[
-      {title:"Firebase Sync",text:"All data syncs to Firestore automatically. Save guards prevent writes until load completes. 20% ISCI drop safeguard blocks catastrophic overwrites. Firestore wins for user edits, seed data fills gaps."},
-      {title:"Theme",text:"Megara from Hercules. Orchid dark mode with dusty plum (#9b7bb0), Pegasus blue (#4AC8E8), gold accents (#D4A040). Cormorant Garamond for headings, DM Sans for body. Meg's voice on every page via PageHead component."},
-      {title:"Olympus Light Mode",text:"Toggle via sun/fire icon in sidebar footer. Uses CSS filter inversion to flip all dark colors to warm parchment/gold. Meg's purple accents survive the inversion."},
-      {title:"No Abbreviations",text:"Full brand names (Postman Law, Wettermark Keith) and market names everywhere. Only ISCI codes use abbreviations (CHI, MSP, etc.)."},
-      {title:"Drag & Drop",text:"Uses counter-based dragEnter/dragLeave to prevent flickering. Supported on: creative upload, CSV import, ISCI registration, companion banners, OOH photos, PDF import."},
-    ]},
-  ];
-  const DocsPg=()=>{
-    const q=docsSearch.toLowerCase().trim();
-    const filtered=q?DOCS.map(s=>({...s,items:s.items.filter(i=>i.title.toLowerCase().includes(q)||i.text.toLowerCase().includes(q)||s.section.toLowerCase().includes(q))})).filter(s=>s.items.length>0):DOCS;
-    return<div style={{display:"flex",flexDirection:"column",gap:12}}>
-      <PageHead title="Help & Docs" pgKey="docs"/>
-      <input value={docsSearch} onChange={e=>setDocsSearch(e.target.value)} placeholder="Search docs..." style={{padding:"8px 12px",borderRadius:6,border:"1px solid #9b7bb0",background:"#1e1233",color:"#E8DFF0",fontSize:14,outline:"none",width:"100%",maxWidth:400}}/>
-      {filtered.length===0&&<Cd style={{padding:20,textAlign:"center"}}><div style={{fontSize:14,color:"#C4A0C8",fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div></Cd>}
-      {filtered.map((s,si)=><Cd key={si} style={{padding:14}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <div style={{fontSize:16,fontWeight:800,color:"#F0E8F8"}}>{s.section}</div>
-          <div style={{fontSize:12,color:"#9b7bb0",fontStyle:"italic",maxWidth:250,textAlign:"right"}}>{s.meg}</div>
-        </div>
-        {s.items.map((item,ii)=><div key={ii} style={{padding:"8px 0",borderTop:ii>0?"1px solid #4a3565":"none"}}>
-          <div style={{fontSize:14,fontWeight:700,color:"#C4A0C8",marginBottom:3}}>{item.title}</div>
-          <div style={{fontSize:13,color:"#D0C4DD",lineHeight:1.6}}>{item.text}</div>
-        </div>)}
-      </Cd>)}
-      <div style={{fontSize:11,color:"#6B5E80",textAlign:"center",padding:8}}>Doom & Deliverables v6.1 · Last updated {new Date().toLocaleDateString("en-US",{month:"long",year:"numeric"})}</div>
+  // ── DOCS / HELP PAGE — BOOK TOME UI ─────────────────────────────────
+  // Framer Motion + Tailwind powered book
+  const FM=window.FramerMotion||{};
+  const motion=FM.motion;
+  const AnimatePresence=FM.AnimatePresence;
+  // Wrapper: use motion.div when available, plain div when not
+  const M=motion?motion.div:"div";
+  const MSpan=motion?motion.span:"span";
+  const MButton=motion?motion.button:"button";
+
+  // ── GREEK ORNAMENTS ──
+  const BookCornerOrnament=({position,glowing,extraStyle})=>{
+    const color=glowing?"#8b5fbf":"#8b7355";
+    const opacity=glowing?0.5:0.35;
+    const rots={"top-left":"rotate(0)","top-right":"rotate(90deg)","bottom-right":"rotate(180deg)","bottom-left":"rotate(270deg)"};
+    const posMap={"top-left":"top-2 left-2","top-right":"top-2 right-2","bottom-left":"bottom-2 left-2","bottom-right":"bottom-2 right-2"};
+    return<M className={`absolute pointer-events-none ${posMap[position]}`} style={{...(extraStyle||{})}} animate={glowing?{filter:["drop-shadow(0 0 5px #8b5fbf)","drop-shadow(0 0 15px #8b5fbf)","drop-shadow(0 0 5px #8b5fbf)"]}:{}} transition={glowing?{duration:3,repeat:Infinity,ease:"easeInOut"}:{}}>
+      <svg width="36" height="36" viewBox="0 0 36 36" style={{transform:rots[position]}}>
+        <path d="M2 2 L2 28 L8 28 L8 14 L14 14 L14 20 L20 20 L20 8 L8 8 L8 2 Z" fill="none" stroke={color} strokeWidth="1.5" opacity={opacity}/>
+        <path d="M4 4 L4 10 L10 10 L10 4" fill={color} fillOpacity={opacity*0.3} stroke="none"/>
+      </svg>
+    </M>;
+  };
+
+  const BookGreekKeyDivider=({glowing})=>{
+    const color=glowing?"#8b5fbf":"#8b7355";
+    const opacity=glowing?0.6:0.4;
+    return<div className="w-full flex items-center justify-center">
+      <svg width="100%" height="20" viewBox="0 0 300 20" preserveAspectRatio="xMidYMid meet">
+        <defs><linearGradient id={`bkfade-${glowing?"g":"p"}`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor={color} stopOpacity="0"/><stop offset="15%" stopColor={color} stopOpacity={opacity}/>
+          <stop offset="85%" stopColor={color} stopOpacity={opacity}/><stop offset="100%" stopColor={color} stopOpacity="0"/>
+        </linearGradient></defs>
+        <path d="M30 10 L50 10 L50 4 L62 4 L62 16 L56 16 L56 10 L74 10 L74 4 L86 4 L86 16 L80 16 L80 10 L98 10 L98 4 L110 4 L110 16 L104 16 L104 10 L122 10 L122 4 L134 4 L134 16 L128 16 L128 10 L146 10 L146 4 L158 4 L158 16 L152 16 L152 10 L170 10 L170 4 L182 4 L182 16 L176 16 L176 10 L194 10 L194 4 L206 4 L206 16 L200 16 L200 10 L218 10 L218 4 L230 4 L230 16 L224 16 L224 10 L242 10 L242 4 L254 4 L254 16 L248 16 L248 10 L270 10" fill="none" stroke={`url(#bkfade-${glowing?"g":"p"})`} strokeWidth="1.5"/>
+      </svg>
+    </div>;
+  };
+
+  const BookGreekRunes=({position})=>{
+    const symbols=position==="top"||position==="bottom"?["♔","♡","⚡","☆","⚱"]:["♡","·","⚡","·"];
+    const isVert=position==="left"||position==="right";
+    return<M className={`flex ${isVert?"flex-col":"flex-row"} items-center justify-center gap-3 pointer-events-none select-none font-heading text-xs tracking-[0.5em]`} style={{color:"rgba(139,95,191,.4)"}} animate={{textShadow:["0 0 5px #8b5fbf","0 0 15px #8b5fbf","0 0 5px #8b5fbf"]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}>
+      {symbols.map((s,i)=><MSpan key={i} initial={{opacity:0,y:-5}} animate={{opacity:1,y:0}} transition={{delay:i*0.1}}>{s}</MSpan>)}
+    </M>;
+  };
+
+  const BookRuneAccent=({glowing})=>{
+    const c=glowing?"rgba(139,95,191,.4)":"rgba(139,115,85,.2)";
+    return<M className="flex items-center justify-center gap-1 text-[10px] font-heading tracking-[0.3em] pointer-events-none select-none" style={{color:c}} animate={glowing?{textShadow:["0 0 5px #8b5fbf","0 0 15px #8b5fbf","0 0 5px #8b5fbf"]}:{}} transition={glowing?{duration:3,repeat:Infinity,ease:"easeInOut"}:{}}>
+      {["✦","♔","·","♡","·","⚡","✦"].map((s,i)=><span key={i}>{s}</span>)}
+    </M>;
+  };
+
+  const BookSideRunes=({side})=>{
+    const symbols=side==="left"?["♔","·","♡","·","☆","·","⚡"]:["⚱","·","♡","·","☆","·","♔"];
+    return<M className={`absolute ${side==="left"?"left-1":"right-2"} top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 pointer-events-none select-none font-heading text-[8px] tracking-[0.15em]`} style={{color:"rgba(139,95,191,.25)"}} animate={{opacity:[0.5,1,0.5],textShadow:["0 0 5px #D4A040","0 0 15px #D4A040","0 0 5px #D4A040"]}} transition={{duration:4,repeat:Infinity,ease:"easeInOut"}}>
+      {symbols.map((s,i)=><MSpan key={i} initial={{opacity:0}} animate={{opacity:s==="·"?0.4:1}} transition={{delay:i*0.08}}>{s}</MSpan>)}
+    </M>;
+  };
+
+  const BookLaurelAccent=({glowing})=>{
+    const color=glowing?"#8b5fbf":"#8b7355";
+    const opacity=glowing?0.4:0.2;
+    return<M className="flex items-center justify-center pointer-events-none" animate={glowing?{filter:["drop-shadow(0 0 5px #8b5fbf)","drop-shadow(0 0 15px #8b5fbf)","drop-shadow(0 0 5px #8b5fbf)"]}:{}} transition={glowing?{duration:3,repeat:Infinity,ease:"easeInOut"}:{}}>
+      <svg width="80" height="24" viewBox="0 0 80 24" fill="none">
+        <path d="M35 12 C30 6 22 4 18 6 C22 6 28 8 32 12" stroke={color} strokeWidth="1" opacity={opacity} fill={color} fillOpacity={opacity*0.3}/>
+        <path d="M33 12 C28 8 20 8 16 10 C20 9 26 10 31 13" stroke={color} strokeWidth="1" opacity={opacity} fill={color} fillOpacity={opacity*0.3}/>
+        <path d="M32 14 C27 11 19 12 15 15 C19 13 25 13 30 15" stroke={color} strokeWidth="1" opacity={opacity} fill={color} fillOpacity={opacity*0.3}/>
+        <path d="M45 12 C50 6 58 4 62 6 C58 6 52 8 48 12" stroke={color} strokeWidth="1" opacity={opacity} fill={color} fillOpacity={opacity*0.3}/>
+        <path d="M47 12 C52 8 60 8 64 10 C60 9 54 10 49 13" stroke={color} strokeWidth="1" opacity={opacity} fill={color} fillOpacity={opacity*0.3}/>
+        <path d="M48 14 C53 11 61 12 65 15 C61 13 55 13 50 15" stroke={color} strokeWidth="1" opacity={opacity} fill={color} fillOpacity={opacity*0.3}/>
+        <circle cx="40" cy="12" r="2" fill={color} opacity={opacity}/>
+      </svg>
+    </M>;
+  };
+
+  // ── DAMAGE EFFECTS ──
+  const BookHoofMark=({style:sx})=><M className="absolute pointer-events-none opacity-50 mix-blend-multiply" style={sx||{}} initial={{opacity:0}} animate={{opacity:0.5}} transition={{delay:0.8,duration:0.6}}>
+    <svg width="60" height="70" viewBox="0 0 60 70" fill="none">
+      <path d="M10 50 C10 25 15 10 30 8 C45 10 50 25 50 50" stroke="#3a2a4a" strokeWidth="6" strokeLinecap="round" fill="none"/>
+      <path d="M16 48 C16 28 20 16 30 14 C40 16 44 28 44 48" stroke="#2a1a3a" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+      <circle cx="14" cy="35" r="2.5" fill="#3a2a4a" opacity="0.6"/><circle cx="46" cy="35" r="2.5" fill="#3a2a4a" opacity="0.6"/><circle cx="30" cy="12" r="2" fill="#3a2a4a" opacity="0.5"/>
+      <ellipse cx="30" cy="45" rx="22" ry="12" fill="#3a2a4a" opacity="0.08"/>
+    </svg>
+  </M>;
+
+  const BookBiteMark=({style:sx})=><M className="absolute pointer-events-none" style={sx||{}} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1,duration:0.5}}>
+    <svg width="60" height="100" viewBox="0 0 60 100" fill="none">
+      <path d="M60 0 C 40 10 20 20 15 30 C 10 40 5 45 10 55 C 15 65 25 75 15 85 C 5 95 30 95 60 100 Z" fill="#05050a"/>
+      <path d="M60 0 C 40 10 20 20 15 30 C 10 40 5 45 10 55 C 15 65 25 75 15 85 C 5 95 30 95 60 100" stroke="rgba(60,40,20,.8)" strokeWidth="4"/>
+    </svg>
+  </M>;
+
+  const BookBurnMark=({style:sx})=><M className="absolute pointer-events-none rounded-full mix-blend-multiply blur-[4px]" style={{background:"radial-gradient(circle,rgba(20,10,5,.9) 0%,rgba(60,30,10,.6) 40%,transparent 100%)",...(sx||{})}} initial={{opacity:0,scale:0.8}} animate={{opacity:1,scale:1}} transition={{delay:0.6,duration:0.8}}/>;
+
+  const BookDroolStain=({style:sx})=><M className="absolute pointer-events-none rounded-full mix-blend-multiply blur-[2px]" style={{background:"radial-gradient(circle,rgba(0,100,150,.3) 0%,rgba(0,150,200,.1) 60%,transparent 100%)",...(sx||{})}} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1.2,duration:1}}/>;
+
+  const BookInkSplatter=({style:sx})=><M className="absolute pointer-events-none opacity-80 mix-blend-multiply" style={sx||{}} initial={{scale:0,opacity:0}} animate={{scale:1,opacity:0.8}} transition={{delay:0.5,duration:0.3,type:"spring"}}>
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="20" r="8" fill="#1a1a2e"/><circle cx="12" cy="15" r="3" fill="#1a1a2e"/><circle cx="28" cy="25" r="4" fill="#1a1a2e"/>
+      <circle cx="25" cy="10" r="2" fill="#1a1a2e"/><circle cx="15" cy="30" r="2.5" fill="#1a1a2e"/>
+      <path d="M20 20 L 35 5" stroke="#1a1a2e" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M20 20 L 5 25" stroke="#1a1a2e" strokeWidth="1" strokeLinecap="round"/>
+    </svg>
+  </M>;
+
+  const BookLipstickMark=({style:sx})=><M className="absolute pointer-events-none opacity-70 mix-blend-multiply" style={sx||{}} initial={{opacity:0,rotate:-10}} animate={{opacity:0.7,rotate:0}} transition={{delay:0.9,duration:0.5}}>
+    <svg width="50" height="35" viewBox="0 0 50 35" fill="none">
+      <path d="M10 18 C15 10 22 8 25 12 C28 8 35 10 40 18 C35 20 25 20 10 18 Z" fill="#d48ba5" opacity="0.8"/>
+      <path d="M12 20 C20 28 30 28 38 20 C32 25 18 25 12 20 Z" fill="#d48ba5" opacity="0.9"/>
+      <path d="M15 15 C20 12 25 15 25 15" stroke="#b06380" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
+      <path d="M35 15 C30 12 25 15 25 15" stroke="#b06380" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
+      <path d="M18 22 C25 25 32 22 32 22" stroke="#b06380" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
+    </svg>
+  </M>;
+
+  // ── MARGIN NOTES ──
+  const BookMarginNote=({author,children})=>{
+    const colors={meg:"border-[#8b5fbf] text-[#8b5fbf]",muses:"border-[#d48ba5] text-[#d48ba5]",hades:"border-[#1a1a3a] text-[#1a1a3a]"};
+    const fonts={meg:"font-heading text-base italic",muses:"font-heading text-base italic",hades:"font-body text-sm font-bold"};
+    const labels={meg:"💜 Meg sighs:",muses:"🎵 The Muses sing:",hades:"🔥 Hades notes:"};
+    return<M className={`mt-4 py-2.5 px-2 pl-3 rounded-sm border-l-2 ${colors[author]||colors.meg} ${fonts[author]||fonts.meg}`} style={{background:"rgba(212,196,160,.4)"}} initial={{opacity:0,x:-10}} animate={{opacity:1,x:0}} transition={{delay:0.5,duration:0.4}}>
+      <div className="text-[10px] uppercase tracking-[0.1em] opacity-60 mb-1 not-italic font-body font-normal">{labels[author]||""}</div>
+      <div>{children}</div>
+    </M>;
+  };
+
+  // ── PEGASUS SVG ──
+  const BookPegasusSVG=({size=80,glowing})=>{
+    const color=glowing?"#D4A040":"#8b5fbf";
+    return<svg width={size} height={size} viewBox="0 0 200 200" fill="none">
+      {glowing&&<defs><filter id="peg-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>}
+      <g filter={glowing?"url(#peg-glow)":undefined} opacity={glowing?0.9:0.6}>
+        <path d="M72 52 C68 48 62 42 58 36 C56 32 56 26 60 22 C62 20 66 18 68 16 C70 14 68 10 66 10 C64 10 60 12 58 16 C56 20 54 24 52 28 C50 24 46 22 44 24 C42 26 44 30 48 30 C50 30 52 32 54 34 C52 36 48 40 46 44 C44 48 44 52 46 56 L48 58 C46 60 44 66 42 72 C40 78 38 86 36 92 C34 96 32 100 30 104 L28 110 C28 114 30 116 34 116 C36 116 38 114 38 112 L40 106 C42 100 44 94 46 88 C48 84 50 80 52 76 L56 72 C58 76 58 82 58 88 C58 94 56 100 56 106 L54 112 C54 116 56 118 60 118 C62 118 64 116 64 112 L64 106 C66 100 66 94 66 88 C66 82 66 78 64 74 L68 70 C72 72 78 74 84 74 C88 74 92 72 96 70 L100 68 C100 74 100 80 100 86 C100 92 98 98 98 104 L96 110 C96 114 98 116 102 116 C104 116 106 114 106 112 L108 106 C108 100 110 94 110 88 C110 82 110 76 108 72 L112 68 C114 72 116 78 118 84 C120 90 120 96 120 102 L118 108 C118 112 120 114 124 114 C126 114 128 112 128 110 L128 104 C128 98 128 92 126 86 C124 80 122 74 118 68 L116 64 C120 62 126 58 130 54 C134 50 136 46 134 42 C132 40 128 40 126 42 C122 46 118 50 114 54 C110 58 104 62 98 64 C92 66 86 66 80 64 C76 62 74 58 72 54 Z" fill={color}/>
+        <path d="M62 56 C58 50 52 42 44 34 C38 28 30 22 22 18 C16 14 10 14 8 18 C6 22 10 26 16 28 C22 30 28 34 34 40 C28 36 20 34 14 36 C8 38 6 42 10 44 C14 46 22 44 30 44 C36 44 40 46 44 48 C38 48 30 50 24 54 C18 58 18 62 22 64 C26 66 34 62 40 58 C46 54 50 54 54 56 C56 58 58 58 62 56 Z" fill={color} opacity="0.85"/>
+        <circle cx="62" cy="20" r="1.5" fill={glowing?"#fff":color} opacity="0.8"/>
+      </g>
+    </svg>;
+  };
+
+  // ── SOUL PARTICLES ──
+  const BookSoulParticles=()=>{
+    const particles=useMemo(()=>Array.from({length:25}).map((_,i)=>({
+      id:i,x:Math.random()*100,size:Math.random()*4+2,dur:Math.random()*10+10,delay:Math.random()*10,op:Math.random()*0.4+0.15,isGold:i>=18,drift:Math.random()*40-20
+    })),[]);
+    const greekFrags=useMemo(()=>{
+      const texts=["♔ ♡ ⚡","☆ ⚱ ♡","DOOM","DELIVER","♔ ☆ ♡","⚡ ⚱ ☆","MEG"];
+      return Array.from({length:6}).map((_,i)=>({id:i,text:texts[i%texts.length],x:Math.random()*80+10,y:Math.random()*80+10,dur:Math.random()*30+40,delay:Math.random()*20}));
+    },[]);
+    return<div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {greekFrags.map(f=><M key={`gf-${f.id}`} className="absolute font-heading text-sm tracking-[0.3em] select-none" style={{left:f.x+"%",top:f.y+"%",color:"rgba(139,95,191,.04)"}} animate={{y:[-10,-170],x:[0,20],opacity:[0,0.05,0.05,0]}} transition={{duration:f.dur,delay:f.delay,repeat:Infinity,ease:"linear"}}>{f.text}</M>)}
+      {particles.map(p=><M key={`sp-${p.id}`} className="absolute rounded-full" style={{left:p.x+"%",width:p.size,height:p.size,background:p.isGold?"#D4A040":"rgba(139,95,191,.9)",boxShadow:p.isGold?`0 0 ${p.size*2}px ${p.size/2}px rgba(212,175,55,.7)`:`0 0 ${p.size*2}px ${p.size/2}px rgba(139,95,191,.8)`}} animate={{y:["110vh","-10vh"],x:[0,p.drift],opacity:[0,p.op,p.op,0]}} transition={{duration:p.dur,delay:p.delay,repeat:Infinity,ease:"linear"}}/>)}
+    </div>;
+  };
+
+  // ── FLYING PEGASUS ──
+  const BookFlyingPegasus=()=><M className="fixed pointer-events-none z-[1]" animate={{x:["-15vw","40vw","115vw"],y:["60vh","30vh","10vh"],rotate:[5,-5,-15],opacity:[0,0.25,0.25,0]}} transition={{duration:25,delay:5,repeat:Infinity,ease:"easeInOut"}}>
+    <BookPegasusSVG size={80} glowing/>
+  </M>;
+
+  // ── PEGASUS CONSTELLATION ──
+  const BookPegasusConstellation=()=>{
+    const stars=[{x:18,y:15,s:2.5,d:0},{x:22,y:10,s:1.5,d:.5},{x:28,y:18,s:2,d:1},{x:35,y:25,s:3,d:1.5},{x:25,y:22,s:2,d:2},{x:18,y:20,s:2,d:2.5},{x:12,y:28,s:1.5,d:3},{x:42,y:30,s:2.5,d:3.5},{x:50,y:35,s:2,d:4},{x:55,y:40,s:2.5,d:4.5},{x:60,y:45,s:2,d:5},{x:38,y:38,s:1.5,d:5.5},{x:32,y:48,s:2,d:6},{x:46,y:46,s:1.5,d:6.5}];
+    const lines=[[0,1],[0,2],[2,3],[3,4],[4,5],[5,6],[3,7],[7,8],[8,9],[9,10],[3,11],[11,12],[8,13]];
+    return<M className="absolute pointer-events-none" style={{top:"5%",right:"5%",width:"40vw",height:"40vh"}} animate={{opacity:[0,0.15,0.1,0.15,0]}} transition={{duration:30,repeat:Infinity,ease:"linear"}}>
+      <svg width="100%" height="100%" viewBox="0 0 80 60" fill="none">
+        {lines.map(([f,t],i)=><line key={`cl-${i}`} x1={stars[f].x} y1={stars[f].y} x2={stars[t].x} y2={stars[t].y} stroke="#D4A040" strokeWidth="0.3" opacity="0.4"/>)}
+        {stars.map((star,i)=><M key={`cs-${i}`} animate={{opacity:[0,0.8,0.4,0.8,0.4],scale:[0,1,0.8,1,0.8]}} transition={{duration:8,delay:star.d,repeat:Infinity,ease:"easeInOut"}}><circle cx={star.x} cy={star.y} r={star.s} fill="#D4A040"/></M>)}
+      </svg>
+    </M>;
+  };
+
+  // ── PAGE SOUND ──
+  const bookPlayPageSound=()=>{
+    try{
+      const ctx=new (window.AudioContext||window.webkitAudioContext)();
+      const dur=0.25,bufSz=ctx.sampleRate*dur,buf=ctx.createBuffer(1,bufSz,ctx.sampleRate),data=buf.getChannelData(0);
+      for(let i=0;i<bufSz;i++){const t=i/ctx.sampleRate;data[i]=(Math.random()*2-1)*Math.exp(-t*18)*0.15}
+      const src=ctx.createBufferSource();src.buffer=buf;
+      const filt=ctx.createBiquadFilter();filt.type="bandpass";filt.frequency.value=2000;filt.Q.value=0.5;
+      src.connect(filt);filt.connect(ctx.destination);src.start();src.onended=()=>ctx.close();
+    }catch(e){}
+  };
+
+  // ── BOOK COVER ──
+  const BookCover=({isLocked,onUnlock})=>{
+    return<div className="book-leather w-full h-full rounded-2xl border-4 border-[#111] flex flex-col items-center justify-center p-8 relative overflow-hidden">
+      <div className="absolute inset-3 border border-[rgba(139,95,191,.2)] rounded-lg pointer-events-none"/>
+      <BookCornerOrnament position="top-left" glowing/>
+      <BookCornerOrnament position="top-right" glowing/>
+      <BookCornerOrnament position="bottom-left" glowing/>
+      <BookCornerOrnament position="bottom-right" glowing/>
+      <div className="absolute top-10 left-0 right-0"><BookGreekRunes position="top"/></div>
+      <div className="text-center z-10 relative">
+        <M className="w-14 h-14 mx-auto mb-6 rounded-full border-2 border-[rgba(139,95,191,.4)] flex items-center justify-center" style={{boxShadow:"0 0 15px 2px rgba(139,95,191,.4)"}} animate={{rotate:360}} transition={{duration:20,repeat:Infinity,ease:"linear"}}>
+          <span className="font-heading text-2xl" style={{color:"rgba(212,175,55,.7)"}}>♔</span>
+        </M>
+        <p className="font-heading text-xs tracking-[0.3em] uppercase mb-3" style={{color:"rgba(139,95,191,.6)"}}>Megara Presents</p>
+        <BookGreekKeyDivider glowing/>
+        <M className="font-heading text-[38px] leading-tight tracking-[0.05em] my-4" style={{color:"#D4A040"}} animate={{textShadow:["0 0 5px #8b5fbf, 0 0 10px #8b5fbf","0 0 10px #8b5fbf, 0 0 20px #8b5fbf, 0 0 30px #8b5fbf","0 0 5px #8b5fbf, 0 0 10px #8b5fbf"]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}>Doom &<br/>Deliverables</M>
+        <BookGreekKeyDivider glowing/>
+        <h2 className="font-body text-sm tracking-[0.15em] uppercase mt-3" style={{color:"rgba(139,95,191,.7)"}}>A Guide to<br/>Traffic Management</h2>
+        <p className="font-heading text-xl mt-4 italic" style={{color:"rgba(212,139,165,.8)"}}>You're welcome.</p>
+      </div>
+      <div className="absolute bottom-14 left-0 right-0"><BookGreekRunes position="bottom"/></div>
+      <BookHoofMark style={{top:32,right:32,opacity:.3,transform:"rotate(-10deg) scale(.75)"}}/>
+      <BookHoofMark style={{bottom:48,left:32,opacity:.2,transform:"rotate(15deg) scale(.6)"}}/>
+      <div className="absolute left-0 top-0 bottom-0 w-10 rounded-l-2xl" style={{background:"linear-gradient(to right,black,#1a1a1a,transparent)",opacity:.8}}/>
+      <M className="absolute bottom-4 font-heading text-xs tracking-[0.2em] uppercase" style={{color:"rgba(212,175,55,.5)"}} animate={{opacity:[0.3,0.8,0.3]}} transition={{duration:2.5,repeat:Infinity}}>{isLocked?"Click the Clasp":"Click to Open"}</M>
+    </div>;
+  };
+
+  const BookInsideCover=()=><div className="w-full h-full rounded-2xl border-4 border-[#111] relative overflow-hidden" style={{background:"#1a1a1a"}}>
+    <div className="absolute inset-0 opacity-10" style={{backgroundImage:"radial-gradient(#333 1px,transparent 1px)",backgroundSize:"20px 20px"}}/>
+    <div className="absolute inset-0 flex flex-col items-center justify-center">
+      <M className="font-heading text-5xl tracking-[0.5em] mb-8" style={{color:"rgba(212,175,55,.05)",transform:"rotate(12deg)"}} animate={{opacity:[0.03,0.06,0.03]}} transition={{duration:8,repeat:Infinity}}>♔ DOOM ♡</M>
+      <M className="font-heading text-xl text-center px-8 mt-12 italic" style={{color:"rgba(212,139,165,.3)"}} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.5,duration:1}}>For everyone who's ever had to explain something twice.</M>
     </div>
+    <BookCornerOrnament position="top-left" glowing extraStyle={{opacity:.3}}/>
+    <BookCornerOrnament position="bottom-right" glowing extraStyle={{opacity:.3}}/>
+    <div className="absolute right-0 top-0 bottom-0 w-12" style={{background:"linear-gradient(to left,black,#1a1a1a,transparent)",opacity:.8}}/>
+  </div>;
+
+  // ── BOOK PAGE ──
+  const toRoman=(num)=>{
+    if(!num)return"";const vals=[[1000,"M"],[900,"CM"],[500,"D"],[400,"CD"],[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]];
+    let s="",n=num;for(const[v,r]of vals){while(n>=v){s+=r;n-=v}}return s;
+  };
+
+  const BookPageComp=({pageNumber,title,children,damageEffects})=>{
+    return<div className="book-parchment w-full h-full rounded-2xl flex flex-col relative overflow-hidden text-[#2a1a1a]">
+      <M className="absolute inset-0 rounded-2xl pointer-events-none z-30 mix-blend-soft-light" style={{background:"rgba(255,200,100,.03)"}} animate={{opacity:[0,0.06,0,0.08,0.02,0.07,0]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}/>
+      <BookCornerOrnament position="top-left" glowing extraStyle={{opacity:.5}}/>
+      <BookCornerOrnament position="top-right" glowing extraStyle={{opacity:.5}}/>
+      <BookCornerOrnament position="bottom-left" glowing extraStyle={{opacity:.5}}/>
+      <BookCornerOrnament position="bottom-right" glowing extraStyle={{opacity:.5}}/>
+      <BookSideRunes side="left"/>
+      <BookSideRunes side="right"/>
+      <M className="absolute inset-3 border border-[rgba(139,95,191,.1)] rounded-lg pointer-events-none z-10" animate={{boxShadow:["0 0 5px rgba(139,95,191,.1)","0 0 15px rgba(139,95,191,.2)","0 0 5px rgba(139,95,191,.1)"]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}/>
+      <div className="absolute left-0 top-0 bottom-0 w-12 pointer-events-none z-20 rounded-l-2xl" style={{background:"linear-gradient(to right,rgba(0,0,0,.35),rgba(100,70,30,.08),transparent)"}}/>
+      <div className="book-scroll flex-1 py-8 px-10 relative z-10 flex flex-col overflow-y-auto">
+        {title&&<M className="text-center mb-4 flex-shrink-0" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:0.2,duration:0.5}}>
+          <BookRuneAccent glowing/>
+          <h2 className="font-heading text-[22px] tracking-[0.05em] my-2" style={{color:"#8b5fbf",textShadow:"0 0 8px rgba(139,95,191,.4),0 0 20px rgba(139,95,191,.15),0 1px 2px rgba(0,0,0,.2)"}}>{title}</h2>
+          <BookGreekKeyDivider glowing/>
+        </M>}
+        <M className="font-body text-sm leading-relaxed text-[#2a1a1a] flex-1" initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.4,duration:0.6}}>{children}</M>
+        {pageNumber>0&&<M className="mt-4 flex-shrink-0" initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.8,duration:0.5}}>
+          <BookGreekKeyDivider glowing/>
+          <BookLaurelAccent glowing/>
+          <div className="text-center font-heading text-[15px] tracking-[0.15em]" style={{color:"#8b5fbf",textShadow:"0 0 6px rgba(139,95,191,.3),0 0 15px rgba(139,95,191,.1)"}}>— {toRoman(pageNumber)} —</div>
+          <BookRuneAccent glowing/>
+        </M>}
+      </div>
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden rounded-2xl">{damageEffects}</div>
+    </div>;
+  };
+
+  // ── BOOK CLASP ──
+  const BookClasp=({isLocked,onUnlock})=>{
+    const handleClick=(e)=>{e.stopPropagation();onUnlock()};
+    const AP=AnimatePresence||React.Fragment;
+    return<AP>
+      {isLocked&&<M className="absolute z-[100] cursor-pointer" style={{right:-8,top:"50%",transform:"translateY(-50%)"}} onClick={handleClick} initial={{x:0,scale:1,opacity:1}} exit={{x:30,scale:1.8,opacity:0}} transition={{duration:0.5,ease:"easeOut"}} whileHover={{scale:1.05}} whileTap={{scale:0.95}}>
+        <div className="relative">
+          <M className="w-11 h-24 flex flex-col items-center justify-center gap-1 rounded-r-lg rounded-l-sm" style={{background:"linear-gradient(to bottom,#2a2a3a,#1a1a2a,#2a2a3a)",border:"2px solid rgba(139,95,191,.5)"}} animate={{boxShadow:["0 0 8px 2px rgba(139,95,191,.3),inset 0 0 4px rgba(139,95,191,.2)","0 0 16px 4px rgba(139,95,191,.6),inset 0 0 8px rgba(139,95,191,.4)","0 0 8px 2px rgba(139,95,191,.3),inset 0 0 4px rgba(139,95,191,.2)"]}} transition={{duration:2,repeat:Infinity,ease:"easeInOut"}}>
+            <div className="w-5 h-0.5 rounded" style={{background:"rgba(139,95,191,.3)"}}/>
+            <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center" style={{borderColor:"rgba(212,175,55,.6)",background:"#160d20"}}>
+              <div className="w-1 h-1 rounded-full" style={{background:"rgba(212,175,55,.4)"}}/>
+            </div>
+            <div className="w-2 h-3 rounded-b-sm -mt-1.5" style={{background:"#160d20",borderLeft:"1px solid rgba(212,175,55,.3)",borderRight:"1px solid rgba(212,175,55,.3)",borderBottom:"1px solid rgba(212,175,55,.3)"}}/>
+            <span className="font-heading text-[9px] mt-0.5" style={{color:"rgba(212,175,55,.6)"}}>Ω</span>
+            <div className="w-5 h-0.5 rounded" style={{background:"rgba(139,95,191,.3)"}}/>
+          </M>
+          <div className="absolute top-1/2 -translate-y-1/2 right-full w-5 h-10 rounded-l-sm" style={{background:"linear-gradient(to left,#2a2a3a,#1a1a2a)",borderTop:"2px solid rgba(139,95,191,.3)",borderBottom:"2px solid rgba(139,95,191,.3)",borderLeft:"2px solid rgba(139,95,191,.3)"}}/>
+        </div>
+      </M>}
+    </AP>;
+  };
+
+  // ── TABLE OF CONTENTS ──
+  const BookTableOfContents=({pages,currentPage,onNavigate,onClose})=>{
+    const romans=["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII","XIV","XV"];
+    const AP=AnimatePresence||React.Fragment;
+    return<M className="absolute inset-0 z-[200] flex items-center justify-center" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.3}}>
+      <div className="absolute inset-0 rounded-2xl backdrop-blur-sm" style={{background:"rgba(0,0,0,.6)"}} onClick={onClose}/>
+      <M className="relative z-10 w-[85%] max-h-[85%] overflow-y-auto rounded-xl p-6" style={{background:"#1a1a1a",border:"2px solid rgba(139,95,191,.3)",boxShadow:"0 0 30px 5px rgba(139,95,191,.6)"}} initial={{scale:0.9,y:20}} animate={{scale:1,y:0}} exit={{scale:0.9,y:20,opacity:0}} transition={{type:"spring",damping:20}}>
+        <div className="text-center mb-5">
+          <p className="font-heading text-[10px] tracking-[0.4em] uppercase mb-1" style={{color:"rgba(212,175,55,.4)"}}>Index</p>
+          <h3 className="font-heading text-lg tracking-[0.1em]" style={{color:"#D4A040"}}>Table of Contents</h3>
+          <div className="w-20 h-px mx-auto mt-2" style={{background:"linear-gradient(to right,transparent,rgba(139,95,191,.5),transparent)"}}/>
+        </div>
+        <div className="flex flex-col gap-1">
+          {pages.map((page,idx)=>{
+            const targetLeaf=Math.floor(idx/2)+1;
+            const isCurrent=currentPage===targetLeaf;
+            return<MButton key={idx} onClick={()=>{onNavigate(targetLeaf);onClose()}} className="w-full text-left py-2.5 px-4 rounded-lg flex items-center gap-3 cursor-pointer transition-all duration-200" style={{border:isCurrent?"1px solid rgba(139,95,191,.3)":"1px solid transparent",background:isCurrent?"rgba(139,95,191,.15)":"transparent"}} initial={{opacity:0,x:-10}} animate={{opacity:1,x:0}} transition={{delay:idx*0.04}} whileHover={{x:4,background:"rgba(139,95,191,.1)"}}>
+              <span className="font-heading text-sm w-8 flex-shrink-0 tracking-[0.1em]" style={{color:isCurrent?"#D4A040":"rgba(139,95,191,.4)"}}>{romans[idx]||idx+1}</span>
+              <span style={{color:"rgba(139,95,191,.2)"}}>·</span>
+              <span className="font-body text-[13px] flex-1" style={{color:isCurrent?"#D4A040":"rgba(232,223,240,.7)"}}>{page.title}</span>
+              {isCurrent&&<M className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{background:"#D4A040",boxShadow:"0 0 15px 2px rgba(139,95,191,.4)"}} animate={{scale:[1,1.3,1]}} transition={{duration:2,repeat:Infinity}}/>}
+            </MButton>;
+          })}
+        </div>
+        <div className="text-center mt-4">
+          <div className="w-20 h-px mx-auto mb-2" style={{background:"linear-gradient(to right,transparent,rgba(139,95,191,.3),transparent)"}}/>
+          <button onClick={onClose} className="font-heading text-[10px] tracking-[0.3em] uppercase bg-transparent border-none cursor-pointer" style={{color:"rgba(139,95,191,.4)"}}>Close</button>
+        </div>
+      </M>
+    </M>;
+  };
+
+  // ── BOOK (main component with page flipping) ──
+  const BookMain=({pages:bookPages})=>{
+    const[isLocked,setIsLocked]=useState(true);
+    const[currentLeaf,setCurrentLeaf]=useState(0);
+    const[showToc,setShowToc]=useState(false);
+    const pairedLeaves=[];
+    for(let i=0;i<bookPages.length;i+=2)pairedLeaves.push({front:bookPages[i],back:bookPages[i+1]||null,fi:i,bi:i+1});
+    const totalLeaves=pairedLeaves.length+1;
+    const flipTo=useCallback((n)=>{if(n<0||n>totalLeaves||n===currentLeaf)return;bookPlayPageSound();setCurrentLeaf(n)},[currentLeaf,totalLeaves]);
+    const handleNext=()=>flipTo(currentLeaf+1);
+    const handlePrev=()=>flipTo(currentLeaf-1);
+    const handleUnlock=()=>{setIsLocked(false);setTimeout(()=>flipTo(1),500)};
+    const handleCoverClick=()=>{if(isLocked)return;currentLeaf===0?handleNext():handlePrev()};
+    const isOpen=currentLeaf>0;
+    const isFullyFlipped=currentLeaf>=totalLeaves;
+    const AP=AnimatePresence||React.Fragment;
+    const getVisText=()=>{
+      if(currentLeaf===0)return"";if(currentLeaf>pairedLeaves.length)return"End";
+      if(currentLeaf===1)return`Page 1 of ${bookPages.length}`;
+      const l=(currentLeaf-1)*2,r=l+1;
+      return r>bookPages.length?`Page ${l} of ${bookPages.length}`:`Pages ${l}-${r} of ${bookPages.length}`;
+    };
+    return<div className="flex flex-col items-center w-full overflow-visible">
+      <M className="relative w-full max-w-[420px] overflow-visible" style={{aspectRatio:"3/4.2",perspective:2000,filter:"drop-shadow(0 0 8px rgba(139,95,191,.08))"}} animate={{x:isOpen?"50%":"0%"}} transition={{duration:0.6,ease:"easeOut"}}>
+        {!isOpen&&<BookClasp isLocked={isLocked} onUnlock={handleUnlock}/>}
+        <AP>
+        {isOpen&&!showToc&&<MButton key="toc-btn" className="absolute -top-3 left-1/2 -translate-x-1/2 z-[150] flex items-center gap-1.5 py-1.5 px-4 rounded-t-lg cursor-pointer" style={{background:"#1a1a2a",border:"1px solid rgba(139,95,191,.4)"}} onClick={(e)=>{e.stopPropagation();setShowToc(true)}} initial={{y:-20,opacity:0}} animate={{y:0,opacity:1}} exit={{y:-20,opacity:0}} whileHover={{y:-2}}>
+          <span className="font-heading text-[10px] tracking-[0.2em] uppercase" style={{color:"rgba(139,95,191,.5)"}}>☰ Index</span>
+        </MButton>}
+        </AP>
+        <AP>{showToc&&<BookTableOfContents key="toc" pages={bookPages} currentPage={currentLeaf} onNavigate={(li)=>{bookPlayPageSound();setCurrentLeaf(li)}} onClose={()=>setShowToc(false)}/>}</AP>
+        {/* Spine edge lines for unflipped pages */}
+        <AP>
+        {isOpen&&!isFullyFlipped&&<M key="spine" className="absolute top-3 -right-px bottom-3 w-1 z-[5] rounded-r-sm overflow-hidden" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+          <div className="w-full h-full" style={{background:"linear-gradient(to bottom,rgba(139,95,191,.1),rgba(212,175,55,.25),rgba(139,95,191,.1))"}}/>
+          {Array.from({length:Math.min(pairedLeaves.length-currentLeaf+1,8)}).map((_,i)=><div key={i} className="absolute w-full h-px" style={{background:"rgba(212,175,55,.15)",top:`${8+i*11}%`}}/>)}
+        </M>}
+        </AP>
+        {/* Back cover base */}
+        <div className="absolute inset-0 z-0">
+          <div className="book-leather w-full h-full rounded-2xl border-4 border-[#111]"/>
+        </div>
+        {/* Parchment base for open book */}
+        <div className="absolute inset-0 z-[1]">
+          <div className="book-parchment w-full h-full rounded-2xl"/>
+        </div>
+        {/* Content leaves (reversed so first is on top when closed) */}
+        {[...pairedLeaves].reverse().map((leaf,ri)=>{
+          const li=pairedLeaves.length-1-ri;
+          const leafIdx=li+1;
+          const isFlipped=currentLeaf>leafIdx;
+          const zIdx=isFlipped?10+leafIdx:10+totalLeaves-leafIdx;
+          return<div key={`leaf-${li}`} className={`book-leaf${isFlipped?" flipped":""}`} style={{zIndex:zIdx}} onClick={()=>{currentLeaf===leafIdx?handleNext():currentLeaf===leafIdx+1?handlePrev():null}}>
+            <div className="book-face">
+              <BookPageComp pageNumber={leaf.fi+1} title={leaf.front.title} damageEffects={leaf.front.damageEffects}>{leaf.front.content}</BookPageComp>
+            </div>
+            <div className="book-face book-face-back">
+              {leaf.back?<BookPageComp pageNumber={leaf.bi+1} title={leaf.back.title} damageEffects={leaf.back.damageEffects}>{leaf.back.content}</BookPageComp>
+                :<div className="book-parchment w-full h-full rounded-2xl opacity-95"/>}
+            </div>
+          </div>;
+        })}
+        {/* Cover leaf */}
+        <div className={`book-leaf${currentLeaf>0?" flipped":""}`} style={{zIndex:currentLeaf>0?10:10+totalLeaves}} onClick={handleCoverClick}>
+          <div className="book-face"><BookCover isLocked={isLocked} onUnlock={handleUnlock}/></div>
+          <div className="book-face book-face-back"><BookInsideCover/></div>
+        </div>
+      </M>
+      {/* Navigation controls */}
+      <M className="mt-8 flex justify-between items-center w-full max-w-[420px] px-2" animate={{opacity:isOpen?1:0}} transition={{duration:0.5}} style={{pointerEvents:isOpen?"auto":"none"}}>
+        <MButton onClick={handlePrev} disabled={currentLeaf<=0} className="flex items-center gap-1 font-heading text-sm tracking-[0.1em] bg-transparent border-none" style={{cursor:currentLeaf<=0?"not-allowed":"pointer",color:currentLeaf<=0?"rgba(139,95,191,.2)":"rgba(212,175,55,.7)"}} whileHover={currentLeaf>0?{x:-3}:{}} whileTap={currentLeaf>0?{scale:0.95}:{}}>◂ Previous</MButton>
+        <div className="font-body text-xs" style={{color:"rgba(139,95,191,.5)"}}>{getVisText()}</div>
+        <MButton onClick={handleNext} disabled={isFullyFlipped} className="flex items-center gap-1 font-heading text-sm tracking-[0.1em] bg-transparent border-none" style={{cursor:isFullyFlipped?"not-allowed":"pointer",color:isFullyFlipped?"rgba(139,95,191,.2)":"rgba(212,175,55,.7)"}} whileHover={!isFullyFlipped?{x:3}:{}} whileTap={!isFullyFlipped?{scale:0.95}:{}}>Next ▸</MButton>
+      </M>
+    </div>;
+  };
+
+  // ── BOOK PAGES (5 at a time) ──
+  // PAGES 1-5: Welcome, Logging In & Nav, Broadcast Month & Theme, Building a Rotation, Combined Estimates
+  const BOOK_PAGES_1=[
+    {title:"Welcome to Doom & Deliverables",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p><span style={{fontSize:28,fontFamily:"'Cormorant Garamond',serif",float:"left",marginRight:8,color:"#4a1a1a",lineHeight:1}}>B</span>y decree of someone who actually knows what they're doing, this guide will walk you through the Traffic Management System.</p>
+      <p>Try to keep up. The system is designed to handle rotations, estimates, and station communications without breaking a sweat.</p>
+      <p>Familiarize yourself with these procedures immediately. We don't have all eternity.</p>
+      <BookMarginNote author="meg">I didn't volunteer for this. But here we are.</BookMarginNote>
+    </div>,damageEffects:<>{<BookBurnMark style={{top:0,right:0,width:96,height:96,opacity:.4}}/>}{<BookInkSplatter style={{bottom:32,left:16,opacity:.4}}/>}{<BookLipstickMark style={{top:"25%",right:32,opacity:.6,transform:"rotate(15deg) scale(1.25)"}}/>}</>},
+
+    {title:"Logging In & Navigation",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Enter the system password on the login screen and click 'Let Me In.' Your session persists until you close the browser tab.</p>
+      <p>The sidebar contains all pages with badge alerts. A gold active indicator shows your current page. Use the search bar to find ISCIs, stations, estimates, and markets.</p>
+      <p>OOH Hub is a separate sub-app at #ooh with its own sidebar and navigation.</p>
+      <BookMarginNote author="muses">She typed the password, clicked the door<br/>The sidebar lit up, who could ask for more?</BookMarginNote>
+    </div>,damageEffects:<>{<BookDroolStain style={{bottom:16,left:16,width:112,height:112,opacity:.3}}/>}{<BookLipstickMark style={{bottom:48,right:24,opacity:.5,transform:"rotate(-25deg) scale(.9)"}}/>}</>},
+
+    {title:"Broadcast Month & Theme",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Set the Broadcast Month in the Traffic Center header. This controls flight dates, rotation deadlines, and which WK monthly estimate appears.</p>
+      <p>WK estimates change per month (213=April, 214=May). PL estimates stay the same all year.</p>
+      <p>The theme is Megara's Underworld — orchid dark mode with dusty plum and gold accents. Olympus light mode (sun icon in sidebar) inverts to warm parchment with golden light.</p>
+      <BookMarginNote author="meg">Yes, I picked the colors. You're welcome.</BookMarginNote>
+    </div>,damageEffects:<>{<BookBiteMark style={{top:"33%",right:0,opacity:.6,transform:"rotate(-90deg) scale(.7)"}}/>}</>},
+
+    {title:"Building a Rotation",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Select an estimate and click 'Build.' Choose your ISCIs and set rotation percentages per schedule (M-F, Weekend, All Week, Bookend).</p>
+      <p>Each duration must total exactly 100%. Stations are grouped by ownership — you can toggle entire groups on or off at once.</p>
+      <BookMarginNote author="muses">A hundred percent, no more, no less<br/>She built that rotation with finesse!</BookMarginNote>
+    </div>,damageEffects:<>{<BookHoofMark style={{bottom:16,right:16,opacity:.3,transform:"rotate(-10deg) scale(.75)"}}/>}{<BookDroolStain style={{top:16,right:16,width:80,height:80,opacity:.2}}/>}</>},
+
+    {title:"Combined Estimates",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>PL has 6 TV buy types per market (Base, Sponsorship, UD/AV, Sports, Cable, Heavy Up).</p>
+      <p>Select all 6 and click 'Combine & Build.' This creates one single traffic sheet with one email per ownership group — not 6 separate emails.</p>
+      <p>WK uses 3-digit monthly estimates shared across all markets. Traffic is still built per market.</p>
+      <BookMarginNote author="meg">Six buy types, one button. Even Pegasus could handle this.</BookMarginNote>
+    </div>,damageEffects:<>{<BookBurnMark style={{bottom:0,left:0,width:128,height:128,opacity:.3}}/>}{<BookLipstickMark style={{top:32,left:32,opacity:.4,transform:"rotate(45deg) scale(1.1)"}}/>}</>},
+  ];
+
+  // PAGES 6-10: Sending, Traffic Tracker, ESPN Digital, Pandora, ISCI Registry
+  const BOOK_PAGES_2=[
+    {title:"Sending to Stations",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Click 'Email Stations' to generate a PDF with clickable creative links and send it via n8n (Outlook).</p>
+      <p>Emails are grouped by ownership — one email per group. The buyer gets CC'd automatically. Use the additional recipients field for manual email addresses.</p>
+      <p>After sending, each market tracks confirmations independently. WK uses estimate|market keys so Birmingham's status is separate from Chattanooga's.</p>
+      <BookMarginNote author="muses">One click to send, one click to shine<br/>Those PDFs went out right on time!</BookMarginNote>
+    </div>,damageEffects:<>{<BookBiteMark style={{bottom:16,right:0,opacity:.5,transform:"rotate(-90deg) scale(.6)"}}/>}</>},
+
+    {title:"The Traffic Tracker",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Mission Control shows overall progress for the selected brand and month, including a progress bar with percentage and smart alerts for markets with missing buy types.</p>
+      <p>The Status Grid displays every market × every buy type. Cells show estimate numbers color-coded: green=sent, gold=built, rose=partial, dark=not started.</p>
+      <p>Toggle between Postman Law and Wettermark Keith. Month tabs let you check any month's status.</p>
+      <BookMarginNote author="meg">I can see everything you haven't done. Don't test me.</BookMarginNote>
+    </div>,damageEffects:<>{<BookHoofMark style={{bottom:32,right:32,opacity:.25,transform:"rotate(20deg) scale(.75)"}}/>}{<BookBurnMark style={{top:0,left:"50%",width:80,height:80,opacity:.25}}/>}</>},
+
+    {title:"ESPN / GKBPS Digital",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Click the campaign button (March Madness, MLB, NFL, etc.) to set UTM parameters automatically. 3 URLs per market are auto-generated.</p>
+      <p>ESPN Video (Placement=ESPNweb), GKBPS (Placement=GKBPS), Display (Medium=Display). All use the same campaign string with the DMA prefix.</p>
+      <p>'Download PDF' generates a native jsPDF document where every URL and creative file link is clickable.</p>
+      <BookMarginNote author="meg">The UTMs better be right.</BookMarginNote>
+    </div>,damageEffects:<>{<BookInkSplatter style={{top:16,left:16,opacity:.5}}/>}{<BookDroolStain style={{bottom:24,right:24,width:64,height:64,opacity:.25}}/>}</>},
+
+    {title:"Pandora / SiriusXM Streaming",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Pandora generates unique URLs for each audio ISCI with UTM_Content=&#123;ISCI_CODE&#125;, Placement=AudioSelect, UTM_Source=SiriusXM.</p>
+      <p>Print and PDF generate all 4 PL markets at once. Each market section shows audio ISCIs with clickable URLs, companion banners, and display banners.</p>
+      <p>Spotify and Generic modes use manual UTM fields for full customization.</p>
+      <BookMarginNote author="muses">Same deal, different vendor — she handles it all!</BookMarginNote>
+    </div>,damageEffects:<>{<BookHoofMark style={{top:24,left:24,opacity:.2,transform:"rotate(30deg) scale(.65)"}}/>}{<BookLipstickMark style={{bottom:40,left:"40%",opacity:.45,transform:"rotate(-10deg)"}}/>}</>},
+
+    {title:"ISCI Registry",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Click '+ Register ISCI' to add new codes. System auto-generates ISCI codes: DMA + brand + sequence + suffix. Select multiple DMAs to register across markets at once.</p>
+      <p>OOH ISCIs (suffix O) only appear in the OOH Hub's dedicated OOH ISCI Registry — not in the main registry.</p>
+      <p>Upload creative files per ISCI via drag-and-drop. Files stored in Firebase Storage. Download links appear clickable in PDFs and emails.</p>
+      <p>ISCIs use code+dma composite key. 20% drop safeguard blocks saves if count drops dramatically.</p>
+      <BookMarginNote author="meg">This is MY registry. You're just visiting.</BookMarginNote>
+    </div>,damageEffects:<>{<BookBurnMark style={{top:8,right:8,width:72,height:72,opacity:.35}}/>}{<BookBiteMark style={{bottom:0,left:0,opacity:.3,transform:"scale(.5)"}}/>}</>},
+  ];
+
+  // PAGES 11-14: Stations, OOH Hub, Traffic Library & System, End
+  const BOOK_PAGES_3=[
+    {title:"Stations & Contacts",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>All TV and Radio stations with call letters, market, brand, ownership, and contact emails. Market filter cascades from brand — no Chicago in WK, no Birmingham in PL.</p>
+      <p>Stations with the same ownership group get one combined email when traffic is sent. The rotation builder shows stations grouped by ownership.</p>
+      <p>Vendors click the Confirm Receipt link in their email. Opens a branded portal with traffic details. They can confirm, add contacts, or request removal.</p>
+      <BookMarginNote author="meg">I keep this list tighter than Hades keeps the Underworld.</BookMarginNote>
+    </div>,damageEffects:<>{<BookDroolStain style={{top:"40%",right:8,width:80,height:80,opacity:.2}}/>}{<BookHoofMark style={{bottom:24,left:24,opacity:.25,transform:"rotate(5deg) scale(.7)"}}/>}</>},
+
+    {title:"OOH Hub",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Separate sub-app at #ooh with its own sidebar. Contains WK OOH, PL OOH, OOH ISCI Registry, and Import/Upload.</p>
+      <p>WK OOH: billboard/poster inventory across 6 markets. Card view with photos, map view, contract tracking, traffic builder per vendor/DMA.</p>
+      <p>PL OOH: panels with creative calendar. Tracks creative due dates, board switches, flight dates.</p>
+      <p>Import/Upload: drag-and-drop PDF contract parser for Lamar, Reagan, Outfront. AI-assisted parsing for unknown formats.</p>
+      <BookMarginNote author="muses">Three hundred boards she oversees with grace<br/>Each one accounted for, in its place!</BookMarginNote>
+    </div>,damageEffects:<>{<BookInkSplatter style={{bottom:16,right:16,opacity:.5}}/>}{<BookLipstickMark style={{top:40,right:40,opacity:.35,transform:"rotate(20deg) scale(.8)"}}/>}</>},
+
+    {title:"Traffic Library & System",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Brand tabs with per-market summary cards. Cards show media coverage per month — green check for sent, red X for missing.</p>
+      <p>Copy to Month: dropdown copies traffic to another month. WK estimates auto-swap to the correct monthly number. PL estimates stay the same.</p>
+      <p>All PDFs generated with jsPDF text rendering — creative file links are clickable. Not canvas screenshots.</p>
+      <p>Firebase syncs automatically. Firestore wins for user edits, seed data fills gaps. Theme uses orchid dark mode with dusty plum, Pegasus blue, and gold accents.</p>
+      <BookMarginNote author="meg">I remember every version. Every mistake.</BookMarginNote>
+    </div>,damageEffects:<>{<BookBurnMark style={{bottom:8,left:8,width:96,height:96,opacity:.25}}/>}{<BookHoofMark style={{top:16,right:16,opacity:.2,transform:"rotate(-15deg) scale(.6)"}}/>}</>},
+
+    {title:"End of the Line",content:<div style={{display:"flex",flexDirection:"column",gap:14,textAlign:"center",paddingTop:24}}>
+      <p style={{fontSize:17,fontFamily:"'Cormorant Garamond',serif",color:"#4a1a1a"}}>Thus concludes the sacred documentation of the Traffic Management System.</p>
+      <p style={{fontStyle:"italic",color:"#5a4a3a",fontSize:12}}>May your rotations total 100% and your confirmations come swiftly.</p>
+      <div style={{width:48,height:48,margin:"32px auto 0",border:"2px solid #4a1a1a",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",opacity:.4}}>
+        <div style={{width:24,height:24,background:"#4a1a1a",transform:"rotate(45deg)"}}/>
+      </div>
+      <BookMarginNote author="muses">And so the guide comes to a close<br/>She taught them well, as heaven knows!</BookMarginNote>
+    </div>,damageEffects:<>{<BookBurnMark style={{bottom:0,right:0,width:160,height:160,opacity:.3}}/>}{<BookLipstickMark style={{bottom:"25%",left:"25%",opacity:.6,transform:"rotate(-15deg) scale(1.5)"}}/>}</>},
+  ];
+
+  const ALL_BOOK_PAGES=useMemo(()=>[...BOOK_PAGES_1,...BOOK_PAGES_2,...BOOK_PAGES_3],[]);
+
+  const DocsPg=()=>{
+    return<div className="flex flex-col gap-3">
+      <PageHead title="Help & Docs" pgKey="docs"/>
+      <div className="relative flex flex-col items-center justify-center py-4 px-2 overflow-hidden" style={{minHeight:"calc(100vh - 120px)"}}>
+        <BookSoulParticles/>
+        <BookFlyingPegasus/>
+        <BookPegasusConstellation/>
+        <div className="z-10 w-full flex flex-col items-center overflow-visible">
+          <BookMain pages={ALL_BOOK_PAGES}/>
+        </div>
+      </div>
+    </div>;
   };
 
   if(confirmJsx)return confirmJsx;

@@ -123,25 +123,35 @@ html.dd-light .leaflet-container{
 html.dd-light ::-webkit-scrollbar-thumb{background:#d4c0a0 !important}
 html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
 
-/* ═══ BOOK TOME UI ═══ */
-.leather-texture{background:linear-gradient(135deg,#2a1b3d 0%,#160d20 100%);position:relative}
-.leather-texture::before{content:"";position:absolute;inset:0;opacity:.25;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");pointer-events:none;border-radius:inherit}
-.parchment-texture{background-color:#e8dcc4;position:relative}
-.parchment-texture::before{content:"";position:absolute;inset:0;opacity:.08;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.4' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");pointer-events:none;border-radius:inherit}
-@keyframes torch-flicker{0%{opacity:0}15%{opacity:.06}30%{opacity:0}45%{opacity:.08}60%{opacity:.02}75%{opacity:.07}90%{opacity:0}100%{opacity:0}}
-.torch-flicker{animation:torch-flicker 3s ease-in-out infinite}
-@keyframes clasp-glow{0%{box-shadow:0 0 8px 2px rgba(139,95,191,.3),inset 0 0 4px rgba(139,95,191,.2)}50%{box-shadow:0 0 16px 4px rgba(139,95,191,.6),inset 0 0 8px rgba(139,95,191,.4)}100%{box-shadow:0 0 8px 2px rgba(139,95,191,.3),inset 0 0 4px rgba(139,95,191,.2)}}
-.clasp-glow{animation:clasp-glow 2s ease-in-out infinite}
-/* Book page dark theme overrides — protect parchment text */
-.parchment-texture,.parchment-texture *{color:#2a1a1a !important}
-.parchment-texture h2{font-family:'Cinzel',serif !important}
-.parchment-texture p{font-family:'MedievalSharp',cursive !important}
-.parchment-texture button{border-color:transparent !important}
-.leather-texture,.leather-texture *{color:inherit !important}
-.leather-texture h1,.leather-texture h2{font-family:'Cinzel',serif !important}
-.leather-texture button{border-color:transparent !important}
-/* Book inner scroll */
-.book-inner-scroll::-webkit-scrollbar{width:4px}.book-inner-scroll::-webkit-scrollbar-thumb{background:rgba(139,115,85,.4);border-radius:2px}.book-inner-scroll::-webkit-scrollbar-track{background:transparent}
+/* ═══ BOOK TOME UI — Help & Docs ═══ */
+.book-leather{background:linear-gradient(135deg,#2a1b3d 0%,#160d20 100%);position:relative}
+.book-leather::before{content:"";position:absolute;inset:0;opacity:.25;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");pointer-events:none;border-radius:inherit}
+.book-parchment{background-color:#e8dcc4;position:relative}
+.book-parchment::before{content:"";position:absolute;inset:0;opacity:.08;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.4' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");pointer-events:none;border-radius:inherit}
+.book-leaf{position:absolute;inset:0;width:100%;height:100%;transform-origin:left center;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.22,1,.36,1);cursor:pointer}
+.book-leaf.flipped{transform:rotateY(-180deg)}
+.book-face{position:absolute;inset:0;width:100%;height:100%;backface-visibility:hidden}
+.book-face-back{transform:rotateY(180deg)}
+@keyframes bookPulseGlow{0%{text-shadow:0 0 5px #8b5fbf,0 0 10px #8b5fbf;filter:drop-shadow(0 0 5px #8b5fbf)}100%{text-shadow:0 0 10px #8b5fbf,0 0 20px #8b5fbf,0 0 30px #8b5fbf;filter:drop-shadow(0 0 15px #8b5fbf)}}
+@keyframes bookFatesPulse{0%{opacity:.7;text-shadow:0 0 5px #D4A040}100%{opacity:1;text-shadow:0 0 15px #D4A040,0 0 25px #D4A040}}
+@keyframes bookClaspGlow{0%{box-shadow:0 0 8px 2px rgba(139,95,191,.3),inset 0 0 4px rgba(139,95,191,.2)}50%{box-shadow:0 0 16px 4px rgba(139,95,191,.6),inset 0 0 8px rgba(139,95,191,.4)}100%{box-shadow:0 0 8px 2px rgba(139,95,191,.3),inset 0 0 4px rgba(139,95,191,.2)}}
+@keyframes bookTorchFlicker{0%{opacity:0}15%{opacity:.06}30%{opacity:0}45%{opacity:.08}60%{opacity:.02}75%{opacity:.07}90%{opacity:0}100%{opacity:0}}
+@keyframes bookPromptPulse{0%,100%{opacity:.3}50%{opacity:.8}}
+@keyframes bookSoulFloat{0%{transform:translateY(110vh) translateX(0);opacity:0}10%{opacity:var(--p-op,.3)}90%{opacity:var(--p-op,.3)}100%{transform:translateY(-10vh) translateX(var(--p-drift,20px));opacity:0}}
+@keyframes bookPegasusFly{0%{transform:translate(-15vw,60vh) rotate(5deg);opacity:0}15%{opacity:.25}50%{transform:translate(40vw,30vh) rotate(-5deg);opacity:.25}85%{opacity:.25}100%{transform:translate(115vw,10vh) rotate(-15deg);opacity:0}}
+@keyframes bookConstellationFade{0%{opacity:0}20%{opacity:.15}50%{opacity:.1}80%{opacity:.15}100%{opacity:0}}
+@keyframes bookStarTwinkle{0%{opacity:0;transform:scale(0)}20%{opacity:.8;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}80%{opacity:.8;transform:scale(1)}100%{opacity:.4;transform:scale(.8)}}
+@keyframes bookGreekDrift{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:.05}90%{opacity:.05}100%{transform:translateY(-160px) translateX(20px);opacity:0}}
+@keyframes bookSpinSlow{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes bookContentFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bookClaspExit{0%{transform:translateX(0) scale(1);opacity:1}100%{transform:translateX(30px) scale(1.8);opacity:0}}
+.book-content-stagger>*:nth-child(1){animation:bookContentFadeIn .5s ease-out .4s both}
+.book-content-stagger>*:nth-child(2){animation:bookContentFadeIn .5s ease-out .55s both}
+.book-content-stagger>*:nth-child(3){animation:bookContentFadeIn .5s ease-out .7s both}
+.book-content-stagger>*:nth-child(4){animation:bookContentFadeIn .5s ease-out .85s both}
+.book-content-stagger>*:nth-child(5){animation:bookContentFadeIn .5s ease-out 1s both}
+/* Book scrollbar */
+.book-scroll::-webkit-scrollbar{width:4px}.book-scroll::-webkit-scrollbar-thumb{background:rgba(139,115,85,.4);border-radius:2px}.book-scroll::-webkit-scrollbar-track{background:transparent}
 </style></head><body style="background:linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)"><div id="R"><div id="dd-loader" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:'DM Sans',Arial,sans-serif">
 <div style="text-align:center">
 <div style="width:88px;height:88px;border-radius:18px;background:#1e1233;border:2px solid #9b7bb0;display:inline-flex;align-items:center;justify-content:center;position:relative;margin-bottom:28px">
@@ -229,6 +239,7 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
       "https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js",
+      "https://cdn.tailwindcss.com",
       "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js",
@@ -237,8 +248,7 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
       "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js",
       "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js",
       "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
-      "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
-      "https://cdn.tailwindcss.com"
+      "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
     ];
 
     // Source data files (protected by middleware)
@@ -266,34 +276,15 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
       // Load all data files in parallel
       return Promise.all(dataFiles.map(function(f){return loadScript(f)}));
     }).then(function(){
-      // Import map: bridge UMD React globals to ESM bare specifiers
-      var im=document.createElement("script");
-      im.type="importmap";
-      im.textContent=JSON.stringify({imports:{
-        "react":"https://esm.sh/react@18.2.0",
-        "react-dom":"https://esm.sh/react-dom@18.2.0",
-        "react/jsx-runtime":"https://esm.sh/react@18.2.0/jsx-runtime"
-      }});
-      document.head.appendChild(im);
-      // Load Framer Motion via ESM, expose as window globals
+      // Load Framer Motion via ESM and expose as globals for Babel scripts
       return new Promise(function(resolve){
         var fm=document.createElement("script");
         fm.type="module";
-        fm.textContent=[
-          'import * as ReactESM from "https://esm.sh/react@18.2.0";',
-          'import * as ReactDOMESM from "https://esm.sh/react-dom@18.2.0";',
-          '// Sync UMD globals with ESM React so hooks share state',
-          'if(!window.React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED){',
-          '  Object.assign(window.React,ReactESM);',
-          '  Object.assign(window.ReactDOM,ReactDOMESM);',
-          '}',
-          'const FM=await import("https://esm.sh/framer-motion@11?external=react,react-dom");',
-          'window.FramerMotion={motion:FM.motion,AnimatePresence:FM.AnimatePresence};',
-          'window.dispatchEvent(new Event("framer-ready"));'
-        ].join("\n");
+        fm.textContent='import{motion,AnimatePresence,useAnimation,useInView}from"https://esm.sh/framer-motion@11?external=react,react-dom&bundle";window.FramerMotion={motion:motion,AnimatePresence:AnimatePresence,useAnimation:useAnimation,useInView:useInView};window.dispatchEvent(new Event("framer-ready"));';
         document.body.appendChild(fm);
         window.addEventListener("framer-ready",function(){console.log("Framer Motion loaded");resolve()},{once:true});
-        setTimeout(function(){if(!window.FramerMotion){console.warn("Framer Motion timeout — CSS fallback active");window.FramerMotion={motion:null,AnimatePresence:null};resolve()}},8000);
+        // Fallback timeout so app still loads if FM CDN fails
+        setTimeout(function(){if(!window.FramerMotion){console.warn("Framer Motion CDN timeout, using CSS fallback");window.FramerMotion={motion:null,AnimatePresence:null,useAnimation:null,useInView:null};resolve()}},8000);
       });
     }).then(function(){
       // Configure Tailwind with Book theme
