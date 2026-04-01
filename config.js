@@ -17,7 +17,7 @@ const autoCase=(title)=>{
 };
 
 const ISCIS_INIT=(()=>{const seen=new Set();return D_I.filter(r=>{if(seen.has(r[0]))return false;seen.add(r[0]);return true}).map(r=>({code:r[0],title:r[1],media:r[2],brand:r[3],dma:r[4],dur:r[5],suffix:r[6],active:r[7]!==false,caseType:r[8]||autoCase(r[1]),valueProp:"",fileUrl:r[9]||"",sentAt:null,sentInEst:null}))})();
-const ESTIMATES=D_E.map(r=>({num:r[0],market:r[1],media:r[2],group:r[3],campaign:r[4],buyer:r[5],brand:r[6]}));
+const ESTIMATES=(()=>{const CABLE_NUMS=new Set(["2605","2613","2621","2629"]);return D_E.map(r=>({num:r[0],market:r[1],media:CABLE_NUMS.has(r[0])&&r[6]==="Postman Law"?"Cable":r[2],group:r[3],campaign:r[4],buyer:r[5],brand:r[6]}))})();
 const STATIONS=D_S.map(r=>({market:r[0],call:r[1],media:r[2],ownership:r[3],contact:r[4],brand:r[5],buyer:r[6]}));
 const CALENDAR=D_C.map(r=>({month:r[0],rotDue:r[1],bcStart:r[2],bcEnd:r[3]}));
 const POSTINGS=D_P.map(r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:r[3],type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17]}));
