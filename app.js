@@ -927,12 +927,14 @@ const App=()=>{
   };
   const CABLE_EST_NUMS=new Set(["2605","2613","2621","2629"]);
   const getEstStations=(est)=>{
-    const isCableEst=CABLE_EST_NUMS.has(est.num);
+    if(CABLE_EST_NUMS.has(est.num)){
+      // Cable: always AmpersandTV for this market, no link check
+      return stations.filter(s=>s.call==="AmpersandTV"&&s.market===est.market);
+    }
+    // Non-cable: normal link check, exclude AmpersandTV
     return stations.filter(s=>{
+      if(s.call==="AmpersandTV")return false;
       if(est.market&&s.market!==est.market)return false;
-      // Cable estimates: only AmpersandTV. Non-cable: exclude AmpersandTV.
-      if(isCableEst&&s.call!=="AmpersandTV")return false;
-      if(!isCableEst&&s.call==="AmpersandTV")return false;
       const linked=staEstLinks[staKey(s)]||[];return linked.includes(est.num);
     });
   };
