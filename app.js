@@ -5981,7 +5981,7 @@ Be direct and actionable. No generic advice.`;
   const BookMarginNote=({author,children})=>{
     const styles={
       meg:{borderLeft:"2px solid #8b5fbf",color:"#8b5fbf",fontFamily:"'Caveat',cursive",fontSize:20,fontStyle:"italic"},
-      muses:{borderLeft:"2px solid #d48ba5",color:"#d48ba5",fontFamily:"'Caveat',cursive",fontSize:20,fontStyle:"italic"},
+      muses:{borderLeft:"2px solid #d48ba5",color:"#d48ba5",fontFamily:"'Cinzel',serif",fontSize:15,fontStyle:"italic",lineHeight:1.6},
       hades:{borderLeft:"2px solid #1a1a3a",color:"#1a1a3a",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:700},
     };
     const cssClass={meg:"book-margin-meg",muses:"book-margin-muses",hades:"book-margin-hades"};
