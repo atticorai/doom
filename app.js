@@ -909,8 +909,16 @@ const App=()=>{
     const k=staKey(s);
     setStaEstLinks(p=>{const cur=p[k]||[];return{...p,[k]:cur.includes(estNum)?cur.filter(n=>n!==estNum):[...cur,estNum]}});
   };
+  const CABLE_EST_NUMS=new Set(["2605","2613","2621","2629"]);
   const getEstStations=(est)=>{
-    return stations.filter(s=>{if(est.market&&s.market!==est.market)return false;const linked=staEstLinks[staKey(s)]||[];return linked.includes(est.num)});
+    const isCableEst=CABLE_EST_NUMS.has(est.num);
+    return stations.filter(s=>{
+      if(est.market&&s.market!==est.market)return false;
+      // Cable estimates: only AmpersandTV. Non-cable: exclude AmpersandTV.
+      if(isCableEst&&s.call!=="AmpersandTV")return false;
+      if(!isCableEst&&s.call==="AmpersandTV")return false;
+      const linked=staEstLinks[staKey(s)]||[];return linked.includes(est.num);
+    });
   };
 
   // ── NOW AIRING / CONFIRMATIONS ──────────────────────────
