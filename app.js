@@ -1815,6 +1815,17 @@ const App=()=>{
         });
       });
       h+='</tbody></table>';
+      // Cable Streaming Component section for Chicago/Denver Cable
+      if(est.num==="2613"||est.num==="2629"){
+        const thirties=sel.filter(r=>r.isci.dur==="30");
+        if(thirties.length>0){
+          h+='<div style="margin-top:14px;padding:8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#0369a1;margin-bottom:6px">📺 Cable Streaming Component — :30 Rotation</div>';
+          h+='<div style="font-size:10px;color:#555;margin-bottom:6px">Same ISCIs as Cable — streaming rotation of :30s only</div>';
+          h+='<table style="width:100%;border-collapse:collapse"><thead><tr><th style="padding:4px 6px;font-size:10px;text-align:left;border-bottom:1px solid #bae6fd">ISCI</th><th style="padding:4px 6px;font-size:10px;text-align:left;border-bottom:1px solid #bae6fd">Title</th><th style="padding:4px 6px;font-size:10px;text-align:center;border-bottom:1px solid #bae6fd">%</th></tr></thead><tbody>';
+          thirties.forEach(r=>{h+='<tr><td style="padding:3px 6px;font-size:11px;font-family:monospace;font-weight:600">'+r.isci.code+'</td><td style="padding:3px 6px;font-size:11px">'+r.isci.title+'</td><td style="padding:3px 6px;font-size:11px;text-align:center;font-weight:600">'+(r.pct?r.pct+'%':'')+'</td></tr>'});
+          h+='</tbody></table></div>';
+        }
+      }
       // Creative file download links
       const filesWithUrls2=sel.filter(r=>r.isci.fileUrl);
       if(filesWithUrls2.length>0){
@@ -1944,6 +1955,18 @@ const App=()=>{
           </tr>;
         })}</tbody></table>
       </div>
+
+      {/* Cable Streaming Component — only for Chicago Cable (2613) and Denver Cable (2629) */}
+      {(est.num==="2613"||est.num==="2629")&&sel.length>0&&<div style={{marginTop:10,padding:10,borderRadius:8,background:"rgba(74,200,232,.08)",border:"1px solid rgba(74,200,232,.25)"}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#4AC8E8",textTransform:"uppercase",letterSpacing:.5,marginBottom:6}}>📺 Cable Streaming Component — :30 Rotation</div>
+        <div style={{fontSize:12,color:"#9B8EAD",marginBottom:6}}>Uses the same ISCIs as Cable. This is a separate streaming rotation for :30s only.</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+          {sel.filter(r=>r.isci.dur==="30").map(r=><div key={r.isci.code+"_cs"} style={{padding:"3px 8px",borderRadius:4,background:"rgba(74,200,232,.12)",border:"1px solid rgba(74,200,232,.2)",fontSize:12,fontFamily:"monospace",fontWeight:600,color:"#4AC8E8"}}>
+            {r.isci.code} — :{r.isci.dur} — {r.pct||"—"}%
+          </div>)}
+          {sel.filter(r=>r.isci.dur==="30").length===0&&<div style={{fontSize:12,color:"#D4A040",fontStyle:"italic"}}>No :30 ISCIs selected — select :30s above to populate streaming component</div>}
+        </div>
+      </div>}
 
       {/* Actions */}
       <div style={{display:"flex",gap:6,marginTop:10,alignItems:"center",flexWrap:"wrap"}}>
