@@ -3,7 +3,6 @@
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Atticor Doom &amp; Deliverables</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Cinzel:wght@400;500;600;700;800;900&family=MedievalSharp&family=UnifrakturCook:wght@700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}html,body,#R{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background:transparent}
@@ -152,6 +151,21 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
 .book-content-stagger>*:nth-child(5){animation:bookContentFadeIn .5s ease-out 1s both}
 /* Book scrollbar */
 .book-scroll::-webkit-scrollbar{width:4px}.book-scroll::-webkit-scrollbar-thumb{background:rgba(139,115,85,.4);border-radius:2px}.book-scroll::-webkit-scrollbar-track{background:transparent}
+/* ═══ BOOK TOME — protect from dark theme !important overrides ═══ */
+.book-parchment,.book-parchment *{color:#2a1a1a !important}
+.book-parchment h2{color:#8b5fbf !important;font-family:'Cormorant Garamond',serif !important}
+.book-parchment p{color:#2a1a1a !important;font-family:'DM Sans',sans-serif !important}
+.book-parchment .book-margin-meg{color:#8b5fbf !important}
+.book-parchment .book-margin-muses{color:#d48ba5 !important}
+.book-parchment .book-margin-hades{color:#1a1a3a !important}
+.book-leather,.book-leather *{color:inherit !important}
+.book-leather h1,.book-leather h2{color:#D4A040 !important;font-family:'Cormorant Garamond',serif !important}
+.book-leather p{font-family:'Cormorant Garamond',serif !important}
+.book-parchment input,.book-parchment select,.book-parchment textarea{background:#f0e8d8 !important;color:#2a1a1a !important;border-color:#c4b090 !important}
+.book-parchment button{border-color:transparent !important}
+.book-leather button{border-color:transparent !important}
+/* Soul particles and flying pegasus — always visible */
+.book-soul-particles,.book-soul-particles *{color:inherit !important;background:inherit !important}
 </style></head><body style="background:linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)"><div id="R"><div id="dd-loader" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:'DM Sans',Arial,sans-serif">
 <div style="text-align:center">
 <div style="width:88px;height:88px;border-radius:18px;background:#1e1233;border:2px solid #9b7bb0;display:inline-flex;align-items:center;justify-content:center;position:relative;margin-bottom:28px">
@@ -287,8 +301,8 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
         setTimeout(function(){if(!window.FramerMotion){console.warn("Framer Motion CDN timeout, using CSS fallback");window.FramerMotion={motion:null,AnimatePresence:null,useAnimation:null,useInView:null};resolve()}},8000);
       });
     }).then(function(){
-      // Configure Tailwind with Book theme
-      if(window.tailwind){tailwind.config={theme:{extend:{colors:{underworld:{900:"#160d20",800:"#1a1028",blue:"#8b5fbf",darkblue:"#6b3fa0",cyan:"#d4af37",glow:"rgba(139,95,191,0.5)"},parchment:{light:"#f4e4bc",DEFAULT:"#e8dcc4",dark:"#d4b872",burn:"#4a3320"},meg:{bg:"#160d20",card:"#201330",border:"#362252",accent:"#6b3fa0",text:"#d1c4e0",muted:"#9a86b3",rose:"#d48ba5",gold:"#d4af37",quote:"#b89cc7",pegasus:"#4a90e2"}},fontFamily:{title:['"UnifrakturCook"',"cursive"],heading:['"Cinzel"',"serif"],body:['"MedievalSharp"',"cursive"],handwriting:['"Caveat"',"cursive"]},boxShadow:{glow:"0 0 15px 2px rgba(139,95,191,0.4)","glow-lg":"0 0 30px 5px rgba(139,95,191,0.6)","glow-text":"0 0 10px rgba(139,95,191,0.8)","inner-dark":"inset 0 0 60px rgba(0,0,0,0.9)",parchment:"inset 0 0 50px rgba(100,70,30,0.6),inset 0 0 20px rgba(0,0,0,0.4),0 10px 25px rgba(0,0,0,0.8)",leather:"inset 0 0 40px rgba(0,0,0,0.9),0 20px 50px rgba(0,0,0,0.9)"},animation:{"pulse-glow":"pulse-glow 3s infinite alternate","fates-pulse":"fates-pulse 4s infinite alternate"},keyframes:{"pulse-glow":{"0%":{textShadow:"0 0 5px #8b5fbf,0 0 10px #8b5fbf",filter:"drop-shadow(0 0 5px #8b5fbf)"},"100%":{textShadow:"0 0 10px #8b5fbf,0 0 20px #8b5fbf,0 0 30px #8b5fbf",filter:"drop-shadow(0 0 15px #8b5fbf)"}},"fates-pulse":{"0%":{opacity:"0.7",textShadow:"0 0 5px #d4af37"},"100%":{opacity:"1",textShadow:"0 0 15px #d4af37,0 0 25px #d4af37"}}}}}}};
+      // Configure Tailwind for Doom palette
+      if(window.tailwind){tailwind.config={theme:{extend:{colors:{plum:{DEFAULT:"#9b7bb0",dark:"#2d1f42",edge:"#4a3565"},pegasus:"#4AC8E8",gold:"#D4A040",rose:"#E85A7A",teal:"#5BC4A0",orchid:{DEFAULT:"#1e1233",mid:"#2a1a3e",shadow:"#2d1f42"},lilac:{DEFAULT:"#C4A0C8",white:"#E8DFF0",bright:"#F0E8F8"},muted:"#9B8EAD",parchment:{DEFAULT:"#e8dcc4",dark:"#d4c4a0",light:"#f0e8d8"}},fontFamily:{heading:['"Cormorant Garamond"',"serif"],body:['"DM Sans"',"sans-serif"]}}}}};
       // Add Babel-transpiled source files
       var c=document.createElement("script");c.type="text/babel";c.src="config.js";c.setAttribute("data-type","module");document.body.appendChild(c);
       var a=document.createElement("script");a.type="text/babel";a.src="app.js";a.setAttribute("data-type","module");document.body.appendChild(a);
