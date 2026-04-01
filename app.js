@@ -5902,21 +5902,21 @@ Be direct and actionable. No generic advice.`;
   const BookGreekRunes=({position})=>{
     const symbols=position==="top"||position==="bottom"?["♔","♡","⚡","☆","⚱"]:["♡","·","⚡","·"];
     const isVert=position==="left"||position==="right";
-    return<div className="flex items-center justify-center gap-3 pointer-events-none select-none" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,pointerEvents:"none",userSelect:"none",flexDirection:isVert?"column":"row",fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:"0.5em",color:"rgba(139,95,191,.4)",animation:"bookPulseGlow 3s infinite alternate"}}>
+    return<div className="flex items-center justify-center gap-3 pointer-events-none select-none book-accent-purple" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,pointerEvents:"none",userSelect:"none",flexDirection:isVert?"column":"row",fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:"0.5em",color:"rgba(139,95,191,.4)",animation:"bookPulseGlow 3s infinite alternate"}}>
       {symbols.map((s,i)=><span key={i}>{s}</span>)}
     </div>;
   };
 
   const BookRuneAccent=({glowing})=>{
     const c=glowing?"rgba(139,95,191,.4)":"rgba(139,115,85,.2)";
-    return<div className="flex items-center justify-center gap-1 pointer-events-none select-none" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,pointerEvents:"none",userSelect:"none",fontSize:10,fontFamily:"'Cinzel',serif",letterSpacing:"0.3em",color:c,animation:glowing?"bookPulseGlow 3s infinite alternate":"none"}}>
+    return<div className="flex items-center justify-center gap-1 pointer-events-none select-none book-accent-purple" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,pointerEvents:"none",userSelect:"none",fontSize:10,fontFamily:"'Cinzel',serif",letterSpacing:"0.3em",color:c,animation:glowing?"bookPulseGlow 3s infinite alternate":"none"}}>
       {["✦","♔","·","♡","·","⚡","✦"].map((s,i)=><span key={i}>{s}</span>)}
     </div>;
   };
 
   const BookSideRunes=({side})=>{
     const symbols=side==="left"?["♔","·","♡","·","☆","·","⚡"]:["⚱","·","♡","·","☆","·","♔"];
-    return<div className="absolute flex flex-col items-center gap-2 pointer-events-none select-none" style={{position:"absolute",display:"flex",flexDirection:"column",alignItems:"center",gap:8,pointerEvents:"none",userSelect:"none",...(side==="left"?{left:4}:{right:8}),top:"50%",transform:"translateY(-50%)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.15em",color:"rgba(139,95,191,.25)",animation:"bookFatesPulse 4s infinite alternate"}}>
+    return<div className="absolute flex flex-col items-center gap-2 pointer-events-none select-none book-accent-purple" style={{position:"absolute",display:"flex",flexDirection:"column",alignItems:"center",gap:8,pointerEvents:"none",userSelect:"none",...(side==="left"?{left:4}:{right:8}),top:"50%",transform:"translateY(-50%)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.15em",color:"rgba(139,95,191,.25)",animation:"bookFatesPulse 4s infinite alternate"}}>
       {symbols.map((s,i)=><span key={i} style={{opacity:s==="·"?0.4:1}}>{s}</span>)}
     </div>;
   };
@@ -6117,7 +6117,7 @@ Be direct and actionable. No generic advice.`;
         {pageNumber>0&&<div className="mt-4 flex-shrink-0" style={{marginTop:16,flexShrink:0}}>
           <BookGreekKeyDivider glowing/>
           <BookLaurelAccent glowing/>
-          <div className="text-center" style={{textAlign:"center",fontFamily:"'Cinzel',serif",fontSize:15,letterSpacing:"0.15em",color:"#8b5fbf",textShadow:"0 0 6px rgba(139,95,191,.3),0 0 15px rgba(139,95,191,.1)"}}>— {toRoman(pageNumber)} —</div>
+          <div className="text-center book-accent-purple" style={{textAlign:"center",fontFamily:"'Cinzel',serif",fontSize:15,letterSpacing:"0.15em",color:"#8b5fbf",textShadow:"0 0 6px rgba(139,95,191,.3),0 0 15px rgba(139,95,191,.1)"}}>— {toRoman(pageNumber)} —</div>
           <BookRuneAccent glowing/>
         </div>}
       </div>
