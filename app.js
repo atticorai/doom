@@ -5661,10 +5661,10 @@ Be direct and actionable. No generic advice.`;
     const[trackerExpanded,setTrackerExpanded]=useState(null);
     const isPL=trackerBrand==="Postman Law";
     const mkts=isPL?["Chicago","Cincinnati","Denver","Minneapolis"]:["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan"];
-    const buyTypes=isPL?["TV Base","TV Sponsorship","TV UD/AV","TV Sports","Cable","Heavy Up","Radio","Streaming Audio","Digital","OOH"]:["TV Base","TV Sponsorship","TV UD/AV","Radio","Streaming Audio","OOH"];
+    const buyTypes=isPL?["TV Base","TV Sponsorship","TV UD/AV","TV Sports","Cable","Cable Streaming","Heavy Up","Radio","Streaming Audio","Digital","OOH"]:["TV Base","TV Sponsorship","TV UD/AV","Radio","Streaming Audio","OOH"];
     // Map buy types to estimate groups for matching
-    const buyToGroup={"TV Base":"Base","TV Sponsorship":"Sponsorship","TV UD/AV":"UD/AV","TV Sports":"Sports","Cable":"Cable","Heavy Up":"Heavy Up","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
-    const buyToMedia={"TV Base":"TV","TV Sponsorship":"TV","TV UD/AV":"TV","TV Sports":"TV","Cable":"TV","Heavy Up":"TV","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
+    const buyToGroup={"TV Base":"Base","TV Sponsorship":"Sponsorship","TV UD/AV":"UD/AV","TV Sports":"Sports","Cable":"Cable","Cable Streaming":"Cable Streaming","Heavy Up":"Heavy Up","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
+    const buyToMedia={"TV Base":"TV","TV Sponsorship":"TV","TV UD/AV":"TV","TV Sports":"TV","Cable":"TV","Cable Streaming":"Streaming Audio","Heavy Up":"TV","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
     // Find traffic record for a market + buy type + month
     const getStatus=(mkt,buyType)=>{
       const media=buyToMedia[buyType];const group=buyToGroup[buyType];
