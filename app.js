@@ -6069,7 +6069,7 @@ Be direct and actionable. No generic advice.`;
         <h1 style={{fontFamily:"'Cinzel',serif",fontSize:38,color:"#D4A040",margin:"16px 0",lineHeight:1.2,letterSpacing:"0.05em",animation:"bookPulseGlow 3s infinite alternate"}}>Doom &<br/>Deliverables</h1>
         <BookGreekKeyDivider glowing/>
         <h2 style={{fontFamily:"'MedievalSharp',cursive",color:"rgba(139,95,191,.7)",fontSize:14,letterSpacing:"0.15em",textTransform:"uppercase",marginTop:12}}>A Guide to<br/>Traffic Management</h2>
-        <p style={{fontFamily:"'Cinzel',serif",color:"rgba(212,139,165,.8)",fontSize:20,marginTop:16,fontStyle:"italic"}}>You're welcome.</p>
+        <p style={{fontFamily:"'Caveat',cursive",color:"rgba(212,139,165,.8)",fontSize:24,marginTop:16,fontStyle:"italic"}}>You're welcome.</p>
       </div>
       <div className="absolute bottom-14 left-0 right-0" style={{position:"absolute",bottom:56,left:0,right:0}}><BookGreekRunes position="bottom"/></div>
       <BookHoofMark style={{top:32,right:32,opacity:.3,transform:"rotate(-10deg) scale(.75)"}}/>
@@ -6083,7 +6083,7 @@ Be direct and actionable. No generic advice.`;
     <div className="absolute inset-0 opacity-10" style={{position:"absolute",inset:0,opacity:0.1,backgroundImage:"radial-gradient(#333 1px,transparent 1px)",backgroundSize:"20px 20px"}}/>
     <div className="absolute inset-0 flex flex-col items-center justify-center" style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
       <div style={{color:"rgba(212,175,55,.05)",fontSize:48,fontFamily:"'Cinzel',serif",letterSpacing:"0.5em",transform:"rotate(12deg)",marginBottom:32}}>♔ DOOM ♡</div>
-      <div style={{fontFamily:"'Cinzel',serif",color:"rgba(212,139,165,.3)",fontSize:20,textAlign:"center",padding:"0 32px",marginTop:48,fontStyle:"italic"}}>For everyone who's ever had to explain something twice.</div>
+      <div style={{fontFamily:"'Caveat',cursive",color:"rgba(212,139,165,.3)",fontSize:22,textAlign:"center",padding:"0 32px",marginTop:48,fontStyle:"italic"}}>For everyone who's ever had to explain something twice.</div>
     </div>
     <BookCornerOrnament position="top-left" glowing extraStyle={{opacity:.3}}/>
     <BookCornerOrnament position="bottom-right" glowing extraStyle={{opacity:.3}}/>
@@ -6200,7 +6200,9 @@ Be direct and actionable. No generic advice.`;
       return r>bookPages.length?`Page ${l} of ${bookPages.length}`:`Pages ${l}-${r} of ${bookPages.length}`;
     };
     return<div className="flex flex-col items-center w-full overflow-visible" style={{display:"flex",flexDirection:"column",alignItems:"center",width:"100%",overflow:"visible"}}>
-      <div className="relative w-full max-w-[420px] overflow-visible" style={{position:"relative",width:"100%",maxWidth:420,overflow:"visible",aspectRatio:"3/4.2",perspective:2000,transition:"transform .6s ease-out,filter .6s",transform:isOpen?"translateX(50%)":"translateX(0)",filter:"drop-shadow(0 0 30px rgba(139,95,191,0.5)) drop-shadow(0 0 60px rgba(139,95,191,0.25)) drop-shadow(0 0 4px rgba(212,175,55,0.3))"}}>
+      <div style={{position:"relative",width:"100%",maxWidth:420,overflow:"visible",transition:"transform .6s ease-out",transform:isOpen?"translateX(50%)":"translateX(0)"}}>
+      <div style={{position:"absolute",inset:-20,borderRadius:32,background:"radial-gradient(ellipse at center,rgba(139,95,191,0.3) 0%,rgba(139,95,191,0.15) 40%,transparent 70%)",pointerEvents:"none",zIndex:0,animation:"bookPulseGlow 3s infinite alternate"}}/>
+      <div className="relative w-full max-w-[420px] overflow-visible" style={{position:"relative",width:"100%",overflow:"visible",aspectRatio:"3/4.2",perspective:2000,boxShadow:"0 0 40px 10px rgba(139,95,191,0.4), 0 0 80px 20px rgba(139,95,191,0.2), 0 0 120px 40px rgba(139,95,191,0.1), 0 0 4px 1px rgba(212,175,55,0.15)",borderRadius:16}}>
         {!isOpen&&<BookClasp isLocked={isLocked} onUnlock={handleUnlock}/>}
         {isOpen&&!showToc&&<button className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 py-1.5 px-4 rounded-t-lg cursor-pointer" style={{position:"absolute",top:-12,left:"50%",transform:"translateX(-50%)",display:"flex",alignItems:"center",gap:6,paddingTop:6,paddingBottom:6,paddingLeft:16,paddingRight:16,borderTopLeftRadius:8,borderTopRightRadius:8,cursor:"pointer",zIndex:150,background:"#1a1a2a",border:"1px solid rgba(139,95,191,.4)",transition:"all .3s"}} onClick={(e)=>{e.stopPropagation();setShowToc(true)}}>
           <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(139,95,191,.5)"}}>☰ Index</span>
@@ -6240,6 +6242,7 @@ Be direct and actionable. No generic advice.`;
           <div className="book-face"><BookCover isLocked={isLocked} onUnlock={handleUnlock}/></div>
           <div className="book-face book-face-back"><BookInsideCover/></div>
         </div>
+      </div>
       </div>
       {/* Navigation controls */}
       <div className="mt-8 flex justify-between items-center w-full max-w-[420px] px-2" style={{marginTop:32,display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",maxWidth:420,paddingLeft:8,paddingRight:8,transition:"opacity .5s",opacity:isOpen?1:0,pointerEvents:isOpen?"auto":"none"}}>
