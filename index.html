@@ -276,14 +276,32 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
       // Load all data files in parallel
       return Promise.all(dataFiles.map(function(f){return loadScript(f)}));
     }).then(function(){
+      // Import map: bridge UMD React globals to ESM bare specifiers so framer-motion can import them
+      var im=document.createElement("script");
+      im.type="importmap";
+      im.textContent=JSON.stringify({imports:{
+        "react":"https://esm.sh/react@18.2.0",
+        "react-dom":"https://esm.sh/react-dom@18.2.0",
+        "react/jsx-runtime":"https://esm.sh/react@18.2.0/jsx-runtime"
+      }});
+      document.head.appendChild(im);
       // Load Framer Motion via ESM and expose as globals for Babel scripts
       return new Promise(function(resolve){
         var fm=document.createElement("script");
         fm.type="module";
-        fm.textContent='import{motion,AnimatePresence,useAnimation,useInView}from"https://esm.sh/framer-motion@11?external=react,react-dom&bundle";window.FramerMotion={motion:motion,AnimatePresence:AnimatePresence,useAnimation:useAnimation,useInView:useInView};window.dispatchEvent(new Event("framer-ready"));';
+        fm.textContent=[
+          'import * as ReactESM from "https://esm.sh/react@18.2.0";',
+          'import * as ReactDOMESM from "https://esm.sh/react-dom@18.2.0";',
+          'if(!window.React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED){',
+          '  Object.assign(window.React,ReactESM);',
+          '  Object.assign(window.ReactDOM,ReactDOMESM);',
+          '}',
+          'const FM=await import("https://esm.sh/framer-motion@11?external=react,react-dom");',
+          'window.FramerMotion={motion:FM.motion,AnimatePresence:FM.AnimatePresence,useAnimation:FM.useAnimation,useInView:FM.useInView};',
+          'window.dispatchEvent(new Event("framer-ready"));'
+        ].join("\n");
         document.body.appendChild(fm);
         window.addEventListener("framer-ready",function(){console.log("Framer Motion loaded");resolve()},{once:true});
-        // Fallback timeout so app still loads if FM CDN fails
         setTimeout(function(){if(!window.FramerMotion){console.warn("Framer Motion CDN timeout, using CSS fallback");window.FramerMotion={motion:null,AnimatePresence:null,useAnimation:null,useInView:null};resolve()}},8000);
       });
     }).then(function(){

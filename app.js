@@ -5870,8 +5870,8 @@ Be direct and actionable. No generic advice.`;
     const color=glowing?"#8b5fbf":"#8b7355";
     const opacity=glowing?0.5:0.35;
     const rots={"top-left":"rotate(0)","top-right":"rotate(90deg)","bottom-right":"rotate(180deg)","bottom-left":"rotate(270deg)"};
-    const posMap={"top-left":"top-2 left-2","top-right":"top-2 right-2","bottom-left":"bottom-2 left-2","bottom-right":"bottom-2 right-2"};
-    return<M className={`absolute pointer-events-none ${posMap[position]}`} style={{...(extraStyle||{})}} animate={glowing?{filter:["drop-shadow(0 0 5px #8b5fbf)","drop-shadow(0 0 15px #8b5fbf)","drop-shadow(0 0 5px #8b5fbf)"]}:{}} transition={glowing?{duration:3,repeat:Infinity,ease:"easeInOut"}:{}}>
+    const posInline={"top-left":{top:8,left:8},"top-right":{top:8,right:8},"bottom-left":{bottom:8,left:8},"bottom-right":{bottom:8,right:8}};
+    return<M style={{position:"absolute",pointerEvents:"none",filter:glowing?"drop-shadow(0 0 8px #8b5fbf)":"none",...posInline[position],...(extraStyle||{})}} animate={glowing?{filter:["drop-shadow(0 0 5px #8b5fbf)","drop-shadow(0 0 15px #8b5fbf)","drop-shadow(0 0 5px #8b5fbf)"]}:{}} transition={glowing?{duration:3,repeat:Infinity,ease:"easeInOut"}:{}}>
       <svg width="36" height="36" viewBox="0 0 36 36" style={{transform:rots[position]}}>
         <path d="M2 2 L2 28 L8 28 L8 14 L14 14 L14 20 L20 20 L20 8 L8 8 L8 2 Z" fill="none" stroke={color} strokeWidth="1.5" opacity={opacity}/>
         <path d="M4 4 L4 10 L10 10 L10 4" fill={color} fillOpacity={opacity*0.3} stroke="none"/>
@@ -5882,7 +5882,7 @@ Be direct and actionable. No generic advice.`;
   const BookGreekKeyDivider=({glowing})=>{
     const color=glowing?"#8b5fbf":"#8b7355";
     const opacity=glowing?0.6:0.4;
-    return<div className="w-full flex items-center justify-center">
+    return<div style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center"}}>
       <svg width="100%" height="20" viewBox="0 0 300 20" preserveAspectRatio="xMidYMid meet">
         <defs><linearGradient id={`bkfade-${glowing?"g":"p"}`} x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor={color} stopOpacity="0"/><stop offset="15%" stopColor={color} stopOpacity={opacity}/>
@@ -5896,21 +5896,21 @@ Be direct and actionable. No generic advice.`;
   const BookGreekRunes=({position})=>{
     const symbols=position==="top"||position==="bottom"?["♔","♡","⚡","☆","⚱"]:["♡","·","⚡","·"];
     const isVert=position==="left"||position==="right";
-    return<M className={`flex ${isVert?"flex-col":"flex-row"} items-center justify-center gap-3 pointer-events-none select-none font-heading text-xs tracking-[0.5em]`} style={{color:"rgba(139,95,191,.4)"}} animate={{textShadow:["0 0 5px #8b5fbf","0 0 15px #8b5fbf","0 0 5px #8b5fbf"]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}>
+    return<M style={{display:"flex",flexDirection:isVert?"column":"row",alignItems:"center",justifyContent:"center",gap:12,pointerEvents:"none",userSelect:"none",letterSpacing:"0.5em",color:"rgba(139,95,191,.4)",fontFamily:"'Cinzel',serif",fontSize:12,textShadow:"0 0 8px #8b5fbf"}} animate={{textShadow:["0 0 5px #8b5fbf","0 0 15px #8b5fbf","0 0 5px #8b5fbf"]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}>
       {symbols.map((s,i)=><MSpan key={i} initial={{opacity:0,y:-5}} animate={{opacity:1,y:0}} transition={{delay:i*0.1}}>{s}</MSpan>)}
     </M>;
   };
 
   const BookRuneAccent=({glowing})=>{
     const c=glowing?"rgba(139,95,191,.4)":"rgba(139,115,85,.2)";
-    return<M className="flex items-center justify-center gap-1 text-[10px] font-heading tracking-[0.3em] pointer-events-none select-none" style={{color:c}} animate={glowing?{textShadow:["0 0 5px #8b5fbf","0 0 15px #8b5fbf","0 0 5px #8b5fbf"]}:{}} transition={glowing?{duration:3,repeat:Infinity,ease:"easeInOut"}:{}}>
+    return<M style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,letterSpacing:"0.3em",pointerEvents:"none",userSelect:"none",color:c,fontFamily:"'Cinzel',serif",fontSize:10,textShadow:glowing?"0 0 8px #8b5fbf":"none"}} animate={glowing?{textShadow:["0 0 5px #8b5fbf","0 0 15px #8b5fbf","0 0 5px #8b5fbf"]}:{}} transition={glowing?{duration:3,repeat:Infinity,ease:"easeInOut"}:{}}>
       {["✦","♔","·","♡","·","⚡","✦"].map((s,i)=><span key={i}>{s}</span>)}
     </M>;
   };
 
   const BookSideRunes=({side})=>{
     const symbols=side==="left"?["♔","·","♡","·","☆","·","⚡"]:["⚱","·","♡","·","☆","·","♔"];
-    return<M className={`absolute ${side==="left"?"left-1":"right-2"} top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 pointer-events-none select-none font-heading text-[8px] tracking-[0.15em]`} style={{color:"rgba(139,95,191,.25)"}} animate={{opacity:[0.5,1,0.5],textShadow:["0 0 5px #D4A040","0 0 15px #D4A040","0 0 5px #D4A040"]}} transition={{duration:4,repeat:Infinity,ease:"easeInOut"}}>
+    return<M style={{position:"absolute",[side==="left"?"left":"right"]:side==="left"?4:8,top:"50%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:8,pointerEvents:"none",userSelect:"none",letterSpacing:"0.15em",color:"rgba(139,95,191,.25)",fontFamily:"'Cinzel',serif",fontSize:8,textShadow:"0 0 5px #D4A040"}} animate={{opacity:[0.5,1,0.5],textShadow:["0 0 5px #D4A040","0 0 15px #D4A040","0 0 5px #D4A040"]}} transition={{duration:4,repeat:Infinity,ease:"easeInOut"}}>
       {symbols.map((s,i)=><MSpan key={i} initial={{opacity:0}} animate={{opacity:s==="·"?0.4:1}} transition={{delay:i*0.08}}>{s}</MSpan>)}
     </M>;
   };
@@ -5918,7 +5918,7 @@ Be direct and actionable. No generic advice.`;
   const BookLaurelAccent=({glowing})=>{
     const color=glowing?"#8b5fbf":"#8b7355";
     const opacity=glowing?0.4:0.2;
-    return<M className="flex items-center justify-center pointer-events-none" animate={glowing?{filter:["drop-shadow(0 0 5px #8b5fbf)","drop-shadow(0 0 15px #8b5fbf)","drop-shadow(0 0 5px #8b5fbf)"]}:{}} transition={glowing?{duration:3,repeat:Infinity,ease:"easeInOut"}:{}}>
+    return<M style={{display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none",filter:glowing?"drop-shadow(0 0 8px #8b5fbf)":"none"}} animate={glowing?{filter:["drop-shadow(0 0 5px #8b5fbf)","drop-shadow(0 0 15px #8b5fbf)","drop-shadow(0 0 5px #8b5fbf)"]}:{}} transition={glowing?{duration:3,repeat:Infinity,ease:"easeInOut"}:{}}>
       <svg width="80" height="24" viewBox="0 0 80 24" fill="none">
         <path d="M35 12 C30 6 22 4 18 6 C22 6 28 8 32 12" stroke={color} strokeWidth="1" opacity={opacity} fill={color} fillOpacity={opacity*0.3}/>
         <path d="M33 12 C28 8 20 8 16 10 C20 9 26 10 31 13" stroke={color} strokeWidth="1" opacity={opacity} fill={color} fillOpacity={opacity*0.3}/>
@@ -5932,7 +5932,7 @@ Be direct and actionable. No generic advice.`;
   };
 
   // ── DAMAGE EFFECTS ──
-  const BookHoofMark=({style:sx})=><M className="absolute pointer-events-none opacity-50 mix-blend-multiply" style={sx||{}} initial={{opacity:0}} animate={{opacity:0.5}} transition={{delay:0.8,duration:0.6}}>
+  const BookHoofMark=({style:sx})=><M style={{position:"absolute",pointerEvents:"none",mixBlendMode:"multiply",...(sx||{})}} initial={{opacity:0}} animate={{opacity:0.5}} transition={{delay:0.8,duration:0.6}}>
     <svg width="60" height="70" viewBox="0 0 60 70" fill="none">
       <path d="M10 50 C10 25 15 10 30 8 C45 10 50 25 50 50" stroke="#3a2a4a" strokeWidth="6" strokeLinecap="round" fill="none"/>
       <path d="M16 48 C16 28 20 16 30 14 C40 16 44 28 44 48" stroke="#2a1a3a" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
@@ -5941,18 +5941,18 @@ Be direct and actionable. No generic advice.`;
     </svg>
   </M>;
 
-  const BookBiteMark=({style:sx})=><M className="absolute pointer-events-none" style={sx||{}} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1,duration:0.5}}>
+  const BookBiteMark=({style:sx})=><M style={{position:"absolute",pointerEvents:"none",...(sx||{})}} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1,duration:0.5}}>
     <svg width="60" height="100" viewBox="0 0 60 100" fill="none">
       <path d="M60 0 C 40 10 20 20 15 30 C 10 40 5 45 10 55 C 15 65 25 75 15 85 C 5 95 30 95 60 100 Z" fill="#05050a"/>
       <path d="M60 0 C 40 10 20 20 15 30 C 10 40 5 45 10 55 C 15 65 25 75 15 85 C 5 95 30 95 60 100" stroke="rgba(60,40,20,.8)" strokeWidth="4"/>
     </svg>
   </M>;
 
-  const BookBurnMark=({style:sx})=><M className="absolute pointer-events-none rounded-full mix-blend-multiply blur-[4px]" style={{background:"radial-gradient(circle,rgba(20,10,5,.9) 0%,rgba(60,30,10,.6) 40%,transparent 100%)",...(sx||{})}} initial={{opacity:0,scale:0.8}} animate={{opacity:1,scale:1}} transition={{delay:0.6,duration:0.8}}/>;
+  const BookBurnMark=({style:sx})=><M style={{position:"absolute",pointerEvents:"none",borderRadius:"50%",mixBlendMode:"multiply",filter:"blur(4px)",background:"radial-gradient(circle,rgba(20,10,5,.9) 0%,rgba(60,30,10,.6) 40%,transparent 100%)",...(sx||{})}} initial={{opacity:0,scale:0.8}} animate={{opacity:1,scale:1}} transition={{delay:0.6,duration:0.8}}/>;
 
-  const BookDroolStain=({style:sx})=><M className="absolute pointer-events-none rounded-full mix-blend-multiply blur-[2px]" style={{background:"radial-gradient(circle,rgba(0,100,150,.3) 0%,rgba(0,150,200,.1) 60%,transparent 100%)",...(sx||{})}} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1.2,duration:1}}/>;
+  const BookDroolStain=({style:sx})=><M style={{position:"absolute",pointerEvents:"none",borderRadius:"50%",mixBlendMode:"multiply",filter:"blur(2px)",background:"radial-gradient(circle,rgba(0,100,150,.3) 0%,rgba(0,150,200,.1) 60%,transparent 100%)",...(sx||{})}} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1.2,duration:1}}/>;
 
-  const BookInkSplatter=({style:sx})=><M className="absolute pointer-events-none opacity-80 mix-blend-multiply" style={sx||{}} initial={{scale:0,opacity:0}} animate={{scale:1,opacity:0.8}} transition={{delay:0.5,duration:0.3,type:"spring"}}>
+  const BookInkSplatter=({style:sx})=><M style={{position:"absolute",pointerEvents:"none",mixBlendMode:"multiply",...(sx||{})}} initial={{scale:0,opacity:0}} animate={{scale:1,opacity:0.8}} transition={{delay:0.5,duration:0.3,type:"spring"}}>
     <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
       <circle cx="20" cy="20" r="8" fill="#1a1a2e"/><circle cx="12" cy="15" r="3" fill="#1a1a2e"/><circle cx="28" cy="25" r="4" fill="#1a1a2e"/>
       <circle cx="25" cy="10" r="2" fill="#1a1a2e"/><circle cx="15" cy="30" r="2.5" fill="#1a1a2e"/>
@@ -5961,7 +5961,7 @@ Be direct and actionable. No generic advice.`;
     </svg>
   </M>;
 
-  const BookLipstickMark=({style:sx})=><M className="absolute pointer-events-none opacity-70 mix-blend-multiply" style={sx||{}} initial={{opacity:0,rotate:-10}} animate={{opacity:0.7,rotate:0}} transition={{delay:0.9,duration:0.5}}>
+  const BookLipstickMark=({style:sx})=><M style={{position:"absolute",pointerEvents:"none",mixBlendMode:"multiply",...(sx||{})}} initial={{opacity:0,rotate:-10}} animate={{opacity:0.7,rotate:0}} transition={{delay:0.9,duration:0.5}}>
     <svg width="50" height="35" viewBox="0 0 50 35" fill="none">
       <path d="M10 18 C15 10 22 8 25 12 C28 8 35 10 40 18 C35 20 25 20 10 18 Z" fill="#d48ba5" opacity="0.8"/>
       <path d="M12 20 C20 28 30 28 38 20 C32 25 18 25 12 20 Z" fill="#d48ba5" opacity="0.9"/>
@@ -5973,11 +5973,13 @@ Be direct and actionable. No generic advice.`;
 
   // ── MARGIN NOTES ──
   const BookMarginNote=({author,children})=>{
-    const colors={meg:"border-[#8b5fbf] text-[#8b5fbf]",muses:"border-[#d48ba5] text-[#d48ba5]",hades:"border-[#1a1a3a] text-[#1a1a3a]"};
-    const fonts={meg:"font-heading text-base italic",muses:"font-heading text-base italic",hades:"font-body text-sm font-bold"};
+    const colorMap={meg:{border:"#8b5fbf",text:"#8b5fbf"},muses:{border:"#d48ba5",text:"#d48ba5"},hades:{border:"#1a1a3a",text:"#1a1a3a"}};
+    const fontMap={meg:{fontFamily:"'Caveat',cursive",fontSize:18,fontStyle:"italic"},muses:{fontFamily:"'Caveat',cursive",fontSize:18,fontStyle:"italic"},hades:{fontFamily:"'MedievalSharp',cursive",fontSize:14,fontWeight:700}};
     const labels={meg:"💜 Meg sighs:",muses:"🎵 The Muses sing:",hades:"🔥 Hades notes:"};
-    return<M className={`mt-4 py-2.5 px-2 pl-3 rounded-sm border-l-2 ${colors[author]||colors.meg} ${fonts[author]||fonts.meg}`} style={{background:"rgba(212,196,160,.4)"}} initial={{opacity:0,x:-10}} animate={{opacity:1,x:0}} transition={{delay:0.5,duration:0.4}}>
-      <div className="text-[10px] uppercase tracking-[0.1em] opacity-60 mb-1 not-italic font-body font-normal">{labels[author]||""}</div>
+    const c=colorMap[author]||colorMap.meg;
+    const f=fontMap[author]||fontMap.meg;
+    return<M style={{marginTop:16,padding:"10px 8px 10px 12px",borderRadius:2,borderLeft:"2px solid "+c.border,color:c.text,background:"rgba(212,196,160,.4)",...f}} initial={{opacity:0,x:-10}} animate={{opacity:1,x:0}} transition={{delay:0.5,duration:0.4}}>
+      <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"0.1em",opacity:0.6,marginBottom:4,fontStyle:"normal",fontFamily:"'MedievalSharp',cursive",fontWeight:400}}>{labels[author]||""}</div>
       <div>{children}</div>
     </M>;
   };
@@ -6004,22 +6006,29 @@ Be direct and actionable. No generic advice.`;
       const texts=["♔ ♡ ⚡","☆ ⚱ ♡","DOOM","DELIVER","♔ ☆ ♡","⚡ ⚱ ☆","MEG"];
       return Array.from({length:6}).map((_,i)=>({id:i,text:texts[i%texts.length],x:Math.random()*80+10,y:Math.random()*80+10,dur:Math.random()*30+40,delay:Math.random()*20}));
     },[]);
-    return<div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {greekFrags.map(f=><M key={`gf-${f.id}`} className="absolute font-heading text-sm tracking-[0.3em] select-none" style={{left:f.x+"%",top:f.y+"%",color:"rgba(139,95,191,.04)"}} animate={{y:[-10,-170],x:[0,20],opacity:[0,0.05,0.05,0]}} transition={{duration:f.dur,delay:f.delay,repeat:Infinity,ease:"linear"}}>{f.text}</M>)}
-      {particles.map(p=><M key={`sp-${p.id}`} className="absolute rounded-full" style={{left:p.x+"%",width:p.size,height:p.size,background:p.isGold?"#D4A040":"rgba(139,95,191,.9)",boxShadow:p.isGold?`0 0 ${p.size*2}px ${p.size/2}px rgba(212,175,55,.7)`:`0 0 ${p.size*2}px ${p.size/2}px rgba(139,95,191,.8)`}} animate={{y:["110vh","-10vh"],x:[0,p.drift],opacity:[0,p.op,p.op,0]}} transition={{duration:p.dur,delay:p.delay,repeat:Infinity,ease:"linear"}}/>)}
+    const useFM=!!motion;
+    return<div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
+      {greekFrags.map(f=>useFM?<M key={`gf-${f.id}`} style={{position:"absolute",left:f.x+"%",top:f.y+"%",color:"rgba(139,95,191,.04)",fontFamily:"'Cinzel',serif",fontSize:14,letterSpacing:"0.3em",userSelect:"none"}} animate={{y:[-10,-170],x:[0,20],opacity:[0,0.05,0.05,0]}} transition={{duration:f.dur,delay:f.delay,repeat:Infinity,ease:"linear"}}>{f.text}</M>
+        :<div key={`gf-${f.id}`} style={{position:"absolute",left:f.x+"%",top:f.y+"%",color:"rgba(139,95,191,.04)",fontFamily:"'Cinzel',serif",fontSize:14,letterSpacing:"0.3em",userSelect:"none",animation:`bookGreekDrift ${f.dur}s linear ${f.delay}s infinite`}}>{f.text}</div>)}
+      {particles.map(p=>{
+        const pStyle={position:"absolute",left:p.x+"%",width:p.size,height:p.size,borderRadius:"50%",background:p.isGold?"#D4A040":"rgba(139,95,191,.9)",boxShadow:p.isGold?`0 0 ${p.size*2}px ${p.size/2}px rgba(212,175,55,.7)`:`0 0 ${p.size*2}px ${p.size/2}px rgba(139,95,191,.8)`};
+        return useFM?<M key={`sp-${p.id}`} style={pStyle} animate={{y:["110vh","-10vh"],x:[0,p.drift],opacity:[0,p.op,p.op,0]}} transition={{duration:p.dur,delay:p.delay,repeat:Infinity,ease:"linear"}}/>
+          :<div key={`sp-${p.id}`} style={{...pStyle,"--p-op":p.op,"--p-drift":p.drift+"px",animation:`bookSoulFloat ${p.dur}s linear ${p.delay}s infinite`}}/>;
+      })}
     </div>;
   };
 
   // ── FLYING PEGASUS ──
-  const BookFlyingPegasus=()=><M className="fixed pointer-events-none z-[1]" animate={{x:["-15vw","40vw","115vw"],y:["60vh","30vh","10vh"],rotate:[5,-5,-15],opacity:[0,0.25,0.25,0]}} transition={{duration:25,delay:5,repeat:Infinity,ease:"easeInOut"}}>
-    <BookPegasusSVG size={80} glowing/>
-  </M>;
+  const BookFlyingPegasus=()=>{
+    if(motion)return<M style={{position:"fixed",pointerEvents:"none",zIndex:1}} animate={{x:["-15vw","40vw","115vw"],y:["60vh","30vh","10vh"],rotate:[5,-5,-15],opacity:[0,0.25,0.25,0]}} transition={{duration:25,delay:5,repeat:Infinity,ease:"easeInOut"}}><BookPegasusSVG size={80} glowing/></M>;
+    return<div style={{position:"fixed",pointerEvents:"none",zIndex:1,animation:"bookPegasusFly 25s ease-in-out 5s infinite"}}><BookPegasusSVG size={80} glowing/></div>;
+  };
 
   // ── PEGASUS CONSTELLATION ──
   const BookPegasusConstellation=()=>{
     const stars=[{x:18,y:15,s:2.5,d:0},{x:22,y:10,s:1.5,d:.5},{x:28,y:18,s:2,d:1},{x:35,y:25,s:3,d:1.5},{x:25,y:22,s:2,d:2},{x:18,y:20,s:2,d:2.5},{x:12,y:28,s:1.5,d:3},{x:42,y:30,s:2.5,d:3.5},{x:50,y:35,s:2,d:4},{x:55,y:40,s:2.5,d:4.5},{x:60,y:45,s:2,d:5},{x:38,y:38,s:1.5,d:5.5},{x:32,y:48,s:2,d:6},{x:46,y:46,s:1.5,d:6.5}];
     const lines=[[0,1],[0,2],[2,3],[3,4],[4,5],[5,6],[3,7],[7,8],[8,9],[9,10],[3,11],[11,12],[8,13]];
-    return<M className="absolute pointer-events-none" style={{top:"5%",right:"5%",width:"40vw",height:"40vh"}} animate={{opacity:[0,0.15,0.1,0.15,0]}} transition={{duration:30,repeat:Infinity,ease:"linear"}}>
+    return<M style={{position:"absolute",pointerEvents:"none",top:"5%",right:"5%",width:"40vw",height:"40vh"}} animate={{opacity:[0,0.15,0.1,0.15,0]}} transition={{duration:30,repeat:Infinity,ease:"linear"}}>
       <svg width="100%" height="100%" viewBox="0 0 80 60" fill="none">
         {lines.map(([f,t],i)=><line key={`cl-${i}`} x1={stars[f].x} y1={stars[f].y} x2={stars[t].x} y2={stars[t].y} stroke="#D4A040" strokeWidth="0.3" opacity="0.4"/>)}
         {stars.map((star,i)=><M key={`cs-${i}`} animate={{opacity:[0,0.8,0.4,0.8,0.4],scale:[0,1,0.8,1,0.8]}} transition={{duration:8,delay:star.d,repeat:Infinity,ease:"easeInOut"}}><circle cx={star.x} cy={star.y} r={star.s} fill="#D4A040"/></M>)}
@@ -6041,41 +6050,41 @@ Be direct and actionable. No generic advice.`;
 
   // ── BOOK COVER ──
   const BookCover=({isLocked,onUnlock})=>{
-    return<div className="book-leather w-full h-full rounded-2xl border-4 border-[#111] flex flex-col items-center justify-center p-8 relative overflow-hidden">
-      <div className="absolute inset-3 border border-[rgba(139,95,191,.2)] rounded-lg pointer-events-none"/>
+    return<div className="book-leather" style={{width:"100%",height:"100%",borderRadius:16,border:"4px solid #111",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",inset:12,border:"1px solid rgba(139,95,191,.2)",borderRadius:8,pointerEvents:"none"}}/>
       <BookCornerOrnament position="top-left" glowing/>
       <BookCornerOrnament position="top-right" glowing/>
       <BookCornerOrnament position="bottom-left" glowing/>
       <BookCornerOrnament position="bottom-right" glowing/>
-      <div className="absolute top-10 left-0 right-0"><BookGreekRunes position="top"/></div>
-      <div className="text-center z-10 relative">
-        <M className="w-14 h-14 mx-auto mb-6 rounded-full border-2 border-[rgba(139,95,191,.4)] flex items-center justify-center" style={{boxShadow:"0 0 15px 2px rgba(139,95,191,.4)"}} animate={{rotate:360}} transition={{duration:20,repeat:Infinity,ease:"linear"}}>
-          <span className="font-heading text-2xl" style={{color:"rgba(212,175,55,.7)"}}>♔</span>
+      <div style={{position:"absolute",top:40,left:0,right:0}}><BookGreekRunes position="top"/></div>
+      <div style={{textAlign:"center",zIndex:10,position:"relative"}}>
+        <M style={{width:56,height:56,margin:"0 auto 24px",borderRadius:"50%",border:"2px solid rgba(139,95,191,.4)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 15px 2px rgba(139,95,191,.4)"}} animate={{rotate:360}} transition={{duration:20,repeat:Infinity,ease:"linear"}}>
+          <span style={{color:"rgba(212,175,55,.7)",fontFamily:"'Cinzel',serif",fontSize:24}}>♔</span>
         </M>
-        <p className="font-heading text-xs tracking-[0.3em] uppercase mb-3" style={{color:"rgba(139,95,191,.6)"}}>Megara Presents</p>
+        <p style={{fontFamily:"'Cinzel',serif",fontSize:12,letterSpacing:"0.3em",textTransform:"uppercase",marginBottom:12,color:"rgba(139,95,191,.6)"}}>Megara Presents</p>
         <BookGreekKeyDivider glowing/>
-        <M className="font-heading text-[38px] leading-tight tracking-[0.05em] my-4" style={{color:"#D4A040"}} animate={{textShadow:["0 0 5px #8b5fbf, 0 0 10px #8b5fbf","0 0 10px #8b5fbf, 0 0 20px #8b5fbf, 0 0 30px #8b5fbf","0 0 5px #8b5fbf, 0 0 10px #8b5fbf"]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}>Doom &<br/>Deliverables</M>
+        <M style={{fontFamily:"'Cinzel',serif",fontSize:38,lineHeight:1.15,letterSpacing:"0.05em",margin:"16px 0",color:"#D4A040",textShadow:"0 0 8px rgba(139,95,191,.4)"}} animate={{textShadow:["0 0 5px #8b5fbf, 0 0 10px #8b5fbf","0 0 10px #8b5fbf, 0 0 20px #8b5fbf, 0 0 30px #8b5fbf","0 0 5px #8b5fbf, 0 0 10px #8b5fbf"]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}>Doom &<br/>Deliverables</M>
         <BookGreekKeyDivider glowing/>
-        <h2 className="font-body text-sm tracking-[0.15em] uppercase mt-3" style={{color:"rgba(139,95,191,.7)"}}>A Guide to<br/>Traffic Management</h2>
-        <p className="font-heading text-xl mt-4 italic" style={{color:"rgba(212,139,165,.8)"}}>You're welcome.</p>
+        <h2 style={{fontFamily:"'MedievalSharp',cursive",fontSize:14,letterSpacing:"0.15em",textTransform:"uppercase",marginTop:12,color:"rgba(139,95,191,.7)"}}>A Guide to<br/>Traffic Management</h2>
+        <p style={{fontFamily:"'Caveat',cursive",fontSize:20,marginTop:16,fontStyle:"italic",color:"rgba(212,139,165,.8)"}}>You're welcome.</p>
       </div>
-      <div className="absolute bottom-14 left-0 right-0"><BookGreekRunes position="bottom"/></div>
+      <div style={{position:"absolute",bottom:56,left:0,right:0}}><BookGreekRunes position="bottom"/></div>
       <BookHoofMark style={{top:32,right:32,opacity:.3,transform:"rotate(-10deg) scale(.75)"}}/>
       <BookHoofMark style={{bottom:48,left:32,opacity:.2,transform:"rotate(15deg) scale(.6)"}}/>
-      <div className="absolute left-0 top-0 bottom-0 w-10 rounded-l-2xl" style={{background:"linear-gradient(to right,black,#1a1a1a,transparent)",opacity:.8}}/>
-      <M className="absolute bottom-4 font-heading text-xs tracking-[0.2em] uppercase" style={{color:"rgba(212,175,55,.5)"}} animate={{opacity:[0.3,0.8,0.3]}} transition={{duration:2.5,repeat:Infinity}}>{isLocked?"Click the Clasp":"Click to Open"}</M>
+      <div style={{position:"absolute",left:0,top:0,bottom:0,width:40,borderRadius:"16px 0 0 16px",background:"linear-gradient(to right,black,#1a1a1a,transparent)",opacity:.8}}/>
+      <M style={{position:"absolute",bottom:16,fontFamily:"'Cinzel',serif",fontSize:12,letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(212,175,55,.5)"}} animate={{opacity:[0.3,0.8,0.3]}} transition={{duration:2.5,repeat:Infinity}}>{isLocked?"Click the Clasp":"Click to Open"}</M>
     </div>;
   };
 
-  const BookInsideCover=()=><div className="w-full h-full rounded-2xl border-4 border-[#111] relative overflow-hidden" style={{background:"#1a1a1a"}}>
-    <div className="absolute inset-0 opacity-10" style={{backgroundImage:"radial-gradient(#333 1px,transparent 1px)",backgroundSize:"20px 20px"}}/>
-    <div className="absolute inset-0 flex flex-col items-center justify-center">
-      <M className="font-heading text-5xl tracking-[0.5em] mb-8" style={{color:"rgba(212,175,55,.05)",transform:"rotate(12deg)"}} animate={{opacity:[0.03,0.06,0.03]}} transition={{duration:8,repeat:Infinity}}>♔ DOOM ♡</M>
-      <M className="font-heading text-xl text-center px-8 mt-12 italic" style={{color:"rgba(212,139,165,.3)"}} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.5,duration:1}}>For everyone who's ever had to explain something twice.</M>
+  const BookInsideCover=()=><div style={{width:"100%",height:"100%",borderRadius:16,border:"4px solid #111",position:"relative",overflow:"hidden",background:"#1a1a1a"}}>
+    <div style={{position:"absolute",inset:0,opacity:.1,backgroundImage:"radial-gradient(#333 1px,transparent 1px)",backgroundSize:"20px 20px"}}/>
+    <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+      <M style={{fontFamily:"'Cinzel',serif",fontSize:48,letterSpacing:"0.5em",marginBottom:32,color:"rgba(212,175,55,.05)",transform:"rotate(12deg)"}} animate={{opacity:[0.03,0.06,0.03]}} transition={{duration:8,repeat:Infinity}}>♔ DOOM ♡</M>
+      <M style={{fontFamily:"'Caveat',cursive",fontSize:20,textAlign:"center",padding:"0 32px",marginTop:48,fontStyle:"italic",color:"rgba(212,139,165,.3)"}} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.5,duration:1}}>For everyone who's ever had to explain something twice.</M>
     </div>
     <BookCornerOrnament position="top-left" glowing extraStyle={{opacity:.3}}/>
     <BookCornerOrnament position="bottom-right" glowing extraStyle={{opacity:.3}}/>
-    <div className="absolute right-0 top-0 bottom-0 w-12" style={{background:"linear-gradient(to left,black,#1a1a1a,transparent)",opacity:.8}}/>
+    <div style={{position:"absolute",right:0,top:0,bottom:0,width:48,background:"linear-gradient(to left,black,#1a1a1a,transparent)",opacity:.8}}/>
   </div>;
 
   // ── BOOK PAGE ──
@@ -6085,31 +6094,31 @@ Be direct and actionable. No generic advice.`;
   };
 
   const BookPageComp=({pageNumber,title,children,damageEffects})=>{
-    return<div className="book-parchment w-full h-full rounded-2xl flex flex-col relative overflow-hidden text-[#2a1a1a]">
-      <M className="absolute inset-0 rounded-2xl pointer-events-none z-30 mix-blend-soft-light" style={{background:"rgba(255,200,100,.03)"}} animate={{opacity:[0,0.06,0,0.08,0.02,0.07,0]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}/>
+    return<div className="book-parchment" style={{width:"100%",height:"100%",borderRadius:16,display:"flex",flexDirection:"column",position:"relative",overflow:"hidden",color:"#2a1a1a"}}>
+      <M style={{position:"absolute",inset:0,borderRadius:16,pointerEvents:"none",zIndex:30,mixBlendMode:"soft-light",background:"rgba(255,200,100,.03)"}} animate={{opacity:[0,0.06,0,0.08,0.02,0.07,0]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}/>
       <BookCornerOrnament position="top-left" glowing extraStyle={{opacity:.5}}/>
       <BookCornerOrnament position="top-right" glowing extraStyle={{opacity:.5}}/>
       <BookCornerOrnament position="bottom-left" glowing extraStyle={{opacity:.5}}/>
       <BookCornerOrnament position="bottom-right" glowing extraStyle={{opacity:.5}}/>
       <BookSideRunes side="left"/>
       <BookSideRunes side="right"/>
-      <M className="absolute inset-3 border border-[rgba(139,95,191,.1)] rounded-lg pointer-events-none z-10" animate={{boxShadow:["0 0 5px rgba(139,95,191,.1)","0 0 15px rgba(139,95,191,.2)","0 0 5px rgba(139,95,191,.1)"]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}/>
-      <div className="absolute left-0 top-0 bottom-0 w-12 pointer-events-none z-20 rounded-l-2xl" style={{background:"linear-gradient(to right,rgba(0,0,0,.35),rgba(100,70,30,.08),transparent)"}}/>
-      <div className="book-scroll flex-1 py-8 px-10 relative z-10 flex flex-col overflow-y-auto">
-        {title&&<M className="text-center mb-4 flex-shrink-0" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:0.2,duration:0.5}}>
+      <M style={{position:"absolute",inset:12,border:"1px solid rgba(139,95,191,.1)",borderRadius:8,pointerEvents:"none",zIndex:10,boxShadow:"0 0 8px rgba(139,95,191,.15)"}} animate={{boxShadow:["0 0 5px rgba(139,95,191,.1)","0 0 15px rgba(139,95,191,.2)","0 0 5px rgba(139,95,191,.1)"]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}/>
+      <div style={{position:"absolute",left:0,top:0,bottom:0,width:48,pointerEvents:"none",zIndex:20,borderRadius:"16px 0 0 16px",background:"linear-gradient(to right,rgba(0,0,0,.35),rgba(100,70,30,.08),transparent)"}}/>
+      <div className="book-scroll" style={{flex:1,padding:"32px 40px",position:"relative",zIndex:10,display:"flex",flexDirection:"column",overflowY:"auto"}}>
+        {title&&<M style={{textAlign:"center",marginBottom:16,flexShrink:0}} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:0.2,duration:0.5}}>
           <BookRuneAccent glowing/>
-          <h2 className="font-heading text-[22px] tracking-[0.05em] my-2" style={{color:"#8b5fbf",textShadow:"0 0 8px rgba(139,95,191,.4),0 0 20px rgba(139,95,191,.15),0 1px 2px rgba(0,0,0,.2)"}}>{title}</h2>
+          <h2 style={{fontFamily:"'Cinzel',serif",fontSize:22,letterSpacing:"0.05em",margin:"8px 0",color:"#8b5fbf",textShadow:"0 0 8px rgba(139,95,191,.4),0 0 20px rgba(139,95,191,.15),0 1px 2px rgba(0,0,0,.2)"}}>{title}</h2>
           <BookGreekKeyDivider glowing/>
         </M>}
-        <M className="font-body text-sm leading-relaxed text-[#2a1a1a] flex-1" initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.4,duration:0.6}}>{children}</M>
-        {pageNumber>0&&<M className="mt-4 flex-shrink-0" initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.8,duration:0.5}}>
+        <M style={{fontFamily:"'MedievalSharp',cursive",fontSize:14,lineHeight:1.7,color:"#2a1a1a",flex:1}} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.4,duration:0.6}}>{children}</M>
+        {pageNumber>0&&<M style={{marginTop:16,flexShrink:0}} initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.8,duration:0.5}}>
           <BookGreekKeyDivider glowing/>
           <BookLaurelAccent glowing/>
-          <div className="text-center font-heading text-[15px] tracking-[0.15em]" style={{color:"#8b5fbf",textShadow:"0 0 6px rgba(139,95,191,.3),0 0 15px rgba(139,95,191,.1)"}}>— {toRoman(pageNumber)} —</div>
+          <div style={{textAlign:"center",fontFamily:"'Cinzel',serif",fontSize:15,letterSpacing:"0.15em",color:"#8b5fbf",textShadow:"0 0 6px rgba(139,95,191,.3),0 0 15px rgba(139,95,191,.1)"}}>— {toRoman(pageNumber)} —</div>
           <BookRuneAccent glowing/>
         </M>}
       </div>
-      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden rounded-2xl">{damageEffects}</div>
+      <div style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden",borderRadius:16}}>{damageEffects}</div>
     </div>;
   };
 
@@ -6118,18 +6127,18 @@ Be direct and actionable. No generic advice.`;
     const handleClick=(e)=>{e.stopPropagation();onUnlock()};
     const AP=AnimatePresence||React.Fragment;
     return<AP>
-      {isLocked&&<M className="absolute z-[100] cursor-pointer" style={{right:-8,top:"50%",transform:"translateY(-50%)"}} onClick={handleClick} initial={{x:0,scale:1,opacity:1}} exit={{x:30,scale:1.8,opacity:0}} transition={{duration:0.5,ease:"easeOut"}} whileHover={{scale:1.05}} whileTap={{scale:0.95}}>
-        <div className="relative">
-          <M className="w-11 h-24 flex flex-col items-center justify-center gap-1 rounded-r-lg rounded-l-sm" style={{background:"linear-gradient(to bottom,#2a2a3a,#1a1a2a,#2a2a3a)",border:"2px solid rgba(139,95,191,.5)"}} animate={{boxShadow:["0 0 8px 2px rgba(139,95,191,.3),inset 0 0 4px rgba(139,95,191,.2)","0 0 16px 4px rgba(139,95,191,.6),inset 0 0 8px rgba(139,95,191,.4)","0 0 8px 2px rgba(139,95,191,.3),inset 0 0 4px rgba(139,95,191,.2)"]}} transition={{duration:2,repeat:Infinity,ease:"easeInOut"}}>
-            <div className="w-5 h-0.5 rounded" style={{background:"rgba(139,95,191,.3)"}}/>
-            <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center" style={{borderColor:"rgba(212,175,55,.6)",background:"#160d20"}}>
-              <div className="w-1 h-1 rounded-full" style={{background:"rgba(212,175,55,.4)"}}/>
+      {isLocked&&<M style={{position:"absolute",zIndex:100,cursor:"pointer",right:-8,top:"50%",transform:"translateY(-50%)"}} onClick={handleClick} initial={{x:0,scale:1,opacity:1}} exit={{x:30,scale:1.8,opacity:0}} transition={{duration:0.5,ease:"easeOut"}} whileHover={{scale:1.05}} whileTap={{scale:0.95}}>
+        <div style={{position:"relative"}}>
+          <M style={{width:44,height:96,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,borderRadius:"0 8px 8px 0",background:"linear-gradient(to bottom,#2a2a3a,#1a1a2a,#2a2a3a)",border:"2px solid rgba(139,95,191,.5)",boxShadow:"0 0 8px 2px rgba(139,95,191,.3),inset 0 0 4px rgba(139,95,191,.2)"}} animate={{boxShadow:["0 0 8px 2px rgba(139,95,191,.3),inset 0 0 4px rgba(139,95,191,.2)","0 0 16px 4px rgba(139,95,191,.6),inset 0 0 8px rgba(139,95,191,.4)","0 0 8px 2px rgba(139,95,191,.3),inset 0 0 4px rgba(139,95,191,.2)"]}} transition={{duration:2,repeat:Infinity,ease:"easeInOut"}}>
+            <div style={{width:20,height:2,borderRadius:2,background:"rgba(139,95,191,.3)"}}/>
+            <div style={{width:16,height:16,borderRadius:"50%",border:"2px solid rgba(212,175,55,.6)",background:"#160d20",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <div style={{width:4,height:4,borderRadius:"50%",background:"rgba(212,175,55,.4)"}}/>
             </div>
-            <div className="w-2 h-3 rounded-b-sm -mt-1.5" style={{background:"#160d20",borderLeft:"1px solid rgba(212,175,55,.3)",borderRight:"1px solid rgba(212,175,55,.3)",borderBottom:"1px solid rgba(212,175,55,.3)"}}/>
-            <span className="font-heading text-[9px] mt-0.5" style={{color:"rgba(212,175,55,.6)"}}>Ω</span>
-            <div className="w-5 h-0.5 rounded" style={{background:"rgba(139,95,191,.3)"}}/>
+            <div style={{width:8,height:12,borderRadius:"0 0 2px 2px",marginTop:-6,background:"#160d20",borderLeft:"1px solid rgba(212,175,55,.3)",borderRight:"1px solid rgba(212,175,55,.3)",borderBottom:"1px solid rgba(212,175,55,.3)"}}/>
+            <span style={{fontFamily:"'Cinzel',serif",fontSize:9,marginTop:2,color:"rgba(212,175,55,.6)"}}>Ω</span>
+            <div style={{width:20,height:2,borderRadius:2,background:"rgba(139,95,191,.3)"}}/>
           </M>
-          <div className="absolute top-1/2 -translate-y-1/2 right-full w-5 h-10 rounded-l-sm" style={{background:"linear-gradient(to left,#2a2a3a,#1a1a2a)",borderTop:"2px solid rgba(139,95,191,.3)",borderBottom:"2px solid rgba(139,95,191,.3)",borderLeft:"2px solid rgba(139,95,191,.3)"}}/>
+          <div style={{position:"absolute",top:"50%",transform:"translateY(-50%)",right:"100%",width:20,height:40,borderRadius:"2px 0 0 2px",background:"linear-gradient(to left,#2a2a3a,#1a1a2a)",borderTop:"2px solid rgba(139,95,191,.3)",borderBottom:"2px solid rgba(139,95,191,.3)",borderLeft:"2px solid rgba(139,95,191,.3)"}}/>
         </div>
       </M>}
     </AP>;
@@ -6139,29 +6148,29 @@ Be direct and actionable. No generic advice.`;
   const BookTableOfContents=({pages,currentPage,onNavigate,onClose})=>{
     const romans=["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII","XIV","XV"];
     const AP=AnimatePresence||React.Fragment;
-    return<M className="absolute inset-0 z-[200] flex items-center justify-center" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.3}}>
-      <div className="absolute inset-0 rounded-2xl backdrop-blur-sm" style={{background:"rgba(0,0,0,.6)"}} onClick={onClose}/>
-      <M className="relative z-10 w-[85%] max-h-[85%] overflow-y-auto rounded-xl p-6" style={{background:"#1a1a1a",border:"2px solid rgba(139,95,191,.3)",boxShadow:"0 0 30px 5px rgba(139,95,191,.6)"}} initial={{scale:0.9,y:20}} animate={{scale:1,y:0}} exit={{scale:0.9,y:20,opacity:0}} transition={{type:"spring",damping:20}}>
-        <div className="text-center mb-5">
-          <p className="font-heading text-[10px] tracking-[0.4em] uppercase mb-1" style={{color:"rgba(212,175,55,.4)"}}>Index</p>
-          <h3 className="font-heading text-lg tracking-[0.1em]" style={{color:"#D4A040"}}>Table of Contents</h3>
-          <div className="w-20 h-px mx-auto mt-2" style={{background:"linear-gradient(to right,transparent,rgba(139,95,191,.5),transparent)"}}/>
+    return<M style={{position:"absolute",inset:0,zIndex:200,display:"flex",alignItems:"center",justifyContent:"center"}} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.3}}>
+      <div style={{position:"absolute",inset:0,borderRadius:16,backdropFilter:"blur(4px)",background:"rgba(0,0,0,.6)"}} onClick={onClose}/>
+      <M style={{position:"relative",zIndex:10,width:"85%",maxHeight:"85%",overflowY:"auto",borderRadius:12,padding:24,background:"#1a1a1a",border:"2px solid rgba(139,95,191,.3)",boxShadow:"0 0 30px 5px rgba(139,95,191,.6)"}} initial={{scale:0.9,y:20}} animate={{scale:1,y:0}} exit={{scale:0.9,y:20,opacity:0}} transition={{type:"spring",damping:20}}>
+        <div style={{textAlign:"center",marginBottom:20}}>
+          <p style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.4em",textTransform:"uppercase",marginBottom:4,color:"rgba(212,175,55,.4)"}}>Index</p>
+          <h3 style={{fontFamily:"'Cinzel',serif",fontSize:18,letterSpacing:"0.1em",color:"#D4A040"}}>Table of Contents</h3>
+          <div style={{width:80,height:1,margin:"8px auto 0",background:"linear-gradient(to right,transparent,rgba(139,95,191,.5),transparent)"}}/>
         </div>
-        <div className="flex flex-col gap-1">
+        <div style={{display:"flex",flexDirection:"column",gap:4}}>
           {pages.map((page,idx)=>{
             const targetLeaf=Math.floor(idx/2)+1;
             const isCurrent=currentPage===targetLeaf;
-            return<MButton key={idx} onClick={()=>{onNavigate(targetLeaf);onClose()}} className="w-full text-left py-2.5 px-4 rounded-lg flex items-center gap-3 cursor-pointer transition-all duration-200" style={{border:isCurrent?"1px solid rgba(139,95,191,.3)":"1px solid transparent",background:isCurrent?"rgba(139,95,191,.15)":"transparent"}} initial={{opacity:0,x:-10}} animate={{opacity:1,x:0}} transition={{delay:idx*0.04}} whileHover={{x:4,background:"rgba(139,95,191,.1)"}}>
-              <span className="font-heading text-sm w-8 flex-shrink-0 tracking-[0.1em]" style={{color:isCurrent?"#D4A040":"rgba(139,95,191,.4)"}}>{romans[idx]||idx+1}</span>
+            return<MButton key={idx} onClick={()=>{onNavigate(targetLeaf);onClose()}} style={{width:"100%",textAlign:"left",padding:"10px 16px",borderRadius:8,display:"flex",alignItems:"center",gap:12,cursor:"pointer",border:isCurrent?"1px solid rgba(139,95,191,.3)":"1px solid transparent",background:isCurrent?"rgba(139,95,191,.15)":"transparent"}} initial={{opacity:0,x:-10}} animate={{opacity:1,x:0}} transition={{delay:idx*0.04}} whileHover={{x:4,background:"rgba(139,95,191,.1)"}}>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:14,width:32,flexShrink:0,letterSpacing:"0.1em",color:isCurrent?"#D4A040":"rgba(139,95,191,.4)"}}>{romans[idx]||idx+1}</span>
               <span style={{color:"rgba(139,95,191,.2)"}}>·</span>
-              <span className="font-body text-[13px] flex-1" style={{color:isCurrent?"#D4A040":"rgba(232,223,240,.7)"}}>{page.title}</span>
-              {isCurrent&&<M className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{background:"#D4A040",boxShadow:"0 0 15px 2px rgba(139,95,191,.4)"}} animate={{scale:[1,1.3,1]}} transition={{duration:2,repeat:Infinity}}/>}
+              <span style={{fontFamily:"'MedievalSharp',cursive",fontSize:13,flex:1,color:isCurrent?"#D4A040":"rgba(232,223,240,.7)"}}>{page.title}</span>
+              {isCurrent&&<M style={{width:6,height:6,borderRadius:"50%",flexShrink:0,background:"#D4A040",boxShadow:"0 0 15px 2px rgba(139,95,191,.4)"}} animate={{scale:[1,1.3,1]}} transition={{duration:2,repeat:Infinity}}/>}
             </MButton>;
           })}
         </div>
-        <div className="text-center mt-4">
-          <div className="w-20 h-px mx-auto mb-2" style={{background:"linear-gradient(to right,transparent,rgba(139,95,191,.3),transparent)"}}/>
-          <button onClick={onClose} className="font-heading text-[10px] tracking-[0.3em] uppercase bg-transparent border-none cursor-pointer" style={{color:"rgba(139,95,191,.4)"}}>Close</button>
+        <div style={{textAlign:"center",marginTop:16}}>
+          <div style={{width:80,height:1,margin:"0 auto 8px",background:"linear-gradient(to right,transparent,rgba(139,95,191,.3),transparent)"}}/>
+          <button onClick={onClose} style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.3em",textTransform:"uppercase",background:"transparent",border:"none",cursor:"pointer",color:"rgba(139,95,191,.4)"}}>Close</button>
         </div>
       </M>
     </M>;
@@ -6189,29 +6198,30 @@ Be direct and actionable. No generic advice.`;
       const l=(currentLeaf-1)*2,r=l+1;
       return r>bookPages.length?`Page ${l} of ${bookPages.length}`:`Pages ${l}-${r} of ${bookPages.length}`;
     };
-    return<div className="flex flex-col items-center w-full overflow-visible">
-      <M className="relative w-full max-w-[420px] overflow-visible" style={{aspectRatio:"3/4.2",perspective:2000,filter:"drop-shadow(0 0 8px rgba(139,95,191,.08))"}} animate={{x:isOpen?"50%":"0%"}} transition={{duration:0.6,ease:"easeOut"}}>
+    return<div style={{display:"flex",flexDirection:"column",alignItems:"center",width:"100%",overflow:"visible"}}>
+      <div style={{position:"relative",width:"100%",maxWidth:420,overflow:"visible",filter:"drop-shadow(0 0 30px rgba(139,95,191,0.45)) drop-shadow(0 0 70px rgba(139,95,191,0.2))"}}>
+      <M style={{position:"relative",width:"100%",aspectRatio:"3/4.2",perspective:2000,overflow:"visible"}} animate={{x:isOpen?"50%":"0%"}} transition={{duration:0.6,ease:"easeOut"}}>
         {!isOpen&&<BookClasp isLocked={isLocked} onUnlock={handleUnlock}/>}
         <AP>
-        {isOpen&&!showToc&&<MButton key="toc-btn" className="absolute -top-3 left-1/2 -translate-x-1/2 z-[150] flex items-center gap-1.5 py-1.5 px-4 rounded-t-lg cursor-pointer" style={{background:"#1a1a2a",border:"1px solid rgba(139,95,191,.4)"}} onClick={(e)=>{e.stopPropagation();setShowToc(true)}} initial={{y:-20,opacity:0}} animate={{y:0,opacity:1}} exit={{y:-20,opacity:0}} whileHover={{y:-2}}>
-          <span className="font-heading text-[10px] tracking-[0.2em] uppercase" style={{color:"rgba(139,95,191,.5)"}}>☰ Index</span>
+        {isOpen&&!showToc&&<MButton key="toc-btn" style={{position:"absolute",top:-12,left:"50%",transform:"translateX(-50%)",zIndex:150,display:"flex",alignItems:"center",gap:6,padding:"6px 16px",borderRadius:"8px 8px 0 0",cursor:"pointer",background:"#1a1a2a",border:"1px solid rgba(139,95,191,.4)"}} onClick={(e)=>{e.stopPropagation();setShowToc(true)}} initial={{y:-20,opacity:0}} animate={{y:0,opacity:1}} exit={{y:-20,opacity:0}} whileHover={{y:-2}}>
+          <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(139,95,191,.5)"}}>☰ Index</span>
         </MButton>}
         </AP>
         <AP>{showToc&&<BookTableOfContents key="toc" pages={bookPages} currentPage={currentLeaf} onNavigate={(li)=>{bookPlayPageSound();setCurrentLeaf(li)}} onClose={()=>setShowToc(false)}/>}</AP>
         {/* Spine edge lines for unflipped pages */}
         <AP>
-        {isOpen&&!isFullyFlipped&&<M key="spine" className="absolute top-3 -right-px bottom-3 w-1 z-[5] rounded-r-sm overflow-hidden" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
-          <div className="w-full h-full" style={{background:"linear-gradient(to bottom,rgba(139,95,191,.1),rgba(212,175,55,.25),rgba(139,95,191,.1))"}}/>
-          {Array.from({length:Math.min(pairedLeaves.length-currentLeaf+1,8)}).map((_,i)=><div key={i} className="absolute w-full h-px" style={{background:"rgba(212,175,55,.15)",top:`${8+i*11}%`}}/>)}
+        {isOpen&&!isFullyFlipped&&<M key="spine" style={{position:"absolute",top:12,right:-1,bottom:12,width:4,zIndex:5,borderRadius:"0 2px 2px 0",overflow:"hidden"}} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+          <div style={{width:"100%",height:"100%",background:"linear-gradient(to bottom,rgba(139,95,191,.1),rgba(212,175,55,.25),rgba(139,95,191,.1))"}}/>
+          {Array.from({length:Math.min(pairedLeaves.length-currentLeaf+1,8)}).map((_,i)=><div key={i} style={{position:"absolute",width:"100%",height:1,background:"rgba(212,175,55,.15)",top:`${8+i*11}%`}}/>)}
         </M>}
         </AP>
         {/* Back cover base */}
-        <div className="absolute inset-0 z-0">
-          <div className="book-leather w-full h-full rounded-2xl border-4 border-[#111]"/>
+        <div style={{position:"absolute",inset:0,zIndex:0}}>
+          <div className="book-leather" style={{width:"100%",height:"100%",borderRadius:16,border:"4px solid #111"}}/>
         </div>
         {/* Parchment base for open book */}
-        <div className="absolute inset-0 z-[1]">
-          <div className="book-parchment w-full h-full rounded-2xl"/>
+        <div style={{position:"absolute",inset:0,zIndex:1}}>
+          <div className="book-parchment" style={{width:"100%",height:"100%",borderRadius:16}}/>
         </div>
         {/* Content leaves (reversed so first is on top when closed) */}
         {[...pairedLeaves].reverse().map((leaf,ri)=>{
@@ -6225,7 +6235,7 @@ Be direct and actionable. No generic advice.`;
             </div>
             <div className="book-face book-face-back">
               {leaf.back?<BookPageComp pageNumber={leaf.bi+1} title={leaf.back.title} damageEffects={leaf.back.damageEffects}>{leaf.back.content}</BookPageComp>
-                :<div className="book-parchment w-full h-full rounded-2xl opacity-95"/>}
+                :<div className="book-parchment" style={{width:"100%",height:"100%",borderRadius:16,opacity:.95}}/>}
             </div>
           </div>;
         })}
@@ -6235,11 +6245,12 @@ Be direct and actionable. No generic advice.`;
           <div className="book-face book-face-back"><BookInsideCover/></div>
         </div>
       </M>
+      </div>
       {/* Navigation controls */}
-      <M className="mt-8 flex justify-between items-center w-full max-w-[420px] px-2" animate={{opacity:isOpen?1:0}} transition={{duration:0.5}} style={{pointerEvents:isOpen?"auto":"none"}}>
-        <MButton onClick={handlePrev} disabled={currentLeaf<=0} className="flex items-center gap-1 font-heading text-sm tracking-[0.1em] bg-transparent border-none" style={{cursor:currentLeaf<=0?"not-allowed":"pointer",color:currentLeaf<=0?"rgba(139,95,191,.2)":"rgba(212,175,55,.7)"}} whileHover={currentLeaf>0?{x:-3}:{}} whileTap={currentLeaf>0?{scale:0.95}:{}}>◂ Previous</MButton>
-        <div className="font-body text-xs" style={{color:"rgba(139,95,191,.5)"}}>{getVisText()}</div>
-        <MButton onClick={handleNext} disabled={isFullyFlipped} className="flex items-center gap-1 font-heading text-sm tracking-[0.1em] bg-transparent border-none" style={{cursor:isFullyFlipped?"not-allowed":"pointer",color:isFullyFlipped?"rgba(139,95,191,.2)":"rgba(212,175,55,.7)"}} whileHover={!isFullyFlipped?{x:3}:{}} whileTap={!isFullyFlipped?{scale:0.95}:{}}>Next ▸</MButton>
+      <M style={{marginTop:32,display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",maxWidth:420,padding:"0 8px",pointerEvents:isOpen?"auto":"none",opacity:isOpen?1:0,transition:"opacity 0.5s"}} animate={{opacity:isOpen?1:0}} transition={{duration:0.5}}>
+        <MButton onClick={handlePrev} disabled={currentLeaf<=0} style={{display:"flex",alignItems:"center",gap:4,fontFamily:"'Cinzel',serif",fontSize:14,letterSpacing:"0.1em",background:"transparent",border:"none",cursor:currentLeaf<=0?"not-allowed":"pointer",color:currentLeaf<=0?"rgba(139,95,191,.2)":"rgba(212,175,55,.7)"}} whileHover={currentLeaf>0?{x:-3}:{}} whileTap={currentLeaf>0?{scale:0.95}:{}}>◂ Previous</MButton>
+        <div style={{fontFamily:"'MedievalSharp',cursive",fontSize:12,color:"rgba(139,95,191,.5)"}}>{getVisText()}</div>
+        <MButton onClick={handleNext} disabled={isFullyFlipped} style={{display:"flex",alignItems:"center",gap:4,fontFamily:"'Cinzel',serif",fontSize:14,letterSpacing:"0.1em",background:"transparent",border:"none",cursor:isFullyFlipped?"not-allowed":"pointer",color:isFullyFlipped?"rgba(139,95,191,.2)":"rgba(212,175,55,.7)"}} whileHover={!isFullyFlipped?{x:3}:{}} whileTap={!isFullyFlipped?{scale:0.95}:{}}>Next ▸</MButton>
       </M>
     </div>;
   };
@@ -6359,13 +6370,13 @@ Be direct and actionable. No generic advice.`;
   const ALL_BOOK_PAGES=useMemo(()=>[...BOOK_PAGES_1,...BOOK_PAGES_2,...BOOK_PAGES_3],[]);
 
   const DocsPg=()=>{
-    return<div className="flex flex-col gap-3">
+    return<div style={{display:"flex",flexDirection:"column",gap:12}}>
       <PageHead title="Help & Docs" pgKey="docs"/>
-      <div className="relative flex flex-col items-center justify-center py-4 px-2 overflow-hidden" style={{minHeight:"calc(100vh - 120px)"}}>
+      <div style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"16px 8px",minHeight:"calc(100vh - 120px)",overflow:"visible"}}>
         <BookSoulParticles/>
         <BookFlyingPegasus/>
         <BookPegasusConstellation/>
-        <div className="z-10 w-full flex flex-col items-center overflow-visible">
+        <div style={{position:"relative",zIndex:10,width:"100%",display:"flex",flexDirection:"column",alignItems:"center",overflow:"visible"}}>
           <BookMain pages={ALL_BOOK_PAGES}/>
         </div>
       </div>
