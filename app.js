@@ -1661,7 +1661,7 @@ const App=()=>{
       const allMedia=[...new Set(combineEsts.map(e=>e.media))];
       const allDmas=[...new Set(combineEsts.map(e=>Object.entries(DM).find(([_,n])=>n.toLowerCase()===e.market.toLowerCase())?.[0]||""))];
       const allMarkets=[...new Set(combineEsts.map(e=>e.market))];
-      const pool=iscis.filter(i=>allDmas.includes(i.dma)&&i.brand===brand&&i.active&&allMedia.some(m=>m==="TV"?i.suffix==="T":m==="Radio"?i.suffix==="R":m==="Streaming Audio"?i.suffix==="S":m==="OOH"?i.suffix==="O":m==="Digital"?i.suffix==="D":m==="Display"?i.suffix==="B":true));
+      const pool=iscis.filter(i=>allDmas.includes(i.dma)&&i.brand===brand&&i.active&&allMedia.some(m=>m==="TV"||m==="Cable"?i.suffix==="T":m==="Radio"?i.suffix==="R":m==="Streaming Audio"?i.suffix==="S":m==="OOH"?i.suffix==="O":m==="Digital"?i.suffix==="D":m==="Display"?i.suffix==="B":true));
       const combinedEst={...combineEsts[0],num:combineEsts.map(e=>e.num).join(" + "),market:allMarkets.join(" / "),media:allMedia.join(" / "),group:combineEsts.map(e=>e.group).join(" + "),_combined:combineEsts};
       if(allMedia.every(m=>m==="Streaming Audio"||m==="Digital")){
         setModal({t:"buildStream",est:combinedEst,pool:pool});
@@ -1695,7 +1695,7 @@ const App=()=>{
       <Cd><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>{combineMode&&<TH w="30">✓</TH>}<STH tbl="traf" col="num">Est#</STH><STH tbl="traf" col="brand">Brand</STH><STH tbl="traf" col="market">Market</STH><STH tbl="traf" col="media">Media</STH><STH tbl="traf" col="group">Buy Type</STH><STH tbl="traf" col="buyer">Buyer</STH><TH>Stations</TH><TH>ISCIs</TH><TH>Airing</TH><TH>Confirmed</TH><TH>Action</TH></tr></thead>
         <tbody>{sortRows("traf",brandEsts,{num:r=>r.num,brand:r=>r.brand,market:r=>r.market,media:r=>r.media,group:r=>r.group||"",buyer:r=>r.buyer||""}).map(e=>{
           const dc=normMkt(e.market)||"";
-          const mi=iscis.filter(i=>i.dma===dc&&i.brand===e.brand&&i.active&&(e.media==="TV"?i.suffix==="T":e.media==="Radio"?i.suffix==="R":e.media==="Streaming Audio"?i.suffix==="S":e.media==="OOH"?i.suffix==="O":e.media==="Digital"?i.suffix==="D":e.media==="Display"?i.suffix==="B":true));
+          const mi=iscis.filter(i=>i.dma===dc&&i.brand===e.brand&&i.active&&(e.media==="TV"||e.media==="Cable"?i.suffix==="T":e.media==="Radio"?i.suffix==="R":e.media==="Streaming Audio"?i.suffix==="S":e.media==="OOH"?i.suffix==="O":e.media==="Digital"?i.suffix==="D":e.media==="Display"?i.suffix==="B":true));
           const isSel=combineSet.includes(estKey(e));
           const linkedSta=getEstStations(e);
           const airing=nowAiring[ak(e)];
