@@ -6401,11 +6401,24 @@ Be direct and actionable. No generic advice.`;
       <BookMarginNote author="hades">The safeguards exist because someone tried to destroy my data. Once.</BookMarginNote>
     </div>,damageEffects:<>{<BookBurnMark style={{top:0,left:0,width:120,height:120,opacity:.35}}/>}{<BookHoofMark style={{bottom:16,right:24,opacity:.2,transform:"rotate(-20deg) scale(.65)"}}/>}</>},
 
-    {title:"AI Planner & Reports",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>The Muses (AI Planner): Claude analyzes staleness, coverage, creative mix, market balance, and recommendations — narrated as dramatic storytelling.</p>
-      <p>Report Mode: ?report=wk or ?report=pl generates read-only views for stakeholders without system access.</p>
+    {title:"AI Planner: The Muses",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>The AI Planner uses Claude to analyze your traffic rotation strategy. The Five Muses from Hercules narrate the analysis as dramatic storytelling.</p>
+      <p>They examine: staleness, coverage gaps, creative mix, market balance, and recommendations. Each Muse has a distinct personality. They interrupt each other.</p>
       <BookMarginNote author="muses">We are the Muses, goddesses of the arts<br/>We'll sing of your traffic — the sum of its parts!</BookMarginNote>
     </div>,damageEffects:<>{<BookLipstickMark style={{top:32,right:24,opacity:.5,transform:"rotate(10deg) scale(1.1)"}}/>}{<BookDroolStain style={{bottom:16,left:32,width:80,height:80,opacity:.2}}/>}</>},
+
+    {title:"Reports & Sharing",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Report Mode: ?report=wk or ?report=pl generates read-only views without sidebar or navigation — for stakeholders who need status without system access.</p>
+      <p>OOH Hub uses hash routing (#ooh/wk, #ooh/pl, #ooh/isci, #ooh/import) as its own sub-application. Full brand and market names everywhere — no abbreviations except ISCI codes.</p>
+      <BookMarginNote author="meg">Share the report. Don't share the password.</BookMarginNote>
+    </div>,damageEffects:<>{<BookHoofMark style={{top:24,left:16,opacity:.25,transform:"rotate(10deg) scale(.7)"}}/>}{<BookBurnMark style={{bottom:0,right:0,width:100,height:100,opacity:.2}}/>}</>},
+
+    {title:"System Architecture",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Single-page React app: index.html (login, loader, CSS), app.js (~6000 lines, Babel-transpiled), config.js (components, constants). Seed data from data-*.js script tags.</p>
+      <p>Backend: api/auth.js (timing-safe compare, rate limiting), api/config.js (Firebase), api/planner.js (AI proxy), middleware.js (64-char hex session tokens). Deployed on Vercel.</p>
+      <p>Routing: state-based (pg variable), no URLs. Loader CSS in head tag — outside React's render root so it survives mount.</p>
+      <BookMarginNote author="meg">Six thousand lines. One file. You're welcome.</BookMarginNote>
+    </div>,damageEffects:<>{<BookInkSplatter style={{top:16,right:16,opacity:.5}}/>}{<BookBiteMark style={{bottom:8,left:0,opacity:.3,transform:"scale(.45)"}}/>}</>},
 
     {title:"End of the Line",content:<div style={{display:"flex",flexDirection:"column",gap:14,textAlign:"center",paddingTop:24}}>
       <p style={{fontSize:17,fontFamily:"'Cinzel',serif",color:"#4a1a1a"}}>Thus concludes the sacred documentation of the Doom & Deliverables Traffic Management System.</p>
