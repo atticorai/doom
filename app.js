@@ -6069,7 +6069,7 @@ Be direct and actionable. No generic advice.`;
         <h1 style={{fontFamily:"'Cinzel',serif",fontSize:38,color:"#D4A040",margin:"16px 0",lineHeight:1.2,letterSpacing:"0.05em",animation:"bookPulseGlow 3s infinite alternate"}}>Doom &<br/>Deliverables</h1>
         <BookGreekKeyDivider glowing/>
         <h2 style={{fontFamily:"'MedievalSharp',cursive",color:"rgba(139,95,191,.7)",fontSize:14,letterSpacing:"0.15em",textTransform:"uppercase",marginTop:12}}>A Guide to<br/>Traffic Management</h2>
-        <p style={{fontFamily:"'Caveat',cursive",color:"rgba(212,139,165,.8)",fontSize:24,marginTop:16,fontStyle:"italic"}}>You're welcome.</p>
+        <p className="book-handwriting" style={{fontFamily:"'Caveat',cursive",color:"rgba(212,139,165,.8)",fontSize:24,marginTop:16,fontStyle:"italic"}}>You're welcome.</p>
       </div>
       <div className="absolute bottom-14 left-0 right-0" style={{position:"absolute",bottom:56,left:0,right:0}}><BookGreekRunes position="bottom"/></div>
       <BookHoofMark style={{top:32,right:32,opacity:.3,transform:"rotate(-10deg) scale(.75)"}}/>
@@ -6083,7 +6083,7 @@ Be direct and actionable. No generic advice.`;
     <div className="absolute inset-0 opacity-10" style={{position:"absolute",inset:0,opacity:0.1,backgroundImage:"radial-gradient(#333 1px,transparent 1px)",backgroundSize:"20px 20px"}}/>
     <div className="absolute inset-0 flex flex-col items-center justify-center" style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
       <div style={{color:"rgba(212,175,55,.05)",fontSize:48,fontFamily:"'Cinzel',serif",letterSpacing:"0.5em",transform:"rotate(12deg)",marginBottom:32}}>♔ DOOM ♡</div>
-      <div style={{fontFamily:"'Caveat',cursive",color:"rgba(212,139,165,.3)",fontSize:22,textAlign:"center",padding:"0 32px",marginTop:48,fontStyle:"italic"}}>For everyone who's ever had to explain something twice.</div>
+      <div className="book-handwriting" style={{fontFamily:"'Caveat',cursive",color:"rgba(212,139,165,.3)",fontSize:22,textAlign:"center",padding:"0 32px",marginTop:48,fontStyle:"italic"}}>For everyone who's ever had to explain something twice.</div>
     </div>
     <BookCornerOrnament position="top-left" glowing extraStyle={{opacity:.3}}/>
     <BookCornerOrnament position="bottom-right" glowing extraStyle={{opacity:.3}}/>
