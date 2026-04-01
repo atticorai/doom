@@ -1830,14 +1830,13 @@ const App=()=>{
         });
       });
       h+='</tbody></table>';
-      // Cable Streaming Component section for Chicago/Denver Cable
+      // Cable Digital Streaming section for Chicago/Denver Cable
       if(est.num==="2613"||est.num==="2629"){
-        const dc=Object.entries(DM).find(([_,n])=>n===est.market)?.[0]||"";
-        const digitalIscis=iscis.filter(i=>i.dma===dc&&i.brand===est.brand&&i.active&&i.suffix==="D");
-        if(digitalIscis.length>0){
-          h+='<div style="margin-top:14px;padding:8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#0369a1;margin-bottom:6px">📺 Cable Streaming Component — Digital TV</div>';
-          h+='<table style="width:100%;border-collapse:collapse"><thead><tr><th style="padding:4px 6px;font-size:10px;text-align:left;border-bottom:1px solid #bae6fd">ISCI</th><th style="padding:4px 6px;font-size:10px;text-align:left;border-bottom:1px solid #bae6fd">Title</th></tr></thead><tbody>';
-          digitalIscis.forEach(i=>{h+='<tr><td style="padding:3px 6px;font-size:11px;font-family:monospace;font-weight:600">'+i.code+'</td><td style="padding:3px 6px;font-size:11px">'+i.title+'</td></tr>'});
+        const thirties=sel.filter(r=>r.isci.dur==="30");
+        if(thirties.length>0){
+          h+='<div style="margin-top:14px;padding:8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#0369a1;margin-bottom:6px">📺 Cable Digital Streaming — :30 Rotation</div>';
+          h+='<table style="width:100%;border-collapse:collapse"><thead><tr><th style="padding:4px 6px;font-size:10px;text-align:left;border-bottom:1px solid #bae6fd">ISCI</th><th style="padding:4px 6px;font-size:10px;text-align:left;border-bottom:1px solid #bae6fd">Title</th><th style="padding:4px 6px;font-size:10px;text-align:center;border-bottom:1px solid #bae6fd">%</th></tr></thead><tbody>';
+          thirties.forEach(r=>{h+='<tr><td style="padding:3px 6px;font-size:11px;font-family:monospace;font-weight:600">'+r.isci.code+'</td><td style="padding:3px 6px;font-size:11px">'+r.isci.title+'</td><td style="padding:3px 6px;font-size:11px;text-align:center;font-weight:600">'+(r.pct?r.pct+'%':'')+'</td></tr>'});
           h+='</tbody></table></div>';
         }
       }
@@ -1973,13 +1972,13 @@ const App=()=>{
 
       {/* Cable Streaming Component — only for Chicago Cable (2613) and Denver Cable (2629) */}
       {(est.num==="2613"||est.num==="2629")&&<div style={{marginTop:10,padding:10,borderRadius:8,background:"rgba(74,200,232,.08)",border:"1px solid rgba(74,200,232,.25)"}}>
-        <div style={{fontSize:13,fontWeight:700,color:"#4AC8E8",textTransform:"uppercase",letterSpacing:.5,marginBottom:6}}>📺 Cable Streaming Component — Digital TV</div>
-        <div style={{fontSize:12,color:"#9B8EAD",marginBottom:6}}>Streaming digital rotation for this market. Select ISCIs below.</div>
+        <div style={{fontSize:13,fontWeight:700,color:"#4AC8E8",textTransform:"uppercase",letterSpacing:.5,marginBottom:6}}>📺 Cable Digital Streaming — :30 Rotation</div>
+        <div style={{fontSize:12,color:"#9B8EAD",marginBottom:6}}>Uses the same :30 TV ISCIs for the streaming digital component.</div>
         <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-          {iscis.filter(i=>{const dc=Object.entries(DM).find(([_,n])=>n===est.market)?.[0]||"";return i.dma===dc&&i.brand===est.brand&&i.active&&i.suffix==="D"}).map(i=><div key={i.code+"_cs"} style={{padding:"3px 8px",borderRadius:4,background:"rgba(74,200,232,.12)",border:"1px solid rgba(74,200,232,.2)",fontSize:12,fontFamily:"monospace",fontWeight:600,color:"#4AC8E8"}}>
-            {i.code} — {i.title}
+          {sel.filter(r=>r.isci.dur==="30").map(r=><div key={r.isci.code+"_cs"} style={{padding:"3px 8px",borderRadius:4,background:"rgba(74,200,232,.12)",border:"1px solid rgba(74,200,232,.2)",fontSize:12,fontFamily:"monospace",fontWeight:600,color:"#4AC8E8"}}>
+            {r.isci.code} — {r.isci.title} — {r.pct||"—"}%
           </div>)}
-          {iscis.filter(i=>{const dc=Object.entries(DM).find(([_,n])=>n===est.market)?.[0]||"";return i.dma===dc&&i.brand===est.brand&&i.active&&i.suffix==="D"}).length===0&&<div style={{fontSize:12,color:"#D4A040",fontStyle:"italic"}}>No Digital ISCIs (suffix D) registered for this market</div>}
+          {sel.filter(r=>r.isci.dur==="30").length===0&&<div style={{fontSize:12,color:"#D4A040",fontStyle:"italic"}}>No :30 ISCIs selected — select :30s above to populate streaming component</div>}
         </div>
       </div>}
 
