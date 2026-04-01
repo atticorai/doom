@@ -5902,21 +5902,21 @@ Be direct and actionable. No generic advice.`;
   const BookGreekRunes=({position})=>{
     const symbols=position==="top"||position==="bottom"?["♔","♡","⚡","☆","⚱"]:["♡","·","⚡","·"];
     const isVert=position==="left"||position==="right";
-    return<div className="flex items-center justify-center gap-3 pointer-events-none select-none" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,pointerEvents:"none",userSelect:"none",flexDirection:isVert?"column":"row",fontFamily:"'Cormorant Garamond',serif",fontSize:11,letterSpacing:"0.5em",color:"rgba(139,95,191,.4)",animation:"bookPulseGlow 3s infinite alternate"}}>
+    return<div className="flex items-center justify-center gap-3 pointer-events-none select-none" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12,pointerEvents:"none",userSelect:"none",flexDirection:isVert?"column":"row",fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:"0.5em",color:"rgba(139,95,191,.4)",animation:"bookPulseGlow 3s infinite alternate"}}>
       {symbols.map((s,i)=><span key={i}>{s}</span>)}
     </div>;
   };
 
   const BookRuneAccent=({glowing})=>{
     const c=glowing?"rgba(139,95,191,.4)":"rgba(139,115,85,.2)";
-    return<div className="flex items-center justify-center gap-1 pointer-events-none select-none" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,pointerEvents:"none",userSelect:"none",fontSize:10,fontFamily:"'Cormorant Garamond',serif",letterSpacing:"0.3em",color:c,animation:glowing?"bookPulseGlow 3s infinite alternate":"none"}}>
+    return<div className="flex items-center justify-center gap-1 pointer-events-none select-none" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,pointerEvents:"none",userSelect:"none",fontSize:10,fontFamily:"'Cinzel',serif",letterSpacing:"0.3em",color:c,animation:glowing?"bookPulseGlow 3s infinite alternate":"none"}}>
       {["✦","♔","·","♡","·","⚡","✦"].map((s,i)=><span key={i}>{s}</span>)}
     </div>;
   };
 
   const BookSideRunes=({side})=>{
     const symbols=side==="left"?["♔","·","♡","·","☆","·","⚡"]:["⚱","·","♡","·","☆","·","♔"];
-    return<div className="absolute flex flex-col items-center gap-2 pointer-events-none select-none" style={{position:"absolute",display:"flex",flexDirection:"column",alignItems:"center",gap:8,pointerEvents:"none",userSelect:"none",...(side==="left"?{left:4}:{right:8}),top:"50%",transform:"translateY(-50%)",fontFamily:"'Cormorant Garamond',serif",fontSize:8,letterSpacing:"0.15em",color:"rgba(139,95,191,.25)",animation:"bookFatesPulse 4s infinite alternate"}}>
+    return<div className="absolute flex flex-col items-center gap-2 pointer-events-none select-none" style={{position:"absolute",display:"flex",flexDirection:"column",alignItems:"center",gap:8,pointerEvents:"none",userSelect:"none",...(side==="left"?{left:4}:{right:8}),top:"50%",transform:"translateY(-50%)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.15em",color:"rgba(139,95,191,.25)",animation:"bookFatesPulse 4s infinite alternate"}}>
       {symbols.map((s,i)=><span key={i} style={{opacity:s==="·"?0.4:1}}>{s}</span>)}
     </div>;
   };
@@ -5980,8 +5980,8 @@ Be direct and actionable. No generic advice.`;
   // ── MARGIN NOTES ──
   const BookMarginNote=({author,children})=>{
     const styles={
-      meg:{borderLeft:"2px solid #8b5fbf",color:"#8b5fbf",fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontStyle:"italic"},
-      muses:{borderLeft:"2px solid #d48ba5",color:"#d48ba5",fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontStyle:"italic"},
+      meg:{borderLeft:"2px solid #8b5fbf",color:"#8b5fbf",fontFamily:"'Caveat',cursive",fontSize:20,fontStyle:"italic"},
+      muses:{borderLeft:"2px solid #d48ba5",color:"#d48ba5",fontFamily:"'Caveat',cursive",fontSize:20,fontStyle:"italic"},
       hades:{borderLeft:"2px solid #1a1a3a",color:"#1a1a3a",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:700},
     };
     const cssClass={meg:"book-margin-meg",muses:"book-margin-muses",hades:"book-margin-hades"};
@@ -6017,7 +6017,7 @@ Be direct and actionable. No generic advice.`;
     },[]);
     // CSS animations always work — FM enhances if available
     return<div className="book-soul-particles fixed inset-0 pointer-events-none z-0 overflow-hidden" style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
-      {greekFrags.map(f=><div key={`gf-${f.id}`} className="absolute select-none" style={{position:"absolute",userSelect:"none",left:f.x+"%",top:f.y+"%",fontFamily:"'Cormorant Garamond',serif",color:"rgba(139,95,191,.04)",fontSize:14,letterSpacing:"0.3em",animation:`bookGreekDrift ${f.dur}s linear ${f.delay}s infinite`}}>{f.text}</div>)}
+      {greekFrags.map(f=><div key={`gf-${f.id}`} className="absolute select-none" style={{position:"absolute",userSelect:"none",left:f.x+"%",top:f.y+"%",fontFamily:"'Cinzel',serif",color:"rgba(139,95,191,.04)",fontSize:14,letterSpacing:"0.3em",animation:`bookGreekDrift ${f.dur}s linear ${f.delay}s infinite`}}>{f.text}</div>)}
       {particles.map(p=><div key={`sp-${p.id}`} className="absolute rounded-full" style={{position:"absolute",left:p.x+"%",width:p.size,height:p.size,borderRadius:"50%",background:p.isGold?"#D4A040":"rgba(139,95,191,.9)",boxShadow:p.isGold?`0 0 ${p.size*2}px ${p.size/2}px rgba(212,175,55,.7)`:`0 0 ${p.size*2}px ${p.size/2}px rgba(139,95,191,.8)`,"--p-op":p.op,"--p-drift":p.drift,animation:`bookSoulFloat ${p.dur}s linear ${p.delay}s infinite`}}/>)}
     </div>;
   };
@@ -6062,28 +6062,28 @@ Be direct and actionable. No generic advice.`;
       <div className="absolute top-10 left-0 right-0" style={{position:"absolute",top:40,left:0,right:0}}><BookGreekRunes position="top"/></div>
       <div className="text-center z-10 relative" style={{textAlign:"center",zIndex:10,position:"relative"}}>
         <div className="w-14 h-14 mx-auto mb-6 rounded-full border-2 flex items-center justify-center" style={{width:56,height:56,marginLeft:"auto",marginRight:"auto",marginBottom:24,borderRadius:"50%",border:"2px solid",display:"flex",alignItems:"center",justifyContent:"center",borderColor:"rgba(139,95,191,.4)",boxShadow:"0 0 15px 2px rgba(139,95,191,.4)",animation:"bookSpinSlow 20s linear infinite"}}>
-          <span style={{color:"rgba(212,175,55,.7)",fontSize:24,fontFamily:"'Cormorant Garamond',serif"}}>♔</span>
+          <span style={{color:"rgba(212,175,55,.7)",fontSize:24,fontFamily:"'Cinzel',serif"}}>♔</span>
         </div>
-        <p style={{fontFamily:"'Cormorant Garamond',serif",color:"rgba(139,95,191,.6)",fontSize:12,letterSpacing:"0.3em",textTransform:"uppercase",marginBottom:12}}>Megara Presents</p>
+        <p style={{fontFamily:"'Cinzel',serif",color:"rgba(139,95,191,.6)",fontSize:12,letterSpacing:"0.3em",textTransform:"uppercase",marginBottom:12}}>Megara Presents</p>
         <BookGreekKeyDivider glowing/>
-        <h1 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:38,color:"#D4A040",margin:"16px 0",lineHeight:1.2,letterSpacing:"0.05em",animation:"bookPulseGlow 3s infinite alternate"}}>Doom &<br/>Deliverables</h1>
+        <h1 style={{fontFamily:"'Cinzel',serif",fontSize:38,color:"#D4A040",margin:"16px 0",lineHeight:1.2,letterSpacing:"0.05em",animation:"bookPulseGlow 3s infinite alternate"}}>Doom &<br/>Deliverables</h1>
         <BookGreekKeyDivider glowing/>
-        <h2 style={{fontFamily:"'DM Sans',sans-serif",color:"rgba(139,95,191,.7)",fontSize:14,letterSpacing:"0.15em",textTransform:"uppercase",marginTop:12}}>A Guide to<br/>Traffic Management</h2>
-        <p style={{fontFamily:"'Cormorant Garamond',serif",color:"rgba(212,139,165,.8)",fontSize:20,marginTop:16,fontStyle:"italic"}}>You're welcome.</p>
+        <h2 style={{fontFamily:"'MedievalSharp',cursive",color:"rgba(139,95,191,.7)",fontSize:14,letterSpacing:"0.15em",textTransform:"uppercase",marginTop:12}}>A Guide to<br/>Traffic Management</h2>
+        <p style={{fontFamily:"'Cinzel',serif",color:"rgba(212,139,165,.8)",fontSize:20,marginTop:16,fontStyle:"italic"}}>You're welcome.</p>
       </div>
       <div className="absolute bottom-14 left-0 right-0" style={{position:"absolute",bottom:56,left:0,right:0}}><BookGreekRunes position="bottom"/></div>
       <BookHoofMark style={{top:32,right:32,opacity:.3,transform:"rotate(-10deg) scale(.75)"}}/>
       <BookHoofMark style={{bottom:48,left:32,opacity:.2,transform:"rotate(15deg) scale(.6)"}}/>
       <div className="absolute left-0 top-0 bottom-0 w-10 rounded-l-2xl" style={{position:"absolute",left:0,top:0,bottom:0,width:40,borderTopLeftRadius:16,borderBottomLeftRadius:16,background:"linear-gradient(to right,black,#1a1a1a,transparent)",opacity:.8}}/>
-      <div className="absolute bottom-4" style={{position:"absolute",bottom:16,fontFamily:"'Cormorant Garamond',serif",color:"rgba(212,175,55,.5)",fontSize:12,letterSpacing:"0.2em",textTransform:"uppercase",animation:"bookPromptPulse 2.5s infinite"}}>{isLocked?"Click the Clasp":"Click to Open"}</div>
+      <div className="absolute bottom-4" style={{position:"absolute",bottom:16,fontFamily:"'Cinzel',serif",color:"rgba(212,175,55,.5)",fontSize:12,letterSpacing:"0.2em",textTransform:"uppercase",animation:"bookPromptPulse 2.5s infinite"}}>{isLocked?"Click the Clasp":"Click to Open"}</div>
     </div>;
   };
 
   const BookInsideCover=()=><div className="w-full h-full rounded-2xl border-4 border-[#111] relative overflow-hidden" style={{width:"100%",height:"100%",borderRadius:16,border:"4px solid #111",position:"relative",overflow:"hidden",background:"#1a1a1a"}}>
     <div className="absolute inset-0 opacity-10" style={{position:"absolute",inset:0,opacity:0.1,backgroundImage:"radial-gradient(#333 1px,transparent 1px)",backgroundSize:"20px 20px"}}/>
     <div className="absolute inset-0 flex flex-col items-center justify-center" style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-      <div style={{color:"rgba(212,175,55,.05)",fontSize:48,fontFamily:"'Cormorant Garamond',serif",letterSpacing:"0.5em",transform:"rotate(12deg)",marginBottom:32}}>♔ DOOM ♡</div>
-      <div style={{fontFamily:"'Cormorant Garamond',serif",color:"rgba(212,139,165,.3)",fontSize:20,textAlign:"center",padding:"0 32px",marginTop:48,fontStyle:"italic"}}>For everyone who's ever had to explain something twice.</div>
+      <div style={{color:"rgba(212,175,55,.05)",fontSize:48,fontFamily:"'Cinzel',serif",letterSpacing:"0.5em",transform:"rotate(12deg)",marginBottom:32}}>♔ DOOM ♡</div>
+      <div style={{fontFamily:"'Cinzel',serif",color:"rgba(212,139,165,.3)",fontSize:20,textAlign:"center",padding:"0 32px",marginTop:48,fontStyle:"italic"}}>For everyone who's ever had to explain something twice.</div>
     </div>
     <BookCornerOrnament position="top-left" glowing extraStyle={{opacity:.3}}/>
     <BookCornerOrnament position="bottom-right" glowing extraStyle={{opacity:.3}}/>
@@ -6110,14 +6110,14 @@ Be direct and actionable. No generic advice.`;
       <div className="book-scroll book-content-stagger flex-1 py-8 px-10 relative flex flex-col overflow-y-auto" style={{flex:1,paddingTop:32,paddingBottom:32,paddingLeft:40,paddingRight:40,position:"relative",display:"flex",flexDirection:"column",overflowY:"auto",zIndex:10}}>
         {title&&<div className="text-center mb-4 flex-shrink-0" style={{textAlign:"center",marginBottom:16,flexShrink:0}}>
           <BookRuneAccent glowing/>
-          <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,letterSpacing:"0.05em",margin:"8px 0",color:"#8b5fbf",textShadow:"0 0 8px rgba(139,95,191,.4),0 0 20px rgba(139,95,191,.15),0 1px 2px rgba(0,0,0,.2)"}}>{title}</h2>
+          <h2 style={{fontFamily:"'Cinzel',serif",fontSize:22,letterSpacing:"0.05em",margin:"8px 0",color:"#8b5fbf",textShadow:"0 0 8px rgba(139,95,191,.4),0 0 20px rgba(139,95,191,.15),0 1px 2px rgba(0,0,0,.2)"}}>{title}</h2>
           <BookGreekKeyDivider glowing/>
         </div>}
-        <div style={{fontFamily:"'DM Sans',sans-serif",fontSize:14,lineHeight:1.7,color:"#2a1a1a",flex:1}}>{children}</div>
+        <div style={{fontFamily:"'MedievalSharp',cursive",fontSize:14,lineHeight:1.7,color:"#2a1a1a",flex:1}}>{children}</div>
         {pageNumber>0&&<div className="mt-4 flex-shrink-0" style={{marginTop:16,flexShrink:0}}>
           <BookGreekKeyDivider glowing/>
           <BookLaurelAccent glowing/>
-          <div className="text-center" style={{textAlign:"center",fontFamily:"'Cormorant Garamond',serif",fontSize:15,letterSpacing:"0.15em",color:"#8b5fbf",textShadow:"0 0 6px rgba(139,95,191,.3),0 0 15px rgba(139,95,191,.1)"}}>— {toRoman(pageNumber)} —</div>
+          <div className="text-center" style={{textAlign:"center",fontFamily:"'Cinzel',serif",fontSize:15,letterSpacing:"0.15em",color:"#8b5fbf",textShadow:"0 0 6px rgba(139,95,191,.3),0 0 15px rgba(139,95,191,.1)"}}>— {toRoman(pageNumber)} —</div>
           <BookRuneAccent glowing/>
         </div>}
       </div>
@@ -6138,7 +6138,7 @@ Be direct and actionable. No generic advice.`;
             <div className="w-1 h-1 rounded-full" style={{width:4,height:4,borderRadius:"50%",background:"rgba(212,175,55,.4)"}}/>
           </div>
           <div style={{width:8,height:12,background:"#160d20",borderRadius:"0 0 2px 2px",marginTop:-6,borderLeft:"1px solid rgba(212,175,55,.3)",borderRight:"1px solid rgba(212,175,55,.3)",borderBottom:"1px solid rgba(212,175,55,.3)"}}/>
-          <span style={{color:"rgba(212,175,55,.6)",fontSize:9,fontFamily:"'Cormorant Garamond',serif",marginTop:2}}>Ω</span>
+          <span style={{color:"rgba(212,175,55,.6)",fontSize:9,fontFamily:"'Cinzel',serif",marginTop:2}}>Ω</span>
           <div style={{width:20,height:2,background:"rgba(139,95,191,.3)",borderRadius:4}}/>
         </div>
         <div className="absolute top-1/2 -translate-y-1/2 right-full w-5 h-10 rounded-l-sm" style={{position:"absolute",top:"50%",transform:"translateY(-50%)",right:"100%",width:20,height:40,borderTopLeftRadius:2,borderBottomLeftRadius:2,background:"linear-gradient(to left,#2a2a3a,#1a1a2a)",borderTop:"2px solid rgba(139,95,191,.3)",borderBottom:"2px solid rgba(139,95,191,.3)",borderLeft:"2px solid rgba(139,95,191,.3)"}}/>
@@ -6153,8 +6153,8 @@ Be direct and actionable. No generic advice.`;
       <div className="absolute inset-0 rounded-2xl" style={{position:"absolute",inset:0,borderRadius:16,background:"rgba(0,0,0,.6)",backdropFilter:"blur(4px)"}} onClick={onClose}/>
       <div className="relative w-[85%] max-h-[85%] overflow-y-auto rounded-xl p-6" style={{position:"relative",width:"85%",maxHeight:"85%",overflowY:"auto",borderRadius:12,padding:24,zIndex:10,background:"#1a1a1a",border:"2px solid rgba(139,95,191,.3)",boxShadow:"0 0 30px 5px rgba(139,95,191,.6)"}}>
         <div className="text-center mb-5" style={{textAlign:"center",marginBottom:20}}>
-          <p style={{fontFamily:"'Cormorant Garamond',serif",color:"rgba(212,175,55,.4)",fontSize:10,letterSpacing:"0.4em",textTransform:"uppercase",marginBottom:4}}>Index</p>
-          <h3 style={{fontFamily:"'Cormorant Garamond',serif",color:"#D4A040",fontSize:18,letterSpacing:"0.1em"}}>Table of Contents</h3>
+          <p style={{fontFamily:"'Cinzel',serif",color:"rgba(212,175,55,.4)",fontSize:10,letterSpacing:"0.4em",textTransform:"uppercase",marginBottom:4}}>Index</p>
+          <h3 style={{fontFamily:"'Cinzel',serif",color:"#D4A040",fontSize:18,letterSpacing:"0.1em"}}>Table of Contents</h3>
           <div className="w-20 h-px mx-auto mt-2" style={{width:80,height:1,marginLeft:"auto",marginRight:"auto",marginTop:8,background:"linear-gradient(to right,transparent,rgba(139,95,191,.5),transparent)"}}/>
         </div>
         <div className="flex flex-col gap-1" style={{display:"flex",flexDirection:"column",gap:4}}>
@@ -6162,16 +6162,16 @@ Be direct and actionable. No generic advice.`;
             const targetLeaf=Math.floor(idx/2)+1;
             const isCurrent=currentPage===targetLeaf;
             return<button key={idx} onClick={()=>{onNavigate(targetLeaf);onClose()}} className="w-full text-left py-2.5 px-4 rounded-lg flex items-center gap-3 cursor-pointer transition-all duration-200" style={{width:"100%",textAlign:"left",paddingTop:10,paddingBottom:10,paddingLeft:16,paddingRight:16,borderRadius:8,display:"flex",alignItems:"center",gap:12,cursor:"pointer",transition:"all 0.2s",border:isCurrent?"1px solid rgba(139,95,191,.3)":"1px solid transparent",background:isCurrent?"rgba(139,95,191,.15)":"transparent"}}>
-              <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:14,width:32,flexShrink:0,letterSpacing:"0.1em",color:isCurrent?"#D4A040":"rgba(139,95,191,.4)"}}>{romans[idx]||idx+1}</span>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:14,width:32,flexShrink:0,letterSpacing:"0.1em",color:isCurrent?"#D4A040":"rgba(139,95,191,.4)"}}>{romans[idx]||idx+1}</span>
               <span style={{color:"rgba(139,95,191,.2)"}}>·</span>
-              <span style={{fontFamily:"'DM Sans',sans-serif",fontSize:13,flex:1,color:isCurrent?"#D4A040":"rgba(232,223,240,.7)"}}>{page.title}</span>
+              <span style={{fontFamily:"'MedievalSharp',cursive",fontSize:13,flex:1,color:isCurrent?"#D4A040":"rgba(232,223,240,.7)"}}>{page.title}</span>
               {isCurrent&&<span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{width:6,height:6,borderRadius:"50%",flexShrink:0,background:"#D4A040",boxShadow:"0 0 15px 2px rgba(139,95,191,.4)"}}/>}
             </button>;
           })}
         </div>
         <div className="text-center mt-4" style={{textAlign:"center",marginTop:16}}>
           <div className="w-20 h-px mx-auto mb-2" style={{width:80,height:1,marginLeft:"auto",marginRight:"auto",marginBottom:8,background:"linear-gradient(to right,transparent,rgba(139,95,191,.3),transparent)"}}/>
-          <button onClick={onClose} style={{fontFamily:"'Cormorant Garamond',serif",color:"rgba(139,95,191,.4)",fontSize:10,letterSpacing:"0.3em",textTransform:"uppercase",background:"none",border:"none",cursor:"pointer"}}>Close</button>
+          <button onClick={onClose} style={{fontFamily:"'Cinzel',serif",color:"rgba(139,95,191,.4)",fontSize:10,letterSpacing:"0.3em",textTransform:"uppercase",background:"none",border:"none",cursor:"pointer"}}>Close</button>
         </div>
       </div>
     </div>;
@@ -6203,7 +6203,7 @@ Be direct and actionable. No generic advice.`;
       <div className="relative w-full max-w-[420px] overflow-visible" style={{position:"relative",width:"100%",maxWidth:420,overflow:"visible",aspectRatio:"3/4.2",perspective:2000,transition:"transform .6s ease-out,filter .6s",transform:isOpen?"translateX(50%)":"translateX(0)",filter:"drop-shadow(0 0 8px rgba(139,95,191,.08))"}}>
         {!isOpen&&<BookClasp isLocked={isLocked} onUnlock={handleUnlock}/>}
         {isOpen&&!showToc&&<button className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 py-1.5 px-4 rounded-t-lg cursor-pointer" style={{position:"absolute",top:-12,left:"50%",transform:"translateX(-50%)",display:"flex",alignItems:"center",gap:6,paddingTop:6,paddingBottom:6,paddingLeft:16,paddingRight:16,borderTopLeftRadius:8,borderTopRightRadius:8,cursor:"pointer",zIndex:150,background:"#1a1a2a",border:"1px solid rgba(139,95,191,.4)",transition:"all .3s"}} onClick={(e)=>{e.stopPropagation();setShowToc(true)}}>
-          <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:10,letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(139,95,191,.5)"}}>☰ Index</span>
+          <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(139,95,191,.5)"}}>☰ Index</span>
         </button>}
         {showToc&&<BookTableOfContents pages={bookPages} currentPage={currentLeaf} onNavigate={(li)=>{bookPlayPageSound();setCurrentLeaf(li)}} onClose={()=>setShowToc(false)}/>}
         {/* Spine edge lines for unflipped pages */}
@@ -6243,9 +6243,9 @@ Be direct and actionable. No generic advice.`;
       </div>
       {/* Navigation controls */}
       <div className="mt-8 flex justify-between items-center w-full max-w-[420px] px-2" style={{marginTop:32,display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",maxWidth:420,paddingLeft:8,paddingRight:8,transition:"opacity .5s",opacity:isOpen?1:0,pointerEvents:isOpen?"auto":"none"}}>
-        <button onClick={handlePrev} disabled={currentLeaf<=0} className="flex items-center gap-1 bg-transparent border-none" style={{display:"flex",alignItems:"center",gap:4,background:"transparent",border:"none",fontFamily:"'Cormorant Garamond',serif",fontSize:14,letterSpacing:"0.1em",cursor:currentLeaf<=0?"not-allowed":"pointer",color:currentLeaf<=0?"rgba(139,95,191,.2)":"rgba(212,175,55,.7)",transition:"color .3s"}}>◂ Previous</button>
-        <div style={{fontFamily:"'DM Sans',sans-serif",color:"rgba(139,95,191,.5)",fontSize:12}}>{getVisText()}</div>
-        <button onClick={handleNext} disabled={isFullyFlipped} className="flex items-center gap-1 bg-transparent border-none" style={{display:"flex",alignItems:"center",gap:4,background:"transparent",border:"none",fontFamily:"'Cormorant Garamond',serif",fontSize:14,letterSpacing:"0.1em",cursor:isFullyFlipped?"not-allowed":"pointer",color:isFullyFlipped?"rgba(139,95,191,.2)":"rgba(212,175,55,.7)",transition:"color .3s"}}>Next ▸</button>
+        <button onClick={handlePrev} disabled={currentLeaf<=0} className="flex items-center gap-1 bg-transparent border-none" style={{display:"flex",alignItems:"center",gap:4,background:"transparent",border:"none",fontFamily:"'Cinzel',serif",fontSize:14,letterSpacing:"0.1em",cursor:currentLeaf<=0?"not-allowed":"pointer",color:currentLeaf<=0?"rgba(139,95,191,.2)":"rgba(212,175,55,.7)",transition:"color .3s"}}>◂ Previous</button>
+        <div style={{fontFamily:"'MedievalSharp',cursive",color:"rgba(139,95,191,.5)",fontSize:12}}>{getVisText()}</div>
+        <button onClick={handleNext} disabled={isFullyFlipped} className="flex items-center gap-1 bg-transparent border-none" style={{display:"flex",alignItems:"center",gap:4,background:"transparent",border:"none",fontFamily:"'Cinzel',serif",fontSize:14,letterSpacing:"0.1em",cursor:isFullyFlipped?"not-allowed":"pointer",color:isFullyFlipped?"rgba(139,95,191,.2)":"rgba(212,175,55,.7)",transition:"color .3s"}}>Next ▸</button>
       </div>
     </div>;
   };
@@ -6254,7 +6254,7 @@ Be direct and actionable. No generic advice.`;
   // PAGES 1-5: Welcome, Logging In & Nav, Broadcast Month & Theme, Building a Rotation, Combined Estimates
   const BOOK_PAGES_1=[
     {title:"Welcome to Doom & Deliverables",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p><span style={{fontSize:28,fontFamily:"'Cormorant Garamond',serif",float:"left",marginRight:8,color:"#4a1a1a",lineHeight:1}}>B</span>y decree of someone who actually knows what they're doing, this guide will walk you through the Traffic Management System.</p>
+      <p><span style={{fontSize:28,fontFamily:"'Cinzel',serif",float:"left",marginRight:8,color:"#4a1a1a",lineHeight:1}}>B</span>y decree of someone who actually knows what they're doing, this guide will walk you through the Traffic Management System.</p>
       <p>Try to keep up. The system is designed to handle rotations, estimates, and station communications without breaking a sweat.</p>
       <p>Familiarize yourself with these procedures immediately. We don't have all eternity.</p>
       <BookMarginNote author="meg">I didn't volunteer for this. But here we are.</BookMarginNote>
@@ -6353,7 +6353,7 @@ Be direct and actionable. No generic advice.`;
     </div>,damageEffects:<>{<BookBurnMark style={{bottom:8,left:8,width:96,height:96,opacity:.25}}/>}{<BookHoofMark style={{top:16,right:16,opacity:.2,transform:"rotate(-15deg) scale(.6)"}}/>}</>},
 
     {title:"End of the Line",content:<div style={{display:"flex",flexDirection:"column",gap:14,textAlign:"center",paddingTop:24}}>
-      <p style={{fontSize:17,fontFamily:"'Cormorant Garamond',serif",color:"#4a1a1a"}}>Thus concludes the sacred documentation of the Traffic Management System.</p>
+      <p style={{fontSize:17,fontFamily:"'Cinzel',serif",color:"#4a1a1a"}}>Thus concludes the sacred documentation of the Traffic Management System.</p>
       <p style={{fontStyle:"italic",color:"#5a4a3a",fontSize:12}}>May your rotations total 100% and your confirmations come swiftly.</p>
       <div style={{width:48,height:48,margin:"32px auto 0",border:"2px solid #4a1a1a",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",opacity:.4}}>
         <div style={{width:24,height:24,background:"#4a1a1a",transform:"rotate(45deg)"}}/>
