@@ -6017,7 +6017,7 @@ Be direct and actionable. No generic advice.`;
     },[]);
     // CSS animations always work — FM enhances if available
     return<div className="book-soul-particles fixed inset-0 pointer-events-none z-0 overflow-hidden" style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
-      {greekFrags.map(f=><div key={`gf-${f.id}`} className="absolute select-none" style={{position:"absolute",userSelect:"none",left:f.x+"%",top:f.y+"%",fontFamily:"'Cinzel',serif",color:"rgba(139,95,191,.04)",fontSize:14,letterSpacing:"0.3em",animation:`bookGreekDrift ${f.dur}s linear ${f.delay}s infinite`}}>{f.text}</div>)}
+      {/* Greek text fragments removed — too visible on dark backgrounds */}
       {particles.map(p=><div key={`sp-${p.id}`} className="absolute rounded-full" style={{position:"absolute",left:p.x+"%",width:p.size,height:p.size,borderRadius:"50%",background:p.isGold?"#D4A040":"rgba(139,95,191,.9)",boxShadow:p.isGold?`0 0 ${p.size*2}px ${p.size/2}px rgba(212,175,55,.7)`:`0 0 ${p.size*2}px ${p.size/2}px rgba(139,95,191,.8)`,"--p-op":p.op,"--p-drift":p.drift,animation:`bookSoulFloat ${p.dur}s linear ${p.delay}s infinite`}}/>)}
     </div>;
   };
@@ -6200,7 +6200,7 @@ Be direct and actionable. No generic advice.`;
       return r>bookPages.length?`Page ${l} of ${bookPages.length}`:`Pages ${l}-${r} of ${bookPages.length}`;
     };
     return<div className="flex flex-col items-center w-full overflow-visible" style={{display:"flex",flexDirection:"column",alignItems:"center",width:"100%",overflow:"visible"}}>
-      <div className="relative w-full max-w-[420px] overflow-visible" style={{position:"relative",width:"100%",maxWidth:420,overflow:"visible",aspectRatio:"3/4.2",perspective:2000,transition:"transform .6s ease-out,filter .6s",transform:isOpen?"translateX(50%)":"translateX(0)",filter:"drop-shadow(0 0 8px rgba(139,95,191,.08))"}}>
+      <div className="relative w-full max-w-[420px] overflow-visible" style={{position:"relative",width:"100%",maxWidth:420,overflow:"visible",aspectRatio:"3/4.2",perspective:2000,transition:"transform .6s ease-out,filter .6s",transform:isOpen?"translateX(50%)":"translateX(0)",filter:"drop-shadow(0 0 30px rgba(139,95,191,0.5)) drop-shadow(0 0 60px rgba(139,95,191,0.25)) drop-shadow(0 0 4px rgba(212,175,55,0.3))"}}>
         {!isOpen&&<BookClasp isLocked={isLocked} onUnlock={handleUnlock}/>}
         {isOpen&&!showToc&&<button className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 py-1.5 px-4 rounded-t-lg cursor-pointer" style={{position:"absolute",top:-12,left:"50%",transform:"translateX(-50%)",display:"flex",alignItems:"center",gap:6,paddingTop:6,paddingBottom:6,paddingLeft:16,paddingRight:16,borderTopLeftRadius:8,borderTopRightRadius:8,cursor:"pointer",zIndex:150,background:"#1a1a2a",border:"1px solid rgba(139,95,191,.4)",transition:"all .3s"}} onClick={(e)=>{e.stopPropagation();setShowToc(true)}}>
           <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(139,95,191,.5)"}}>☰ Index</span>
