@@ -5699,8 +5699,8 @@ Be direct and actionable. No generic advice.`;
         const hMkt=normMkt(h.market)||h.market;
         const matchMkt=hMkt===mktCode||h.market===mkt||(h.market||"").includes(mkt);
         if(!matchMkt)return false;
-        // For TV buy types, combined estimates cover all TV groups
-        if(media==="TV"&&h.media==="TV"&&h.combined)return true;
+        // For TV buy types, combined estimates cover all TV groups EXCEPT Cable (sent separately to AmpersandTV)
+        if(media==="TV"&&h.media==="TV"&&h.combined&&group!=="Cable")return true;
         if(h.media===media){
           if(!group||!h.group)return true;
           if(h.group===group)return true;
