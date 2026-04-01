@@ -687,31 +687,28 @@ const App=()=>{
                 if(cleaned.length!==estNums.length)migCount++;
               }
             }else{
-              // PL: remove Cable estimate links from non-Cable stations
-              const CABLE_EST=new Set(["2605","2613","2621","2629"]);
-              const isCableSta=sCall==="AmpersandTV";
-              if(isCableSta){
-                // AmpersandTV: keep only Cable estimates
-                migrated[key]=estNums.filter(n=>CABLE_EST.has(n));
-              }else{
-                // Other PL stations: remove Cable estimates
-                migrated[key]=estNums.filter(n=>!CABLE_EST.has(n));
-              }
-              if(migrated[key].length!==estNums.length)migCount++;
+              // PL: rebuild from current media types so Cable↔TV links are correct
+              const sta=stations.find(s=>s.call===sCall&&s.market===sMarket&&s.brand===sBrand);
+              if(sta){
+                const fresh=ESTIMATES.filter(e=>e.market===sta.market&&e.brand===sta.brand&&sta.media===e.media).map(e=>e.num);
+                migrated[key]=fresh;
+                if(fresh.length!==estNums.length||fresh.some(n=>!estNums.includes(n)))migCount++;
+              }else{migrated[key]=estNums}
             }
           });
-          // Ensure AmpersandTV is linked to Cable estimates in each market
-          const CABLE_MKT={"Chicago":"2613","Cincinnati":"2621","Denver":"2629","Minneapolis":"2605"};
-          Object.entries(CABLE_MKT).forEach(([mkt,estNum])=>{
-            const k="AmpersandTV|"+mkt+"|Postman Law";
-            if(!migrated[k]||!migrated[k].includes(estNum)){
-              migrated[k]=[estNum];migCount++;
-            }
-          });
-          if(migCount>0){console.log("Migrated "+migCount+" station-estimate links (Cable separation)");try{db.collection("appData").doc("staEstLinks").set({data:JSON.stringify(migrated),ts:Date.now()})}catch(e){}}
+          // Add links for new stations not yet in Firestore
+          const defaultLinks=buildDefaultLinks(stations,ESTIMATES);
+          Object.entries(defaultLinks).forEach(([k,nums])=>{if(!migrated[k]){migrated[k]=nums;migCount++}});
+          if(migCount>0){console.log("Migrated "+migCount+" station-estimate links");try{db.collection("appData").doc("staEstLinks").set({data:JSON.stringify(migrated),ts:Date.now()})}catch(e){}}
           setStaEstLinks(migrated);
           linksReady.current=true;
-        }else{linksReady.current=true}}
+        }else{
+          // No links in Firestore — build from scratch
+          const defaultLinks=buildDefaultLinks(stations,ESTIMATES);
+          setStaEstLinks(defaultLinks);
+          try{db.collection("appData").doc("staEstLinks").set({data:JSON.stringify(defaultLinks),ts:Date.now()})}catch(e){}
+          linksReady.current=true;
+        }}
         if(docs.nowAiring?.data){const d=JSON.parse(docs.nowAiring.data);
           // Remove old 4-digit WK estimate keys from nowAiring
           const cleanedAiring={};Object.entries(d).forEach(([k,v])=>{if(!OLD_WK.has(k))cleanedAiring[k]=v});
@@ -912,31 +909,13 @@ const App=()=>{
   };
   const[staEstLinks,setStaEstLinks]=useState({});
   const staKey=(s)=>`${s.call}|${s.market}|${s.brand}`;
-  const getStaEsts=(s)=>{
-    const linked=staEstLinks[staKey(s)]||[];
-    // Cable estimates only for AmpersandTV, never for other stations
-    if(s.call==="AmpersandTV")return linked.filter(n=>CABLE_EST_NUMS.has(n));
-    return linked.filter(n=>!CABLE_EST_NUMS.has(n));
-  };
+  const getStaEsts=(s)=>staEstLinks[staKey(s)]||[];
   const toggleStaEst=(s,estNum)=>{
-    // Enforce Cable separation
-    if(CABLE_EST_NUMS.has(estNum)&&s.call!=="AmpersandTV")return;
-    if(!CABLE_EST_NUMS.has(estNum)&&s.call==="AmpersandTV")return;
     const k=staKey(s);
     setStaEstLinks(p=>{const cur=p[k]||[];return{...p,[k]:cur.includes(estNum)?cur.filter(n=>n!==estNum):[...cur,estNum]}});
   };
-  const CABLE_EST_NUMS=new Set(["2605","2613","2621","2629"]);
   const getEstStations=(est)=>{
-    if(CABLE_EST_NUMS.has(est.num)){
-      // Cable: always AmpersandTV for this market, no link check
-      return stations.filter(s=>s.call==="AmpersandTV"&&s.market===est.market);
-    }
-    // Non-cable: normal link check, exclude AmpersandTV
-    return stations.filter(s=>{
-      if(s.call==="AmpersandTV")return false;
-      if(est.market&&s.market!==est.market)return false;
-      const linked=staEstLinks[staKey(s)]||[];return linked.includes(est.num);
-    });
+    return stations.filter(s=>{if(est.market&&s.market!==est.market)return false;const linked=staEstLinks[staKey(s)]||[];return linked.includes(est.num)});
   };
 
   // ── NOW AIRING / CONFIRMATIONS ──────────────────────────
@@ -6685,9 +6664,8 @@ Be direct and actionable. No generic advice.`;
       </Mod>
     })()}
     {modal?.t==="linkEst"&&(()=>{const s=modal.station;const linked=getStaEsts(s);
-      const cableFilter=e=>s.call==="AmpersandTV"?CABLE_EST_NUMS.has(e.num):!CABLE_EST_NUMS.has(e.num);
-      const matching=estimates.filter(e=>e.market===s.market&&e.brand===s.brand&&cableFilter(e));
-      const others=estimates.filter(e=>!(e.market===s.market&&e.brand===s.brand)&&cableFilter(e));
+      const matching=estimates.filter(e=>e.market===s.market&&e.brand===s.brand);
+      const others=estimates.filter(e=>!(e.market===s.market&&e.brand===s.brand));
       return<Mod title={`Link Estimates — ${s.call} · ${s.market} · ${s.brand}`} onClose={()=>setModal(null)}>
         <div style={{fontSize:13,color:"#9B8EAD",marginBottom:8}}>Tap to link or unlink. Matching estimates shown first.</div>
         <div style={{display:"flex",flexDirection:"column",gap:4,maxHeight:400,overflowY:"auto"}}>
