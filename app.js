@@ -6264,160 +6264,176 @@ Be direct and actionable. No generic advice.`;
     </div>,damageEffects:<>{<BookBurnMark style={{top:0,right:0,width:96,height:96,opacity:.4}}/>}{<BookInkSplatter style={{bottom:32,left:16,opacity:.4}}/>}{<BookLipstickMark style={{top:"25%",right:32,opacity:.6,transform:"rotate(15deg) scale(1.25)"}}/>}</>},
 
     {title:"Login & Navigation",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Enter the system password on the login screen and click 'Let Me In.' Your session persists until you close the browser tab.</p>
-      <p>The sidebar contains every page with badge alerts. A gold indicator shows your current page. The global search bar finds ISCIs, stations, estimates, and markets.</p>
+      <p>Enter the system password on the login screen and click 'Let Me In.' Authentication uses timing-safe comparison with rate limiting — too many bad attempts locks you out. Your session is secured by a cryptographic 64-character hex token validated by Vercel middleware on every request.</p>
+      <p>The sidebar lists every page in the system. Badge alerts appear when pages have pending items — unconfirmed sends, new imports, or overdue creative. A gold active indicator marks your current page. The global search bar at the top searches across ISCIs, stations, estimates, and markets simultaneously.</p>
+      <p>The OOH Hub is a separate sub-application at #ooh with its own sidebar and navigation — it doesn't share the main app's navigation state.</p>
       <BookMarginNote author="muses">She typed the password, clicked the door<br/>The sidebar lit up — who could ask for more?</BookMarginNote>
     </div>,damageEffects:<>{<BookDroolStain style={{bottom:16,left:16,width:112,height:112,opacity:.3}}/>}{<BookLipstickMark style={{bottom:48,right:24,opacity:.5,transform:"rotate(-25deg) scale(.9)"}}/>}</>},
 
     {title:"Broadcast Month & Theme",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Set the Broadcast Month in the Traffic Center header — this controls flight dates, rotation deadlines, and which WK monthly estimate appears.</p>
-      <p>The theme is Megara's Underworld: orchid dark mode with dusty plum and gold accents. Toggle Olympus light mode via the sun/fire icon in the sidebar footer.</p>
+      <p>The Broadcast Month selector in the Traffic Center header is the master control for the entire system. It determines flight dates for rotations, sets rotation deadlines, and controls which WK monthly estimate number appears in dropdowns. Changing the month cascades across the Traffic Center, Traffic Tracker, and Library views.</p>
+      <p>WK estimates rotate monthly (213 for April, 214 for May), so the broadcast month directly determines which estimate you're building. PL estimates are year-round and unaffected by month changes.</p>
+      <p>The visual theme is Megara's Underworld — an orchid dark mode with dusty plum (#9b7bb0), gold accents (#D4A040), and Pegasus blue (#4AC8E8) for interactive elements. Toggle Olympus light mode via the sun/fire icon in the sidebar footer — it inverts the palette to warm parchment with golden light using CSS filters.</p>
       <BookMarginNote author="meg">Yes, I picked the colors. You're welcome.</BookMarginNote>
     </div>,damageEffects:<>{<BookBiteMark style={{top:"33%",right:0,opacity:.6,transform:"rotate(-90deg) scale(.7)"}}/>}</>},
 
     {title:"Postman Law: Markets",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Postman Law operates in four markets: Chicago (CHI), Cincinnati (CIN), Denver (DEN), and Minneapolis (MSP).</p>
-      <p>PL uses 4-digit estimate numbers (2601–2643), one per market per buy type, valid all year. There are 6 TV buy types: Base, Sponsorship, UD/AV, Sports, Cable, and Heavy Up.</p>
-      <p>Buyers: Ken Lazar (MSP), Lynn Cortelezzi (CHI/CIN/DEN). Automatically CC'd on station emails.</p>
-      <BookMarginNote author="meg">Four markets. Six buy types. One button to combine them.</BookMarginNote>
+      <p>Postman Law operates in four markets: Chicago (CHI), Cincinnati (CIN), Denver (DEN), and Minneapolis (MSP). Each market has its own set of stations, its own rotation sheets, and its own confirmation tracking. Markets never cross brands — you will never see a WK market in a PL dropdown.</p>
+      <p>PL uses 4-digit estimate numbers ranging from 2601 to 2643. Each estimate is assigned to one specific market and one specific buy type (Base TV, Sponsorship, UD/AV, Sports, Cable, or Heavy Up). These estimates are valid all year — no monthly rotation needed. This means the same estimate number is used January through December.</p>
+      <p>Buyers: Ken Lazar handles Minneapolis. Lynn Cortelezzi handles Chicago, Cincinnati, and Denver. They are automatically CC'd on every station email sent for their respective markets.</p>
+      <BookMarginNote author="meg">Four markets. Six buy types. One button to combine them. Even Pegasus could handle this.</BookMarginNote>
     </div>,damageEffects:<>{<BookInkSplatter style={{bottom:24,left:16,opacity:.4}}/>}{<BookHoofMark style={{top:16,right:24,opacity:.2,transform:"rotate(15deg) scale(.65)"}}/>}</>},
 
-    {title:"Postman Law: Estimates",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>All 6 TV buy types can be combined into a single traffic sheet per market using 'Combine & Build.' This sends one email per ownership group — not six separate emails.</p>
-      <p>PL airing and confirmation data is keyed by estimate number alone (e.g., "2609") since each estimate is unique to one market.</p>
-      <p>PL estimates are valid all year — no monthly rotation needed.</p>
+    {title:"PL Combined Estimates",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Postman Law's 6 TV buy types per market (Base, Sponsorship, UD/AV, Sports, Cable, Heavy Up) can be combined into a single traffic sheet using 'Combine & Build.' This merges all active ISCIs across all 6 buy types into one unified rotation for that market.</p>
+      <p>When combined, stations are deduped across buy types — if WBBM-TV appears in both Base and Sports, it gets one email, not two. The system sends one email per ownership group covering all 6 buy types in a single PDF attachment.</p>
+      <p>PL airing and confirmation data is keyed by estimate number alone (e.g., "2609") because each PL estimate is already unique to one market. No market qualifier is needed.</p>
       <BookMarginNote author="muses">Six buy types merged into one<br/>Combined and built — the job is done!</BookMarginNote>
     </div>,damageEffects:<>{<BookBurnMark style={{top:0,right:0,width:80,height:80,opacity:.3}}/>}</>},
 
     {title:"Wettermark Keith: Markets",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Wettermark Keith spans six markets: Birmingham (BRM), Huntsville (HSV), Knoxville (KNX), Chattanooga (CHA), Montgomery (MTG), and Dothan (DHN).</p>
-      <p>Buyer: Amy Coffey, CC'd on all WK station emails. Markets never overlap with PL — no Chicago in WK, no Birmingham in PL.</p>
+      <p>Wettermark Keith spans six markets: Birmingham (BRM), Huntsville (HSV), Knoxville (KNX), Chattanooga (CHA), Montgomery (MTG), and Dothan (DHN). Each market has its own stations, rotations, and independent confirmation tracking despite sharing estimate numbers.</p>
+      <p>Amy Coffey is the sole buyer for all WK markets and is CC'd on every WK station email. The market filter cascades strictly from brand — selecting WK shows only the six WK markets, never PL's Chicago or Denver.</p>
+      <p>WK's brand color is gold (#D4A040), used throughout the UI for WK-specific elements, badges, and indicators. PL uses dusty plum (#9b7bb0).</p>
       <BookMarginNote author="meg">Six markets. One buyer. Don't mix them up.</BookMarginNote>
     </div>,damageEffects:<>{<BookHoofMark style={{bottom:16,right:16,opacity:.3,transform:"rotate(-10deg) scale(.75)"}}/>}{<BookDroolStain style={{top:16,right:16,width:80,height:80,opacity:.2}}/>}</>},
 
     {title:"WK Monthly Estimates",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>WK uses 3-digit monthly estimates shared across ALL markets: 210=Jan, 211=Feb, 212=Mar, 213=Apr, 214=May, 215=Jun, 218=Jul, 221=Aug, 222=Sep, 223=Oct, 224=Nov, 225=Dec.</p>
-      <p>One estimate covers every WK market for that month. Traffic is still built per market. Airing data is keyed by estimate|market (e.g., "213|Birmingham").</p>
-      <p>Old 4-digit WK estimates (2633–2660) are legacy — filtered out on load.</p>
+      <p>WK uses 3-digit monthly estimates shared across ALL six markets: 210=Jan, 211=Feb, 212=Mar, 213=Apr, 214=May, 215=Jun, 218=Jul, 221=Aug, 222=Sep, 223=Oct, 224=Nov, 225=Dec. Note the gap at July (218) — the numbering is not sequential.</p>
+      <p>One estimate number covers every WK market for that month. Estimate 213 means April traffic for Birmingham, Huntsville, Knoxville, Chattanooga, Montgomery, AND Dothan. But traffic is still built per market — each market gets its own rotation sheet, its own station emails, and its own confirmation tracking.</p>
+      <p>Because the estimate is shared, airing/confirmation data is keyed by estimate|market (e.g., "213|Birmingham") so Birmingham's confirmation status stays separate from Chattanooga's. Old 4-digit WK estimates (2633–2660) are legacy and filtered out on load.</p>
       <BookMarginNote author="muses">Six markets share one number's name<br/>But Birmingham and Dothan aren't the same!</BookMarginNote>
     </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:32,opacity:.5,transform:"rotate(10deg) scale(.9)"}}/>}</>},
 
     {title:"Building a Rotation",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Select an estimate and click 'Build.' Choose ISCIs and assign rotation percentages per schedule: M–F, Weekend, All Week, or Bookend. Each duration must total exactly 100%.</p>
-      <p>Stations are grouped by ownership — toggle entire groups on or off. For PL combined builds, select all 6 buy types and click 'Combine & Build.'</p>
-      <BookMarginNote author="meg">A hundred percent. Not 99. Not 101. I will know.</BookMarginNote>
+      <p>In the Traffic Center, select an estimate and click 'Build.' The rotation builder presents all active ISCIs for that brand and lets you assign rotation percentages per schedule type: Monday–Friday, Weekend, All Week, or Bookend. Each schedule's percentages across all ISCIs must total exactly 100%.</p>
+      <p>Stations are displayed grouped by ownership (Sinclair, Hearst, Nexstar, etc.). Toggle an entire ownership group on or off — you never select individual stations. This grouping ensures emails are sent correctly: one per ownership group, not per station.</p>
+      <p>For WK, the Traffic Center automatically filters to show only the current broadcast month's estimate number. Switch the broadcast month to build rotations for a different month's estimate.</p>
+      <BookMarginNote author="meg">A hundred percent. Not 99. Not 101. A hundred. I will know.</BookMarginNote>
     </div>,damageEffects:<>{<BookBurnMark style={{bottom:0,left:0,width:128,height:128,opacity:.3}}/>}{<BookLipstickMark style={{top:32,left:32,opacity:.4,transform:"rotate(45deg) scale(1.1)"}}/>}</>},
   ];
 
   // PAGES 9-16: Email, Confirmations, Tracker, ISCIs, Tags, Stations, ESPN, Pandora
   const BOOK_PAGES_2=[
     {title:"Sending to Stations",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Click 'Email Stations' to generate a PDF with clickable creative links and send via n8n (Outlook, emm.caban@atticor.ai). Fallback: EmailJS via /api/email.</p>
-      <p>Emails group by ownership — one per ownership group per market. The buyer is auto-CC'd. The additional recipients field allows manual addresses.</p>
+      <p>Click 'Email Stations' to generate a PDF with clickable creative file links and send via the n8n webhook. The webhook connects to Outlook sending from emm.caban@atticor.ai. If n8n fails (timeout, server error), the system automatically falls back to EmailJS via /api/email.</p>
+      <p>Emails are always grouped by ownership — Sinclair stations get one email, Hearst gets another, Nexstar gets another. Never individual emails per station. The buyer for that brand/market is automatically CC'd, and emm.caban@atticor.ai is always CC'd on every send.</p>
+      <p>The additional recipients field in the rotation builder lets you add manual email addresses that receive the same PDF alongside the ownership group emails.</p>
       <BookMarginNote author="muses">One click to send, one click to shine<br/>Those PDFs went out right on time!</BookMarginNote>
     </div>,damageEffects:<>{<BookBiteMark style={{bottom:16,right:0,opacity:.5,transform:"rotate(-90deg) scale(.6)"}}/>}</>},
 
-    {title:"Email Details",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>CC logic: Ken Lazar or Lynn Cortelezzi for PL, Amy Coffey for WK. emm.caban@atticor.ai is always CC'd on every send.</p>
-      <p>For combined PL estimates, stations are deduped across all 6 buy types — still one email per ownership group, not six.</p>
-      <p>All PDFs use jsPDF text rendering with clickable links — not canvas screenshots. ESPN Digital and Pandora have dedicated PDF generators.</p>
+    {title:"PDFs & Email Logic",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>All traffic PDFs are generated with jsPDF text rendering — creative file links are clickable hyperlinks in the PDF, not screenshot images. The function generatePdfBase64() uses textWithLink() for creative files when a traffic record is passed, and falls back to html2canvas when not.</p>
+      <p>For combined PL estimates, stations are deduped across all 6 buy types before grouping by ownership — if WBBM appears in both Base and Sports, they still get one email with one combined PDF, not six separate sends.</p>
+      <p>ESPN Digital and Pandora have their own dedicated jsPDF generators (generateDigitalTrafficPdf and the Pandora Download PDF button) with format-specific layouts for tracking URLs and banner placements.</p>
       <BookMarginNote author="meg">It's out. Nothing left to second-guess.</BookMarginNote>
     </div>,damageEffects:<>{<BookDroolStain style={{top:16,left:16,width:80,height:80,opacity:.25}}/>}</>},
 
     {title:"Confirmation Tracking",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>PL confirmations key by estimate ("2609"). WK confirmations key by estimate|market ("213|Birmingham").</p>
-      <p>Vendors click 'Confirm Receipt' in their email — opens a branded portal where they confirm, add contacts, or request removal. Batch confirm by ownership group.</p>
-      <BookMarginNote author="hades">If a vendor claims they never got the email, the audit log will prove otherwise.</BookMarginNote>
+      <p>After traffic is sent, each market tracks confirmations independently. PL confirmations are keyed by estimate number ("2609") since each is unique to one market. WK confirmations are keyed by estimate|market ("213|Birmingham") because the estimate is shared across all six WK markets.</p>
+      <p>Vendors receive a 'Confirm Receipt' link in their email. Clicking it opens a branded confirmation portal at ?confirm=EST&sta=CALL&tok=TOKEN. The portal displays the traffic details and lets vendors: confirm they received the rotation, add additional email contacts for future sends, or request removal from the distribution list.</p>
+      <p>Batch confirmation is available by ownership group — confirm all stations under Sinclair or Hearst at once. Status updates reflect immediately in the Traffic Tracker and Traffic Library.</p>
+      <BookMarginNote author="hades">If a vendor claims they never got the email, the audit log will prove otherwise. I keep records.</BookMarginNote>
     </div>,damageEffects:<>{<BookHoofMark style={{bottom:32,right:32,opacity:.25,transform:"rotate(20deg) scale(.75)"}}/>}{<BookBurnMark style={{top:0,left:"50%",width:80,height:80,opacity:.25}}/>}</>},
 
     {title:"The Traffic Tracker",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Mission Control shows progress per brand and month. Smart alerts flag markets with missing buy types.</p>
-      <p>Status Grid: market × buy type matrix. Color-coded: green=sent, gold=built, rose=partial, dark=empty. Click any cell to expand and see rotation ISCIs.</p>
-      <BookMarginNote author="meg">I can see everything you haven't done. Don't test me.</BookMarginNote>
+      <p>Mission Control (📡 in the nav) provides an at-a-glance overview of traffic status for the selected brand and month. It displays an overall progress bar with completion percentage and generates smart alerts for markets that have missing buy types or incomplete sends.</p>
+      <p>The Status Grid is the core view: a matrix of every market × every buy type. Each cell shows the estimate number, color-coded by status — green for sent to stations, gold for rotation built but not yet sent, rose for partially complete, dark for not started. Click any cell to expand it inline and see the specific ISCIs and rotation percentages.</p>
+      <p>Toggle between Postman Law and Wettermark Keith with brand tabs. Month tabs let you review any month's status. For PL, combined TV estimates automatically count as coverage for all 6 TV buy types. Meg provides commentary calibrated to your completion percentage.</p>
+      <BookMarginNote author="meg">I can see everything you haven't done. Every. Single. Market.</BookMarginNote>
     </div>,damageEffects:<>{<BookInkSplatter style={{top:16,left:16,opacity:.5}}/>}{<BookDroolStain style={{bottom:24,right:24,width:64,height:64,opacity:.25}}/>}</>},
 
     {title:"ISCI Registry",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Register ISCIs: auto-generated codes (DMA + brand + sequence + suffix, e.g., CHIPL001V). Select multiple DMAs to register across markets at once.</p>
-      <p>ISCIs use code+DMA composite key — same code in different markets are different ISCIs. Upload creative files via drag-and-drop to Firebase Storage.</p>
+      <p>Click '+ Register ISCI' to add new creative codes. The system auto-generates ISCI codes following the format: DMA prefix + brand identifier + sequence number + suffix. For example, CHIPL001V is Chicago, Postman Law, sequence 001, TV. Select multiple DMAs to register the same creative across several markets at once.</p>
+      <p>ISCIs use a code+DMA composite key — the same ISCI code registered in Chicago and Denver are tracked as two separate ISCIs with independent status, titles, and creative files. Upload creative files per ISCI via drag-and-drop; files are stored in Firebase Storage and their download links appear as clickable URLs in traffic PDFs and station emails.</p>
+      <p>The ISCI list supports filtering by brand, DMA, active/inactive status, and tags. Bulk operations let you activate, deactivate, or tag multiple ISCIs at once.</p>
       <BookMarginNote author="meg">This is MY registry. You're just visiting.</BookMarginNote>
     </div>,damageEffects:<>{<BookHoofMark style={{top:24,left:24,opacity:.2,transform:"rotate(30deg) scale(.65)"}}/>}{<BookLipstickMark style={{bottom:40,left:"40%",opacity:.45,transform:"rotate(-10deg)"}}/>}</>},
 
     {title:"ISCIs: Tags & Protection",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>OOH ISCIs (suffix O) only appear in the OOH Hub registry — filtered from the main list. Tag Manager assigns categories, value props, and VOs per brand with auto-tagging.</p>
-      <p>The 20% drop safeguard blocks saves that would reduce ISCI count dramatically — preventing catastrophic data loss.</p>
-      <BookMarginNote author="hades">Destroy my data and you'll wish you hadn't. The safeguards exist because someone tried.</BookMarginNote>
+      <p>OOH ISCIs (suffix O) are filtered out of the main ISCI Registry and only appear in the OOH Hub's dedicated OOH ISCI Registry. This separation ensures outdoor creative codes don't clutter the TV/Radio/Streaming registry.</p>
+      <p>The Tag Manager lets you define categories, value propositions, and VO (voiceover) labels per brand. Auto-tagging analyzes ISCI titles and suggests matching categories automatically. Tags flow into the rotation builder and traffic PDFs.</p>
+      <p>The 20% ISCI drop safeguard monitors every save operation. If the save would reduce the total ISCI count by more than 20%, it's blocked entirely — protecting against empty page loads, corrupted merges, or accidental bulk deletions. The save is aborted and a warning is logged to the audit trail.</p>
+      <BookMarginNote author="hades">Destroy my data and you'll wish you hadn't. The safeguards exist because someone tried. Once.</BookMarginNote>
     </div>,damageEffects:<>{<BookBurnMark style={{top:8,right:8,width:72,height:72,opacity:.35}}/>}</>},
 
     {title:"Stations & Contacts",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>All stations with call letters, market, brand, ownership, and contact emails. Market filter cascades from brand — no cross-brand markets.</p>
-      <p>Ownership groups get combined emails. Stations auto-link to estimates by market + brand + media. Manual link/unlink via the + icon.</p>
+      <p>The station list contains every TV and Radio station with call letters, market, brand, ownership group, and contact email addresses. The market dropdown cascades from brand selection — choosing Postman Law shows only CHI/CIN/DEN/MSP, choosing Wettermark Keith shows only BRM/HSV/KNX/CHA/MTG/DHN.</p>
+      <p>Stations sharing the same ownership group (Sinclair, Hearst, Nexstar, Gray, etc.) always receive one combined email when traffic is sent. The rotation builder displays stations grouped by ownership so you toggle entire groups, never individual stations.</p>
+      <p>Stations auto-link to matching estimates by market + brand + media type. WK stations link to all 12 monthly estimates for their media type automatically. Use the + icon next to any station to manually link or unlink specific estimate associations.</p>
       <BookMarginNote author="muses">Each station grouped beneath its crown<br/>One email sent — no runaround!</BookMarginNote>
     </div>,damageEffects:<>{<BookBiteMark style={{bottom:0,left:0,opacity:.3,transform:"scale(.5)"}}/>}{<BookInkSplatter style={{top:32,right:16,opacity:.35}}/>}</>},
 
     {title:"ESPN / GKBPS Digital",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Campaign selector (March Madness, MLB, NFL, etc.) sets UTMs automatically. Three URLs per market: ESPN Video, GKBPS Video, Display.</p>
-      <p>DMA-prefixed campaigns (CHIMarchMadness, MSPMarchMadness). PDF has clickable links. Sends to jmondo@ and mmetroka@goodkarmabrands.com.</p>
-      <BookMarginNote author="meg">The UTMs better be right.</BookMarginNote>
+      <p>The ESPN/GKBPS Digital Builder generates tracking URLs for PL digital campaigns. Click the campaign button (March Madness, MLB, NFL, NBA, College Football, etc.) to auto-populate UTM parameters — no manual entry needed.</p>
+      <p>Three URLs are generated per campaign per market: ESPN Video (Placement=ESPNweb), GKBPS Video (Placement=GKBPS), and Display (Medium=Display). Campaign strings are prefixed with the DMA code — CHIMarchMadness, MSPMarchMadness, CINMarchMadness, DENMarchMadness.</p>
+      <p>'Download PDF' produces a jsPDF document with clickable URLs. 'Send to ESPN/GKBPS' emails jmondo@goodkarmabrands.com, mmetroka@goodkarmabrands.com, and jessica.flynn@atticor.ai with the PDF attached.</p>
+      <BookMarginNote author="meg">The UTMs better be right. I'm not debugging your campaign strings.</BookMarginNote>
     </div>,damageEffects:<>{<BookDroolStain style={{top:"40%",right:8,width:80,height:80,opacity:.2}}/>}{<BookHoofMark style={{bottom:24,left:24,opacity:.25,transform:"rotate(5deg) scale(.7)"}}/>}</>},
   ];
 
   // PAGES 17-24: Pandora, OOH WK/PL, OOH Import, Library, Audit, Data, System, End
   const BOOK_PAGES_3=[
     {title:"Pandora / SiriusXM",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Per-ISCI URLs: UTM_Content=&#123;ISCI&#125;, Placement=AudioSelect, UTM_Source=SiriusXM. Generates all 4 PL markets at once.</p>
-      <p>Companion banners (paired with audio) and display banners (standalone A/B) each get their own Placement parameter.</p>
-      <p>Spotify and Generic modes use manual UTM fields.</p>
+      <p>The Pandora/SiriusXM builder generates unique tracking URLs for each audio ISCI. Each URL includes UTM_Content set to the ISCI code, Placement=AudioSelect, and UTM_Source=SiriusXM. Campaign format follows: Blackacre_KellerPostman_PostmanLawPI-&#123;Market&#125;_&#123;Year&#125;Q&#123;Quarter&#125;.</p>
+      <p>Print and PDF generate all 4 PL markets simultaneously. Each market section shows: audio ISCIs with clickable URLs, companion banners (Placement=CompanionBanners, paired with specific audio ISCIs), and display banners (Placement=DisplayBanners, standalone A/B test creatives).</p>
+      <p>Spotify and Generic streaming modes provide fully manual UTM fields for custom URL generation with any streaming vendor not covered by the Pandora or ESPN builders.</p>
       <BookMarginNote author="muses">Four markets built in just one go<br/>Pandora, Spotify — on with the show!</BookMarginNote>
     </div>,damageEffects:<>{<BookInkSplatter style={{bottom:16,right:16,opacity:.5}}/>}{<BookLipstickMark style={{top:40,right:40,opacity:.35,transform:"rotate(20deg) scale(.8)"}}/>}</>},
 
     {title:"OOH Hub: WK Outdoor",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Separate sub-app at #ooh with its own sidebar. WK OOH manages billboard and poster inventory across all 6 markets.</p>
-      <p>Card view with photos, Leaflet map with heatmaps, contract tracking per vendor, traffic builder per vendor/DMA.</p>
+      <p>The OOH Hub is a separate sub-application accessed at #ooh with its own sidebar and navigation, independent from the main app. It manages all out-of-home advertising across both brands.</p>
+      <p>WK OOH manages billboard and poster inventory across all 6 WK markets. Features include a card view with uploaded photos of each board, a Leaflet map view with location markers and heatmap overlays, per-vendor contract tracking with start/end dates, and a traffic builder that generates OOH rotation sheets per vendor/DMA combination.</p>
       <BookMarginNote author="muses">Three hundred boards she oversees with grace<br/>Each one accounted for, in its place!</BookMarginNote>
     </div>,damageEffects:<>{<BookBurnMark style={{bottom:8,left:8,width:96,height:96,opacity:.25}}/>}{<BookHoofMark style={{top:16,right:16,opacity:.2,transform:"rotate(-15deg) scale(.6)"}}/>}</>},
 
     {title:"OOH Hub: PL & Import",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>PL OOH: panels with creative calendar tracking due dates, board switches, and flight dates. Alerts show in dashboard and OOH sidebar badge.</p>
-      <p>Import/Upload: drag-and-drop PDF parser for Lamar, Reagan, Outfront. Also handles Excel and CSV. AI-assisted parsing for unknown formats.</p>
-      <p>OOH ISCI Registry: full-featured, suffix O only.</p>
+      <p>PL OOH manages Postman Law panels with a creative calendar that tracks creative due dates, board switch dates, and flight date ranges. When a creative is due or a board switch is approaching, alerts appear in both the main dashboard stat cards and the OOH Hub sidebar badge count.</p>
+      <p>Import/Upload provides drag-and-drop parsing for vendor contracts — supports PDF contracts from Lamar, Reagan, Outfront, and others, plus Excel media plans and CSV exports. For unrecognized vendor formats, AI-assisted parsing attempts to extract board locations, dates, and pricing automatically.</p>
+      <p>The OOH ISCI Registry is a full-featured registry exclusively for OOH creatives (suffix O). It mirrors the main ISCI Registry's capabilities — register, edit, activate/deactivate, search, filter by brand and DMA.</p>
       <BookMarginNote author="meg">I manage 300+ boards. What do you manage?</BookMarginNote>
     </div>,damageEffects:<>{<BookDroolStain style={{top:"35%",right:12,width:72,height:72,opacity:.2}}/>}{<BookLipstickMark style={{bottom:32,left:24,opacity:.4,transform:"rotate(-15deg) scale(.85)"}}/>}</>},
 
     {title:"Traffic Library",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Archives every rotation. Brand tabs show per-market cards with coverage status — green check for sent, red X for missing.</p>
-      <p>Copy to Month: WK estimates auto-swap (213→214). PL stays the same. Warns if target month has existing traffic.</p>
-      <BookMarginNote author="meg">I remember every version. Every mistake.</BookMarginNote>
+      <p>The Traffic Library archives every rotation ever built. Brand tabs (Postman Law / Wettermark Keith) show per-market summary cards. Each card displays media coverage per month with green checks for sent traffic and red X marks for missing buy types. Multi-market records count toward each individual market's coverage.</p>
+      <p>Send from the library by clicking any archived rotation — a confirmation dialog shows full details (ISCIs, percentages, stations) before sending. Stations are looked up fresh by brand + market + media type, grouped by ownership. One email per group, same rules as the Traffic Center.</p>
+      <p>Copy to Month lets you duplicate any traffic record to another month. For WK, the estimate number auto-swaps to the target month (e.g., April 213 becomes May 214). For PL, the estimate stays the same. The system warns if the target month already has traffic for that market and buy type.</p>
+      <BookMarginNote author="meg">I remember every version. Every mistake. Every rotation you deleted at 2 AM.</BookMarginNote>
     </div>,damageEffects:<>{<BookHoofMark style={{bottom:16,left:16,opacity:.3,transform:"rotate(15deg) scale(.7)"}}/>}{<BookDroolStain style={{top:8,right:8,width:64,height:64,opacity:.2}}/>}</>},
 
     {title:"Audit Log",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Brand tabs: All Activity, Postman Law, Wettermark Keith. Category filters: Traffic, Emails, Confirmations, Edits, Imports, Admin.</p>
-      <p>Free-text search across action names and details. Find specific stations, estimates, or ISCIs instantly.</p>
+      <p>The Audit Log records every significant action in the system with timestamps. Brand tabs filter by All Activity, Postman Law, or Wettermark Keith — the filter matches brand names, market names, and DMA codes found anywhere in the log entry details.</p>
+      <p>Category filters narrow results by type: Traffic (rotation builds), Emails (sends with recipients), Confirmations (vendor receipts), Edits (ISCI/station changes), Imports (OOH contracts, CSV uploads), or Admin (system-level actions). Each category shows a count badge. Categories combine with brand tabs and the free-text search.</p>
+      <p>The log shows up to 200 entries at a time. Search across action names and details to find specific stations, estimates, ISCI codes, or email addresses instantly.</p>
       <BookMarginNote author="meg">I see everything, Wonderboy. Everything.</BookMarginNote>
     </div>,damageEffects:<>{<BookBiteMark style={{top:"25%",right:0,opacity:.4,transform:"rotate(-90deg) scale(.6)"}}/>}{<BookInkSplatter style={{bottom:24,left:16,opacity:.4}}/>}</>},
 
     {title:"Data Protection",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Firestore wins for user edits. Seed data restores missing ISCIs and blank titles/fileUrls on every load.</p>
-      <p>Save guards: loadCompleteRef, saveRef, iscisLoadedRef, linksReady. The 20% ISCI drop safeguard blocks catastrophic saves.</p>
-      <BookMarginNote author="hades">The safeguards exist because someone tried to destroy my data. Once.</BookMarginNote>
+      <p>Firestore is the source of truth for all user edits — active status, titles, tags, creative file URLs, and custom data. On every page load, seed data from data-*.js files is merged with Firestore: Firestore wins for any field the user has edited, but seed data restores ISCIs that are missing from Firestore and fills in blank titles or fileUrls.</p>
+      <p>Four save guards prevent catastrophic writes: loadCompleteRef ensures all data is fully loaded before allowing saves, saveRef prevents concurrent writes from overlapping, iscisLoadedRef confirms the ISCI array is populated, and linksReady ensures station-estimate link resolution is complete.</p>
+      <p>The 20% ISCI drop safeguard is the last line of defense. If any save operation would reduce the total ISCI count by more than 20% compared to what was loaded, the save is blocked entirely. This protects against empty page loads, corrupted Firestore reads, or accidental bulk deletions.</p>
+      <BookMarginNote author="hades">The safeguards exist because someone tried to destroy my data. Once. They did not try again.</BookMarginNote>
     </div>,damageEffects:<>{<BookBurnMark style={{top:0,left:0,width:120,height:120,opacity:.35}}/>}{<BookHoofMark style={{bottom:16,right:24,opacity:.2,transform:"rotate(-20deg) scale(.65)"}}/>}</>},
 
     {title:"AI Planner: The Muses",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>The AI Planner uses Claude to analyze your traffic rotation strategy. The Five Muses from Hercules narrate the analysis as dramatic storytelling.</p>
-      <p>They examine: staleness, coverage gaps, creative mix, market balance, and recommendations. Each Muse has a distinct personality. They interrupt each other.</p>
+      <p>The AI Planner uses Claude to analyze your traffic rotation strategy. It is themed as the Five Muses from Hercules, who narrate the analysis like they're telling a dramatic story. The planner proxies through /api/planner.js with a model whitelist for security.</p>
+      <p>Each Muse represents a different analysis angle: staleness (how old are your rotations?), coverage (which markets and buy types are missing?), creative mix (are you rotating enough ISCIs?), market balance (is one market getting disproportionate attention?), and recommendations (what should change next?).</p>
+      <p>Results are presented as the Muses singing your rotation's story — they interrupt each other, have distinct personalities, and deliver data as dramatic storytelling rather than dry statistics.</p>
       <BookMarginNote author="muses">We are the Muses, goddesses of the arts<br/>We'll sing of your traffic — the sum of its parts!</BookMarginNote>
     </div>,damageEffects:<>{<BookLipstickMark style={{top:32,right:24,opacity:.5,transform:"rotate(10deg) scale(1.1)"}}/>}{<BookDroolStain style={{bottom:16,left:32,width:80,height:80,opacity:.2}}/>}</>},
 
     {title:"Reports & Sharing",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Report Mode: ?report=wk or ?report=pl generates read-only views without sidebar or navigation — for stakeholders who need status without system access.</p>
-      <p>OOH Hub uses hash routing (#ooh/wk, #ooh/pl, #ooh/isci, #ooh/import) as its own sub-application. Full brand and market names everywhere — no abbreviations except ISCI codes.</p>
-      <BookMarginNote author="meg">Share the report. Don't share the password.</BookMarginNote>
+      <p>Report Mode generates shareable, read-only views of traffic data accessible via URL: ?report=wk for Wettermark Keith or ?report=pl for Postman Law. These pages render without the sidebar, navigation, or any editing controls — designed for stakeholders, account managers, or clients who need to see traffic status without full system access.</p>
+      <p>The OOH Hub operates as its own sub-application using hash-based routing: #ooh/wk for WK outdoor inventory, #ooh/pl for PL panels, #ooh/isci for the OOH ISCI Registry, and #ooh/import for the contract import tool. It has its own sidebar independent of the main app navigation.</p>
+      <p>All reports, PDFs, and exports use full brand names (Postman Law, Wettermark Keith) and full market names (Birmingham, not BRM). Abbreviations appear only in ISCI codes themselves.</p>
+      <BookMarginNote author="meg">Share the report. Don't share the password. I shouldn't have to say this.</BookMarginNote>
     </div>,damageEffects:<>{<BookHoofMark style={{top:24,left:16,opacity:.25,transform:"rotate(10deg) scale(.7)"}}/>}{<BookBurnMark style={{bottom:0,right:0,width:100,height:100,opacity:.2}}/>}</>},
 
     {title:"System Architecture",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Single-page React app: index.html (login, loader, CSS), app.js (~6000 lines, Babel-transpiled), config.js (components, constants). Seed data from data-*.js script tags.</p>
-      <p>Backend: api/auth.js (timing-safe compare, rate limiting), api/config.js (Firebase), api/planner.js (AI proxy), middleware.js (64-char hex session tokens). Deployed on Vercel.</p>
-      <p>Routing: state-based (pg variable), no URLs. Loader CSS in head tag — outside React's render root so it survives mount.</p>
-      <BookMarginNote author="meg">Six thousand lines. One file. You're welcome.</BookMarginNote>
+      <p>The entire application lives in three files: index.html (login screen, loader animations, all CSS including keyframes in the head tag), app.js (~6000 lines of React, Babel-transpiled at runtime via babel-standalone), and config.js (shared UI components, constants, data transform utilities, calendar logic). Seed data loads from data-*.js files as script tags.</p>
+      <p>Backend endpoints on Vercel: api/auth.js handles login with timing-safe password comparison and rate limiting, api/config.js serves the Firebase configuration, api/planner.js proxies Claude AI requests with a model whitelist, and api/email.js provides the EmailJS fallback. middleware.js validates 64-character hex session tokens on every protected request.</p>
+      <p>Routing is entirely state-based via the pg variable — no URL routing for the main app. The HTML loader in index.html stays visible until React sets dbLoaded=true. Critically, loader animation CSS lives in the head tag outside the #R render root so React can't destroy the keyframes during mount.</p>
+      <BookMarginNote author="meg">Six thousand lines. One file. Babel-transpiled at runtime. You're welcome.</BookMarginNote>
     </div>,damageEffects:<>{<BookInkSplatter style={{top:16,right:16,opacity:.5}}/>}{<BookBiteMark style={{bottom:8,left:0,opacity:.3,transform:"scale(.45)"}}/>}</>},
 
     {title:"End of the Line",content:<div style={{display:"flex",flexDirection:"column",gap:14,textAlign:"center",paddingTop:24}}>
