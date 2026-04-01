@@ -634,26 +634,20 @@ const App=()=>{
         if(docs.iscis?.data){const d=JSON.parse(docs.iscis.data);console.log("Firestore ISCIs: "+d.length+" records, ISCIS_INIT has "+ISCIS_INIT.length);
           // Clean codes (fix malformed ISCI codes with titles stuck in them)
           const REMOVE_ISCIS=new Set(["CINPL2660003T","MSPPL2660001T","CHIPL2660005T","CINPL2660005T","DENPL2660005T","MSPPL2660005T","BRMWK2630009R","BRMWK2630010R","CHAWK2630009R","CHAWK2630010R","DHNWK2630009R","DHNWK2630010R","HSVWK2630009R","HSVWK2630010R","KNXWK2630009R","KNXWK2630010R","MTGWK2630009R","MTGWK2630010R"]);
-          // Fix known wrong titles from Firestore
-          const TITLE_FIX={"CHIPL2630007S":"Catching Curveballs_30","CINPL2630007S":"Catching Curveballs_30","DENPL2630007S":"Catching Curveballs_30","MSPPL2630007S":"Catching Curveballs_30"};
-          const cleaned=(d.length?d:[]).filter(i=>!REMOVE_ISCIS.has(i.code)).map(i=>{if(TITLE_FIX[i.code])i={...i,title:TITLE_FIX[i.code]};if(i.dur==="600")i={...i,dur:"60"};if(i.dur==="300")i={...i,dur:"30"};if(i.dur==="150")i={...i,dur:"15"};return i}).map(i=>{if(i.code&&/^[A-Z]{3,4}[A-Z]{2}\d/.test(i.code)){const dashMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*[-–—:]+\s*(.+)$/);if(dashMatch)return{...i,code:dashMatch[1].trim(),title:dashMatch[2].trim()||i.title};const spaceMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s{2,}(.+)$/);if(spaceMatch)return{...i,code:spaceMatch[1].trim(),title:spaceMatch[2].trim()||i.title};if(i.code.length>16){const coreMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*(.*)$/);if(coreMatch&&coreMatch[2])return{...i,code:coreMatch[1].trim(),title:coreMatch[2].trim()||i.title}}}return i});
+          const cleaned=(d.length?d:[]).filter(i=>!REMOVE_ISCIS.has(i.code)).map(i=>{if(i.code&&/^[A-Z]{3,4}[A-Z]{2}\d/.test(i.code)){const dashMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*[-–—:]+\s*(.+)$/);if(dashMatch)return{...i,code:dashMatch[1].trim(),title:dashMatch[2].trim()||i.title};const spaceMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s{2,}(.+)$/);if(spaceMatch)return{...i,code:spaceMatch[1].trim(),title:spaceMatch[2].trim()||i.title};if(i.code.length>16){const coreMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*(.*)$/);if(coreMatch&&coreMatch[2])return{...i,code:coreMatch[1].trim(),title:coreMatch[2].trim()||i.title}}}return i});
           // ═══ MERGE RULES ═══
-          // 1. Firestore wins for user edits (active, title, tags, category, etc.)
-          // 2. Seed restores fileUrls if Firestore lost them
-          // 3. Missing seed ISCIs always get added back (better to have extras than lose data)
+          // 1. Seed is authoritative for: title, dur, media, fileUrl
+          // 2. Firestore wins for user edits: active, tags, category, valueProp, vo, caseType
+          // 3. Missing seed ISCIs always get added back
           // 4. User-added ISCIs (not in seed) are always kept
           // Use code+dma as composite key for same code in different markets
           const fbMap=new Map(cleaned.map(i=>[i.code+"|"+(i.dma||""),i]));
           const seedMap=new Map(ISCIS_INIT.map(i=>[i.code+"|"+(i.dma||""),i]));
-          // Start from Firestore — restore fileUrls AND titles from seed if Firestore lost them
+          // Merge: seed wins for title/dur/media/fileUrl, Firestore wins for user edits
           const enhanced=cleaned.map(fb=>{
             const seed=seedMap.get(fb.code+"|"+(fb.dma||""));
-            if(!seed)return fb;
-            const fixes={};
-            if(!fb.fileUrl&&seed.fileUrl)fixes.fileUrl=seed.fileUrl;
-            if((!fb.title||fb.title===fb.code)&&seed.title)fixes.title=seed.title;
-            if((!fb.category&&!fb.caseType)&&seed.category)fixes.category=seed.category;
-            return Object.keys(fixes).length?{...fb,...fixes}:fb;
+            if(!seed)return fb; // User-added ISCI, keep as-is
+            return{...fb,title:seed.title||fb.title,dur:seed.dur||fb.dur,media:seed.media||fb.media,fileUrl:seed.fileUrl||fb.fileUrl};
           });
           // Always add back missing seed ISCIs — better to recover than lose
           const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||"")));
