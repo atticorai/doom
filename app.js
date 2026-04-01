@@ -6329,19 +6329,28 @@ Be direct and actionable. No generic advice.`;
       <BookMarginNote author="meg">It's out. Nothing left to second-guess.</BookMarginNote>
     </div>,damageEffects:<>{<BookDroolStain style={{top:16,left:16,width:80,height:80,opacity:.25}}/>}</>},
 
-    {title:"Confirmation Tracking",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+    {title:"Confirmation Keys",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
       <p>After traffic is sent, each market tracks confirmations independently. PL confirmations are keyed by estimate number ("2609") since each is unique to one market. WK confirmations are keyed by estimate|market ("213|Birmingham") because the estimate is shared across all six WK markets.</p>
-      <p>Vendors receive a 'Confirm Receipt' link in their email. Clicking it opens a branded confirmation portal at ?confirm=EST&sta=CALL&tok=TOKEN. The portal displays the traffic details and lets vendors: confirm they received the rotation, add additional email contacts for future sends, or request removal from the distribution list.</p>
-      <p>Batch confirmation is available by ownership group — confirm all stations under Sinclair or Hearst at once. Status updates reflect immediately in the Traffic Tracker and Traffic Library.</p>
-      <BookMarginNote author="hades">If a vendor claims they never got the email, the audit log will prove otherwise. I keep records.</BookMarginNote>
-    </div>,damageEffects:<>{<BookHoofMark style={{bottom:32,right:32,opacity:.25,transform:"rotate(20deg) scale(.75)"}}/>}{<BookBurnMark style={{top:0,left:"50%",width:80,height:80,opacity:.25}}/>}</>},
+      <p>The helper function ak(est) generates the correct key format automatically. akFromHistory(h) derives the key from traffic history records.</p>
+    </div>,damageEffects:<>{<BookHoofMark style={{bottom:32,right:32,opacity:.25,transform:"rotate(20deg) scale(.75)"}}/>}</>},
 
-    {title:"The Traffic Tracker",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Mission Control (📡 in the nav) provides an at-a-glance overview of traffic status for the selected brand and month. It displays an overall progress bar with completion percentage and generates smart alerts for markets that have missing buy types or incomplete sends.</p>
-      <p>The Status Grid is the core view: a matrix of every market × every buy type. Each cell shows the estimate number, color-coded by status — green for sent to stations, gold for rotation built but not yet sent, rose for partially complete, dark for not started. Click any cell to expand it inline and see the specific ISCIs and rotation percentages.</p>
-      <p>Toggle between Postman Law and Wettermark Keith with brand tabs. Month tabs let you review any month's status. For PL, combined TV estimates automatically count as coverage for all 6 TV buy types. Meg provides commentary calibrated to your completion percentage.</p>
-      <BookMarginNote author="meg">I can see everything you haven't done. Every. Single. Market.</BookMarginNote>
-    </div>,damageEffects:<>{<BookInkSplatter style={{top:16,left:16,opacity:.5}}/>}{<BookDroolStain style={{bottom:24,right:24,width:64,height:64,opacity:.25}}/>}</>},
+    {title:"Confirmation Portal",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Vendors receive a 'Confirm Receipt' link in their email. Clicking it opens a branded portal at ?confirm=EST&sta=CALL&tok=TOKEN where they can confirm receipt, add email contacts, or request removal.</p>
+      <p>Batch confirmation by ownership group — confirm all Sinclair or Hearst stations at once. Status updates reflect in the Tracker and Library immediately.</p>
+      <BookMarginNote author="hades">If a vendor claims they never got it, the audit log says otherwise.</BookMarginNote>
+    </div>,damageEffects:<>{<BookBurnMark style={{top:0,left:"50%",width:80,height:80,opacity:.25}}/>}</>},
+
+    {title:"Tracker: Mission Control",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Mission Control (📡) provides an at-a-glance overview of traffic status for the selected brand and month. An overall progress bar shows completion percentage with smart alerts for markets missing buy types or incomplete sends.</p>
+      <p>Toggle between Postman Law and Wettermark Keith with brand tabs. Month tabs let you review any month. Combined TV estimates count as coverage for all 6 PL buy types.</p>
+      <BookMarginNote author="meg">I can see everything you haven't done.</BookMarginNote>
+    </div>,damageEffects:<>{<BookInkSplatter style={{top:16,left:16,opacity:.5}}/>}</>},
+
+    {title:"Tracker: Status Grid",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>The Status Grid is a matrix of every market × every buy type. Each cell shows the estimate number, color-coded: green = sent, gold = built not sent, rose = partial, dark = not started.</p>
+      <p>Click any cell to expand inline and see the specific ISCIs, rotation percentages, and send history for that market/buy type combination.</p>
+      <BookMarginNote author="muses">Green for sent and gold for built<br/>Rose means partial, dark means guilt!</BookMarginNote>
+    </div>,damageEffects:<>{<BookDroolStain style={{bottom:24,right:24,width:64,height:64,opacity:.25}}/>}</>},
 
     {title:"ISCI Registry",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
       <p>Click '+ Register ISCI' to add new creative codes. The system auto-generates ISCI codes following the format: DMA prefix + brand identifier + sequence number + suffix. For example, CHIPL001V is Chicago, Postman Law, sequence 001, TV. Select multiple DMAs to register the same creative across several markets at once.</p>
@@ -6395,11 +6404,16 @@ Be direct and actionable. No generic advice.`;
     </div>,damageEffects:<>{<BookDroolStain style={{top:"35%",right:12,width:72,height:72,opacity:.2}}/>}{<BookLipstickMark style={{bottom:32,left:24,opacity:.4,transform:"rotate(-15deg) scale(.85)"}}/>}</>},
 
     {title:"Traffic Library",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>The Traffic Library archives every rotation ever built. Brand tabs (Postman Law / Wettermark Keith) show per-market summary cards. Each card displays media coverage per month with green checks for sent traffic and red X marks for missing buy types. Multi-market records count toward each individual market's coverage.</p>
-      <p>Send from the library by clicking any archived rotation — a confirmation dialog shows full details (ISCIs, percentages, stations) before sending. Stations are looked up fresh by brand + market + media type, grouped by ownership. One email per group, same rules as the Traffic Center.</p>
-      <p>Copy to Month lets you duplicate any traffic record to another month. For WK, the estimate number auto-swaps to the target month (e.g., April 213 becomes May 214). For PL, the estimate stays the same. The system warns if the target month already has traffic for that market and buy type.</p>
-      <BookMarginNote author="meg">I remember every version. Every mistake. Every rotation you deleted at 2 AM.</BookMarginNote>
-    </div>,damageEffects:<>{<BookHoofMark style={{bottom:16,left:16,opacity:.3,transform:"rotate(15deg) scale(.7)"}}/>}{<BookDroolStain style={{top:8,right:8,width:64,height:64,opacity:.2}}/>}</>},
+      <p>The Traffic Library archives every rotation ever built. Brand tabs show per-market summary cards with media coverage per month — green checks for sent, red X for missing. Multi-market records count for each market.</p>
+      <p>Send from the library: click any rotation, review ISCIs and stations in the confirmation dialog, then send. Stations are looked up fresh by brand + market + media, grouped by ownership.</p>
+      <BookMarginNote author="meg">I remember every version. Every mistake.</BookMarginNote>
+    </div>,damageEffects:<>{<BookHoofMark style={{bottom:16,left:16,opacity:.3,transform:"rotate(15deg) scale(.7)"}}/>}</>},
+
+    {title:"Library: Copy to Month",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Copy to Month duplicates any traffic record to another month. For WK, the estimate number auto-swaps to the target month (April 213 → May 214). For PL, the estimate stays the same since PL estimates are year-round.</p>
+      <p>The system warns if the target month already has traffic for that market and buy type, preventing accidental overwrites.</p>
+      <BookMarginNote author="muses">From April's page to May's fresh start<br/>The estimates swap — a work of art!</BookMarginNote>
+    </div>,damageEffects:<>{<BookDroolStain style={{top:8,right:8,width:64,height:64,opacity:.2}}/>}</>},
 
     {title:"Audit Log",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
       <p>The Audit Log records every significant action in the system with timestamps. Brand tabs filter by All Activity, Postman Law, or Wettermark Keith — the filter matches brand names, market names, and DMA codes found anywhere in the log entry details.</p>
@@ -6408,12 +6422,17 @@ Be direct and actionable. No generic advice.`;
       <BookMarginNote author="meg">I see everything, Wonderboy. Everything.</BookMarginNote>
     </div>,damageEffects:<>{<BookBiteMark style={{top:"25%",right:0,opacity:.4,transform:"rotate(-90deg) scale(.6)"}}/>}{<BookInkSplatter style={{bottom:24,left:16,opacity:.4}}/>}</>},
 
-    {title:"Data Protection",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>Firestore is the source of truth for all user edits — active status, titles, tags, creative file URLs, and custom data. On every page load, seed data from data-*.js files is merged with Firestore: Firestore wins for any field the user has edited, but seed data restores ISCIs that are missing from Firestore and fills in blank titles or fileUrls.</p>
-      <p>Four save guards prevent catastrophic writes: loadCompleteRef ensures all data is fully loaded before allowing saves, saveRef prevents concurrent writes from overlapping, iscisLoadedRef confirms the ISCI array is populated, and linksReady ensures station-estimate link resolution is complete.</p>
-      <p>The 20% ISCI drop safeguard is the last line of defense. If any save operation would reduce the total ISCI count by more than 20% compared to what was loaded, the save is blocked entirely. This protects against empty page loads, corrupted Firestore reads, or accidental bulk deletions.</p>
-      <BookMarginNote author="hades">The safeguards exist because someone tried to destroy my data. Once. They did not try again.</BookMarginNote>
-    </div>,damageEffects:<>{<BookBurnMark style={{top:0,left:0,width:120,height:120,opacity:.35}}/>}{<BookHoofMark style={{bottom:16,right:24,opacity:.2,transform:"rotate(-20deg) scale(.65)"}}/>}</>},
+    {title:"Data: Firestore & Seed",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Firestore is the source of truth for all user edits — active status, titles, tags, creative file URLs, and custom data. Seed data lives in data-*.js files loaded as script tags.</p>
+      <p>On every page load, the two are merged: Firestore wins for any field the user has edited, but seed data restores ISCIs missing from Firestore and fills blank titles or fileUrls.</p>
+      <BookMarginNote author="meg">Firestore wins. Seed fills gaps. That's the rule.</BookMarginNote>
+    </div>,damageEffects:<>{<BookBurnMark style={{top:0,left:0,width:120,height:120,opacity:.35}}/>}</>},
+
+    {title:"Data: Save Guards",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Four save guards prevent catastrophic writes: loadCompleteRef (data fully loaded), saveRef (no concurrent writes), iscisLoadedRef (ISCIs present), linksReady (station-estimate links resolved).</p>
+      <p>The 20% ISCI drop safeguard blocks any save that would reduce count by more than 20% — protecting against empty loads, corrupted reads, or accidental bulk deletions.</p>
+      <BookMarginNote author="hades">The safeguards exist because someone tried. Once. They did not try again.</BookMarginNote>
+    </div>,damageEffects:<>{<BookHoofMark style={{bottom:16,right:24,opacity:.2,transform:"rotate(-20deg) scale(.65)"}}/>}</>},
 
     {title:"AI Planner: The Muses",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
       <p>The AI Planner uses Claude to analyze your traffic rotation strategy. It is themed as the Five Muses from Hercules, who narrate the analysis like they're telling a dramatic story. The planner proxies through /api/planner.js with a model whitelist for security.</p>
@@ -6429,12 +6448,17 @@ Be direct and actionable. No generic advice.`;
       <BookMarginNote author="meg">Share the report. Don't share the password. I shouldn't have to say this.</BookMarginNote>
     </div>,damageEffects:<>{<BookHoofMark style={{top:24,left:16,opacity:.25,transform:"rotate(10deg) scale(.7)"}}/>}{<BookBurnMark style={{bottom:0,right:0,width:100,height:100,opacity:.2}}/>}</>},
 
-    {title:"System Architecture",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>The entire application lives in three files: index.html (login screen, loader animations, all CSS including keyframes in the head tag), app.js (~6000 lines of React, Babel-transpiled at runtime via babel-standalone), and config.js (shared UI components, constants, data transform utilities, calendar logic). Seed data loads from data-*.js files as script tags.</p>
-      <p>Backend endpoints on Vercel: api/auth.js handles login with timing-safe password comparison and rate limiting, api/config.js serves the Firebase configuration, api/planner.js proxies Claude AI requests with a model whitelist, and api/email.js provides the EmailJS fallback. middleware.js validates 64-character hex session tokens on every protected request.</p>
-      <p>Routing is entirely state-based via the pg variable — no URL routing for the main app. The HTML loader in index.html stays visible until React sets dbLoaded=true. Critically, loader animation CSS lives in the head tag outside the #R render root so React can't destroy the keyframes during mount.</p>
-      <BookMarginNote author="meg">Six thousand lines. One file. Babel-transpiled at runtime. You're welcome.</BookMarginNote>
-    </div>,damageEffects:<>{<BookInkSplatter style={{top:16,right:16,opacity:.5}}/>}{<BookBiteMark style={{bottom:8,left:0,opacity:.3,transform:"scale(.45)"}}/>}</>},
+    {title:"Architecture: Frontend",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Three files: index.html (login, loader, all CSS with keyframes in the head tag), app.js (~6000 lines of React, Babel-transpiled at runtime), config.js (UI components, constants, calendar). Seed data from data-*.js script tags.</p>
+      <p>Routing is state-based via the pg variable — no URL routing. The HTML loader stays visible until React's dbLoaded flag is true. Loader CSS lives in the head tag outside #R so React can't destroy it during mount.</p>
+      <BookMarginNote author="meg">Six thousand lines. One file. You're welcome.</BookMarginNote>
+    </div>,damageEffects:<>{<BookInkSplatter style={{top:16,right:16,opacity:.5}}/>}</>},
+
+    {title:"Architecture: Backend",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Vercel endpoints: api/auth.js (timing-safe password compare, rate limiting), api/config.js (Firebase config), api/planner.js (Claude AI proxy with model whitelist), api/email.js (EmailJS fallback).</p>
+      <p>middleware.js validates 64-character hex session tokens on every protected request. Deployed on Vercel with SPA rewrites via vercel.json.</p>
+      <BookMarginNote author="muses">The backend guards each door and gate<br/>No token, no entry — that's your fate!</BookMarginNote>
+    </div>,damageEffects:<>{<BookBiteMark style={{bottom:8,left:0,opacity:.3,transform:"scale(.45)"}}/>}</>},
 
     {title:"End of the Line",content:<div style={{display:"flex",flexDirection:"column",gap:14,textAlign:"center",paddingTop:24}}>
       <p style={{fontSize:17,fontFamily:"'Cinzel',serif",color:"#4a1a1a"}}>Thus concludes the sacred documentation of the Doom & Deliverables Traffic Management System.</p>
