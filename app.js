@@ -700,6 +700,14 @@ const App=()=>{
               if(migrated[key].length!==estNums.length)migCount++;
             }
           });
+          // Ensure AmpersandTV is linked to Cable estimates in each market
+          const CABLE_MKT={"Chicago":"2613","Cincinnati":"2621","Denver":"2629","Minneapolis":"2605"};
+          Object.entries(CABLE_MKT).forEach(([mkt,estNum])=>{
+            const k="AmpersandTV|"+mkt+"|Postman Law";
+            if(!migrated[k]||!migrated[k].includes(estNum)){
+              migrated[k]=[estNum];migCount++;
+            }
+          });
           if(migCount>0){console.log("Migrated "+migCount+" station-estimate links (Cable separation)");try{db.collection("appData").doc("staEstLinks").set({data:JSON.stringify(migrated),ts:Date.now()})}catch(e){}}
           setStaEstLinks(migrated);
           linksReady.current=true;
@@ -904,8 +912,16 @@ const App=()=>{
   };
   const[staEstLinks,setStaEstLinks]=useState({});
   const staKey=(s)=>`${s.call}|${s.market}|${s.brand}`;
-  const getStaEsts=(s)=>staEstLinks[staKey(s)]||[];
+  const getStaEsts=(s)=>{
+    const linked=staEstLinks[staKey(s)]||[];
+    // Cable estimates only for AmpersandTV, never for other stations
+    if(s.call==="AmpersandTV")return linked.filter(n=>CABLE_EST_NUMS.has(n));
+    return linked.filter(n=>!CABLE_EST_NUMS.has(n));
+  };
   const toggleStaEst=(s,estNum)=>{
+    // Enforce Cable separation
+    if(CABLE_EST_NUMS.has(estNum)&&s.call!=="AmpersandTV")return;
+    if(!CABLE_EST_NUMS.has(estNum)&&s.call==="AmpersandTV")return;
     const k=staKey(s);
     setStaEstLinks(p=>{const cur=p[k]||[];return{...p,[k]:cur.includes(estNum)?cur.filter(n=>n!==estNum):[...cur,estNum]}});
   };
@@ -6667,8 +6683,9 @@ Be direct and actionable. No generic advice.`;
       </Mod>
     })()}
     {modal?.t==="linkEst"&&(()=>{const s=modal.station;const linked=getStaEsts(s);
-      const matching=estimates.filter(e=>e.market===s.market&&e.brand===s.brand);
-      const others=estimates.filter(e=>!(e.market===s.market&&e.brand===s.brand));
+      const cableFilter=e=>s.call==="AmpersandTV"?CABLE_EST_NUMS.has(e.num):!CABLE_EST_NUMS.has(e.num);
+      const matching=estimates.filter(e=>e.market===s.market&&e.brand===s.brand&&cableFilter(e));
+      const others=estimates.filter(e=>!(e.market===s.market&&e.brand===s.brand)&&cableFilter(e));
       return<Mod title={`Link Estimates — ${s.call} · ${s.market} · ${s.brand}`} onClose={()=>setModal(null)}>
         <div style={{fontSize:13,color:"#9B8EAD",marginBottom:8}}>Tap to link or unlink. Matching estimates shown first.</div>
         <div style={{display:"flex",flexDirection:"column",gap:4,maxHeight:400,overflowY:"auto"}}>
