@@ -617,7 +617,7 @@ const App=()=>{
           const fbCalls=new Set(migSta.map(s=>s.call+"|"+s.market+"|"+s.brand));
           const missing=STATIONS.filter(s=>!fbCalls.has(s.call+"|"+s.market+"|"+s.brand));
           _loadedStations=[...migSta,...missing];
-          setStations(_loadedStations);stationsLoadedRef.current=true
+          setStations(_loadedStations);stationsFbCountRef.current=_loadedStations.length;stationsLoadedRef.current=true
         }}else{stationsLoadedRef.current=true}
         if(docs.estimates?.data){const d=JSON.parse(docs.estimates.data);if(d.length){
           // Filter out old 4-digit WK estimates from Firestore data too
@@ -629,7 +629,7 @@ const App=()=>{
           // Merge with patched estimates — add any new ones not in Firebase
           const fbNums=new Set(migrated.map(e=>e.num+"|"+e.market));
           const missing=ESTIMATES.filter(e=>!fbNums.has(e.num+"|"+e.market));
-          setEstimates([...migrated,...missing]);estimatesLoadedRef.current=true
+          const allEst=[...migrated,...missing];setEstimates(allEst);estimatesFbCountRef.current=allEst.length;estimatesLoadedRef.current=true
         }}else{estimatesLoadedRef.current=true}
         if(docs.iscis?.data){const d=JSON.parse(docs.iscis.data);console.log("Firestore ISCIs: "+d.length+" records, ISCIS_INIT has "+ISCIS_INIT.length);
           // Clean codes (fix malformed ISCI codes with titles stuck in them)
@@ -795,20 +795,37 @@ const App=()=>{
   // Auto-save on changes — guards: dbLoaded, per-collection loaded flags, never save empty over real data
   const saveRef=React.useRef(false);
   const isciFbCountRef=React.useRef(0);
+  const stationsFbCountRef=React.useRef(0);
+  const estimatesFbCountRef=React.useRef(0);
   const iscisLoadedRef=React.useRef(false);
   const stationsLoadedRef=React.useRef(false);
   const estimatesLoadedRef=React.useRef(false);
   const trafficLoadedRef=React.useRef(false);
-  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current){saveRef.current=true;return;}if(stations.length>0&&stationsLoadedRef.current)saveToDb("stations",stations)},[stations,dbLoaded]);
-  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(estimates.length>0&&estimatesLoadedRef.current)saveToDb("estimates",estimates)},[estimates,dbLoaded]);
-  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(iscis.length>0&&iscisLoadedRef.current){
-    // SAFEGUARD: if ISCI count drops by more than 20% from what Firestore had, block the save
-    if(isciFbCountRef.current>50&&iscis.length<isciFbCountRef.current*0.8){
-      console.error("ISCI SAVE BLOCKED: count dropped from "+isciFbCountRef.current+" to "+iscis.length+" (>20% loss). This looks like a bug, not user action.");
-      return;
+
+  // Backup before save — keeps last known good state
+  const backupBeforeSave=(collection,data)=>{
+    try{db.collection("appData").doc(collection+"_backup").set({data:JSON.stringify(data),ts:Date.now(),backupOf:collection})}catch(e){console.warn("Backup failed for "+collection)}
+  };
+
+  // Safe save with drop guard (blocks if count drops >20% from loaded count)
+  const safeSave=(collection,data,fbCountRef)=>{
+    if(fbCountRef&&fbCountRef.current>10){
+      const dropPct=1-(data.length/fbCountRef.current);
+      if(dropPct>0.2){
+        console.error("SAVE BLOCKED ["+collection+"]: count dropped from "+fbCountRef.current+" to "+data.length+" ("+Math.round(dropPct*100)+"% loss)");
+        log("Save Blocked","⚠ "+collection+" save blocked: "+fbCountRef.current+"→"+data.length+" ("+Math.round(dropPct*100)+"% drop)");
+        return false;
+      }
     }
-    isciFbCountRef.current=iscis.length;saveToDb("iscis",iscis)
-  }},[iscis,dbLoaded]);
+    backupBeforeSave(collection,data);
+    saveToDb(collection,data);
+    if(fbCountRef)fbCountRef.current=data.length;
+    return true;
+  };
+
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current){saveRef.current=true;return;}if(stations.length>0&&stationsLoadedRef.current)safeSave("stations",stations,stationsFbCountRef)},[stations,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(estimates.length>0&&estimatesLoadedRef.current)safeSave("estimates",estimates,estimatesFbCountRef)},[estimates,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(iscis.length>0&&iscisLoadedRef.current)safeSave("iscis",iscis,isciFbCountRef)},[iscis,dbLoaded]);
   const linksReady=React.useRef(false);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(!linksReady.current)return;if(Object.keys(staEstLinks).length>0)saveToDb("staEstLinks",staEstLinks)},[staEstLinks,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;const newLinks={};stations.forEach(s=>{const k=staKey(s);const existing=staEstLinks[k]||[];const matched=estimates.filter(e=>e.market===s.market&&e.brand===s.brand&&s.media===e.media).map(e=>e.num);if(existing.length===0&&matched.length){newLinks[k]=matched}});if(Object.keys(newLinks).length){setStaEstLinks(p=>({...p,...newLinks}))}linksReady.current=true},[stations,dbLoaded]);
