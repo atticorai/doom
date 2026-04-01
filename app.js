@@ -1982,7 +1982,6 @@ const App=()=>{
           {iscis.filter(i=>{const dc=Object.entries(DM).find(([_,n])=>n===est.market)?.[0]||"";return i.dma===dc&&i.brand===est.brand&&i.active&&i.suffix==="D"}).length===0&&<div style={{fontSize:12,color:"#D4A040",fontStyle:"italic"}}>No Digital ISCIs (suffix D) registered for this market</div>}
         </div>
       </div>}
-      </div>}
 
       {/* Actions */}
       <div style={{display:"flex",gap:6,marginTop:10,alignItems:"center",flexWrap:"wrap"}}>
