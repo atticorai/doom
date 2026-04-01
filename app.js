@@ -633,7 +633,7 @@ const App=()=>{
         }}else{estimatesLoadedRef.current=true}
         if(docs.iscis?.data){const d=JSON.parse(docs.iscis.data);console.log("Firestore ISCIs: "+d.length+" records, ISCIS_INIT has "+ISCIS_INIT.length);
           // Clean codes (fix malformed ISCI codes with titles stuck in them)
-          const REMOVE_ISCIS=new Set(["CINPL2660003T","MSPPL2660001T","MSPPL2660002T","CHIPL2660004T","CHIPL2660005T","CINPL2660004T","CINPL2660005T","DENPL2660004T","DENPL2660005T","MSPPL2660004T","MSPPL2660005T"]);
+          const REMOVE_ISCIS=new Set(["CINPL2660003T","MSPPL2660001T","CHIPL2660005T","CINPL2660005T","DENPL2660005T","MSPPL2660005T"]);
           const cleaned=(d.length?d:[]).filter(i=>!REMOVE_ISCIS.has(i.code)).map(i=>{if(i.dur==="600")i={...i,dur:"60"};if(i.dur==="300")i={...i,dur:"30"};if(i.dur==="150")i={...i,dur:"15"};return i}).map(i=>{if(i.code&&/^[A-Z]{3,4}[A-Z]{2}\d/.test(i.code)){const dashMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*[-–—:]+\s*(.+)$/);if(dashMatch)return{...i,code:dashMatch[1].trim(),title:dashMatch[2].trim()||i.title};const spaceMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s{2,}(.+)$/);if(spaceMatch)return{...i,code:spaceMatch[1].trim(),title:spaceMatch[2].trim()||i.title};if(i.code.length>16){const coreMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*(.*)$/);if(coreMatch&&coreMatch[2])return{...i,code:coreMatch[1].trim(),title:coreMatch[2].trim()||i.title}}}return i});
           // ═══ MERGE RULES ═══
           // 1. Firestore wins for user edits (active, title, tags, category, etc.)
