@@ -687,7 +687,17 @@ const App=()=>{
                 if(cleaned.length!==estNums.length)migCount++;
               }
             }else{
-              migrated[key]=estNums;
+              // PL: remove Cable estimate links from non-Cable stations
+              const CABLE_EST=new Set(["2605","2613","2621","2629"]);
+              const isCableSta=sCall==="AmpersandTV";
+              if(isCableSta){
+                // AmpersandTV: keep only Cable estimates
+                migrated[key]=estNums.filter(n=>CABLE_EST.has(n));
+              }else{
+                // Other PL stations: remove Cable estimates
+                migrated[key]=estNums.filter(n=>!CABLE_EST.has(n));
+              }
+              if(migrated[key].length!==estNums.length)migCount++;
             }
           });
           if(migCount>0)console.log("Migrated "+migCount+" WK station-estimate links to 3-digit system");
