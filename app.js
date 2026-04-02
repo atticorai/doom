@@ -2013,7 +2013,7 @@ const App=()=>{
           const now=new Date().toISOString();const sentCodes=sel.map(r=>r.isci.code);
           setIscis(p=>p.map(i=>sentCodes.includes(i.code)?{...i,sentAt:i.sentAt||now,sentInEst:i.sentInEst||est.num}:i));
           log("Traffic Generated",`Est ${est.num} · ${est.market} · v${version}${_revise?" (↻ revision)":""} · ${sel.length} ISCIs · ${staList.length} stations`);notify(`Traffic v${version} generated${_revise?" — previous rotation end-dated":""}`)}}>🖨 Print Traffic Sheet</Btn>
-        <Btn primary color="#5BC4A0" disabled={!allValid||sel.length===0||sendStations.length===0} onClick={async()=>{
+        <Btn primary color="#5BC4A0" disabled={!allValid||sel.length===0||(sendStations.length===0&&!manualEmails.trim())} onClick={async()=>{
           if(!allValid||sel.length===0)return;
           notify(DOOM.anchor);
           const isciRec=sel.map(r=>({code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct,sched:r.sched,bookend:r.bookend}));
@@ -2022,7 +2022,8 @@ const App=()=>{
           const sendable=sendList.filter(s=>parseEmails(s.contact).length>0);
           const skipped=sendList.filter(s=>parseEmails(s.contact).length===0);
           if(skipped.length)notify(skipped.length+" station(s) skipped — no email contacts: "+skipped.map(s=>s.call).join(", "));
-          if(!sendable.length){notify("No stations have email contacts");return}
+          const extraEmails=manualEmails.split(/[,;]/).map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+          if(!sendable.length&&!extraEmails.length){notify("No stations or recipients to send to");return}
           const tokens={};sendable.forEach(s=>{tokens[s.call]={confirmed:false,token:genToken()}});
           const recId=Date.now();
           const rec={ts:new Date().toISOString(),_id:recId,est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:curMonth?.month,flight,version,comments,combined:!!est._combined,
@@ -2046,8 +2047,7 @@ const App=()=>{
           const buyerCc=BUYER_EMAILS[est.buyer]||"";
           const emmCc="emm.caban@atticor.ai";
           const ccList=[buyerCc,emmCc].filter(Boolean).join(",");
-          // Include manual email recipients as an additional send
-          const extraEmails=manualEmails.split(/[,;]/).map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+          // extraEmails already parsed above
           let sent=0;let failed=0;
           for(const[grpName,grpStations]of Object.entries(ownershipGroups)){
             // Collect ALL unique emails across stations in this group
@@ -2100,7 +2100,7 @@ const App=()=>{
             setIscis(p=>p.map(i=>sentCodes.includes(i.code)?{...i,sentAt:i.sentAt||now,sentInEst:i.sentInEst||est.num}:i));
           }
           notify(doomPick(DOOM.send)+" "+sent+" sent"+(failed?" ("+failed+" failed)":""));
-        }}>✉ Email Stations ({sendStations.length})</Btn>
+        }}>✉ Email {sendStations.length>0?`Stations (${sendStations.length})`:"Recipients"}</Btn>
         <Btn onClick={()=>setModal(null)}>Cancel</Btn>
         {!allValid&&sel.length>0&&<span style={{fontSize:13,color:"#E85A7A",fontWeight:600}}>⚠ Fix rotation %s — each duration must total 100%</span>}
         <span style={{marginLeft:"auto",fontSize:13,color:"#9B8EAD"}}>{sel.length} selected · {linkedSta.length} stations</span>
