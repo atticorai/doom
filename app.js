@@ -134,6 +134,17 @@ const STATIONS=(()=>{
     ["Montgomery","TTWN-WK","Streaming Audio","TTWN Network","adahu@iheartmedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
     ["Dothan","TTWN-WK","Streaming Audio","TTWN Network","adahu@iheartmedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
     ["Birmingham","TEST-TV","TV","Test Station","Emm.caban@atticor.ai.com; emm.caban@blackacreservices.com; Hannah.jennings@blackacreservices.com","Wettermark Keith","Amy Coffey"],
+    ["Birmingham","WBPT-FM","Radio","Summit Media","radiosupport@summitmediacorp.com","Wettermark Keith","Amy Coffey"],
+    ["Birmingham","WQEN-FM","Radio","iHeart Media","adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
+    ["Birmingham","WDXB-FM","Radio","iHeart Media","adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
+    ["Birmingham","WERC-FM","Radio","iHeart Media","adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
+    ["Birmingham","WMJJ-FM","Radio","iHeart Media","adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
+    ["Huntsville","WDRM-FM","Radio","iHeart Media","adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
+    ["Huntsville","WQRV-FM","Radio","iHeart Media","adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
+    ["Huntsville","WTAK-FM","Radio","iHeart Media","adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
+    ["Montgomery","WHLW-FM","Radio","iHeart Media","adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
+    ["Montgomery","WWMG-FM","Radio","iHeart Media","adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
+    ["Montgomery","WZHT-FM","Radio","iHeart Media","adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
   ];
   // Authoritative WK station call signs — anything not on this list gets dropped
   const WK_CALLS_AUTH=new Set(Object.keys(WK_UPD));
@@ -1800,14 +1811,14 @@ const App=()=>{
       return 0;
     });
 
-    const SCHED_COLORS={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#1f3530","Holiday Only":"#fee2e2"};
+    const SCHED_COLORS={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#dcfce7","Holiday Only":"#fee2e2"};
     const SCHED_ORDER=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
     const buildSheetHtml=()=>{
       const bc=brand.code==="PL"?"#9b7bb0":"#D4A040";const bcBg=brand.code==="PL"?"#F0E8F8":"#fffbeb";
       let h='<html><head><title>Traffic Instructions</title><style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}body{padding:28px}table{width:100%;border-collapse:collapse;margin-top:14px}th{background:#F0E8F8;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#6B5E80}td{padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)}.sig{margin-top:36px;border-top:2px solid '+bc+';padding-top:8px}.note{background:'+bcBg+';padding:7px;font-size:10px;color:'+bc+';margin-top:6px}.grp{padding:5px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid rgba(0,0,0,.1)}</style></head><body>';
       h+='<div style="text-align:center;margin-bottom:14px"><img src="'+brand.logo+'" style="height:48px"/></div>';
       const hdr=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+v+'</span></div>';
-      h+=hdr("Agency","Atticor");
+      h+=hdr("Agency",brand.code==="WK"?"WK Advertising Solutions":brand.code==="PL"?"Blackacre Services":"Atticor");
       h+=hdr("Client",brand.name,brand.code==="PL"?"#9b7bb0":"#D4A040");
       h+=hdr("Market",est.market);
       h+=hdr("Buyer",est.buyer,"#D4A040");
@@ -1956,7 +1967,7 @@ const App=()=>{
         </tr></thead>
         <tbody>{sorted.map((r,idx)=>{
           const ri=rows.indexOf(r);
-          return<tr key={r.isci.code+idx} style={{background:r.selected?({"M-F Schedule":"#dbeafe44","Weekend Schedule":"#fef3c744","M-F Bookend":"#ede9fe44","Weekend Bookend":"#fce7f344","All Week":"#1f353044","Holiday Only":"#fee2e244"}[r.sched]||"#f0f9ff"):""}}>
+          return<tr key={r.isci.code+idx} style={{background:r.selected?({"M-F Schedule":"#dbeafe44","Weekend Schedule":"#fef3c744","M-F Bookend":"#ede9fe44","Weekend Bookend":"#fce7f344","All Week":"#dcfce744","Holiday Only":"#fee2e244"}[r.sched]||"#f0f9ff"):""}}>
             <td style={{padding:"3px 5px",textAlign:"center",borderBottom:"1px solid #ede9fe"}}>
               <input type="checkbox" checked={r.selected} onChange={e=>updRow(ri,"selected",e.target.checked)}/>
             </td>
@@ -5072,12 +5083,12 @@ ${fullText.substring(0,3000)}`}]
     const searched=libSearch.trim()?visData.filter(h=>{const q=libSearch.toLowerCase();const mName=(DM[h.market]||h.market).toLowerCase();return(h.market||"").toLowerCase().includes(q)||mName.includes(q)||(h.media||"").toLowerCase().includes(q)||(h.est||"").toLowerCase().includes(q)||(h.buyer||"").toLowerCase().includes(q)||(h.month||"").toLowerCase().includes(q)||(h.iscis||[]).some(r=>(r.code||"").toLowerCase().includes(q)||(r.title||"").toLowerCase().includes(q))}):visData;
     const bc2=libBrand==="Postman Law"?"#9b7bb0":"#D4A040";
     // Manual form JSX
-    const SCHED_COLORS_LIB={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#1f3530","Holiday Only":"#fee2e2"};
+    const SCHED_COLORS_LIB={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#dcfce7","Holiday Only":"#fee2e2"};
     const SCHED_ORDER_LIB=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
     const bldHtml=(h)=>{
       const bc=h.brand==="Postman Law"?"#9b7bb0":"#D4A040";
       const lg=h.brand==="Postman Law"?LOGO_PL:LOGO_WK;
-      let x='<html><head><style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}body{padding:28px;background:#fff;color:#1e1233}table{width:100%;border-collapse:collapse;margin-top:14px}th{background:#F0E8F8;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#6B5E80}td{padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)}.grp{font-weight:700;font-size:11px;text-transform:uppercase;padding:5px 9px;color:#333}.sig{margin-top:36px;border-top:2px solid '+bc+';padding-top:8px}.note{background:#3a1f35;padding:7px;font-size:10px;color:#E85A7A;margin-top:6px}</style></head><body>';
+      let x='<html><head><style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}body{padding:28px;background:#fff;color:#1e1233}table{width:100%;border-collapse:collapse;margin-top:14px}th{background:#F0E8F8;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#6B5E80}td{padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)}.grp{font-weight:700;font-size:11px;text-transform:uppercase;padding:5px 9px;color:#333}.sig{margin-top:36px;border-top:2px solid '+bc+';padding-top:8px}.note{background:#fffbeb;padding:7px;font-size:10px;color:#92400e;margin-top:6px;border:1px solid #fde68a}</style></head><body>';
       const hd=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+v+'</span></div>';
       x+='<div style="text-align:center;margin-bottom:14px"><img src="'+lg+'" style="height:48px"/></div>';
       x+=hd("Agency",h.brand==="Wettermark Keith"?"WK Advertising Solutions":h.brand==="Postman Law"?"Blackacre Services":"Atticor");
