@@ -117,6 +117,7 @@ const STATIONS=(()=>{
   };
   // New stations not in base data
   const WK_NEW=[
+    ["Birmingham","WBRC-TV","TV","Gray Media","allwbrctraffic@wbrc.com; cburns@wbrc.com; wbrc-traffic@gray.tv","Wettermark Keith","Amy Coffey"],
     ["Birmingham","EVTM-TV","TV","Hearst","WVTM_traffic@hearst.com","Wettermark Keith","Amy Coffey"],
     ["Dothan","GTVY-TV","TV","Gray Media","ashley.wright@wtvy.com; wtvy-traffic@gray.tv","Wettermark Keith","Amy Coffey"],
     ["Huntsville","EZDX-TV","TV","Tegna","hsvtraffic@tegna.com; WZDXTraffic@tegna.com","Wettermark Keith","Amy Coffey"],
@@ -647,18 +648,20 @@ const App=()=>{
           const REMOVE_ISCIS=new Set(["CINPL2660003T","MSPPL2660001T","CHIPL2660005T","CINPL2660005T","DENPL2660005T","MSPPL2660005T","BRMWK2630009R","BRMWK2630010R","CHAWK2630009R","CHAWK2630010R","DHNWK2630009R","DHNWK2630010R","HSVWK2630009R","HSVWK2630010R","KNXWK2630009R","KNXWK2630010R","MTGWK2630009R","MTGWK2630010R"]);
           const cleaned=(d.length?d:[]).filter(i=>!REMOVE_ISCIS.has(i.code)).map(i=>{if(i.code&&/^[A-Z]{3,4}[A-Z]{2}\d/.test(i.code)){const dashMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*[-–—:]+\s*(.+)$/);if(dashMatch)return{...i,code:dashMatch[1].trim(),title:dashMatch[2].trim()||i.title};const spaceMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s{2,}(.+)$/);if(spaceMatch)return{...i,code:spaceMatch[1].trim(),title:spaceMatch[2].trim()||i.title};if(i.code.length>16){const coreMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*(.*)$/);if(coreMatch&&coreMatch[2])return{...i,code:coreMatch[1].trim(),title:coreMatch[2].trim()||i.title}}}return i});
           // ═══ MERGE RULES ═══
-          // 1. Seed is authoritative for: title, dur, media, fileUrl
-          // 2. Firestore wins for user edits: active, tags, category, valueProp, vo, caseType
-          // 3. Missing seed ISCIs always get added back
-          // 4. User-added ISCIs (not in seed) are always kept
+          // 1. Firestore wins for: title, dur, media (user edits persist)
+          // 2. Seed fills blanks for title/dur/media when Firestore has empty values
+          // 3. Seed wins for fileUrl (creative links are system-managed)
+          // 4. Firestore wins for: active, tags, category, valueProp, vo, caseType
+          // 5. Missing seed ISCIs always get added back
+          // 6. User-added ISCIs (not in seed) are always kept
           // Use code+dma as composite key for same code in different markets
           const fbMap=new Map(cleaned.map(i=>[i.code+"|"+(i.dma||""),i]));
           const seedMap=new Map(ISCIS_INIT.map(i=>[i.code+"|"+(i.dma||""),i]));
-          // Merge: seed wins for title/dur/media/fileUrl, Firestore wins for user edits
+          // Merge: Firestore wins for title/dur/media, seed fills blanks + wins for fileUrl
           const enhanced=cleaned.map(fb=>{
             const seed=seedMap.get(fb.code+"|"+(fb.dma||""));
             if(!seed)return fb; // User-added ISCI, keep as-is
-            return{...fb,title:seed.title||fb.title,dur:seed.dur||fb.dur,media:seed.media||fb.media,fileUrl:seed.fileUrl||fb.fileUrl};
+            return{...fb,title:fb.title||seed.title,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:seed.fileUrl||fb.fileUrl};
           });
           // Always add back missing seed ISCIs — better to recover than lose
           const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||"")));
@@ -740,7 +743,7 @@ const App=()=>{
               }
             }
           });
-          if(wkRadioFixed>0)console.warn("WK Radio traffic cleanup: fixed "+wkRadioFixed+" records");
+          if(wkRadioFixed>0){console.warn("WK Radio traffic cleanup: fixed "+wkRadioFixed+" records");try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){console.warn("WK Radio cleanup save failed:",e)}}
           // One-time: seed PL April TV + Radio traffic if missing after cleanup
           const PL_APRIL_SEED=[];
           const hasPLAprilTV=(mkt)=>cleaned.some(h=>h.brand==="Postman Law"&&h.market===mkt&&h.media==="TV"&&h.month==="April"&&h.status!=="copied");
@@ -864,7 +867,16 @@ const App=()=>{
     setTrafficHistoryRaw(prev=>{
       const next=typeof updater==='function'?updater(prev):updater;
       if(dbLoaded&&trafficLoadedRef.current&&trafficDirtyRef.current&&next.length>0){
+        // Drop guard: block save if traffic count drops >20% from loaded count
+        if(trafficFbCountRef.current>5){
+          const dropPct=1-(next.length/trafficFbCountRef.current);
+          if(dropPct>0.2){
+            console.error("SAVE BLOCKED [trafficHistory]: count dropped from "+trafficFbCountRef.current+" to "+next.length+" ("+Math.round(dropPct*100)+"% loss)");
+            return prev; // Return previous state, don't save
+          }
+        }
         trafficFbCountRef.current=next.length;
+        backupBeforeSave("trafficHistory",next);
         setTimeout(()=>saveToDb("trafficHistory",next),100);
       }
       return next;
@@ -5397,6 +5409,11 @@ ${fullText.substring(0,3000)}`}]
                           var sent4=0;var failed3=0;
                           var grpKeys=Object.keys(ownerGroups);
                           notify("Sending to "+grpKeys.length+" group(s)...");
+                          // Generate fresh confirmation tokens for resend
+                          var resendKey=akFromHistory(h);
+                          var resendTokens={};
+                          staList.forEach(function(call){resendTokens[call]={confirmed:false,token:genToken()}});
+                          setConfirmations(function(p){var u={};u[resendKey]=Object.assign({},p[resendKey]||{},resendTokens);return Object.assign({},p,u)});
                           var isciObjs=(h.iscis||[]).map(function(ic){var full=iscis.find(function(i){return i.code===ic.code});return full?{code:ic.code,title:ic.title,fileUrl:full.fileUrl}:null}).filter(Boolean);
                           var creativeLinks2=isciObjs.filter(function(i){return i.fileUrl}).length>0?"<br><br><b>Creative Files:</b><br>"+isciObjs.filter(function(i){return i.fileUrl}).map(function(i){return'<a href="'+i.fileUrl+'">'+i.code+" — "+i.title+"</a>"}).join("<br>"):"";
                           for(var gi=0;gi<grpKeys.length;gi++){
@@ -5407,7 +5424,7 @@ ${fullText.substring(0,3000)}`}]
                             var subj2="Atticor | "+(h.brand||"")+" "+(h.market||"")+" "+(h.media||"")+" Traffic Instructions | "+(h.month||"")+" | Est "+(h.est||"");
                             var noteHtml=resendNote.trim()?"<b>Note:</b> "+resendNote.trim()+"<br><br>":"";
                             var confirmBase4=window.location.href.split("?")[0];
-                            var confirmBtns=grpStas.map(function(s){var url=confirmBase4+"?confirm="+(h.est||"")+"&sta="+s.call+"&tok=auto";return'<a href="'+url+'" style="display:inline-block;padding:6px 16px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:4px 2px">Confirm '+s.call+'</a>'}).join(" ");
+                            var confirmBtns=grpStas.map(function(s){var tok=resendTokens[s.call]?resendTokens[s.call].token:"auto";var url=confirmBase4+"?confirm="+(h.est||"")+"&sta="+s.call+"&tok="+encodeURIComponent(tok);return'<a href="'+url+'" style="display:inline-block;padding:6px 16px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:4px 2px">Confirm '+s.call+'</a>'}).join(" ");
                             var body2="Hello,<br><br>Please find the attached traffic instructions for Est "+(h.est||"")+" — "+(h.brand||"")+", "+(h.market||"")+", "+(h.media||"")+".<br><br>"+noteHtml+"<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Version:</b> "+(h.version||"")+"<br><b>Station(s):</b> "+staCalls.join(", ")+creativeLinks2+"<br><br>Please confirm receipt of this traffic within 24 hours:<br>"+confirmBtns+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
                             try{var resp3=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:grpEmails,cc:ccListR,subject:subj2,message:body2,pdfBase64:pdfB64,pdfName:pdfName})});if(resp3.ok)sent4+=grpStas.length;else failed3+=grpStas.length}catch(e4){failed3+=grpStas.length}
                           }
