@@ -17,7 +17,8 @@ export default function middleware(request) {
     (pathname.endsWith('.js') && !pathname.startsWith('/api/')) ||
     pathname === '/api/config' ||
     pathname === '/api/email' ||
-    pathname === '/api/planner';
+    pathname === '/api/planner' ||
+    pathname === '/api/send-traffic';
 
   if (isProtected) {
     const cookie = request.headers.get('cookie') || '';

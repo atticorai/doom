@@ -917,7 +917,7 @@ const App=()=>{
       let pdfB64="";try{const sheetHtml=bldHtml(r.h);const pdfUri=await generatePdfBase64(sheetHtml,r.h);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
       const pdfName="Traffic_"+r.h.brand.replace(/\s/g,"")+"_"+r.h.market+"_"+r.h.media+"_"+(r.h.month||"").replace(/\s/g,"")+"_v"+r.h.version+".pdf";
       try{
-        const resp=await fetch("https://doomndeliverables.app.n8n.cloud/webhook/9661ec80-6bd8-4cf5-acca-90f2547a75eb",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:r.emails.join(","),cc:[BUYER_EMAILS[r.h.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj,message:body,pdfBase64:pdfB64,pdfName:pdfName})});
+        const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:r.emails.join(","),cc:[BUYER_EMAILS[r.h.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj,message:body,pdfBase64:pdfB64,pdfName:pdfName})});
         if(resp.ok){newReminders[r.rKey]={ts:now,to:r.emails.join(",")};sent++;log("Confirm Reminder",r.call+" — Est "+r.h.est+" "+r.h.market+" "+r.h.media)}
       }catch(e){
         try{await sendEmailServer({to_email:r.emails.join(","),subject:subj,message:body,name:"Atticor"});newReminders[r.rKey]={ts:now,to:r.emails.join(",")};sent++;log("Confirm Reminder",r.call+" — Est "+r.h.est+" (emailjs fallback)")}catch(e2){failed++}
@@ -2097,7 +2097,7 @@ const App=()=>{
               '<br><br>Please confirm receipt of this traffic within 24 hours:<br>'+confirmLinks+
               "<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
             try{
-              const resp=await fetch("https://doomndeliverables.app.n8n.cloud/webhook/9661ec80-6bd8-4cf5-acca-90f2547a75eb",{
+              const resp=await fetch("/api/send-traffic",{
                 method:"POST",headers:{"Content-Type":"application/json"},
                 body:JSON.stringify({to:allEmails,cc:ccList,subject:subj,message:body,pdfBase64:pdfB64,pdfName:pdfName})
               });
@@ -2114,7 +2114,7 @@ const App=()=>{
             const subj="Atticor | "+est.brand+" "+est.market+" "+est.media+" Traffic Instructions | "+(curMonth?.month||"")+" | Est "+est.num;
             const body="Hello,<br><br>Please find the attached traffic instructions for Est "+est.num+" — "+brand.name+", "+est.market+", "+est.media+".<br><br><b>Broadcast Month:</b> "+(curMonth?.month||"")+"<br><b>Flight Dates:</b> "+flight+"<br><b>Version:</b> "+version+creativeLinks+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
             try{
-              const resp=await fetch("https://doomndeliverables.app.n8n.cloud/webhook/9661ec80-6bd8-4cf5-acca-90f2547a75eb",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:extraEmails.join(","),cc:ccList,subject:subj,message:body,pdfBase64:pdfB64,pdfName:pdfName})});
+              const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:extraEmails.join(","),cc:ccList,subject:subj,message:body,pdfBase64:pdfB64,pdfName:pdfName})});
               if(resp.ok){sent++;log("Manual Email",extraEmails.join(", ")+" — Est "+est.num)}else{failed++}
             }catch(e){failed++}
           }
@@ -2674,7 +2674,7 @@ const App=()=>{
           var subj2="Postman Law - "+mediaLabel+" Traffic Instructions - "+workMonth+" V"+version+" - "+est.market+" - "+vendorLabel2;
           var recipients2=isDigital?["jmondo@goodkarmabrands.com","mmetroka@goodkarmabrands.com","jessica.flynn@atticor.ai"]:["jake.jaffe@siriusxm.com","josh.mustachi@siriusxm.com","jessica.flynn@atticor.ai"];
           try{
-            var resp2=await fetch("https://doomndeliverables.app.n8n.cloud/webhook/9661ec80-6bd8-4cf5-acca-90f2547a75eb",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients2.join(","),cc:[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj2,message:emailBody2,pdfBase64:pdfB64,pdfName:pdfName})});
+            var resp2=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients2.join(","),cc:[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj2,message:emailBody2,pdfBase64:pdfB64,pdfName:pdfName})});
             if(resp2.ok){
               notify(doomPick(DOOM.send));log(vendorLabel2+" Email","Sent - "+est.market+" "+workMonth);
               setTrafficHistory(function(p){
@@ -2708,7 +2708,7 @@ const App=()=>{
           emailBody+='Please confirm receipt:<br><a href="'+confirmUrl+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Media';
           var subj="Atticor | "+est.brand+" Streaming Audio Traffic | "+workMonth+" V"+version+" | "+(est.market||"");
           try{
-            var resp=await fetch("https://doomndeliverables.app.n8n.cloud/webhook/9661ec80-6bd8-4cf5-acca-90f2547a75eb",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:rcpts.join(","),cc:[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj,message:emailBody,pdfBase64:pdfB64,pdfName:pdfName})});
+            var resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:rcpts.join(","),cc:[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj,message:emailBody,pdfBase64:pdfB64,pdfName:pdfName})});
             if(resp.ok){
               var allIscis=sel.map(function(r){return{code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:""}});
               setTrafficHistory(function(p){return[{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market||"",media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+" | Generic | Sent to: "+rcpts.join(", "),iscis:allIscis,stations:["Generic"],isOoh:false,status:"sent"}].concat(p)});
@@ -4594,7 +4594,7 @@ ${fullText.substring(0,3000)}`}]
                 setSending(true);setSendResult(null);var sent=0;var failed=0;var errors=[];
                 for(var ei3=0;ei3<emails.length;ei3++){
                   try{
-                    var resp5=await fetch("https://doomndeliverables.app.n8n.cloud/webhook/9661ec80-6bd8-4cf5-acca-90f2547a75eb",{
+                    var resp5=await fetch("/api/send-traffic",{
                       method:"POST",headers:{"Content-Type":"application/json"},
                       body:JSON.stringify({to:emails[ei3],cc:"emm.caban@atticor.ai",subject:draftSubj,message:draftBody})
                     });
@@ -5378,7 +5378,7 @@ ${fullText.substring(0,3000)}`}]
                           var subj=(h.brand||"")+" - Digital Video Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+(h.market||"");
                           var recipients=["jmondo@goodkarmabrands.com","mmetroka@goodkarmabrands.com","jessica.flynn@atticor.ai"];
                           notify("Sending to "+recipients.join(", ")+"...");
-                          try{var resp2=await fetch("https://doomndeliverables.app.n8n.cloud/webhook/9661ec80-6bd8-4cf5-acca-90f2547a75eb",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients.join(","),cc:ccListR,subject:subj,message:emailBody,pdfBase64:pdfB64,pdfName:pdfName})});
+                          try{var resp2=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients.join(","),cc:ccListR,subject:subj,message:emailBody,pdfBase64:pdfB64,pdfName:pdfName})});
                             if(resp2.ok){notify(doomPick(DOOM.send))}else throw new Error("n8n "+resp2.status)}catch(e3){notify("Failed: "+(e3.message||e3))}
                           log("Traffic Sent",h.market+" "+h.media+" "+h.month);
                           setTrafficHistory(p=>p.map((r,ri)=>ri===gIdx?{...r,status:"sent",statusNote:"Sent "+new Date().toLocaleDateString()}:r));
@@ -5409,7 +5409,7 @@ ${fullText.substring(0,3000)}`}]
                             var confirmBase4=window.location.href.split("?")[0];
                             var confirmBtns=grpStas.map(function(s){var url=confirmBase4+"?confirm="+(h.est||"")+"&sta="+s.call+"&tok=auto";return'<a href="'+url+'" style="display:inline-block;padding:6px 16px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:4px 2px">Confirm '+s.call+'</a>'}).join(" ");
                             var body2="Hello,<br><br>Please find the attached traffic instructions for Est "+(h.est||"")+" — "+(h.brand||"")+", "+(h.market||"")+", "+(h.media||"")+".<br><br>"+noteHtml+"<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Version:</b> "+(h.version||"")+"<br><b>Station(s):</b> "+staCalls.join(", ")+creativeLinks2+"<br><br>Please confirm receipt of this traffic within 24 hours:<br>"+confirmBtns+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
-                            try{var resp3=await fetch("https://doomndeliverables.app.n8n.cloud/webhook/9661ec80-6bd8-4cf5-acca-90f2547a75eb",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:grpEmails,cc:ccListR,subject:subj2,message:body2,pdfBase64:pdfB64,pdfName:pdfName})});if(resp3.ok)sent4+=grpStas.length;else failed3+=grpStas.length}catch(e4){failed3+=grpStas.length}
+                            try{var resp3=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:grpEmails,cc:ccListR,subject:subj2,message:body2,pdfBase64:pdfB64,pdfName:pdfName})});if(resp3.ok)sent4+=grpStas.length;else failed3+=grpStas.length}catch(e4){failed3+=grpStas.length}
                           }
                           notify(doomPick(DOOM.send)+" "+sent4+" sent"+(failed3?" ("+failed3+" failed)":""));log("Traffic Sent",h.market+" "+h.media+" "+h.month+" — "+sent4+" sent to "+grpKeys.length+" groups");
                           if(sent4>0)setTrafficHistory(p=>p.map((r,ri)=>ri===gIdx?{...r,status:failed3?"partial":"sent",statusNote:sent4+" sent"+(failed3?" · "+failed3+" failed":"")}:r));
@@ -6747,7 +6747,7 @@ Be direct and actionable. No generic advice.`;
           const pdfName="Traffic_"+e.brand.replace(/\s/g,"")+"_"+e.market+"_"+e.media+"_"+(airing?.month||"").replace(/\s/g,"")+".pdf";
           for(const email of emails){
             try{
-              const resp=await fetch("https://doomndeliverables.app.n8n.cloud/webhook/9661ec80-6bd8-4cf5-acca-90f2547a75eb",{
+              const resp=await fetch("/api/send-traffic",{
                 method:"POST",headers:{"Content-Type":"application/json"},
                 body:JSON.stringify({to:email,cc:[BUYER_EMAILS[e.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj,message:body,pdfBase64:pdfB64,pdfName:pdfName})
               });
