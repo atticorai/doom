@@ -5107,8 +5107,12 @@ ${fullText.substring(0,3000)}`}]
     const brandData=trafficHistory.filter(h=>h.brand===libBrand).map(h=>({...h,market:normMkt(h.market)||h.market}));
     const brandMonths=(()=>{const raw=[...new Set(brandData.map(h=>h.month))].filter(Boolean);return raw.sort((a,b)=>{const ai=MO_NAMES.indexOf(a),bi=MO_NAMES.indexOf(b);return bi-ai})})();
     const brandMedias=(()=>{const raw=[...new Set(brandData.map(h=>h.media))];return raw.sort((a,b)=>(MEDIA_ORDER.indexOf(a)===-1?99:MEDIA_ORDER.indexOf(a))-(MEDIA_ORDER.indexOf(b)===-1?99:MEDIA_ORDER.indexOf(b)))})();
-    const now2=new Date();const archCutoff=new Date(now2.getFullYear(),now2.getMonth()-2,1);
-    const isArch=(h)=>!h.ts||new Date(h.ts)<archCutoff;
+    const now2=new Date();const archMonthIdx=now2.getMonth()-2;// 2 months back
+    const isArch=(h)=>{
+      // Archive based on broadcast month, not creation date
+      if(h.month){const mi=MO_NAMES.indexOf(h.month);if(mi>-1)return mi<archMonthIdx}
+      return!h.ts||new Date(h.ts)<new Date(now2.getFullYear(),archMonthIdx,1);
+    };
     const archivedCount=brandData.filter(h=>isArch(h)).length;
     const visData=showArchived?brandData:brandData.filter(h=>!isArch(h));
     const searched=libSearch.trim()?visData.filter(h=>{const q=libSearch.toLowerCase();const mName=(DM[h.market]||h.market).toLowerCase();return(h.market||"").toLowerCase().includes(q)||mName.includes(q)||(h.media||"").toLowerCase().includes(q)||(h.est||"").toLowerCase().includes(q)||(h.buyer||"").toLowerCase().includes(q)||(h.month||"").toLowerCase().includes(q)||(h.iscis||[]).some(r=>(r.code||"").toLowerCase().includes(q)||(r.title||"").toLowerCase().includes(q))}):visData;
