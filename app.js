@@ -968,7 +968,8 @@ const App=()=>{
     setStaEstLinks(p=>{const cur=p[k]||[];return{...p,[k]:cur.includes(estNum)?cur.filter(n=>n!==estNum):[...cur,estNum]}});
   };
   const getEstStations=(est)=>{
-    return stations.filter(s=>{if(est.market&&s.market!==est.market)return false;const linked=staEstLinks[staKey(s)]||[];return linked.includes(est.num)});
+    const em=est.market?normMkt(est.market)||est.market:"";
+    return stations.filter(s=>{if(em){const sm=normMkt(s.market)||s.market;if(sm!==em&&s.market!==est.market)return false}const linked=staEstLinks[staKey(s)]||[];return linked.includes(est.num)});
   };
 
   // ── NOW AIRING / CONFIRMATIONS ──────────────────────────
@@ -2079,7 +2080,7 @@ const App=()=>{
           const sheetHtml=buildSheetHtml();
           saveSheetToFirestore(sheetHtml,sendable.map(s=>s.call));
           let pdfB64="";
-          try{const pdfUri=await generatePdfBase64(sheetHtml,rec);pdfB64=pdfUri.split(",")[1]||""}catch(e){console.warn("PDF gen failed:",e);notify("PDF generation failed — sending without attachment")}
+          try{const pdfUri=await generatePdfBase64(sheetHtml,rec);pdfB64=pdfUri.split(",")[1]||""}catch(e){console.warn("PDF gen failed:",e);notify("⚠ PDF generation failed — sending without attachment");log("PDF Failed","Est "+est.num+" "+est.market+" — "+e.message)}
           const pdfName="Traffic_"+est.brand.replace(/\s/g,"")+"_"+est.market+"_"+est.media+"_"+(curMonth?.month||"").replace(/\s/g,"")+"_v"+version+".pdf";
           const filesWithUrls=sel.filter(r=>r.isci.fileUrl);
           const creativeLinks=filesWithUrls.length>0?
@@ -6697,7 +6698,10 @@ Be direct and actionable. No generic advice.`;
       const[editIscis,setEditIscis]=useState(()=>JSON.parse(JSON.stringify(eh.iscis||[])));
       const[editMeta,setEditMeta]=useState({month:eh.month||"",flight:eh.flight||"",version:eh.version||"1",comments:eh.comments||""});
       const updI=(idx,k,v)=>setEditIscis(p=>p.map((r,i)=>i===idx?{...r,[k]:v}:r));
-      const saveEdit=()=>{setTrafficHistory(p=>p.map((h,i)=>i===editTrafficIdx?{...h,iscis:editIscis,month:editMeta.month,flight:editMeta.flight,version:editMeta.version,comments:editMeta.comments}:h));log("Traffic Edited",eh.brand+" "+eh.market+" "+eh.media+" "+editMeta.month);notify("Traffic updated");setEditTrafficIdx(null)};
+      const saveEdit=()=>{
+        const validIscis=editIscis.filter(r=>r.code&&r.code.trim());
+        if(!validIscis.length){alert("Cannot save — no ISCIs with codes. Add at least one ISCI.");return}
+        setTrafficHistory(p=>p.map((h,i)=>i===editTrafficIdx?{...h,iscis:validIscis,month:editMeta.month,flight:editMeta.flight,version:editMeta.version,comments:editMeta.comments}:h));log("Traffic Edited",eh.brand+" "+eh.market+" "+eh.media+" "+editMeta.month);notify("Traffic updated — "+validIscis.length+" ISCIs");setEditTrafficIdx(null)};
       const addRow=()=>setEditIscis(p=>[...p,{code:"",title:"",dur:"30",pct:"",sched:"All Week",bookend:""}]);
       const delRow=(idx)=>setEditIscis(p=>p.filter((_,i)=>i!==idx));
       return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={()=>setEditTrafficIdx(null)} wide>
