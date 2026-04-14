@@ -314,7 +314,7 @@ const DM_REV=Object.fromEntries(Object.entries(DM).flatMap(([c,n])=>[[n,c],[n.to
 // Normalize any market value (code or full name) to its 3-letter code
 const normMkt=(m)=>{if(!m)return"";const v=m.trim();if(DM[v])return v;const found=DM_REV[v]||DM_REV[v.toLowerCase()];if(found)return found;const entry=Object.entries(DM).find(([_,n])=>n.toLowerCase()===v.toLowerCase());return entry?entry[0]:v};
 const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
-const BRANDS=[{code:"PL",name:"Postman Law",agency:"Blackacre Services",logo:LOGO_PL},{code:"WK",name:"Wettermark Keith",agency:"WK Advertising Solutions",logo:LOGO_WK}];
+// BRANDS defined in config.js with color, colorBg, agency, markets, airingKey
 const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display"];const OOH_TYPES=[{code:"SB",name:"Static Billboard"},{code:"DB",name:"Digital Billboard"},{code:"SP",name:"Static Poster"},{code:"DP",name:"Digital Poster"},{code:"BS",name:"Bus Shelter"},{code:"WS",name:"Wallscape"},{code:"TR",name:"Transit"},{code:"SF",name:"Street Furniture"},{code:"JP",name:"Junior Poster"}];
 const DISPLAY_TYPES=[{code:"MR",name:"Medium Rectangle (300x250)"},{code:"LB",name:"Leaderboard (728x90)"},{code:"SQ",name:"Square (640x640)"},{code:"SK",name:"Skyscraper (300x600)"},{code:"MB",name:"Mobile Banner (320x50)"},{code:"WB",name:"Wide Banner (1280x100)"},{code:"SL",name:"Slim Banner (970x66)"},{code:"BN",name:"Banner (Generic)"}];
 const SUFFIXES={TV:"T",Radio:"R",Digital:"D","Streaming Audio":"S",OOH:"O",Cable:"T",Display:"B"};const OOH_SUFFIXES={SB:"O",DB:"O",SP:"O",DP:"O",BS:"O",WS:"O",TR:"O",SF:"O",JP:"O"};
@@ -1577,7 +1577,7 @@ const App=()=>{
       <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);saveToDb("iscis",updated);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
       {showTagMgr&&<Cd style={{padding:14,marginTop:8}}>
         <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:8}}>🏷 Manage Categories, Value Props & VOs</div>
-        {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?"#9b7bb0":"#D4A040";const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
+        {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
           return<div key={brand} style={{marginBottom:16}}>
           <div style={{fontSize:13,fontWeight:800,color:bc,marginBottom:6}}>{brand}</div>
           {[{key:"categories",label:"Categories",color:"#4AC8E8"},{key:"valueProps",label:"Value Props",color:"#5BC4A0"},{key:"vos",label:"VOs",color:"#D4A040"}].map(({key,label,color})=><div key={key} style={{marginBottom:8}}>
@@ -1759,7 +1759,7 @@ const App=()=>{
           const conf=getConfirmed(ak(e));const sentStas=airing?.stations||[];const confCount=sentStas.filter(c=>conf[c]?.confirmed).length;const totalSent=sentStas.length;
           return<tr key={e.num+e.brand+e.market} style={{background:isSel?"#1f2540":""}}>
             {combineMode&&<TD a="center"><input type="checkbox" checked={isSel} onChange={()=>toggleCombine(e)}/></TD>}
-            <TD m b>{e.num}</TD><TD><B l={e.brand} c={e.brand==="Postman Law"?"#9b7bb0":"#D4A040"}/></TD><TD b>{e.market}</TD><TD><B l={e.media} c={mc(e.media)}/></TD><TD>{e.group}</TD><TD>{e.buyer}</TD>
+            <TD m b>{e.num}</TD><TD><B l={e.brand} c={e.brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK")}/></TD><TD b>{e.market}</TD><TD><B l={e.media} c={mc(e.media)}/></TD><TD>{e.group}</TD><TD>{e.buyer}</TD>
             <TD a="center" b c={linkedSta.length?"#059669":"#E85A7A"}><span title={linkedSta.map(s=>s.call).join(", ")} style={{cursor:"help"}}>{linkedSta.length}</span></TD>
             <TD a="center" b c={mi.length?"#4AC8E8":"#E85A7A"}>{mi.length}</TD>
             <TD a="center">{airing?<span title={`v${airing.version} · ${airing.iscis.length} ISCIs · ${airing.month}`} style={{cursor:"help",fontSize:13,padding:"2px 5px",borderRadius:8,background:"#dcfce7",color:"#5BC4A0",fontWeight:600}}>v{airing.version}</span>:<span style={{fontSize:13,color:"#9B8EAD"}}>—</span>}</TD>
@@ -1846,12 +1846,12 @@ const App=()=>{
     const SCHED_COLORS={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#dcfce7","Holiday Only":"#fee2e2"};
     const SCHED_ORDER=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
     const buildSheetHtml=()=>{
-      const bc=brand.code==="PL"?"#9b7bb0":"#D4A040";const bcBg=brand.code==="PL"?"#F0E8F8":"#fffbeb";
+      const bc=getBrandColor(brand.code);const bcBg=getBrandBg(brand.code);
       let h='<html><head><title>Traffic Instructions</title><style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}body{padding:28px}table{width:100%;border-collapse:collapse;margin-top:14px}th{background:#F0E8F8;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#6B5E80}td{padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)}.sig{margin-top:36px;border-top:2px solid '+bc+';padding-top:8px}.note{background:'+bcBg+';padding:7px;font-size:10px;color:'+bc+';margin-top:6px}.grp{padding:5px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid rgba(0,0,0,.1)}</style></head><body>';
       h+='<div style="text-align:center;margin-bottom:14px"><img src="'+brand.logo+'" style="height:48px"/></div>';
       const hdr=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+v+'</span></div>';
-      h+=hdr("Agency",brand.code==="WK"?"WK Advertising Solutions":brand.code==="PL"?"Blackacre Services":"Atticor");
-      h+=hdr("Client",brand.name,brand.code==="PL"?"#9b7bb0":"#D4A040");
+      h+=hdr("Agency",getBrandAgency(brand.code));
+      h+=hdr("Client",brand.name,getBrandColor(brand.code));
       h+=hdr("Market",est.market);
       h+=hdr("Buyer",est.buyer,"#D4A040");
       h+=hdr("Estimate(s)",est._combined?est._combined.length+" combined estimates":est.num);
@@ -4780,11 +4780,11 @@ ${fullText.substring(0,3000)}`}]
 
       {/* BRAND TABS */}
       <div style={{display:"flex",gap:0,marginBottom:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=fBrand===b;const c=b==="Postman Law"?"#9b7bb0":"#D4A040";const ct=trackingData.filter(d=>d.brand===b).length;return<button key={b} onClick={()=>{setFBrand(b);setFMarket("all");setFMedia("all");setFMonth("all")}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
+        {["Postman Law","Wettermark Keith"].map(b=>{const active=fBrand===b;const c=b==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const ct=trackingData.filter(d=>d.brand===b).length;return<button key={b} onClick={()=>{setFBrand(b);setFMarket("all");setFMedia("all");setFMonth("all")}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
         <div style={{flex:1,borderBottom:"2px solid #4a3565"}}/>
       </div>
       {/* FILTERS */}
-      <Cd style={{padding:10,marginBottom:12,borderRadius:"0 8px 8px 8px",borderTop:"2px solid "+(fBrand==="Postman Law"?"#9b7bb0":"#D4A040")}}>
+      <Cd style={{padding:10,marginBottom:12,borderRadius:"0 8px 8px 8px",borderTop:"2px solid "+(fBrand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK"))}}>
         <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"end"}}>
           <FiltSel label="Market" value={fMarket} onChange={setFMarket} options={markets}/>
           <FiltSel label="Media" value={fMedia} onChange={setFMedia} options={medias}/>
@@ -5121,17 +5121,17 @@ ${fullText.substring(0,3000)}`}]
     const archivedCount=brandData.filter(h=>isArch(h)).length;
     const visData=showArchived?brandData:brandData.filter(h=>!isArch(h));
     const searched=libSearch.trim()?visData.filter(h=>{const q=libSearch.toLowerCase();const mName=(DM[h.market]||h.market).toLowerCase();return(h.market||"").toLowerCase().includes(q)||mName.includes(q)||(h.media||"").toLowerCase().includes(q)||(h.est||"").toLowerCase().includes(q)||(h.buyer||"").toLowerCase().includes(q)||(h.month||"").toLowerCase().includes(q)||(h.iscis||[]).some(r=>(r.code||"").toLowerCase().includes(q)||(r.title||"").toLowerCase().includes(q))}):visData;
-    const bc2=libBrand==="Postman Law"?"#9b7bb0":"#D4A040";
+    const bc2=libBrand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");
     // Manual form JSX
     const SCHED_COLORS_LIB={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#dcfce7","Holiday Only":"#fee2e2"};
     const SCHED_ORDER_LIB=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
     const bldHtml=(h)=>{
-      const bc=h.brand==="Postman Law"?"#9b7bb0":"#D4A040";
+      const bc=h.brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");
       const lg=h.brand==="Postman Law"?LOGO_PL:LOGO_WK;
       let x='<html><head><style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}body{padding:28px;background:#fff;color:#1e1233}table{width:100%;border-collapse:collapse;margin-top:14px}th{background:#F0E8F8;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#6B5E80}td{padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)}.grp{font-weight:700;font-size:11px;text-transform:uppercase;padding:5px 9px;color:#333}.sig{margin-top:36px;border-top:2px solid '+bc+';padding-top:8px}.note{background:#fffbeb;padding:7px;font-size:10px;color:#92400e;margin-top:6px;border:1px solid #fde68a}</style></head><body>';
       const hd=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+v+'</span></div>';
       x+='<div style="text-align:center;margin-bottom:14px"><img src="'+lg+'" style="height:48px"/></div>';
-      x+=hd("Agency",h.brand==="Wettermark Keith"?"WK Advertising Solutions":h.brand==="Postman Law"?"Blackacre Services":"Atticor");
+      x+=hd("Agency",getBrandAgency(h.brand));
       x+=hd("Client",h.brand,bc);x+=hd("Market",(DM[normMkt(h.market)]||h.market)+(normMkt(h.market)?" ("+normMkt(h.market)+")":""));x+=hd("Buyer",h.buyer,"#D4A040");
       x+=hd("Media",h.media,h.isOoh?"#D4A040":"#4AC8E8");x+=hd("Broadcast Month",h.month,"#E85A7A");
       if(h.isOoh&&h.postDates)x+=hd("Post Dates",h.postDates,"#1e1233");
@@ -5301,7 +5301,7 @@ ${fullText.substring(0,3000)}`}]
       </Cd>}
       {/* Brand Tabs */}
       <div style={{display:"flex",gap:0,marginBottom:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=libBrand===b;const c=b==="Postman Law"?"#9b7bb0":"#D4A040";const ct=trafficHistory.filter(h=>h.brand===b).length;return<button key={b} onClick={()=>setLibBrand(b)} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
+        {["Postman Law","Wettermark Keith"].map(b=>{const active=libBrand===b;const c=b==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const ct=trafficHistory.filter(h=>h.brand===b).length;return<button key={b} onClick={()=>setLibBrand(b)} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
         <div style={{flex:1,borderBottom:"2px solid #4a3565"}}/>
       </div>
       {/* Search + archive bar */}
@@ -5598,7 +5598,7 @@ Be direct and actionable. No generic advice.`;
   };
 
   const PlannerPg=()=>{
-    const bc=planBrand==="Postman Law"?"#9b7bb0":"#D4A040";
+    const bc=planBrand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");
     const brand=planBrand;
     const bt=trafficHistory.filter(h=>h.brand===brand);
     const bi=iscis.filter(i=>i.brand===brand&&i.active);
@@ -5623,7 +5623,7 @@ Be direct and actionable. No generic advice.`;
       <div style={{fontSize:13,color:"#C4A0C8",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",marginTop:-8,marginBottom:4}}>"We are the Muses, goddesses of the arts and proclaimers of heroes…"</div>
       {/* Brand Tabs */}
       <div style={{display:"flex",gap:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b;const c=b==="Postman Law"?"#9b7bb0":"#D4A040";return<button key={b} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null)}} style={{padding:"8px 20px",fontSize:13,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#6B5E80",borderRadius:"8px 8px 0 0"}}>{b}</button>})}
+        {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b;const c=b==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");return<button key={b} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null)}} style={{padding:"8px 20px",fontSize:13,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#6B5E80",borderRadius:"8px 8px 0 0"}}>{b}</button>})}
         <div style={{flex:1,borderBottom:"2px solid #4a3565"}}/>
       </div>
       {/* Muse stat cards — each Muse owns a stat */}
@@ -5724,7 +5724,7 @@ Be direct and actionable. No generic advice.`;
               <tbody>{filtered.map((ic,i)=>{const gi=iscis.findIndex(x=>x.code===ic.code&&x.dma===ic.dma);return<tr key={ic.code+ic.dma} style={{opacity:ic.active?1:.45}}>
                 <TD m b><span style={{cursor:"pointer",color:"#4AC8E8",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})}>{ic.code}</span></TD>
                 <TD>{ic.title}</TD>
-                <TD><B l={ic.brand} c={ic.brand==="Postman Law"?"#9b7bb0":"#D4A040"}/></TD>
+                <TD><B l={ic.brand} c={ic.brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK")}/></TD>
                 <TD>{DM[ic.dma]||ic.dma}</TD>
                 <TD>{ic.dur}</TD>
                 <TD>{ic.fileUrl?<a href={ic.fileUrl} target="_blank" rel="noopener noreferrer" style={{color:"#4AC8E8",fontSize:12,fontWeight:600}}>📁 View</a>:<span style={{color:"#E85A7A",fontSize:12}}>No file</span>}</TD>
@@ -5824,7 +5824,7 @@ Be direct and actionable. No generic advice.`;
       <PageHead title="Traffic Tracker" pgKey="tracker" sub={"Mission control — "+trackerMonth+" "+trackerBrand}/>
       {/* Brand + Month selector */}
       <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-        {["Postman Law","Wettermark Keith"].map(b=><button key={b} onClick={()=>setTrackerBrand(b)} style={{padding:"6px 16px",borderRadius:8,border:trackerBrand===b?"2px solid "+(b==="Postman Law"?"#9b7bb0":"#D4A040"):"1px solid #4a3565",background:trackerBrand===b?"rgba(155,123,176,.1)":"transparent",color:trackerBrand===b?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:700,cursor:"pointer"}}>{b}</button>)}
+        {["Postman Law","Wettermark Keith"].map(b=><button key={b} onClick={()=>setTrackerBrand(b)} style={{padding:"6px 16px",borderRadius:8,border:trackerBrand===b?"2px solid "+(b==="Postman Law"?getBrandColor("PL"):getBrandColor("WK")):"1px solid #4a3565",background:trackerBrand===b?"rgba(155,123,176,.1)":"transparent",color:trackerBrand===b?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:700,cursor:"pointer"}}>{b}</button>)}
         <div style={{marginLeft:8,display:"flex",gap:3}}>{CALENDAR.map(c=><button key={c.month} onClick={()=>setTrackerMonth(c.month)} style={{padding:"4px 10px",borderRadius:6,border:trackerMonth===c.month?"2px solid #D4A040":"1px solid #4a3565",background:trackerMonth===c.month?"rgba(212,160,64,.12)":"transparent",color:trackerMonth===c.month?"#D4A040":"#6B5E80",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c.month.substring(0,3)}</button>)}</div>
       </div>
       {/* Progress bar */}
