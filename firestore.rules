@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default: deny everything
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // appData collection — where all app state lives
+    // Only allow access from authenticated sessions (server-side writes)
+    // Since this app uses custom session auth (not Firebase Auth),
+    // lock down to admin SDK writes only by denying all client access.
+    // The app reads/writes Firestore from the CLIENT using the Firebase JS SDK,
+    // so we need to allow client access but restrict to the appData collection only.
+    match /appData/{docId} {
+      // Allow reads — the app needs to load data on startup
+      allow read: if true;
+
+      // Allow writes — but only to known document IDs
+      // This prevents creation of arbitrary new collections
+      allow write: if docId in [
+        'iscis',
+        'stations',
+        'estimates',
+        'staEstLinks',
+        'trafficHistory',
+        'nowAiring',
+        'auditLog',
+        'confirmations',
+        'confirmRemindersSent',
+        'oohRemindersSent',
+        'oohContracts',
+        'customTags',
+        'workMonth',
+        'wkOohIscis',
+        'plOohIscis',
+        'oohPhotos',
+        'backups'
+      ];
+    }
+
+    // trafficSheets — stored per estimate+station for confirmation portal
+    match /trafficSheets/{sheetId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}
