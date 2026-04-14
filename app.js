@@ -5061,9 +5061,12 @@ ${fullText.substring(0,3000)}`}]
           const found=[...new Set((t.match(codePat)||[]))];
           if(found.length)found.forEach(code=>iscis.push({code,title:"",dur:"30",pct:"",sched:flight||"",bookend:""}));
         }
-        if(!iscis.length)return null;
+        // Deduplicate ISCIs by code — keep the entry with the most data (pct, title)
+        const deduped=[];const seenCodes=new Set();
+        iscis.forEach(r=>{if(seenCodes.has(r.code)){const existing=deduped.find(d=>d.code===r.code);if(existing&&!existing.pct&&r.pct)Object.assign(existing,r);return}seenCodes.add(r.code);deduped.push(r)});
+        if(!deduped.length)return null;
         const est=dma+"-"+(brand==="Postman Law"?"PL":"WK")+"-"+media;
-        return{est,brand,market:dma,media,buyer,month,version:parseInt(version),stations:[],ts:Date.now(),comments:comments||versionRaw,isRevision:false,combined:false,iscis,flight};
+        return{est,brand,market:dma,media,buyer,month,version:parseInt(version),stations:[],ts:Date.now(),comments:comments||versionRaw,isRevision:false,combined:false,iscis:deduped,flight};
       }catch(e){console.error("Parse error:",e);return null}
     };
     const doImport=async()=>{if(!importPreview)return;const pw=prompt("Admin password to import:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Incorrect password");setTrafficHistory(p=>[...p,importPreview]);log("Traffic Import",importPreview.brand+" "+importPreview.market+" "+importPreview.month+" "+importPreview.media);notify(doomPick(DOOM.importClean)+" Imported: "+importPreview.market+" "+importPreview.month);setImportText("");setImportPreview(null);setShowImport(false)};
