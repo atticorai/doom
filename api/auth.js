@@ -40,7 +40,7 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => 
 function getCorsOrigin(req) {
   const origin = req.headers.origin || '';
   if (ALLOWED_ORIGINS.length > 0 && ALLOWED_ORIGINS.includes(origin)) return origin;
-  if (ALLOWED_ORIGINS.length === 0) return origin || '*';
+  if (ALLOWED_ORIGINS.length === 0) return '';
   return '';
 }
 
