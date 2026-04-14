@@ -4,10 +4,7 @@ const {useState, useEffect, useRef, useCallback, useMemo} = React;
 const verifyAuth=async(password,type)=>{
   try{const r=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password,type})});const d=await r.json();return d.success===true}catch(e){console.error("Auth check failed:",e);return false}
 };
-// Server-side email sending
-const sendEmailServer=async(params)=>{
-  const r=await fetch("/api/email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(params)});if(!r.ok){const d=await r.json();throw{text:d.error||"Send failed"}}return r.json();
-};
+// All emails go through /api/send-traffic (n8n webhook proxy)
 
 // Sparkline mini-chart component
 const Sparkline=({data,color,width=60,height=20})=>{
@@ -937,7 +934,7 @@ const App=()=>{
         const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:r.emails.join(","),cc:[BUYER_EMAILS[r.h.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj,message:body,pdfBase64:pdfB64,pdfName:pdfName})});
         if(resp.ok){newReminders[r.rKey]={ts:now,to:r.emails.join(",")};sent++;log("Confirm Reminder",r.call+" — Est "+r.h.est+" "+r.h.market+" "+r.h.media)}
       }catch(e){
-        try{await sendEmailServer({to_email:r.emails.join(","),subject:subj,message:body,name:"Atticor"});newReminders[r.rKey]={ts:now,to:r.emails.join(",")};sent++;log("Confirm Reminder",r.call+" — Est "+r.h.est+" (emailjs fallback)")}catch(e2){failed++}
+        failed++;log("Reminder Failed",r.call+" — Est "+r.h.est+" "+r.h.market);
       }
     }
     if(Object.keys(newReminders).length>0)setConfirmRemindersSent(p=>({...p,...newReminders}));
@@ -2080,7 +2077,7 @@ const App=()=>{
           const sheetHtml=buildSheetHtml();
           saveSheetToFirestore(sheetHtml,sendable.map(s=>s.call));
           let pdfB64="";
-          try{const pdfUri=await generatePdfBase64(sheetHtml,rec);pdfB64=pdfUri.split(",")[1]||""}catch(e){console.warn("PDF gen failed:",e);notify("⚠ PDF generation failed — sending without attachment");log("PDF Failed","Est "+est.num+" "+est.market+" — "+e.message)}
+          try{const pdfUri=await generatePdfBase64(sheetHtml,rec);pdfB64=pdfUri.split(",")[1]||""}catch(e){console.warn("PDF gen failed:",e);notify("⚠ PDF generation failed — cannot send without the traffic sheet. Try again.");log("PDF Failed","Est "+est.num+" "+est.market+" — "+e.message);return}
           const pdfName="Traffic_"+est.brand.replace(/\s/g,"")+"_"+est.market+"_"+est.media+"_"+(curMonth?.month||"").replace(/\s/g,"")+"_v"+version+".pdf";
           const filesWithUrls=sel.filter(r=>r.isci.fileUrl);
           const creativeLinks=filesWithUrls.length>0?
@@ -2121,9 +2118,7 @@ const App=()=>{
               });
               if(resp.ok){sent+=grpStations.length}else throw new Error("n8n "+resp.status)
             }catch(fnErr){
-              console.warn("n8n failed for "+grpName+":",fnErr);
-              try{await sendEmailServer({to_email:allEmails,subject:subj,body:body,name:"Atticor",message:body});sent+=grpStations.length}
-              catch(err){failed+=grpStations.length;notify("FAIL: "+grpName+" — "+(err?.text||err?.message||"unknown"))}
+              failed+=grpStations.length;notify("FAIL: "+grpName+" — "+(fnErr?.message||"send failed"));log("Send Failed",grpName+" — Est "+est.num+" "+est.market);
             }
           }
           log("Traffic Emailed",`Est ${est.num} · ${est.market} · v${version} · ${sent} sent${failed?" · "+failed+" failed":""} · ${sel.length} ISCIs`);
@@ -4018,14 +4013,16 @@ const App=()=>{
                       const emails=oohEmailRecipients.split(/[;,]/).map(e=>e.trim()).filter(Boolean);
                       if(!emails.length){notify("No recipient emails");return}
                       const urgency=urgent?"URGENT":"HEADS UP";
-                      sendEmailServer({
-                        to_email:emails.join(","),subject:urgency+" - OOH Creative Due: "+c.brand+" "+c.market+" "+c.media+" ("+c.due+")",
-                        message:"Creative deadline approaching for "+c.brand+" "+c.market+" "+c.media+".\n\nDue Date: "+c.due+"\nPosting: "+c.start+" to "+c.end+"\nVendor: "+c.vendor+"\nContract: "+c.contract+"\nUnits: "+c.units+"\nSize: "+c.size+(c.spec?"\nSpec: "+c.spec:"")+"\n\nPlease ensure creative materials are submitted by the deadline."
-                      }).then(()=>{
+                      fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+                        to:emails.join(","),cc:"emm.caban@atticor.ai",
+                        subject:urgency+" - OOH Creative Due: "+c.brand+" "+c.market+" "+c.media+" ("+c.due+")",
+                        message:"Creative deadline approaching for "+c.brand+" "+c.market+" "+c.media+".<br><br>Due Date: "+c.due+"<br>Posting: "+c.start+" to "+c.end+"<br>Vendor: "+c.vendor+"<br>Contract: "+c.contract+"<br>Units: "+c.units+"<br>Size: "+c.size+(c.spec?"<br>Spec: "+c.spec:"")+"<br><br>Please ensure creative materials are submitted by the deadline."
+                      })}).then(r=>{
+                        if(!r.ok)throw new Error("Send failed");
                         setOohRemindersSent(p=>({...p,[key]:{ts:Date.now(),to:emails.join(",")}}));
                         log("OOH Reminder",c.brand+" "+c.market+" "+c.media+" due "+c.due);
                         notify("Reminder sent for "+c.market+" "+c.media);
-                      }).catch(e=>notify("Send failed: "+e.text));
+                      }).catch(e=>notify("Send failed: "+(e.message||e)));
                     }} style={{padding:"3px 8px",borderRadius:4,border:"1px solid "+(sent?"#5BC4A0":"#4AC8E8"),background:sent?"#1f3530":"#1f2540",color:sent?"#5BC4A0":"#4AC8E8",fontSize:13,fontWeight:600,cursor:"pointer"}}>{sent?"Resend":"Send Reminder"}</button>
                     {sent&&<span style={{fontSize:14,color:"#5BC4A0"}}>Sent {new Date(sent.ts).toLocaleDateString()}</span>}
                   </div>
@@ -4441,9 +4438,10 @@ ${fullText.substring(0,3000)}`}]
     const[draftEst,setDraftEst]=useState(null);
     const[draftSubj,setDraftSubj]=useState("");const[draftBody,setDraftBody]=useState("");const[showRawBody,setShowRawBody]=useState(false);
     const[sending,setSending]=useState(false);const[sendResult,setSendResult]=useState(null);
-    // Send email via EmailJS
+    // Send email via n8n
     const sendEmail=async(toEmail,subject,body)=>{
-      return sendEmailServer({to_email:toEmail,subject:subject,body:body,name:"Atticor Media",message:body});
+      const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:toEmail,cc:"emm.caban@atticor.ai",subject,message:body})});
+      if(!r.ok)throw new Error("Send failed");return r.json();
     };
     const sendToAll=async(emails,subject,body)=>{
       setSending(true);setSendResult(null);let sent=0;let failed=0;const errors=[];
@@ -6783,8 +6781,7 @@ Be direct and actionable. No generic advice.`;
               });
               if(!resp.ok)throw new Error("n8n failed");
             }catch(fnErr){
-              try{await sendEmailServer({to_email:email,subject:subj,body:body,name:"Atticor",message:body})}
-              catch(e2){console.warn("EmailJS also failed:",e2)}
+              console.warn("Send failed for "+s.call+":",fnErr);notify("Failed: "+s.call);
             }
           }
           log("Email Sent",s.call+" — Est "+e.num+" ("+emails.length+" addresses)");notify("Sent to "+s.call);
