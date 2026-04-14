@@ -1257,9 +1257,10 @@ const App=()=>{
         pdf.text(S(trafficRec.flight),colX[0]+1,y);
         pdf.setFont("helvetica","bold");pdf.text(S(r.code)+" - "+S(r.title),colX[1]+1,y,{maxWidth:cols[1]-2});
         pdf.setFont("helvetica","normal");
-        pdf.text(r.bookend||":"+S(r.dur),colX[2]+1,y);
+        pdf.text(":"+S(r.dur),colX[2]+1,y);
         pdf.text(r.pct?S(r.pct).replace("%","")+"%":"",colX[3]+1,y);
-        pdf.text(sched,colX[4]+1,y);
+        const bkNote=(typeof r.bookend==="string"&&r.bookend&&r.bookend!=="true"&&r.bookend!=="false")?r.bookend:sched;
+        pdf.text(bkNote,colX[4]+1,y);
         y+=4.5;
       });
     });
@@ -1842,16 +1843,17 @@ const App=()=>{
       if(comments)h+=hdr("Comments",comments);
       h+='<table><thead><tr><th>Flight Dates</th><th>ISCI Codes & Title:</th><th>Length:</th><th>%</th><th>Notes:</th></tr></thead><tbody>';
       const grouped={};sel.forEach(r=>{const s=r.sched||"All Week";if(!grouped[s])grouped[s]=[];grouped[s].push(r)});
+      const validBk=(b)=>typeof b==="string"&&b&&b!=="true"&&b!=="false";
       SCHED_ORDER.forEach(s=>{if(!grouped[s])return;const bg=SCHED_COLORS[s]||"#2d1f42";const items=grouped[s].sort((a,b)=>(parseInt(b.isci.dur)||0)-(parseInt(a.isci.dur)||0));
         h+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
-        items.forEach(r=>{const len=r.bookend?r.bookend:":"+r.isci.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";
-          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>'+len+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+s+'</td></tr>';
+        items.forEach(r=>{const len=validBk(r.bookend)?r.bookend:":"+r.isci.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk(r.bookend)?r.bookend:s;
+          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>:'+r.isci.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
         });
       });
       Object.keys(grouped).filter(s=>!SCHED_ORDER.includes(s)).forEach(s=>{const bg="#F0E8F8";const items=grouped[s].sort((a,b)=>(parseInt(b.isci.dur)||0)-(parseInt(a.isci.dur)||0));
         h+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
-        items.forEach(r=>{const len=r.bookend?r.bookend:":"+r.isci.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";
-          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>'+len+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+s+'</td></tr>';
+        items.forEach(r=>{const len=validBk(r.bookend)?r.bookend:":"+r.isci.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk(r.bookend)?r.bookend:s;
+          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>:'+r.isci.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
         });
       });
       h+='</tbody></table>';
@@ -5162,25 +5164,26 @@ ${fullText.substring(0,3000)}`}]
       x+='<table><thead><tr><th>Flight Dates</th><th>ISCI Codes & Title:</th><th>Length:</th><th>%</th><th>Notes:</th></tr></thead><tbody>';
       // Check if ISCIs have schedule types (WK style) or just flight dates
       const hasSchedTypes=(h.iscis||[]).some(r=>r.sched&&SCHED_ORDER_LIB.includes(r.sched));
+      const validBk2=(b)=>typeof b==="string"&&b&&b!=="true"&&b!=="false";
       if(hasSchedTypes){
         // Group by schedule type like Traffic Center does
         const grouped={};(h.iscis||[]).forEach(r=>{const s=r.sched||"All Week";if(!grouped[s])grouped[s]=[];grouped[s].push(r)});
         SCHED_ORDER_LIB.forEach(s=>{if(!grouped[s])return;const bg=SCHED_COLORS_LIB[s]||"#2d1f42";const items=grouped[s].sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0));
           x+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
-          items.forEach(r=>{const len=r.bookend?r.bookend:":"+r.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";
-            x+='<tr style="background:'+bg+'44"><td>'+(h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>'+len+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+s+'</td></tr>';
+          items.forEach(r=>{const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk2(r.bookend)?r.bookend:s;
+            x+='<tr style="background:'+bg+'44"><td>'+(h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>:'+r.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
           });
         });
         Object.keys(grouped).filter(s=>!SCHED_ORDER_LIB.includes(s)).forEach(s=>{const bg="#F0E8F8";const items=grouped[s];
           x+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
-          items.forEach(r=>{const len=r.bookend?r.bookend:":"+r.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";
-            x+='<tr style="background:'+bg+'44"><td>'+(r.sched||h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>'+len+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+s+'</td></tr>';
+          items.forEach(r=>{const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk2(r.bookend)?r.bookend:s;
+            x+='<tr style="background:'+bg+'44"><td>'+(h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>:'+r.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
           });
         });
       } else {
         // Simple flat list (PL style or imported without schedules)
-        (h.iscis||[]).forEach(r=>{const len=r.bookend?r.bookend:":"+r.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";
-          x+='<tr><td>'+(r.sched||h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>'+len+'</td><td style="font-weight:600">'+pct+'</td><td></td></tr>';
+        (h.iscis||[]).forEach(r=>{const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk2(r.bookend)?r.bookend:"";
+          x+='<tr><td>'+(h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>:'+r.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
         });
       }
       x+='</tbody></table>';
