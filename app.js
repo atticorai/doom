@@ -727,25 +727,25 @@ const App=()=>{
           });
           const removedCount=d.length-cleaned.length;
           if(removedCount>0)console.warn("Traffic cleanup: removed "+removedCount+" bad PL April copied records");
-          // One-time cleanup: ALL traffic records — remove ISCIs that have no rotation percentage
-          // These were erroneously included when traffic PDFs were parsed (affects both PL and WK)
+          // One-time cleanup: WK Radio traffic records only — remove ISCIs without rotation %
+          // PL records are left alone (imported PL traffic may legitimately lack pct values)
           let trafficIsciFixed=0;
           cleaned.forEach(h=>{
-            if(h.iscis&&h.iscis.length>0){
+            if(h.brand==="Wettermark Keith"&&h.media==="Radio"&&h.iscis&&h.iscis.length>0){
               const withPct=h.iscis.filter(r=>r.pct&&parseFloat(r.pct)>0);
               if(withPct.length>0&&withPct.length<h.iscis.length){
                 const removed=h.iscis.length-withPct.length;
-                console.warn("Traffic cleanup: "+h.brand+" "+h.market+" "+h.media+" "+h.month+" — removed "+removed+" ISCIs without rotation %, kept "+withPct.length);
+                console.warn("WK Radio cleanup: "+h.market+" "+h.month+" — removed "+removed+" ISCIs without rotation %, kept "+withPct.length);
                 h.iscis=withPct;trafficIsciFixed++;
               }
-              // Fix truncated bookend labels (":15 A" → "Bookend :15 A")
-              h.iscis.forEach(r=>{
-                if(r.bookend&&typeof r.bookend==="string"&&/^:\d{2}\s+[A-D]$/.test(r.bookend)){r.bookend="Bookend "+r.bookend}
-                if(r.bookend===true||r.bookend===false||r.bookend==="true"||r.bookend==="false"){r.bookend=""}
-              });
             }
+            // Fix truncated bookend labels and boolean bookends (all brands)
+            if(h.iscis){h.iscis.forEach(r=>{
+              if(r.bookend&&typeof r.bookend==="string"&&/^:\d{2}\s+[A-D]$/.test(r.bookend)){r.bookend="Bookend "+r.bookend}
+              if(r.bookend===true||r.bookend===false||r.bookend==="true"||r.bookend==="false"){r.bookend=""}
+            })}
           });
-          if(trafficIsciFixed>0){console.warn("Traffic cleanup: fixed "+trafficIsciFixed+" records");try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){console.warn("Traffic cleanup save failed:",e)}}
+          if(trafficIsciFixed>0){console.warn("WK Radio cleanup: fixed "+trafficIsciFixed+" records");try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){console.warn("Cleanup save failed:",e)}}
           // One-time: seed PL April TV + Radio traffic if missing after cleanup
           const PL_APRIL_SEED=[];
           const hasPLAprilTV=(mkt)=>cleaned.some(h=>h.brand==="Postman Law"&&h.market===mkt&&h.media==="TV"&&h.month==="April"&&h.status!=="copied");
