@@ -5085,15 +5085,7 @@ ${fullText.substring(0,3000)}`}]
         return{est,brand,market:dma,media,buyer,month,version:parseInt(version),stations:[],ts:Date.now(),comments:comments||versionRaw,isRevision:false,combined:false,iscis:deduped,flight};
       }catch(e){console.error("Parse error:",e);return null}
     };
-    const doImport=async()=>{if(!importPreview)return;const pw=prompt("Admin password to import:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Incorrect password");
-      // Smart import: if a record already exists for this brand/market/media/month, REPLACE it
-      const em=normMkt(importPreview.market)||importPreview.market;
-      setTrafficHistory(p=>{
-        const existingIdx=p.findIndex(h=>h.brand===importPreview.brand&&(normMkt(h.market)||h.market)===em&&h.media===importPreview.media&&h.month===importPreview.month);
-        if(existingIdx>-1){const updated=[...p];updated[existingIdx]={...importPreview,ts:new Date().toISOString()};console.warn("Import: replaced existing "+importPreview.brand+" "+em+" "+importPreview.media+" "+importPreview.month);return updated}
-        return[...p,{...importPreview,ts:new Date().toISOString()}];
-      });
-      log("Traffic Import",importPreview.brand+" "+importPreview.market+" "+importPreview.month+" "+importPreview.media);notify(doomPick(DOOM.importClean)+" Imported: "+importPreview.market+" "+importPreview.month);setImportText("");setImportPreview(null);setShowImport(false)};
+    const doImport=async()=>{if(!importPreview)return;const pw=prompt("Admin password to import:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Incorrect password");setTrafficHistory(p=>[...p,importPreview]);log("Traffic Import",importPreview.brand+" "+importPreview.market+" "+importPreview.month+" "+importPreview.media);notify(doomPick(DOOM.importClean)+" Imported: "+importPreview.market+" "+importPreview.month);setImportText("");setImportPreview(null);setShowImport(false)};
     const brands=[...new Set(trafficHistory.map(h=>h.brand))].sort();
     const mkts=[...new Set(trafficHistory.map(h=>h.market))].sort();
     const medias=[...new Set(trafficHistory.map(h=>h.media))].sort();
