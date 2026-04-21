@@ -682,6 +682,8 @@ const App=()=>{
           });
           if(missing.length>0)console.warn("ISCI RESTORE: "+missing.length+" seed ISCIs were missing from Firestore — restored");
           console.log("ISCI load: "+enhanced.length+" from Firestore + "+missing.length+" restored = "+all.length+" total");
+          // Save tagged ISCIs back to Firestore immediately
+          try{db.collection("appData").doc("iscis").set({data:JSON.stringify(all),ts:Date.now()}).catch(()=>{})}catch(e){}
           setIscis(all);isciFbCountRef.current=all.length;iscisLoadedRef.current=true
         }else{
           // No Firestore data at all — write seed as initial data
