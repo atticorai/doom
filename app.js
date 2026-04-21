@@ -720,6 +720,11 @@ const App=()=>{
           setNowAiring(cleanedAiring)}
         if(docs.auditLog?.data){const d=JSON.parse(docs.auditLog.data);if(d.length)setAuditLog(d)}
         if(docs.trafficHistory?.data){const d=JSON.parse(docs.trafficHistory.data);if(d.length){
+          // ═══ TRAFFIC INVENTORY — what's actually in Firestore ═══
+          console.log("═══ TRAFFIC HISTORY: "+d.length+" records in Firestore ═══");
+          const inv={};d.forEach(h=>{const k=(h.brand||"?")+" | "+(h.market||"?")+" | "+(h.media||"?")+" | "+(h.month||"?");if(!inv[k])inv[k]=0;inv[k]++});
+          Object.entries(inv).sort().forEach(([k,v])=>console.log("  "+k+(v>1?" (×"+v+")":"")));
+          console.log("═══════════════════════════════════════════════");
           // ═══ RULES: NEVER delete records. NEVER touch April. NEVER strip PL ISCIs. ═══
           // All traffic history is preserved as-is. Only two narrow fixes:
           // 1. WK Radio non-April: strip ISCIs without rotation % (bad import data)
