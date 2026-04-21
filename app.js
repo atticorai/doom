@@ -1778,7 +1778,7 @@ const App=()=>{
           <span style={{fontSize:13,fontWeight:600,color:canCombine?"#5BC4A0":"#D4A040"}}>{combineSet.length} selected{!canCombine&&combineSet.length>=2?" (must be same DMA + brand)":""}</span>
           <Btn small primary disabled={!canCombine} onClick={launchCombined}>Combine & Build</Btn>
           <Btn small onClick={()=>{setCombineMode(false);setCombineSet([])}}>Cancel</Btn>
-        </div>:<Btn small onClick={()=>setCombineMode(true)}>⊕ Combine Estimates</Btn>}</div>
+        </div>:tb==="Postman Law"?<Btn small onClick={()=>setCombineMode(true)}>⊕ Combine Estimates</Btn>:null}</div>
       </div>
       <Cd><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>{combineMode&&<TH w="30">✓</TH>}<STH tbl="traf" col="num">Est#</STH><STH tbl="traf" col="market">Market</STH><STH tbl="traf" col="media">Media</STH><STH tbl="traf" col="group">Buy Type</STH><STH tbl="traf" col="buyer">Buyer</STH><TH>Stations</TH><TH>ISCIs</TH><TH>Airing</TH><TH>Confirmed</TH><TH>Action</TH></tr></thead>
         <tbody>{sortRows("traf",brandEsts,{num:r=>r.num,brand:r=>r.brand,market:r=>r.market,media:r=>r.media,group:r=>r.group||"",buyer:r=>r.buyer||""}).map(e=>{
@@ -2776,7 +2776,17 @@ const App=()=>{
     const[sugStations,setSugStations]=useState([]);const[selStations,setSelStations]=useState([]);
     const EG2=[...new Set(estimates.filter(e=>e.brand===estBrand).map(e=>e.group))].sort();
     const estBrandCounts={"Postman Law":estimates.filter(e=>e.brand==="Postman Law").length,"Wettermark Keith":estimates.filter(e=>e.brand==="Wettermark Keith").length};
-    const fl=sortRows("est",estimates.filter(e=>e.brand===estBrand&&(sf.estGroup?e.group===sf.estGroup:true)),{num:r=>r.num,brand:r=>r.brand,market:r=>r.market,media:r=>r.media,group:r=>r.group,campaign:r=>r.campaign||"",buyer:r=>r.buyer||""});
+    // WK uses monthly estimates (210-225) — only show the one matching workMonth.
+    // Non-monthly WK estimates (216, 217, 219, 226-232) always show. PL is fixed.
+    const WK_MONTH_EST_MAP={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};
+    const WK_MONTHLY_NUMS=new Set(Object.values(WK_MONTH_EST_MAP));
+    const currentWkEst=WK_MONTH_EST_MAP[workMonth];
+    const fl=sortRows("est",estimates.filter(e=>{
+      if(e.brand!==estBrand)return false;
+      if(sf.estGroup&&e.group!==sf.estGroup)return false;
+      if(e.brand==="Wettermark Keith"&&WK_MONTHLY_NUMS.has(e.num)&&e.num!==currentWkEst)return false;
+      return true;
+    }),{num:r=>r.num,brand:r=>r.brand,market:r=>r.market,media:r=>r.media,group:r=>r.group,campaign:r=>r.campaign||"",buyer:r=>r.buyer||""});
     const startEdit=(i,e)=>{setEditIdx(i);setEditRow({...e})};
     const saveEdit=()=>{setEstimates(p=>p.map((e,i)=>i===editIdx?{...editRow}:e));setEditIdx(null);log("Est Edit",`${editRow.num} updated`);notify("Estimate updated")};
     const nextNum=()=>{const nums=estimates.map(e=>parseInt(e.num)).filter(n=>!isNaN(n));return nums.length?String(Math.max(...nums)+1):"2700"};
@@ -2861,6 +2871,12 @@ const App=()=>{
       </div>}
     </Cd>}
     <BrandTabs value={estBrand} onChange={setEstBrand} counts={estBrandCounts}/>
+    {estBrand==="Wettermark Keith"&&<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+      <span style={{fontSize:13,color:"#9B8EAD"}}>WK monthly estimate:</span>
+      <select value={workMonth} onChange={e=>setWorkMonth(e.target.value)} style={{padding:"4px 8px",borderRadius:5,border:"2px solid #D4A040",fontSize:13,fontWeight:700,color:"#D4A040",background:"rgba(212,160,64,.12)"}}>{CALENDAR.map(c=><option key={c.month}>{c.month}</option>)}</select>
+      <span style={{fontSize:13,fontWeight:700,color:"#D4A040"}}>#{currentWkEst}</span>
+      <span style={{fontSize:12,color:"#9B8EAD"}}>— non-monthly WK estimates (UD/AV, Sports, TTWN, etc.) always show</span>
+    </div>}
     <div style={{display:"flex",gap:3,flexWrap:"wrap"}}><Pill l="All" ac={!sf.estGroup} n={estimates.filter(e=>e.brand===estBrand).length} c="#1e1233" onClick={()=>setF("estGroup","")}/>{EG2.map(g=><Pill key={g} l={g} ac={sf.estGroup===g} n={estimates.filter(e=>e.brand===estBrand&&e.group===g).length} c="#9b7bb0" onClick={()=>setF("estGroup",sf.estGroup===g?"":g)}/>)}</div>
     <Cd><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><STH tbl="est" col="num">Est#</STH><STH tbl="est" col="market">Market</STH><STH tbl="est" col="media">Media</STH><STH tbl="est" col="group">Buy Type</STH><STH tbl="est" col="campaign">Campaign</STH><STH tbl="est" col="buyer">Buyer</STH><TH w={50}>Actions</TH></tr></thead>
       <tbody>{fl.map((e,i)=>{const ai=estimates.indexOf(e);return editIdx===ai?<tr key={ai} style={{background:"rgba(37,99,235,.15)"}}>
