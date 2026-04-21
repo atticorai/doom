@@ -36,7 +36,14 @@ service cloud.firestore {
         'wkOohIscis',
         'plOohIscis',
         'oohPhotos',
-        'backups'
+        'backups',
+        'iscis_backup',
+        'stations_backup',
+        'estimates_backup',
+        'trafficHistory_backup',
+        'nowAiring_backup',
+        'staEstLinks_backup',
+        'confirmations_backup'
       ];
     }
 
