@@ -746,6 +746,21 @@ const App=()=>{
             })}
           });
           if(trafficIsciFixed>0){console.warn("WK Radio cleanup: fixed "+trafficIsciFixed+" records");try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){console.warn("Cleanup save failed:",e)}}
+          // Recovery: check backup for PL records with more ISCIs (in case cleanup stripped them)
+          try{const backupDoc=await db.collection("appData").doc("trafficHistory_backup").get();
+            if(backupDoc.exists){const backup=JSON.parse(backupDoc.data().data||"[]");let restored=0;
+              cleaned.forEach(h=>{
+                if(h.brand==="Postman Law"&&h.iscis){
+                  const match=backup.find(b=>b.brand===h.brand&&b.est===h.est&&b.market===h.market&&b.month===h.month&&b.media===h.media);
+                  if(match&&match.iscis&&match.iscis.length>h.iscis.length){
+                    console.warn("PL recovery: "+h.market+" "+h.media+" "+h.month+" — restoring "+match.iscis.length+" ISCIs (had "+h.iscis.length+")");
+                    h.iscis=match.iscis;restored++;
+                  }
+                }
+              });
+              if(restored>0){console.warn("PL recovery: restored "+restored+" records from backup");try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){}}
+            }
+          }catch(e){console.warn("Backup read failed:",e)}
           // One-time: seed PL April TV + Radio traffic if missing after cleanup
           const PL_APRIL_SEED=[];
           const hasPLAprilTV=(mkt)=>cleaned.some(h=>h.brand==="Postman Law"&&h.market===mkt&&h.media==="TV"&&h.month==="April"&&h.status!=="copied");
