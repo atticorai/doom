@@ -752,20 +752,33 @@ const App=()=>{
             });if(fixed)trafficIsciFixed++}
           });
           if(trafficIsciFixed>0){console.warn("Traffic data fix: corrected bookend/sched values in "+trafficIsciFixed+" records");try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){console.warn("Fix save failed:",e)}}
-          // Recovery: check backup for records with more ISCIs (NOT April — April stays as-is)
+          // Recovery: restore missing records AND records with fewer ISCIs from backup
           try{const backupDoc=await db.collection("appData").doc("trafficHistory_backup").get();
-            if(backupDoc.exists){const backup=JSON.parse(backupDoc.data().data||"[]");let restored=0;
+            if(backupDoc.exists){const backup=JSON.parse(backupDoc.data().data||"[]");let restoredIscis=0;let restoredRecords=0;
+              // Fix records with fewer ISCIs than backup
               cleaned.forEach(h=>{
-                if(h.month==="April")return; // NEVER TOUCH APRIL
+                if(h.month==="April")return;
                 if(h.iscis){
                   const match=backup.find(b=>b.brand===h.brand&&b.est===h.est&&b.market===h.market&&b.month===h.month&&b.media===h.media);
                   if(match&&match.iscis&&match.iscis.length>h.iscis.length){
                     console.warn("Recovery: "+h.brand+" "+h.market+" "+h.media+" "+h.month+" — restoring "+match.iscis.length+" ISCIs (had "+h.iscis.length+")");
-                    h.iscis=match.iscis;restored++;
+                    h.iscis=match.iscis;restoredIscis++;
                   }
                 }
               });
-              if(restored>0){console.warn("Recovery: restored "+restored+" records from backup");try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){}}
+              // Restore completely missing records from backup
+              const missing=backup.filter(b=>{
+                if(b.month==="April")return false; // Don't touch April
+                return!cleaned.some(h=>h.brand===b.brand&&h.est===b.est&&h.market===b.market&&h.month===b.month&&h.media===b.media);
+              });
+              if(missing.length>0){
+                missing.forEach(r=>console.warn("Recovery: restoring missing record — "+r.brand+" "+r.market+" "+r.media+" "+r.month));
+                cleaned.push(...missing);restoredRecords=missing.length;
+              }
+              if(restoredIscis>0||restoredRecords>0){
+                console.warn("Recovery: "+restoredIscis+" ISCI fixes + "+restoredRecords+" missing records restored from backup");
+                try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){}
+              }
             }
           }catch(e){console.warn("Backup read failed:",e)}
           // One-time: seed PL April TV + Radio traffic if missing after cleanup
