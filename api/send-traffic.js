@@ -8,10 +8,8 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
-  if (!N8N_WEBHOOK_URL) {
-    return res.status(500).json({ error: 'Email service not configured' });
-  }
+  const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'https://doomndeliverables.app.n8n.cloud/webhook/9661ec80-6bd8-4cf5-acca-90f2547a75eb';
+
 
   const { to, cc, subject, message, pdfBase64, pdfName } = req.body || {};
 
