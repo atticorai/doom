@@ -801,27 +801,34 @@ const App=()=>{
         console.error("⚠ SAVES BLOCKED — Firestore load failed. Default/seed data will NOT overwrite your database. Refresh to retry.")}
       setDbLoaded(true);
       // ── AUTO-RECOVER CREATIVE FILES ──────────────────────
-      // Scan Firebase Storage for every ISCI missing a fileUrl and re-link
+      // Scan Firebase Storage for every ISCI missing a fileUrl and re-link.
+      // OOH ISCIs live under ooh-photos/ so they never match creative/<code>.<ext>.
+      // We also cache codes that came up empty in localStorage so we don't
+      // re-scan them on every page load (35 404s per reload → 0 after first).
       if(storage){
         setTimeout(async()=>{
           try{
-            const current=iscis;// won't have latest yet, read from what we just set
             const snap2=await db.collection("appData").doc("iscis").get();
             const live=snap2.exists?JSON.parse(snap2.data().data):[];
-            const missing=live.filter(i=>!i.fileUrl&&i.active!==false);
-            if(!missing.length){console.log("Creative recovery: all ISCIs have files");return}
+            let failedCache={};try{failedCache=JSON.parse(localStorage.getItem("creativeScanFailed")||"{}")}catch(_){}
+            const missing=live.filter(i=>!i.fileUrl&&i.active!==false&&i.suffix!=="O"&&!failedCache[i.code]);
+            if(!missing.length){console.log("Creative recovery: nothing to scan");return}
             console.log("Creative recovery: scanning "+missing.length+" ISCIs for files in Storage...");
             const exts=["mp4","mov","wav","mp3","pdf","jpg","png"];
-            let found=0;const updates={};
+            let found=0;const updates={};const newFails={};
             for(let mi=0;mi<missing.length;mi++){
-              const isci=missing[mi];
+              const isci=missing[mi];let hit=false;
               for(const ext of exts){
                 try{
                   const ref=storage.ref("creative/"+isci.code+"."+ext);
                   const url=await ref.getDownloadURL();
-                  updates[isci.code]=url;found++;break;
-                }catch(e){console.warn("Download URL lookup failed:",e.message)}
+                  updates[isci.code]=url;found++;hit=true;break;
+                }catch(e){/* silent — 404s are expected and noisy */}
               }
+              if(!hit)newFails[isci.code]=Date.now();
+            }
+            if(Object.keys(newFails).length){
+              localStorage.setItem("creativeScanFailed",JSON.stringify({...failedCache,...newFails}));
             }
             if(found>0){
               const healed=live.map(i=>updates[i.code]?{...i,fileUrl:updates[i.code]}:i);
@@ -1594,7 +1601,7 @@ const App=()=>{
     const isciBrandCounts={"Postman Law":iscis.filter(i=>i.brand==="Postman Law"&&i.suffix!=="O"&&i.active).length,"Wettermark Keith":iscis.filter(i=>i.brand==="Wettermark Keith"&&i.suffix!=="O"&&i.active).length};
     const fl=(()=>{const filtered=iscis.filter(i=>i.suffix!=="O"&&i.brand===isciBrand&&(sf.media?i.media===sf.media:true)&&(sf.dma?i.dma===sf.dma:true)&&(isciSearch?`${i.code} ${i.title} ${i.category||""} ${i.valueProp||""} ${i.vo||""}`.toLowerCase().includes(isciSearch.toLowerCase()):true)&&(showOff?true:i.active));return sortRows("isci",filtered,{code:r=>r.code,title:r=>r.title,media:r=>r.media,brand:r=>r.brand,dma:r=>r.dma,dur:r=>parseInt(r.dur)||0,category:r=>r.category||r.caseType||"",valueProp:r=>r.valueProp||"",vo:r=>r.vo||"",status:r=>r.active?"1":"0"})})();
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);saveToDb("iscis",updated);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
+      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);saveToDb("iscis",updated);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
       {showTagMgr&&<Cd style={{padding:14,marginTop:8}}>
         <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:8}}>🏷 Manage Categories, Value Props & VOs</div>
         {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
@@ -1657,7 +1664,7 @@ const App=()=>{
         </DropZone>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div style={{fontSize:12,color:"#94a3b8"}}>ISCIs with creative: <b style={{color:"#5BC4A0"}}>{iscis.filter(i=>i.fileUrl).length}</b> / {iscis.length}</div>
-          <Btn small onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs for existing files...");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);saveToDb("iscis",updated);return updated});notify(found+" creative files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found in storage")}}}>🔗 Recover Links</Btn>
+          <Btn small onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs for existing files...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);saveToDb("iscis",updated);return updated});notify(found+" creative files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found in storage")}}}>🔗 Recover Links</Btn>
         </div>
       </Cd>}
       {showBulk&&<Cd style={{padding:12}}>

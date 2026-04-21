@@ -5,6 +5,17 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Cinzel:wght@400;500;600;700;800;900&family=MedievalSharp&family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="/tailwind.css"/>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime"
+  }
+}
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}html,body,#R{height:100%;font-family:'DM Sans',sans-serif;font-size:14px;background:transparent}
 #R{background:transparent !important}
@@ -254,12 +265,11 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
     showLoading();
     sessionStorage.setItem("dd_auth","1");
 
-    // CDN libraries (public, but loaded after auth so page stays light)
+    // CDN libraries (public, but loaded after auth so page stays light).
+    // React + ReactDOM are loaded later as ESM via the import map so Framer
+    // Motion shares the same React instance. See the framer-ready step below.
     var cdnLibs=[
-      "https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js",
-      "https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js",
-      "https://cdn.tailwindcss.com",
       "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js",
@@ -296,19 +306,28 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
       // Load all data files in parallel
       return Promise.all(dataFiles.map(function(f){return loadScript(f)}));
     }).then(function(){
-      // Load Framer Motion via ESM and expose as globals for Babel scripts
-      return new Promise(function(resolve){
+      // Load React + ReactDOM + Framer Motion as ESM in a single module so
+      // they share one React instance (via the importmap above). Then expose
+      // React/ReactDOM as globals for the Babel-transpiled Source files.
+      return new Promise(function(resolve,reject){
         var fm=document.createElement("script");
         fm.type="module";
-        fm.textContent='import{motion,AnimatePresence,useAnimation,useInView}from"https://esm.sh/framer-motion@11?external=react,react-dom&bundle";window.FramerMotion={motion:motion,AnimatePresence:AnimatePresence,useAnimation:useAnimation,useInView:useInView};window.dispatchEvent(new Event("framer-ready"));';
+        fm.textContent=[
+          'import React from "react";',
+          'import * as ReactDOM from "react-dom";',
+          'import { createRoot } from "react-dom/client";',
+          'import { motion, AnimatePresence, useAnimation, useInView } from "https://esm.sh/framer-motion@11?external=react,react-dom";',
+          'window.React = React;',
+          'window.ReactDOM = Object.assign({}, (ReactDOM.default || ReactDOM), { createRoot: createRoot });',
+          'window.FramerMotion = { motion: motion, AnimatePresence: AnimatePresence, useAnimation: useAnimation, useInView: useInView };',
+          'window.dispatchEvent(new Event("framer-ready"));'
+        ].join("\n");
         document.body.appendChild(fm);
-        window.addEventListener("framer-ready",function(){console.log("Framer Motion loaded");resolve()},{once:true});
-        // Fallback timeout so app still loads if FM CDN fails
-        setTimeout(function(){if(!window.FramerMotion){console.warn("Framer Motion CDN timeout, using CSS fallback");window.FramerMotion={motion:null,AnimatePresence:null,useAnimation:null,useInView:null};resolve()}},8000);
+        window.addEventListener("framer-ready",function(){console.log("React + Framer Motion loaded (ESM)");resolve()},{once:true});
+        setTimeout(function(){if(!window.React||!window.FramerMotion)reject(new Error("React / Framer Motion failed to load from esm.sh"))},15000);
       });
     }).then(function(){
-      // Configure Tailwind for Doom palette
-      if(window.tailwind){tailwind.config={theme:{extend:{colors:{plum:{DEFAULT:"#9b7bb0",dark:"#2d1f42",edge:"#4a3565"},pegasus:"#4AC8E8",gold:"#D4A040",rose:"#E85A7A",teal:"#5BC4A0",orchid:{DEFAULT:"#1e1233",mid:"#2a1a3e",shadow:"#2d1f42"},lilac:{DEFAULT:"#C4A0C8",white:"#E8DFF0",bright:"#F0E8F8"},muted:"#9B8EAD",parchment:{DEFAULT:"#e8dcc4",dark:"#d4c4a0",light:"#f0e8d8"}},fontFamily:{heading:['"Cormorant Garamond"',"serif"],body:['"DM Sans"',"sans-serif"]}}}}};
+      // Tailwind is precompiled to /tailwind.css — no runtime config needed.
       // Add Babel-transpiled source files
       var c=document.createElement("script");c.type="text/babel";c.src="config.js";c.setAttribute("data-type","module");document.body.appendChild(c);
       var a=document.createElement("script");a.type="text/babel";a.src="app.js";a.setAttribute("data-type","module");document.body.appendChild(a);
