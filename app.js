@@ -664,7 +664,7 @@ const App=()=>{
           const enhanced=cleaned.map(fb=>{
             const seed=seedMap.get(fb.code+"|"+(fb.dma||""));
             if(!seed)return fb; // User-added ISCI, keep as-is
-            return{...fb,title:fb.title||seed.title,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:seed.fileUrl||fb.fileUrl};
+            return{...fb,title:fb.title||seed.title,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:seed.fileUrl||fb.fileUrl,category:fb.category||seed.category||seed.caseType||"",caseType:fb.caseType||seed.caseType||seed.category||"",vo:fb.vo||seed.vo||""};
           });
           // Always add back missing seed ISCIs — better to recover than lose
           const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||"")));
