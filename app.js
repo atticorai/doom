@@ -725,66 +725,13 @@ const App=()=>{
           const inv={};d.forEach(h=>{const k=(h.brand||"?")+" | "+(h.market||"?")+" | "+(h.media||"?")+" | "+(h.month||"?");if(!inv[k])inv[k]=0;inv[k]++});
           Object.entries(inv).sort().forEach(([k,v])=>console.log("  "+k+(v>1?" (×"+v+")":"")));
           console.log("═══════════════════════════════════════════════");
-          // ═══ RULES: NEVER delete records. NEVER touch April. NEVER strip PL ISCIs. ═══
-          // All traffic history is preserved as-is. Only two narrow fixes:
-          // 1. WK Radio non-April: strip ISCIs without rotation % (bad import data)
-          // 2. Boolean bookend cleanup: fix true/false → "" (display-only, all brands except April)
-          const cleaned=d; // NO RECORD DELETION — all history preserved
-          let trafficIsciFixed=0;
-          cleaned.forEach(h=>{
-            if(h.month==="April")return; // NEVER TOUCH APRIL — either brand
-            // WK Radio only: strip ISCIs without rotation % (the original problem)
-            if(h.brand==="Wettermark Keith"&&h.media==="Radio"&&h.iscis&&h.iscis.length>0){
-              const withPct=h.iscis.filter(r=>r.pct&&parseFloat(r.pct)>0);
-              if(withPct.length>0&&withPct.length<h.iscis.length){
-                const removed=h.iscis.length-withPct.length;
-                console.warn("WK Radio cleanup: "+h.market+" "+h.month+" — removed "+removed+" ISCIs without rotation %, kept "+withPct.length);
-                h.iscis=withPct;trafficIsciFixed++;
-              }
-            }
-            // Fix boolean bookends and bare letter schedules (same bad import data as seed)
-            if(h.iscis){let fixed=false;h.iscis.forEach(r=>{
-              if(r.bookend===true&&(r.sched==="A"||r.sched==="B"||r.sched==="C"||r.sched==="D")){r.bookend="Bookend :"+r.dur+" "+r.sched;r.sched="All Week";fixed=true}
-              else if(r.bookend===true){r.bookend="";fixed=true}
-              else if(r.bookend===false){r.bookend="";if(!r.sched)r.sched="All Week";fixed=true}
-              else if(r.bookend==="true"||r.bookend==="false"){r.bookend="";fixed=true}
-              if(r.sched==="A"||r.sched==="B"||r.sched==="C"||r.sched==="D"){r.bookend="Bookend :"+r.dur+" "+r.sched;r.sched="All Week";fixed=true}
-            });if(fixed)trafficIsciFixed++}
-          });
-          if(trafficIsciFixed>0){console.warn("Traffic data fix: corrected bookend/sched values in "+trafficIsciFixed+" records");try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){console.warn("Fix save failed:",e)}}
-          // Recovery: restore missing records AND records with fewer ISCIs from backup
-          try{const backupDoc=await db.collection("appData").doc("trafficHistory_backup").get();
-            if(backupDoc.exists){const backup=JSON.parse(backupDoc.data().data||"[]");let restoredIscis=0;let restoredRecords=0;
-              // Fix records with fewer ISCIs than backup
-              cleaned.forEach(h=>{
-                if(h.month==="April")return;
-                if(h.iscis){
-                  const match=backup.find(b=>b.brand===h.brand&&b.est===h.est&&b.market===h.market&&b.month===h.month&&b.media===h.media);
-                  if(match&&match.iscis&&match.iscis.length>h.iscis.length){
-                    console.warn("Recovery: "+h.brand+" "+h.market+" "+h.media+" "+h.month+" — restoring "+match.iscis.length+" ISCIs (had "+h.iscis.length+")");
-                    h.iscis=match.iscis;restoredIscis++;
-                  }
-                }
-              });
-              // Restore completely missing records from backup
-              const missing=backup.filter(b=>{
-                if(b.month==="April")return false; // Don't touch April
-                return!cleaned.some(h=>h.brand===b.brand&&h.est===b.est&&h.market===b.market&&h.month===b.month&&h.media===b.media);
-              });
-              if(missing.length>0){
-                missing.forEach(r=>console.warn("Recovery: restoring missing record — "+r.brand+" "+r.market+" "+r.media+" "+r.month));
-                cleaned.push(...missing);restoredRecords=missing.length;
-              }
-              if(restoredIscis>0||restoredRecords>0){
-                console.warn("Recovery: "+restoredIscis+" ISCI fixes + "+restoredRecords+" missing records restored from backup");
-                try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){}
-              }
-            }
-          }catch(e){console.warn("Backup read failed:",e)}
-          // One-time: seed PL April TV + Radio traffic if missing after cleanup
+          // ═══ DO NOT MODIFY FIRESTORE DATA ON LOAD ═══
+          // Load it. Display it. That's it.
+          // Rendering handles bad values (boolean bookends, bare sched letters) gracefully.
+          // One-time: seed PL April TV + Radio traffic if missing
           const PL_APRIL_SEED=[];
-          const hasPLAprilTV=(mkt)=>cleaned.some(h=>h.brand==="Postman Law"&&h.market===mkt&&h.media==="TV"&&h.month==="April"&&h.status!=="copied");
-          const hasPLAprilRadio=(mkt)=>cleaned.some(h=>h.brand==="Postman Law"&&h.market===mkt&&h.media==="Radio"&&h.month==="April"&&h.status!=="copied");
+          const hasPLAprilTV=(mkt)=>d.some(h=>h.brand==="Postman Law"&&h.market===mkt&&h.media==="TV"&&h.month==="April"&&h.status!=="copied");
+          const hasPLAprilRadio=(mkt)=>d.some(h=>h.brand==="Postman Law"&&h.market===mkt&&h.media==="Radio"&&h.month==="April"&&h.status!=="copied");
           const tvIscis={
             CHI:[{code:"CHIPL2660004T",title:"Why Postman_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CHIPL2660002T",title:"Supreme Court_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CHIPL2630013T",title:"Warren's Story_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2630012T",title:"Local Lawyers_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2630011T",title:"Legal Firepower_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2630010T",title:"Justice & Representation_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2615014T",title:"Warren's Story_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CHIPL2615013T",title:"Local Lawyers_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CHIPL2615012T",title:"Legal Firepower_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"},{code:"CHIPL2615011T",title:"Justice & Representation_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"}],
             CIN:[{code:"CINPL2660004T",title:"Why Postman_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CINPL2660002T",title:"Supreme Court_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CINPL2630013T",title:"Warren's Story_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2630012T",title:"Local Lawyers_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2630011T",title:"Legal Firepower_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2630010T",title:"Justice & Representation_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2615014T",title:"Warren's Story_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CINPL2615013T",title:"Local Lawyers_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CINPL2615012T",title:"Legal Firepower_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"},{code:"CINPL2615011T",title:"Justice & Representation_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"}],
@@ -802,18 +749,14 @@ const App=()=>{
           Object.entries(tvIscis).forEach(([dma,isciList])=>{const mkt=DM[dma];if(!hasPLAprilTV(mkt)){PL_APRIL_SEED.push({ts:"2026-03-30T12:00:00.000Z",est:tvEsts[dma],brand:"Postman Law",market:mkt,media:"TV",buyer:tvBuyer[dma],month:"April",flight:"3/30 - 4/26",version:"1",comments:"If you buy has no bookends, run as standalones, if you have stand alones run Legal Firepower :15",combined:true,iscis:isciList,stations:[],status:"sent",isRevision:false,prevVersion:null})}});
           Object.entries(radioIscis).forEach(([dma,isciList])=>{const mkt=DM[dma];if(!hasPLAprilRadio(mkt)){PL_APRIL_SEED.push({ts:"2026-03-30T12:00:00.000Z",est:radioEsts[dma],brand:"Postman Law",market:mkt,media:"Radio",buyer:tvBuyer[dma],month:"April",flight:"3/30 - 4/26",version:"1",comments:"",combined:false,iscis:isciList,stations:[],status:"sent",isRevision:false,prevVersion:null})}});
           // OOH: Wilkins Media MSP Digital Bulletins
-          const hasPLAprilOohMsp=cleaned.some(h=>h.brand==="Postman Law"&&h.market==="MSP"&&h.media==="OOH"&&h.month==="April"&&h.isOoh);
+          const hasPLAprilOohMsp=d.some(h=>h.brand==="Postman Law"&&h.market==="MSP"&&h.media==="OOH"&&h.month==="April"&&h.isOoh);
           if(!hasPLAprilOohMsp){PL_APRIL_SEED.push({ts:"2026-03-25T12:00:00.000Z",est:"OOH-MSP-PL",brand:"Postman Law",market:"MSP",media:"OOH",buyer:"Ken Lazar",month:"April",flight:"3/30",version:"1",comments:"V1 MSP Digital Bulletins | Vendor: Wilkins Media",combined:false,iscis:[{code:"MSPPL26DB001O",title:"PL Digital Bulletin - 208x720 - MSP - Cityscape - MinneapolisIA",dur:"",pct:"33",sched:"All Week",bookend:"",units:"1"},{code:"MSPPL26DB002O",title:"PL Digital Bulletin - 208x720 - MSP - MascotTriangle - MinneapolisIA",dur:"",pct:"33",sched:"All Week",bookend:"",units:"1"},{code:"MSPPL26DB003O",title:"PL Digital Bulletin - 208x720 - MSP - MascotTriangle - MinneapolisIALogo",dur:"",pct:"34",sched:"All Week",bookend:"",units:"1"}],stations:[],status:"sent",isOoh:true,totalUnits:3,vendor:"Wilkins Media",isRevision:false,prevVersion:null})}
           if(PL_APRIL_SEED.length>0)console.warn("PL April seed: restored "+PL_APRIL_SEED.length+" traffic records");
-          // Restore missing seed traffic records (pre-April history)
-          // Same logic as ISCI restore: if seed record not in Firestore, add it back
+          // Restore missing seed records (additive only — never removes or modifies existing)
           const seedTraffic=typeof TRAFFIC_HISTORY_INIT!=="undefined"?TRAFFIC_HISTORY_INIT:[];
-          let restoredSeed=0;
-          const missingFromSeed=seedTraffic.filter(seed=>{
-            return!cleaned.some(h=>h.brand===seed.brand&&h.est===seed.est&&h.market===seed.market&&h.month===seed.month&&h.media===seed.media);
-          });
-          if(missingFromSeed.length>0){console.warn("Traffic seed restore: "+missingFromSeed.length+" records missing from Firestore — restoring");restoredSeed=missingFromSeed.length}
-          const final=[...PL_APRIL_SEED,...missingFromSeed,...cleaned];
+          const missingFromSeed=seedTraffic.filter(seed=>!d.some(h=>h.brand===seed.brand&&h.est===seed.est&&h.market===seed.market&&h.month===seed.month&&h.media===seed.media));
+          if(missingFromSeed.length>0)console.warn("Seed restore: "+missingFromSeed.length+" records missing — adding back");
+          const final=[...PL_APRIL_SEED,...missingFromSeed,...d];
           setTrafficHistory(final);trafficFbCountRef.current=final.length
         }trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
         if(docs.workMonth?.data)setWorkMonth(JSON.parse(docs.workMonth.data));
