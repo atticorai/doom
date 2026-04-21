@@ -5108,10 +5108,18 @@ ${fullText.substring(0,3000)}`}]
     const brandData=trafficHistory.filter(h=>h.brand===libBrand).map(h=>({...h,market:normMkt(h.market)||h.market}));
     const brandMonths=(()=>{const raw=[...new Set(brandData.map(h=>h.month))].filter(Boolean);return raw.sort((a,b)=>{const ai=MO_NAMES.indexOf(a),bi=MO_NAMES.indexOf(b);return bi-ai})})();
     const brandMedias=(()=>{const raw=[...new Set(brandData.map(h=>h.media))];return raw.sort((a,b)=>(MEDIA_ORDER.indexOf(a)===-1?99:MEDIA_ORDER.indexOf(a))-(MEDIA_ORDER.indexOf(b)===-1?99:MEDIA_ORDER.indexOf(b)))})();
-    const now2=new Date();const archMonthIdx=now2.getMonth()-2;// 2 months back
+    const now2=new Date();const curMonthIdx=now2.getMonth();// April=3
     const isArch=(h)=>{
-      // Archive based on broadcast month, not creation date
-      if(h.month){const mi=MO_NAMES.indexOf(h.month);if(mi>-1)return mi<archMonthIdx}
+      if(h.month){
+        const mi=MO_NAMES.indexOf(h.month);
+        if(mi>-1){
+          // Archive if more than 2 months before current month (handles year wrap)
+          const diff=curMonthIdx-mi;
+          return diff>2||(diff<0&&diff>-10); // negative diff = previous year (Dec when in Feb+)
+        }
+      }
+      return!h.ts||new Date(h.ts)<new Date(now2.getFullYear(),curMonthIdx-2,1);
+    };
       return!h.ts||new Date(h.ts)<new Date(now2.getFullYear(),archMonthIdx,1);
     };
     const archivedCount=brandData.filter(h=>isArch(h)).length;
