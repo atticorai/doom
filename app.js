@@ -1030,6 +1030,7 @@ const App=()=>{
   const[libSearch2,setLibSearch2]=useState("");
   const[libShowArchived,setLibShowArchived]=useState(false);
   const[libBrand,setLibBrand]=useState("Postman Law");
+  const[trafBrand,setTrafBrand]=useState("Postman Law");
   const[isciBrand,setIsciBrand]=useState("Postman Law");
   const[estBrand,setEstBrand]=useState("Postman Law");
   const[staBrand,setStaBrand]=useState("Postman Law");
@@ -1720,22 +1721,25 @@ const App=()=>{
 
   // ── TRAFFIC CENTER (REBUILT) ──────────────────────────
   const TrafPg=()=>{
-    const[tb,setTb]=useState("");const[tm,setTm]=useState("");const[tMedia,setTMedia]=useState("");
+    const[tb,setTb]=useState(trafBrand||"Postman Law");const[tm,setTm]=useState("");const[tMedia,setTMedia]=useState("");
+    // Keep the page-level trafBrand state in sync so the tab selection survives nav
+    React.useEffect(()=>{if(tb!==trafBrand)setTrafBrand(tb)},[tb]);
     const[combineMode,setCombineMode]=useState(false);const[combineSet,setCombineSet]=useState([]);
     // WK monthly TV Base estimates: only show the one matching the current work month
     const WK_MONTH_EST_MAP={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};
     const WK_MONTHLY_NUMS=new Set(Object.values(WK_MONTH_EST_MAP));
     const currentWkEst=WK_MONTH_EST_MAP[workMonth];
+    const trafBrandCounts={"Postman Law":estimates.filter(e=>e.brand==="Postman Law").length,"Wettermark Keith":estimates.filter(e=>e.brand==="Wettermark Keith").length};
     const brandEsts=estimates.filter(e=>{
-      if(tb&&e.brand!==tb)return false;
+      if(e.brand!==tb)return false;
       if(tm&&e.market!==tm)return false;
       if(tMedia&&e.media!==tMedia)return false;
       // Filter WK monthly estimates to current month only
       if(e.brand==="Wettermark Keith"&&WK_MONTHLY_NUMS.has(e.num)&&e.num!==currentWkEst)return false;
       return true;
     });
-    const mkts=[...new Set(estimates.filter(e=>!tb||e.brand===tb).map(e=>e.market))].sort();
-    const mediaTypes=[...new Set(estimates.filter(e=>(!tb||e.brand===tb)&&(!tm||e.market===tm)).map(e=>e.media))].sort();
+    const mkts=[...new Set(estimates.filter(e=>e.brand===tb).map(e=>e.market))].sort();
+    const mediaTypes=[...new Set(estimates.filter(e=>e.brand===tb&&(!tm||e.market===tm)).map(e=>e.media))].sort();
     const estKey=(e)=>e.num+"|"+e.market;
     const toggleCombine=(e)=>setCombineSet(p=>{const k=estKey(e);return p.includes(k)?p.filter(n=>n!==k):[...p,k]});
     const combineEsts=brandEsts.filter(e=>combineSet.includes(estKey(e)));
@@ -1765,18 +1769,18 @@ const App=()=>{
         <select value={workMonth} onChange={e=>setWorkMonth(e.target.value)} style={{padding:"4px 8px",borderRadius:5,border:"2px solid #4AC8E8",fontSize:13,fontWeight:700,color:"#4AC8E8",background:"rgba(37,99,235,.15)"}}>{CALENDAR.map(c=><option key={c.month}>{c.month}</option>)}</select>
         {(()=>{const cm=CALENDAR.find(c=>c.month===workMonth);return cm?<span style={{fontSize:13,color:"#9B8EAD"}}>Flight: {fD(cm.bcStart)} – {fD(cm.bcEnd)} · Rotation due: {fD(cm.rotDue)}</span>:null})()}
       </div>
+      <BrandTabs value={tb} onChange={setTb} counts={trafBrandCounts}/>
       <div style={{display:"flex",gap:5,alignItems:"center"}}>
-        <Sel label="Brand" options={BRANDS.map(b=>({v:b.name,l:b.name}))} value={tb} onChange={setTb} placeholder="All"/>
         <Sel label="Market" options={mkts} value={tm} onChange={setTm} placeholder="All"/>
         <Sel label="Media" options={mediaTypes} value={tMedia} onChange={setTMedia} placeholder="All"/>
-        {(tb||tm||tMedia)&&<Btn small onClick={()=>{setTb("");setTm("");setTMedia("")}}>Clear</Btn>}
+        {(tm||tMedia)&&<Btn small onClick={()=>{setTm("");setTMedia("")}}>Clear</Btn>}
         <div style={{marginLeft:"auto"}}>{combineMode?<div style={{display:"flex",gap:4,alignItems:"center"}}>
           <span style={{fontSize:13,fontWeight:600,color:canCombine?"#5BC4A0":"#D4A040"}}>{combineSet.length} selected{!canCombine&&combineSet.length>=2?" (must be same DMA + brand)":""}</span>
           <Btn small primary disabled={!canCombine} onClick={launchCombined}>Combine & Build</Btn>
           <Btn small onClick={()=>{setCombineMode(false);setCombineSet([])}}>Cancel</Btn>
         </div>:<Btn small onClick={()=>setCombineMode(true)}>⊕ Combine Estimates</Btn>}</div>
       </div>
-      <Cd><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>{combineMode&&<TH w="30">✓</TH>}<STH tbl="traf" col="num">Est#</STH><STH tbl="traf" col="brand">Brand</STH><STH tbl="traf" col="market">Market</STH><STH tbl="traf" col="media">Media</STH><STH tbl="traf" col="group">Buy Type</STH><STH tbl="traf" col="buyer">Buyer</STH><TH>Stations</TH><TH>ISCIs</TH><TH>Airing</TH><TH>Confirmed</TH><TH>Action</TH></tr></thead>
+      <Cd><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>{combineMode&&<TH w="30">✓</TH>}<STH tbl="traf" col="num">Est#</STH><STH tbl="traf" col="market">Market</STH><STH tbl="traf" col="media">Media</STH><STH tbl="traf" col="group">Buy Type</STH><STH tbl="traf" col="buyer">Buyer</STH><TH>Stations</TH><TH>ISCIs</TH><TH>Airing</TH><TH>Confirmed</TH><TH>Action</TH></tr></thead>
         <tbody>{sortRows("traf",brandEsts,{num:r=>r.num,brand:r=>r.brand,market:r=>r.market,media:r=>r.media,group:r=>r.group||"",buyer:r=>r.buyer||""}).map(e=>{
           const dc=normMkt(e.market)||"";
           const mi=iscis.filter(i=>i.dma===dc&&i.brand===e.brand&&i.active&&(e.media==="TV"||e.media==="Cable"?i.suffix==="T":e.media==="Radio"?i.suffix==="R":e.media==="Streaming Audio"?i.suffix==="S":e.media==="OOH"?i.suffix==="O":e.media==="Digital"?i.suffix==="D":e.media==="Display"?i.suffix==="B":true));
@@ -1786,7 +1790,7 @@ const App=()=>{
           const conf=getConfirmed(ak(e));const sentStas=airing?.stations||[];const confCount=sentStas.filter(c=>conf[c]?.confirmed).length;const totalSent=sentStas.length;
           return<tr key={e.num+e.brand+e.market} style={{background:isSel?"#1f2540":""}}>
             {combineMode&&<TD a="center"><input type="checkbox" checked={isSel} onChange={()=>toggleCombine(e)}/></TD>}
-            <TD m b>{e.num}</TD><TD><B l={e.brand} c={e.brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK")}/></TD><TD b>{e.market}</TD><TD><B l={e.media} c={mc(e.media)}/></TD><TD>{e.group}</TD><TD>{e.buyer}</TD>
+            <TD m b>{e.num}</TD><TD b>{e.market}</TD><TD><B l={e.media} c={mc(e.media)}/></TD><TD>{e.group}</TD><TD>{e.buyer}</TD>
             <TD a="center" b c={linkedSta.length?"#059669":"#E85A7A"}><span title={linkedSta.map(s=>s.call).join(", ")} style={{cursor:"help"}}>{linkedSta.length}</span></TD>
             <TD a="center" b c={mi.length?"#4AC8E8":"#E85A7A"}>{mi.length}</TD>
             <TD a="center">{airing?<span title={`v${airing.version} · ${airing.iscis.length} ISCIs · ${airing.month}`} style={{cursor:"help",fontSize:13,padding:"2px 5px",borderRadius:8,background:"#dcfce7",color:"#5BC4A0",fontWeight:600}}>v{airing.version}</span>:<span style={{fontSize:13,color:"#9B8EAD"}}>—</span>}</TD>
