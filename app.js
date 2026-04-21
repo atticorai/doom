@@ -5139,7 +5139,24 @@ ${fullText.substring(0,3000)}`}]
     const brandMonths=(()=>{const raw=[...new Set(brandData.map(h=>h.month))].filter(Boolean);return raw.sort((a,b)=>{const ai=MO_NAMES.indexOf(a),bi=MO_NAMES.indexOf(b);return bi-ai})})();
     const brandMedias=(()=>{const raw=[...new Set(brandData.map(h=>h.media))];return raw.sort((a,b)=>(MEDIA_ORDER.indexOf(a)===-1?99:MEDIA_ORDER.indexOf(a))-(MEDIA_ORDER.indexOf(b)===-1?99:MEDIA_ORDER.indexOf(b)))})();
     const now2=new Date();const archCutoff=new Date(now2.getFullYear(),now2.getMonth()-2,1);
-    const isArch=(h)=>!h.ts||new Date(h.ts)<archCutoff;
+    // Archive by the record's broadcast month, not its timestamp. Imports get
+    // a fresh ts, so a Dec 2025 record imported today would never archive if
+    // we trusted ts. Year is inferred from month name + today's date: a month
+    // more than two ahead of the current month is assumed to be last year.
+    const monthToDate=(h)=>{
+      if(h.month){
+        const parts=String(h.month).trim().split(/\s+/);
+        const idx=MO_NAMES.indexOf(parts[0]);
+        if(idx>=0){
+          const parsedYear=parseInt(parts[1]);
+          const curIdx=now2.getMonth();const curYear=now2.getFullYear();
+          const year=!isNaN(parsedYear)?parsedYear:(idx>curIdx+2?curYear-1:curYear);
+          return new Date(year,idx,1);
+        }
+      }
+      return h.ts?new Date(h.ts):null;
+    };
+    const isArch=(h)=>{const d=monthToDate(h);return d?d<archCutoff:true;};
     const archivedCount=brandData.filter(h=>isArch(h)).length;
     const visData=showArchived?brandData:brandData.filter(h=>!isArch(h));
     const searched=libSearch.trim()?visData.filter(h=>{const q=libSearch.toLowerCase();const mName=(DM[h.market]||h.market).toLowerCase();return(h.market||"").toLowerCase().includes(q)||mName.includes(q)||(h.media||"").toLowerCase().includes(q)||(h.est||"").toLowerCase().includes(q)||(h.buyer||"").toLowerCase().includes(q)||(h.month||"").toLowerCase().includes(q)||(h.iscis||[]).some(r=>(r.code||"").toLowerCase().includes(q)||(r.title||"").toLowerCase().includes(q))}):visData;
