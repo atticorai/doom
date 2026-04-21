@@ -670,6 +670,16 @@ const App=()=>{
           // Always add back missing seed ISCIs — better to recover than lose
           const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||"")));
           const all=[...enhanced,...missing];
+          // Assign WK categories and VO directly — not through merge, just do it
+          all.forEach(i=>{if(i.brand!=="Wettermark Keith")return;const t=(i.title||"").toLowerCase();
+            if(/on.?the.?job|working man/i.test(t))i.category=i.caseType="Workers Comp";
+            else if(/car wreck|auto accident|mother.?s wreck|distracted|cell phone/i.test(t))i.category=i.caseType="Auto Accidents";
+            else if(/trucking|commercial vehicle|commercial accident/i.test(t))i.category=i.caseType="Trucking/Commercial";
+            else if(/premise|premises/i.test(t))i.category=i.caseType="Premises Liability";
+            else if(/christmas|thanksgiving|holiday|happy/i.test(t))i.category=i.caseType="Holiday/Seasonal";
+            else i.category=i.caseType="Brand";
+            if(!i.vo)i.vo="Chris Keith";
+          });
           if(missing.length>0)console.warn("ISCI RESTORE: "+missing.length+" seed ISCIs were missing from Firestore — restored");
           console.log("ISCI load: "+enhanced.length+" from Firestore + "+missing.length+" restored = "+all.length+" total");
           setIscis(all);isciFbCountRef.current=all.length;iscisLoadedRef.current=true
