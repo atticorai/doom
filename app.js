@@ -737,12 +737,16 @@ const App=()=>{
                 h.iscis=withPct;trafficIsciFixed++;
               }
             }
-            // Fix boolean bookend values only (display fix, doesn't remove ISCIs or touch sched)
-            if(h.iscis){h.iscis.forEach(r=>{
-              if(r.bookend===true||r.bookend===false||r.bookend==="true"||r.bookend==="false"){r.bookend=""}
-            })}
+            // Fix boolean bookends and bare letter schedules (same bad import data as seed)
+            if(h.iscis){let fixed=false;h.iscis.forEach(r=>{
+              if(r.bookend===true&&(r.sched==="A"||r.sched==="B"||r.sched==="C"||r.sched==="D")){r.bookend="Bookend :"+r.dur+" "+r.sched;r.sched="All Week";fixed=true}
+              else if(r.bookend===true){r.bookend="";fixed=true}
+              else if(r.bookend===false){r.bookend="";if(!r.sched)r.sched="All Week";fixed=true}
+              else if(r.bookend==="true"||r.bookend==="false"){r.bookend="";fixed=true}
+              if(r.sched==="A"||r.sched==="B"||r.sched==="C"||r.sched==="D"){r.bookend="Bookend :"+r.dur+" "+r.sched;r.sched="All Week";fixed=true}
+            });if(fixed)trafficIsciFixed++}
           });
-          if(trafficIsciFixed>0){console.warn("WK Radio cleanup: fixed "+trafficIsciFixed+" records");try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){console.warn("Cleanup save failed:",e)}}
+          if(trafficIsciFixed>0){console.warn("Traffic data fix: corrected bookend/sched values in "+trafficIsciFixed+" records");try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){console.warn("Fix save failed:",e)}}
           // Recovery: check backup for records with more ISCIs (NOT April — April stays as-is)
           try{const backupDoc=await db.collection("appData").doc("trafficHistory_backup").get();
             if(backupDoc.exists){const backup=JSON.parse(backupDoc.data().data||"[]");let restored=0;
