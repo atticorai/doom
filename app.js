@@ -783,7 +783,15 @@ const App=()=>{
           const hasPLAprilOohMsp=cleaned.some(h=>h.brand==="Postman Law"&&h.market==="MSP"&&h.media==="OOH"&&h.month==="April"&&h.isOoh);
           if(!hasPLAprilOohMsp){PL_APRIL_SEED.push({ts:"2026-03-25T12:00:00.000Z",est:"OOH-MSP-PL",brand:"Postman Law",market:"MSP",media:"OOH",buyer:"Ken Lazar",month:"April",flight:"3/30",version:"1",comments:"V1 MSP Digital Bulletins | Vendor: Wilkins Media",combined:false,iscis:[{code:"MSPPL26DB001O",title:"PL Digital Bulletin - 208x720 - MSP - Cityscape - MinneapolisIA",dur:"",pct:"33",sched:"All Week",bookend:"",units:"1"},{code:"MSPPL26DB002O",title:"PL Digital Bulletin - 208x720 - MSP - MascotTriangle - MinneapolisIA",dur:"",pct:"33",sched:"All Week",bookend:"",units:"1"},{code:"MSPPL26DB003O",title:"PL Digital Bulletin - 208x720 - MSP - MascotTriangle - MinneapolisIALogo",dur:"",pct:"34",sched:"All Week",bookend:"",units:"1"}],stations:[],status:"sent",isOoh:true,totalUnits:3,vendor:"Wilkins Media",isRevision:false,prevVersion:null})}
           if(PL_APRIL_SEED.length>0)console.warn("PL April seed: restored "+PL_APRIL_SEED.length+" traffic records");
-          const final=[...PL_APRIL_SEED,...cleaned];
+          // Restore missing seed traffic records (pre-April history)
+          // Same logic as ISCI restore: if seed record not in Firestore, add it back
+          const seedTraffic=typeof TRAFFIC_HISTORY_INIT!=="undefined"?TRAFFIC_HISTORY_INIT:[];
+          let restoredSeed=0;
+          const missingFromSeed=seedTraffic.filter(seed=>{
+            return!cleaned.some(h=>h.brand===seed.brand&&h.est===seed.est&&h.market===seed.market&&h.month===seed.month&&h.media===seed.media);
+          });
+          if(missingFromSeed.length>0){console.warn("Traffic seed restore: "+missingFromSeed.length+" records missing from Firestore — restoring");restoredSeed=missingFromSeed.length}
+          const final=[...PL_APRIL_SEED,...missingFromSeed,...cleaned];
           setTrafficHistory(final);trafficFbCountRef.current=final.length
         }trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
         if(docs.workMonth?.data)setWorkMonth(JSON.parse(docs.workMonth.data));
