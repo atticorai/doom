@@ -670,8 +670,11 @@ const App=()=>{
           // Always add back missing seed ISCIs — better to recover than lose
           const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||"")));
           const all=[...enhanced,...missing];
-          // Assign WK categories and VO directly — not through merge, just do it
-          all.forEach(i=>{if(i.brand!=="Wettermark Keith")return;const t=(i.title||"").toLowerCase();
+          // Assign WK categories and VO — only if empty or generic. User edits stick.
+          const GENERIC=new Set(["","Personal Injury (General)","—"]);
+          all.forEach(i=>{if(i.brand!=="Wettermark Keith")return;
+            if(!GENERIC.has(i.category||""))return; // User already set a specific category — leave it
+            const t=(i.title||"").toLowerCase();
             if(/on.?the.?job|working man/i.test(t))i.category=i.caseType="Workers Comp";
             else if(/car wreck|auto accident|mother.?s wreck|distracted|cell phone/i.test(t))i.category=i.caseType="Auto Accidents";
             else if(/trucking|commercial vehicle|commercial accident/i.test(t))i.category=i.caseType="Trucking/Commercial";
