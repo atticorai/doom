@@ -727,10 +727,13 @@ const App=()=>{
           });
           const removedCount=d.length-cleaned.length;
           if(removedCount>0)console.warn("Traffic cleanup: removed "+removedCount+" bad PL April copied records");
-          // One-time cleanup: WK Radio traffic records only — remove ISCIs without rotation %
-          // PL records are left alone (imported PL traffic may legitimately lack pct values)
+          // ═══ APRIL IS UNTOUCHABLE — both brands ═══
+          // No cleanup, no modification, no stripping of any April record.
+          // One-time cleanup: WK Radio traffic records only (NOT April) — remove ISCIs without rotation %
+          // PL records are left alone entirely
           let trafficIsciFixed=0;
           cleaned.forEach(h=>{
+            if(h.month==="April")return; // NEVER TOUCH APRIL
             if(h.brand==="Wettermark Keith"&&h.media==="Radio"&&h.iscis&&h.iscis.length>0){
               const withPct=h.iscis.filter(r=>r.pct&&parseFloat(r.pct)>0);
               if(withPct.length>0&&withPct.length<h.iscis.length){
@@ -739,26 +742,27 @@ const App=()=>{
                 h.iscis=withPct;trafficIsciFixed++;
               }
             }
-            // Fix truncated bookend labels and boolean bookends (all brands)
+            // Fix truncated bookend labels and boolean bookends (all brands, NOT April)
             if(h.iscis){h.iscis.forEach(r=>{
               if(r.bookend&&typeof r.bookend==="string"&&/^:\d{2}\s+[A-D]$/.test(r.bookend)){r.bookend="Bookend "+r.bookend}
               if(r.bookend===true||r.bookend===false||r.bookend==="true"||r.bookend==="false"){r.bookend=""}
             })}
           });
           if(trafficIsciFixed>0){console.warn("WK Radio cleanup: fixed "+trafficIsciFixed+" records");try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){console.warn("Cleanup save failed:",e)}}
-          // Recovery: check backup for PL records with more ISCIs (in case cleanup stripped them)
+          // Recovery: check backup for records with more ISCIs (NOT April — April stays as-is)
           try{const backupDoc=await db.collection("appData").doc("trafficHistory_backup").get();
             if(backupDoc.exists){const backup=JSON.parse(backupDoc.data().data||"[]");let restored=0;
               cleaned.forEach(h=>{
-                if(h.brand==="Postman Law"&&h.iscis){
+                if(h.month==="April")return; // NEVER TOUCH APRIL
+                if(h.iscis){
                   const match=backup.find(b=>b.brand===h.brand&&b.est===h.est&&b.market===h.market&&b.month===h.month&&b.media===h.media);
                   if(match&&match.iscis&&match.iscis.length>h.iscis.length){
-                    console.warn("PL recovery: "+h.market+" "+h.media+" "+h.month+" — restoring "+match.iscis.length+" ISCIs (had "+h.iscis.length+")");
+                    console.warn("Recovery: "+h.brand+" "+h.market+" "+h.media+" "+h.month+" — restoring "+match.iscis.length+" ISCIs (had "+h.iscis.length+")");
                     h.iscis=match.iscis;restored++;
                   }
                 }
               });
-              if(restored>0){console.warn("PL recovery: restored "+restored+" records from backup");try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){}}
+              if(restored>0){console.warn("Recovery: restored "+restored+" records from backup");try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(cleaned),ts:Date.now()})}catch(e){}}
             }
           }catch(e){console.warn("Backup read failed:",e)}
           // One-time: seed PL April TV + Radio traffic if missing after cleanup
