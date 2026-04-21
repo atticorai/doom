@@ -5378,35 +5378,7 @@ ${fullText.substring(0,3000)}`}]
           <span style={{fontSize:13,color:"#9B8EAD"}}>{searched.length} shown</span>
         </div>
       </Cd>
-      {/* ═══ SUMMARY CARDS — per market, coverage across ALL months ═══ */}
-      {(()=>{
-        // Normalize: multi-market records (like "Birmingham / Huntsville / ...") count as coverage for each individual market
-        const expandedMedia=[];
-        searched.forEach(h=>{
-          const mkts=(h.market||"").includes("/")?h.market.split("/").map(s=>s.trim()):[(normMkt(h.market)||h.market)];
-          mkts.forEach(m=>{if(m)expandedMedia.push({market:m,month:h.month,media:h.media})});
-        });
-        const allBrandMkts=[...new Set(expandedMedia.map(e=>e.market))].filter(m=>!m.includes("/")).sort();
-        const visMonths=brandMonths.filter(mo=>searched.some(h=>h.month===mo));
-        const allBrandMedias=(()=>{const raw=[...new Set(searched.map(h=>h.media))];return raw.sort((a,b)=>(MEDIA_ORDER.indexOf(a)===-1?99:MEDIA_ORDER.indexOf(a))-(MEDIA_ORDER.indexOf(b)===-1?99:MEDIA_ORDER.indexOf(b)))})();
-        return<div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
-          {allBrandMkts.map(m=>{
-            return<Cd key={m} style={{padding:"10px 14px",flex:"1 1 180px",minWidth:180,borderLeft:"3px solid "+(MC[m]||"#64748b")}}>
-              <div style={{fontSize:15,fontWeight:800,color:MC[m]||"#E8DFF0",marginBottom:4}}>{DM[m]||m}</div>
-              {visMonths.map(mo=>{
-                const mediaHave=[...new Set(expandedMedia.filter(e=>e.market===m&&e.month===mo).map(e=>e.media))];
-                if(!mediaHave.length)return null;
-                return<div key={mo} style={{marginBottom:4,paddingBottom:4,borderBottom:"1px solid #2d1f42"}}>
-                  <div style={{fontSize:11,fontWeight:700,color:"#E8DFF0"}}>{mo}</div>
-                  <div style={{display:"flex",gap:3,flexWrap:"wrap",marginTop:2}}>
-                    {allBrandMedias.map(med=>{const has=mediaHave.includes(med);return<span key={med} style={{fontSize:10,padding:"1px 4px",borderRadius:3,background:has?"rgba(74,222,128,.15)":"rgba(248,113,113,.15)",color:has?"#5BC4A0":"#E85A7A",fontWeight:600}}>{has?"✓":"✗"} {med}</span>})}
-                  </div>
-                </div>
-              })}
-            </Cd>
-          })}
-        </div>
-      })()}
+      {/* Summary cards removed — Traffic Tracker page owns coverage tracking. */}
       {/* ═══ TRAFFIC LIST — by month > media type > market ═══ */}
       {brandMonths.filter(mo=>searched.some(h=>h.month===mo)).map(mo=>{
         const moData=searched.filter(h=>h.month===mo);
@@ -6561,7 +6533,7 @@ Be direct and actionable. No generic advice.`;
     </div>,damageEffects:<>{<BookDroolStain style={{top:"35%",right:12,width:72,height:72,opacity:.2}}/>}{<BookLipstickMark style={{bottom:32,left:24,opacity:.4,transform:"rotate(-15deg) scale(.85)"}}/>}</>},
 
     {title:"Using the Traffic Library",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <p>The Library archives every rotation ever built. Use brand tabs to switch between PL and WK. Each market shows a summary card with green checks (sent) and red X marks (missing) per month.</p>
+      <p>The Library archives every rotation ever built. Use brand tabs to switch between PL and WK. Coverage tracking (green checks / red X's per market × month) lives on the Traffic Tracker page.</p>
       <p>Click any rotation to re-send it — a confirmation dialog shows all details first. Stations are looked up fresh, grouped by ownership, same rules as the Traffic Center.</p>
       <BookMarginNote author="meg">I remember every version. Every mistake.</BookMarginNote>
     </div>,damageEffects:<>{<BookHoofMark style={{bottom:16,left:16,opacity:.3,transform:"rotate(15deg) scale(.7)"}}/>}</>},
