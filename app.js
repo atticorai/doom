@@ -825,9 +825,13 @@ const App=()=>{
   const estimatesLoadedRef=React.useRef(false);
   const trafficLoadedRef=React.useRef(false);
 
-  // Backup before save — keeps last known good state
+  // Backup before save — keeps last known good state in localStorage (no Firestore permissions needed)
   const backupBeforeSave=(collection,data)=>{
-    try{db.collection("appData").doc(collection+"_backup").set({data:JSON.stringify(data),ts:Date.now(),backupOf:collection})}catch(e){console.warn("Backup failed for "+collection)}
+    try{
+      localStorage.setItem("doom_backup_"+collection,JSON.stringify({data:JSON.stringify(data),ts:Date.now()}));
+      // Also try Firestore backup (may fail depending on rules — that's OK)
+      db.collection("appData").doc(collection+"_backup").set({data:JSON.stringify(data),ts:Date.now(),backupOf:collection}).catch(()=>{});
+    }catch(e){}
   };
 
   // Safe save with drop guard (blocks if count drops >20% from loaded count)
