@@ -6030,18 +6030,15 @@ Be direct and actionable. No generic advice.`;
     </div>};
 
   // ── DOCS / HELP PAGE — BOOK TOME UI ─────────────────────────────────
-  // Framer Motion + Tailwind powered book
-  const FM=window.FramerMotion||{};
+  // Framer Motion is loaded as ESM before this file ever runs (see index.html
+  // importmap + framer-ready promise). If that load fails, app.js never runs,
+  // so we can bind directly without fallbacks — per "no CSS fallbacks".
+  const FM=window.FramerMotion;
   const fmMotion=FM.motion;
   const AnimatePresence=FM.AnimatePresence;
-  const hasFM=!!fmMotion;
-
-  // Smart wrapper: use Framer Motion when available, strip FM props and apply CSS fallbacks when not
-  const fmProps=["animate","initial","exit","transition","whileHover","whileTap","whileInView","variants","layout","layoutId","onAnimationComplete"];
-  const stripFM=(props)=>{const clean={};for(const k in props){if(!fmProps.includes(k))clean[k]=props[k]}return clean};
-  const MDiv=hasFM?fmMotion.div:React.forwardRef((props,ref)=>React.createElement("div",{...stripFM(props),ref}));
-  const MSpan=hasFM?fmMotion.span:React.forwardRef((props,ref)=>React.createElement("span",{...stripFM(props),ref}));
-  const MBtn=hasFM?fmMotion.button:React.forwardRef((props,ref)=>React.createElement("button",{...stripFM(props),ref}));
+  const MDiv=fmMotion.div;
+  const MSpan=fmMotion.span;
+  const MBtn=fmMotion.button;
   const M=MDiv;
   const MButton=MBtn;
 
@@ -6366,7 +6363,7 @@ Be direct and actionable. No generic advice.`;
     const handleCoverClick=()=>{if(isLocked)return;currentLeaf===0?handleNext():handlePrev()};
     const isOpen=currentLeaf>0;
     const isFullyFlipped=currentLeaf>=totalLeaves;
-    const AP=AnimatePresence||React.Fragment;
+    const AP=AnimatePresence;
     const getVisText=()=>{
       if(currentLeaf===0)return"";if(currentLeaf>pairedLeaves.length)return"End";
       if(currentLeaf===1)return`Page 1 of ${bookPages.length}`;
@@ -6739,19 +6736,21 @@ Be direct and actionable. No generic advice.`;
       <div style={{padding:"10px 12px",borderTop:"1px solid rgba(212,160,64,.1)",fontSize:12,color:"#6B5E80"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,color:"#D4A040",letterSpacing:1}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #4a3565",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#9B8EAD",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:"#5BC4A0"}}>Synced {Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago"}</span>}</div></div>
     </div>
     <div style={{flex:1,overflowY:"auto",padding:16}}>
-      <div>
-      {pg==="dash"&&<Dash/>}
-      {pg==="traf"&&<TrafPg/>}
-      {pg==="tracker"&&<TrackerPg/>}
-      {pg==="isci"&&IsciPg()}
-      {pg==="est"&&<EstPg/>}
-      {pg==="sta"&&<StaPg/>}
-      {pg==="metrics"&&<MetricsPg/>}
-      {pg==="library"&&LibraryPg()}
-      {pg==="planner"&&PlannerPg()}
-      {pg==="notif"&&pages["notif"]}
-      {pg==="docs"&&<DocsPg/>}
-      </div>
+      <AnimatePresence mode="wait" initial={false}>
+        <MDiv key={pg} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}} transition={{duration:0.22,ease:[0.4,0,0.2,1]}}>
+          {pg==="dash"&&<Dash/>}
+          {pg==="traf"&&<TrafPg/>}
+          {pg==="tracker"&&<TrackerPg/>}
+          {pg==="isci"&&IsciPg()}
+          {pg==="est"&&<EstPg/>}
+          {pg==="sta"&&<StaPg/>}
+          {pg==="metrics"&&<MetricsPg/>}
+          {pg==="library"&&LibraryPg()}
+          {pg==="planner"&&PlannerPg()}
+          {pg==="notif"&&pages["notif"]}
+          {pg==="docs"&&<DocsPg/>}
+        </MDiv>
+      </AnimatePresence>
     </div>
     {(modal==="newIsci"||modal?.t==="newIsci")&&<NewIsciMod defaultMedia={modal?.defaultMedia||null}/>}
     {modal?.t==="buildRot"&&<RotBuilder est={modal.est} pool={modal.pool} workMonth={workMonth} _revise={modal._revise}/>}
