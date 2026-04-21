@@ -311,7 +311,10 @@ const DM_REV=Object.fromEntries(Object.entries(DM).flatMap(([c,n])=>[[n,c],[n.to
 // Normalize any market value (code or full name) to its 3-letter code
 const normMkt=(m)=>{if(!m)return"";const v=m.trim();if(DM[v])return v;const found=DM_REV[v]||DM_REV[v.toLowerCase()];if(found)return found;const entry=Object.entries(DM).find(([_,n])=>n.toLowerCase()===v.toLowerCase());return entry?entry[0]:v};
 const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
-// BRANDS defined in config.js with color, colorBg, agency, markets, airingKey
+// Brand helpers
+const getBrandColor=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.color:"#9B8EAD"};
+const getBrandBg=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.colorBg:"#F0E8F8"};
+const getBrandAgency=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.agency:"Atticor"};
 const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display"];const OOH_TYPES=[{code:"SB",name:"Static Billboard"},{code:"DB",name:"Digital Billboard"},{code:"SP",name:"Static Poster"},{code:"DP",name:"Digital Poster"},{code:"BS",name:"Bus Shelter"},{code:"WS",name:"Wallscape"},{code:"TR",name:"Transit"},{code:"SF",name:"Street Furniture"},{code:"JP",name:"Junior Poster"}];
 const DISPLAY_TYPES=[{code:"MR",name:"Medium Rectangle (300x250)"},{code:"LB",name:"Leaderboard (728x90)"},{code:"SQ",name:"Square (640x640)"},{code:"SK",name:"Skyscraper (300x600)"},{code:"MB",name:"Mobile Banner (320x50)"},{code:"WB",name:"Wide Banner (1280x100)"},{code:"SL",name:"Slim Banner (970x66)"},{code:"BN",name:"Banner (Generic)"}];
 const SUFFIXES={TV:"T",Radio:"R",Digital:"D","Streaming Audio":"S",OOH:"O",Cable:"T",Display:"B"};const OOH_SUFFIXES={SB:"O",DB:"O",SP:"O",DP:"O",BS:"O",WS:"O",TR:"O",SF:"O",JP:"O"};
