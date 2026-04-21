@@ -760,7 +760,7 @@ const App=()=>{
           if(PL_APRIL_SEED.length>0)console.warn("PL April seed: restored "+PL_APRIL_SEED.length+" traffic records");
           // Restore missing seed records (additive only — never removes or modifies existing)
           const seedTraffic=typeof TRAFFIC_HISTORY_INIT!=="undefined"?TRAFFIC_HISTORY_INIT:[];
-          const missingFromSeed=seedTraffic.filter(seed=>!d.some(h=>h.brand===seed.brand&&h.est===seed.est&&h.market===seed.market&&h.month===seed.month&&h.media===seed.media));
+          const missingFromSeed=seedTraffic.filter(seed=>!d.some(h=>h.brand===seed.brand&&h.est===seed.est&&(h.market===seed.market||(normMkt(h.market)||h.market)===(normMkt(seed.market)||seed.market))&&h.month===seed.month&&h.media===seed.media));
           if(missingFromSeed.length>0)console.warn("Seed restore: "+missingFromSeed.length+" records missing — adding back");
           const final=[...PL_APRIL_SEED,...missingFromSeed,...d];
           setTrafficHistory(final);trafficFbCountRef.current=final.length
