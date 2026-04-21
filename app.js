@@ -664,7 +664,8 @@ const App=()=>{
           const enhanced=cleaned.map(fb=>{
             const seed=seedMap.get(fb.code+"|"+(fb.dma||""));
             if(!seed)return fb; // User-added ISCI, keep as-is
-            return{...fb,title:fb.title||seed.title,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:seed.fileUrl||fb.fileUrl,category:fb.category||seed.category||seed.caseType||"",caseType:fb.caseType||seed.caseType||seed.category||"",vo:fb.vo||seed.vo||""};
+            const seedCat=seed.category||seed.caseType||"";const fbCat=fb.category||fb.caseType||"";const useSeedCat=seedCat&&(seedCat!=="Personal Injury (General)")&&(!fbCat||fbCat==="Personal Injury (General)"||fbCat==="—");
+            return{...fb,title:fb.title||seed.title,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:seed.fileUrl||fb.fileUrl,category:useSeedCat?seedCat:(fbCat||seedCat),caseType:useSeedCat?seedCat:(fbCat||seedCat),vo:fb.vo||seed.vo||""};
           });
           // Always add back missing seed ISCIs — better to recover than lose
           const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||"")));
