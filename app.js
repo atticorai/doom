@@ -720,20 +720,15 @@ const App=()=>{
           setNowAiring(cleanedAiring)}
         if(docs.auditLog?.data){const d=JSON.parse(docs.auditLog.data);if(d.length)setAuditLog(d)}
         if(docs.trafficHistory?.data){const d=JSON.parse(docs.trafficHistory.data);if(d.length){
-          // One-time cleanup: remove bad PL April records that were copied from March during Firestore recovery
-          const cleaned=d.filter(h=>{
-            if(h.brand==="Postman Law"&&h.month==="April"&&h.status==="copied"&&(h.statusNote||"").includes("March"))return false;
-            return true;
-          });
-          const removedCount=d.length-cleaned.length;
-          if(removedCount>0)console.warn("Traffic cleanup: removed "+removedCount+" bad PL April copied records");
-          // ═══ APRIL IS UNTOUCHABLE — both brands ═══
-          // No cleanup, no modification, no stripping of any April record.
-          // One-time cleanup: WK Radio traffic records only (NOT April) — remove ISCIs without rotation %
-          // PL records are left alone entirely
+          // ═══ RULES: NEVER delete records. NEVER touch April. NEVER strip PL ISCIs. ═══
+          // All traffic history is preserved as-is. Only two narrow fixes:
+          // 1. WK Radio non-April: strip ISCIs without rotation % (bad import data)
+          // 2. Boolean bookend cleanup: fix true/false → "" (display-only, all brands except April)
+          const cleaned=d; // NO RECORD DELETION — all history preserved
           let trafficIsciFixed=0;
           cleaned.forEach(h=>{
-            if(h.month==="April")return; // NEVER TOUCH APRIL
+            if(h.month==="April")return; // NEVER TOUCH APRIL — either brand
+            // WK Radio only: strip ISCIs without rotation % (the original problem)
             if(h.brand==="Wettermark Keith"&&h.media==="Radio"&&h.iscis&&h.iscis.length>0){
               const withPct=h.iscis.filter(r=>r.pct&&parseFloat(r.pct)>0);
               if(withPct.length>0&&withPct.length<h.iscis.length){
@@ -742,9 +737,8 @@ const App=()=>{
                 h.iscis=withPct;trafficIsciFixed++;
               }
             }
-            // Fix truncated bookend labels and boolean bookends (all brands, NOT April)
+            // Fix boolean bookend values only (display fix, doesn't remove ISCIs or touch sched)
             if(h.iscis){h.iscis.forEach(r=>{
-              if(r.bookend&&typeof r.bookend==="string"&&/^:\d{2}\s+[A-D]$/.test(r.bookend)){r.bookend="Bookend "+r.bookend}
               if(r.bookend===true||r.bookend===false||r.bookend==="true"||r.bookend==="false"){r.bookend=""}
             })}
           });
