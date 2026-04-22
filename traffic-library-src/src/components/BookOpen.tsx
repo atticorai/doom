@@ -22,101 +22,16 @@ interface BookOpenProps {
   light?: boolean;
 }
 function generateIsciRows(instruction: Instruction) {
-  // Real data path — when the host app passes iscisDetail, render exactly
-  // those ISCIs instead of synthesizing placeholder rows.
-  if (instruction.iscisDetail && instruction.iscisDetail.length) {
-    return instruction.iscisDetail.map((r) => ({
-      dates: r.sched || instruction.dateRange,
-      code: r.code + (r.title ? ' - ' + r.title : ''),
-      length: r.dur ? (r.dur.startsWith(':') ? r.dur : ':' + r.dur) : (r.units ? r.units + ' units' : ''),
-      pct: r.pct || '',
-      notes: r.bookend || r.sched || ''
-    }));
-  }
-  const MARKET_PREFIX: Record<string, string> = {
-    Chicago: 'CHI', Cincinnati: 'CIN', Denver: 'DEN', Minneapolis: 'MSP',
-    Birmingham: 'BRM', Huntsville: 'HSV', Knoxville: 'KNX', Chattanooga: 'CHA',
-    Montgomery: 'MTG', Dothan: 'DHN', Gadsden: 'GAD',
-  };
-  const prefix = MARKET_PREFIX[instruction.market] || 'XXX';
-  const brand = instruction.brand === 'Postman Law' ? 'PL' : 'WK';
-  if (instruction.mediaType === 'OOH') {
-    return [
-    {
-      dates: instruction.dateRange,
-      code: `${prefix}${brand}OOH001 - Billboard_Main`,
-      length: 'Static',
-      pct: '34%',
-      notes: 'All Week'
-    },
-    {
-      dates: instruction.dateRange,
-      code: `${prefix}${brand}OOH002 - Digital_Board`,
-      length: 'Digital',
-      pct: '33%',
-      notes: 'All Week'
-    },
-    {
-      dates: instruction.dateRange,
-      code: `${prefix}${brand}OOH003 - Transit_Shelter`,
-      length: 'Static',
-      pct: '33%',
-      notes: 'All Week'
-    }];
-
-  }
-  const isTV =
-  instruction.mediaType === 'TV' || instruction.mediaType === 'Cable';
-  const suffix = isTV ? 'T' : instruction.mediaType === 'Radio' ? 'R' : 'S';
-  const spots = [
-  {
-    name: 'Why Postman_60',
-    length: ':60',
-    pct: '50%'
-  },
-  {
-    name: 'Supreme Court_60',
-    length: ':60',
-    pct: '50%'
-  },
-  {
-    name: "Warren's Story_30",
-    length: ':30',
-    pct: '25%'
-  },
-  {
-    name: 'Local Lawyers_30',
-    length: ':30',
-    pct: '25%'
-  },
-  {
-    name: 'Legal Firepower_30',
-    length: ':30',
-    pct: '25%'
-  },
-  {
-    name: 'Justice & Representation_30',
-    length: ':30',
-    pct: '25%'
-  },
-  {
-    name: "Warren's Story_15",
-    length: ':15',
-    pct: '25%'
-  },
-  {
-    name: 'Local Lawyers_15',
-    length: ':15',
-    pct: '25%'
-  }];
-
-  const isciCount = parseInt(instruction.iscis) || 8;
-  return spots.slice(0, isciCount).map((spot, i) => ({
-    dates: instruction.dateRange,
-    code: `${prefix}${brand}${2660000 + i}${suffix} - ${spot.name}`,
-    length: spot.length,
-    pct: spot.pct,
-    notes: spot.length === ':15' ? ':15 A' : 'All Week'
+  // Render real ISCIs from the host app. No synthesized placeholder rows —
+  // if the record has no iscisDetail, show an empty state instead of fake
+  // "Supreme Court_60 / Local Lawyers_30" demo copy.
+  const detail = instruction.iscisDetail || [];
+  return detail.map((r) => ({
+    dates: r.sched || instruction.dateRange,
+    code: r.code + (r.title ? ' - ' + r.title : ''),
+    length: r.dur ? (r.dur.startsWith(':') ? r.dur : ':' + r.dur) : (r.units ? r.units + ' units' : ''),
+    pct: r.pct || '',
+    notes: r.bookend || r.sched || ''
   }));
 }
 export function BookOpen({
