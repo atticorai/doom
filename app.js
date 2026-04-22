@@ -5899,10 +5899,12 @@ Be direct and actionable. No generic advice. Every market recommendation must re
         return false;
       });
       if(!rec)return{status:"empty",est:null,rec:null};
-      if(rec.status==="sent")return{status:"sent",est:rec.est,rec};
+      // Any record in this slot counts as "sent" — the record only exists in
+      // Firestore because it was sent / imported / built and persisted.
+      // Granular statuses ("copied", "partial") still win if explicitly set.
       if(rec.status==="copied")return{status:"copied",est:rec.est,rec};
       if(rec.status==="partial")return{status:"partial",est:rec.est,rec};
-      return{status:"built",est:rec.est,rec};
+      return{status:"sent",est:rec.est,rec};
     };
     // Find estimate number for a market + buy type
     const getEst=(mkt,buyType)=>{
@@ -6898,7 +6900,9 @@ Be direct and actionable. No generic advice. Every market recommendation must re
             id:(h.ts?String(h.ts):"tmp")+"_"+i,
             historyIdx:i,
             brand:h.brand,
-            market:DM[h.market]||h.market,
+            // Strip ", STATE" suffix if the record came from a PDF parse that
+            // captured the full "Chicago, IL" label in the Market field.
+            market:((DM[h.market]||h.market)||"").split(",")[0].trim(),
             mediaType:h.media,
             month:parts[0]||h.month,
             estimate:h.est||"",
