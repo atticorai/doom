@@ -6690,35 +6690,7 @@ Be direct and actionable. No generic advice.`;
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
     {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#2d1f42",color:"#E8DFF0",padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.3)",zIndex:9999,border:"1px solid #4a3565"}}>{toast}</div>}
   </React.Fragment>;
-  return<React.Fragment>
-  {pg==="library"&&(()=>{
-    // Megara Traffic Library — full-viewport takeover. The library ships its
-    // own fixed inset-0 background layers, so we render it above everything
-    // instead of embedding it inside the normal sidebar/content layout.
-    // Real trafficHistory is mapped to the library's Instruction shape and
-    // pushed to window.MegaraLibraryData, which its trafficData.ts proxy reads.
-    const data=trafficHistory.map((h,i)=>({
-      id:(h.ts?String(h.ts):"tmp")+"_"+i,
-      brand:h.brand,
-      market:DM[h.market]||h.market,
-      mediaType:h.media,
-      month:h.month,
-      estimate:h.est||"",
-      version:h.version?("v"+h.version):"",
-      iscis:(h.iscis?.length||0)+" ISCIs"+(h.stations?.length?(" "+h.stations.length+" stations"):""),
-      dateRange:h.flight||"",
-      buyer:h.buyer||"",
-      status:h.status==="sent"?"sent":"pending",
-    }));
-    window.MegaraLibraryData=data;
-    const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");
-    const ML=window.MegaraLibrary;
-    return<div style={{position:"fixed",inset:0,zIndex:100}}>
-      <button onClick={()=>setPg("dash")} style={{position:"fixed",top:14,left:14,zIndex:200,padding:"8px 14px",borderRadius:8,border:"1px solid rgba(212,160,64,.4)",background:"rgba(30,18,51,.6)",backdropFilter:"blur(8px)",color:"#D4A040",fontSize:13,fontWeight:700,letterSpacing:.5,cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,.3)"}}>← Back to Doom</button>
-      {ML?React.createElement(ML,{key:libKey}):null}
-    </div>;
-  })()}
-  <div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",overflow:"hidden",visibility:pg==="library"?"hidden":"visible"}}>
+  return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",overflow:"hidden"}}>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
     <div style={{width:200,background:"linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
       <div style={{padding:"14px 12px 12px",borderBottom:"1px solid rgba(212,160,64,.15)"}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:36,height:36,borderRadius:8,background:"linear-gradient(135deg,#2d1f42,#1e1233)",border:"1.5px solid #D4A040",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 12px rgba(212,160,64,.15)"}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="url(#sflm)"/><defs><linearGradient id="sflm" x1="12" y1="3" x2="12" y2="22"><stop stopColor="#D4A040"/><stop offset=".5" stopColor="#C4A0C8"/><stop offset="1" stopColor="#9b7bb0"/></linearGradient></defs></svg></div><div><div style={{fontSize:15,fontWeight:800,color:"#D4A040",lineHeight:1,letterSpacing:1}}>ATTICOR</div><div style={{fontSize:7,color:"#9B8EAD",fontWeight:600,letterSpacing:1.5}}>DOOM & DELIVERABLES</div></div></div></div>
@@ -6753,10 +6725,33 @@ Be direct and actionable. No generic advice.`;
           {pg==="sta"&&<StaPg/>}
           {pg==="metrics"&&<MetricsPg/>}
           {pg==="library"&&(()=>{
-            // Library is rendered as a full-screen overlay below (outside this
-            // content frame) because its design uses fixed inset-0 background
-            // layers that need the whole viewport. This slot stays empty.
-            return null;
+            // Map trafficHistory → Library's Instruction shape and push to the
+            // window so the library's trafficData.ts Proxy picks it up live.
+            const data=trafficHistory.map((h,i)=>({
+              id:(h.ts?String(h.ts):"tmp")+"_"+i,
+              brand:h.brand,
+              market:DM[h.market]||h.market,
+              mediaType:h.media,
+              month:h.month,
+              estimate:h.est||"",
+              version:h.version?("v"+h.version):"",
+              iscis:(h.iscis?.length||0)+" ISCIs"+(h.stations?.length?(" "+h.stations.length+" stations"):""),
+              dateRange:h.flight||"",
+              buyer:h.buyer||"",
+              status:h.status==="sent"?"sent":"pending",
+            }));
+            window.MegaraLibraryData=data;
+            console.log("[MegaraLibrary] piped",data.length,"records from trafficHistory");
+            const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");
+            const ML=window.MegaraLibrary;
+            if(!ML)return null;
+            // The library uses `fixed inset-0` for its background/vignette/fog
+            // layers. A CSS transform on this wrapper creates a containing
+            // block, so those fixed children are bound to this frame instead
+            // of escaping to the viewport and covering the sidebar.
+            return<div style={{transform:"translateZ(0)",position:"relative",minHeight:"100%",margin:-16}}>
+              {React.createElement(ML,{key:libKey})}
+            </div>;
           })()}
           {pg==="planner"&&PlannerPg()}
           {pg==="notif"&&pages["notif"]}
@@ -6932,7 +6927,6 @@ Be direct and actionable. No generic advice.`;
       {uploadTracker.current&&uploadTracker.total&&<div style={{fontSize:11,color:"#94a3b8"}}>{uploadTracker.current}/{uploadTracker.total}</div>}
     </div>}
     {toast&&<div style={{position:"fixed",bottom:14,right:14,background:"linear-gradient(135deg,#2d1f42,#1e1233)",color:"#E8DFF0",padding:"10px 16px",borderRadius:8,fontSize:13,fontWeight:600,boxShadow:"0 8px 32px rgba(155,123,176,.2),0 0 1px rgba(196,160,200,.3)",zIndex:2e3,borderLeft:"3px solid #C4A0C8",maxWidth:400}}>{toast}</div>}
-  </div>
-  </React.Fragment>;
+  </div>;
 };
 ReactDOM.createRoot(document.getElementById('R')).render(<App/>);
