@@ -6903,11 +6903,50 @@ Be direct and actionable. No generic advice.`;
         // by name through window.MegaraLibraryActions, receiving the
         // instruction.historyIdx set on each record below.
         window.MegaraLibraryActions={
-          edit:(idx)=>{if(typeof idx==="number")setEditTrafficIdx(idx)},
-          view:(idx)=>{const h=trafficHistory[idx];if(!h)return;const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close()},
-          print:(idx)=>{const h=trafficHistory[idx];if(!h)return;const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close();w.focus();setTimeout(()=>w.print(),300)},
-          send:(idx)=>{const h=trafficHistory[idx];if(!h)return;notify("Resend runs through the Traffic Library list — open it from the side nav and hit ↻ Send on the record.")},
-          copyTo:(idx)=>{const h=trafficHistory[idx];if(!h)return;notify("Copy-to-month runs through the Traffic Library list — open it from the side nav.")},
+          edit:(idx)=>{if(typeof idx==="number"){setEditTrafficIdx(idx);notify("Edit Traffic — changes save back to Firestore")}},
+          view:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close()},
+          print:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close();w.focus();setTimeout(()=>w.print(),300)},
+          send:async(idx)=>{
+            const h=trafficHistory[idx];if(!h)return;
+            if(!confirm("Send traffic?\n\n"+h.brand+" · "+(DM[h.market]||h.market)+" · "+(h.media||"")+" · "+h.month+" · v"+(h.version||"1")+"\n"+(h.iscis||[]).length+" ISCIs\n\nThis will email all linked stations."))return;
+            const note=(prompt("Add a note to this email (optional):")||"").trim();
+            const sheetHtml=data[idx]?.sheetHtml||"";
+            let pdfB64="";try{const pdfUri=await generatePdfBase64(sheetHtml,h);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
+            const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+(h.market||"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
+            const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
+            const recipients=[...new Set(linkedStations.map(s=>s.contact).filter(Boolean).flatMap(c=>c.split(/[,;]\s*/)))].filter(Boolean);
+            if(!recipients.length){notify("No station email contacts found for this record — link stations in the Stations page first.");return}
+            const buyerCc=BUYER_EMAILS[h.buyer]||"";
+            const ccList=[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(",");
+            const confirmBase=window.location.href.split("?")[0];
+            let emailBody="Hello,<br><br>Please find the attached traffic instructions for "+(h.brand||"")+" — "+(h.market||"")+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br>";
+            if(note)emailBody+="<b>Note:</b> "+note+"<br><br>";
+            emailBody+="<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
+            emailBody+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmBase+'?confirm='+(h.est||"")+'&sta=resend&tok=auto" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager';
+            const subj=(h.brand||"")+" - Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+(h.market||"");
+            notify("Sending to "+recipients.length+" recipient"+(recipients.length===1?"":"s")+"...");
+            try{
+              const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients.join(","),cc:ccList,subject:subj,message:emailBody,pdfBase64:pdfB64,pdfName:pdfName})});
+              if(resp.ok){notify(doomPick(DOOM.send));log("Traffic Sent",h.brand+" "+h.market+" "+h.media+" "+h.month+" v"+(h.version||"1"))}
+              else throw new Error("n8n "+resp.status);
+            }catch(e){notify("Send failed: "+(e.message||e));console.error("Send failed:",e)}
+          },
+          copyTo:(idx)=>{
+            const h=trafficHistory[idx];if(!h)return;
+            const months=CALENDAR.map(c=>c.month);
+            const target=prompt("Copy this record to which month?\nOptions: "+months.join(", "));
+            if(!target)return;
+            const newMonth=months.find(m=>m.toLowerCase()===target.trim().toLowerCase());
+            if(!newMonth){notify("Unknown month: "+target);return}
+            if(newMonth===h.month){notify("Same month — nothing to copy");return}
+            let newEst=h.est;
+            if(h.brand==="Wettermark Keith"){const map={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};if(map[newMonth])newEst=map[newMonth]}
+            const cm=CALENDAR.find(c=>c.month===newMonth);const newFlight=cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):h.flight;
+            const copy={...h,ts:new Date().toISOString(),est:newEst,month:newMonth,flight:newFlight,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:"Copied from "+h.month};
+            setTrafficHistory(p=>[copy,...p]);
+            log("Traffic Copied",h.brand+" "+h.market+" "+h.media+" "+h.month+" → "+newMonth+" (Est "+newEst+")");
+            notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);
+          },
           delete:async(idx)=>{const h=trafficHistory[idx];if(!h)return;const pw=prompt("Admin password to delete traffic:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok){alert("Wrong password");return}if(!confirm("Delete "+h.brand+" "+h.market+" "+h.media+" "+h.month+"? This cannot be undone."))return;setTrafficHistory(p=>p.filter((_,j)=>j!==idx));log("Traffic Deleted",h.brand+" "+h.market+" "+h.media+" "+h.month);notify("Traffic deleted")},
         };
         console.log("[MegaraLibrary] piped",data.length,"records from trafficHistory");

@@ -66,7 +66,7 @@ export function BookOpen({
     const idx = (instruction as any)?.historyIdx;
     if (typeof actions[name] === 'function' && typeof idx === 'number') {
       actions[name](idx);
-      if (name === 'delete' || name === 'edit') onClose();
+      if (name === 'delete') onClose();
     }
   };
   return (

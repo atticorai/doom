@@ -1449,7 +1449,7 @@ function Ge({
     Ke(), i("send");
   }, i = (c) => {
     const m = typeof window < "u" && window.MegaraLibraryActions || {}, x = t == null ? void 0 : t.historyIdx;
-    typeof m[c] == "function" && typeof x == "number" && (m[c](x), (c === "delete" || c === "edit") && s());
+    typeof m[c] == "function" && typeof x == "number" && (m[c](x), c === "delete" && s());
   };
   return /* @__PURE__ */ e.jsx(W, { children: /* @__PURE__ */ e.jsx(
     "div",
