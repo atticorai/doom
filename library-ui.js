@@ -439,6 +439,21 @@ function Re({
         /* @__PURE__ */ e.jsxs(
           "button",
           {
+            onClick: () => {
+              const m = typeof window < "u" && window.MegaraLibraryActions || {};
+              typeof m.wipeBrand == "function" && m.wipeBrand(a);
+            },
+            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${c ? "bg-red-50 border-red-400 text-red-800 hover:bg-red-100" : "bg-red-900/30 border-red-500/50 text-red-300 hover:bg-red-900/50"}`,
+            title: `Wipe ALL ${a} traffic records from Firestore (nuclear option)`,
+            children: [
+              "☠ Wipe ",
+              a === "Postman Law" ? "PL" : "WK"
+            ]
+          }
+        ),
+        /* @__PURE__ */ e.jsxs(
+          "button",
+          {
             onClick: s,
             className: `ml-3 p-2.5 rounded-full transition-all relative group ${c ? "text-amber-600 hover:bg-amber-100 hover:shadow-[0_0_20px_4px_rgba(217,119,6,0.2)]" : "text-magic-gold hover:bg-white/10 hover:shadow-[0_0_20px_4px_rgba(255,215,0,0.3)]"}`,
             title: "Toggle Illumination",

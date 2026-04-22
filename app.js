@@ -6987,6 +6987,23 @@ Be direct and actionable. No generic advice. Every market recommendation must re
             notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);
           },
           delete:async(idx)=>{const h=trafficHistory[idx];if(!h)return;const pw=prompt("Admin password to delete traffic:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok){alert("Wrong password");return}if(!confirm("Delete "+h.brand+" "+h.market+" "+h.media+" "+h.month+"? This cannot be undone."))return;setTrafficHistory(p=>p.filter((_,j)=>j!==idx));log("Traffic Deleted",h.brand+" "+h.market+" "+h.media+" "+h.month);notify("Traffic deleted")},
+          wipeBrand:async(targetBrand)=>{
+            // Nuclear option — removes ALL trafficHistory records for one
+            // brand so the user can re-import cleanly. Admin-gated + double
+            // confirm. Does NOT touch the other brand.
+            const pw=prompt("Admin password — WIPE ALL "+targetBrand+" traffic records from Firestore:");
+            if(!pw)return;
+            const ok=await verifyAuth(pw,"admin");
+            if(!ok){alert("Wrong password");return}
+            const toRemove=trafficHistory.filter(h=>h.brand===targetBrand);
+            if(!toRemove.length){notify("No "+targetBrand+" records in Firestore.");return}
+            const months=[...new Set(toRemove.map(h=>h.month))].sort();
+            if(!confirm("DELETE ALL "+toRemove.length+" "+targetBrand+" records?\n\nMonths present: "+months.join(", ")+"\n\nThis cannot be undone. Re-import from PDFs after."))return;
+            if(!confirm("Really delete ALL "+targetBrand+" traffic? Type-of-action: WIPE. Cannot be undone."))return;
+            setTrafficHistory(p=>p.filter(h=>h.brand!==targetBrand));
+            log("Brand Wipe",targetBrand+" — "+toRemove.length+" records removed");
+            notify("Wiped "+toRemove.length+" "+targetBrand+" records. Import fresh now.");
+          },
           cleanPlaceholders:async()=>{
             const pw=prompt("Admin password — clean Claude-injected placeholders out of Firestore:");
             if(!pw)return;

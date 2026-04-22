@@ -108,6 +108,15 @@ export function LibraryHeader({
             title="Remove Claude-injected placeholder traffic records from Firestore">
             🧹 Clean Placeholders
           </button>
+          <button
+            onClick={() => {
+              const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
+              if (typeof actions.wipeBrand === 'function') actions.wipeBrand(brand);
+            }}
+            className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'bg-red-50 border-red-400 text-red-800 hover:bg-red-100' : 'bg-red-900/30 border-red-500/50 text-red-300 hover:bg-red-900/50'}`}
+            title={`Wipe ALL ${brand} traffic records from Firestore (nuclear option)`}>
+            ☠ Wipe {brand === 'Postman Law' ? 'PL' : 'WK'}
+          </button>
 
           <button
             onClick={toggleTheme}
