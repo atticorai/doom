@@ -6872,36 +6872,9 @@ Be direct and actionable. No generic advice. Every market recommendation must re
           x+='</body></html>';
           return x;
         };
-        // Dedup per brand|market|media|month slot. Prefer records with
-        // status="sent" (the user actually sent/fixed those), then newest
-        // ts. This is why your hand-corrected records were getting buried
-        // by older auto-generated dupes for the same slot.
-        const _slotKey=(h)=>(h.brand||"")+"|"+((normMkt(h.market)||h.market)||"")+"|"+(h.media||"")+"|"+(h.month||"")+"|"+(h.isOoh?"OOH":"")+"|"+(h.vendor||"");
-        const _slotScore=(h)=>{
-          let s=0;
-          // Richer record wins — a curated WK January TV sheet has 20+
-          // ISCIs across multiple schedule groups; an auto-created or
-          // placeholder shell has a handful. Weight ISCI count heavily so
-          // the curated record always beats the stub for the same slot.
-          s+=(h.iscis||[]).length*50;
-          // Schedule-type variety is another curated signal (M-F / Weekend
-          // / Bookend / All Week vs. everything dumped in All Week).
-          const schedTypes=new Set((h.iscis||[]).map(r=>r.sched||"All Week"));
-          s+=schedTypes.size*100;
-          if(h.status==="sent")s+=500;
-          else if(h.status==="partial")s+=250;
-          else if(h.status==="imported")s+=100;
-          else if(h.status==="copied")s+=50;
-          if(h.ts){const t=new Date(h.ts).getTime();if(!isNaN(t))s+=Math.floor(t/1e9)}
-          return s;
-        };
-        const _slotBest=new Map();
-        trafficHistory.forEach((h,i)=>{
-          const k=_slotKey(h);
-          const prev=_slotBest.get(k);
-          if(!prev||_slotScore(h)>_slotScore(prev.h)){_slotBest.set(k,{h,i})}
-        });
-        const dedupedEntries=Array.from(_slotBest.values());
+        // No dedup — show every trafficHistory record, including duplicates
+        // and archived, so the correct stored version is always visible.
+        const dedupedEntries=trafficHistory.map((h,i)=>({h,i}));
         const data=dedupedEntries.map(({h,i})=>{
           const parts=String(h.month||"").trim().split(/\s+/);
           const monIdx=MO_LIB.indexOf(parts[0]);
