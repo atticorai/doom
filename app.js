@@ -5664,28 +5664,34 @@ PLANNING FOR: ${nextBroadcastMonth} (next broadcast month)
 
 All recommendations must be specific to the ${nextBroadcastMonth} broadcast month. Do NOT recommend holiday creative, New Year's content, or any seasonal themes that are not relevant to ${nextBroadcastMonth}. Think about what matters for PI advertising in ${MO_FULL[(curMoIdx+1)%12]}: spring driving season, motorcycle accidents, construction zone injuries, distracted driving awareness, prom/graduation season DUIs, etc — whatever is actually relevant to the upcoming month.
 
-Analyze the data and provide:
+Format: Respond with exactly SIX sections, each introduced by a line starting with "## " (two hash marks + space + section title). The client splits your response on that pattern to assign each section to one of the Muses, so the format is mandatory. Do not use any other top-level headings. Keep each section under 300 words so all six fit within max_tokens.
 
-1. STALENESS ANALYSIS: Which creatives have been running 2+ months and need rotation. Be specific — name the ISCI codes and markets.
+## Staleness Analysis
+Which creatives have been running 2+ months and need rotation. Be specific — name the ISCI codes and markets.
 
-2. COVERAGE GAPS: Which markets are missing media types or creative tags. What needs to be added for ${nextBroadcastMonth}.
+## Coverage Gaps
+Which markets are missing media types or creative tags. What needs to be added for ${nextBroadcastMonth}.
 
-3. CREATIVE MIX ANALYSIS: Analyze THREE dimensions: (a) Category distribution — are case types balanced? (b) Value Prop distribution — is the messaging varied enough? (c) VO distribution — is there enough voice variety? For PI attorneys, categories should cover: auto accidents, trucking, premises liability, brand awareness. Value props should mix: trust, results, local connection, expertise.
+## Creative Mix Analysis
+Analyze THREE dimensions: (a) Category distribution — are case types balanced? (b) Value Prop distribution — is the messaging varied enough? (c) VO distribution — is there enough voice variety? For PI attorneys, categories should cover: auto accidents, trucking, premises liability, brand awareness. Value props should mix: trust, results, local connection, expertise.
 
-4. TREND RECOMMENDATIONS: What PI advertising approaches are working RIGHT NOW in spring 2026? What should they lean into for ${nextBroadcastMonth} specifically?
+## Trend Recommendations
+What PI advertising approaches are working RIGHT NOW in spring 2026? What should they lean into for ${nextBroadcastMonth} specifically?
 
-5. MARKET-SPECIFIC RECOMMENDATIONS: The payload includes a marketProfiles object with climate, industries, local sports, seasonal accident drivers, and cultural notes for every market in this brand. Use those profiles. Each market gets its own paragraph that references the actual local context — e.g. "Knoxville: UT home games start September, plan DUI/crash creative cadence around Saturdays," or "Birmingham: spring tornado season disrupts I-65 commerce, lean into trucking/commercial-accident creative in ${nextBroadcastMonth}," or "Dothan: rural audience + agricultural commerce, farm-equipment-accident angle resonates more than urban-distracted-driving messaging." Don't copy the profile text — synthesize it into actionable market guidance.
+## Market-Specific Recommendations
+The payload includes a marketProfiles object with climate, industries, local sports, seasonal accident drivers, and cultural notes for every market in this brand. Use those profiles. Each market gets its own short paragraph that references the actual local context — e.g. "Knoxville: UT home games start September, plan DUI/crash creative cadence around Saturdays." Don't copy the profile text — synthesize it into actionable market guidance.
 
-6. ${nextBroadcastMonth.toUpperCase()} ROTATION PLAN: For each market, recommend the specific rotation — which ISCIs to keep, which to swap out, and what new creative types to produce. Use actual ISCI codes and market codes. Ground each market's recommendation in that market's profile (climate, sports calendar, local industries, typical PI drivers) so the plan isn't interchangeable between markets.
+## ${nextBroadcastMonth} Rotation Plan
+For each market, recommend the specific rotation — which ISCIs to keep, which to swap out, and what new creative types to produce. Use actual ISCI codes and market codes. Ground each market's recommendation in that market's profile so the plan isn't interchangeable between markets.
 
-Be direct and actionable. No generic advice. Every market recommendation must reference something specific about that market.`;
+Be direct and actionable. No generic advice.`;
 
       const resp=await fetch("/api/planner",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
-          model:"claude-sonnet-4-20250514",
-          max_tokens:4000,
+          model:"claude-sonnet-4-6",
+          max_tokens:12000,
           system:systemPrompt,
           messages:[{role:"user",content:"Here is the current rotation data for "+brand+":\n\n"+dataPayload+"\n\nPlease analyze and provide your recommendations."}]
         })
