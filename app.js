@@ -674,12 +674,12 @@ const App=()=>{
           // Always add back missing seed ISCIs — better to recover than lose
           const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||"")));
           const all=[...enhanced,...missing];
-          // Assign WK categories and VO — only if empty or generic. User edits stick.
-          const GENERIC=new Set(["","Personal Injury (General)","—"]);
-          const WK_CAT_NAMES=new Set();
-          let anyWkTagged=false;
+          // WK titles self-describe the case type — just apply the rule on
+          // every WK ISCI, every load. VO = Chris Keith, always. No merging
+          // of stale names, no "user edits stick" guard for WK categories
+          // (old names were placeholders, not edits).
+          const WK_TARGET_CATS=["Workers Comp","Auto Accidents","Trucking/Commercial","Premises Liability","Holiday/Seasonal","Brand"];
           all.forEach(i=>{if(i.brand!=="Wettermark Keith")return;
-            if(!GENERIC.has(i.category||""))return; // User already set a specific category — leave it
             const t=(i.title||"").toLowerCase();
             if(/on.?the.?job|working man/i.test(t))i.category=i.caseType="Workers Comp";
             else if(/car wreck|auto accident|mother.?s wreck|distracted|cell phone/i.test(t))i.category=i.caseType="Auto Accidents";
@@ -687,24 +687,17 @@ const App=()=>{
             else if(/premise|premises/i.test(t))i.category=i.caseType="Premises Liability";
             else if(/christmas|thanksgiving|holiday|happy/i.test(t))i.category=i.caseType="Holiday/Seasonal";
             else i.category=i.caseType="Brand";
-            WK_CAT_NAMES.add(i.category);
-            if(!i.vo)i.vo="Chris Keith";
-            anyWkTagged=true;
+            i.vo="Chris Keith";
+            // WK has no Value Prop dimension — blank it if anything slipped in.
+            i.valueProp="";
           });
-          // Merge any auto-assigned names into customFields so the Category /
-          // VO dropdowns can actually show them as selected options. Without
-          // this, "Auto Accidents" gets assigned but the dropdown only lists
-          // "Car Wreck" / "Trucking" / etc. and the value renders as "—".
-          if(anyWkTagged){
-            setCustomFields(prev=>{
-              const wkPrev=prev["Wettermark Keith"]||{categories:[],valueProps:[],vos:[]};
-              const mergedCats=Array.from(new Set([...(wkPrev.categories||[]),...WK_CAT_NAMES]));
-              const mergedVos=Array.from(new Set([...(wkPrev.vos||[]),"Chris Keith"]));
-              const next={...prev,"Wettermark Keith":{...wkPrev,categories:mergedCats,vos:mergedVos}};
-              try{db.collection("appData").doc("customTags").set({data:JSON.stringify(next),ts:Date.now()}).catch(()=>{})}catch(e){}
-              return next;
-            });
-          }
+          // Replace WK customFields with the canonical set. No stale names,
+          // no empty Value Props section.
+          setCustomFields(prev=>{
+            const next={...prev,"Wettermark Keith":{categories:[...WK_TARGET_CATS],valueProps:[],vos:["Chris Keith"]}};
+            try{db.collection("appData").doc("customTags").set({data:JSON.stringify(next),ts:Date.now()}).catch(()=>{})}catch(e){}
+            return next;
+          });
           if(missing.length>0)console.warn("ISCI RESTORE: "+missing.length+" seed ISCIs were missing from Firestore — restored");
           console.log("ISCI load: "+enhanced.length+" from Firestore + "+missing.length+" restored = "+all.length+" total");
           // Save tagged ISCIs back to Firestore immediately
@@ -1624,8 +1617,9 @@ const App=()=>{
           <Btn small onClick={()=>{
             const wkCount=iscis.filter(i=>i.brand==="Wettermark Keith").length;
             if(!wkCount){notify("No WK ISCIs to re-tag");return}
-            if(!confirm("Re-run title-based tagging across all "+wkCount+" WK ISCIs? This overwrites the current Category (and fills empty VOs with Chris Keith). Intentional — use this when the auto-tag needs correcting."))return;
-            let changed=0;const seenCats=new Set();
+            if(!confirm("Re-tag all "+wkCount+" WK ISCIs by title? Replaces Category, sets VO = Chris Keith, clears Value Prop, and resets the WK dropdowns to exactly the 6 canonical case types."))return;
+            const WK_TARGET=["Workers Comp","Auto Accidents","Trucking/Commercial","Premises Liability","Holiday/Seasonal","Brand"];
+            let changed=0;
             setIscis(prev=>{
               const next=prev.map(i=>{
                 if(i.brand!=="Wettermark Keith")return i;
@@ -1637,30 +1631,25 @@ const App=()=>{
                 else if(/premise|premises/i.test(t))cat="Premises Liability";
                 else if(/christmas|thanksgiving|holiday|happy/i.test(t))cat="Holiday/Seasonal";
                 else cat="Brand";
-                seenCats.add(cat);
-                const vo=i.vo||"Chris Keith";
-                if(i.category!==cat||i.caseType!==cat||i.vo!==vo)changed++;
-                return{...i,category:cat,caseType:cat,vo:vo};
+                if(i.category!==cat||i.caseType!==cat||i.vo!=="Chris Keith"||i.valueProp)changed++;
+                return{...i,category:cat,caseType:cat,vo:"Chris Keith",valueProp:""};
               });
               saveToDb("iscis",next);
               return next;
             });
             setCustomFields(prev=>{
-              const wkPrev=prev["Wettermark Keith"]||{categories:[],valueProps:[],vos:[]};
-              const mergedCats=Array.from(new Set([...(wkPrev.categories||[]),...seenCats]));
-              const mergedVos=Array.from(new Set([...(wkPrev.vos||[]),"Chris Keith"]));
-              const next={...prev,"Wettermark Keith":{...wkPrev,categories:mergedCats,vos:mergedVos}};
+              const next={...prev,"Wettermark Keith":{categories:[...WK_TARGET],valueProps:[],vos:["Chris Keith"]}};
               try{db.collection("appData").doc("customTags").set({data:JSON.stringify(next),ts:Date.now()}).catch(()=>{})}catch(e){}
               return next;
             });
             log("WK Re-tag",changed+" ISCIs updated");
-            notify(changed?("Re-tagged "+changed+" WK ISCIs by title"):"All WK ISCIs already match title rules");
+            notify("Re-tagged "+changed+" WK ISCIs by title");
           }} color="#D4A040">⟳ Re-tag WK by Title</Btn>
         </div>
         {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
           return<div key={brand} style={{marginBottom:16}}>
           <div style={{fontSize:13,fontWeight:800,color:bc,marginBottom:6}}>{brand}</div>
-          {[{key:"categories",label:"Categories",color:"#4AC8E8"},{key:"valueProps",label:"Value Props",color:"#5BC4A0"},{key:"vos",label:"VOs",color:"#D4A040"}].map(({key,label,color})=><div key={key} style={{marginBottom:8}}>
+          {(brand==="Wettermark Keith"?[{key:"categories",label:"Categories",color:"#4AC8E8"},{key:"vos",label:"VOs",color:"#D4A040"}]:[{key:"categories",label:"Categories",color:"#4AC8E8"},{key:"valueProps",label:"Value Props",color:"#5BC4A0"},{key:"vos",label:"VOs",color:"#D4A040"}]).map(({key,label,color})=><div key={key} style={{marginBottom:8}}>
             <div style={{fontSize:12,fontWeight:700,color,marginBottom:3,textTransform:"uppercase"}}>{label}</div>
             <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:4}}>
               {(bf[key]||[]).map(t=><span key={t} style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 7px",borderRadius:4,background:color+"15",color,fontSize:11,fontWeight:600}}>
