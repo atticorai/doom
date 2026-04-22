@@ -4,6 +4,7 @@ import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
 import path from "path";
 import { fileURLToPath } from "url";
+import libraryTailwindConfig from "./traffic-library-src/tailwind.config.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -23,8 +24,14 @@ export default defineConfig({
   css: {
     postcss: {
       plugins: [
+        // Use the library's theme verbatim, but override content paths to
+        // absolute so PostCSS (run from the repo root) scans the correct files.
         tailwindcss({
-          config: path.resolve(__dirname, "traffic-library-src/tailwind.config.js"),
+          ...libraryTailwindConfig,
+          content: [
+            path.resolve(__dirname, "traffic-library-src/src/**/*.{js,ts,jsx,tsx,html}"),
+            path.resolve(__dirname, "traffic-library-src/index.html"),
+          ],
         }),
         autoprefixer(),
       ],
