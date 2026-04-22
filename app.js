@@ -6869,6 +6869,7 @@ Be direct and actionable. No generic advice.`;
           const archived=effDate?effDate<archCutoff:true;
           return{
             id:(h.ts?String(h.ts):"tmp")+"_"+i,
+            historyIdx:i,
             brand:h.brand,
             market:DM[h.market]||h.market,
             mediaType:h.media,
@@ -6894,6 +6895,17 @@ Be direct and actionable. No generic advice.`;
         // Logos read by brand by the library's BookOpen (keeps one copy of
         // each base64 instead of duplicating it into every instruction).
         window.MegaraLibraryLogos={"Postman Law":LOGO_PL,"Wettermark Keith":LOGO_WK};
+        // Button handlers for the right-page actions. BookOpen calls these
+        // by name through window.MegaraLibraryActions, receiving the
+        // instruction.historyIdx set on each record below.
+        window.MegaraLibraryActions={
+          edit:(idx)=>{if(typeof idx==="number")setEditTrafficIdx(idx)},
+          view:(idx)=>{const h=trafficHistory[idx];if(!h)return;const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close()},
+          print:(idx)=>{const h=trafficHistory[idx];if(!h)return;const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close();w.focus();setTimeout(()=>w.print(),300)},
+          send:(idx)=>{const h=trafficHistory[idx];if(!h)return;notify("Resend runs through the Traffic Library list — open it from the side nav and hit ↻ Send on the record.")},
+          copyTo:(idx)=>{const h=trafficHistory[idx];if(!h)return;notify("Copy-to-month runs through the Traffic Library list — open it from the side nav.")},
+          delete:async(idx)=>{const h=trafficHistory[idx];if(!h)return;const pw=prompt("Admin password to delete traffic:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok){alert("Wrong password");return}if(!confirm("Delete "+h.brand+" "+h.market+" "+h.media+" "+h.month+"? This cannot be undone."))return;setTrafficHistory(p=>p.filter((_,j)=>j!==idx));log("Traffic Deleted",h.brand+" "+h.market+" "+h.media+" "+h.month);notify("Traffic deleted")},
+        };
         console.log("[MegaraLibrary] piped",data.length,"records from trafficHistory");
         const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");
         const ML=window.MegaraLibrary;

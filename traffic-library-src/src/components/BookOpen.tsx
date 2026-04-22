@@ -59,6 +59,15 @@ export function BookOpen({
   };
   const handleSend = () => {
     playSendSound();
+    fireAction('send');
+  };
+  const fireAction = (name: string) => {
+    const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
+    const idx = (instruction as any)?.historyIdx;
+    if (typeof actions[name] === 'function' && typeof idx === 'number') {
+      actions[name](idx);
+      if (name === 'delete' || name === 'edit') onClose();
+    }
   };
   return (
     <AnimatePresence>
@@ -346,8 +355,9 @@ export function BookOpen({
               </h3>
 
               <button
+                onClick={() => fireAction('edit')}
                 className={`w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${light ? 'border-purple-200 text-purple-700 hover:bg-purple-100' : 'border-megara-dark/40 text-megara-light hover:bg-megara-dark/20'}`}>
-                
+
                 <Edit2
                   size={16}
                   className="text-megara-primary group-hover:scale-110 transition-transform" />
@@ -355,8 +365,9 @@ export function BookOpen({
                 Edit
               </button>
               <button
+                onClick={() => fireAction('view')}
                 className={`w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group font-medium ${light ? 'border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100' : 'border-magic-teal/40 bg-magic-teal/10 text-magic-teal hover:bg-magic-teal/20'}`}>
-                
+
                 <Eye
                   size={16}
                   className="group-hover:scale-110 transition-transform" />
@@ -364,8 +375,9 @@ export function BookOpen({
                 View
               </button>
               <button
+                onClick={() => fireAction('print')}
                 className={`w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${light ? 'border-purple-200 text-purple-700 hover:bg-purple-100' : 'border-megara-dark/40 text-megara-light hover:bg-megara-dark/20'}`}>
-                
+
                 <Printer
                   size={16}
                   className={`group-hover:scale-110 transition-transform ${light ? 'text-amber-600' : 'text-magic-gold'}`} />
@@ -383,8 +395,9 @@ export function BookOpen({
                 Send
               </button>
               <button
+                onClick={() => fireAction('copyTo')}
                 className={`w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${light ? 'border-purple-200 text-purple-700 hover:bg-purple-100' : 'border-megara-dark/40 text-megara-light hover:bg-megara-dark/20'}`}>
-                
+
                 <Copy
                   size={16}
                   className={`group-hover:scale-110 transition-transform ${light ? 'text-purple-400' : 'text-megara-light/60'}`} />
@@ -393,14 +406,15 @@ export function BookOpen({
                 <ChevronDown
                   size={14}
                   className={`ml-auto ${light ? 'text-purple-300' : 'text-megara-light/40'}`} />
-                
+
               </button>
             </div>
 
             <div className="px-6 pb-6 relative z-10">
               <button
+                onClick={() => fireAction('delete')}
                 className={`w-full py-2.5 px-4 rounded border text-sm flex items-center justify-center gap-2 transition-colors ${light ? 'border-red-200 text-red-500 hover:bg-red-50' : 'border-red-900/40 text-red-400 hover:bg-red-900/20'}`}>
-                
+
                 <Trash2 size={16} /> Delete
               </button>
             </div>

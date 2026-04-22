@@ -1,5 +1,5 @@
-import B, { forwardRef as L, createElement as z, useState as k, useEffect as T, useContext as E, createContext as H, useMemo as K } from "react";
-import { motion as j, AnimatePresence as W } from "framer-motion";
+import B, { forwardRef as L, createElement as z, useState as N, useEffect as T, useContext as E, createContext as H, useMemo as K } from "react";
+import { motion as k, AnimatePresence as W } from "framer-motion";
 var S = { exports: {} }, C = {};
 /**
  * @license React
@@ -12,11 +12,11 @@ var S = { exports: {} }, C = {};
  */
 var G = B, F = Symbol.for("react.element"), q = Symbol.for("react.fragment"), U = Object.prototype.hasOwnProperty, Y = G.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, J = { key: !0, ref: !0, __self: !0, __source: !0 };
 function R(t, s, a) {
-  var r, i = {}, d = null, x = null;
-  a !== void 0 && (d = "" + a), s.key !== void 0 && (d = "" + s.key), s.ref !== void 0 && (x = s.ref);
-  for (r in s) U.call(s, r) && !J.hasOwnProperty(r) && (i[r] = s[r]);
-  if (t && t.defaultProps) for (r in s = t.defaultProps, s) i[r] === void 0 && (i[r] = s[r]);
-  return { $$typeof: F, type: t, key: d, ref: x, props: i, _owner: Y.current };
+  var r, n = {}, l = null, b = null;
+  a !== void 0 && (l = "" + a), s.key !== void 0 && (l = "" + s.key), s.ref !== void 0 && (b = s.ref);
+  for (r in s) U.call(s, r) && !J.hasOwnProperty(r) && (n[r] = s[r]);
+  if (t && t.defaultProps) for (r in s = t.defaultProps, s) n[r] === void 0 && (n[r] = s[r]);
+  return { $$typeof: F, type: t, key: l, ref: b, props: n, _owner: Y.current };
 }
 C.Fragment = q;
 C.jsx = R;
@@ -69,26 +69,26 @@ const te = L(
     size: s = 24,
     strokeWidth: a = 2,
     absoluteStrokeWidth: r,
-    className: i = "",
-    children: d,
-    iconNode: x,
-    ...c
-  }, l) => z(
+    className: n = "",
+    children: l,
+    iconNode: b,
+    ...d
+  }, i) => z(
     "svg",
     {
-      ref: l,
+      ref: i,
       ...ee,
       width: s,
       height: s,
       stroke: t,
       strokeWidth: r ? Number(a) * 24 / Number(s) : a,
-      className: P("lucide", i),
-      ...!d && !Q(c) && { "aria-hidden": "true" },
-      ...c
+      className: P("lucide", n),
+      ...!l && !Q(d) && { "aria-hidden": "true" },
+      ...d
     },
     [
-      ...x.map(([p, m]) => z(p, m)),
-      ...Array.isArray(d) ? d : [d]
+      ...b.map(([c, m]) => z(c, m)),
+      ...Array.isArray(l) ? l : [l]
     ]
   )
 );
@@ -100,15 +100,15 @@ const te = L(
  */
 const u = (t, s) => {
   const a = L(
-    ({ className: r, ...i }, d) => z(te, {
-      ref: d,
+    ({ className: r, ...n }, l) => z(te, {
+      ref: l,
       iconNode: s,
       className: P(
         `lucide-${Z(I(t))}`,
         `lucide-${t}`,
         r
       ),
-      ...i
+      ...n
     })
   );
   return a.displayName = I(t), a;
@@ -324,12 +324,12 @@ function Se({
   toggleTheme: s,
   brand: a,
   onBrandChange: r,
-  brandCounts: i,
-  totalInstructions: d,
-  totalMarkets: x,
-  archivedCount: c,
-  showArchived: l,
-  onToggleArchived: p
+  brandCounts: n,
+  totalInstructions: l,
+  totalMarkets: b,
+  archivedCount: d,
+  showArchived: i,
+  onToggleArchived: c
 }) {
   const m = [
     "I remember every version. Every mistake.",
@@ -338,17 +338,17 @@ function Se({
     "It's all Greek to them. But not to me.",
     `I don't do "lost files." Try someone else.`,
     "Megara doesn't forget. Megara doesn't forgive late sends."
-  ], [b, v] = k(0), o = t;
+  ], [x, w] = N(0), p = t;
   return T(() => {
     const g = setInterval(() => {
-      v((y) => (y + 1) % m.length);
+      w((h) => (h + 1) % m.length);
     }, 8e3);
     return () => clearInterval(g);
   }, []), /* @__PURE__ */ e.jsxs("header", { className: "w-full py-6 px-8 flex flex-col gap-5 relative z-10", children: [
     /* @__PURE__ */ e.jsx(
       "div",
       {
-        className: `absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent ${o ? "via-purple-400/30" : "via-magic-gold/30"} to-transparent`
+        className: `absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent ${p ? "via-purple-400/30" : "via-magic-gold/30"} to-transparent`
       }
     ),
     /* @__PURE__ */ e.jsxs("div", { className: "flex justify-between items-start", children: [
@@ -357,47 +357,47 @@ function Se({
           /* @__PURE__ */ e.jsx(
             "div",
             {
-              className: `w-8 h-px ${o ? "bg-purple-600" : "bg-magic-gold"}`
+              className: `w-8 h-px ${p ? "bg-purple-600" : "bg-magic-gold"}`
             }
           ),
           /* @__PURE__ */ e.jsx(
             "div",
             {
-              className: `w-2 h-2 rotate-45 border ${o ? "border-purple-600" : "border-magic-gold"}`
+              className: `w-2 h-2 rotate-45 border ${p ? "border-purple-600" : "border-magic-gold"}`
             }
           ),
           /* @__PURE__ */ e.jsx(
             "div",
             {
-              className: `w-4 h-px ${o ? "bg-purple-600" : "bg-magic-gold"}`
+              className: `w-4 h-px ${p ? "bg-purple-600" : "bg-magic-gold"}`
             }
           )
         ] }),
         /* @__PURE__ */ e.jsx(
           "h1",
           {
-            className: `font-serif font-bold text-4xl tracking-wide ${o ? "text-purple-800 drop-shadow-sm" : "title-shimmer"}`,
+            className: `font-serif font-bold text-4xl tracking-wide ${p ? "text-purple-800 drop-shadow-sm" : "title-shimmer"}`,
             children: "Traffic Library"
           }
         ),
         /* @__PURE__ */ e.jsxs(
           "p",
           {
-            className: `font-serif italic text-base mb-1 transition-opacity duration-1000 ${o ? "text-purple-600/70" : "text-megara-light/60"}`,
+            className: `font-serif italic text-base mb-1 transition-opacity duration-1000 ${p ? "text-purple-600/70" : "text-megara-light/60"}`,
             children: [
               '"',
-              m[b],
+              m[x],
               '"'
             ]
           },
-          b
+          x
         )
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-3", children: [
         /* @__PURE__ */ e.jsxs(
           "button",
           {
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${o ? "border-purple-300 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light/70 hover:bg-megara-dark/20 hover:text-megara-light"}`,
+            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${p ? "border-purple-300 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light/70 hover:bg-megara-dark/20 hover:text-megara-light"}`,
             children: [
               /* @__PURE__ */ e.jsx(xe, { size: 16 }),
               " Export CSV"
@@ -407,7 +407,7 @@ function Se({
         /* @__PURE__ */ e.jsxs(
           "button",
           {
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${o ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100" : "bg-magic-gold/10 border-magic-gold/40 text-magic-gold hover:bg-magic-gold/20 hover:shadow-glow-gold"}`,
+            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${p ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100" : "bg-magic-gold/10 border-magic-gold/40 text-magic-gold hover:bg-magic-gold/20 hover:shadow-glow-gold"}`,
             children: [
               /* @__PURE__ */ e.jsx(oe, { size: 16 }),
               " Send Reminders"
@@ -417,7 +417,7 @@ function Se({
         /* @__PURE__ */ e.jsxs(
           "button",
           {
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${o ? "bg-purple-100 border-purple-300 text-purple-700 hover:bg-purple-200" : "bg-megara-primary/20 border-megara-primary/50 text-megara-light hover:bg-megara-primary/30 hover:shadow-glow-purple"}`,
+            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${p ? "bg-purple-100 border-purple-300 text-purple-700 hover:bg-purple-200" : "bg-megara-primary/20 border-megara-primary/50 text-megara-light hover:bg-megara-primary/30 hover:shadow-glow-purple"}`,
             children: [
               /* @__PURE__ */ e.jsx(ke, { size: 16 }),
               " Import"
@@ -428,14 +428,14 @@ function Se({
           "button",
           {
             onClick: s,
-            className: `ml-3 p-2.5 rounded-full transition-all relative group ${o ? "text-amber-600 hover:bg-amber-100 hover:shadow-[0_0_20px_4px_rgba(217,119,6,0.2)]" : "text-magic-gold hover:bg-white/10 hover:shadow-[0_0_20px_4px_rgba(255,215,0,0.3)]"}`,
+            className: `ml-3 p-2.5 rounded-full transition-all relative group ${p ? "text-amber-600 hover:bg-amber-100 hover:shadow-[0_0_20px_4px_rgba(217,119,6,0.2)]" : "text-magic-gold hover:bg-white/10 hover:shadow-[0_0_20px_4px_rgba(255,215,0,0.3)]"}`,
             title: "Toggle Illumination",
             children: [
               t ? /* @__PURE__ */ e.jsx(he, { size: 22 }) : /* @__PURE__ */ e.jsx(ve, { size: 22 }),
               /* @__PURE__ */ e.jsx(
                 "div",
                 {
-                  className: `absolute inset-0 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity ${o ? "bg-amber-400/20" : "bg-magic-gold/10"}`
+                  className: `absolute inset-0 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity ${p ? "bg-amber-400/20" : "bg-magic-gold/10"}`
                 }
               )
             ]
@@ -446,10 +446,10 @@ function Se({
     /* @__PURE__ */ e.jsxs(
       "div",
       {
-        className: `font-serif text-xs flex gap-2 tracking-wider uppercase ${o ? "text-purple-500/60" : "text-megara-light/40"}`,
+        className: `font-serif text-xs flex gap-2 tracking-wider uppercase ${p ? "text-purple-500/60" : "text-megara-light/40"}`,
         children: [
           /* @__PURE__ */ e.jsxs("span", { children: [
-            d,
+            l,
             " instructions"
           ] }),
           " · ",
@@ -457,7 +457,7 @@ function Se({
           " ·",
           " ",
           /* @__PURE__ */ e.jsxs("span", { children: [
-            x,
+            b,
             " markets"
           ] })
         ]
@@ -466,19 +466,19 @@ function Se({
     /* @__PURE__ */ e.jsx("div", { className: "flex gap-4 items-center", children: /* @__PURE__ */ e.jsx(
       "div",
       {
-        className: `flex rounded-t-lg border-b overflow-hidden backdrop-blur-sm ${o ? "bg-white/60 border-purple-200" : "bg-underworld-800/60 border-megara-dark/40"}`,
+        className: `flex rounded-t-lg border-b overflow-hidden backdrop-blur-sm ${p ? "bg-white/60 border-purple-200" : "bg-underworld-800/60 border-megara-dark/40"}`,
         children: ["Postman Law", "Wettermark Keith"].map((g) => {
-          const y = a === g, w = o ? "text-purple-800 border-purple-600 bg-purple-50" : "text-megara-light border-magic-gold bg-magic-gold/5", N = o ? "text-purple-400 border-transparent hover:text-purple-600 hover:bg-purple-50/50" : "text-megara-light/40 border-transparent hover:text-megara-light/70 hover:bg-white/5";
+          const h = a === g, v = p ? "text-purple-800 border-purple-600 bg-purple-50" : "text-megara-light border-magic-gold bg-magic-gold/5", j = p ? "text-purple-400 border-transparent hover:text-purple-600 hover:bg-purple-50/50" : "text-megara-light/40 border-transparent hover:text-megara-light/70 hover:bg-white/5";
           return /* @__PURE__ */ e.jsxs(
             "button",
             {
               onClick: () => r(g),
-              className: `font-serif px-6 py-3 font-medium text-sm border-b-2 transition-colors ${y ? w : N}`,
+              className: `font-serif px-6 py-3 font-medium text-sm border-b-2 transition-colors ${h ? v : j}`,
               children: [
                 g,
                 /* @__PURE__ */ e.jsxs("span", { className: "text-xs opacity-50 ml-1", children: [
                   "(",
-                  i[g],
+                  n[g],
                   ")"
                 ] })
               ]
@@ -493,7 +493,7 @@ function Se({
         /* @__PURE__ */ e.jsx(
           $e,
           {
-            className: `absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${o ? "text-purple-400 group-focus-within:text-purple-600" : "text-magic-teal/50 group-focus-within:text-magic-teal"}`,
+            className: `absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${p ? "text-purple-400 group-focus-within:text-purple-600" : "text-magic-teal/50 group-focus-within:text-magic-teal"}`,
             size: 18
           }
         ),
@@ -502,54 +502,54 @@ function Se({
           {
             type: "text",
             placeholder: "Search the archives — ISCIs, markets, buyers, incantations...",
-            className: `w-full rounded-lg py-3 pl-12 pr-4 focus:outline-none transition-all backdrop-blur-sm ${o ? "bg-white/70 border border-purple-200 text-purple-900 placeholder:text-purple-400/50 focus:border-purple-400 focus:shadow-[0_0_15px_2px_rgba(147,51,234,0.1)]" : "bg-underworld-800/40 border border-megara-dark/25 text-megara-light placeholder:text-megara-light/30 focus:border-magic-teal/50 focus:shadow-[0_0_20px_2px_rgba(0,206,209,0.1)]"}`
+            className: `w-full rounded-lg py-3 pl-12 pr-4 focus:outline-none transition-all backdrop-blur-sm ${p ? "bg-white/70 border border-purple-200 text-purple-900 placeholder:text-purple-400/50 focus:border-purple-400 focus:shadow-[0_0_15px_2px_rgba(147,51,234,0.1)]" : "bg-underworld-800/40 border border-megara-dark/25 text-megara-light placeholder:text-megara-light/30 focus:border-magic-teal/50 focus:shadow-[0_0_20px_2px_rgba(0,206,209,0.1)]"}`
           }
         ),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity ${o ? "via-purple-400/30" : "via-magic-teal/20"}`
+            className: `absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity ${p ? "via-purple-400/30" : "via-magic-teal/20"}`
           }
         )
       ] }),
       /* @__PURE__ */ e.jsxs(
         "button",
         {
-          onClick: p,
-          className: `flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm backdrop-blur-sm transition-colors cursor-pointer ${o ? l ? "border-amber-400 bg-amber-50" : "border-purple-200 bg-white/60 hover:border-purple-400" : l ? "border-magic-gold/60 bg-magic-gold/10" : "border-megara-dark/25 bg-underworld-800/40 hover:border-magic-gold/40"}`,
+          onClick: c,
+          className: `flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm backdrop-blur-sm transition-colors cursor-pointer ${p ? i ? "border-amber-400 bg-amber-50" : "border-purple-200 bg-white/60 hover:border-purple-400" : i ? "border-magic-gold/60 bg-magic-gold/10" : "border-megara-dark/25 bg-underworld-800/40 hover:border-magic-gold/40"}`,
           children: [
             /* @__PURE__ */ e.jsx(
               re,
               {
                 size: 16,
-                className: o ? "text-amber-600/70" : "text-magic-gold/70"
+                className: p ? "text-amber-600/70" : "text-magic-gold/70"
               }
             ),
             /* @__PURE__ */ e.jsxs(
               "span",
               {
-                className: `text-xs ${o ? "text-purple-600/60" : "text-megara-light/60"}`,
+                className: `text-xs ${p ? "text-purple-600/60" : "text-megara-light/60"}`,
                 children: [
-                  c,
+                  d,
                   " archived"
                 ]
               }
             ),
-            /* @__PURE__ */ e.jsx("span", { className: o ? "text-purple-300" : "text-megara-light/20", children: "|" }),
+            /* @__PURE__ */ e.jsx("span", { className: p ? "text-purple-300" : "text-megara-light/20", children: "|" }),
             /* @__PURE__ */ e.jsxs(
               "span",
               {
-                className: `text-xs ${o ? "text-purple-600/60" : "text-megara-light/60"}`,
+                className: `text-xs ${p ? "text-purple-600/60" : "text-megara-light/60"}`,
                 children: [
-                  d,
+                  l,
                   " shown"
                 ]
               }
             ),
-            l && /* @__PURE__ */ e.jsx(
+            i && /* @__PURE__ */ e.jsx(
               "span",
               {
-                className: `text-[10px] font-bold tracking-widest uppercase ml-1 ${o ? "text-amber-700" : "text-magic-gold"}`,
+                className: `text-[10px] font-bold tracking-widest uppercase ml-1 ${p ? "text-amber-700" : "text-magic-gold"}`,
                 children: "ON"
               }
             )
@@ -560,7 +560,7 @@ function Se({
     /* @__PURE__ */ e.jsx(
       "div",
       {
-        className: `absolute bottom-0 left-8 right-8 h-px bg-gradient-to-r from-transparent ${o ? "via-purple-300/30" : "via-megara-dark/30"} to-transparent`
+        className: `absolute bottom-0 left-8 right-8 h-px bg-gradient-to-r from-transparent ${p ? "via-purple-300/30" : "via-megara-dark/30"} to-transparent`
       }
     )
   ] });
@@ -575,19 +575,19 @@ function Pe({
   months: s,
   light: a = !1
 }) {
-  const r = (i) => {
-    const d = document.getElementById(`month-${i}`);
-    d && d.scrollIntoView({
+  const r = (n) => {
+    const l = document.getElementById(`month-${n}`);
+    l && l.scrollIntoView({
       behavior: "smooth",
       block: "start"
     });
   };
-  return /* @__PURE__ */ e.jsx("div", { className: "relative z-10 px-8 pb-6", children: /* @__PURE__ */ e.jsx("div", { className: "flex gap-3 flex-wrap", children: s.map((i, d) => {
-    const x = t.filter(
-      (c) => c.month === i
+  return /* @__PURE__ */ e.jsx("div", { className: "relative z-10 px-8 pb-6", children: /* @__PURE__ */ e.jsx("div", { className: "flex gap-3 flex-wrap", children: s.map((n, l) => {
+    const b = t.filter(
+      (d) => d.month === n
     ).length;
     return /* @__PURE__ */ e.jsxs(
-      j.button,
+      k.button,
       {
         initial: {
           opacity: 0,
@@ -598,9 +598,9 @@ function Pe({
           y: 0
         },
         transition: {
-          delay: d * 0.06
+          delay: l * 0.06
         },
-        onClick: () => r(i),
+        onClick: () => r(n),
         className: `relative group flex flex-col w-32 rounded-t-sm rounded-b-md overflow-hidden transition-all ${a ? "bg-white/70 border border-purple-200 hover:border-purple-400 hover:bg-white hover:shadow-[0_0_15px_rgba(147,51,234,0.15)]" : "bg-underworld-800/80 border border-megara-dark/30 hover:border-magic-teal/40 hover:bg-underworld-700/50 hover:shadow-glow-teal"}`,
         children: [
           /* @__PURE__ */ e.jsx(
@@ -615,7 +615,7 @@ function Pe({
                 "span",
                 {
                   className: `font-mono text-[10px] font-bold tracking-wider ${a ? "text-purple-400 group-hover:text-purple-600" : "text-magic-teal/40 group-hover:text-magic-teal/70"}`,
-                  children: Re[i] || "001"
+                  children: Re[n] || "001"
                 }
               ),
               /* @__PURE__ */ e.jsx(
@@ -630,7 +630,7 @@ function Pe({
               "span",
               {
                 className: `font-serif text-sm font-medium text-left transition-colors ${a ? "text-purple-700/70 group-hover:text-purple-800" : "text-megara-light/60 group-hover:text-megara-light/80"}`,
-                children: i
+                children: n
               }
             ),
             /* @__PURE__ */ e.jsxs(
@@ -638,9 +638,9 @@ function Pe({
               {
                 className: `text-[10px] font-mono ${a ? "text-purple-400/50" : "text-megara-light/25"}`,
                 children: [
-                  x,
+                  b,
                   " ",
-                  x === 1 ? "scroll" : "scrolls"
+                  b === 1 ? "scroll" : "scrolls"
                 ]
               }
             )
@@ -653,7 +653,7 @@ function Pe({
           )
         ]
       },
-      i
+      n
     );
   }) }) });
 }
@@ -1018,21 +1018,21 @@ const Oe = [
   Gadsden: "bg-market-gadsden"
 };
 function De({ instruction: t, onClick: s }) {
-  const a = E(V), r = t.status === "sent", i = parseInt(t.iscis) || 5, d = i > 8 ? "h-48" : i > 5 ? "h-44" : "h-40", x = {
+  const a = E(V), r = t.status === "sent", n = parseInt(t.iscis) || 5, l = n > 8 ? "h-48" : n > 5 ? "h-44" : "h-40", b = {
     TV: "from-[#2a1540] to-[#1a0d2e]",
     Radio: "from-[#1a2040] to-[#0d1530]",
     "Streaming Audio": "from-[#1a3030] to-[#0d2020]",
     Cable: "from-[#2a1a30] to-[#1a1020]",
     OOH: "from-[#2a2a1a] to-[#1a1a0d]"
-  }, c = {
+  }, d = {
     TV: "from-[#e8daf0] to-[#d4c0e0]",
     Radio: "from-[#d5dff0] to-[#c0cfe0]",
     "Streaming Audio": "from-[#d0e8e8] to-[#bcd8d8]",
     Cable: "from-[#e0d5e8] to-[#d0c0d8]",
     OOH: "from-[#e8e5d0] to-[#d8d5c0]"
-  }, l = a ? c[t.mediaType] || c.TV : x[t.mediaType] || x.TV;
+  }, i = a ? d[t.mediaType] || d.TV : b[t.mediaType] || b.TV;
   return /* @__PURE__ */ e.jsxs(
-    j.div,
+    k.div,
     {
       whileHover: {
         y: -14,
@@ -1043,10 +1043,10 @@ function De({ instruction: t, onClick: s }) {
       },
       onClick: s,
       className: `
-        relative w-14 ${d} cursor-pointer group
+        relative w-14 ${l} cursor-pointer group
         rounded-l-sm rounded-r-md
         flex flex-col items-center justify-between py-3
-        bg-gradient-to-b ${l}
+        bg-gradient-to-b ${i}
         ${a ? "" : r ? "book-glow-sent" : "book-glow-pending"}
         ${a ? "shadow-[2px_2px_8px_rgba(0,0,0,0.1),-1px_0_3px_rgba(0,0,0,0.05)]" : ""}
       `,
@@ -1172,21 +1172,21 @@ function Be({
   light: r = !1
 }) {
   if (s.length === 0) return null;
-  const i = s.reduce(
-    (c, l) => (c[l.mediaType] || (c[l.mediaType] = []), c[l.mediaType].push(l), c),
+  const n = s.reduce(
+    (d, i) => (d[i.mediaType] || (d[i.mediaType] = []), d[i.mediaType].push(i), d),
     {}
-  ), x = [
+  ), b = [
     "TV",
     "Radio",
     "Streaming Audio",
     "Cable",
     "OOH"
-  ].filter((c) => {
-    var l;
-    return ((l = i[c]) == null ? void 0 : l.length) > 0;
+  ].filter((d) => {
+    var i;
+    return ((i = n[d]) == null ? void 0 : i.length) > 0;
   });
   return /* @__PURE__ */ e.jsxs(
-    j.div,
+    k.div,
     {
       initial: {
         opacity: 0,
@@ -1257,10 +1257,10 @@ function Be({
             )
           ] })
         ] }),
-        x.map((c, l) => {
-          const p = i[c], m = new Set(p.map((b) => b.market)).size;
+        b.map((d, i) => {
+          const c = n[d], m = new Set(c.map((x) => x.market)).size;
           return /* @__PURE__ */ e.jsxs(
-            j.div,
+            k.div,
             {
               initial: {
                 opacity: 0,
@@ -1271,7 +1271,7 @@ function Be({
                 x: 0
               },
               transition: {
-                delay: l * 0.1,
+                delay: i * 0.1,
                 duration: 0.4
               },
               className: "mb-12 relative",
@@ -1286,7 +1286,7 @@ function Be({
                         {
                           className: `font-serif text-xs font-bold tracking-widest uppercase drop-shadow-md ${r ? "text-purple-800" : "text-yellow-100"}`,
                           children: [
-                            c,
+                            d,
                             /* @__PURE__ */ e.jsxs(
                               "span",
                               {
@@ -1322,9 +1322,9 @@ function Be({
                     className: `absolute inset-x-0 top-4 bottom-7 rounded-t-sm ${r ? "bg-gradient-to-b from-purple-100/40 to-white/20 border-t border-purple-200/30" : "bg-gradient-to-b from-underworld-900/80 to-underworld-800/40 border-t border-megara-dark/10"}`
                   }
                 ),
-                /* @__PURE__ */ e.jsx("div", { className: "flex items-end gap-1 px-12 pt-10 pb-1 min-h-[210px] relative z-10 overflow-x-auto hide-scrollbar", children: p.map(
-                  (b, v) => /* @__PURE__ */ e.jsx(
-                    j.div,
+                /* @__PURE__ */ e.jsx("div", { className: "flex items-end gap-1 px-12 pt-10 pb-1 min-h-[210px] relative z-10 overflow-x-auto hide-scrollbar", children: c.map(
+                  (x, w) => /* @__PURE__ */ e.jsx(
+                    k.div,
                     {
                       initial: {
                         opacity: 0,
@@ -1335,17 +1335,17 @@ function Be({
                         y: 0
                       },
                       transition: {
-                        delay: l * 0.1 + v * 0.03
+                        delay: i * 0.1 + w * 0.03
                       },
                       children: /* @__PURE__ */ e.jsx(
                         De,
                         {
-                          instruction: b,
-                          onClick: () => a(b)
+                          instruction: x,
+                          onClick: () => a(x)
                         }
                       )
                     },
-                    b.id
+                    x.id
                   )
                 ) }),
                 /* @__PURE__ */ e.jsxs("div", { className: "shelf-wood h-8 w-full rounded-sm relative z-0", children: [
@@ -1365,7 +1365,7 @@ function Be({
                 )
               ]
             },
-            c
+            d
           );
         })
       ]
@@ -1376,16 +1376,16 @@ const M = () => new (window.AudioContext || window.webkitAudioContext)();
 function Ee() {
   try {
     const t = M(), s = t.currentTime;
-    [880, 1320].forEach((d, x) => {
-      const c = t.createOscillator();
-      c.type = "sine", c.frequency.value = d;
-      const l = t.createGain(), p = s + x * 0.06;
-      l.gain.setValueAtTime(0, p), l.gain.linearRampToValueAtTime(0.07, p + 0.01), l.gain.exponentialRampToValueAtTime(1e-3, p + 0.8), c.connect(l), l.connect(t.destination), c.start(p), c.stop(p + 0.8);
+    [880, 1320].forEach((l, b) => {
+      const d = t.createOscillator();
+      d.type = "sine", d.frequency.value = l;
+      const i = t.createGain(), c = s + b * 0.06;
+      i.gain.setValueAtTime(0, c), i.gain.linearRampToValueAtTime(0.07, c + 0.01), i.gain.exponentialRampToValueAtTime(1e-3, c + 0.8), d.connect(i), i.connect(t.destination), d.start(c), d.stop(c + 0.8);
     });
     const r = t.createOscillator();
     r.type = "sine", r.frequency.value = 2640;
-    const i = t.createGain();
-    i.gain.setValueAtTime(0, s + 0.1), i.gain.linearRampToValueAtTime(0.025, s + 0.12), i.gain.exponentialRampToValueAtTime(1e-3, s + 0.5), r.connect(i), i.connect(t.destination), r.start(s + 0.1), r.stop(s + 0.5), setTimeout(() => t.close(), 1200);
+    const n = t.createGain();
+    n.gain.setValueAtTime(0, s + 0.1), n.gain.linearRampToValueAtTime(0.025, s + 0.12), n.gain.exponentialRampToValueAtTime(1e-3, s + 0.5), r.connect(n), n.connect(t.destination), r.start(s + 0.1), r.stop(s + 0.5), setTimeout(() => t.close(), 1200);
   } catch {
   }
 }
@@ -1401,16 +1401,16 @@ function He() {
 function Ke() {
   try {
     const t = M(), s = t.currentTime;
-    [1047, 1319, 1568, 2093].forEach((x, c) => {
-      const l = t.createOscillator();
-      l.type = "sine", l.frequency.value = x;
-      const p = t.createGain(), m = s + c * 0.1;
-      p.gain.setValueAtTime(0, m), p.gain.linearRampToValueAtTime(0.06, m + 0.01), p.gain.exponentialRampToValueAtTime(1e-3, m + 0.6), l.connect(p), p.connect(t.destination), l.start(m), l.stop(m + 0.6);
+    [1047, 1319, 1568, 2093].forEach((b, d) => {
+      const i = t.createOscillator();
+      i.type = "sine", i.frequency.value = b;
+      const c = t.createGain(), m = s + d * 0.1;
+      c.gain.setValueAtTime(0, m), c.gain.linearRampToValueAtTime(0.06, m + 0.01), c.gain.exponentialRampToValueAtTime(1e-3, m + 0.6), i.connect(c), c.connect(t.destination), i.start(m), i.stop(m + 0.6);
     });
     const r = t.createOscillator();
     r.type = "sine", r.frequency.value = 3136;
-    const i = t.createGain(), d = s + 0.4;
-    i.gain.setValueAtTime(0, d), i.gain.linearRampToValueAtTime(0.04, d + 0.01), i.gain.exponentialRampToValueAtTime(1e-3, d + 0.5), r.connect(i), i.connect(t.destination), r.start(d), r.stop(d + 0.5), setTimeout(() => t.close(), 1500);
+    const n = t.createGain(), l = s + 0.4;
+    n.gain.setValueAtTime(0, l), n.gain.linearRampToValueAtTime(0.04, l + 0.01), n.gain.exponentialRampToValueAtTime(1e-3, l + 0.5), r.connect(n), n.connect(t.destination), r.start(l), r.stop(l + 0.5), setTimeout(() => t.close(), 1500);
   } catch {
   }
 }
@@ -1431,7 +1431,7 @@ function Ge({
   if (T(() => {
     t && Ee();
   }, [t]), !t) return null;
-  const r = We(t), d = {
+  const r = We(t), l = {
     Chicago: "CHI",
     Cincinnati: "CIN",
     Denver: "DEN",
@@ -1443,18 +1443,21 @@ function Ge({
     Montgomery: "MTG",
     Dothan: "DHN",
     Gadsden: "GAD"
-  }[t.market] || t.market.slice(0, 3).toUpperCase(), x = () => {
+  }[t.market] || t.market.slice(0, 3).toUpperCase(), b = () => {
     He(), s();
-  }, c = () => {
-    Ke();
+  }, d = () => {
+    Ke(), i("send");
+  }, i = (c) => {
+    const m = typeof window < "u" && window.MegaraLibraryActions || {}, x = t == null ? void 0 : t.historyIdx;
+    typeof m[c] == "function" && typeof x == "number" && (m[c](x), (c === "delete" || c === "edit") && s());
   };
   return /* @__PURE__ */ e.jsx(W, { children: /* @__PURE__ */ e.jsx(
     "div",
     {
       className: `fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-6 ${a ? "bg-black/40" : "bg-black/70"}`,
-      onClick: x,
+      onClick: b,
       children: /* @__PURE__ */ e.jsxs(
-        j.div,
+        k.div,
         {
           initial: {
             scale: 0.85,
@@ -1477,14 +1480,14 @@ function Ge({
             stiffness: 180
           },
           className: `w-full max-w-6xl h-[85vh] flex rounded-lg overflow-hidden ${a ? "shadow-[0_0_40px_rgba(147,51,234,0.1),0_25px_50px_rgba(0,0,0,0.2)]" : "shadow-[0_0_60px_rgba(200,80,192,0.15),0_25px_50px_rgba(0,0,0,0.5)]"}`,
-          onClick: (l) => l.stopPropagation(),
+          onClick: (c) => c.stopPropagation(),
           children: [
             /* @__PURE__ */ e.jsxs("div", { className: "flex-1 bg-white overflow-y-auto relative", children: [
               /* @__PURE__ */ e.jsx("div", { className: "absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-300 to-transparent z-10 pointer-events-none" }),
               t.sheetHtml ? /* @__PURE__ */ e.jsx("div", { dangerouslySetInnerHTML: { __html: t.sheetHtml } }) : /* @__PURE__ */ e.jsx(e.Fragment, { children: /* @__PURE__ */ e.jsxs("div", { className: "px-10 pt-8 pb-8", children: [
                 /* @__PURE__ */ e.jsx("div", { className: "text-center mb-6", children: (() => {
-                  const p = (typeof window < "u" && window.MegaraLibraryLogos || {})[t.brand];
-                  return p ? /* @__PURE__ */ e.jsx("img", { src: p, alt: t.brand, style: { height: 48, margin: "0 auto", display: "block" } }) : /* @__PURE__ */ e.jsx("div", { className: "inline-block border-2 border-gray-800 px-5 py-1.5", children: /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-900 tracking-wider text-lg uppercase", children: t.brand.toUpperCase() }) });
+                  const m = (typeof window < "u" && window.MegaraLibraryLogos || {})[t.brand];
+                  return m ? /* @__PURE__ */ e.jsx("img", { src: m, alt: t.brand, style: { height: 48, margin: "0 auto", display: "block" } }) : /* @__PURE__ */ e.jsx("div", { className: "inline-block border-2 border-gray-800 px-5 py-1.5", children: /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-900 tracking-wider text-lg uppercase", children: t.brand.toUpperCase() }) });
                 })() }),
                 /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-[140px_1fr] gap-y-2.5 text-sm max-w-2xl mb-8", children: [
                   /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-700", children: "Agency:" }),
@@ -1495,7 +1498,7 @@ function Ge({
                   /* @__PURE__ */ e.jsxs("span", { className: "text-gray-900 font-medium", children: [
                     t.market,
                     " (",
-                    d,
+                    l,
                     ")"
                   ] }),
                   /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-700", children: "Buyer:" }),
@@ -1534,55 +1537,55 @@ function Ge({
                     /* @__PURE__ */ e.jsx("th", { className: "text-left py-2.5 px-3 text-gray-500 font-semibold uppercase text-[10px] tracking-wider w-20", children: "Notes" })
                   ] }) }),
                   /* @__PURE__ */ e.jsx("tbody", { children: (() => {
-                    const l = [
+                    const c = [
                       "M-F Schedule",
                       "M-F Bookend",
                       "Weekend Schedule",
                       "Weekend Bookend",
                       "All Week",
                       "Holiday Only"
-                    ], p = {
+                    ], m = {
                       "M-F Schedule": "bg-blue-100 border-blue-200",
                       "M-F Bookend": "bg-purple-100 border-purple-200",
                       "Weekend Schedule": "bg-amber-100 border-amber-200",
                       "Weekend Bookend": "bg-pink-100 border-pink-200",
                       "All Week": "bg-green-100 border-green-200",
                       "Holiday Only": "bg-red-100 border-red-200"
-                    }, m = {};
-                    r.forEach((o) => {
-                      const g = o.notes && l.indexOf(o.notes) >= 0 ? o.notes : "All Week";
-                      m[g] || (m[g] = []), m[g].push(o);
+                    }, x = {};
+                    r.forEach((g) => {
+                      const h = g.notes && c.indexOf(g.notes) >= 0 ? g.notes : "All Week";
+                      x[h] || (x[h] = []), x[h].push(g);
                     });
-                    const b = [
-                      ...l.filter((o) => {
-                        var g;
-                        return (g = m[o]) == null ? void 0 : g.length;
+                    const w = [
+                      ...c.filter((g) => {
+                        var h;
+                        return (h = x[g]) == null ? void 0 : h.length;
                       }),
-                      ...Object.keys(m).filter((o) => !l.includes(o))
-                    ], v = [];
-                    return b.forEach((o) => {
-                      const g = p[o] || "bg-gray-100 border-gray-200";
-                      v.push(
-                        /* @__PURE__ */ e.jsx("tr", { className: `${g} border-b`, children: /* @__PURE__ */ e.jsx("td", { colSpan: 5, className: "py-1.5 px-3 font-bold text-gray-800 uppercase text-xs", children: o }) }, "hdr-" + o)
-                      ), m[o].forEach((y, w) => {
-                        v.push(
+                      ...Object.keys(x).filter((g) => !c.includes(g))
+                    ], p = [];
+                    return w.forEach((g) => {
+                      const h = m[g] || "bg-gray-100 border-gray-200";
+                      p.push(
+                        /* @__PURE__ */ e.jsx("tr", { className: `${h} border-b`, children: /* @__PURE__ */ e.jsx("td", { colSpan: 5, className: "py-1.5 px-3 font-bold text-gray-800 uppercase text-xs", children: g }) }, "hdr-" + g)
+                      ), x[g].forEach((v, j) => {
+                        p.push(
                           /* @__PURE__ */ e.jsxs(
                             "tr",
                             {
-                              className: `border-b border-gray-100 ${w % 2 === 0 ? "bg-green-50/40" : "bg-white"} hover:bg-green-50 transition-colors`,
+                              className: `border-b border-gray-100 ${j % 2 === 0 ? "bg-green-50/40" : "bg-white"} hover:bg-green-50 transition-colors`,
                               children: [
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-600 font-mono text-xs", children: y.dates }),
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-900 font-mono text-xs", children: y.code }),
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: y.length }),
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: y.pct }),
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-500 text-xs", children: y.notes })
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-600 font-mono text-xs", children: v.dates }),
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-900 font-mono text-xs", children: v.code }),
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: v.length }),
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: v.pct }),
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-500 text-xs", children: v.notes })
                               ]
                             },
-                            o + "-" + w
+                            g + "-" + j
                           )
                         );
                       });
-                    }), v;
+                    }), p;
                   })() })
                 ] }),
                 /* @__PURE__ */ e.jsxs("div", { className: "mt-9 pt-3 border-t-2 border-purple-400", children: [
@@ -1632,7 +1635,7 @@ function Ge({
                   /* @__PURE__ */ e.jsx("div", { className: "p-4 flex justify-end relative z-10", children: /* @__PURE__ */ e.jsx(
                     "button",
                     {
-                      onClick: x,
+                      onClick: b,
                       className: `p-2 rounded-full transition-colors ${a ? "text-purple-400 hover:text-purple-700 hover:bg-purple-100" : "text-megara-light/60 hover:text-megara-light hover:bg-white/10"}`,
                       children: /* @__PURE__ */ e.jsx(Le, { size: 20 })
                     }
@@ -1709,6 +1712,7 @@ function Ge({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
+                        onClick: () => i("edit"),
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
@@ -1726,6 +1730,7 @@ function Ge({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
+                        onClick: () => i("view"),
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group font-medium ${a ? "border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100" : "border-magic-teal/40 bg-magic-teal/10 text-magic-teal hover:bg-magic-teal/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
@@ -1743,6 +1748,7 @@ function Ge({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
+                        onClick: () => i("print"),
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
@@ -1760,7 +1766,7 @@ function Ge({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
-                        onClick: c,
+                        onClick: d,
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
@@ -1778,6 +1784,7 @@ function Ge({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
+                        onClick: () => i("copyTo"),
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
@@ -1803,6 +1810,7 @@ function Ge({
                   /* @__PURE__ */ e.jsx("div", { className: "px-6 pb-6 relative z-10", children: /* @__PURE__ */ e.jsxs(
                     "button",
                     {
+                      onClick: () => i("delete"),
                       className: `w-full py-2.5 px-4 rounded border text-sm flex items-center justify-center gap-2 transition-colors ${a ? "border-red-200 text-red-500 hover:bg-red-50" : "border-red-900/40 text-red-400 hover:bg-red-900/20"}`,
                       children: [
                         /* @__PURE__ */ e.jsx(Ae, { size: 16 }),
@@ -1821,12 +1829,12 @@ function Ge({
 }
 const V = H(!1);
 function Ue() {
-  const [t, s] = k(!1), [a, r] = k("Postman Law"), [i, d] = k(!1), [x, c] = k(null);
+  const [t, s] = N(!1), [a, r] = N("Postman Law"), [n, l] = N(!1), [b, d] = N(null);
   T(() => {
     t ? document.body.classList.add("light") : document.body.classList.remove("light");
   }, [t]);
-  const l = K(() => {
-    const n = [
+  const i = K(() => {
+    const o = [
       "soul-teal",
       "soul-purple",
       "soul-gold",
@@ -1839,14 +1847,14 @@ function Ue() {
       left: `${Math.random() * 100}vw`,
       bottom: `${-10 + Math.random() * 20}px`,
       size: 1 + Math.random() * 4,
-      type: n[A % n.length],
+      type: o[A % o.length],
       delay: `${Math.random() * 20}s`,
       duration: `${8 + Math.random() * 18}s`
     }));
-  }, []), p = {
-    "Postman Law": $.filter((n) => n.brand === "Postman Law").length,
-    "Wettermark Keith": $.filter((n) => n.brand === "Wettermark Keith").length
-  }, m = $.filter((n) => n.brand === a), b = i ? m : m.filter((n) => !n.archived), v = m.filter((n) => n.archived).length, o = [
+  }, []), c = {
+    "Postman Law": $.filter((o) => o.brand === "Postman Law").length,
+    "Wettermark Keith": $.filter((o) => o.brand === "Wettermark Keith").length
+  }, m = $.filter((o) => o.brand === a), x = n ? m : m.filter((o) => !o.archived), w = m.filter((o) => o.archived).length, p = [
     "January",
     "February",
     "March",
@@ -1859,64 +1867,64 @@ function Ue() {
     "October",
     "November",
     "December"
-  ], g = Array.from(new Set(b.map((n) => n.month))), y = o.filter((n) => g.includes(n)).reverse(), w = b.reduce(
-    (n, f) => (n[f.month] || (n[f.month] = []), n[f.month].push(f), n),
+  ], g = Array.from(new Set(x.map((o) => o.month))), h = p.filter((o) => g.includes(o)).reverse(), v = x.reduce(
+    (o, f) => (o[f.month] || (o[f.month] = []), o[f.month].push(f), o),
     {}
-  ), N = y.filter((n) => {
+  ), j = h.filter((o) => {
     var f;
-    return ((f = w[n]) == null ? void 0 : f.length) > 0;
-  }), D = new Set(b.map((n) => n.market)).size, h = t;
+    return ((f = v[o]) == null ? void 0 : f.length) > 0;
+  }), D = new Set(x.map((o) => o.market)).size, y = t;
   return /* @__PURE__ */ e.jsx(V.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
     "div",
     {
-      className: `min-h-screen w-full flex flex-col relative overflow-hidden font-sans transition-colors duration-700 ${h ? "bg-[#f5eef8]" : ""}`,
+      className: `min-h-screen w-full flex flex-col relative overflow-hidden font-sans transition-colors duration-700 ${y ? "bg-[#f5eef8]" : ""}`,
       children: [
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `absolute inset-0 pointer-events-none z-0 transition-all duration-700 ${h ? "bg-[radial-gradient(ellipse_at_top,#f8f0fc,#ede4f3,#e0d4ec)]" : "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-underworld-800 via-underworld-900 to-black"}`
+            className: `absolute inset-0 pointer-events-none z-0 transition-all duration-700 ${y ? "bg-[radial-gradient(ellipse_at_top,#f8f0fc,#ede4f3,#e0d4ec)]" : "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-underworld-800 via-underworld-900 to-black"}`
           }
         ),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `absolute inset-0 pointer-events-none z-[1] ${h ? "library-vignette-light" : "library-vignette"}`
+            className: `absolute inset-0 pointer-events-none z-[1] ${y ? "library-vignette-light" : "library-vignette"}`
           }
         ),
         /* @__PURE__ */ e.jsx("div", { className: "absolute inset-0 pointer-events-none z-[1] library-fog" }),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `absolute top-0 left-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none z-0 transition-colors duration-700 ${h ? "bg-purple-300/20" : "bg-megara-primary/5"}`
+            className: `absolute top-0 left-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none z-0 transition-colors duration-700 ${y ? "bg-purple-300/20" : "bg-megara-primary/5"}`
           }
         ),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `absolute top-1/3 right-1/4 w-80 h-80 rounded-full blur-[100px] pointer-events-none z-0 transition-colors duration-700 ${h ? "bg-pink-200/20" : "bg-magic-teal/5"}`
+            className: `absolute top-1/3 right-1/4 w-80 h-80 rounded-full blur-[100px] pointer-events-none z-0 transition-colors duration-700 ${y ? "bg-pink-200/20" : "bg-magic-teal/5"}`
           }
         ),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-64 rounded-full blur-[80px] pointer-events-none z-0 transition-colors duration-700 ${h ? "bg-amber-200/15" : "bg-magic-gold/3"}`
+            className: `absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-64 rounded-full blur-[80px] pointer-events-none z-0 transition-colors duration-700 ${y ? "bg-amber-200/15" : "bg-magic-gold/3"}`
           }
         ),
-        l.map(
-          (n) => /* @__PURE__ */ e.jsx(
+        i.map(
+          (o) => /* @__PURE__ */ e.jsx(
             "div",
             {
-              className: `soul-particle ${n.type}`,
+              className: `soul-particle ${o.type}`,
               style: {
-                left: n.left,
-                bottom: n.bottom,
-                width: `${n.size}px`,
-                height: `${n.size}px`,
-                "--delay": n.delay,
-                "--duration": n.duration
+                left: o.left,
+                bottom: o.bottom,
+                width: `${o.size}px`,
+                height: `${o.size}px`,
+                "--delay": o.delay,
+                "--duration": o.duration
               }
             },
-            n.id
+            o.id
           )
         ),
         /* @__PURE__ */ e.jsx(
@@ -1926,20 +1934,20 @@ function Ue() {
             toggleTheme: () => s(!t),
             brand: a,
             onBrandChange: r,
-            brandCounts: p,
-            totalInstructions: b.length,
+            brandCounts: c,
+            totalInstructions: x.length,
             totalMarkets: D,
-            archivedCount: v,
-            showArchived: i,
-            onToggleArchived: () => d((n) => !n)
+            archivedCount: w,
+            showArchived: n,
+            onToggleArchived: () => l((o) => !o)
           }
         ),
         /* @__PURE__ */ e.jsx(
           Pe,
           {
-            instructions: b,
-            months: N,
-            light: h
+            instructions: x,
+            months: j,
+            light: y
           }
         ),
         /* @__PURE__ */ e.jsx("main", { className: "flex-1 overflow-y-auto hide-scrollbar flex flex-col relative z-10", children: /* @__PURE__ */ e.jsxs("div", { className: "px-8 pb-32 flex-1 relative", children: [
@@ -1951,36 +1959,36 @@ function Ue() {
                 /* @__PURE__ */ e.jsx(
                   "div",
                   {
-                    className: `w-20 h-full bg-gradient-to-b ${h ? "from-purple-400/30 via-purple-300/10" : "from-megara-dark/50 via-megara-dark/20"} to-transparent border-x ${h ? "border-purple-300/20" : "border-megara-dark/30"}`
+                    className: `w-20 h-full bg-gradient-to-b ${y ? "from-purple-400/30 via-purple-300/10" : "from-megara-dark/50 via-megara-dark/20"} to-transparent border-x ${y ? "border-purple-300/20" : "border-megara-dark/30"}`
                   }
                 ),
                 /* @__PURE__ */ e.jsx(
                   "div",
                   {
-                    className: `w-20 h-full bg-gradient-to-b ${h ? "from-purple-400/30 via-purple-300/10" : "from-megara-dark/50 via-megara-dark/20"} to-transparent border-x ${h ? "border-purple-300/20" : "border-megara-dark/30"}`
+                    className: `w-20 h-full bg-gradient-to-b ${y ? "from-purple-400/30 via-purple-300/10" : "from-megara-dark/50 via-megara-dark/20"} to-transparent border-x ${y ? "border-purple-300/20" : "border-megara-dark/30"}`
                   }
                 )
               ]
             }
           ),
-          /* @__PURE__ */ e.jsx("div", { className: "max-w-6xl mx-auto relative z-10", children: N.map(
-            (n) => /* @__PURE__ */ e.jsx("div", { id: `month-${n}`, children: /* @__PURE__ */ e.jsx(
+          /* @__PURE__ */ e.jsx("div", { className: "max-w-6xl mx-auto relative z-10", children: j.map(
+            (o) => /* @__PURE__ */ e.jsx("div", { id: `month-${o}`, children: /* @__PURE__ */ e.jsx(
               Be,
               {
-                month: n,
-                instructions: w[n],
-                onBookClick: c,
-                light: h
+                month: o,
+                instructions: v[o],
+                onBookClick: d,
+                light: y
               }
-            ) }, n)
+            ) }, o)
           ) })
         ] }) }),
         /* @__PURE__ */ e.jsx(
           Ge,
           {
-            instruction: x,
-            onClose: () => c(null),
-            light: h
+            instruction: b,
+            onClose: () => d(null),
+            light: y
           }
         )
       ]
