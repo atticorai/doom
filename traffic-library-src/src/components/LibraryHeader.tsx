@@ -8,13 +8,24 @@ import {
   FlameKindling,
   Archive } from
 'lucide-react';
+type Brand = 'Postman Law' | 'Wettermark Keith';
 interface LibraryHeaderProps {
   isLightMode: boolean;
   toggleTheme: () => void;
+  brand: Brand;
+  onBrandChange: (b: Brand) => void;
+  brandCounts: Record<Brand, number>;
+  totalInstructions: number;
+  totalMarkets: number;
 }
 export function LibraryHeader({
   isLightMode,
-  toggleTheme
+  toggleTheme,
+  brand,
+  onBrandChange,
+  brandCounts,
+  totalInstructions,
+  totalMarkets,
 }: LibraryHeaderProps) {
   const quotes = [
   'I remember every version. Every mistake.',
@@ -99,25 +110,32 @@ export function LibraryHeader({
       <div
         className={`font-serif text-xs flex gap-2 tracking-wider uppercase ${light ? 'text-purple-500/60' : 'text-megara-light/40'}`}>
         
-        <span>91 instructions</span> &middot; <span>2 brands</span> &middot;{' '}
-        <span>11 markets</span>
+        <span>{totalInstructions} instructions</span> &middot; <span>2 brands</span> &middot;{' '}
+        <span>{totalMarkets} markets</span>
       </div>
 
       <div className="flex gap-4 items-center">
         <div
           className={`flex rounded-t-lg border-b overflow-hidden backdrop-blur-sm ${light ? 'bg-white/60 border-purple-200' : 'bg-underworld-800/60 border-megara-dark/40'}`}>
           
-          <button
-            className={`font-serif px-6 py-3 font-medium text-sm border-b-2 ${light ? 'text-purple-800 border-purple-600 bg-purple-50' : 'text-megara-light border-magic-gold bg-magic-gold/5'}`}>
-            
-            Postman Law <span className="text-xs opacity-50 ml-1">(55)</span>
-          </button>
-          <button
-            className={`font-serif px-6 py-3 font-medium text-sm transition-colors ${light ? 'text-purple-400 hover:text-purple-600 hover:bg-purple-50/50' : 'text-megara-light/40 hover:text-megara-light/70 hover:bg-white/5'}`}>
-            
-            Wettermark Keith{' '}
-            <span className="text-xs opacity-40 ml-1">(36)</span>
-          </button>
+          {(['Postman Law', 'Wettermark Keith'] as const).map((b) => {
+            const active = brand === b;
+            const activeClasses = light
+              ? 'text-purple-800 border-purple-600 bg-purple-50'
+              : 'text-megara-light border-magic-gold bg-magic-gold/5';
+            const idleClasses = light
+              ? 'text-purple-400 border-transparent hover:text-purple-600 hover:bg-purple-50/50'
+              : 'text-megara-light/40 border-transparent hover:text-megara-light/70 hover:bg-white/5';
+            return (
+              <button
+                key={b}
+                onClick={() => onBrandChange(b)}
+                className={`font-serif px-6 py-3 font-medium text-sm border-b-2 transition-colors ${active ? activeClasses : idleClasses}`}>
+                {b}
+                <span className="text-xs opacity-50 ml-1">({brandCounts[b]})</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

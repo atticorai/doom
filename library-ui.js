@@ -1,6 +1,6 @@
-import I, { forwardRef as N, createElement as h, useState as f, useEffect as y, useContext as L, createContext as R, useMemo as A } from "react";
-import { motion as g, AnimatePresence as M } from "framer-motion";
-var k = { exports: {} }, b = {};
+import P, { forwardRef as L, createElement as _, useState as w, useEffect as $, useContext as O, createContext as V, useMemo as D } from "react";
+import { motion as f, AnimatePresence as B } from "framer-motion";
+var I = { exports: {} }, j = {};
 /**
  * @license React
  * react-jsx-runtime.production.min.js
@@ -10,32 +10,32 @@ var k = { exports: {} }, b = {};
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-var S = I, P = Symbol.for("react.element"), V = Symbol.for("react.fragment"), O = Object.prototype.hasOwnProperty, D = S.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, B = { key: !0, ref: !0, __self: !0, __source: !0 };
-function _(t, s, a) {
-  var r, i = {}, o = null, p = null;
-  a !== void 0 && (o = "" + a), s.key !== void 0 && (o = "" + s.key), s.ref !== void 0 && (p = s.ref);
-  for (r in s) O.call(s, r) && !B.hasOwnProperty(r) && (i[r] = s[r]);
-  if (t && t.defaultProps) for (r in s = t.defaultProps, s) i[r] === void 0 && (i[r] = s[r]);
-  return { $$typeof: P, type: t, key: o, ref: p, props: i, _owner: D.current };
+var E = P, H = Symbol.for("react.element"), W = Symbol.for("react.fragment"), K = Object.prototype.hasOwnProperty, q = E.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, F = { key: !0, ref: !0, __self: !0, __source: !0 };
+function A(t, s, a) {
+  var r, o = {}, d = null, c = null;
+  a !== void 0 && (d = "" + a), s.key !== void 0 && (d = "" + s.key), s.ref !== void 0 && (c = s.ref);
+  for (r in s) K.call(s, r) && !F.hasOwnProperty(r) && (o[r] = s[r]);
+  if (t && t.defaultProps) for (r in s = t.defaultProps, s) o[r] === void 0 && (o[r] = s[r]);
+  return { $$typeof: H, type: t, key: d, ref: c, props: o, _owner: q.current };
 }
-b.Fragment = V;
-b.jsx = _;
-b.jsxs = _;
-k.exports = b;
-var e = k.exports;
+j.Fragment = W;
+j.jsx = A;
+j.jsxs = A;
+I.exports = j;
+var e = I.exports;
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const E = (t) => t.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase(), H = (t) => t.replace(
+const G = (t) => t.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase(), U = (t) => t.replace(
   /^([A-Z])|[\s-_]+(\w)/g,
   (s, a, r) => r ? r.toUpperCase() : a.toLowerCase()
-), w = (t) => {
-  const s = H(t);
+), z = (t) => {
+  const s = U(t);
   return s.charAt(0).toUpperCase() + s.slice(1);
-}, $ = (...t) => t.filter((s, a, r) => !!s && s.trim() !== "" && r.indexOf(s) === a).join(" ").trim(), q = (t) => {
+}, M = (...t) => t.filter((s, a, r) => !!s && s.trim() !== "" && r.indexOf(s) === a).join(" ").trim(), J = (t) => {
   for (const s in t)
     if (s.startsWith("aria-") || s === "role" || s === "title")
       return !0;
@@ -46,7 +46,7 @@ const E = (t) => t.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase(), H = (t)
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-var W = {
+var Y = {
   xmlns: "http://www.w3.org/2000/svg",
   width: 24,
   height: 24,
@@ -63,32 +63,32 @@ var W = {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const K = N(
+const Z = L(
   ({
     color: t = "currentColor",
     size: s = 24,
     strokeWidth: a = 2,
     absoluteStrokeWidth: r,
-    className: i = "",
-    children: o,
-    iconNode: p,
-    ...d
-  }, n) => h(
+    className: o = "",
+    children: d,
+    iconNode: c,
+    ...i
+  }, n) => _(
     "svg",
     {
       ref: n,
-      ...W,
+      ...Y,
       width: s,
       height: s,
       stroke: t,
       strokeWidth: r ? Number(a) * 24 / Number(s) : a,
-      className: $("lucide", i),
-      ...!o && !q(d) && { "aria-hidden": "true" },
-      ...d
+      className: M("lucide", o),
+      ...!d && !J(i) && { "aria-hidden": "true" },
+      ...i
     },
     [
-      ...p.map(([l, c]) => h(l, c)),
-      ...Array.isArray(o) ? o : [o]
+      ...c.map(([m, l]) => _(m, l)),
+      ...Array.isArray(d) ? d : [d]
     ]
   )
 );
@@ -98,20 +98,20 @@ const K = N(
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const m = (t, s) => {
-  const a = N(
-    ({ className: r, ...i }, o) => h(K, {
-      ref: o,
+const x = (t, s) => {
+  const a = L(
+    ({ className: r, ...o }, d) => _(Z, {
+      ref: d,
       iconNode: s,
-      className: $(
-        `lucide-${E(w(t))}`,
+      className: M(
+        `lucide-${G(z(t))}`,
         `lucide-${t}`,
         r
       ),
-      ...i
+      ...o
     })
   );
-  return a.displayName = w(t), a;
+  return a.displayName = z(t), a;
 };
 /**
  * @license lucide-react v0.522.0 - ISC
@@ -119,18 +119,18 @@ const m = (t, s) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const G = [
+const Q = [
   ["rect", { width: "20", height: "5", x: "2", y: "3", rx: "1", key: "1wp1u1" }],
   ["path", { d: "M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8", key: "1s80jp" }],
   ["path", { d: "M10 12h4", key: "a56b0p" }]
-], F = m("archive", G);
+], X = x("archive", Q);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const U = [
+const ee = [
   ["path", { d: "M10.268 21a2 2 0 0 0 3.464 0", key: "vwvbt9" }],
   [
     "path",
@@ -139,36 +139,7 @@ const U = [
       key: "11g9vi"
     }
   ]
-], Y = m("bell", U);
-/**
- * @license lucide-react v0.522.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const Z = [
-  ["path", { d: "M8 2v4", key: "1cmpym" }],
-  ["path", { d: "M16 2v4", key: "4m81vk" }],
-  ["rect", { width: "18", height: "18", x: "3", y: "4", rx: "2", key: "1hopcy" }],
-  ["path", { d: "M3 10h18", key: "8toen8" }]
-], J = m("calendar", Z);
-/**
- * @license lucide-react v0.522.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const Q = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]], X = m("chevron-down", Q);
-/**
- * @license lucide-react v0.522.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const ee = [
-  ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
-  ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
-], te = m("copy", ee);
+], te = x("bell", ee);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -176,43 +147,28 @@ const ee = [
  * See the LICENSE file in the root directory of this source tree.
  */
 const ae = [
-  ["path", { d: "M12 15V3", key: "m9g1x1" }],
-  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
-  ["path", { d: "m7 10 5 5 5-5", key: "brsn70" }]
-], re = m("download", ae);
+  ["path", { d: "M8 2v4", key: "1cmpym" }],
+  ["path", { d: "M16 2v4", key: "4m81vk" }],
+  ["rect", { width: "18", height: "18", x: "3", y: "4", rx: "2", key: "1hopcy" }],
+  ["path", { d: "M3 10h18", key: "8toen8" }]
+], re = x("calendar", ae);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const se = [
-  [
-    "path",
-    {
-      d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
-      key: "1nclc0"
-    }
-  ],
-  ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
-], oe = m("eye", se);
+const se = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]], ne = x("chevron-down", se);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const ne = [
-  [
-    "path",
-    {
-      d: "M12 2c1 3 2.5 3.5 3.5 4.5A5 5 0 0 1 17 10a5 5 0 1 1-10 0c0-.3 0-.6.1-.9a2 2 0 1 0 3.3-2C8 4.5 11 2 12 2Z",
-      key: "1ir223"
-    }
-  ],
-  ["path", { d: "m5 22 14-4", key: "1brv4h" }],
-  ["path", { d: "m5 18 14 4", key: "lgyyje" }]
-], ie = m("flame-kindling", ne);
+const oe = [
+  ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
+  ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
+], ie = x("copy", oe);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -220,14 +176,10 @@ const ne = [
  * See the LICENSE file in the root directory of this source tree.
  */
 const le = [
-  [
-    "path",
-    {
-      d: "M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z",
-      key: "96xj49"
-    }
-  ]
-], de = m("flame", le);
+  ["path", { d: "M12 15V3", key: "m9g1x1" }],
+  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
+  ["path", { d: "m7 10 5 5 5-5", key: "brsn70" }]
+], de = x("download", le);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -238,11 +190,12 @@ const pe = [
   [
     "path",
     {
-      d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
-      key: "1a8usu"
+      d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
+      key: "1nclc0"
     }
-  ]
-], ce = m("pen", pe);
+  ],
+  ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
+], ce = x("eye", pe);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -250,9 +203,16 @@ const pe = [
  * See the LICENSE file in the root directory of this source tree.
  */
 const me = [
-  ["path", { d: "M5 12h14", key: "1ays0h" }],
-  ["path", { d: "M12 5v14", key: "s699le" }]
-], xe = m("plus", me);
+  [
+    "path",
+    {
+      d: "M12 2c1 3 2.5 3.5 3.5 4.5A5 5 0 0 1 17 10a5 5 0 1 1-10 0c0-.3 0-.6.1-.9a2 2 0 1 0 3.3-2C8 4.5 11 2 12 2Z",
+      key: "1ir223"
+    }
+  ],
+  ["path", { d: "m5 22 14-4", key: "1brv4h" }],
+  ["path", { d: "m5 18 14 4", key: "lgyyje" }]
+], xe = x("flame-kindling", me);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -263,13 +223,11 @@ const ge = [
   [
     "path",
     {
-      d: "M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2",
-      key: "143wyd"
+      d: "M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z",
+      key: "96xj49"
     }
-  ],
-  ["path", { d: "M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6", key: "1itne7" }],
-  ["rect", { x: "6", y: "14", width: "12", height: "8", rx: "1", key: "1ue0tg" }]
-], ue = m("printer", ge);
+  ]
+], ue = x("flame", ge);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -277,9 +235,14 @@ const ge = [
  * See the LICENSE file in the root directory of this source tree.
  */
 const be = [
-  ["path", { d: "m21 21-4.34-4.34", key: "14j7rj" }],
-  ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
-], he = m("search", be);
+  [
+    "path",
+    {
+      d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
+      key: "1a8usu"
+    }
+  ]
+], he = x("pen", be);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -287,6 +250,43 @@ const be = [
  * See the LICENSE file in the root directory of this source tree.
  */
 const fe = [
+  ["path", { d: "M5 12h14", key: "1ays0h" }],
+  ["path", { d: "M12 5v14", key: "s699le" }]
+], ye = x("plus", fe);
+/**
+ * @license lucide-react v0.522.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const ve = [
+  [
+    "path",
+    {
+      d: "M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2",
+      key: "143wyd"
+    }
+  ],
+  ["path", { d: "M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6", key: "1itne7" }],
+  ["rect", { x: "6", y: "14", width: "12", height: "8", rx: "1", key: "1ue0tg" }]
+], we = x("printer", ve);
+/**
+ * @license lucide-react v0.522.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const je = [
+  ["path", { d: "m21 21-4.34-4.34", key: "14j7rj" }],
+  ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
+], ke = x("search", je);
+/**
+ * @license lucide-react v0.522.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Ne = [
   [
     "path",
     {
@@ -295,52 +295,57 @@ const fe = [
     }
   ],
   ["path", { d: "m21.854 2.147-10.94 10.939", key: "12cjpa" }]
-], ye = m("send", fe);
+], _e = x("send", Ne);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const ve = [
+const $e = [
   ["path", { d: "M3 6h18", key: "d0wm0j" }],
   ["path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", key: "4alrt4" }],
   ["path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", key: "v07s0e" }],
   ["line", { x1: "10", x2: "10", y1: "11", y2: "17", key: "1uufr5" }],
   ["line", { x1: "14", x2: "14", y1: "11", y2: "17", key: "xtxkd" }]
-], we = m("trash-2", ve);
+], Ce = x("trash-2", $e);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const je = [
+const Te = [
   ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
   ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
-], Ne = m("x", je);
-function ke({
+], ze = x("x", Te);
+function Le({
   isLightMode: t,
-  toggleTheme: s
+  toggleTheme: s,
+  brand: a,
+  onBrandChange: r,
+  brandCounts: o,
+  totalInstructions: d,
+  totalMarkets: c
 }) {
-  const a = [
+  const i = [
     "I remember every version. Every mistake.",
     "Everything you've ever sent. Archived. By me. Obviously.",
     "People do crazy things... like forgetting to send traffic.",
     "It's all Greek to them. But not to me.",
     `I don't do "lost files." Try someone else.`,
     "Megara doesn't forget. Megara doesn't forgive late sends."
-  ], [r, i] = f(0), o = t;
-  return y(() => {
-    const p = setInterval(() => {
-      i((d) => (d + 1) % a.length);
+  ], [n, m] = w(0), l = t;
+  return $(() => {
+    const g = setInterval(() => {
+      m((b) => (b + 1) % i.length);
     }, 8e3);
-    return () => clearInterval(p);
+    return () => clearInterval(g);
   }, []), /* @__PURE__ */ e.jsxs("header", { className: "w-full py-6 px-8 flex flex-col gap-5 relative z-10", children: [
     /* @__PURE__ */ e.jsx(
       "div",
       {
-        className: `absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent ${o ? "via-purple-400/30" : "via-magic-gold/30"} to-transparent`
+        className: `absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent ${l ? "via-purple-400/30" : "via-magic-gold/30"} to-transparent`
       }
     ),
     /* @__PURE__ */ e.jsxs("div", { className: "flex justify-between items-start", children: [
@@ -349,49 +354,49 @@ function ke({
           /* @__PURE__ */ e.jsx(
             "div",
             {
-              className: `w-8 h-px ${o ? "bg-purple-600" : "bg-magic-gold"}`
+              className: `w-8 h-px ${l ? "bg-purple-600" : "bg-magic-gold"}`
             }
           ),
           /* @__PURE__ */ e.jsx(
             "div",
             {
-              className: `w-2 h-2 rotate-45 border ${o ? "border-purple-600" : "border-magic-gold"}`
+              className: `w-2 h-2 rotate-45 border ${l ? "border-purple-600" : "border-magic-gold"}`
             }
           ),
           /* @__PURE__ */ e.jsx(
             "div",
             {
-              className: `w-4 h-px ${o ? "bg-purple-600" : "bg-magic-gold"}`
+              className: `w-4 h-px ${l ? "bg-purple-600" : "bg-magic-gold"}`
             }
           )
         ] }),
         /* @__PURE__ */ e.jsx(
           "h1",
           {
-            className: `font-serif font-bold text-4xl tracking-wide ${o ? "text-purple-800 drop-shadow-sm" : "title-shimmer"}`,
+            className: `font-serif font-bold text-4xl tracking-wide ${l ? "text-purple-800 drop-shadow-sm" : "title-shimmer"}`,
             children: "Traffic Library"
           }
         ),
         /* @__PURE__ */ e.jsxs(
           "p",
           {
-            className: `font-serif italic text-base mb-1 transition-opacity duration-1000 ${o ? "text-purple-600/70" : "text-megara-light/60"}`,
+            className: `font-serif italic text-base mb-1 transition-opacity duration-1000 ${l ? "text-purple-600/70" : "text-megara-light/60"}`,
             children: [
               '"',
-              a[r],
+              i[n],
               '"'
             ]
           },
-          r
+          n
         )
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-3", children: [
         /* @__PURE__ */ e.jsxs(
           "button",
           {
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${o ? "border-purple-300 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light/70 hover:bg-megara-dark/20 hover:text-megara-light"}`,
+            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${l ? "border-purple-300 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light/70 hover:bg-megara-dark/20 hover:text-megara-light"}`,
             children: [
-              /* @__PURE__ */ e.jsx(re, { size: 16 }),
+              /* @__PURE__ */ e.jsx(de, { size: 16 }),
               " Export CSV"
             ]
           }
@@ -399,9 +404,9 @@ function ke({
         /* @__PURE__ */ e.jsxs(
           "button",
           {
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${o ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100" : "bg-magic-gold/10 border-magic-gold/40 text-magic-gold hover:bg-magic-gold/20 hover:shadow-glow-gold"}`,
+            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${l ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100" : "bg-magic-gold/10 border-magic-gold/40 text-magic-gold hover:bg-magic-gold/20 hover:shadow-glow-gold"}`,
             children: [
-              /* @__PURE__ */ e.jsx(Y, { size: 16 }),
+              /* @__PURE__ */ e.jsx(te, { size: 16 }),
               " Send Reminders"
             ]
           }
@@ -409,9 +414,9 @@ function ke({
         /* @__PURE__ */ e.jsxs(
           "button",
           {
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${o ? "bg-purple-100 border-purple-300 text-purple-700 hover:bg-purple-200" : "bg-megara-primary/20 border-megara-primary/50 text-megara-light hover:bg-megara-primary/30 hover:shadow-glow-purple"}`,
+            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${l ? "bg-purple-100 border-purple-300 text-purple-700 hover:bg-purple-200" : "bg-megara-primary/20 border-megara-primary/50 text-megara-light hover:bg-megara-primary/30 hover:shadow-glow-purple"}`,
             children: [
-              /* @__PURE__ */ e.jsx(xe, { size: 16 }),
+              /* @__PURE__ */ e.jsx(ye, { size: 16 }),
               " Import"
             ]
           }
@@ -420,14 +425,14 @@ function ke({
           "button",
           {
             onClick: s,
-            className: `ml-3 p-2.5 rounded-full transition-all relative group ${o ? "text-amber-600 hover:bg-amber-100 hover:shadow-[0_0_20px_4px_rgba(217,119,6,0.2)]" : "text-magic-gold hover:bg-white/10 hover:shadow-[0_0_20px_4px_rgba(255,215,0,0.3)]"}`,
+            className: `ml-3 p-2.5 rounded-full transition-all relative group ${l ? "text-amber-600 hover:bg-amber-100 hover:shadow-[0_0_20px_4px_rgba(217,119,6,0.2)]" : "text-magic-gold hover:bg-white/10 hover:shadow-[0_0_20px_4px_rgba(255,215,0,0.3)]"}`,
             title: "Toggle Illumination",
             children: [
-              t ? /* @__PURE__ */ e.jsx(ie, { size: 22 }) : /* @__PURE__ */ e.jsx(de, { size: 22 }),
+              t ? /* @__PURE__ */ e.jsx(xe, { size: 22 }) : /* @__PURE__ */ e.jsx(ue, { size: 22 }),
               /* @__PURE__ */ e.jsx(
                 "div",
                 {
-                  className: `absolute inset-0 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity ${o ? "bg-amber-400/20" : "bg-magic-gold/10"}`
+                  className: `absolute inset-0 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity ${l ? "bg-amber-400/20" : "bg-magic-gold/10"}`
                 }
               )
             ]
@@ -438,52 +443,54 @@ function ke({
     /* @__PURE__ */ e.jsxs(
       "div",
       {
-        className: `font-serif text-xs flex gap-2 tracking-wider uppercase ${o ? "text-purple-500/60" : "text-megara-light/40"}`,
+        className: `font-serif text-xs flex gap-2 tracking-wider uppercase ${l ? "text-purple-500/60" : "text-megara-light/40"}`,
         children: [
-          /* @__PURE__ */ e.jsx("span", { children: "91 instructions" }),
+          /* @__PURE__ */ e.jsxs("span", { children: [
+            d,
+            " instructions"
+          ] }),
           " · ",
           /* @__PURE__ */ e.jsx("span", { children: "2 brands" }),
           " ·",
           " ",
-          /* @__PURE__ */ e.jsx("span", { children: "11 markets" })
+          /* @__PURE__ */ e.jsxs("span", { children: [
+            c,
+            " markets"
+          ] })
         ]
       }
     ),
-    /* @__PURE__ */ e.jsx("div", { className: "flex gap-4 items-center", children: /* @__PURE__ */ e.jsxs(
+    /* @__PURE__ */ e.jsx("div", { className: "flex gap-4 items-center", children: /* @__PURE__ */ e.jsx(
       "div",
       {
-        className: `flex rounded-t-lg border-b overflow-hidden backdrop-blur-sm ${o ? "bg-white/60 border-purple-200" : "bg-underworld-800/60 border-megara-dark/40"}`,
-        children: [
-          /* @__PURE__ */ e.jsxs(
+        className: `flex rounded-t-lg border-b overflow-hidden backdrop-blur-sm ${l ? "bg-white/60 border-purple-200" : "bg-underworld-800/60 border-megara-dark/40"}`,
+        children: ["Postman Law", "Wettermark Keith"].map((g) => {
+          const b = a === g, y = l ? "text-purple-800 border-purple-600 bg-purple-50" : "text-megara-light border-magic-gold bg-magic-gold/5", k = l ? "text-purple-400 border-transparent hover:text-purple-600 hover:bg-purple-50/50" : "text-megara-light/40 border-transparent hover:text-megara-light/70 hover:bg-white/5";
+          return /* @__PURE__ */ e.jsxs(
             "button",
             {
-              className: `font-serif px-6 py-3 font-medium text-sm border-b-2 ${o ? "text-purple-800 border-purple-600 bg-purple-50" : "text-megara-light border-magic-gold bg-magic-gold/5"}`,
+              onClick: () => r(g),
+              className: `font-serif px-6 py-3 font-medium text-sm border-b-2 transition-colors ${b ? y : k}`,
               children: [
-                "Postman Law ",
-                /* @__PURE__ */ e.jsx("span", { className: "text-xs opacity-50 ml-1", children: "(55)" })
+                g,
+                /* @__PURE__ */ e.jsxs("span", { className: "text-xs opacity-50 ml-1", children: [
+                  "(",
+                  o[g],
+                  ")"
+                ] })
               ]
-            }
-          ),
-          /* @__PURE__ */ e.jsxs(
-            "button",
-            {
-              className: `font-serif px-6 py-3 font-medium text-sm transition-colors ${o ? "text-purple-400 hover:text-purple-600 hover:bg-purple-50/50" : "text-megara-light/40 hover:text-megara-light/70 hover:bg-white/5"}`,
-              children: [
-                "Wettermark Keith",
-                " ",
-                /* @__PURE__ */ e.jsx("span", { className: "text-xs opacity-40 ml-1", children: "(36)" })
-              ]
-            }
-          )
-        ]
+            },
+            g
+          );
+        })
       }
     ) }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex gap-4 items-center w-full", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "relative flex-1 group", children: [
         /* @__PURE__ */ e.jsx(
-          he,
+          ke,
           {
-            className: `absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${o ? "text-purple-400 group-focus-within:text-purple-600" : "text-magic-teal/50 group-focus-within:text-magic-teal"}`,
+            className: `absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${l ? "text-purple-400 group-focus-within:text-purple-600" : "text-magic-teal/50 group-focus-within:text-magic-teal"}`,
             size: 18
           }
         ),
@@ -492,40 +499,40 @@ function ke({
           {
             type: "text",
             placeholder: "Search the archives — ISCIs, markets, buyers, incantations...",
-            className: `w-full rounded-lg py-3 pl-12 pr-4 focus:outline-none transition-all backdrop-blur-sm ${o ? "bg-white/70 border border-purple-200 text-purple-900 placeholder:text-purple-400/50 focus:border-purple-400 focus:shadow-[0_0_15px_2px_rgba(147,51,234,0.1)]" : "bg-underworld-800/40 border border-megara-dark/25 text-megara-light placeholder:text-megara-light/30 focus:border-magic-teal/50 focus:shadow-[0_0_20px_2px_rgba(0,206,209,0.1)]"}`
+            className: `w-full rounded-lg py-3 pl-12 pr-4 focus:outline-none transition-all backdrop-blur-sm ${l ? "bg-white/70 border border-purple-200 text-purple-900 placeholder:text-purple-400/50 focus:border-purple-400 focus:shadow-[0_0_15px_2px_rgba(147,51,234,0.1)]" : "bg-underworld-800/40 border border-megara-dark/25 text-megara-light placeholder:text-megara-light/30 focus:border-magic-teal/50 focus:shadow-[0_0_20px_2px_rgba(0,206,209,0.1)]"}`
           }
         ),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity ${o ? "via-purple-400/30" : "via-magic-teal/20"}`
+            className: `absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity ${l ? "via-purple-400/30" : "via-magic-teal/20"}`
           }
         )
       ] }),
       /* @__PURE__ */ e.jsxs(
         "div",
         {
-          className: `flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm backdrop-blur-sm ${o ? "border-purple-200 bg-white/60" : "border-megara-dark/25 bg-underworld-800/40"}`,
+          className: `flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm backdrop-blur-sm ${l ? "border-purple-200 bg-white/60" : "border-megara-dark/25 bg-underworld-800/40"}`,
           children: [
             /* @__PURE__ */ e.jsx(
-              F,
+              X,
               {
                 size: 16,
-                className: o ? "text-amber-600/70" : "text-magic-gold/70"
+                className: l ? "text-amber-600/70" : "text-magic-gold/70"
               }
             ),
             /* @__PURE__ */ e.jsx(
               "span",
               {
-                className: `text-xs ${o ? "text-purple-600/60" : "text-megara-light/60"}`,
+                className: `text-xs ${l ? "text-purple-600/60" : "text-megara-light/60"}`,
                 children: "30 archived"
               }
             ),
-            /* @__PURE__ */ e.jsx("span", { className: o ? "text-purple-300" : "text-megara-light/20", children: "|" }),
+            /* @__PURE__ */ e.jsx("span", { className: l ? "text-purple-300" : "text-megara-light/20", children: "|" }),
             /* @__PURE__ */ e.jsx(
               "span",
               {
-                className: `text-xs ${o ? "text-purple-600/60" : "text-megara-light/60"}`,
+                className: `text-xs ${l ? "text-purple-600/60" : "text-megara-light/60"}`,
                 children: "25 shown"
               }
             )
@@ -536,34 +543,34 @@ function ke({
     /* @__PURE__ */ e.jsx(
       "div",
       {
-        className: `absolute bottom-0 left-8 right-8 h-px bg-gradient-to-r from-transparent ${o ? "via-purple-300/30" : "via-megara-dark/30"} to-transparent`
+        className: `absolute bottom-0 left-8 right-8 h-px bg-gradient-to-r from-transparent ${l ? "via-purple-300/30" : "via-megara-dark/30"} to-transparent`
       }
     )
   ] });
 }
-const _e = {
+const Ie = {
   April: "001.04",
   March: "001.03",
   December: "001.12"
 };
-function $e({
+function Ae({
   instructions: t,
   months: s,
   light: a = !1
 }) {
-  const r = (i) => {
-    const o = document.getElementById(`month-${i}`);
-    o && o.scrollIntoView({
+  const r = (o) => {
+    const d = document.getElementById(`month-${o}`);
+    d && d.scrollIntoView({
       behavior: "smooth",
       block: "start"
     });
   };
-  return /* @__PURE__ */ e.jsx("div", { className: "relative z-10 px-8 pb-6", children: /* @__PURE__ */ e.jsx("div", { className: "flex gap-3 flex-wrap", children: s.map((i, o) => {
-    const p = t.filter(
-      (d) => d.month === i
+  return /* @__PURE__ */ e.jsx("div", { className: "relative z-10 px-8 pb-6", children: /* @__PURE__ */ e.jsx("div", { className: "flex gap-3 flex-wrap", children: s.map((o, d) => {
+    const c = t.filter(
+      (i) => i.month === o
     ).length;
     return /* @__PURE__ */ e.jsxs(
-      g.button,
+      f.button,
       {
         initial: {
           opacity: 0,
@@ -574,9 +581,9 @@ function $e({
           y: 0
         },
         transition: {
-          delay: o * 0.06
+          delay: d * 0.06
         },
-        onClick: () => r(i),
+        onClick: () => r(o),
         className: `relative group flex flex-col w-32 rounded-t-sm rounded-b-md overflow-hidden transition-all ${a ? "bg-white/70 border border-purple-200 hover:border-purple-400 hover:bg-white hover:shadow-[0_0_15px_rgba(147,51,234,0.15)]" : "bg-underworld-800/80 border border-megara-dark/30 hover:border-magic-teal/40 hover:bg-underworld-700/50 hover:shadow-glow-teal"}`,
         children: [
           /* @__PURE__ */ e.jsx(
@@ -591,11 +598,11 @@ function $e({
                 "span",
                 {
                   className: `font-mono text-[10px] font-bold tracking-wider ${a ? "text-purple-400 group-hover:text-purple-600" : "text-magic-teal/40 group-hover:text-magic-teal/70"}`,
-                  children: _e[i] || "001"
+                  children: Ie[o] || "001"
                 }
               ),
               /* @__PURE__ */ e.jsx(
-                J,
+                re,
                 {
                   size: 14,
                   className: `transition-colors ${a ? "text-purple-300 group-hover:text-purple-500" : "text-magic-teal/30 group-hover:text-magic-teal/60"}`
@@ -606,7 +613,7 @@ function $e({
               "span",
               {
                 className: `font-serif text-sm font-medium text-left transition-colors ${a ? "text-purple-700/70 group-hover:text-purple-800" : "text-megara-light/60 group-hover:text-megara-light/80"}`,
-                children: i
+                children: o
               }
             ),
             /* @__PURE__ */ e.jsxs(
@@ -614,9 +621,9 @@ function $e({
               {
                 className: `text-[10px] font-mono ${a ? "text-purple-400/50" : "text-megara-light/25"}`,
                 children: [
-                  p,
+                  c,
                   " ",
-                  p === 1 ? "scroll" : "scrolls"
+                  c === 1 ? "scroll" : "scrolls"
                 ]
               }
             )
@@ -629,11 +636,11 @@ function $e({
           )
         ]
       },
-      i
+      o
     );
   }) }) });
 }
-const Ce = [
+const Me = [
   // Postman Law - April - TV
   {
     id: "1",
@@ -954,47 +961,47 @@ const Ce = [
     buyer: "Lynn Cortelezzi",
     status: "pending"
   }
-], u = () => typeof window < "u" && window.MegaraLibraryData ? window.MegaraLibraryData : Ce, j = new Proxy([], {
+], v = () => typeof window < "u" && window.MegaraLibraryData ? window.MegaraLibraryData : Me, N = new Proxy([], {
   get(t, s) {
-    const a = u(), r = a[s];
+    const a = v(), r = a[s];
     return typeof r == "function" ? r.bind(a) : r;
   },
   has(t, s) {
-    return s in u();
+    return s in v();
   },
   ownKeys() {
-    return Reflect.ownKeys(u());
+    return Reflect.ownKeys(v());
   },
   getOwnPropertyDescriptor(t, s) {
-    return Object.getOwnPropertyDescriptor(u(), s);
+    return Object.getOwnPropertyDescriptor(v(), s);
   }
-}), C = {
+}), R = {
   Chicago: "text-market-chicago",
   Cincinnati: "text-market-cincinnati",
   Denver: "text-market-denver",
   Minneapolis: "text-market-minneapolis"
-}, Te = {
+}, Re = {
   Chicago: "bg-market-chicago",
   Cincinnati: "bg-market-cincinnati",
   Denver: "bg-market-denver",
   Minneapolis: "bg-market-minneapolis"
 };
-function ze({ instruction: t, onClick: s }) {
-  const a = L(T), r = t.status === "sent", i = parseInt(t.iscis) || 5, o = i > 8 ? "h-48" : i > 5 ? "h-44" : "h-40", p = {
+function Se({ instruction: t, onClick: s }) {
+  const a = O(S), r = t.status === "sent", o = parseInt(t.iscis) || 5, d = o > 8 ? "h-48" : o > 5 ? "h-44" : "h-40", c = {
     TV: "from-[#2a1540] to-[#1a0d2e]",
     Radio: "from-[#1a2040] to-[#0d1530]",
     "Streaming Audio": "from-[#1a3030] to-[#0d2020]",
     Cable: "from-[#2a1a30] to-[#1a1020]",
     OOH: "from-[#2a2a1a] to-[#1a1a0d]"
-  }, d = {
+  }, i = {
     TV: "from-[#e8daf0] to-[#d4c0e0]",
     Radio: "from-[#d5dff0] to-[#c0cfe0]",
     "Streaming Audio": "from-[#d0e8e8] to-[#bcd8d8]",
     Cable: "from-[#e0d5e8] to-[#d0c0d8]",
     OOH: "from-[#e8e5d0] to-[#d8d5c0]"
-  }, n = a ? d[t.mediaType] || d.TV : p[t.mediaType] || p.TV;
+  }, n = a ? i[t.mediaType] || i.TV : c[t.mediaType] || c.TV;
   return /* @__PURE__ */ e.jsxs(
-    g.div,
+    f.div,
     {
       whileHover: {
         y: -14,
@@ -1005,7 +1012,7 @@ function ze({ instruction: t, onClick: s }) {
       },
       onClick: s,
       className: `
-        relative w-14 ${o} cursor-pointer group
+        relative w-14 ${d} cursor-pointer group
         rounded-l-sm rounded-r-md
         flex flex-col items-center justify-between py-3
         bg-gradient-to-b ${n}
@@ -1041,7 +1048,7 @@ function ze({ instruction: t, onClick: s }) {
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `w-full h-3 ${Te[t.market]} opacity-90 shadow-inner relative z-10`,
+            className: `w-full h-3 ${Re[t.market]} opacity-90 shadow-inner relative z-10`,
             children: /* @__PURE__ */ e.jsx("div", { className: "absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" })
           }
         ),
@@ -1088,7 +1095,7 @@ function ze({ instruction: t, onClick: s }) {
               /* @__PURE__ */ e.jsx(
                 "div",
                 {
-                  className: `font-bold text-sm ${C[t.market]}`,
+                  className: `font-bold text-sm ${R[t.market]}`,
                   children: t.market
                 }
               ),
@@ -1127,28 +1134,28 @@ function ze({ instruction: t, onClick: s }) {
     }
   );
 }
-function Ie({
+function Pe({
   month: t,
   instructions: s,
   onBookClick: a,
   light: r = !1
 }) {
   if (s.length === 0) return null;
-  const i = s.reduce(
-    (d, n) => (d[n.mediaType] || (d[n.mediaType] = []), d[n.mediaType].push(n), d),
+  const o = s.reduce(
+    (i, n) => (i[n.mediaType] || (i[n.mediaType] = []), i[n.mediaType].push(n), i),
     {}
-  ), p = [
+  ), c = [
     "TV",
     "Radio",
     "Streaming Audio",
     "Cable",
     "OOH"
-  ].filter((d) => {
+  ].filter((i) => {
     var n;
-    return ((n = i[d]) == null ? void 0 : n.length) > 0;
+    return ((n = o[i]) == null ? void 0 : n.length) > 0;
   });
   return /* @__PURE__ */ e.jsxs(
-    g.div,
+    f.div,
     {
       initial: {
         opacity: 0,
@@ -1219,10 +1226,10 @@ function Ie({
             )
           ] })
         ] }),
-        p.map((d, n) => {
-          const l = i[d], c = new Set(l.map((x) => x.market)).size;
+        c.map((i, n) => {
+          const m = o[i], l = new Set(m.map((g) => g.market)).size;
           return /* @__PURE__ */ e.jsxs(
-            g.div,
+            f.div,
             {
               initial: {
                 opacity: 0,
@@ -1248,15 +1255,15 @@ function Ie({
                         {
                           className: `font-serif text-xs font-bold tracking-widest uppercase drop-shadow-md ${r ? "text-purple-800" : "text-yellow-100"}`,
                           children: [
-                            d,
+                            i,
                             /* @__PURE__ */ e.jsxs(
                               "span",
                               {
                                 className: `opacity-50 normal-case ml-2 font-sans text-[10px] ${r ? "text-purple-600" : ""}`,
                                 children: [
-                                  c,
+                                  l,
                                   " ",
-                                  c === 1 ? "market" : "markets"
+                                  l === 1 ? "market" : "markets"
                                 ]
                               }
                             )
@@ -1284,9 +1291,9 @@ function Ie({
                     className: `absolute inset-x-0 top-4 bottom-7 rounded-t-sm ${r ? "bg-gradient-to-b from-purple-100/40 to-white/20 border-t border-purple-200/30" : "bg-gradient-to-b from-underworld-900/80 to-underworld-800/40 border-t border-megara-dark/10"}`
                   }
                 ),
-                /* @__PURE__ */ e.jsx("div", { className: "flex items-end gap-1 px-12 pt-10 pb-1 min-h-[210px] relative z-10 overflow-x-auto hide-scrollbar", children: l.map(
-                  (x, z) => /* @__PURE__ */ e.jsx(
-                    g.div,
+                /* @__PURE__ */ e.jsx("div", { className: "flex items-end gap-1 px-12 pt-10 pb-1 min-h-[210px] relative z-10 overflow-x-auto hide-scrollbar", children: m.map(
+                  (g, b) => /* @__PURE__ */ e.jsx(
+                    f.div,
                     {
                       initial: {
                         opacity: 0,
@@ -1297,17 +1304,17 @@ function Ie({
                         y: 0
                       },
                       transition: {
-                        delay: n * 0.1 + z * 0.03
+                        delay: n * 0.1 + b * 0.03
                       },
                       children: /* @__PURE__ */ e.jsx(
-                        ze,
+                        Se,
                         {
-                          instruction: x,
-                          onClick: () => a(x)
+                          instruction: g,
+                          onClick: () => a(g)
                         }
                       )
                     },
-                    x.id
+                    g.id
                   )
                 ) }),
                 /* @__PURE__ */ e.jsxs("div", { className: "shelf-wood h-8 w-full rounded-sm relative z-0", children: [
@@ -1327,56 +1334,56 @@ function Ie({
                 )
               ]
             },
-            d
+            i
           );
         })
       ]
     }
   );
 }
-const v = () => new (window.AudioContext || window.webkitAudioContext)();
-function Le() {
+const C = () => new (window.AudioContext || window.webkitAudioContext)();
+function Oe() {
   try {
-    const t = v(), s = t.currentTime;
-    [880, 1320].forEach((o, p) => {
-      const d = t.createOscillator();
-      d.type = "sine", d.frequency.value = o;
-      const n = t.createGain(), l = s + p * 0.06;
-      n.gain.setValueAtTime(0, l), n.gain.linearRampToValueAtTime(0.07, l + 0.01), n.gain.exponentialRampToValueAtTime(1e-3, l + 0.8), d.connect(n), n.connect(t.destination), d.start(l), d.stop(l + 0.8);
+    const t = C(), s = t.currentTime;
+    [880, 1320].forEach((d, c) => {
+      const i = t.createOscillator();
+      i.type = "sine", i.frequency.value = d;
+      const n = t.createGain(), m = s + c * 0.06;
+      n.gain.setValueAtTime(0, m), n.gain.linearRampToValueAtTime(0.07, m + 0.01), n.gain.exponentialRampToValueAtTime(1e-3, m + 0.8), i.connect(n), n.connect(t.destination), i.start(m), i.stop(m + 0.8);
     });
     const r = t.createOscillator();
     r.type = "sine", r.frequency.value = 2640;
-    const i = t.createGain();
-    i.gain.setValueAtTime(0, s + 0.1), i.gain.linearRampToValueAtTime(0.025, s + 0.12), i.gain.exponentialRampToValueAtTime(1e-3, s + 0.5), r.connect(i), i.connect(t.destination), r.start(s + 0.1), r.stop(s + 0.5), setTimeout(() => t.close(), 1200);
+    const o = t.createGain();
+    o.gain.setValueAtTime(0, s + 0.1), o.gain.linearRampToValueAtTime(0.025, s + 0.12), o.gain.exponentialRampToValueAtTime(1e-3, s + 0.5), r.connect(o), o.connect(t.destination), r.start(s + 0.1), r.stop(s + 0.5), setTimeout(() => t.close(), 1200);
   } catch {
   }
 }
-function Re() {
+function Ve() {
   try {
-    const t = v(), s = t.currentTime, a = t.createOscillator();
+    const t = C(), s = t.currentTime, a = t.createOscillator();
     a.type = "sine", a.frequency.setValueAtTime(440, s), a.frequency.exponentialRampToValueAtTime(220, s + 0.08);
     const r = t.createGain();
     r.gain.setValueAtTime(0.06, s), r.gain.exponentialRampToValueAtTime(1e-3, s + 0.1), a.connect(r), r.connect(t.destination), a.start(s), a.stop(s + 0.1), setTimeout(() => t.close(), 300);
   } catch {
   }
 }
-function Ae() {
+function De() {
   try {
-    const t = v(), s = t.currentTime;
-    [1047, 1319, 1568, 2093].forEach((p, d) => {
+    const t = C(), s = t.currentTime;
+    [1047, 1319, 1568, 2093].forEach((c, i) => {
       const n = t.createOscillator();
-      n.type = "sine", n.frequency.value = p;
-      const l = t.createGain(), c = s + d * 0.1;
-      l.gain.setValueAtTime(0, c), l.gain.linearRampToValueAtTime(0.06, c + 0.01), l.gain.exponentialRampToValueAtTime(1e-3, c + 0.6), n.connect(l), l.connect(t.destination), n.start(c), n.stop(c + 0.6);
+      n.type = "sine", n.frequency.value = c;
+      const m = t.createGain(), l = s + i * 0.1;
+      m.gain.setValueAtTime(0, l), m.gain.linearRampToValueAtTime(0.06, l + 0.01), m.gain.exponentialRampToValueAtTime(1e-3, l + 0.6), n.connect(m), m.connect(t.destination), n.start(l), n.stop(l + 0.6);
     });
     const r = t.createOscillator();
     r.type = "sine", r.frequency.value = 3136;
-    const i = t.createGain(), o = s + 0.4;
-    i.gain.setValueAtTime(0, o), i.gain.linearRampToValueAtTime(0.04, o + 0.01), i.gain.exponentialRampToValueAtTime(1e-3, o + 0.5), r.connect(i), i.connect(t.destination), r.start(o), r.stop(o + 0.5), setTimeout(() => t.close(), 1500);
+    const o = t.createGain(), d = s + 0.4;
+    o.gain.setValueAtTime(0, d), o.gain.linearRampToValueAtTime(0.04, d + 0.01), o.gain.exponentialRampToValueAtTime(1e-3, d + 0.5), r.connect(o), o.connect(t.destination), r.start(d), r.stop(d + 0.5), setTimeout(() => t.close(), 1500);
   } catch {
   }
 }
-function Me(t) {
+function Be(t) {
   const s = t.market, a = s === "Chicago" ? "CHI" : s === "Cincinnati" ? "CIN" : s === "Denver" ? "DEN" : "MSP", r = t.brand === "Postman Law" ? "PL" : "WK";
   if (t.mediaType === "OOH")
     return [
@@ -1402,7 +1409,7 @@ function Me(t) {
         notes: "All Week"
       }
     ];
-  const o = t.mediaType === "TV" || t.mediaType === "Cable" ? "T" : t.mediaType === "Radio" ? "R" : "S", p = [
+  const d = t.mediaType === "TV" || t.mediaType === "Cable" ? "T" : t.mediaType === "Radio" ? "R" : "S", c = [
     {
       name: "Why Postman_60",
       length: ":60",
@@ -1443,35 +1450,35 @@ function Me(t) {
       length: ":15",
       pct: "25%"
     }
-  ], d = parseInt(t.iscis) || 8;
-  return p.slice(0, d).map((n, l) => ({
+  ], i = parseInt(t.iscis) || 8;
+  return c.slice(0, i).map((n, m) => ({
     dates: t.dateRange,
-    code: `${a}${r}${266e4 + l}${o} - ${n.name}`,
+    code: `${a}${r}${266e4 + m}${d} - ${n.name}`,
     length: n.length,
     pct: n.pct,
     notes: n.length === ":15" ? ":15 A" : "All Week"
   }));
 }
-function Se({
+function Ee({
   instruction: t,
   onClose: s,
   light: a = !1
 }) {
-  if (y(() => {
-    t && Le();
+  if ($(() => {
+    t && Oe();
   }, [t]), !t) return null;
-  const r = Me(t), i = t.market === "Chicago" ? "CHI" : t.market === "Cincinnati" ? "CIN" : t.market === "Denver" ? "DEN" : "MSP", o = () => {
-    Re(), s();
-  }, p = () => {
-    Ae();
+  const r = Be(t), o = t.market === "Chicago" ? "CHI" : t.market === "Cincinnati" ? "CIN" : t.market === "Denver" ? "DEN" : "MSP", d = () => {
+    Ve(), s();
+  }, c = () => {
+    De();
   };
-  return /* @__PURE__ */ e.jsx(M, { children: /* @__PURE__ */ e.jsx(
+  return /* @__PURE__ */ e.jsx(B, { children: /* @__PURE__ */ e.jsx(
     "div",
     {
       className: `fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-6 ${a ? "bg-black/40" : "bg-black/70"}`,
-      onClick: o,
+      onClick: d,
       children: /* @__PURE__ */ e.jsxs(
-        g.div,
+        f.div,
         {
           initial: {
             scale: 0.85,
@@ -1494,7 +1501,7 @@ function Se({
             stiffness: 180
           },
           className: `w-full max-w-6xl h-[85vh] flex rounded-lg overflow-hidden ${a ? "shadow-[0_0_40px_rgba(147,51,234,0.1),0_25px_50px_rgba(0,0,0,0.2)]" : "shadow-[0_0_60px_rgba(200,80,192,0.15),0_25px_50px_rgba(0,0,0,0.5)]"}`,
-          onClick: (d) => d.stopPropagation(),
+          onClick: (i) => i.stopPropagation(),
           children: [
             /* @__PURE__ */ e.jsxs("div", { className: "flex-1 bg-white overflow-y-auto relative", children: [
               /* @__PURE__ */ e.jsx("div", { className: "absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-300 to-transparent z-10 pointer-events-none" }),
@@ -1509,7 +1516,7 @@ function Se({
                   /* @__PURE__ */ e.jsxs("span", { className: "text-gray-900 font-medium", children: [
                     t.market,
                     " (",
-                    i,
+                    o,
                     ")"
                   ] }),
                   /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-700", children: "Buyer:" }),
@@ -1523,7 +1530,7 @@ function Se({
                   /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-700", children: "Version / Links:" }),
                   /* @__PURE__ */ e.jsxs("span", { className: "text-gray-900", children: [
                     "Version 1 / ",
-                    i,
+                    o,
                     " Assets"
                   ] }),
                   /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-700", children: "Comments:" }),
@@ -1547,16 +1554,16 @@ function Se({
                       }
                     ) }),
                     r.map(
-                      (d, n) => /* @__PURE__ */ e.jsxs(
+                      (i, n) => /* @__PURE__ */ e.jsxs(
                         "tr",
                         {
                           className: `border-b border-gray-100 ${n % 2 === 0 ? "bg-green-50/40" : "bg-white"} hover:bg-green-50 transition-colors`,
                           children: [
-                            /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-600 font-mono text-xs", children: d.dates }),
-                            /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-900 font-mono text-xs", children: d.code }),
-                            /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: d.length }),
-                            /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: d.pct }),
-                            /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-500 text-xs", children: d.notes })
+                            /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-600 font-mono text-xs", children: i.dates }),
+                            /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-900 font-mono text-xs", children: i.code }),
+                            /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: i.length }),
+                            /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: i.pct }),
+                            /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-500 text-xs", children: i.notes })
                           ]
                         },
                         n
@@ -1598,9 +1605,9 @@ function Se({
                   /* @__PURE__ */ e.jsx("div", { className: "p-4 flex justify-end relative z-10", children: /* @__PURE__ */ e.jsx(
                     "button",
                     {
-                      onClick: o,
+                      onClick: d,
                       className: `p-2 rounded-full transition-colors ${a ? "text-purple-400 hover:text-purple-700 hover:bg-purple-100" : "text-megara-light/60 hover:text-megara-light hover:bg-white/10"}`,
-                      children: /* @__PURE__ */ e.jsx(Ne, { size: 20 })
+                      children: /* @__PURE__ */ e.jsx(ze, { size: 20 })
                     }
                   ) }),
                   /* @__PURE__ */ e.jsxs(
@@ -1611,7 +1618,7 @@ function Se({
                         /* @__PURE__ */ e.jsx(
                           "span",
                           {
-                            className: `font-serif text-2xl font-bold ${C[t.market]}`,
+                            className: `font-serif text-2xl font-bold ${R[t.market]}`,
                             children: t.market
                           }
                         ),
@@ -1678,7 +1685,7 @@ function Se({
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            ce,
+                            he,
                             {
                               size: 16,
                               className: "text-megara-primary group-hover:scale-110 transition-transform"
@@ -1695,7 +1702,7 @@ function Se({
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group font-medium ${a ? "border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100" : "border-magic-teal/40 bg-magic-teal/10 text-magic-teal hover:bg-magic-teal/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            oe,
+                            ce,
                             {
                               size: 16,
                               className: "group-hover:scale-110 transition-transform"
@@ -1712,7 +1719,7 @@ function Se({
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            ue,
+                            we,
                             {
                               size: 16,
                               className: `group-hover:scale-110 transition-transform ${a ? "text-amber-600" : "text-magic-gold"}`
@@ -1726,11 +1733,11 @@ function Se({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
-                        onClick: p,
+                        onClick: c,
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            ye,
+                            _e,
                             {
                               size: 16,
                               className: "text-megara-primary group-hover:scale-110 transition-transform group-hover:translate-x-0.5"
@@ -1747,7 +1754,7 @@ function Se({
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            te,
+                            ie,
                             {
                               size: 16,
                               className: `group-hover:scale-110 transition-transform ${a ? "text-purple-400" : "text-megara-light/60"}`
@@ -1756,7 +1763,7 @@ function Se({
                           " ",
                           "Copy to...",
                           /* @__PURE__ */ e.jsx(
-                            X,
+                            ne,
                             {
                               size: 14,
                               className: `ml-auto ${a ? "text-purple-300" : "text-megara-light/40"}`
@@ -1771,7 +1778,7 @@ function Se({
                     {
                       className: `w-full py-2.5 px-4 rounded border text-sm flex items-center justify-center gap-2 transition-colors ${a ? "border-red-200 text-red-500 hover:bg-red-50" : "border-red-900/40 text-red-400 hover:bg-red-900/20"}`,
                       children: [
-                        /* @__PURE__ */ e.jsx(we, { size: 16 }),
+                        /* @__PURE__ */ e.jsx(Ce, { size: 16 }),
                         " Delete"
                       ]
                     }
@@ -1785,14 +1792,14 @@ function Se({
     }
   ) });
 }
-const T = R(!1);
-function Oe() {
-  const [t, s] = f(!1), [a, r] = f(null);
-  y(() => {
+const S = V(!1);
+function Ke() {
+  const [t, s] = w(!1), [a, r] = w("Postman Law"), [o, d] = w(null);
+  $(() => {
     t ? document.body.classList.add("light") : document.body.classList.remove("light");
   }, [t]);
-  const i = A(() => {
-    const l = [
+  const c = D(() => {
+    const p = [
       "soul-teal",
       "soul-purple",
       "soul-gold",
@@ -1800,88 +1807,109 @@ function Oe() {
     ];
     return Array.from({
       length: 60
-    }).map((c, x) => ({
-      id: x,
+    }).map((h, T) => ({
+      id: T,
       left: `${Math.random() * 100}vw`,
       bottom: `${-10 + Math.random() * 20}px`,
       size: 1 + Math.random() * 4,
-      type: l[x % l.length],
+      type: p[T % p.length],
       delay: `${Math.random() * 20}s`,
       duration: `${8 + Math.random() * 18}s`
     }));
-  }, []), o = ["April", "March", "December"], p = j.reduce(
-    (l, c) => (l[c.month] || (l[c.month] = []), l[c.month].push(c), l),
+  }, []), i = {
+    "Postman Law": N.filter((p) => p.brand === "Postman Law").length,
+    "Wettermark Keith": N.filter((p) => p.brand === "Wettermark Keith").length
+  }, n = N.filter((p) => p.brand === a), m = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ], l = Array.from(new Set(n.map((p) => p.month))), g = m.filter((p) => l.includes(p)).reverse(), b = n.reduce(
+    (p, h) => (p[h.month] || (p[h.month] = []), p[h.month].push(h), p),
     {}
-  ), d = o.filter((l) => {
-    var c;
-    return ((c = p[l]) == null ? void 0 : c.length) > 0;
-  }), n = t;
-  return /* @__PURE__ */ e.jsx(T.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
+  ), y = g.filter((p) => {
+    var h;
+    return ((h = b[p]) == null ? void 0 : h.length) > 0;
+  }), k = new Set(n.map((p) => p.market)).size, u = t;
+  return /* @__PURE__ */ e.jsx(S.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
     "div",
     {
-      className: `min-h-screen w-full flex flex-col relative overflow-hidden font-sans transition-colors duration-700 ${n ? "bg-[#f5eef8]" : ""}`,
+      className: `min-h-screen w-full flex flex-col relative overflow-hidden font-sans transition-colors duration-700 ${u ? "bg-[#f5eef8]" : ""}`,
       children: [
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `fixed inset-0 pointer-events-none z-0 transition-all duration-700 ${n ? "bg-[radial-gradient(ellipse_at_top,#f8f0fc,#ede4f3,#e0d4ec)]" : "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-underworld-800 via-underworld-900 to-black"}`
+            className: `fixed inset-0 pointer-events-none z-0 transition-all duration-700 ${u ? "bg-[radial-gradient(ellipse_at_top,#f8f0fc,#ede4f3,#e0d4ec)]" : "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-underworld-800 via-underworld-900 to-black"}`
           }
         ),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `fixed inset-0 pointer-events-none z-[1] ${n ? "library-vignette-light" : "library-vignette"}`
+            className: `fixed inset-0 pointer-events-none z-[1] ${u ? "library-vignette-light" : "library-vignette"}`
           }
         ),
         /* @__PURE__ */ e.jsx("div", { className: "fixed inset-0 pointer-events-none z-[1] library-fog" }),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `fixed top-0 left-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none z-0 transition-colors duration-700 ${n ? "bg-purple-300/20" : "bg-megara-primary/5"}`
+            className: `fixed top-0 left-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none z-0 transition-colors duration-700 ${u ? "bg-purple-300/20" : "bg-megara-primary/5"}`
           }
         ),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `fixed top-1/3 right-1/4 w-80 h-80 rounded-full blur-[100px] pointer-events-none z-0 transition-colors duration-700 ${n ? "bg-pink-200/20" : "bg-magic-teal/5"}`
+            className: `fixed top-1/3 right-1/4 w-80 h-80 rounded-full blur-[100px] pointer-events-none z-0 transition-colors duration-700 ${u ? "bg-pink-200/20" : "bg-magic-teal/5"}`
           }
         ),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `fixed bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-64 rounded-full blur-[80px] pointer-events-none z-0 transition-colors duration-700 ${n ? "bg-amber-200/15" : "bg-magic-gold/3"}`
+            className: `fixed bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-64 rounded-full blur-[80px] pointer-events-none z-0 transition-colors duration-700 ${u ? "bg-amber-200/15" : "bg-magic-gold/3"}`
           }
         ),
-        i.map(
-          (l) => /* @__PURE__ */ e.jsx(
+        c.map(
+          (p) => /* @__PURE__ */ e.jsx(
             "div",
             {
-              className: `soul-particle ${l.type}`,
+              className: `soul-particle ${p.type}`,
               style: {
-                left: l.left,
-                bottom: l.bottom,
-                width: `${l.size}px`,
-                height: `${l.size}px`,
-                "--delay": l.delay,
-                "--duration": l.duration
+                left: p.left,
+                bottom: p.bottom,
+                width: `${p.size}px`,
+                height: `${p.size}px`,
+                "--delay": p.delay,
+                "--duration": p.duration
               }
             },
-            l.id
+            p.id
           )
         ),
         /* @__PURE__ */ e.jsx(
-          ke,
+          Le,
           {
             isLightMode: t,
-            toggleTheme: () => s(!t)
+            toggleTheme: () => s(!t),
+            brand: a,
+            onBrandChange: r,
+            brandCounts: i,
+            totalInstructions: n.length,
+            totalMarkets: k
           }
         ),
         /* @__PURE__ */ e.jsx(
-          $e,
+          Ae,
           {
-            instructions: j,
-            months: d,
-            light: n
+            instructions: n,
+            months: y,
+            light: u
           }
         ),
         /* @__PURE__ */ e.jsx("main", { className: "flex-1 overflow-y-auto hide-scrollbar flex flex-col relative z-10", children: /* @__PURE__ */ e.jsxs("div", { className: "px-8 pb-32 flex-1 relative", children: [
@@ -1893,36 +1921,36 @@ function Oe() {
                 /* @__PURE__ */ e.jsx(
                   "div",
                   {
-                    className: `w-20 h-full bg-gradient-to-b ${n ? "from-purple-400/30 via-purple-300/10" : "from-megara-dark/50 via-megara-dark/20"} to-transparent border-x ${n ? "border-purple-300/20" : "border-megara-dark/30"}`
+                    className: `w-20 h-full bg-gradient-to-b ${u ? "from-purple-400/30 via-purple-300/10" : "from-megara-dark/50 via-megara-dark/20"} to-transparent border-x ${u ? "border-purple-300/20" : "border-megara-dark/30"}`
                   }
                 ),
                 /* @__PURE__ */ e.jsx(
                   "div",
                   {
-                    className: `w-20 h-full bg-gradient-to-b ${n ? "from-purple-400/30 via-purple-300/10" : "from-megara-dark/50 via-megara-dark/20"} to-transparent border-x ${n ? "border-purple-300/20" : "border-megara-dark/30"}`
+                    className: `w-20 h-full bg-gradient-to-b ${u ? "from-purple-400/30 via-purple-300/10" : "from-megara-dark/50 via-megara-dark/20"} to-transparent border-x ${u ? "border-purple-300/20" : "border-megara-dark/30"}`
                   }
                 )
               ]
             }
           ),
-          /* @__PURE__ */ e.jsx("div", { className: "max-w-6xl mx-auto relative z-10", children: d.map(
-            (l) => /* @__PURE__ */ e.jsx("div", { id: `month-${l}`, children: /* @__PURE__ */ e.jsx(
-              Ie,
+          /* @__PURE__ */ e.jsx("div", { className: "max-w-6xl mx-auto relative z-10", children: y.map(
+            (p) => /* @__PURE__ */ e.jsx("div", { id: `month-${p}`, children: /* @__PURE__ */ e.jsx(
+              Pe,
               {
-                month: l,
-                instructions: p[l],
-                onBookClick: r,
-                light: n
+                month: p,
+                instructions: b[p],
+                onBookClick: d,
+                light: u
               }
-            ) }, l)
+            ) }, p)
           ) })
         ] }) }),
         /* @__PURE__ */ e.jsx(
-          Se,
+          Ee,
           {
-            instruction: a,
-            onClose: () => r(null),
-            light: n
+            instruction: o,
+            onClose: () => d(null),
+            light: u
           }
         )
       ]
@@ -1930,6 +1958,6 @@ function Oe() {
   ) });
 }
 export {
-  Oe as App,
-  T as ThemeContext
+  Ke as App,
+  S as ThemeContext
 };

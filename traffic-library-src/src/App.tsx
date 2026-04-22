@@ -3,7 +3,7 @@ import { LibraryHeader } from './components/LibraryHeader';
 import { CatalogCards } from './components/CatalogCards';
 import { BookShelf } from './components/BookShelf';
 import { BookOpen } from './components/BookOpen';
-import { mockData, Instruction, Month } from './data/trafficData';
+import { mockData, Instruction, Month, Brand } from './data/trafficData';
 export const ThemeContext = createContext(false);
 interface SoulParticle {
   id: number;
@@ -16,6 +16,7 @@ interface SoulParticle {
 }
 export function App() {
   const [isLightMode, setIsLightMode] = useState(false);
+  const [brand, setBrand] = useState<Brand>('Postman Law');
   const [selectedInstruction, setSelectedInstruction] =
   useState<Instruction | null>(null);
   useEffect(() => {
@@ -44,8 +45,24 @@ export function App() {
       duration: `${8 + Math.random() * 18}s`
     }));
   }, []);
-  const monthOrder: Month[] = ['April', 'March', 'December'];
-  const groupedByMonth = mockData.reduce(
+  // Brand counts across ALL data (for the header tabs)
+  const brandCounts = {
+    'Postman Law': mockData.filter((i) => i.brand === 'Postman Law').length,
+    'Wettermark Keith': mockData.filter((i) => i.brand === 'Wettermark Keith').length,
+  };
+  // Filter to the currently-selected brand — brands have different rules and
+  // the two are never reconciled in one view.
+  const brandData = mockData.filter((i) => i.brand === brand);
+  // Derive month order from whatever months are present, newest first. The
+  // upstream hardcoded ['April','March','December'] and dropped everything
+  // else — real data spans any month of the year.
+  const MONTH_NAMES: Month[] = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December'
+  ];
+  const presentMonths = Array.from(new Set(brandData.map((i) => i.month))) as Month[];
+  const monthOrder: Month[] = MONTH_NAMES.filter((m) => presentMonths.includes(m)).reverse();
+  const groupedByMonth = brandData.reduce(
     (acc, inst) => {
       if (!acc[inst.month]) acc[inst.month] = [];
       acc[inst.month].push(inst);
@@ -54,6 +71,7 @@ export function App() {
     {} as Record<string, Instruction[]>
   );
   const sortedMonths = monthOrder.filter((m) => groupedByMonth[m]?.length > 0);
+  const totalMarkets = new Set(brandData.map((i) => i.market)).size;
   const light = isLightMode;
   return (
     <ThemeContext.Provider value={isLightMode}>
@@ -104,14 +122,19 @@ export function App() {
 
         <LibraryHeader
           isLightMode={isLightMode}
-          toggleTheme={() => setIsLightMode(!isLightMode)} />
-        
+          toggleTheme={() => setIsLightMode(!isLightMode)}
+          brand={brand}
+          onBrandChange={setBrand}
+          brandCounts={brandCounts}
+          totalInstructions={brandData.length}
+          totalMarkets={totalMarkets} />
+
 
         <CatalogCards
-          instructions={mockData}
+          instructions={brandData}
           months={sortedMonths}
           light={light} />
-        
+
 
         <main className="flex-1 overflow-y-auto hide-scrollbar flex flex-col relative z-10">
           <div className="px-8 pb-32 flex-1 relative">
