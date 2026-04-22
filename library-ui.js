@@ -1899,7 +1899,7 @@ function We({
 }
 const O = H(!1);
 function Ue() {
-  const [t, s] = N(!1), [a, r] = N("Postman Law"), [n, c] = N(!0), [b, p] = N(null);
+  const [t, s] = N(!1), [a, r] = N("Postman Law"), [n, c] = N(!1), [b, p] = N(null);
   z(() => {
     t ? document.body.classList.add("light") : document.body.classList.remove("light");
   }, [t]);

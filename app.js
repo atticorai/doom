@@ -6803,7 +6803,12 @@ Be direct and actionable. No generic advice. Every market recommendation must re
         // clicking a book actually covers the screen.
         const MO_LIB=["January","February","March","April","May","June","July","August","September","October","November","December"];
         const now=new Date();const curIdx=now.getMonth();const curYear=now.getFullYear();
-        const archCutoff=new Date(curYear,curIdx-2,1);
+        // Archive anything whose inferred broadcast year is before the
+        // current calendar year. Nov / Dec with no year stamp get inferred
+        // as last year (since they're "ahead" of the current month by more
+        // than 2), so they land in 2025 and archive. Jan-Apr 2026 stay
+        // visible as current.
+        const archCutoff=new Date(curYear,0,1);
         // Render the exact same traffic sheet the main app emits (see
         // buildSheetHtml in RotBuilder). The library displays the result via
         // dangerouslySetInnerHTML in the left page so what you see matches
@@ -7107,7 +7112,7 @@ Be direct and actionable. No generic advice. Every market recommendation must re
                 const seen=new Set();const uniq=[];
                 iscis.forEach(r=>{if(seen.has(r.code)){const ex=uniq.find(u=>u.code===r.code);if(ex&&!ex.pct&&r.pct)Object.assign(ex,r);return}seen.add(r.code);uniq.push(r)});
                 if(!uniq.length)return null;
-                return{est:dma+"-"+(brand==="Postman Law"?"PL":"WK")+"-"+media,brand,market:dma,media,buyer,month,version:parseInt(version)||1,stations:[],ts:new Date().toISOString(),comments,isRevision:false,combined:false,iscis:uniq,flight,status:"source"};
+                return{est:dma+"-"+(brand==="Postman Law"?"PL":"WK")+"-"+media,brand,market:dma,media,buyer,month,version:parseInt(version)||1,stations:[],ts:new Date().toISOString(),comments,isRevision:false,combined:false,iscis:uniq,flight,status:"sent"};
               }catch(e){console.error("Parse error:",e);return null}
             };
             let parsed=0,skipped=0,failed=0;const parsedRecords=[];
