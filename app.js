@@ -797,12 +797,9 @@ const App=()=>{
           const hasPLAprilOohMsp=d.some(h=>h.brand==="Postman Law"&&(h.market==="MSP"||h.market==="Minneapolis")&&h.media==="OOH"&&h.month==="April"&&h.isOoh);
           if(!hasPLAprilOohMsp){PL_APRIL_SEED.push({ts:"2026-03-25T12:00:00.000Z",est:"OOH-MSP-PL",brand:"Postman Law",market:"MSP",media:"OOH",buyer:"Ken Lazar",month:"April",flight:"3/30",version:"1",comments:"V1 MSP Digital Bulletins | Vendor: Wilkins Media",combined:false,iscis:[{code:"MSPPL26DB001O",title:"PL Digital Bulletin - 208x720 - MSP - Cityscape - MinneapolisIA",dur:"",pct:"33",sched:"All Week",bookend:"",units:"1"},{code:"MSPPL26DB002O",title:"PL Digital Bulletin - 208x720 - MSP - MascotTriangle - MinneapolisIA",dur:"",pct:"33",sched:"All Week",bookend:"",units:"1"},{code:"MSPPL26DB003O",title:"PL Digital Bulletin - 208x720 - MSP - MascotTriangle - MinneapolisIALogo",dur:"",pct:"34",sched:"All Week",bookend:"",units:"1"}],stations:[],status:"sent",isOoh:true,totalUnits:3,vendor:"Wilkins Media",isRevision:false,prevVersion:null})}
           if(PL_APRIL_SEED.length>0)console.warn("PL April seed: restored "+PL_APRIL_SEED.length+" traffic records");
-          // Restore missing seed records (additive only — never removes or modifies existing)
-          const seedTraffic=typeof TRAFFIC_HISTORY_INIT!=="undefined"?TRAFFIC_HISTORY_INIT:[];
-          const missingFromSeed=seedTraffic.filter(seed=>!d.some(h=>h.brand===seed.brand&&h.est===seed.est&&(h.market===seed.market||(normMkt(h.market)||h.market)===(normMkt(seed.market)||seed.market))&&h.month===seed.month&&h.media===seed.media));
-          if(missingFromSeed.length>0)console.warn("Seed restore: "+missingFromSeed.length+" records missing — adding back");
-          const final=[...PL_APRIL_SEED,...missingFromSeed,...d];
-          setTrafficHistory(final);trafficFbCountRef.current=final.length
+          // Firestore is source of truth. No PL_APRIL_SEED, no TRAFFIC_HISTORY_INIT
+          // backfill — the library shows exactly what's been sent.
+          setTrafficHistory(d);trafficFbCountRef.current=d.length
         }trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
         if(docs.workMonth?.data)setWorkMonth(JSON.parse(docs.workMonth.data));
         if(docs.confirmations?.data){const d=JSON.parse(docs.confirmations.data);setConfirmations(d)}
