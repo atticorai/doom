@@ -17,7 +17,7 @@ interface SoulParticle {
 export function App() {
   const [isLightMode, setIsLightMode] = useState(false);
   const [brand, setBrand] = useState<Brand>('Postman Law');
-  const [showArchived, setShowArchived] = useState(false);
+  const [showArchived, setShowArchived] = useState(true);
   const [selectedInstruction, setSelectedInstruction] =
   useState<Instruction | null>(null);
   useEffect(() => {

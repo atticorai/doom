@@ -1848,7 +1848,7 @@ function Fe({
 }
 const D = H(!1);
 function Ue() {
-  const [t, s] = N(!1), [a, r] = N("Postman Law"), [n, l] = N(!1), [b, d] = N(null);
+  const [t, s] = N(!1), [a, r] = N("Postman Law"), [n, l] = N(!0), [b, d] = N(null);
   T(() => {
     t ? document.body.classList.add("light") : document.body.classList.remove("light");
   }, [t]);
