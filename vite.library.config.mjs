@@ -13,6 +13,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // externalize them to avoid shipping a second copy.
 export default defineConfig({
   plugins: [react()],
+  // Vite lib mode doesn't replace process.env.NODE_ENV by default — deps like
+  // lucide-react / scheduler check it at runtime. Define it here so the bundle
+  // runs cleanly in the browser (no ReferenceError: process is not defined).
+  define: {
+    "process.env.NODE_ENV": JSON.stringify("production"),
+    "process.env": JSON.stringify({}),
+  },
   css: {
     postcss: {
       plugins: [
