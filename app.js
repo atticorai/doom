@@ -308,8 +308,10 @@ const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const base=D_
 const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery"};
 // Reverse map: full name → code (case-insensitive lookup for market normalization)
 const DM_REV=Object.fromEntries(Object.entries(DM).flatMap(([c,n])=>[[n,c],[n.toLowerCase(),c],[c,c],[c.toLowerCase(),c]]));
-// Normalize any market value (code or full name) to its 3-letter code
-const normMkt=(m)=>{if(!m)return"";const v=m.trim();if(DM[v])return v;const found=DM_REV[v]||DM_REV[v.toLowerCase()];if(found)return found;const entry=Object.entries(DM).find(([_,n])=>n.toLowerCase()===v.toLowerCase());return entry?entry[0]:v};
+// Normalize any market value (code or full name) to its 3-letter code.
+// Strips ", STATE" suffix (e.g. "Chicago, IL" → "CHI") so PDF-imported
+// records match cleanly against stations/estimates that use clean names.
+const normMkt=(m)=>{if(!m)return"";const raw=String(m).trim();const v=raw.split(",")[0].trim();if(DM[v])return v;const found=DM_REV[v]||DM_REV[v.toLowerCase()];if(found)return found;const entry=Object.entries(DM).find(([_,n])=>n.toLowerCase()===v.toLowerCase());return entry?entry[0]:v};
 const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
 const BRANDS=[
   {code:"PL",name:"Postman Law",agency:"Blackacre Services",logo:LOGO_PL,color:"#9b7bb0",colorBg:"#F0E8F8"},
