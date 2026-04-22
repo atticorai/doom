@@ -6725,21 +6725,42 @@ Be direct and actionable. No generic advice.`;
           {pg==="sta"&&<StaPg/>}
           {pg==="metrics"&&<MetricsPg/>}
           {pg==="library"&&(()=>{
-            // Map trafficHistory → Library's Instruction shape and push to the
-            // window so the library's trafficData.ts Proxy picks it up live.
-            const data=trafficHistory.map((h,i)=>({
-              id:(h.ts?String(h.ts):"tmp")+"_"+i,
-              brand:h.brand,
-              market:DM[h.market]||h.market,
-              mediaType:h.media,
-              month:h.month,
-              estimate:h.est||"",
-              version:h.version?("v"+h.version):"",
-              iscis:(h.iscis?.length||0)+" ISCIs"+(h.stations?.length?(" "+h.stations.length+" stations"):""),
-              dateRange:h.flight||"",
-              buyer:h.buyer||"",
-              status:h.status==="sent"?"sent":"pending",
-            }));
+            // Pass each real traffic instruction through to the library with
+            // full formatting: estimate, flight dates, version, buyer, status,
+            // stations, ISCI list. BookOpen uses these instead of synthesizing
+            // placeholder rows.
+            const MO_LIB=["January","February","March","April","May","June","July","August","September","October","November","December"];
+            const now=new Date();const curIdx=now.getMonth();const curYear=now.getFullYear();
+            const archCutoff=new Date(curYear,curIdx-2,1);
+            const data=trafficHistory.map((h,i)=>{
+              const parts=String(h.month||"").trim().split(/\s+/);
+              const monIdx=MO_LIB.indexOf(parts[0]);
+              const parsedYear=parseInt(parts[1]);
+              const year=!isNaN(parsedYear)?parsedYear:(monIdx>curIdx+2?curYear-1:curYear);
+              const effDate=monIdx>=0?new Date(year,monIdx,1):(h.ts?new Date(h.ts):null);
+              const archived=effDate?effDate<archCutoff:true;
+              return{
+                id:(h.ts?String(h.ts):"tmp")+"_"+i,
+                brand:h.brand,
+                market:DM[h.market]||h.market,
+                mediaType:h.media,
+                month:parts[0]||h.month,
+                estimate:h.est||"",
+                version:h.version?("v"+h.version):"",
+                iscis:(h.iscis?.length||0)+" ISCIs"+(h.stations?.length?(" · "+h.stations.length+" stations"):""),
+                dateRange:h.flight||"",
+                buyer:h.buyer||"",
+                status:h.status==="sent"?"sent":"pending",
+                iscisDetail:(h.iscis||[]).map(r=>({
+                  code:r.code,title:r.title,dur:r.dur,pct:r.pct,sched:r.sched,bookend:r.bookend,units:r.units
+                })),
+                stations:h.stations||[],
+                ts:h.ts,
+                year:year,
+                archived:archived,
+                comments:h.comments||"",
+              };
+            });
             window.MegaraLibraryData=data;
             console.log("[MegaraLibrary] piped",data.length,"records from trafficHistory");
             const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");

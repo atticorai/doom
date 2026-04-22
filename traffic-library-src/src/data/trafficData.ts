@@ -1,7 +1,21 @@
-export type MediaType = 'TV' | 'Radio' | 'Streaming Audio' | 'Cable' | 'OOH';
-export type Market = 'Chicago' | 'Cincinnati' | 'Denver' | 'Minneapolis';
-export type Month = 'December' | 'March' | 'April';
+export type MediaType = 'TV' | 'Radio' | 'Streaming Audio' | 'Cable' | 'OOH' | 'Digital' | 'Display';
+export type Market =
+  | 'Chicago' | 'Cincinnati' | 'Denver' | 'Minneapolis'
+  | 'Birmingham' | 'Huntsville' | 'Knoxville' | 'Chattanooga' | 'Montgomery' | 'Dothan' | 'Gadsden';
+export type Month =
+  | 'January' | 'February' | 'March' | 'April' | 'May' | 'June'
+  | 'July' | 'August' | 'September' | 'October' | 'November' | 'December';
 export type Brand = 'Postman Law' | 'Wettermark Keith';
+
+export interface IsciRow {
+  code: string;
+  title: string;
+  dur?: string;
+  pct?: string;
+  sched?: string;
+  bookend?: string;
+  units?: string;
+}
 
 export interface Instruction {
   id: string;
@@ -11,10 +25,18 @@ export interface Instruction {
   month: Month;
   estimate: string;
   version: string;
-  iscis: string;
+  iscis: string;           // summary text, e.g. "10 ISCIs 5 stations"
   dateRange: string;
   buyer: string;
   status: 'sent' | 'pending';
+  // Optional real-data fields. When present, BookOpen renders the actual
+  // ISCIs / stations / year instead of falling back to placeholder rows.
+  iscisDetail?: IsciRow[];
+  stations?: string[];
+  ts?: number;
+  year?: number;
+  archived?: boolean;
+  comments?: string;
 }
 
 const baseMockData: Instruction[] = [
@@ -374,19 +396,40 @@ export const marketColors: Record<Market, string> = {
   Chicago: 'text-market-chicago',
   Cincinnati: 'text-market-cincinnati',
   Denver: 'text-market-denver',
-  Minneapolis: 'text-market-minneapolis'
+  Minneapolis: 'text-market-minneapolis',
+  Birmingham: 'text-market-birmingham',
+  Huntsville: 'text-market-huntsville',
+  Knoxville: 'text-market-knoxville',
+  Chattanooga: 'text-market-chattanooga',
+  Montgomery: 'text-market-montgomery',
+  Dothan: 'text-market-dothan',
+  Gadsden: 'text-market-gadsden',
 };
 
 export const marketBgColors: Record<Market, string> = {
   Chicago: 'bg-market-chicago',
   Cincinnati: 'bg-market-cincinnati',
   Denver: 'bg-market-denver',
-  Minneapolis: 'bg-market-minneapolis'
+  Minneapolis: 'bg-market-minneapolis',
+  Birmingham: 'bg-market-birmingham',
+  Huntsville: 'bg-market-huntsville',
+  Knoxville: 'bg-market-knoxville',
+  Chattanooga: 'bg-market-chattanooga',
+  Montgomery: 'bg-market-montgomery',
+  Dothan: 'bg-market-dothan',
+  Gadsden: 'bg-market-gadsden',
 };
 
 export const marketBorderColors: Record<Market, string> = {
   Chicago: 'border-market-chicago',
   Cincinnati: 'border-market-cincinnati',
   Denver: 'border-market-denver',
-  Minneapolis: 'border-market-minneapolis'
+  Minneapolis: 'border-market-minneapolis',
+  Birmingham: 'border-market-birmingham',
+  Huntsville: 'border-market-huntsville',
+  Knoxville: 'border-market-knoxville',
+  Chattanooga: 'border-market-chattanooga',
+  Montgomery: 'border-market-montgomery',
+  Dothan: 'border-market-dothan',
+  Gadsden: 'border-market-gadsden',
 };

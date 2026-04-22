@@ -22,15 +22,23 @@ interface BookOpenProps {
   light?: boolean;
 }
 function generateIsciRows(instruction: Instruction) {
-  const market = instruction.market;
-  const prefix =
-  market === 'Chicago' ?
-  'CHI' :
-  market === 'Cincinnati' ?
-  'CIN' :
-  market === 'Denver' ?
-  'DEN' :
-  'MSP';
+  // Real data path — when the host app passes iscisDetail, render exactly
+  // those ISCIs instead of synthesizing placeholder rows.
+  if (instruction.iscisDetail && instruction.iscisDetail.length) {
+    return instruction.iscisDetail.map((r) => ({
+      dates: r.sched || instruction.dateRange,
+      code: r.code + (r.title ? ' - ' + r.title : ''),
+      length: r.dur ? (r.dur.startsWith(':') ? r.dur : ':' + r.dur) : (r.units ? r.units + ' units' : ''),
+      pct: r.pct || '',
+      notes: r.bookend || r.sched || ''
+    }));
+  }
+  const MARKET_PREFIX: Record<string, string> = {
+    Chicago: 'CHI', Cincinnati: 'CIN', Denver: 'DEN', Minneapolis: 'MSP',
+    Birmingham: 'BRM', Huntsville: 'HSV', Knoxville: 'KNX', Chattanooga: 'CHA',
+    Montgomery: 'MTG', Dothan: 'DHN', Gadsden: 'GAD',
+  };
+  const prefix = MARKET_PREFIX[instruction.market] || 'XXX';
   const brand = instruction.brand === 'Postman Law' ? 'PL' : 'WK';
   if (instruction.mediaType === 'OOH') {
     return [

@@ -17,6 +17,9 @@ interface LibraryHeaderProps {
   brandCounts: Record<Brand, number>;
   totalInstructions: number;
   totalMarkets: number;
+  archivedCount: number;
+  showArchived: boolean;
+  onToggleArchived: () => void;
 }
 export function LibraryHeader({
   isLightMode,
@@ -26,6 +29,9 @@ export function LibraryHeader({
   brandCounts,
   totalInstructions,
   totalMarkets,
+  archivedCount,
+  showArchived,
+  onToggleArchived,
 }: LibraryHeaderProps) {
   const quotes = [
   'I remember every version. Every mistake.',
@@ -154,27 +160,36 @@ export function LibraryHeader({
             className={`absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity ${light ? 'via-purple-400/30' : 'via-magic-teal/20'}`}>
           </div>
         </div>
-        <div
-          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm backdrop-blur-sm ${light ? 'border-purple-200 bg-white/60' : 'border-megara-dark/25 bg-underworld-800/40'}`}>
-          
+        <button
+          onClick={onToggleArchived}
+          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm backdrop-blur-sm transition-colors cursor-pointer ${light
+            ? showArchived
+              ? 'border-amber-400 bg-amber-50'
+              : 'border-purple-200 bg-white/60 hover:border-purple-400'
+            : showArchived
+              ? 'border-magic-gold/60 bg-magic-gold/10'
+              : 'border-megara-dark/25 bg-underworld-800/40 hover:border-magic-gold/40'}`}>
           <Archive
             size={16}
             className={light ? 'text-amber-600/70' : 'text-magic-gold/70'} />
-          
           <span
             className={`text-xs ${light ? 'text-purple-600/60' : 'text-megara-light/60'}`}>
-            
-            30 archived
+            {archivedCount} archived
           </span>
           <span className={light ? 'text-purple-300' : 'text-megara-light/20'}>
             |
           </span>
           <span
             className={`text-xs ${light ? 'text-purple-600/60' : 'text-megara-light/60'}`}>
-            
-            25 shown
+            {totalInstructions} shown
           </span>
-        </div>
+          {showArchived && (
+            <span
+              className={`text-[10px] font-bold tracking-widest uppercase ml-1 ${light ? 'text-amber-700' : 'text-magic-gold'}`}>
+              ON
+            </span>
+          )}
+        </button>
       </div>
 
       <div

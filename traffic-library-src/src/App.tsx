@@ -17,6 +17,7 @@ interface SoulParticle {
 export function App() {
   const [isLightMode, setIsLightMode] = useState(false);
   const [brand, setBrand] = useState<Brand>('Postman Law');
+  const [showArchived, setShowArchived] = useState(false);
   const [selectedInstruction, setSelectedInstruction] =
   useState<Instruction | null>(null);
   useEffect(() => {
@@ -51,8 +52,14 @@ export function App() {
     'Wettermark Keith': mockData.filter((i) => i.brand === 'Wettermark Keith').length,
   };
   // Filter to the currently-selected brand — brands have different rules and
-  // the two are never reconciled in one view.
-  const brandData = mockData.filter((i) => i.brand === brand);
+  // the two are never reconciled in one view. Archived records (more than two
+  // broadcast months old, so e.g. December 2025 when current month is April
+  // 2026) are hidden unless the user toggles Show Archived.
+  const brandOnly = mockData.filter((i) => i.brand === brand);
+  const brandData = showArchived
+    ? brandOnly
+    : brandOnly.filter((i) => !(i as any).archived);
+  const archivedCount = brandOnly.filter((i) => (i as any).archived).length;
   // Derive month order from whatever months are present, newest first. The
   // upstream hardcoded ['April','March','December'] and dropped everything
   // else — real data spans any month of the year.
@@ -127,7 +134,10 @@ export function App() {
           onBrandChange={setBrand}
           brandCounts={brandCounts}
           totalInstructions={brandData.length}
-          totalMarkets={totalMarkets} />
+          totalMarkets={totalMarkets}
+          archivedCount={archivedCount}
+          showArchived={showArchived}
+          onToggleArchived={() => setShowArchived((p) => !p)} />
 
 
         <CatalogCards

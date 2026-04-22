@@ -24,10 +24,19 @@ export default {
           gold: '#FFD700',
         },
         market: {
+          // PL markets
           chicago: '#FF6B6B',
           cincinnati: '#F4D03F',
           denver: '#2ECC71',
           minneapolis: '#00CED1',
+          // WK markets — match the colors used elsewhere in the Doom app
+          birmingham: '#D4A040',
+          huntsville: '#F97316',
+          knoxville: '#6366F1',
+          chattanooga: '#06B6D4',
+          montgomery: '#EC4899',
+          dothan: '#84CC16',
+          gadsden: '#A855F7',
         }
       },
       fontFamily: {
