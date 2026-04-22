@@ -7111,35 +7111,43 @@ Be direct and actionable. No generic advice. Every market recommendation must re
               }catch(e){console.error("Parse error:",e);return null}
             };
             let parsed=0,skipped=0,failed=0;const parsedRecords=[];
-            for(const name of files){
+            notify("Parsing "+files.length+" PDFs…");
+            for(let fi=0;fi<files.length;fi++){
+              const name=files[fi];
               try{
                 const buf=await zip.files[name].async("arraybuffer");
                 const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
                 const text=await extractPdfTextLocal(pdf);
                 const rec=parseLocal(text);
-                if(!rec){failed++;console.warn("Zip parse failed:",name);continue}
-                if(rec.month==="April"){skipped++;continue} // April is sacred
+                if(!rec){failed++;console.warn("[LoadSource] parse returned null for:",name);continue}
+                if(rec.month==="April"){skipped++;continue}
                 parsedRecords.push(rec);
                 parsed++;
-              }catch(e){failed++;console.error("Zip file error:",name,e)}
+                if((fi+1)%10===0)notify("Parsed "+(fi+1)+"/"+files.length+"…");
+              }catch(e){failed++;console.error("[LoadSource] error on",name,e)}
             }
-            if(!parsedRecords.length){notify("No records parsed from zip. "+failed+" failed, "+skipped+" skipped.");return}
+            console.log("[LoadSource] parsed=",parsed,"skipped(April)=",skipped,"failed=",failed,"records=",parsedRecords);
+            if(!parsedRecords.length){notify("No records parsed. failed="+failed+" skipped(April)="+skipped+". Check console for why.");return}
             if(!confirm("Zip parsed: "+parsed+" records ready to import.\n\n"+skipped+" April records were skipped (sacred).\n"+failed+" PDFs failed to parse.\n\nThis will REPLACE each matching brand|market|media|month slot in Firestore. Continue?"))return;
             // Merge: replace matching slots, add new ones
             const slotKey=(h)=>(h.brand||"")+"|"+(normMkt(h.market)||h.market||"")+"|"+(h.media||"")+"|"+(h.month||"");
-            setTrafficHistory(prev=>{
-              const map=new Map();
-              prev.forEach(h=>map.set(slotKey(h),h));
-              parsedRecords.forEach(r=>map.set(slotKey(r),r));
-              const next=Array.from(map.values());
-              // Bypass drop guard (this is intentional replace, not shrink)
-              backupBeforeSave("trafficHistory",next);
-              trafficFbCountRef.current=next.length;
-              try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(next),ts:Date.now()})}catch(e){console.error("Source import save failed:",e)}
-              return next;
-            });
-            log("Traffic Source Load",parsed+" records imported from traffic-source.zip");
-            notify("Imported "+parsed+" records from zip. "+skipped+" April skipped, "+failed+" failed.");
+            const map=new Map();
+            trafficHistory.forEach(h=>map.set(slotKey(h),h));
+            parsedRecords.forEach(r=>map.set(slotKey(r),r));
+            const next=Array.from(map.values());
+            console.log("[LoadSource] merged: prev="+trafficHistory.length+" + new="+parsedRecords.length+" = "+next.length);
+            // Direct Firestore write (bypass drop guard + React batching issues)
+            backupBeforeSave("trafficHistory",next);
+            trafficFbCountRef.current=next.length;
+            setTrafficHistoryRaw(next);
+            try{
+              await db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(next),ts:Date.now()});
+              log("Traffic Source Load",parsed+" records imported from traffic-source.zip");
+              notify("✓ Imported "+parsed+" records. "+skipped+" April skipped, "+failed+" failed. Firestore now has "+next.length+" total.");
+            }catch(e){
+              console.error("[LoadSource] Firestore save failed:",e);
+              notify("Firestore save FAILED: "+(e.message||e)+". State updated locally; refresh will revert.");
+            }
           },
           wipeNonApril:async()=>{
             // Deletes every trafficHistory record where month !== "April" for
