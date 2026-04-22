@@ -1,0 +1,182 @@
+/* @import url() FONT IMPORTS MUST ALWAYS BE AT THE VERY TOP OF THIS FILE, ABOVE THE TAILWIND IMPORTS — DO NOT DELETE THIS COMMENT */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Cinzel+Decorative:wght@400;700&display=swap');
+
+/* CRITICAL: THE FOLLOWING TAILWIND IMPORTS MUST NEVER BE DELETED OR REORDERED — DO NOT DELETE THIS COMMENT */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* END TAILWIND IMPORTS — ALL OTHER CSS MUST GO BELOW THIS LINE */
+
+@layer utilities {
+  .writing-vertical-rl {
+    writing-mode: vertical-rl;
+  }
+  .text-orientation-mixed {
+    text-orientation: mixed;
+  }
+}
+body {
+  @apply bg-underworld-900 text-megara-light transition-colors duration-500;
+}
+.light body {
+  @apply bg-[#f8f0fc] text-underworld-900;
+}
+/* ===== SOUL PARTICLES ===== */
+@keyframes soul-rise {
+  0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+  15% { opacity: 0.8; }
+  50% { opacity: 0.4; }
+  85% { opacity: 0.6; }
+  100% { transform: translateY(-100vh) translateX(30px) scale(0.3); opacity: 0; }
+}
+@keyframes soul-drift {
+  0% { transform: translateY(0) translateX(0) scale(0.5); opacity: 0; }
+  20% { opacity: 0.6; }
+  50% { transform: translateY(-40vh) translateX(40px) scale(1); opacity: 0.3; }
+  80% { opacity: 0.5; }
+  100% { transform: translateY(-90vh) translateX(-20px) scale(0.2); opacity: 0; }
+}
+@keyframes soul-orbit {
+  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+  25% { transform: translateY(-25vh) translateX(50px) rotate(90deg); opacity: 0.7; }
+  50% { transform: translateY(-50vh) translateX(0px) rotate(180deg); opacity: 0.3; }
+  75% { transform: translateY(-75vh) translateX(-50px) rotate(270deg); opacity: 0.6; }
+  100% { transform: translateY(-100vh) translateX(0px) rotate(360deg); opacity: 0; }
+}
+@keyframes soul-pulse {
+  0%, 100% { box-shadow: 0 0 4px 1px currentColor; transform: scale(1); }
+  50% { box-shadow: 0 0 12px 4px currentColor; transform: scale(1.5); }
+}
+.soul-particle {
+  position: fixed;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.soul-teal {
+  background: #00CED1;
+  color: #00CED1;
+  box-shadow: 0 0 8px 2px #00CED1;
+  animation: soul-rise var(--duration) infinite linear var(--delay);
+}
+.soul-purple {
+  background: #C850C0;
+  color: #C850C0;
+  box-shadow: 0 0 8px 2px #C850C0;
+  animation: soul-drift var(--duration) infinite ease-in-out var(--delay);
+}
+.soul-gold {
+  background: #FFD700;
+  color: #FFD700;
+  box-shadow: 0 0 6px 2px #FFD700;
+  animation: soul-orbit var(--duration) infinite linear var(--delay);
+}
+.soul-ember {
+  background: #FF6B4A;
+  color: #FF6B4A;
+  box-shadow: 0 0 6px 1px #FF6B4A;
+  animation: soul-rise var(--duration) infinite linear var(--delay);
+}
+.light .soul-teal { background: #9B59B6; color: #9B59B6; box-shadow: 0 0 8px 2px #9B59B6; }
+.light .soul-purple { background: #C850C0; color: #C850C0; box-shadow: 0 0 8px 2px #C850C0; }
+.light .soul-gold { background: #D4A017; color: #D4A017; box-shadow: 0 0 6px 2px #D4A017; }
+.light .soul-ember { background: #E8A0BF; color: #E8A0BF; box-shadow: 0 0 6px 1px #E8A0BF; }
+/* ===== BOOK GLOW PULSE ===== */
+@keyframes book-breathe {
+  0%, 100% { box-shadow: 0 0 5px 0px rgba(0, 206, 209, 0.1); }
+  50% { box-shadow: 0 0 15px 3px rgba(0, 206, 209, 0.25); }
+}
+@keyframes book-breathe-pending {
+  0%, 100% { box-shadow: 0 0 5px 0px rgba(200, 80, 192, 0.1); }
+  50% { box-shadow: 0 0 12px 2px rgba(200, 80, 192, 0.2); }
+}
+.book-glow-sent {
+  animation: book-breathe 3s infinite ease-in-out;
+}
+.book-glow-pending {
+  animation: book-breathe-pending 4s infinite ease-in-out;
+}
+/* ===== SHELF ATMOSPHERE ===== */
+@keyframes shelf-glow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+.shelf-ambient {
+  animation: shelf-glow 5s infinite ease-in-out;
+}
+/* ===== VIGNETTE & FOG ===== */
+.library-vignette {
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(10, 5, 20, 0.7) 100%);
+}
+.library-vignette-light {
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(200, 180, 220, 0.2) 100%);
+}
+.library-fog {
+  background: linear-gradient(to top, rgba(0, 206, 209, 0.03) 0%, transparent 30%);
+}
+.light .library-fog {
+  background: linear-gradient(to top, rgba(200, 80, 192, 0.03) 0%, transparent 30%);
+}
+/* ===== TITLE SHIMMER ===== */
+@keyframes title-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.title-shimmer {
+  background: linear-gradient(90deg, #FFD700 0%, #FFF8DC 25%, #FFD700 50%, #F4A460 75%, #FFD700 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: title-shimmer 6s linear infinite;
+}
+/* ===== BRASS PLATE SHIMMER ===== */
+@keyframes brass-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.brass-plate {
+  background: linear-gradient(135deg, #B8860B 0%, #DAA520 25%, #FFD700 50%, #DAA520 75%, #B8860B 100%);
+  background-size: 200% 200%;
+  animation: brass-shimmer 4s ease-in-out infinite;
+}
+/* ===== WOOD TEXTURE FOR SHELVES ===== */
+.shelf-wood {
+  background: linear-gradient(to bottom, #3a2345, #22122e);
+  box-shadow: inset 0 4px 6px rgba(0,0,0,0.5), 0 8px 15px rgba(0,0,0,0.6);
+  border-top: 2px solid #4a2d59;
+  position: relative;
+}
+.shelf-wood::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 40px,
+    rgba(255,255,255,0.02) 40px,
+    rgba(255,255,255,0.02) 42px
+  );
+}
+.light .shelf-wood {
+  background: linear-gradient(to bottom, #e8d5f5, #d4bce6);
+  box-shadow: inset 0 4px 6px rgba(255,255,255,0.5), 0 8px 15px rgba(0,0,0,0.1);
+  border-top: 2px solid #f3e8fa;
+}
+/* Parchment texture */
+.parchment {
+  background-color: #2a1b3d;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+}
+.light .parchment {
+  background-color: #fcf8eb;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+}
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #4a2d59; border-radius: 4px; }
+.light ::-webkit-scrollbar-thumb { background: #d4bce6; }

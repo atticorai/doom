@@ -6724,7 +6724,29 @@ Be direct and actionable. No generic advice.`;
           {pg==="est"&&<EstPg/>}
           {pg==="sta"&&<StaPg/>}
           {pg==="metrics"&&<MetricsPg/>}
-          {pg==="library"&&LibraryPg()}
+          {pg==="library"&&(()=>{
+            // Map our trafficHistory shape → the Megara Library Instruction
+            // shape and push to window so the Library's trafficData.ts proxy
+            // picks it up. Library re-mounts when the history length or
+            // latest timestamp changes.
+            const data=trafficHistory.map((h,i)=>({
+              id:(h.ts?String(h.ts):"tmp")+"_"+i,
+              brand:h.brand,
+              market:DM[h.market]||h.market,
+              mediaType:h.media,
+              month:h.month,
+              estimate:h.est||"",
+              version:h.version?("v"+h.version):"",
+              iscis:(h.iscis?.length||0)+" ISCIs"+(h.stations?.length?(" "+h.stations.length+" stations"):""),
+              dateRange:h.flight||"",
+              buyer:h.buyer||"",
+              status:h.status==="sent"?"sent":"pending",
+            }));
+            window.MegaraLibraryData=data;
+            const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");
+            const ML=window.MegaraLibrary;
+            return ML?React.createElement(ML,{key:libKey}):null;
+          })()}
           {pg==="planner"&&PlannerPg()}
           {pg==="notif"&&pages["notif"]}
           {pg==="docs"&&<DocsPg/>}
