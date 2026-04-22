@@ -96,8 +96,17 @@ export function LibraryHeader({
           </button>
           <button
             className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'bg-purple-100 border-purple-300 text-purple-700 hover:bg-purple-200' : 'bg-megara-primary/20 border-megara-primary/50 text-megara-light hover:bg-megara-primary/30 hover:shadow-glow-purple'}`}>
-            
+
             <Plus size={16} /> Import
+          </button>
+          <button
+            onClick={() => {
+              const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
+              if (typeof actions.cleanPlaceholders === 'function') actions.cleanPlaceholders();
+            }}
+            className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100' : 'bg-rose-900/20 border-rose-500/40 text-rose-300 hover:bg-rose-900/30'}`}
+            title="Remove Claude-injected placeholder traffic records from Firestore">
+            🧹 Clean Placeholders
           </button>
 
           <button

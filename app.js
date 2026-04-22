@@ -1645,30 +1645,6 @@ const App=()=>{
             log("WK Re-tag",changed+" ISCIs updated");
             notify("Re-tagged "+changed+" WK ISCIs by title");
           }} color="#D4A040">⟳ Re-tag WK by Title</Btn>
-          <Btn small onClick={async()=>{
-            // Remove the PL April placeholders that earlier Claude sessions
-            // injected into Firestore (PL_APRIL_SEED). They're identifiable
-            // by ts + combined+true + the specific "If you buy has no
-            // bookends" comment string. Also removes WK records whose only
-            // content is a status="copied" stub with no manual edits since.
-            const pw=prompt("Admin password — clean Claude-injected placeholders out of Firestore:");
-            if(!pw)return;
-            const ok=await verifyAuth(pw,"admin");
-            if(!ok){alert("Wrong password");return}
-            const isClaudePlaceholder=(h)=>{
-              // The PL April seed fingerprint
-              if(h.brand==="Postman Law"&&h.month==="April"&&h.ts==="2026-03-30T12:00:00.000Z"&&h.comments&&h.comments.indexOf("If you buy has no bookends")>=0)return true;
-              // The PL April OOH MSP placeholder
-              if(h.brand==="Postman Law"&&h.month==="April"&&h.isOoh&&h.est==="OOH-MSP-PL"&&h.comments&&h.comments.indexOf("Wilkins Media")>=0&&h.ts==="2026-03-25T12:00:00.000Z")return true;
-              return false;
-            };
-            const toRemove=trafficHistory.filter(isClaudePlaceholder);
-            if(!toRemove.length){notify("No Claude placeholders found in Firestore — you're clean.");return}
-            if(!confirm("Found "+toRemove.length+" placeholder record(s) to delete:\n\n"+toRemove.map(h=>h.brand+" · "+h.market+" · "+h.media+" · "+h.month).join("\n")+"\n\nDelete from Firestore?"))return;
-            setTrafficHistory(p=>p.filter(h=>!isClaudePlaceholder(h)));
-            log("Cleanup",toRemove.length+" placeholder records removed");
-            notify("Deleted "+toRemove.length+" placeholder record(s). If your real records were behind them, they should surface now.");
-          }} color="#E85A7A">🧹 Clean Placeholders</Btn>
         </div>
         {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
           return<div key={brand} style={{marginBottom:16}}>
@@ -7011,6 +6987,23 @@ Be direct and actionable. No generic advice. Every market recommendation must re
             notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);
           },
           delete:async(idx)=>{const h=trafficHistory[idx];if(!h)return;const pw=prompt("Admin password to delete traffic:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok){alert("Wrong password");return}if(!confirm("Delete "+h.brand+" "+h.market+" "+h.media+" "+h.month+"? This cannot be undone."))return;setTrafficHistory(p=>p.filter((_,j)=>j!==idx));log("Traffic Deleted",h.brand+" "+h.market+" "+h.media+" "+h.month);notify("Traffic deleted")},
+          cleanPlaceholders:async()=>{
+            const pw=prompt("Admin password — clean Claude-injected placeholders out of Firestore:");
+            if(!pw)return;
+            const ok=await verifyAuth(pw,"admin");
+            if(!ok){alert("Wrong password");return}
+            const isClaudePlaceholder=(h)=>{
+              if(h.brand==="Postman Law"&&h.month==="April"&&h.ts==="2026-03-30T12:00:00.000Z"&&h.comments&&h.comments.indexOf("If you buy has no bookends")>=0)return true;
+              if(h.brand==="Postman Law"&&h.month==="April"&&h.isOoh&&h.est==="OOH-MSP-PL"&&h.comments&&h.comments.indexOf("Wilkins Media")>=0&&h.ts==="2026-03-25T12:00:00.000Z")return true;
+              return false;
+            };
+            const toRemove=trafficHistory.filter(isClaudePlaceholder);
+            if(!toRemove.length){notify("No Claude placeholders found in Firestore — you're clean.");return}
+            if(!confirm("Found "+toRemove.length+" placeholder record(s) to delete:\n\n"+toRemove.map(h=>h.brand+" · "+h.market+" · "+h.media+" · "+h.month).join("\n")+"\n\nDelete from Firestore?"))return;
+            setTrafficHistory(p=>p.filter(h=>!isClaudePlaceholder(h)));
+            log("Cleanup",toRemove.length+" placeholder records removed");
+            notify("Deleted "+toRemove.length+" placeholder record(s).");
+          },
         };
         console.log("[MegaraLibrary] piped",data.length,"records from trafficHistory");
         const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");
