@@ -6790,6 +6790,76 @@ Be direct and actionable. No generic advice.`;
         const MO_LIB=["January","February","March","April","May","June","July","August","September","October","November","December"];
         const now=new Date();const curIdx=now.getMonth();const curYear=now.getFullYear();
         const archCutoff=new Date(curYear,curIdx-2,1);
+        // Render the exact same traffic sheet the main app emits (see
+        // buildSheetHtml in RotBuilder). The library displays the result via
+        // dangerouslySetInnerHTML in the left page so what you see matches
+        // what was sent / printed / emailed.
+        const SCHED_COLORS_SHEET={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#dcfce7","Holiday Only":"#fee2e2"};
+        const SCHED_ORDER_SHEET=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
+        const renderSheet=(h)=>{
+          const code=h.brand==="Postman Law"?"PL":"WK";
+          const bc=getBrandColor(code);const bcBg=getBrandBg(code);
+          const logo=code==="PL"?LOGO_PL:LOGO_WK;
+          const hdr=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+(v==null?"":v)+'</span></div>';
+          let x='<div style="padding:28px;background:#fff;color:#1e1233;font-family:Arial,sans-serif">';
+          x+='<div style="text-align:center;margin-bottom:14px"><img src="'+logo+'" style="height:48px"/></div>';
+          x+=hdr("Agency",getBrandAgency(code));
+          x+=hdr("Client",h.brand,bc);
+          x+=hdr("Market",DM[h.market]||h.market);
+          x+=hdr("Buyer",h.buyer,"#D4A040");
+          const estStr=h.est||"";
+          const estNums=estStr.split(/\s*[+\/]\s*/).map(s=>s.trim()).filter(Boolean);
+          const isCombined=(h.combined===true)||estNums.length>1;
+          if(isCombined){
+            x+=hdr("Estimate(s)",estNums.length+" combined estimates");
+            x+=hdr("Media",h.media,h.isOoh?"#D4A040":"#4AC8E8");
+            const hMkt=normMkt(h.market)||h.market;
+            const subs=estNums.map(n=>estimates.find(e=>e.num===n&&e.brand===h.brand&&((normMkt(e.market)||e.market)===hMkt||e.market===h.market))).filter(Boolean);
+            const buyTypes=[...new Set(subs.map(e=>e.group))].join(", ");
+            if(buyTypes)x+=hdr("Buy Type(s)",buyTypes);
+            x+='<table style="margin:8px 0;font-size:11px;border:1px solid #ddd;width:100%;border-collapse:collapse"><thead><tr style="background:#F0E8F8"><th style="padding:4px 8px;text-align:left;color:#5b21b6">Estimate</th><th style="padding:4px 8px;text-align:left;color:#5b21b6">Buy Type</th><th style="padding:4px 8px;text-align:left;color:#5b21b6">Stations</th></tr></thead><tbody>';
+            subs.forEach(ce=>{
+              const stas=getEstStations(ce);
+              x+='<tr><td style="padding:3px 8px;font-weight:700;border-bottom:1px solid #eee">'+ce.num+'</td><td style="padding:3px 8px;border-bottom:1px solid #eee">'+ce.group+'</td><td style="padding:3px 8px;border-bottom:1px solid #eee;font-size:10px">'+(stas.length?stas.map(s=>s.call).join(", "):"—")+'</td></tr>';
+            });
+            x+='</tbody></table>';
+          }else{
+            x+=hdr("Estimate(s)",estStr);
+            x+=hdr("Media",h.media,h.isOoh?"#D4A040":"#4AC8E8");
+            const stas=(h.stations&&h.stations.length)?h.stations:[];
+            if(stas.length)x+=hdr("Stations ("+stas.length+")",stas.join(", "));
+          }
+          x+=hdr("Broadcast Month",h.month,bc);
+          if(h.isOoh&&h.postDates)x+=hdr("Post Dates",h.postDates,"#1e1233");
+          else if(h.flight)x+=hdr("Flight Dates",h.flight,"#1e1233");
+          x+=hdr("Version/ Links","Version "+(h.version||"1")+" / "+h.market+" Assets");
+          if(h.comments)x+=hdr("Comments",h.comments);
+          const thCell='background:#F0E8F8;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#6B5E80';
+          const tdCell='padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)';
+          x+='<table style="width:100%;border-collapse:collapse;margin-top:14px"><thead><tr><th style="'+thCell+'">Flight Dates</th><th style="'+thCell+'">ISCI Codes &amp; Title:</th><th style="'+thCell+'">Length:</th><th style="'+thCell+'">%</th><th style="'+thCell+'">Notes:</th></tr></thead><tbody>';
+          const grouped={};
+          (h.iscis||[]).forEach(r=>{const s=r.sched||"All Week";if(!grouped[s])grouped[s]=[];grouped[s].push(r)});
+          const validBk=b=>typeof b==="string"&&b&&b!=="true"&&b!=="false";
+          const renderGroup=(s,bg)=>{
+            const items=(grouped[s]||[]).slice().sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0));
+            x+='<tr><td colspan="5" style="padding:5px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid rgba(0,0,0,.1);background:'+bg+'">'+s+'</td></tr>';
+            items.forEach(r=>{
+              const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";
+              const note=validBk(r.bookend)?r.bookend:s;
+              const length=validBk(r.bookend)?r.bookend:(r.dur?":"+r.dur:"");
+              x+='<tr style="background:'+bg+'44"><td style="'+tdCell+'">'+(h.flight||"")+'</td><td style="'+tdCell+';font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td style="'+tdCell+'">'+length+'</td><td style="'+tdCell+';font-weight:600">'+pct+'</td><td style="'+tdCell+';font-size:10px;color:#555">'+note+'</td></tr>';
+            });
+          };
+          SCHED_ORDER_SHEET.forEach(s=>{if(grouped[s])renderGroup(s,SCHED_COLORS_SHEET[s])});
+          Object.keys(grouped).filter(s=>!SCHED_ORDER_SHEET.includes(s)).forEach(s=>renderGroup(s,"#F0E8F8"));
+          x+='</tbody></table>';
+          x+='<div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">';
+          Object.entries(SCHED_COLORS_SHEET).forEach(([s,c])=>{if(grouped[s])x+='<div style="display:flex;align-items:center;gap:4px;font-size:9px"><div style="width:12px;height:12px;border-radius:2px;background:'+c+'"></div>'+s+'</div>'});
+          x+='</div>';
+          x+='<div style="margin-top:36px;border-top:2px solid '+bc+';padding-top:8px"><div style="display:flex;justify-content:space-between;font-size:13px"><div><b>Accepted by:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div style="background:'+bcBg+';padding:7px;font-size:10px;color:'+bc+';margin-top:6px;border:1px solid '+bc+'33">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></div>';
+          x+='</div>';
+          return x;
+        };
         const data=trafficHistory.map((h,i)=>{
           const parts=String(h.month||"").trim().split(/\s+/);
           const monIdx=MO_LIB.indexOf(parts[0]);
@@ -6817,6 +6887,7 @@ Be direct and actionable. No generic advice.`;
             year:year,
             archived:archived,
             comments:h.comments||"",
+            sheetHtml:renderSheet(h),
           };
         });
         window.MegaraLibraryData=data;

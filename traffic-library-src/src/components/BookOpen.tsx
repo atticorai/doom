@@ -90,9 +90,13 @@ export function BookOpen({
           className={`w-full max-w-6xl h-[85vh] flex rounded-lg overflow-hidden ${light ? 'shadow-[0_0_40px_rgba(147,51,234,0.1),0_25px_50px_rgba(0,0,0,0.2)]' : 'shadow-[0_0_60px_rgba(200,80,192,0.15),0_25px_50px_rgba(0,0,0,0.5)]'}`}
           onClick={(e) => e.stopPropagation()}>
           
-          {/* LEFT PAGE — PDF */}
+          {/* LEFT PAGE — real traffic sheet HTML from the host app when
+              available, otherwise the React-composed fallback. */}
           <div className="flex-1 bg-white overflow-y-auto relative">
             <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-300 to-transparent z-10 pointer-events-none"></div>
+            {(instruction as any).sheetHtml ? (
+              <div dangerouslySetInnerHTML={{__html: (instruction as any).sheetHtml}} />
+            ) : (<>
 
             <div className="px-10 pt-8 pb-8">
               <div className="text-center mb-6">
@@ -261,6 +265,7 @@ export function BookOpen({
                 </div>
               </div>
             </div>
+            </>)}
           </div>
 
           {/* BOOK SPINE */}

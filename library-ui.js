@@ -1,6 +1,6 @@
 import B, { forwardRef as L, createElement as z, useState as k, useEffect as T, useContext as E, createContext as H, useMemo as K } from "react";
 import { motion as j, AnimatePresence as W } from "framer-motion";
-var R = { exports: {} }, C = {};
+var S = { exports: {} }, C = {};
 /**
  * @license React
  * react-jsx-runtime.production.min.js
@@ -10,19 +10,19 @@ var R = { exports: {} }, C = {};
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-var G = B, q = Symbol.for("react.element"), F = Symbol.for("react.fragment"), U = Object.prototype.hasOwnProperty, Y = G.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, J = { key: !0, ref: !0, __self: !0, __source: !0 };
-function S(t, s, a) {
+var G = B, F = Symbol.for("react.element"), q = Symbol.for("react.fragment"), U = Object.prototype.hasOwnProperty, Y = G.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, J = { key: !0, ref: !0, __self: !0, __source: !0 };
+function R(t, s, a) {
   var r, i = {}, d = null, x = null;
   a !== void 0 && (d = "" + a), s.key !== void 0 && (d = "" + s.key), s.ref !== void 0 && (x = s.ref);
   for (r in s) U.call(s, r) && !J.hasOwnProperty(r) && (i[r] = s[r]);
   if (t && t.defaultProps) for (r in s = t.defaultProps, s) i[r] === void 0 && (i[r] = s[r]);
-  return { $$typeof: q, type: t, key: d, ref: x, props: i, _owner: Y.current };
+  return { $$typeof: F, type: t, key: d, ref: x, props: i, _owner: Y.current };
 }
-C.Fragment = F;
-C.jsx = S;
-C.jsxs = S;
-R.exports = C;
-var e = R.exports;
+C.Fragment = q;
+C.jsx = R;
+C.jsxs = R;
+S.exports = C;
+var e = S.exports;
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -319,7 +319,7 @@ const Ie = [
   ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
   ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
 ], Le = u("x", Ie);
-function Re({
+function Se({
   isLightMode: t,
   toggleTheme: s,
   brand: a,
@@ -565,7 +565,7 @@ function Re({
     )
   ] });
 }
-const Se = {
+const Re = {
   April: "001.04",
   March: "001.03",
   December: "001.12"
@@ -615,7 +615,7 @@ function Pe({
                 "span",
                 {
                   className: `font-mono text-[10px] font-bold tracking-wider ${a ? "text-purple-400 group-hover:text-purple-600" : "text-magic-teal/40 group-hover:text-magic-teal/70"}`,
-                  children: Se[i] || "001"
+                  children: Re[i] || "001"
                 }
               ),
               /* @__PURE__ */ e.jsx(
@@ -1481,7 +1481,7 @@ function Ge({
           children: [
             /* @__PURE__ */ e.jsxs("div", { className: "flex-1 bg-white overflow-y-auto relative", children: [
               /* @__PURE__ */ e.jsx("div", { className: "absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-300 to-transparent z-10 pointer-events-none" }),
-              /* @__PURE__ */ e.jsxs("div", { className: "px-10 pt-8 pb-8", children: [
+              t.sheetHtml ? /* @__PURE__ */ e.jsx("div", { dangerouslySetInnerHTML: { __html: t.sheetHtml } }) : /* @__PURE__ */ e.jsx(e.Fragment, { children: /* @__PURE__ */ e.jsxs("div", { className: "px-10 pt-8 pb-8", children: [
                 /* @__PURE__ */ e.jsx("div", { className: "text-center mb-6", children: (() => {
                   const p = (typeof window < "u" && window.MegaraLibraryLogos || {})[t.brand];
                   return p ? /* @__PURE__ */ e.jsx("img", { src: p, alt: t.brand, style: { height: 48, margin: "0 auto", display: "block" } }) : /* @__PURE__ */ e.jsx("div", { className: "inline-block border-2 border-gray-800 px-5 py-1.5", children: /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-900 tracking-wider text-lg uppercase", children: t.brand.toUpperCase() }) });
@@ -1598,7 +1598,7 @@ function Ge({
                   ] }),
                   /* @__PURE__ */ e.jsx("div", { className: "mt-2 px-2 py-1.5 bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-relaxed", children: "Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email." })
                 ] })
-              ] })
+              ] }) })
             ] }),
             /* @__PURE__ */ e.jsx(
               "div",
@@ -1920,7 +1920,7 @@ function Ue() {
           )
         ),
         /* @__PURE__ */ e.jsx(
-          Re,
+          Se,
           {
             isLightMode: t,
             toggleTheme: () => s(!t),
