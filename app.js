@@ -5888,12 +5888,13 @@ Be direct and actionable. No generic advice. Every market recommendation must re
         const hMkt=normMkt(h.market)||h.market;
         const matchMkt=hMkt===mktCode||h.market===mkt||(h.market||"").includes(mkt);
         if(!matchMkt)return false;
-        // For TV buy types, combined estimates cover all TV groups
-        if(media==="TV"&&h.media==="TV"&&h.combined)return true;
+        // Combined if the flag is set OR the est string has "+" (multi-estimate)
+        const hIsCombined=h.combined||(typeof h.est==="string"&&h.est.indexOf("+")>=0);
+        if(media==="TV"&&h.media==="TV"&&hIsCombined)return true;
         if(h.media===media){
           if(!group||!h.group)return true;
           if(h.group===group)return true;
-          if(h.combined)return true;
+          if(hIsCombined)return true;
         }
         return false;
       });
@@ -6906,9 +6907,27 @@ Be direct and actionable. No generic advice. Every market recommendation must re
             dateRange:h.flight||"",
             buyer:h.buyer||"",
             status:h.status==="sent"?"sent":"pending",
-            iscisDetail:(h.iscis||[]).map(r=>({
-              code:r.code,title:r.title,dur:r.dur,pct:r.pct,sched:r.sched,bookend:r.bookend,units:r.units
-            })),
+            // Enrich each ISCI entry at render time from the registry so
+            // title / dur / fileUrl / category / vo stay in sync with
+            // whatever's in the ISCI registry. User values on the record
+            // win if present.
+            iscisDetail:(h.iscis||[]).map(r=>{
+              if(!r||!r.code)return r;
+              const hDma=normMkt(h.market)||h.market||"";
+              const full=iscis.find(i=>i.code===r.code&&(i.dma||"")===hDma)||iscis.find(i=>i.code===r.code);
+              return{
+                code:r.code,
+                title:r.title||full?.title||"",
+                dur:r.dur||full?.dur||"",
+                pct:r.pct,
+                sched:r.sched,
+                bookend:r.bookend,
+                units:r.units,
+                fileUrl:full?.fileUrl||r.fileUrl||"",
+                category:full?.category||full?.caseType||r.category||"",
+                vo:full?.vo||r.vo||"",
+              };
+            }),
             stations:h.stations||[],
             ts:h.ts,
             year:year,

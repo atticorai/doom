@@ -1,6 +1,6 @@
-import V, { forwardRef as I, createElement as T, useState as N, useEffect as z, useContext as E, createContext as H, useMemo as K } from "react";
-import { motion as j, AnimatePresence as F } from "framer-motion";
-var S = { exports: {} }, _ = {};
+import B, { forwardRef as L, createElement as z, useState as N, useEffect as T, useContext as E, createContext as H, useMemo as K } from "react";
+import { motion as k, AnimatePresence as W } from "framer-motion";
+var S = { exports: {} }, C = {};
 /**
  * @license React
  * react-jsx-runtime.production.min.js
@@ -10,18 +10,18 @@ var S = { exports: {} }, _ = {};
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-var W = V, G = Symbol.for("react.element"), q = Symbol.for("react.fragment"), U = Object.prototype.hasOwnProperty, Y = W.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, J = { key: !0, ref: !0, __self: !0, __source: !0 };
+var G = B, F = Symbol.for("react.element"), q = Symbol.for("react.fragment"), U = Object.prototype.hasOwnProperty, Y = G.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, J = { key: !0, ref: !0, __self: !0, __source: !0 };
 function R(t, s, a) {
-  var r, i = {}, c = null, b = null;
-  a !== void 0 && (c = "" + a), s.key !== void 0 && (c = "" + s.key), s.ref !== void 0 && (b = s.ref);
-  for (r in s) U.call(s, r) && !J.hasOwnProperty(r) && (i[r] = s[r]);
-  if (t && t.defaultProps) for (r in s = t.defaultProps, s) i[r] === void 0 && (i[r] = s[r]);
-  return { $$typeof: G, type: t, key: c, ref: b, props: i, _owner: Y.current };
+  var r, n = {}, l = null, b = null;
+  a !== void 0 && (l = "" + a), s.key !== void 0 && (l = "" + s.key), s.ref !== void 0 && (b = s.ref);
+  for (r in s) U.call(s, r) && !J.hasOwnProperty(r) && (n[r] = s[r]);
+  if (t && t.defaultProps) for (r in s = t.defaultProps, s) n[r] === void 0 && (n[r] = s[r]);
+  return { $$typeof: F, type: t, key: l, ref: b, props: n, _owner: Y.current };
 }
-_.Fragment = q;
-_.jsx = R;
-_.jsxs = R;
-S.exports = _;
+C.Fragment = q;
+C.jsx = R;
+C.jsxs = R;
+S.exports = C;
 var e = S.exports;
 /**
  * @license lucide-react v0.522.0 - ISC
@@ -32,7 +32,7 @@ var e = S.exports;
 const Z = (t) => t.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase(), X = (t) => t.replace(
   /^([A-Z])|[\s-_]+(\w)/g,
   (s, a, r) => r ? r.toUpperCase() : a.toLowerCase()
-), M = (t) => {
+), I = (t) => {
   const s = X(t);
   return s.charAt(0).toUpperCase() + s.slice(1);
 }, P = (...t) => t.filter((s, a, r) => !!s && s.trim() !== "" && r.indexOf(s) === a).join(" ").trim(), Q = (t) => {
@@ -63,32 +63,32 @@ var ee = {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const te = I(
+const te = L(
   ({
     color: t = "currentColor",
     size: s = 24,
     strokeWidth: a = 2,
     absoluteStrokeWidth: r,
-    className: i = "",
-    children: c,
+    className: n = "",
+    children: l,
     iconNode: b,
-    ...p
-  }, l) => T(
+    ...d
+  }, i) => z(
     "svg",
     {
-      ref: l,
+      ref: i,
       ...ee,
       width: s,
       height: s,
       stroke: t,
       strokeWidth: r ? Number(a) * 24 / Number(s) : a,
-      className: P("lucide", i),
-      ...!c && !Q(p) && { "aria-hidden": "true" },
-      ...p
+      className: P("lucide", n),
+      ...!l && !Q(d) && { "aria-hidden": "true" },
+      ...d
     },
     [
-      ...b.map(([m, x]) => T(m, x)),
-      ...Array.isArray(c) ? c : [c]
+      ...b.map(([c, m]) => z(c, m)),
+      ...Array.isArray(l) ? l : [l]
     ]
   )
 );
@@ -99,19 +99,19 @@ const te = I(
  * See the LICENSE file in the root directory of this source tree.
  */
 const u = (t, s) => {
-  const a = I(
-    ({ className: r, ...i }, c) => T(te, {
-      ref: c,
+  const a = L(
+    ({ className: r, ...n }, l) => z(te, {
+      ref: l,
       iconNode: s,
       className: P(
-        `lucide-${Z(M(t))}`,
+        `lucide-${Z(I(t))}`,
         `lucide-${t}`,
         r
       ),
-      ...i
+      ...n
     })
   );
-  return a.displayName = M(t), a;
+  return a.displayName = I(t), a;
 };
 /**
  * @license lucide-react v0.522.0 - ISC
@@ -219,7 +219,7 @@ const ue = [
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const fe = [
+const ye = [
   [
     "path",
     {
@@ -227,7 +227,7 @@ const fe = [
       key: "96xj49"
     }
   ]
-], ye = u("flame", fe);
+], fe = u("flame", ye);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -249,10 +249,10 @@ const ve = [
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const ke = [
+const je = [
   ["path", { d: "M5 12h14", key: "1ays0h" }],
   ["path", { d: "M12 5v14", key: "s699le" }]
-], je = u("plus", ke);
+], ke = u("plus", je);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -269,24 +269,24 @@ const Ne = [
   ],
   ["path", { d: "M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6", key: "1itne7" }],
   ["rect", { x: "6", y: "14", width: "12", height: "8", rx: "1", key: "1ue0tg" }]
-], Ce = u("printer", Ne);
+], _e = u("printer", Ne);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const _e = [
+const Ce = [
   ["path", { d: "m21 21-4.34-4.34", key: "14j7rj" }],
   ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
-], $e = u("search", _e);
+], $e = u("search", Ce);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const Te = [
+const ze = [
   [
     "path",
     {
@@ -295,20 +295,7 @@ const Te = [
     }
   ],
   ["path", { d: "m21.854 2.147-10.94 10.939", key: "12cjpa" }]
-], ze = u("send", Te);
-/**
- * @license lucide-react v0.522.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const Ae = [
-  ["path", { d: "M3 6h18", key: "d0wm0j" }],
-  ["path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", key: "4alrt4" }],
-  ["path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", key: "v07s0e" }],
-  ["line", { x1: "10", x2: "10", y1: "11", y2: "17", key: "1uufr5" }],
-  ["line", { x1: "14", x2: "14", y1: "11", y2: "17", key: "xtxkd" }]
-], Le = u("trash-2", Ae);
+], Te = u("send", ze);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -316,39 +303,52 @@ const Ae = [
  * See the LICENSE file in the root directory of this source tree.
  */
 const Me = [
+  ["path", { d: "M3 6h18", key: "d0wm0j" }],
+  ["path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", key: "4alrt4" }],
+  ["path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", key: "v07s0e" }],
+  ["line", { x1: "10", x2: "10", y1: "11", y2: "17", key: "1uufr5" }],
+  ["line", { x1: "14", x2: "14", y1: "11", y2: "17", key: "xtxkd" }]
+], Ae = u("trash-2", Me);
+/**
+ * @license lucide-react v0.522.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Ie = [
   ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
   ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
-], Ie = u("x", Me);
+], Le = u("x", Ie);
 function Se({
   isLightMode: t,
   toggleTheme: s,
   brand: a,
   onBrandChange: r,
-  brandCounts: i,
-  totalInstructions: c,
+  brandCounts: n,
+  totalInstructions: l,
   totalMarkets: b,
-  archivedCount: p,
-  showArchived: l,
-  onToggleArchived: m
+  archivedCount: d,
+  showArchived: i,
+  onToggleArchived: c
 }) {
-  const x = [
+  const m = [
     "I remember every version. Every mistake.",
     "Everything you've ever sent. Archived. By me. Obviously.",
     "People do crazy things... like forgetting to send traffic.",
     "It's all Greek to them. But not to me.",
     `I don't do "lost files." Try someone else.`,
     "Megara doesn't forget. Megara doesn't forgive late sends."
-  ], [g, w] = N(0), d = t;
-  return z(() => {
-    const o = setInterval(() => {
-      w((h) => (h + 1) % x.length);
+  ], [x, w] = N(0), p = t;
+  return T(() => {
+    const g = setInterval(() => {
+      w((h) => (h + 1) % m.length);
     }, 8e3);
-    return () => clearInterval(o);
+    return () => clearInterval(g);
   }, []), /* @__PURE__ */ e.jsxs("header", { className: "w-full py-6 px-8 flex flex-col gap-5 relative z-10", children: [
     /* @__PURE__ */ e.jsx(
       "div",
       {
-        className: `absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent ${d ? "via-purple-400/30" : "via-magic-gold/30"} to-transparent`
+        className: `absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent ${p ? "via-purple-400/30" : "via-magic-gold/30"} to-transparent`
       }
     ),
     /* @__PURE__ */ e.jsxs("div", { className: "flex justify-between items-start", children: [
@@ -357,47 +357,47 @@ function Se({
           /* @__PURE__ */ e.jsx(
             "div",
             {
-              className: `w-8 h-px ${d ? "bg-purple-600" : "bg-magic-gold"}`
+              className: `w-8 h-px ${p ? "bg-purple-600" : "bg-magic-gold"}`
             }
           ),
           /* @__PURE__ */ e.jsx(
             "div",
             {
-              className: `w-2 h-2 rotate-45 border ${d ? "border-purple-600" : "border-magic-gold"}`
+              className: `w-2 h-2 rotate-45 border ${p ? "border-purple-600" : "border-magic-gold"}`
             }
           ),
           /* @__PURE__ */ e.jsx(
             "div",
             {
-              className: `w-4 h-px ${d ? "bg-purple-600" : "bg-magic-gold"}`
+              className: `w-4 h-px ${p ? "bg-purple-600" : "bg-magic-gold"}`
             }
           )
         ] }),
         /* @__PURE__ */ e.jsx(
           "h1",
           {
-            className: `font-serif font-bold text-4xl tracking-wide ${d ? "text-purple-800 drop-shadow-sm" : "title-shimmer"}`,
+            className: `font-serif font-bold text-4xl tracking-wide ${p ? "text-purple-800 drop-shadow-sm" : "title-shimmer"}`,
             children: "Traffic Library"
           }
         ),
         /* @__PURE__ */ e.jsxs(
           "p",
           {
-            className: `font-serif italic text-base mb-1 transition-opacity duration-1000 ${d ? "text-purple-600/70" : "text-megara-light/60"}`,
+            className: `font-serif italic text-base mb-1 transition-opacity duration-1000 ${p ? "text-purple-600/70" : "text-megara-light/60"}`,
             children: [
               '"',
-              x[g],
+              m[x],
               '"'
             ]
           },
-          g
+          x
         )
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-3", children: [
         /* @__PURE__ */ e.jsxs(
           "button",
           {
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${d ? "border-purple-300 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light/70 hover:bg-megara-dark/20 hover:text-megara-light"}`,
+            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${p ? "border-purple-300 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light/70 hover:bg-megara-dark/20 hover:text-megara-light"}`,
             children: [
               /* @__PURE__ */ e.jsx(xe, { size: 16 }),
               " Export CSV"
@@ -407,7 +407,7 @@ function Se({
         /* @__PURE__ */ e.jsxs(
           "button",
           {
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${d ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100" : "bg-magic-gold/10 border-magic-gold/40 text-magic-gold hover:bg-magic-gold/20 hover:shadow-glow-gold"}`,
+            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${p ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100" : "bg-magic-gold/10 border-magic-gold/40 text-magic-gold hover:bg-magic-gold/20 hover:shadow-glow-gold"}`,
             children: [
               /* @__PURE__ */ e.jsx(oe, { size: 16 }),
               " Send Reminders"
@@ -417,85 +417,10 @@ function Se({
         /* @__PURE__ */ e.jsxs(
           "button",
           {
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${d ? "bg-purple-100 border-purple-300 text-purple-700 hover:bg-purple-200" : "bg-megara-primary/20 border-megara-primary/50 text-megara-light hover:bg-megara-primary/30 hover:shadow-glow-purple"}`,
+            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${p ? "bg-purple-100 border-purple-300 text-purple-700 hover:bg-purple-200" : "bg-megara-primary/20 border-megara-primary/50 text-megara-light hover:bg-megara-primary/30 hover:shadow-glow-purple"}`,
             children: [
-              /* @__PURE__ */ e.jsx(je, { size: 16 }),
+              /* @__PURE__ */ e.jsx(ke, { size: 16 }),
               " Import"
-            ]
-          }
-        ),
-        /* @__PURE__ */ e.jsx(
-          "button",
-          {
-            onClick: () => {
-              const o = typeof window < "u" && window.MegaraLibraryActions || {};
-              typeof o.restoreFromBackup == "function" && o.restoreFromBackup();
-            },
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${d ? "bg-emerald-50 border-emerald-400 text-emerald-800 hover:bg-emerald-100" : "bg-emerald-900/20 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/30"}`,
-            title: "Restore trafficHistory from Firestore / localStorage backup",
-            children: "↺ Restore Backup"
-          }
-        ),
-        /* @__PURE__ */ e.jsx(
-          "button",
-          {
-            onClick: () => {
-              const o = typeof window < "u" && window.MegaraLibraryActions || {};
-              typeof o.wipeNonApril == "function" && o.wipeNonApril();
-            },
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${d ? "bg-orange-50 border-orange-400 text-orange-800 hover:bg-orange-100" : "bg-orange-900/20 border-orange-500/40 text-orange-300 hover:bg-orange-900/30"}`,
-            title: "Delete all non-April traffic records. April PL + April WK stay.",
-            children: "⚠ Wipe Non-April"
-          }
-        ),
-        /* @__PURE__ */ e.jsx(
-          "button",
-          {
-            onClick: () => {
-              const o = typeof window < "u" && window.MegaraLibraryActions || {};
-              typeof o.relinkCreative == "function" && o.relinkCreative();
-            },
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${d ? "bg-blue-50 border-blue-400 text-blue-800 hover:bg-blue-100" : "bg-blue-900/20 border-blue-500/40 text-blue-300 hover:bg-blue-900/30"}`,
-            title: "Re-sync every traffic record's ISCI entries against the registry — refreshes titles, durations, fileUrls, categories; repairs combined=true on PL TV records.",
-            children: "🔗 Re-link Creative"
-          }
-        ),
-        /* @__PURE__ */ e.jsx(
-          "button",
-          {
-            onClick: () => {
-              const o = typeof window < "u" && window.MegaraLibraryActions || {};
-              typeof o.loadTrafficSource == "function" && o.loadTrafficSource();
-            },
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 font-semibold ${d ? "bg-cyan-50 border-cyan-400 text-cyan-800 hover:bg-cyan-100" : "bg-cyan-900/20 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/30"}`,
-            title: "Fetch /traffic-source.zip and replace matching Firestore records with the PDFs inside. April records are skipped.",
-            children: "📦 Load Traffic Source"
-          }
-        ),
-        /* @__PURE__ */ e.jsx(
-          "button",
-          {
-            onClick: () => {
-              const o = typeof window < "u" && window.MegaraLibraryActions || {};
-              typeof o.cleanPlaceholders == "function" && o.cleanPlaceholders();
-            },
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${d ? "bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100" : "bg-rose-900/20 border-rose-500/40 text-rose-300 hover:bg-rose-900/30"}`,
-            title: "Remove Claude-injected placeholder traffic records from Firestore",
-            children: "🧹 Clean Placeholders"
-          }
-        ),
-        /* @__PURE__ */ e.jsxs(
-          "button",
-          {
-            onClick: () => {
-              const o = typeof window < "u" && window.MegaraLibraryActions || {};
-              typeof o.wipeBrand == "function" && o.wipeBrand(a);
-            },
-            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${d ? "bg-red-50 border-red-400 text-red-800 hover:bg-red-100" : "bg-red-900/30 border-red-500/50 text-red-300 hover:bg-red-900/50"}`,
-            title: `Wipe ALL ${a} traffic records from Firestore (nuclear option)`,
-            children: [
-              "☠ Wipe ",
-              a === "Postman Law" ? "PL" : "WK"
             ]
           }
         ),
@@ -503,14 +428,14 @@ function Se({
           "button",
           {
             onClick: s,
-            className: `ml-3 p-2.5 rounded-full transition-all relative group ${d ? "text-amber-600 hover:bg-amber-100 hover:shadow-[0_0_20px_4px_rgba(217,119,6,0.2)]" : "text-magic-gold hover:bg-white/10 hover:shadow-[0_0_20px_4px_rgba(255,215,0,0.3)]"}`,
+            className: `ml-3 p-2.5 rounded-full transition-all relative group ${p ? "text-amber-600 hover:bg-amber-100 hover:shadow-[0_0_20px_4px_rgba(217,119,6,0.2)]" : "text-magic-gold hover:bg-white/10 hover:shadow-[0_0_20px_4px_rgba(255,215,0,0.3)]"}`,
             title: "Toggle Illumination",
             children: [
-              t ? /* @__PURE__ */ e.jsx(he, { size: 22 }) : /* @__PURE__ */ e.jsx(ye, { size: 22 }),
+              t ? /* @__PURE__ */ e.jsx(he, { size: 22 }) : /* @__PURE__ */ e.jsx(fe, { size: 22 }),
               /* @__PURE__ */ e.jsx(
                 "div",
                 {
-                  className: `absolute inset-0 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity ${d ? "bg-amber-400/20" : "bg-magic-gold/10"}`
+                  className: `absolute inset-0 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity ${p ? "bg-amber-400/20" : "bg-magic-gold/10"}`
                 }
               )
             ]
@@ -521,10 +446,10 @@ function Se({
     /* @__PURE__ */ e.jsxs(
       "div",
       {
-        className: `font-serif text-xs flex gap-2 tracking-wider uppercase ${d ? "text-purple-500/60" : "text-megara-light/40"}`,
+        className: `font-serif text-xs flex gap-2 tracking-wider uppercase ${p ? "text-purple-500/60" : "text-megara-light/40"}`,
         children: [
           /* @__PURE__ */ e.jsxs("span", { children: [
-            c,
+            l,
             " instructions"
           ] }),
           " · ",
@@ -541,24 +466,24 @@ function Se({
     /* @__PURE__ */ e.jsx("div", { className: "flex gap-4 items-center", children: /* @__PURE__ */ e.jsx(
       "div",
       {
-        className: `flex rounded-t-lg border-b overflow-hidden backdrop-blur-sm ${d ? "bg-white/60 border-purple-200" : "bg-underworld-800/60 border-megara-dark/40"}`,
-        children: ["Postman Law", "Wettermark Keith"].map((o) => {
-          const h = a === o, y = d ? "text-purple-800 border-purple-600 bg-purple-50" : "text-megara-light border-magic-gold bg-magic-gold/5", k = d ? "text-purple-400 border-transparent hover:text-purple-600 hover:bg-purple-50/50" : "text-megara-light/40 border-transparent hover:text-megara-light/70 hover:bg-white/5";
+        className: `flex rounded-t-lg border-b overflow-hidden backdrop-blur-sm ${p ? "bg-white/60 border-purple-200" : "bg-underworld-800/60 border-megara-dark/40"}`,
+        children: ["Postman Law", "Wettermark Keith"].map((g) => {
+          const h = a === g, f = p ? "text-purple-800 border-purple-600 bg-purple-50" : "text-megara-light border-magic-gold bg-magic-gold/5", j = p ? "text-purple-400 border-transparent hover:text-purple-600 hover:bg-purple-50/50" : "text-megara-light/40 border-transparent hover:text-megara-light/70 hover:bg-white/5";
           return /* @__PURE__ */ e.jsxs(
             "button",
             {
-              onClick: () => r(o),
-              className: `font-serif px-6 py-3 font-medium text-sm border-b-2 transition-colors ${h ? y : k}`,
+              onClick: () => r(g),
+              className: `font-serif px-6 py-3 font-medium text-sm border-b-2 transition-colors ${h ? f : j}`,
               children: [
-                o,
+                g,
                 /* @__PURE__ */ e.jsxs("span", { className: "text-xs opacity-50 ml-1", children: [
                   "(",
-                  i[o],
+                  n[g],
                   ")"
                 ] })
               ]
             },
-            o
+            g
           );
         })
       }
@@ -568,7 +493,7 @@ function Se({
         /* @__PURE__ */ e.jsx(
           $e,
           {
-            className: `absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${d ? "text-purple-400 group-focus-within:text-purple-600" : "text-magic-teal/50 group-focus-within:text-magic-teal"}`,
+            className: `absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${p ? "text-purple-400 group-focus-within:text-purple-600" : "text-magic-teal/50 group-focus-within:text-magic-teal"}`,
             size: 18
           }
         ),
@@ -577,54 +502,54 @@ function Se({
           {
             type: "text",
             placeholder: "Search the archives — ISCIs, markets, buyers, incantations...",
-            className: `w-full rounded-lg py-3 pl-12 pr-4 focus:outline-none transition-all backdrop-blur-sm ${d ? "bg-white/70 border border-purple-200 text-purple-900 placeholder:text-purple-400/50 focus:border-purple-400 focus:shadow-[0_0_15px_2px_rgba(147,51,234,0.1)]" : "bg-underworld-800/40 border border-megara-dark/25 text-megara-light placeholder:text-megara-light/30 focus:border-magic-teal/50 focus:shadow-[0_0_20px_2px_rgba(0,206,209,0.1)]"}`
+            className: `w-full rounded-lg py-3 pl-12 pr-4 focus:outline-none transition-all backdrop-blur-sm ${p ? "bg-white/70 border border-purple-200 text-purple-900 placeholder:text-purple-400/50 focus:border-purple-400 focus:shadow-[0_0_15px_2px_rgba(147,51,234,0.1)]" : "bg-underworld-800/40 border border-megara-dark/25 text-megara-light placeholder:text-megara-light/30 focus:border-magic-teal/50 focus:shadow-[0_0_20px_2px_rgba(0,206,209,0.1)]"}`
           }
         ),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity ${d ? "via-purple-400/30" : "via-magic-teal/20"}`
+            className: `absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity ${p ? "via-purple-400/30" : "via-magic-teal/20"}`
           }
         )
       ] }),
       /* @__PURE__ */ e.jsxs(
         "button",
         {
-          onClick: m,
-          className: `flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm backdrop-blur-sm transition-colors cursor-pointer ${d ? l ? "border-amber-400 bg-amber-50" : "border-purple-200 bg-white/60 hover:border-purple-400" : l ? "border-magic-gold/60 bg-magic-gold/10" : "border-megara-dark/25 bg-underworld-800/40 hover:border-magic-gold/40"}`,
+          onClick: c,
+          className: `flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm backdrop-blur-sm transition-colors cursor-pointer ${p ? i ? "border-amber-400 bg-amber-50" : "border-purple-200 bg-white/60 hover:border-purple-400" : i ? "border-magic-gold/60 bg-magic-gold/10" : "border-megara-dark/25 bg-underworld-800/40 hover:border-magic-gold/40"}`,
           children: [
             /* @__PURE__ */ e.jsx(
               re,
               {
                 size: 16,
-                className: d ? "text-amber-600/70" : "text-magic-gold/70"
+                className: p ? "text-amber-600/70" : "text-magic-gold/70"
               }
             ),
             /* @__PURE__ */ e.jsxs(
               "span",
               {
-                className: `text-xs ${d ? "text-purple-600/60" : "text-megara-light/60"}`,
+                className: `text-xs ${p ? "text-purple-600/60" : "text-megara-light/60"}`,
                 children: [
-                  p,
+                  d,
                   " archived"
                 ]
               }
             ),
-            /* @__PURE__ */ e.jsx("span", { className: d ? "text-purple-300" : "text-megara-light/20", children: "|" }),
+            /* @__PURE__ */ e.jsx("span", { className: p ? "text-purple-300" : "text-megara-light/20", children: "|" }),
             /* @__PURE__ */ e.jsxs(
               "span",
               {
-                className: `text-xs ${d ? "text-purple-600/60" : "text-megara-light/60"}`,
+                className: `text-xs ${p ? "text-purple-600/60" : "text-megara-light/60"}`,
                 children: [
-                  c,
+                  l,
                   " shown"
                 ]
               }
             ),
-            l && /* @__PURE__ */ e.jsx(
+            i && /* @__PURE__ */ e.jsx(
               "span",
               {
-                className: `text-[10px] font-bold tracking-widest uppercase ml-1 ${d ? "text-amber-700" : "text-magic-gold"}`,
+                className: `text-[10px] font-bold tracking-widest uppercase ml-1 ${p ? "text-amber-700" : "text-magic-gold"}`,
                 children: "ON"
               }
             )
@@ -635,7 +560,7 @@ function Se({
     /* @__PURE__ */ e.jsx(
       "div",
       {
-        className: `absolute bottom-0 left-8 right-8 h-px bg-gradient-to-r from-transparent ${d ? "via-purple-300/30" : "via-megara-dark/30"} to-transparent`
+        className: `absolute bottom-0 left-8 right-8 h-px bg-gradient-to-r from-transparent ${p ? "via-purple-300/30" : "via-megara-dark/30"} to-transparent`
       }
     )
   ] });
@@ -650,19 +575,19 @@ function Pe({
   months: s,
   light: a = !1
 }) {
-  const r = (i) => {
-    const c = document.getElementById(`month-${i}`);
-    c && c.scrollIntoView({
+  const r = (n) => {
+    const l = document.getElementById(`month-${n}`);
+    l && l.scrollIntoView({
       behavior: "smooth",
       block: "start"
     });
   };
-  return /* @__PURE__ */ e.jsx("div", { className: "relative z-10 px-8 pb-6", children: /* @__PURE__ */ e.jsx("div", { className: "flex gap-3 flex-wrap", children: s.map((i, c) => {
+  return /* @__PURE__ */ e.jsx("div", { className: "relative z-10 px-8 pb-6", children: /* @__PURE__ */ e.jsx("div", { className: "flex gap-3 flex-wrap", children: s.map((n, l) => {
     const b = t.filter(
-      (p) => p.month === i
+      (d) => d.month === n
     ).length;
     return /* @__PURE__ */ e.jsxs(
-      j.button,
+      k.button,
       {
         initial: {
           opacity: 0,
@@ -673,9 +598,9 @@ function Pe({
           y: 0
         },
         transition: {
-          delay: c * 0.06
+          delay: l * 0.06
         },
-        onClick: () => r(i),
+        onClick: () => r(n),
         className: `relative group flex flex-col w-32 rounded-t-sm rounded-b-md overflow-hidden transition-all ${a ? "bg-white/70 border border-purple-200 hover:border-purple-400 hover:bg-white hover:shadow-[0_0_15px_rgba(147,51,234,0.15)]" : "bg-underworld-800/80 border border-megara-dark/30 hover:border-magic-teal/40 hover:bg-underworld-700/50 hover:shadow-glow-teal"}`,
         children: [
           /* @__PURE__ */ e.jsx(
@@ -690,7 +615,7 @@ function Pe({
                 "span",
                 {
                   className: `font-mono text-[10px] font-bold tracking-wider ${a ? "text-purple-400 group-hover:text-purple-600" : "text-magic-teal/40 group-hover:text-magic-teal/70"}`,
-                  children: Re[i] || "001"
+                  children: Re[n] || "001"
                 }
               ),
               /* @__PURE__ */ e.jsx(
@@ -705,7 +630,7 @@ function Pe({
               "span",
               {
                 className: `font-serif text-sm font-medium text-left transition-colors ${a ? "text-purple-700/70 group-hover:text-purple-800" : "text-megara-light/60 group-hover:text-megara-light/80"}`,
-                children: i
+                children: n
               }
             ),
             /* @__PURE__ */ e.jsxs(
@@ -728,11 +653,11 @@ function Pe({
           )
         ]
       },
-      i
+      n
     );
   }) }) });
 }
-const De = [
+const Oe = [
   // Postman Law - April - TV
   {
     id: "1",
@@ -1053,21 +978,21 @@ const De = [
     buyer: "Lynn Cortelezzi",
     status: "pending"
   }
-], C = () => typeof window < "u" && window.MegaraLibraryData ? window.MegaraLibraryData : De, $ = new Proxy([], {
+], _ = () => typeof window < "u" && window.MegaraLibraryData ? window.MegaraLibraryData : Oe, $ = new Proxy([], {
   get(t, s) {
-    const a = C(), r = a[s];
+    const a = _(), r = a[s];
     return typeof r == "function" ? r.bind(a) : r;
   },
   has(t, s) {
-    return s in C();
+    return s in _();
   },
   ownKeys() {
-    return Reflect.ownKeys(C());
+    return Reflect.ownKeys(_());
   },
   getOwnPropertyDescriptor(t, s) {
-    return Object.getOwnPropertyDescriptor(C(), s);
+    return Object.getOwnPropertyDescriptor(_(), s);
   }
-}), D = {
+}), O = {
   Chicago: "text-market-chicago",
   Cincinnati: "text-market-cincinnati",
   Denver: "text-market-denver",
@@ -1079,7 +1004,7 @@ const De = [
   Montgomery: "text-market-montgomery",
   Dothan: "text-market-dothan",
   Gadsden: "text-market-gadsden"
-}, Oe = {
+}, De = {
   Chicago: "bg-market-chicago",
   Cincinnati: "bg-market-cincinnati",
   Denver: "bg-market-denver",
@@ -1092,22 +1017,22 @@ const De = [
   Dothan: "bg-market-dothan",
   Gadsden: "bg-market-gadsden"
 };
-function Be({ instruction: t, onClick: s }) {
-  const a = E(O), r = t.status === "sent", i = parseInt(t.iscis) || 5, c = i > 8 ? "h-48" : i > 5 ? "h-44" : "h-40", b = {
+function Ve({ instruction: t, onClick: s }) {
+  const a = E(D), r = t.status === "sent", n = parseInt(t.iscis) || 5, l = n > 8 ? "h-48" : n > 5 ? "h-44" : "h-40", b = {
     TV: "from-[#2a1540] to-[#1a0d2e]",
     Radio: "from-[#1a2040] to-[#0d1530]",
     "Streaming Audio": "from-[#1a3030] to-[#0d2020]",
     Cable: "from-[#2a1a30] to-[#1a1020]",
     OOH: "from-[#2a2a1a] to-[#1a1a0d]"
-  }, p = {
+  }, d = {
     TV: "from-[#e8daf0] to-[#d4c0e0]",
     Radio: "from-[#d5dff0] to-[#c0cfe0]",
     "Streaming Audio": "from-[#d0e8e8] to-[#bcd8d8]",
     Cable: "from-[#e0d5e8] to-[#d0c0d8]",
     OOH: "from-[#e8e5d0] to-[#d8d5c0]"
-  }, l = a ? p[t.mediaType] || p.TV : b[t.mediaType] || b.TV;
+  }, i = a ? d[t.mediaType] || d.TV : b[t.mediaType] || b.TV;
   return /* @__PURE__ */ e.jsxs(
-    j.div,
+    k.div,
     {
       whileHover: {
         y: -14,
@@ -1118,10 +1043,10 @@ function Be({ instruction: t, onClick: s }) {
       },
       onClick: s,
       className: `
-        relative w-14 ${c} cursor-pointer group
+        relative w-14 ${l} cursor-pointer group
         rounded-l-sm rounded-r-md
         flex flex-col items-center justify-between py-3
-        bg-gradient-to-b ${l}
+        bg-gradient-to-b ${i}
         ${a ? "" : r ? "book-glow-sent" : "book-glow-pending"}
         ${a ? "shadow-[2px_2px_8px_rgba(0,0,0,0.1),-1px_0_3px_rgba(0,0,0,0.05)]" : ""}
       `,
@@ -1154,7 +1079,7 @@ function Be({ instruction: t, onClick: s }) {
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `w-full h-3 ${Oe[t.market]} opacity-90 shadow-inner relative z-10`,
+            className: `w-full h-3 ${De[t.market]} opacity-90 shadow-inner relative z-10`,
             children: /* @__PURE__ */ e.jsx("div", { className: "absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" })
           }
         ),
@@ -1201,7 +1126,7 @@ function Be({ instruction: t, onClick: s }) {
               /* @__PURE__ */ e.jsx(
                 "div",
                 {
-                  className: `font-bold text-sm ${D[t.market]}`,
+                  className: `font-bold text-sm ${O[t.market]}`,
                   children: t.market
                 }
               ),
@@ -1240,15 +1165,15 @@ function Be({ instruction: t, onClick: s }) {
     }
   );
 }
-function Ve({
+function Be({
   month: t,
   instructions: s,
   onBookClick: a,
   light: r = !1
 }) {
   if (s.length === 0) return null;
-  const i = s.reduce(
-    (p, l) => (p[l.mediaType] || (p[l.mediaType] = []), p[l.mediaType].push(l), p),
+  const n = s.reduce(
+    (d, i) => (d[i.mediaType] || (d[i.mediaType] = []), d[i.mediaType].push(i), d),
     {}
   ), b = [
     "TV",
@@ -1256,12 +1181,12 @@ function Ve({
     "Streaming Audio",
     "Cable",
     "OOH"
-  ].filter((p) => {
-    var l;
-    return ((l = i[p]) == null ? void 0 : l.length) > 0;
+  ].filter((d) => {
+    var i;
+    return ((i = n[d]) == null ? void 0 : i.length) > 0;
   });
   return /* @__PURE__ */ e.jsxs(
-    j.div,
+    k.div,
     {
       initial: {
         opacity: 0,
@@ -1332,10 +1257,10 @@ function Ve({
             )
           ] })
         ] }),
-        b.map((p, l) => {
-          const m = i[p], x = new Set(m.map((g) => g.market)).size;
+        b.map((d, i) => {
+          const c = n[d], m = new Set(c.map((x) => x.market)).size;
           return /* @__PURE__ */ e.jsxs(
-            j.div,
+            k.div,
             {
               initial: {
                 opacity: 0,
@@ -1346,7 +1271,7 @@ function Ve({
                 x: 0
               },
               transition: {
-                delay: l * 0.1,
+                delay: i * 0.1,
                 duration: 0.4
               },
               className: "mb-12 relative",
@@ -1361,15 +1286,15 @@ function Ve({
                         {
                           className: `font-serif text-xs font-bold tracking-widest uppercase drop-shadow-md ${r ? "text-purple-800" : "text-yellow-100"}`,
                           children: [
-                            p,
+                            d,
                             /* @__PURE__ */ e.jsxs(
                               "span",
                               {
                                 className: `opacity-50 normal-case ml-2 font-sans text-[10px] ${r ? "text-purple-600" : ""}`,
                                 children: [
-                                  x,
+                                  m,
                                   " ",
-                                  x === 1 ? "market" : "markets"
+                                  m === 1 ? "market" : "markets"
                                 ]
                               }
                             )
@@ -1397,9 +1322,9 @@ function Ve({
                     className: `absolute inset-x-0 top-4 bottom-7 rounded-t-sm ${r ? "bg-gradient-to-b from-purple-100/40 to-white/20 border-t border-purple-200/30" : "bg-gradient-to-b from-underworld-900/80 to-underworld-800/40 border-t border-megara-dark/10"}`
                   }
                 ),
-                /* @__PURE__ */ e.jsx("div", { className: "flex items-end gap-1 px-12 pt-10 pb-1 min-h-[210px] relative z-10 overflow-x-auto hide-scrollbar", children: m.map(
-                  (g, w) => /* @__PURE__ */ e.jsx(
-                    j.div,
+                /* @__PURE__ */ e.jsx("div", { className: "flex items-end gap-1 px-12 pt-10 pb-1 min-h-[210px] relative z-10 overflow-x-auto hide-scrollbar", children: c.map(
+                  (x, w) => /* @__PURE__ */ e.jsx(
+                    k.div,
                     {
                       initial: {
                         opacity: 0,
@@ -1410,17 +1335,17 @@ function Ve({
                         y: 0
                       },
                       transition: {
-                        delay: l * 0.1 + w * 0.03
+                        delay: i * 0.1 + w * 0.03
                       },
                       children: /* @__PURE__ */ e.jsx(
-                        Be,
+                        Ve,
                         {
-                          instruction: g,
-                          onClick: () => a(g)
+                          instruction: x,
+                          onClick: () => a(x)
                         }
                       )
                     },
-                    g.id
+                    x.id
                   )
                 ) }),
                 /* @__PURE__ */ e.jsxs("div", { className: "shelf-wood h-8 w-full rounded-sm relative z-0", children: [
@@ -1440,33 +1365,33 @@ function Ve({
                 )
               ]
             },
-            p
+            d
           );
         })
       ]
     }
   );
 }
-const A = () => new (window.AudioContext || window.webkitAudioContext)();
+const M = () => new (window.AudioContext || window.webkitAudioContext)();
 function Ee() {
   try {
-    const t = A(), s = t.currentTime;
-    [880, 1320].forEach((c, b) => {
-      const p = t.createOscillator();
-      p.type = "sine", p.frequency.value = c;
-      const l = t.createGain(), m = s + b * 0.06;
-      l.gain.setValueAtTime(0, m), l.gain.linearRampToValueAtTime(0.07, m + 0.01), l.gain.exponentialRampToValueAtTime(1e-3, m + 0.8), p.connect(l), l.connect(t.destination), p.start(m), p.stop(m + 0.8);
+    const t = M(), s = t.currentTime;
+    [880, 1320].forEach((l, b) => {
+      const d = t.createOscillator();
+      d.type = "sine", d.frequency.value = l;
+      const i = t.createGain(), c = s + b * 0.06;
+      i.gain.setValueAtTime(0, c), i.gain.linearRampToValueAtTime(0.07, c + 0.01), i.gain.exponentialRampToValueAtTime(1e-3, c + 0.8), d.connect(i), i.connect(t.destination), d.start(c), d.stop(c + 0.8);
     });
     const r = t.createOscillator();
     r.type = "sine", r.frequency.value = 2640;
-    const i = t.createGain();
-    i.gain.setValueAtTime(0, s + 0.1), i.gain.linearRampToValueAtTime(0.025, s + 0.12), i.gain.exponentialRampToValueAtTime(1e-3, s + 0.5), r.connect(i), i.connect(t.destination), r.start(s + 0.1), r.stop(s + 0.5), setTimeout(() => t.close(), 1200);
+    const n = t.createGain();
+    n.gain.setValueAtTime(0, s + 0.1), n.gain.linearRampToValueAtTime(0.025, s + 0.12), n.gain.exponentialRampToValueAtTime(1e-3, s + 0.5), r.connect(n), n.connect(t.destination), r.start(s + 0.1), r.stop(s + 0.5), setTimeout(() => t.close(), 1200);
   } catch {
   }
 }
 function He() {
   try {
-    const t = A(), s = t.currentTime, a = t.createOscillator();
+    const t = M(), s = t.currentTime, a = t.createOscillator();
     a.type = "sine", a.frequency.setValueAtTime(440, s), a.frequency.exponentialRampToValueAtTime(220, s + 0.08);
     const r = t.createGain();
     r.gain.setValueAtTime(0.06, s), r.gain.exponentialRampToValueAtTime(1e-3, s + 0.1), a.connect(r), r.connect(t.destination), a.start(s), a.stop(s + 0.1), setTimeout(() => t.close(), 300);
@@ -1475,21 +1400,21 @@ function He() {
 }
 function Ke() {
   try {
-    const t = A(), s = t.currentTime;
-    [1047, 1319, 1568, 2093].forEach((b, p) => {
-      const l = t.createOscillator();
-      l.type = "sine", l.frequency.value = b;
-      const m = t.createGain(), x = s + p * 0.1;
-      m.gain.setValueAtTime(0, x), m.gain.linearRampToValueAtTime(0.06, x + 0.01), m.gain.exponentialRampToValueAtTime(1e-3, x + 0.6), l.connect(m), m.connect(t.destination), l.start(x), l.stop(x + 0.6);
+    const t = M(), s = t.currentTime;
+    [1047, 1319, 1568, 2093].forEach((b, d) => {
+      const i = t.createOscillator();
+      i.type = "sine", i.frequency.value = b;
+      const c = t.createGain(), m = s + d * 0.1;
+      c.gain.setValueAtTime(0, m), c.gain.linearRampToValueAtTime(0.06, m + 0.01), c.gain.exponentialRampToValueAtTime(1e-3, m + 0.6), i.connect(c), c.connect(t.destination), i.start(m), i.stop(m + 0.6);
     });
     const r = t.createOscillator();
     r.type = "sine", r.frequency.value = 3136;
-    const i = t.createGain(), c = s + 0.4;
-    i.gain.setValueAtTime(0, c), i.gain.linearRampToValueAtTime(0.04, c + 0.01), i.gain.exponentialRampToValueAtTime(1e-3, c + 0.5), r.connect(i), i.connect(t.destination), r.start(c), r.stop(c + 0.5), setTimeout(() => t.close(), 1500);
+    const n = t.createGain(), l = s + 0.4;
+    n.gain.setValueAtTime(0, l), n.gain.linearRampToValueAtTime(0.04, l + 0.01), n.gain.exponentialRampToValueAtTime(1e-3, l + 0.5), r.connect(n), n.connect(t.destination), r.start(l), r.stop(l + 0.5), setTimeout(() => t.close(), 1500);
   } catch {
   }
 }
-function Fe(t) {
+function We(t) {
   return (t.iscisDetail || []).map((a) => ({
     dates: a.sched || t.dateRange,
     code: a.code + (a.title ? " - " + a.title : ""),
@@ -1498,15 +1423,15 @@ function Fe(t) {
     notes: a.bookend || a.sched || ""
   }));
 }
-function We({
+function Ge({
   instruction: t,
   onClose: s,
   light: a = !1
 }) {
-  if (z(() => {
+  if (T(() => {
     t && Ee();
   }, [t]), !t) return null;
-  const r = Fe(t), c = {
+  const r = We(t), l = {
     Chicago: "CHI",
     Cincinnati: "CIN",
     Denver: "DEN",
@@ -1520,19 +1445,19 @@ function We({
     Gadsden: "GAD"
   }[t.market] || t.market.slice(0, 3).toUpperCase(), b = () => {
     He(), s();
-  }, p = () => {
-    Ke(), l("send");
-  }, l = (m) => {
-    const x = typeof window < "u" && window.MegaraLibraryActions || {}, g = t == null ? void 0 : t.historyIdx;
-    typeof x[m] == "function" && typeof g == "number" && (x[m](g), m === "delete" && s());
+  }, d = () => {
+    Ke(), i("send");
+  }, i = (c) => {
+    const m = typeof window < "u" && window.MegaraLibraryActions || {}, x = t == null ? void 0 : t.historyIdx;
+    typeof m[c] == "function" && typeof x == "number" && (m[c](x), c === "delete" && s());
   };
-  return /* @__PURE__ */ e.jsx(F, { children: /* @__PURE__ */ e.jsx(
+  return /* @__PURE__ */ e.jsx(W, { children: /* @__PURE__ */ e.jsx(
     "div",
     {
       className: `fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-6 ${a ? "bg-black/40" : "bg-black/70"}`,
       onClick: b,
       children: /* @__PURE__ */ e.jsxs(
-        j.div,
+        k.div,
         {
           initial: {
             scale: 0.85,
@@ -1555,7 +1480,7 @@ function We({
             stiffness: 180
           },
           className: `w-full max-w-6xl h-[85vh] flex rounded-lg overflow-hidden ${a ? "shadow-[0_0_40px_rgba(147,51,234,0.1),0_25px_50px_rgba(0,0,0,0.2)]" : "shadow-[0_0_60px_rgba(200,80,192,0.15),0_25px_50px_rgba(0,0,0,0.5)]"}`,
-          onClick: (m) => m.stopPropagation(),
+          onClick: (c) => c.stopPropagation(),
           children: [
             /* @__PURE__ */ e.jsxs("div", { className: "flex-1 bg-white overflow-y-auto relative", children: [
               /* @__PURE__ */ e.jsx("div", { className: "absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-300 to-transparent z-10 pointer-events-none" }),
@@ -1568,8 +1493,8 @@ function We({
                 }
               ) : /* @__PURE__ */ e.jsx(e.Fragment, { children: /* @__PURE__ */ e.jsxs("div", { className: "px-10 pt-8 pb-8", children: [
                 /* @__PURE__ */ e.jsx("div", { className: "text-center mb-6", children: (() => {
-                  const x = (typeof window < "u" && window.MegaraLibraryLogos || {})[t.brand];
-                  return x ? /* @__PURE__ */ e.jsx("img", { src: x, alt: t.brand, style: { height: 48, margin: "0 auto", display: "block" } }) : /* @__PURE__ */ e.jsx("div", { className: "inline-block border-2 border-gray-800 px-5 py-1.5", children: /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-900 tracking-wider text-lg uppercase", children: t.brand.toUpperCase() }) });
+                  const m = (typeof window < "u" && window.MegaraLibraryLogos || {})[t.brand];
+                  return m ? /* @__PURE__ */ e.jsx("img", { src: m, alt: t.brand, style: { height: 48, margin: "0 auto", display: "block" } }) : /* @__PURE__ */ e.jsx("div", { className: "inline-block border-2 border-gray-800 px-5 py-1.5", children: /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-900 tracking-wider text-lg uppercase", children: t.brand.toUpperCase() }) });
                 })() }),
                 /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-[140px_1fr] gap-y-2.5 text-sm max-w-2xl mb-8", children: [
                   /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-700", children: "Agency:" }),
@@ -1580,7 +1505,7 @@ function We({
                   /* @__PURE__ */ e.jsxs("span", { className: "text-gray-900 font-medium", children: [
                     t.market,
                     " (",
-                    c,
+                    l,
                     ")"
                   ] }),
                   /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-700", children: "Buyer:" }),
@@ -1619,55 +1544,55 @@ function We({
                     /* @__PURE__ */ e.jsx("th", { className: "text-left py-2.5 px-3 text-gray-500 font-semibold uppercase text-[10px] tracking-wider w-20", children: "Notes" })
                   ] }) }),
                   /* @__PURE__ */ e.jsx("tbody", { children: (() => {
-                    const m = [
+                    const c = [
                       "M-F Schedule",
                       "M-F Bookend",
                       "Weekend Schedule",
                       "Weekend Bookend",
                       "All Week",
                       "Holiday Only"
-                    ], x = {
+                    ], m = {
                       "M-F Schedule": "bg-blue-100 border-blue-200",
                       "M-F Bookend": "bg-purple-100 border-purple-200",
                       "Weekend Schedule": "bg-amber-100 border-amber-200",
                       "Weekend Bookend": "bg-pink-100 border-pink-200",
                       "All Week": "bg-green-100 border-green-200",
                       "Holiday Only": "bg-red-100 border-red-200"
-                    }, g = {};
-                    r.forEach((o) => {
-                      const h = o.notes && m.indexOf(o.notes) >= 0 ? o.notes : "All Week";
-                      g[h] || (g[h] = []), g[h].push(o);
+                    }, x = {};
+                    r.forEach((g) => {
+                      const h = g.notes && c.indexOf(g.notes) >= 0 ? g.notes : "All Week";
+                      x[h] || (x[h] = []), x[h].push(g);
                     });
                     const w = [
-                      ...m.filter((o) => {
+                      ...c.filter((g) => {
                         var h;
-                        return (h = g[o]) == null ? void 0 : h.length;
+                        return (h = x[g]) == null ? void 0 : h.length;
                       }),
-                      ...Object.keys(g).filter((o) => !m.includes(o))
-                    ], d = [];
-                    return w.forEach((o) => {
-                      const h = x[o] || "bg-gray-100 border-gray-200";
-                      d.push(
-                        /* @__PURE__ */ e.jsx("tr", { className: `${h} border-b`, children: /* @__PURE__ */ e.jsx("td", { colSpan: 5, className: "py-1.5 px-3 font-bold text-gray-800 uppercase text-xs", children: o }) }, "hdr-" + o)
-                      ), g[o].forEach((y, k) => {
-                        d.push(
+                      ...Object.keys(x).filter((g) => !c.includes(g))
+                    ], p = [];
+                    return w.forEach((g) => {
+                      const h = m[g] || "bg-gray-100 border-gray-200";
+                      p.push(
+                        /* @__PURE__ */ e.jsx("tr", { className: `${h} border-b`, children: /* @__PURE__ */ e.jsx("td", { colSpan: 5, className: "py-1.5 px-3 font-bold text-gray-800 uppercase text-xs", children: g }) }, "hdr-" + g)
+                      ), x[g].forEach((f, j) => {
+                        p.push(
                           /* @__PURE__ */ e.jsxs(
                             "tr",
                             {
-                              className: `border-b border-gray-100 ${k % 2 === 0 ? "bg-green-50/40" : "bg-white"} hover:bg-green-50 transition-colors`,
+                              className: `border-b border-gray-100 ${j % 2 === 0 ? "bg-green-50/40" : "bg-white"} hover:bg-green-50 transition-colors`,
                               children: [
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-600 font-mono text-xs", children: y.dates }),
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-900 font-mono text-xs", children: y.code }),
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: y.length }),
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: y.pct }),
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-500 text-xs", children: y.notes })
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-600 font-mono text-xs", children: f.dates }),
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-900 font-mono text-xs", children: f.code }),
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: f.length }),
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: f.pct }),
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-500 text-xs", children: f.notes })
                               ]
                             },
-                            o + "-" + k
+                            g + "-" + j
                           )
                         );
                       });
-                    }), d;
+                    }), p;
                   })() })
                 ] }),
                 /* @__PURE__ */ e.jsxs("div", { className: "mt-9 pt-3 border-t-2 border-purple-400", children: [
@@ -1719,7 +1644,7 @@ function We({
                     {
                       onClick: b,
                       className: `p-2 rounded-full transition-colors ${a ? "text-purple-400 hover:text-purple-700 hover:bg-purple-100" : "text-megara-light/60 hover:text-megara-light hover:bg-white/10"}`,
-                      children: /* @__PURE__ */ e.jsx(Ie, { size: 20 })
+                      children: /* @__PURE__ */ e.jsx(Le, { size: 20 })
                     }
                   ) }),
                   /* @__PURE__ */ e.jsxs(
@@ -1730,7 +1655,7 @@ function We({
                         /* @__PURE__ */ e.jsx(
                           "span",
                           {
-                            className: `font-serif text-2xl font-bold ${D[t.market]}`,
+                            className: `font-serif text-2xl font-bold ${O[t.market]}`,
                             children: t.market
                           }
                         ),
@@ -1794,7 +1719,7 @@ function We({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
-                        onClick: () => l("edit"),
+                        onClick: () => i("edit"),
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
@@ -1812,7 +1737,7 @@ function We({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
-                        onClick: () => l("view"),
+                        onClick: () => i("view"),
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group font-medium ${a ? "border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100" : "border-magic-teal/40 bg-magic-teal/10 text-magic-teal hover:bg-magic-teal/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
@@ -1830,11 +1755,11 @@ function We({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
-                        onClick: () => l("print"),
+                        onClick: () => i("print"),
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            Ce,
+                            _e,
                             {
                               size: 16,
                               className: `group-hover:scale-110 transition-transform ${a ? "text-amber-600" : "text-magic-gold"}`
@@ -1848,11 +1773,11 @@ function We({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
-                        onClick: p,
+                        onClick: d,
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            ze,
+                            Te,
                             {
                               size: 16,
                               className: "text-megara-primary group-hover:scale-110 transition-transform group-hover:translate-x-0.5"
@@ -1866,7 +1791,7 @@ function We({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
-                        onClick: () => l("copyTo"),
+                        onClick: () => i("copyTo"),
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
@@ -1892,10 +1817,10 @@ function We({
                   /* @__PURE__ */ e.jsx("div", { className: "px-6 pb-6 relative z-10", children: /* @__PURE__ */ e.jsxs(
                     "button",
                     {
-                      onClick: () => l("delete"),
+                      onClick: () => i("delete"),
                       className: `w-full py-2.5 px-4 rounded border text-sm flex items-center justify-center gap-2 transition-colors ${a ? "border-red-200 text-red-500 hover:bg-red-50" : "border-red-900/40 text-red-400 hover:bg-red-900/20"}`,
                       children: [
-                        /* @__PURE__ */ e.jsx(Le, { size: 16 }),
+                        /* @__PURE__ */ e.jsx(Ae, { size: 16 }),
                         " Delete"
                       ]
                     }
@@ -1909,14 +1834,14 @@ function We({
     }
   ) });
 }
-const O = H(!1);
+const D = H(!1);
 function Ue() {
-  const [t, s] = N(!1), [a, r] = N("Postman Law"), [i, c] = N(!1), [b, p] = N(null);
-  z(() => {
+  const [t, s] = N(!1), [a, r] = N("Postman Law"), [n, l] = N(!1), [b, d] = N(null);
+  T(() => {
     t ? document.body.classList.add("light") : document.body.classList.remove("light");
   }, [t]);
-  const l = K(() => {
-    const n = [
+  const i = K(() => {
+    const o = [
       "soul-teal",
       "soul-purple",
       "soul-gold",
@@ -1924,19 +1849,19 @@ function Ue() {
     ];
     return Array.from({
       length: 60
-    }).map((v, L) => ({
-      id: L,
+    }).map((v, A) => ({
+      id: A,
       left: `${Math.random() * 100}vw`,
       bottom: `${-10 + Math.random() * 20}px`,
       size: 1 + Math.random() * 4,
-      type: n[L % n.length],
+      type: o[A % o.length],
       delay: `${Math.random() * 20}s`,
       duration: `${8 + Math.random() * 18}s`
     }));
-  }, []), m = {
-    "Postman Law": $.filter((n) => n.brand === "Postman Law").length,
-    "Wettermark Keith": $.filter((n) => n.brand === "Wettermark Keith").length
-  }, x = $.filter((n) => n.brand === a), g = i ? x : x.filter((n) => !n.archived), w = x.filter((n) => n.archived).length, d = [
+  }, []), c = {
+    "Postman Law": $.filter((o) => o.brand === "Postman Law").length,
+    "Wettermark Keith": $.filter((o) => o.brand === "Wettermark Keith").length
+  }, m = $.filter((o) => o.brand === a), x = n ? m : m.filter((o) => !o.archived), w = m.filter((o) => o.archived).length, p = [
     "January",
     "February",
     "March",
@@ -1949,64 +1874,64 @@ function Ue() {
     "October",
     "November",
     "December"
-  ], o = Array.from(new Set(g.map((n) => n.month))), h = d.filter((n) => o.includes(n)).reverse(), y = g.reduce(
-    (n, v) => (n[v.month] || (n[v.month] = []), n[v.month].push(v), n),
+  ], g = Array.from(new Set(x.map((o) => o.month))), h = p.filter((o) => g.includes(o)).reverse(), f = x.reduce(
+    (o, v) => (o[v.month] || (o[v.month] = []), o[v.month].push(v), o),
     {}
-  ), k = h.filter((n) => {
+  ), j = h.filter((o) => {
     var v;
-    return ((v = y[n]) == null ? void 0 : v.length) > 0;
-  }), B = new Set(g.map((n) => n.market)).size, f = t;
-  return /* @__PURE__ */ e.jsx(O.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
+    return ((v = f[o]) == null ? void 0 : v.length) > 0;
+  }), V = new Set(x.map((o) => o.market)).size, y = t;
+  return /* @__PURE__ */ e.jsx(D.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
     "div",
     {
-      className: `min-h-screen w-full flex flex-col relative overflow-hidden font-sans transition-colors duration-700 ${f ? "bg-[#f5eef8]" : ""}`,
+      className: `min-h-screen w-full flex flex-col relative overflow-hidden font-sans transition-colors duration-700 ${y ? "bg-[#f5eef8]" : ""}`,
       children: [
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `absolute inset-0 pointer-events-none z-0 transition-all duration-700 ${f ? "bg-[radial-gradient(ellipse_at_top,#f8f0fc,#ede4f3,#e0d4ec)]" : "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-underworld-800 via-underworld-900 to-black"}`
+            className: `absolute inset-0 pointer-events-none z-0 transition-all duration-700 ${y ? "bg-[radial-gradient(ellipse_at_top,#f8f0fc,#ede4f3,#e0d4ec)]" : "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-underworld-800 via-underworld-900 to-black"}`
           }
         ),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `absolute inset-0 pointer-events-none z-[1] ${f ? "library-vignette-light" : "library-vignette"}`
+            className: `absolute inset-0 pointer-events-none z-[1] ${y ? "library-vignette-light" : "library-vignette"}`
           }
         ),
         /* @__PURE__ */ e.jsx("div", { className: "absolute inset-0 pointer-events-none z-[1] library-fog" }),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `absolute top-0 left-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none z-0 transition-colors duration-700 ${f ? "bg-purple-300/20" : "bg-megara-primary/5"}`
+            className: `absolute top-0 left-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none z-0 transition-colors duration-700 ${y ? "bg-purple-300/20" : "bg-megara-primary/5"}`
           }
         ),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `absolute top-1/3 right-1/4 w-80 h-80 rounded-full blur-[100px] pointer-events-none z-0 transition-colors duration-700 ${f ? "bg-pink-200/20" : "bg-magic-teal/5"}`
+            className: `absolute top-1/3 right-1/4 w-80 h-80 rounded-full blur-[100px] pointer-events-none z-0 transition-colors duration-700 ${y ? "bg-pink-200/20" : "bg-magic-teal/5"}`
           }
         ),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-64 rounded-full blur-[80px] pointer-events-none z-0 transition-colors duration-700 ${f ? "bg-amber-200/15" : "bg-magic-gold/3"}`
+            className: `absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-64 rounded-full blur-[80px] pointer-events-none z-0 transition-colors duration-700 ${y ? "bg-amber-200/15" : "bg-magic-gold/3"}`
           }
         ),
-        l.map(
-          (n) => /* @__PURE__ */ e.jsx(
+        i.map(
+          (o) => /* @__PURE__ */ e.jsx(
             "div",
             {
-              className: `soul-particle ${n.type}`,
+              className: `soul-particle ${o.type}`,
               style: {
-                left: n.left,
-                bottom: n.bottom,
-                width: `${n.size}px`,
-                height: `${n.size}px`,
-                "--delay": n.delay,
-                "--duration": n.duration
+                left: o.left,
+                bottom: o.bottom,
+                width: `${o.size}px`,
+                height: `${o.size}px`,
+                "--delay": o.delay,
+                "--duration": o.duration
               }
             },
-            n.id
+            o.id
           )
         ),
         /* @__PURE__ */ e.jsx(
@@ -2016,20 +1941,20 @@ function Ue() {
             toggleTheme: () => s(!t),
             brand: a,
             onBrandChange: r,
-            brandCounts: m,
-            totalInstructions: g.length,
-            totalMarkets: B,
+            brandCounts: c,
+            totalInstructions: x.length,
+            totalMarkets: V,
             archivedCount: w,
-            showArchived: i,
-            onToggleArchived: () => c((n) => !n)
+            showArchived: n,
+            onToggleArchived: () => l((o) => !o)
           }
         ),
         /* @__PURE__ */ e.jsx(
           Pe,
           {
-            instructions: g,
-            months: k,
-            light: f
+            instructions: x,
+            months: j,
+            light: y
           }
         ),
         /* @__PURE__ */ e.jsx("main", { className: "flex-1 overflow-y-auto hide-scrollbar flex flex-col relative z-10", children: /* @__PURE__ */ e.jsxs("div", { className: "px-8 pb-32 flex-1 relative", children: [
@@ -2041,36 +1966,36 @@ function Ue() {
                 /* @__PURE__ */ e.jsx(
                   "div",
                   {
-                    className: `w-20 h-full bg-gradient-to-b ${f ? "from-purple-400/30 via-purple-300/10" : "from-megara-dark/50 via-megara-dark/20"} to-transparent border-x ${f ? "border-purple-300/20" : "border-megara-dark/30"}`
+                    className: `w-20 h-full bg-gradient-to-b ${y ? "from-purple-400/30 via-purple-300/10" : "from-megara-dark/50 via-megara-dark/20"} to-transparent border-x ${y ? "border-purple-300/20" : "border-megara-dark/30"}`
                   }
                 ),
                 /* @__PURE__ */ e.jsx(
                   "div",
                   {
-                    className: `w-20 h-full bg-gradient-to-b ${f ? "from-purple-400/30 via-purple-300/10" : "from-megara-dark/50 via-megara-dark/20"} to-transparent border-x ${f ? "border-purple-300/20" : "border-megara-dark/30"}`
+                    className: `w-20 h-full bg-gradient-to-b ${y ? "from-purple-400/30 via-purple-300/10" : "from-megara-dark/50 via-megara-dark/20"} to-transparent border-x ${y ? "border-purple-300/20" : "border-megara-dark/30"}`
                   }
                 )
               ]
             }
           ),
-          /* @__PURE__ */ e.jsx("div", { className: "max-w-6xl mx-auto relative z-10", children: k.map(
-            (n) => /* @__PURE__ */ e.jsx("div", { id: `month-${n}`, children: /* @__PURE__ */ e.jsx(
-              Ve,
+          /* @__PURE__ */ e.jsx("div", { className: "max-w-6xl mx-auto relative z-10", children: j.map(
+            (o) => /* @__PURE__ */ e.jsx("div", { id: `month-${o}`, children: /* @__PURE__ */ e.jsx(
+              Be,
               {
-                month: n,
-                instructions: y[n],
-                onBookClick: p,
-                light: f
+                month: o,
+                instructions: f[o],
+                onBookClick: d,
+                light: y
               }
-            ) }, n)
+            ) }, o)
           ) })
         ] }) }),
         /* @__PURE__ */ e.jsx(
-          We,
+          Ge,
           {
             instruction: b,
-            onClose: () => p(null),
-            light: f
+            onClose: () => d(null),
+            light: y
           }
         )
       ]
@@ -2079,5 +2004,5 @@ function Ue() {
 }
 export {
   Ue as App,
-  O as ThemeContext
+  D as ThemeContext
 };

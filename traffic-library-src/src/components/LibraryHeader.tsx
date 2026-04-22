@@ -99,60 +99,11 @@ export function LibraryHeader({
 
             <Plus size={16} /> Import
           </button>
-          <button
-            onClick={() => {
-              const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
-              if (typeof actions.restoreFromBackup === 'function') actions.restoreFromBackup();
-            }}
-            className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'bg-emerald-50 border-emerald-400 text-emerald-800 hover:bg-emerald-100' : 'bg-emerald-900/20 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/30'}`}
-            title="Restore trafficHistory from Firestore / localStorage backup">
-            ↺ Restore Backup
-          </button>
-          <button
-            onClick={() => {
-              const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
-              if (typeof actions.wipeNonApril === 'function') actions.wipeNonApril();
-            }}
-            className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'bg-orange-50 border-orange-400 text-orange-800 hover:bg-orange-100' : 'bg-orange-900/20 border-orange-500/40 text-orange-300 hover:bg-orange-900/30'}`}
-            title="Delete all non-April traffic records. April PL + April WK stay.">
-            ⚠ Wipe Non-April
-          </button>
-          <button
-            onClick={() => {
-              const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
-              if (typeof actions.relinkCreative === 'function') actions.relinkCreative();
-            }}
-            className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'bg-blue-50 border-blue-400 text-blue-800 hover:bg-blue-100' : 'bg-blue-900/20 border-blue-500/40 text-blue-300 hover:bg-blue-900/30'}`}
-            title="Re-sync every traffic record's ISCI entries against the registry — refreshes titles, durations, fileUrls, categories; repairs combined=true on PL TV records.">
-            🔗 Re-link Creative
-          </button>
-          <button
-            onClick={() => {
-              const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
-              if (typeof actions.loadTrafficSource === 'function') actions.loadTrafficSource();
-            }}
-            className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 font-semibold ${light ? 'bg-cyan-50 border-cyan-400 text-cyan-800 hover:bg-cyan-100' : 'bg-cyan-900/20 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/30'}`}
-            title="Fetch /traffic-source.zip and replace matching Firestore records with the PDFs inside. April records are skipped.">
-            📦 Load Traffic Source
-          </button>
-          <button
-            onClick={() => {
-              const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
-              if (typeof actions.cleanPlaceholders === 'function') actions.cleanPlaceholders();
-            }}
-            className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100' : 'bg-rose-900/20 border-rose-500/40 text-rose-300 hover:bg-rose-900/30'}`}
-            title="Remove Claude-injected placeholder traffic records from Firestore">
-            🧹 Clean Placeholders
-          </button>
-          <button
-            onClick={() => {
-              const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
-              if (typeof actions.wipeBrand === 'function') actions.wipeBrand(brand);
-            }}
-            className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'bg-red-50 border-red-400 text-red-800 hover:bg-red-100' : 'bg-red-900/30 border-red-500/50 text-red-300 hover:bg-red-900/50'}`}
-            title={`Wipe ALL ${brand} traffic records from Firestore (nuclear option)`}>
-            ☠ Wipe {brand === 'Postman Law' ? 'PL' : 'WK'}
-          </button>
+          {/* Utility actions (Restore Backup, Wipe Non-April, Re-link
+              Creative, Load Traffic Source, Clean Placeholders, Wipe Brand)
+              are still registered on window.MegaraLibraryActions and can be
+              called from the browser console for emergencies, but they're
+              intentionally not in the header to keep it clean. */}
 
           <button
             onClick={toggleTheme}
