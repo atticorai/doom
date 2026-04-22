@@ -5614,6 +5614,22 @@ ${fullText.substring(0,3000)}`}]
       const nextBroadcastMonth=MO_FULL[(curMoIdx+1)%12]+" "+(curMoIdx===11?nowDate.getFullYear()+1:nowDate.getFullYear());
       const currentBroadcastMonth=MO_FULL[curMoIdx]+" "+nowDate.getFullYear();
 
+      // Market profiles — climate, demographics, typical accident drivers,
+      // major local events / sports / industries. The Muses use these to
+      // tailor recommendations per market instead of giving generic advice.
+      const MARKET_PROFILES={
+        Chicago:{state:"IL",climate:"harsh winters, lake-effect snow, severe summer storms",population:"dense urban + large commuter zone",industries:"finance, tech, manufacturing, logistics",sports:"Bears (NFL), Cubs/White Sox (MLB), Bulls (NBA), Blackhawks (NHL)",seasonal:"winter ice/snow collisions, summer motorcycle season, road-construction zones April-Nov",notes:"dense expressway network (Dan Ryan, Kennedy, Edens) drives trucking/commercial accident volume; winter weather = rear-end and black-ice crashes"},
+        Cincinnati:{state:"OH",climate:"four seasons, icy winters, humid summers",population:"mid-size metro, heavy commuter bleed from KY/IN",industries:"P&G, healthcare, manufacturing, logistics (FedEx, DHL hubs nearby)",sports:"Bengals (NFL), Reds (MLB), FC Cincinnati (MLS)",seasonal:"I-71/I-75 trucking corridor accidents year-round, winter weather collisions",notes:"river-city, bridges add to commuter crash patterns; tri-state line means jurisdiction complexity"},
+        Denver:{state:"CO",climate:"high altitude, heavy mountain snow in winter, dry summers",population:"fast-growing metro, transplant heavy",industries:"aerospace, tech, outdoor rec, cannabis, oil/gas",sports:"Broncos (NFL), Nuggets (NBA), Avalanche (NHL), Rockies (MLB)",seasonal:"I-70 mountain-pass crashes, ski-traffic accidents, summer outdoor recreation injuries",notes:"altitude + new residents unfamiliar with mountain driving; cannabis DUI is a distinct PI angle"},
+        Minneapolis:{state:"MN",climate:"brutal winters, frequent blizzards, short humid summers",population:"Twin Cities metro, affluent, progressive",industries:"healthcare, finance, manufacturing, Target/Best Buy HQ",sports:"Vikings (NFL), Twins (MLB), Timberwolves (NBA), Wild (NHL)",seasonal:"extreme winter weather crashes Dec-Mar, construction-zone season May-Oct",notes:"snow/ice highest-volume PI driver; winter gear matters in creative — messaging should feel local to MN"},
+        Birmingham:{state:"AL",climate:"warm, humid summers, mild winters, severe spring storms",population:"largest AL metro, medical/banking hub",industries:"healthcare (UAB), banking, steel/manufacturing legacy",sports:"Alabama/Auburn college football dominates; Birmingham Stallions (UFL)",seasonal:"spring tornado season disrupts roads; year-round I-65/I-20 trucking traffic",notes:"college football Saturdays = DUI/crash spikes; SEC fandom is central to culture — any brand play should respect that"},
+        Huntsville:{state:"AL",climate:"mild, humid, severe spring storms",population:"fast-growing tech metro, highest-educated in AL",industries:"NASA, Redstone Arsenal, defense, aerospace, tech",sports:"Alabama/Auburn college football, Huntsville Havoc (ECHL)",seasonal:"I-565 commuter crashes, spring tornado disruption",notes:"tech-professional audience — messaging can be more technical/results-driven; military adjacency matters"},
+        Knoxville:{state:"TN",climate:"four seasons, moderate winters, hot summers",population:"college town + Smokies tourism",industries:"UT, TVA, Oak Ridge National Lab, tourism",sports:"Tennessee Volunteers (college football dominant)",seasonal:"UT football Saturdays, summer Smokies tourism, winter I-40 weather crashes",notes:"orange-Saturday DUI volume in fall; Smokies tourism = out-of-state driver crashes; truck-route commerce (I-40, I-75)"},
+        Chattanooga:{state:"TN",climate:"four seasons, mild, river valley humidity",population:"mid-size, revitalized downtown, outdoor-rec destination",industries:"VW manufacturing, logistics, freight rail, outdoor recreation",sports:"Tennessee Volunteers, Chattanooga FC, minor-league baseball",seasonal:"I-24/I-75 trucking corridor year-round, summer river/outdoor injury season",notes:"national trucking chokepoint — commercial-vehicle PI volume is unusually high for the metro size"},
+        Montgomery:{state:"AL",climate:"warm, humid, mild winters",population:"state capital, civil rights heritage city",industries:"government, Hyundai manufacturing, military (Maxwell AFB)",sports:"Alabama/Auburn college football, Biscuits (minor-league)",seasonal:"I-65 north-south trucking corridor, spring storm disruption",notes:"capital + military audience; conservative-leaning; civil rights tourism brings visitors who don't know the roads"},
+        Dothan:{state:"AL",climate:"warm, humid, mild winters",population:"small market, agricultural center (Peanut Capital)",industries:"agriculture (peanuts), healthcare (Southeast Health regional hospital), military spillover (Fort Novosel, Ft. Rucker)",sports:"Alabama/Auburn college football, high-school football is huge",seasonal:"farm-equipment road accidents, rural highway crashes year-round",notes:"rural audience — straight-talking messaging works best; agricultural/farm-vehicle accidents are a distinct angle; limited local TV inventory"},
+      };
+      const relevantProfiles={};markets.forEach(m=>{if(MARKET_PROFILES[m])relevantProfiles[m]=MARKET_PROFILES[m]});
       const dataPayload=JSON.stringify({
         brand,
         todaysDate:nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}),
@@ -5628,6 +5644,7 @@ ${fullText.substring(0,3000)}`}]
         valuePropDistribution:vpCounts,
         voDistribution:voCounts,
         marketBreakdown,
+        marketProfiles:relevantProfiles,
         benchISCIs:bench.slice(0,80),
         totalActiveISCIs:brandIscis.length,
         totalInRotation:inRotation.size
@@ -5651,9 +5668,11 @@ Analyze the data and provide:
 
 4. TREND RECOMMENDATIONS: What PI advertising approaches are working RIGHT NOW in spring 2026? What should they lean into for ${nextBroadcastMonth} specifically?
 
-5. ${nextBroadcastMonth.toUpperCase()} ROTATION PLAN: For each market, recommend the specific rotation — which ISCIs to keep, which to swap out, and what new creative types to produce. Use actual ISCI codes and market codes.
+5. MARKET-SPECIFIC RECOMMENDATIONS: The payload includes a marketProfiles object with climate, industries, local sports, seasonal accident drivers, and cultural notes for every market in this brand. Use those profiles. Each market gets its own paragraph that references the actual local context — e.g. "Knoxville: UT home games start September, plan DUI/crash creative cadence around Saturdays," or "Birmingham: spring tornado season disrupts I-65 commerce, lean into trucking/commercial-accident creative in ${nextBroadcastMonth}," or "Dothan: rural audience + agricultural commerce, farm-equipment-accident angle resonates more than urban-distracted-driving messaging." Don't copy the profile text — synthesize it into actionable market guidance.
 
-Be direct and actionable. No generic advice.`;
+6. ${nextBroadcastMonth.toUpperCase()} ROTATION PLAN: For each market, recommend the specific rotation — which ISCIs to keep, which to swap out, and what new creative types to produce. Use actual ISCI codes and market codes. Ground each market's recommendation in that market's profile (climate, sports calendar, local industries, typical PI drivers) so the plan isn't interchangeable between markets.
+
+Be direct and actionable. No generic advice. Every market recommendation must reference something specific about that market.`;
 
       const resp=await fetch("/api/planner",{
         method:"POST",
