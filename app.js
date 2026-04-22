@@ -676,6 +676,8 @@ const App=()=>{
           const all=[...enhanced,...missing];
           // Assign WK categories and VO — only if empty or generic. User edits stick.
           const GENERIC=new Set(["","Personal Injury (General)","—"]);
+          const WK_CAT_NAMES=new Set();
+          let anyWkTagged=false;
           all.forEach(i=>{if(i.brand!=="Wettermark Keith")return;
             if(!GENERIC.has(i.category||""))return; // User already set a specific category — leave it
             const t=(i.title||"").toLowerCase();
@@ -685,8 +687,24 @@ const App=()=>{
             else if(/premise|premises/i.test(t))i.category=i.caseType="Premises Liability";
             else if(/christmas|thanksgiving|holiday|happy/i.test(t))i.category=i.caseType="Holiday/Seasonal";
             else i.category=i.caseType="Brand";
+            WK_CAT_NAMES.add(i.category);
             if(!i.vo)i.vo="Chris Keith";
+            anyWkTagged=true;
           });
+          // Merge any auto-assigned names into customFields so the Category /
+          // VO dropdowns can actually show them as selected options. Without
+          // this, "Auto Accidents" gets assigned but the dropdown only lists
+          // "Car Wreck" / "Trucking" / etc. and the value renders as "—".
+          if(anyWkTagged){
+            setCustomFields(prev=>{
+              const wkPrev=prev["Wettermark Keith"]||{categories:[],valueProps:[],vos:[]};
+              const mergedCats=Array.from(new Set([...(wkPrev.categories||[]),...WK_CAT_NAMES]));
+              const mergedVos=Array.from(new Set([...(wkPrev.vos||[]),"Chris Keith"]));
+              const next={...prev,"Wettermark Keith":{...wkPrev,categories:mergedCats,vos:mergedVos}};
+              try{db.collection("appData").doc("customTags").set({data:JSON.stringify(next),ts:Date.now()}).catch(()=>{})}catch(e){}
+              return next;
+            });
+          }
           if(missing.length>0)console.warn("ISCI RESTORE: "+missing.length+" seed ISCIs were missing from Firestore — restored");
           console.log("ISCI load: "+enhanced.length+" from Firestore + "+missing.length+" restored = "+all.length+" total");
           // Save tagged ISCIs back to Firestore immediately
