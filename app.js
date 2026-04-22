@@ -765,33 +765,10 @@ const App=()=>{
           // ═══ DO NOT MODIFY FIRESTORE DATA ON LOAD ═══
           // Load it. Display it. That's it.
           // Rendering handles bad values (boolean bookends, bare sched letters) gracefully.
-          // One-time: seed PL April TV + Radio traffic if missing
-          const PL_APRIL_SEED=[];
-          const mktMatch=(a,b)=>a===b||(normMkt(a)||a)===(normMkt(b)||b);
-          const hasPLAprilTV=(mkt)=>d.some(h=>h.brand==="Postman Law"&&mktMatch(h.market,mkt)&&h.media==="TV"&&h.month==="April"&&h.status!=="copied");
-          const hasPLAprilRadio=(mkt)=>d.some(h=>h.brand==="Postman Law"&&mktMatch(h.market,mkt)&&h.media==="Radio"&&h.month==="April"&&h.status!=="copied");
-          const tvIscis={
-            CHI:[{code:"CHIPL2660004T",title:"Why Postman_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CHIPL2660002T",title:"Supreme Court_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CHIPL2630013T",title:"Warren's Story_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2630012T",title:"Local Lawyers_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2630011T",title:"Legal Firepower_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2630010T",title:"Justice & Representation_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2615014T",title:"Warren's Story_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CHIPL2615013T",title:"Local Lawyers_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CHIPL2615012T",title:"Legal Firepower_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"},{code:"CHIPL2615011T",title:"Justice & Representation_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"}],
-            CIN:[{code:"CINPL2660004T",title:"Why Postman_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CINPL2660002T",title:"Supreme Court_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CINPL2630013T",title:"Warren's Story_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2630012T",title:"Local Lawyers_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2630011T",title:"Legal Firepower_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2630010T",title:"Justice & Representation_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2615014T",title:"Warren's Story_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CINPL2615013T",title:"Local Lawyers_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CINPL2615012T",title:"Legal Firepower_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"},{code:"CINPL2615011T",title:"Justice & Representation_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"}],
-            DEN:[{code:"DENPL2660004T",title:"Why Postman_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"DENPL2660002T",title:"Supreme Court_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"DENPL2630013T",title:"Warren's Story_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"DENPL2630012T",title:"Local Lawyers_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"DENPL2630011T",title:"Legal Firepower_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"DENPL2630010T",title:"Justice & Representation_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"DENPL2615014T",title:"Warren's Story_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"DENPL2615013T",title:"Local Lawyers_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"DENPL2615012T",title:"Legal Firepower_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"},{code:"DENPL2615011T",title:"Justice & Representation_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"}],
-            MSP:[{code:"MSPPL2660005T",title:"Supreme Court_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"MSPPL2660004T",title:"Why Postman_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"MSPPL2630013T",title:"Warren's Story_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"MSPPL2630012T",title:"Local Lawyers_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"MSPPL2630011T",title:"Legal Firepower_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"MSPPL2630010T",title:"Justice & Representation_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"MSPPL2615014T",title:"Warren's Story_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"MSPPL2615013T",title:"Local Lawyers_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"MSPPL2615012T",title:"Legal Firepower_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"},{code:"MSPPL2615011T",title:"Justice & Representation_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"}]
-          };
-          const tvEsts={CHI:"2609 + 2610 + 2611 + 2612 + 2614",CIN:"2617 + 2618 + 2619 + 2620 + 2622",DEN:"2625 + 2626 + 2627 + 2628 + 2630",MSP:"2601 + 2602 + 2603 + 2604 + 2606"};
-          const tvBuyer={CHI:"Lynn Cortelezzi",CIN:"Lynn Cortelezzi",DEN:"Lynn Cortelezzi",MSP:"Ken Lazar"};
-          const radioIscis={
-            CHI:[{code:"CHIPL2630001R",title:"To Do List",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"CHIPL2630002R",title:"We Fight",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"CHIPL2630010R",title:"Peace of Mind – One Stop Shop_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"CHIPL2630008R",title:"Peace of Mind – One Call for Everything_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"CHIPL2615001R",title:"To Do List",dur:"15",pct:"15",sched:"All Week",bookend:"Bookend :15 A"},{code:"CHIPL2615002R",title:"We Fight",dur:"15",pct:"15",sched:"All Week",bookend:"Bookend :15 A"},{code:"CHIPL2615006R",title:"Peace of Mind – We Handle it All_15",dur:"15",pct:"35",sched:"All Week",bookend:""},{code:"CHIPL2615005R",title:"Peace of Mind – No More Chasing Insurance_15",dur:"15",pct:"35",sched:"All Week",bookend:""}],
-            CIN:[{code:"CINPL2630002R",title:"We Fight",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"CINPL2630001R",title:"To Do List",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"CINPL2630010R",title:"Peace of Mind – One Stop Shop_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"CINPL2630008R",title:"Peace of Mind – One Call for Everything_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"CINPL2615002R",title:"We Fight",dur:"15",pct:"15",sched:"All Week",bookend:"Bookend :15 A"},{code:"CINPL2615001R",title:"To Do List",dur:"15",pct:"15",sched:"All Week",bookend:"Bookend :15 A"},{code:"CINPL2615006R",title:"Peace of Mind – We Handle it All_15",dur:"15",pct:"35",sched:"All Week",bookend:""},{code:"CINPL2615005R",title:"Peace of Mind – No More Chasing Insurance_15",dur:"15",pct:"35",sched:"All Week",bookend:""}],
-            DEN:[{code:"DENPL2630002R",title:"We Fight",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"DENPL2630001R",title:"To Do List",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"DENPL2630010R",title:"Peace of Mind – One Stop Shop_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"DENPL2630008R",title:"Peace of Mind – One Call for Everything_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"DENPL2615002R",title:"We Fight",dur:"15",pct:"15",sched:"All Week",bookend:""},{code:"DENPL2615001R",title:"To Do List",dur:"15",pct:"15",sched:"All Week",bookend:""},{code:"DENPL2615006R",title:"Peace of Mind – We Handle it All_15",dur:"15",pct:"35",sched:"All Week",bookend:""},{code:"DENPL2615005R",title:"Peace of Mind – No More Chasing Insurance_15",dur:"15",pct:"35",sched:"All Week",bookend:""}]
-          };
-          const radioEsts={CHI:"2615",CIN:"2623",DEN:"2631"};
-          Object.entries(tvIscis).forEach(([dma,isciList])=>{const mkt=DM[dma];if(!hasPLAprilTV(mkt)){PL_APRIL_SEED.push({ts:"2026-03-30T12:00:00.000Z",est:tvEsts[dma],brand:"Postman Law",market:mkt,media:"TV",buyer:tvBuyer[dma],month:"April",flight:"3/30 - 4/26",version:"1",comments:"If you buy has no bookends, run as standalones, if you have stand alones run Legal Firepower :15",combined:true,iscis:isciList,stations:[],status:"sent",isRevision:false,prevVersion:null})}});
-          Object.entries(radioIscis).forEach(([dma,isciList])=>{const mkt=DM[dma];if(!hasPLAprilRadio(mkt)){PL_APRIL_SEED.push({ts:"2026-03-30T12:00:00.000Z",est:radioEsts[dma],brand:"Postman Law",market:mkt,media:"Radio",buyer:tvBuyer[dma],month:"April",flight:"3/30 - 4/26",version:"1",comments:"",combined:false,iscis:isciList,stations:[],status:"sent",isRevision:false,prevVersion:null})}});
-          // OOH: Wilkins Media MSP Digital Bulletins
-          const hasPLAprilOohMsp=d.some(h=>h.brand==="Postman Law"&&(h.market==="MSP"||h.market==="Minneapolis")&&h.media==="OOH"&&h.month==="April"&&h.isOoh);
-          if(!hasPLAprilOohMsp){PL_APRIL_SEED.push({ts:"2026-03-25T12:00:00.000Z",est:"OOH-MSP-PL",brand:"Postman Law",market:"MSP",media:"OOH",buyer:"Ken Lazar",month:"April",flight:"3/30",version:"1",comments:"V1 MSP Digital Bulletins | Vendor: Wilkins Media",combined:false,iscis:[{code:"MSPPL26DB001O",title:"PL Digital Bulletin - 208x720 - MSP - Cityscape - MinneapolisIA",dur:"",pct:"33",sched:"All Week",bookend:"",units:"1"},{code:"MSPPL26DB002O",title:"PL Digital Bulletin - 208x720 - MSP - MascotTriangle - MinneapolisIA",dur:"",pct:"33",sched:"All Week",bookend:"",units:"1"},{code:"MSPPL26DB003O",title:"PL Digital Bulletin - 208x720 - MSP - MascotTriangle - MinneapolisIALogo",dur:"",pct:"34",sched:"All Week",bookend:"",units:"1"}],stations:[],status:"sent",isOoh:true,totalUnits:3,vendor:"Wilkins Media",isRevision:false,prevVersion:null})}
-          if(PL_APRIL_SEED.length>0)console.warn("PL April seed: restored "+PL_APRIL_SEED.length+" traffic records");
-          // Firestore is source of truth. No PL_APRIL_SEED, no TRAFFIC_HISTORY_INIT
-          // backfill — the library shows exactly what's been sent.
+          // Firestore is the sole source of truth for traffic. All in-code
+          // seed / backfill / placeholder logic was removed on [today].
+          // DO NOT reintroduce it — any auto-written record can silently
+          // overwrite user data on the next save.
           setTrafficHistory(d);trafficFbCountRef.current=d.length
         }trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
         if(docs.workMonth?.data)setWorkMonth(JSON.parse(docs.workMonth.data));
@@ -863,9 +840,17 @@ const App=()=>{
   // Backup before save — keeps last known good state in localStorage (no Firestore permissions needed)
   const backupBeforeSave=(collection,data)=>{
     try{
+      // Single newest-state backup (latest only) — kept for compatibility.
       localStorage.setItem("doom_backup_"+collection,JSON.stringify({data:JSON.stringify(data),ts:Date.now()}));
-      // Also try Firestore backup (may fail depending on rules — that's OK)
       db.collection("appData").doc(collection+"_backup").set({data:JSON.stringify(data),ts:Date.now(),backupOf:collection}).catch(()=>{});
+      // Rotating 10-slot history so we never lose more than 10 saves back.
+      // Slot id cycles 0..9. Written in parallel to the single backup above.
+      const slotKey="doom_backup_slot_"+collection;
+      let slot=0;try{slot=(parseInt(localStorage.getItem(slotKey)||"0")+1)%10}catch(_){}
+      localStorage.setItem(slotKey,String(slot));
+      const payload={data:JSON.stringify(data),ts:Date.now(),backupOf:collection,slot};
+      localStorage.setItem("doom_backup_"+collection+"_s"+slot,JSON.stringify(payload));
+      db.collection("appData").doc(collection+"_backup_s"+slot).set(payload).catch(()=>{});
     }catch(e){}
   };
 
@@ -7009,33 +6994,40 @@ Be direct and actionable. No generic advice. Every market recommendation must re
           },
           delete:async(idx)=>{const h=trafficHistory[idx];if(!h)return;const pw=prompt("Admin password to delete traffic:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok){alert("Wrong password");return}if(!confirm("Delete "+h.brand+" "+h.market+" "+h.media+" "+h.month+"? This cannot be undone."))return;setTrafficHistory(p=>p.filter((_,j)=>j!==idx));log("Traffic Deleted",h.brand+" "+h.market+" "+h.media+" "+h.month);notify("Traffic deleted")},
           restoreFromBackup:async()=>{
-            // Pulls the Firestore backup document (appData/trafficHistory_backup)
-            // which was written right before each save, then also checks
-            // localStorage. Shows counts, lets user pick which to restore.
+            // Pulls every available backup — the single "latest" backup plus
+            // the rotating 10-slot history from both Firestore and
+            // localStorage. User picks by record count + timestamp.
             if(!db){notify("Firestore not available");return}
             const pw=prompt("Admin password — restore trafficHistory from backup:");
             if(!pw)return;
             const ok=await verifyAuth(pw,"admin");
             if(!ok){alert("Wrong password");return}
-            let fsBackup=null;let lsBackup=null;
-            try{const snap=await db.collection("appData").doc("trafficHistory_backup").get();if(snap.exists){const d=snap.data();if(d&&d.data){fsBackup={data:JSON.parse(d.data),ts:d.ts}}}}catch(e){console.warn("Firestore backup read failed:",e)}
-            try{const ls=localStorage.getItem("doom_backup_trafficHistory");if(ls){const j=JSON.parse(ls);if(j&&j.data){lsBackup={data:JSON.parse(j.data),ts:j.ts}}}}catch(e){console.warn("localStorage backup read failed:",e)}
-            if(!fsBackup&&!lsBackup){notify("No backup found in Firestore or localStorage.");return}
+            const found=[];
+            // Latest single backup (Firestore)
+            try{const s=await db.collection("appData").doc("trafficHistory_backup").get();if(s.exists){const d=s.data();if(d&&d.data)found.push({src:"FS latest",ts:d.ts,data:JSON.parse(d.data)})}}catch(e){}
+            // Rotating slots 0..9 (Firestore)
+            for(let i=0;i<10;i++){
+              try{const s=await db.collection("appData").doc("trafficHistory_backup_s"+i).get();if(s.exists){const d=s.data();if(d&&d.data)found.push({src:"FS slot "+i,ts:d.ts,data:JSON.parse(d.data)})}}catch(e){}
+            }
+            // localStorage
+            try{const ls=localStorage.getItem("doom_backup_trafficHistory");if(ls){const j=JSON.parse(ls);if(j&&j.data)found.push({src:"LS latest",ts:j.ts,data:JSON.parse(j.data)})}}catch(e){}
+            for(let i=0;i<10;i++){
+              try{const ls=localStorage.getItem("doom_backup_trafficHistory_s"+i);if(ls){const j=JSON.parse(ls);if(j&&j.data)found.push({src:"LS slot "+i,ts:j.ts,data:JSON.parse(j.data)})}}catch(e){}
+            }
+            if(!found.length){notify("No backups found anywhere.");return}
+            // Sort newest first
+            found.sort((a,b)=>(b.ts||0)-(a.ts||0));
             const cur=trafficHistory.length;
-            const opts=[];
-            if(fsBackup)opts.push("1 = Firestore backup ("+fsBackup.data.length+" records, saved "+new Date(fsBackup.ts).toLocaleString()+")");
-            if(lsBackup)opts.push("2 = localStorage backup ("+lsBackup.data.length+" records, saved "+new Date(lsBackup.ts).toLocaleString()+")");
-            opts.push("Cancel = keep current ("+cur+" records)");
-            const pick=prompt("Current trafficHistory: "+cur+" records.\n\nWhich backup to restore?\n\n"+opts.join("\n"));
+            const lines=found.map((b,i)=>(i+1)+" = "+b.src+" · "+b.data.length+" records · "+new Date(b.ts).toLocaleString());
+            const pick=prompt("Current: "+cur+" records.\n\nPick a backup (type the number) or Cancel:\n\n"+lines.join("\n"));
             if(!pick)return;
-            let chosen=null;
-            if(pick.trim()==="1"&&fsBackup)chosen=fsBackup;
-            else if(pick.trim()==="2"&&lsBackup)chosen=lsBackup;
-            if(!chosen){notify("Cancelled.");return}
-            if(!confirm("REPLACE current "+cur+" records with backup ("+chosen.data.length+" records from "+new Date(chosen.ts).toLocaleString()+")?\n\nYour current data will be lost unless it's also in the backup."))return;
+            const n=parseInt(pick.trim())-1;
+            const chosen=found[n];
+            if(!chosen){notify("Invalid selection.");return}
+            if(!confirm("REPLACE current "+cur+" records with "+chosen.src+" ("+chosen.data.length+" records from "+new Date(chosen.ts).toLocaleString()+")?"))return;
             setTrafficHistory(chosen.data);
-            log("Restore from backup",chosen.data.length+" records restored");
-            notify("Restored "+chosen.data.length+" records from backup.");
+            log("Restore from backup",chosen.src+" — "+chosen.data.length+" records restored");
+            notify("Restored "+chosen.data.length+" records from "+chosen.src+".");
           },
           wipeBrand:async(targetBrand)=>{            // Nuclear option — removes ALL trafficHistory records for one
             // brand so the user can re-import cleanly. Admin-gated + double
