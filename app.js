@@ -6833,7 +6833,7 @@ Be direct and actionable. No generic advice.`;
             const stas=(h.stations&&h.stations.length)?h.stations:[];
             if(stas.length)x+=hdr("Stations ("+stas.length+")",stas.join(", "));
           }
-          x+=hdr("Broadcast Month",h.month,bc);
+          x+=hdr("Broadcast Month",h.month,"#E85A7A");
           if(h.isOoh&&h.postDates)x+=hdr("Post Dates",h.postDates,"#1e1233");
           else if(h.flight)x+=hdr("Flight Dates",h.flight,"#1e1233");
           x+=hdr("Version/ Links","Version "+(h.version||"1")+" / "+h.market+" Assets");
