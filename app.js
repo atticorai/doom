@@ -6800,8 +6800,12 @@ Be direct and actionable. No generic advice.`;
           const code=h.brand==="Postman Law"?"PL":"WK";
           const bc=getBrandColor(code);const bcBg=getBrandBg(code);
           const logo=code==="PL"?LOGO_PL:LOGO_WK;
-          const hdr=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+(v==null?"":v)+'</span></div>';
-          let x='<div style="padding:28px;background:#fff;color:#1e1233;font-family:Arial,sans-serif">';
+          const hdr=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0;color:#1e1233"><b style="min-width:140px;color:#555;font-weight:700">'+l+':</b><span style="color:'+(c||'#1e1233')+';font-weight:'+(c?'600':'500')+'">'+(v==null?"":v)+'</span></div>';
+          // Scoped <style> forces the sheet to render as white paper with dark
+          // legible text even when the Library's dark theme is in effect on the
+          // host page. Explicit inline `style="color:#..."` spans win via CSS
+          // specificity, so brand accents (Client red, Buyer gold) still show.
+          let x='<div class="doom-traffic-sheet" style="padding:28px;background:#fff;color:#1e1233;font-family:Arial,sans-serif"><style>.doom-traffic-sheet,.doom-traffic-sheet *{box-sizing:border-box}.doom-traffic-sheet{color:#1e1233;background:#fff}.doom-traffic-sheet b{font-weight:700}.doom-traffic-sheet table{border-collapse:collapse}.doom-traffic-sheet td,.doom-traffic-sheet th{color:#1e1233}</style>';
           x+='<div style="text-align:center;margin-bottom:14px"><img src="'+logo+'" style="height:48px"/></div>';
           x+=hdr("Agency",getBrandAgency(code));
           x+=hdr("Client",h.brand,bc);
@@ -6856,7 +6860,7 @@ Be direct and actionable. No generic advice.`;
           x+='<div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">';
           Object.entries(SCHED_COLORS_SHEET).forEach(([s,c])=>{if(grouped[s])x+='<div style="display:flex;align-items:center;gap:4px;font-size:9px"><div style="width:12px;height:12px;border-radius:2px;background:'+c+'"></div>'+s+'</div>'});
           x+='</div>';
-          x+='<div style="margin-top:36px;border-top:2px solid '+bc+';padding-top:8px"><div style="display:flex;justify-content:space-between;font-size:13px"><div><b>Accepted by:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div style="background:'+bcBg+';padding:7px;font-size:10px;color:'+bc+';margin-top:6px;border:1px solid '+bc+'33">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></div>';
+          x+='<div style="margin-top:36px;border-top:2px solid '+bc+';padding-top:8px;color:#1e1233"><div style="display:flex;justify-content:space-between;font-size:13px"><div><b>Accepted by:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div style="background:#fffbeb;padding:7px;font-size:10px;color:#92400e;margin-top:6px;border:1px solid #fde68a">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></div>';
           x+='</div>';
           return x;
         };
