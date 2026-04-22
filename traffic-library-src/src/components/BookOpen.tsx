@@ -8,7 +8,8 @@ import {
   Send,
   Trash2,
   Copy,
-  ChevronDown } from
+  ChevronDown,
+  MailCheck } from
 'lucide-react';
 import { Instruction, marketColors } from '../data/trafficData';
 import {
@@ -389,9 +390,19 @@ export function BookOpen({
                 Print
               </button>
               <button
+                onClick={() => fireAction('preview')}
+                className={`w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${light ? 'border-teal-300 bg-teal-50 text-teal-700 hover:bg-teal-100' : 'border-magic-teal/40 bg-magic-teal/10 text-magic-teal hover:bg-magic-teal/20'}`}
+                title="Dry-run — shows the PDF + email body, sends nothing">
+                <MailCheck
+                  size={16}
+                  className="group-hover:scale-110 transition-transform" />
+                {' '}
+                Preview Send
+              </button>
+              <button
                 onClick={handleSend}
                 className={`w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${light ? 'border-purple-200 text-purple-700 hover:bg-purple-100' : 'border-megara-dark/40 text-megara-light hover:bg-megara-dark/20'}`}>
-                
+
                 <Send
                   size={16}
                   className="text-megara-primary group-hover:scale-110 transition-transform group-hover:translate-x-0.5" />

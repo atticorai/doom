@@ -6983,6 +6983,46 @@ Be direct and actionable. No generic advice.`;
           edit:(idx)=>{if(typeof idx==="number"){setEditTrafficIdx(idx);notify("Edit Traffic — changes save back to Firestore")}},
           view:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close()},
           print:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close();w.focus();setTimeout(()=>w.print(),300)},
+          preview:async(idx)=>{
+            // Dry-run of the full send pipeline — generates the real PDF,
+            // computes recipients/CC/subject/body, but DOES NOT call
+            // /api/send-traffic. Opens the PDF in one tab and a second
+            // window showing exactly what the vendor would see in their
+            // inbox (subject, to/cc, rendered body HTML, attachment name).
+            const h=trafficHistory[idx];if(!h)return;
+            notify("Building preview — no emails will be sent…");
+            const sheetHtml=data[idx]?.sheetHtml||"";
+            let pdfUri="";try{pdfUri=await generatePdfBase64(sheetHtml,h)}catch(pe){notify("PDF generation failed: "+pe.message);return}
+            const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+(h.market||"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
+            const parseEmails2=(c)=>{if(!c)return[];return c.split(";").map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))};
+            const mediaCompat=(sMed,hMed)=>{if(sMed===hMed)return true;if(sMed==="TV"&&["TV","Sports","Heavy Up","UD/AV","Sponsorship"].includes(hMed))return true;if(sMed==="Radio"&&hMed==="Radio")return true;if(sMed==="Cable"&&hMed==="Cable")return true;return false};
+            const mkt=normMkt(h.market);
+            const marketStations=stations.filter(s=>s.brand===h.brand&&normMkt(s.market)===mkt&&mediaCompat(s.media,h.media));
+            const ownerGroups={};marketStations.forEach(s=>{const grp=s.ownership||s.call;if(!ownerGroups[grp])ownerGroups[grp]=[];ownerGroups[grp].push(s)});
+            const grpKeys=Object.keys(ownerGroups);
+            const buyerCc=BUYER_EMAILS[h.buyer]||"";
+            const ccList=[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(", ");
+            const isciObjs=(h.iscis||[]).map(ic=>{const full=iscis.find(i=>i.code===ic.code);return full?{code:ic.code,title:ic.title,fileUrl:full.fileUrl}:null}).filter(Boolean);
+            const creativeLinks=isciObjs.filter(i=>i.fileUrl).length>0?"<br><br><b>Creative Files:</b><br>"+isciObjs.filter(i=>i.fileUrl).map(i=>'<a href="'+i.fileUrl+'">'+i.code+" — "+i.title+"</a>").join("<br>"):"";
+            const subj="Atticor | "+(h.brand||"")+" "+(h.market||"")+" "+(h.media||"")+" Traffic Instructions | "+(h.month||"")+" | Est "+(h.est||"");
+            // Build preview panel — one card per ownership group
+            let groupsHtml="";
+            if(!grpKeys.length){groupsHtml='<div style="padding:16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b">No stations match — nothing would be sent.</div>'}
+            else grpKeys.forEach(grpKey=>{
+              const grpStas=ownerGroups[grpKey];
+              const grpEmails=[...new Set(grpStas.flatMap(s=>parseEmails2(s.contact)))];
+              const staCalls=grpStas.map(s=>s.call);
+              const confirmBtns=grpStas.map(s=>'<a href="#" onclick="return false" style="display:inline-block;padding:6px 16px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:4px 2px">Confirm '+s.call+'</a>').join(" ");
+              const body="Hello,<br><br>Please find the attached traffic instructions for Est "+(h.est||"")+" — "+(h.brand||"")+", "+(h.market||"")+", "+(h.media||"")+".<br><br><b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Version:</b> "+(h.version||"")+"<br><b>Station(s):</b> "+staCalls.join(", ")+creativeLinks+"<br><br>Please confirm receipt of this traffic within 24 hours:<br>"+confirmBtns+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
+              groupsHtml+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:16px;overflow:hidden"><div style="background:#f3f4f6;padding:10px 14px;border-bottom:1px solid #e5e7eb;font-weight:700;color:#1e1233">'+grpKey+' <span style="font-weight:400;color:#6b7280;font-size:13px">— '+grpStas.length+' station(s): '+staCalls.join(", ")+'</span></div><div style="padding:14px;font-size:13px;color:#374151"><div><b>To:</b> '+(grpEmails.length?grpEmails.join(", "):'<span style="color:#b91c1c">(no emails on file — would fail)</span>')+'</div><div><b>Cc:</b> '+ccList+'</div><div><b>Subject:</b> '+subj+'</div><div><b>Attachment:</b> '+pdfName+'</div><div style="margin-top:12px;padding:14px;background:#fafafa;border-radius:6px;color:#1e1233;line-height:1.6">'+body+'</div></div></div>'
+            });
+            const recipientCount=grpKeys.reduce((n,k)=>n+[...new Set(ownerGroups[k].flatMap(s=>parseEmails2(s.contact)))].length,0);
+            const previewHtml='<!doctype html><html><head><meta charset="UTF-8"><title>Send Preview — '+h.brand+' '+h.market+' '+h.media+'</title><style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f9fafb;color:#111827}header{background:linear-gradient(135deg,#1e1233,#2a1a3e);color:#E8DFF0;padding:18px 24px;box-shadow:0 2px 8px rgba(0,0,0,.1)}h1{margin:0 0 4px;font-size:20px;font-weight:700}.banner{display:inline-block;padding:4px 10px;background:#D4A040;color:#1e1233;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-right:10px}.meta{color:#9B8EAD;font-size:13px;margin-top:6px}main{padding:24px;max-width:900px;margin:0 auto}.pdfbtn{display:inline-block;padding:10px 18px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin-bottom:20px}</style></head><body><header><div><span class="banner">PREVIEW — NOT SENT</span><span style="color:#D4A040;font-weight:700">'+h.brand+' · '+h.market+' · '+h.media+' · '+h.month+' · v'+(h.version||"1")+'</span></div><h1>'+grpKeys.length+' ownership group(s), '+recipientCount+' recipient email(s) total</h1><div class="meta">This is exactly what the vendor would receive. Nothing has been sent. Confirm buttons are disabled.</div></header><main><a class="pdfbtn" href="'+pdfUri+'" download="'+pdfName+'" target="_blank">📄 Open the actual PDF attachment</a>'+groupsHtml+'</main></body></html>';
+            const w=window.open("","","width=1100,height=900");
+            if(!w){notify("Popup blocked — allow popups to see the preview");return}
+            w.document.write(previewHtml);w.document.close();w.focus();
+            notify("Preview ready — nothing sent. "+grpKeys.length+" group(s), "+recipientCount+" recipient(s).");
+          },
           send:async(idx)=>{
             // Mirrors the main Traffic Library's resend flow (app.js ~line
             // 5491+): look up stations by market + brand + media-compatible
