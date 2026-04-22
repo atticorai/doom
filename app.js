@@ -5924,6 +5924,14 @@ Be direct and actionable. No generic advice.`;
     const builtCells=mkts.reduce((a,m)=>a+buyTypes.filter(bt=>getStatus(m,bt).status==="built").length,0);
     const emptyCells=totalCells-sentCells-builtCells-mkts.reduce((a,m)=>a+buyTypes.filter(bt=>{const s=getStatus(m,bt).status;return s==="copied"||s==="partial"}).length,0);
     const pct=totalCells?Math.round((sentCells/totalCells)*100):0;
+    // Diagnostic: dump what Firestore has for the currently-selected brand +
+    // month so devtools console shows exactly which records exist and why
+    // empty cells are empty. Runs every render but is free to run.
+    const _diag=trafficHistory.filter(h=>h.brand===trackerBrand&&h.month===trackerMonth).map(h=>({
+      est:h.est,market:h.market,media:h.media,group:h.group||"(none)",combined:!!h.combined,hasPlus:(h.est||"").indexOf("+")>=0,status:h.status||"(none)",iscis:(h.iscis||[]).length
+    }));
+    if(typeof window!=="undefined")window.__trackerDiag={brand:trackerBrand,month:trackerMonth,count:_diag.length,records:_diag};
+    console.log("[TrackerDiag] "+trackerBrand+" · "+trackerMonth+" · "+_diag.length+" records:",_diag);
     // Smart alerts
     const alerts=[];
     mkts.forEach(mkt=>{
