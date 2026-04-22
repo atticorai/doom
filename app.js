@@ -6762,9 +6762,9 @@ Be direct and actionable. No generic advice.`;
       <nav style={{flex:1,padding:"3px 0"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:(pg===n.id&&!isOohHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 12px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative",transition:"all .15s",letterSpacing:a?.3:0}} onMouseEnter={e=>{if(!a)e.currentTarget.style.background="rgba(155,123,176,.06)"}} onMouseLeave={e=>{if(!a)e.currentTarget.style.background="transparent"}}><span style={{fontSize:14}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:12,fontWeight:800,padding:"1px 6px",borderRadius:10,background:typeof badge==="number"?"#E85A7A":"#D4A040",color:"#fff",boxShadow:typeof badge==="number"?"0 2px 8px rgba(232,90,122,.3)":"0 2px 8px rgba(212,160,64,.3)"}}>{badge}</span>}</button>})}</nav>
       <div style={{padding:"10px 12px",borderTop:"1px solid rgba(212,160,64,.1)",fontSize:12,color:"#6B5E80"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,color:"#D4A040",letterSpacing:1}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #4a3565",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#9B8EAD",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:"#5BC4A0"}}>Synced {Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago"}</span>}</div></div>
     </div>
-    <div style={{flex:1,overflowY:"auto",padding:16}}>
+    <div style={{flex:1,overflowY:"auto",padding:16,position:"relative"}}>
       <AnimatePresence mode="wait" initial={false}>
-        <MDiv
+        {pg!=="library"&&<MDiv
           key={pg}
           initial={{opacity:0,y:28,scale:0.97,filter:"blur(6px)"}}
           animate={{opacity:1,y:0,scale:1,filter:"blur(0px)"}}
@@ -6779,60 +6779,58 @@ Be direct and actionable. No generic advice.`;
           {pg==="est"&&<EstPg/>}
           {pg==="sta"&&<StaPg/>}
           {pg==="metrics"&&<MetricsPg/>}
-          {pg==="library"&&(()=>{
-            // Pass each real traffic instruction through to the library with
-            // full formatting: estimate, flight dates, version, buyer, status,
-            // stations, ISCI list. BookOpen uses these instead of synthesizing
-            // placeholder rows.
-            const MO_LIB=["January","February","March","April","May","June","July","August","September","October","November","December"];
-            const now=new Date();const curIdx=now.getMonth();const curYear=now.getFullYear();
-            const archCutoff=new Date(curYear,curIdx-2,1);
-            const data=trafficHistory.map((h,i)=>{
-              const parts=String(h.month||"").trim().split(/\s+/);
-              const monIdx=MO_LIB.indexOf(parts[0]);
-              const parsedYear=parseInt(parts[1]);
-              const year=!isNaN(parsedYear)?parsedYear:(monIdx>curIdx+2?curYear-1:curYear);
-              const effDate=monIdx>=0?new Date(year,monIdx,1):(h.ts?new Date(h.ts):null);
-              const archived=effDate?effDate<archCutoff:true;
-              return{
-                id:(h.ts?String(h.ts):"tmp")+"_"+i,
-                brand:h.brand,
-                market:DM[h.market]||h.market,
-                mediaType:h.media,
-                month:parts[0]||h.month,
-                estimate:h.est||"",
-                version:h.version?("v"+h.version):"",
-                iscis:(h.iscis?.length||0)+" ISCIs"+(h.stations?.length?(" · "+h.stations.length+" stations"):""),
-                dateRange:h.flight||"",
-                buyer:h.buyer||"",
-                status:h.status==="sent"?"sent":"pending",
-                iscisDetail:(h.iscis||[]).map(r=>({
-                  code:r.code,title:r.title,dur:r.dur,pct:r.pct,sched:r.sched,bookend:r.bookend,units:r.units
-                })),
-                stations:h.stations||[],
-                ts:h.ts,
-                year:year,
-                archived:archived,
-                comments:h.comments||"",
-              };
-            });
-            window.MegaraLibraryData=data;
-            console.log("[MegaraLibrary] piped",data.length,"records from trafficHistory");
-            const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");
-            const ML=window.MegaraLibrary;
-            if(!ML)return null;
-            // Library backgrounds are absolute (not fixed) so they stay bound
-            // to this frame. BookOpen's modal keeps fixed positioning and can
-            // cover the full viewport including the sidebar when a book opens.
-            return<div style={{position:"relative",minHeight:"100%",margin:-16,overflow:"hidden"}}>
-              {React.createElement(ML,{key:libKey})}
-            </div>;
-          })()}
           {pg==="planner"&&PlannerPg()}
           {pg==="notif"&&pages["notif"]}
           {pg==="docs"&&<DocsPg/>}
-        </MDiv>
+        </MDiv>}
       </AnimatePresence>
+      {pg==="library"&&(()=>{
+        // Library is rendered OUTSIDE the MDiv page-transition wrapper
+        // because that wrapper applies a transform (for opacity/scale/blur
+        // animations) which creates a containing block for fixed descendants.
+        // BookOpen's `fixed inset-0` modal needs to escape to the viewport so
+        // clicking a book actually covers the screen.
+        const MO_LIB=["January","February","March","April","May","June","July","August","September","October","November","December"];
+        const now=new Date();const curIdx=now.getMonth();const curYear=now.getFullYear();
+        const archCutoff=new Date(curYear,curIdx-2,1);
+        const data=trafficHistory.map((h,i)=>{
+          const parts=String(h.month||"").trim().split(/\s+/);
+          const monIdx=MO_LIB.indexOf(parts[0]);
+          const parsedYear=parseInt(parts[1]);
+          const year=!isNaN(parsedYear)?parsedYear:(monIdx>curIdx+2?curYear-1:curYear);
+          const effDate=monIdx>=0?new Date(year,monIdx,1):(h.ts?new Date(h.ts):null);
+          const archived=effDate?effDate<archCutoff:true;
+          return{
+            id:(h.ts?String(h.ts):"tmp")+"_"+i,
+            brand:h.brand,
+            market:DM[h.market]||h.market,
+            mediaType:h.media,
+            month:parts[0]||h.month,
+            estimate:h.est||"",
+            version:h.version?("v"+h.version):"",
+            iscis:(h.iscis?.length||0)+" ISCIs"+(h.stations?.length?(" · "+h.stations.length+" stations"):""),
+            dateRange:h.flight||"",
+            buyer:h.buyer||"",
+            status:h.status==="sent"?"sent":"pending",
+            iscisDetail:(h.iscis||[]).map(r=>({
+              code:r.code,title:r.title,dur:r.dur,pct:r.pct,sched:r.sched,bookend:r.bookend,units:r.units
+            })),
+            stations:h.stations||[],
+            ts:h.ts,
+            year:year,
+            archived:archived,
+            comments:h.comments||"",
+          };
+        });
+        window.MegaraLibraryData=data;
+        console.log("[MegaraLibrary] piped",data.length,"records from trafficHistory");
+        const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");
+        const ML=window.MegaraLibrary;
+        if(!ML)return null;
+        return<div style={{position:"relative",minHeight:"100%",margin:-16,overflow:"hidden"}}>
+          {React.createElement(ML,{key:libKey})}
+        </div>;
+      })()}
     </div>
     {(modal==="newIsci"||modal?.t==="newIsci")&&<NewIsciMod defaultMedia={modal?.defaultMedia||null}/>}
     {modal?.t==="buildRot"&&<RotBuilder est={modal.est} pool={modal.pool} workMonth={workMonth} _revise={modal._revise}/>}
