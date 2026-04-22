@@ -6816,12 +6816,14 @@ Be direct and actionable. No generic advice.`;
         // clicking a book actually covers the screen.
         const MO_LIB=["January","February","March","April","May","June","July","August","September","October","November","December"];
         const now=new Date();const curIdx=now.getMonth();const curYear=now.getFullYear();
-        // Archive anything whose inferred broadcast year is before the
-        // current calendar year. Nov / Dec with no year stamp get inferred
-        // as last year (since they're "ahead" of the current month by more
-        // than 2), so they land in 2025 and archive. Jan-Apr 2026 stay
-        // visible as current.
-        const archCutoff=new Date(curYear,0,1);
+        // Archive cutoff = first day of (current month - 2). Matches the
+        // main app's Tracker logic (app.js ~5213). From April 2026 that's
+        // Feb 1, 2026, so Jan 2026, Dec 2025, Nov 2025 etc. all archive.
+        // Records with month name only (no year) get their year inferred:
+        // months > curIdx+2 must be from last year, since a record for
+        // "December" in April can't mean next December — that's 8 months
+        // ahead, and we only plan ~2 months forward.
+        const archCutoff=new Date(curYear,curIdx-2,1);
         // Render the exact same traffic sheet the main app emits (see
         // buildSheetHtml in RotBuilder). The library displays the result via
         // dangerouslySetInnerHTML in the left page so what you see matches
