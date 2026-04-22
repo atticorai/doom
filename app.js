@@ -6975,29 +6975,53 @@ Be direct and actionable. No generic advice.`;
           view:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close()},
           print:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close();w.focus();setTimeout(()=>w.print(),300)},
           send:async(idx)=>{
+            // Mirrors the main Traffic Library's resend flow (app.js ~line
+            // 5491+): look up stations by market + brand + media-compatible
+            // (so TV variants share station list), group by ownership, send
+            // ONE email per ownership group with per-station confirm buttons,
+            // generate fresh confirmation tokens for each station, update
+            // record status on success.
             const h=trafficHistory[idx];if(!h)return;
             if(!confirm("Send traffic?\n\n"+h.brand+" · "+(DM[h.market]||h.market)+" · "+(h.media||"")+" · "+h.month+" · v"+(h.version||"1")+"\n"+(h.iscis||[]).length+" ISCIs\n\nThis will email all linked stations."))return;
-            const note=(prompt("Add a note to this email (optional):")||"").trim();
+            const resendNote=(prompt("Add a note to this email (optional):")||"").trim();
             const sheetHtml=data[idx]?.sheetHtml||"";
             let pdfB64="";try{const pdfUri=await generatePdfBase64(sheetHtml,h);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
             const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+(h.market||"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
-            const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
-            const recipients=[...new Set(linkedStations.map(s=>s.contact).filter(Boolean).flatMap(c=>c.split(/[,;]\s*/)))].filter(Boolean);
-            if(!recipients.length){notify("No station email contacts found for this record — link stations in the Stations page first.");return}
+            const parseEmails2=(c)=>{if(!c)return[];return c.split(";").map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))};
+            const mediaCompat=(sMed,hMed)=>{if(sMed===hMed)return true;if(sMed==="TV"&&["TV","Sports","Heavy Up","UD/AV","Sponsorship"].includes(hMed))return true;if(sMed==="Radio"&&hMed==="Radio")return true;return false};
+            const mkt=normMkt(h.market)||h.market;
+            const marketStations=stations.filter(s=>s.brand===h.brand&&(normMkt(s.market)===mkt||s.market===h.market)&&mediaCompat(s.media,h.media));
+            if(!marketStations.length){notify("No stations found for "+h.market+" "+h.media);return}
+            // Group by ownership — one email per owner group per record
+            const ownerGroups={};
+            marketStations.forEach(s=>{const grp=s.ownership||s.call;if(!ownerGroups[grp])ownerGroups[grp]=[];ownerGroups[grp].push(s)});
+            const grpKeys=Object.keys(ownerGroups);
+            notify("Sending to "+grpKeys.length+" ownership group(s)…");
+            // Fresh confirmation tokens per station
+            const resendKey=akFromHistory(h);
+            const resendTokens={};
+            marketStations.forEach(s=>{resendTokens[s.call]={confirmed:false,token:genToken()}});
+            setConfirmations(p=>({...p,[resendKey]:{...(p[resendKey]||{}),...resendTokens}}));
             const buyerCc=BUYER_EMAILS[h.buyer]||"";
             const ccList=[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(",");
+            const isciObjs=(h.iscis||[]).map(ic=>{const full=iscis.find(i=>i.code===ic.code);return full?{code:ic.code,title:ic.title,fileUrl:full.fileUrl}:null}).filter(Boolean);
+            const creativeLinks=isciObjs.filter(i=>i.fileUrl).length>0?"<br><br><b>Creative Files:</b><br>"+isciObjs.filter(i=>i.fileUrl).map(i=>'<a href="'+i.fileUrl+'">'+i.code+" — "+i.title+"</a>").join("<br>"):"";
+            let sent=0,failed=0;
             const confirmBase=window.location.href.split("?")[0];
-            let emailBody="Hello,<br><br>Please find the attached traffic instructions for "+(h.brand||"")+" — "+(h.market||"")+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br>";
-            if(note)emailBody+="<b>Note:</b> "+note+"<br><br>";
-            emailBody+="<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
-            emailBody+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmBase+'?confirm='+(h.est||"")+'&sta=resend&tok=auto" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager';
-            const subj=(h.brand||"")+" - Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+(h.market||"");
-            notify("Sending to "+recipients.length+" recipient"+(recipients.length===1?"":"s")+"...");
-            try{
-              const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients.join(","),cc:ccList,subject:subj,message:emailBody,pdfBase64:pdfB64,pdfName:pdfName})});
-              if(resp.ok){notify(doomPick(DOOM.send));log("Traffic Sent",h.brand+" "+h.market+" "+h.media+" "+h.month+" v"+(h.version||"1"))}
-              else throw new Error("n8n "+resp.status);
-            }catch(e){notify("Send failed: "+(e.message||e));console.error("Send failed:",e)}
+            for(const grpKey of grpKeys){
+              const grpStas=ownerGroups[grpKey];
+              const grpEmails=[...new Set(grpStas.flatMap(s=>parseEmails2(s.contact)))].join(",");
+              if(!grpEmails){failed+=grpStas.length;continue}
+              const staCalls=grpStas.map(s=>s.call);
+              const subj="Atticor | "+(h.brand||"")+" "+(h.market||"")+" "+(h.media||"")+" Traffic Instructions | "+(h.month||"")+" | Est "+(h.est||"");
+              const noteHtml=resendNote?"<b>Note:</b> "+resendNote+"<br><br>":"";
+              const confirmBtns=grpStas.map(s=>{const tok=resendTokens[s.call]?.token||"auto";const url=confirmBase+"?confirm="+(h.est||"")+"&sta="+s.call+"&tok="+encodeURIComponent(tok);return'<a href="'+url+'" style="display:inline-block;padding:6px 16px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:4px 2px">Confirm '+s.call+'</a>'}).join(" ");
+              const body="Hello,<br><br>Please find the attached traffic instructions for Est "+(h.est||"")+" — "+(h.brand||"")+", "+(h.market||"")+", "+(h.media||"")+".<br><br>"+noteHtml+"<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Version:</b> "+(h.version||"")+"<br><b>Station(s):</b> "+staCalls.join(", ")+creativeLinks+"<br><br>Please confirm receipt of this traffic within 24 hours:<br>"+confirmBtns+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
+              try{const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:grpEmails,cc:ccList,subject:subj,message:body,pdfBase64:pdfB64,pdfName:pdfName})});if(r.ok)sent+=grpStas.length;else failed+=grpStas.length}catch(e){failed+=grpStas.length;console.error("Send group failed:",grpKey,e)}
+            }
+            notify(doomPick(DOOM.send)+" "+sent+" sent"+(failed?" ("+failed+" failed)":""));
+            log("Traffic Sent",h.market+" "+h.media+" "+h.month+" — "+sent+" sent to "+grpKeys.length+" ownership groups");
+            if(sent>0)setTrafficHistory(p=>p.map((r,j)=>j===idx?{...r,status:failed?"partial":"sent",statusNote:sent+" sent"+(failed?" · "+failed+" failed":"")}:r));
           },
           copyTo:(idx)=>{
             // Mirrors the main Library's "Copy to…" flow (see ~line 5535):
