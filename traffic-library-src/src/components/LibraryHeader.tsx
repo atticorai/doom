@@ -120,6 +120,15 @@ export function LibraryHeader({
           <button
             onClick={() => {
               const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
+              if (typeof actions.relinkCreative === 'function') actions.relinkCreative();
+            }}
+            className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'bg-blue-50 border-blue-400 text-blue-800 hover:bg-blue-100' : 'bg-blue-900/20 border-blue-500/40 text-blue-300 hover:bg-blue-900/30'}`}
+            title="Re-sync every traffic record's ISCI entries against the registry — refreshes titles, durations, fileUrls, categories; repairs combined=true on PL TV records.">
+            🔗 Re-link Creative
+          </button>
+          <button
+            onClick={() => {
+              const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
               if (typeof actions.loadTrafficSource === 'function') actions.loadTrafficSource();
             }}
             className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 font-semibold ${light ? 'bg-cyan-50 border-cyan-400 text-cyan-800 hover:bg-cyan-100' : 'bg-cyan-900/20 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/30'}`}

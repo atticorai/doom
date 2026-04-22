@@ -12,11 +12,11 @@ var S = { exports: {} }, _ = {};
  */
 var W = V, G = Symbol.for("react.element"), q = Symbol.for("react.fragment"), U = Object.prototype.hasOwnProperty, Y = W.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, J = { key: !0, ref: !0, __self: !0, __source: !0 };
 function R(t, s, a) {
-  var r, n = {}, c = null, b = null;
+  var r, i = {}, c = null, b = null;
   a !== void 0 && (c = "" + a), s.key !== void 0 && (c = "" + s.key), s.ref !== void 0 && (b = s.ref);
-  for (r in s) U.call(s, r) && !J.hasOwnProperty(r) && (n[r] = s[r]);
-  if (t && t.defaultProps) for (r in s = t.defaultProps, s) n[r] === void 0 && (n[r] = s[r]);
-  return { $$typeof: G, type: t, key: c, ref: b, props: n, _owner: Y.current };
+  for (r in s) U.call(s, r) && !J.hasOwnProperty(r) && (i[r] = s[r]);
+  if (t && t.defaultProps) for (r in s = t.defaultProps, s) i[r] === void 0 && (i[r] = s[r]);
+  return { $$typeof: G, type: t, key: c, ref: b, props: i, _owner: Y.current };
 }
 _.Fragment = q;
 _.jsx = R;
@@ -32,7 +32,7 @@ var e = S.exports;
 const Z = (t) => t.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase(), X = (t) => t.replace(
   /^([A-Z])|[\s-_]+(\w)/g,
   (s, a, r) => r ? r.toUpperCase() : a.toLowerCase()
-), L = (t) => {
+), M = (t) => {
   const s = X(t);
   return s.charAt(0).toUpperCase() + s.slice(1);
 }, P = (...t) => t.filter((s, a, r) => !!s && s.trim() !== "" && r.indexOf(s) === a).join(" ").trim(), Q = (t) => {
@@ -69,20 +69,20 @@ const te = I(
     size: s = 24,
     strokeWidth: a = 2,
     absoluteStrokeWidth: r,
-    className: n = "",
+    className: i = "",
     children: c,
     iconNode: b,
     ...p
-  }, i) => T(
+  }, l) => T(
     "svg",
     {
-      ref: i,
+      ref: l,
       ...ee,
       width: s,
       height: s,
       stroke: t,
       strokeWidth: r ? Number(a) * 24 / Number(s) : a,
-      className: P("lucide", n),
+      className: P("lucide", i),
       ...!c && !Q(p) && { "aria-hidden": "true" },
       ...p
     },
@@ -100,18 +100,18 @@ const te = I(
  */
 const u = (t, s) => {
   const a = I(
-    ({ className: r, ...n }, c) => T(te, {
+    ({ className: r, ...i }, c) => T(te, {
       ref: c,
       iconNode: s,
       className: P(
-        `lucide-${Z(L(t))}`,
+        `lucide-${Z(M(t))}`,
         `lucide-${t}`,
         r
       ),
-      ...n
+      ...i
     })
   );
-  return a.displayName = L(t), a;
+  return a.displayName = M(t), a;
 };
 /**
  * @license lucide-react v0.522.0 - ISC
@@ -308,27 +308,27 @@ const Ae = [
   ["path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", key: "v07s0e" }],
   ["line", { x1: "10", x2: "10", y1: "11", y2: "17", key: "1uufr5" }],
   ["line", { x1: "14", x2: "14", y1: "11", y2: "17", key: "xtxkd" }]
-], Me = u("trash-2", Ae);
+], Le = u("trash-2", Ae);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const Le = [
+const Me = [
   ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
   ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
-], Ie = u("x", Le);
+], Ie = u("x", Me);
 function Se({
   isLightMode: t,
   toggleTheme: s,
   brand: a,
   onBrandChange: r,
-  brandCounts: n,
+  brandCounts: i,
   totalInstructions: c,
   totalMarkets: b,
   archivedCount: p,
-  showArchived: i,
+  showArchived: l,
   onToggleArchived: m
 }) {
   const x = [
@@ -340,10 +340,10 @@ function Se({
     "Megara doesn't forget. Megara doesn't forgive late sends."
   ], [g, w] = N(0), d = t;
   return z(() => {
-    const l = setInterval(() => {
+    const o = setInterval(() => {
       w((h) => (h + 1) % x.length);
     }, 8e3);
-    return () => clearInterval(l);
+    return () => clearInterval(o);
   }, []), /* @__PURE__ */ e.jsxs("header", { className: "w-full py-6 px-8 flex flex-col gap-5 relative z-10", children: [
     /* @__PURE__ */ e.jsx(
       "div",
@@ -428,8 +428,8 @@ function Se({
           "button",
           {
             onClick: () => {
-              const l = typeof window < "u" && window.MegaraLibraryActions || {};
-              typeof l.restoreFromBackup == "function" && l.restoreFromBackup();
+              const o = typeof window < "u" && window.MegaraLibraryActions || {};
+              typeof o.restoreFromBackup == "function" && o.restoreFromBackup();
             },
             className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${d ? "bg-emerald-50 border-emerald-400 text-emerald-800 hover:bg-emerald-100" : "bg-emerald-900/20 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/30"}`,
             title: "Restore trafficHistory from Firestore / localStorage backup",
@@ -440,8 +440,8 @@ function Se({
           "button",
           {
             onClick: () => {
-              const l = typeof window < "u" && window.MegaraLibraryActions || {};
-              typeof l.wipeNonApril == "function" && l.wipeNonApril();
+              const o = typeof window < "u" && window.MegaraLibraryActions || {};
+              typeof o.wipeNonApril == "function" && o.wipeNonApril();
             },
             className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${d ? "bg-orange-50 border-orange-400 text-orange-800 hover:bg-orange-100" : "bg-orange-900/20 border-orange-500/40 text-orange-300 hover:bg-orange-900/30"}`,
             title: "Delete all non-April traffic records. April PL + April WK stay.",
@@ -452,8 +452,20 @@ function Se({
           "button",
           {
             onClick: () => {
-              const l = typeof window < "u" && window.MegaraLibraryActions || {};
-              typeof l.loadTrafficSource == "function" && l.loadTrafficSource();
+              const o = typeof window < "u" && window.MegaraLibraryActions || {};
+              typeof o.relinkCreative == "function" && o.relinkCreative();
+            },
+            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${d ? "bg-blue-50 border-blue-400 text-blue-800 hover:bg-blue-100" : "bg-blue-900/20 border-blue-500/40 text-blue-300 hover:bg-blue-900/30"}`,
+            title: "Re-sync every traffic record's ISCI entries against the registry — refreshes titles, durations, fileUrls, categories; repairs combined=true on PL TV records.",
+            children: "🔗 Re-link Creative"
+          }
+        ),
+        /* @__PURE__ */ e.jsx(
+          "button",
+          {
+            onClick: () => {
+              const o = typeof window < "u" && window.MegaraLibraryActions || {};
+              typeof o.loadTrafficSource == "function" && o.loadTrafficSource();
             },
             className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 font-semibold ${d ? "bg-cyan-50 border-cyan-400 text-cyan-800 hover:bg-cyan-100" : "bg-cyan-900/20 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/30"}`,
             title: "Fetch /traffic-source.zip and replace matching Firestore records with the PDFs inside. April records are skipped.",
@@ -464,8 +476,8 @@ function Se({
           "button",
           {
             onClick: () => {
-              const l = typeof window < "u" && window.MegaraLibraryActions || {};
-              typeof l.cleanPlaceholders == "function" && l.cleanPlaceholders();
+              const o = typeof window < "u" && window.MegaraLibraryActions || {};
+              typeof o.cleanPlaceholders == "function" && o.cleanPlaceholders();
             },
             className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${d ? "bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100" : "bg-rose-900/20 border-rose-500/40 text-rose-300 hover:bg-rose-900/30"}`,
             title: "Remove Claude-injected placeholder traffic records from Firestore",
@@ -476,8 +488,8 @@ function Se({
           "button",
           {
             onClick: () => {
-              const l = typeof window < "u" && window.MegaraLibraryActions || {};
-              typeof l.wipeBrand == "function" && l.wipeBrand(a);
+              const o = typeof window < "u" && window.MegaraLibraryActions || {};
+              typeof o.wipeBrand == "function" && o.wipeBrand(a);
             },
             className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${d ? "bg-red-50 border-red-400 text-red-800 hover:bg-red-100" : "bg-red-900/30 border-red-500/50 text-red-300 hover:bg-red-900/50"}`,
             title: `Wipe ALL ${a} traffic records from Firestore (nuclear option)`,
@@ -530,23 +542,23 @@ function Se({
       "div",
       {
         className: `flex rounded-t-lg border-b overflow-hidden backdrop-blur-sm ${d ? "bg-white/60 border-purple-200" : "bg-underworld-800/60 border-megara-dark/40"}`,
-        children: ["Postman Law", "Wettermark Keith"].map((l) => {
-          const h = a === l, y = d ? "text-purple-800 border-purple-600 bg-purple-50" : "text-megara-light border-magic-gold bg-magic-gold/5", k = d ? "text-purple-400 border-transparent hover:text-purple-600 hover:bg-purple-50/50" : "text-megara-light/40 border-transparent hover:text-megara-light/70 hover:bg-white/5";
+        children: ["Postman Law", "Wettermark Keith"].map((o) => {
+          const h = a === o, y = d ? "text-purple-800 border-purple-600 bg-purple-50" : "text-megara-light border-magic-gold bg-magic-gold/5", k = d ? "text-purple-400 border-transparent hover:text-purple-600 hover:bg-purple-50/50" : "text-megara-light/40 border-transparent hover:text-megara-light/70 hover:bg-white/5";
           return /* @__PURE__ */ e.jsxs(
             "button",
             {
-              onClick: () => r(l),
+              onClick: () => r(o),
               className: `font-serif px-6 py-3 font-medium text-sm border-b-2 transition-colors ${h ? y : k}`,
               children: [
-                l,
+                o,
                 /* @__PURE__ */ e.jsxs("span", { className: "text-xs opacity-50 ml-1", children: [
                   "(",
-                  n[l],
+                  i[o],
                   ")"
                 ] })
               ]
             },
-            l
+            o
           );
         })
       }
@@ -579,7 +591,7 @@ function Se({
         "button",
         {
           onClick: m,
-          className: `flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm backdrop-blur-sm transition-colors cursor-pointer ${d ? i ? "border-amber-400 bg-amber-50" : "border-purple-200 bg-white/60 hover:border-purple-400" : i ? "border-magic-gold/60 bg-magic-gold/10" : "border-megara-dark/25 bg-underworld-800/40 hover:border-magic-gold/40"}`,
+          className: `flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm backdrop-blur-sm transition-colors cursor-pointer ${d ? l ? "border-amber-400 bg-amber-50" : "border-purple-200 bg-white/60 hover:border-purple-400" : l ? "border-magic-gold/60 bg-magic-gold/10" : "border-megara-dark/25 bg-underworld-800/40 hover:border-magic-gold/40"}`,
           children: [
             /* @__PURE__ */ e.jsx(
               re,
@@ -609,7 +621,7 @@ function Se({
                 ]
               }
             ),
-            i && /* @__PURE__ */ e.jsx(
+            l && /* @__PURE__ */ e.jsx(
               "span",
               {
                 className: `text-[10px] font-bold tracking-widest uppercase ml-1 ${d ? "text-amber-700" : "text-magic-gold"}`,
@@ -638,16 +650,16 @@ function Pe({
   months: s,
   light: a = !1
 }) {
-  const r = (n) => {
-    const c = document.getElementById(`month-${n}`);
+  const r = (i) => {
+    const c = document.getElementById(`month-${i}`);
     c && c.scrollIntoView({
       behavior: "smooth",
       block: "start"
     });
   };
-  return /* @__PURE__ */ e.jsx("div", { className: "relative z-10 px-8 pb-6", children: /* @__PURE__ */ e.jsx("div", { className: "flex gap-3 flex-wrap", children: s.map((n, c) => {
+  return /* @__PURE__ */ e.jsx("div", { className: "relative z-10 px-8 pb-6", children: /* @__PURE__ */ e.jsx("div", { className: "flex gap-3 flex-wrap", children: s.map((i, c) => {
     const b = t.filter(
-      (p) => p.month === n
+      (p) => p.month === i
     ).length;
     return /* @__PURE__ */ e.jsxs(
       j.button,
@@ -663,7 +675,7 @@ function Pe({
         transition: {
           delay: c * 0.06
         },
-        onClick: () => r(n),
+        onClick: () => r(i),
         className: `relative group flex flex-col w-32 rounded-t-sm rounded-b-md overflow-hidden transition-all ${a ? "bg-white/70 border border-purple-200 hover:border-purple-400 hover:bg-white hover:shadow-[0_0_15px_rgba(147,51,234,0.15)]" : "bg-underworld-800/80 border border-megara-dark/30 hover:border-magic-teal/40 hover:bg-underworld-700/50 hover:shadow-glow-teal"}`,
         children: [
           /* @__PURE__ */ e.jsx(
@@ -678,7 +690,7 @@ function Pe({
                 "span",
                 {
                   className: `font-mono text-[10px] font-bold tracking-wider ${a ? "text-purple-400 group-hover:text-purple-600" : "text-magic-teal/40 group-hover:text-magic-teal/70"}`,
-                  children: Re[n] || "001"
+                  children: Re[i] || "001"
                 }
               ),
               /* @__PURE__ */ e.jsx(
@@ -693,7 +705,7 @@ function Pe({
               "span",
               {
                 className: `font-serif text-sm font-medium text-left transition-colors ${a ? "text-purple-700/70 group-hover:text-purple-800" : "text-megara-light/60 group-hover:text-megara-light/80"}`,
-                children: n
+                children: i
               }
             ),
             /* @__PURE__ */ e.jsxs(
@@ -716,7 +728,7 @@ function Pe({
           )
         ]
       },
-      n
+      i
     );
   }) }) });
 }
@@ -1081,7 +1093,7 @@ const De = [
   Gadsden: "bg-market-gadsden"
 };
 function Be({ instruction: t, onClick: s }) {
-  const a = E(O), r = t.status === "sent", n = parseInt(t.iscis) || 5, c = n > 8 ? "h-48" : n > 5 ? "h-44" : "h-40", b = {
+  const a = E(O), r = t.status === "sent", i = parseInt(t.iscis) || 5, c = i > 8 ? "h-48" : i > 5 ? "h-44" : "h-40", b = {
     TV: "from-[#2a1540] to-[#1a0d2e]",
     Radio: "from-[#1a2040] to-[#0d1530]",
     "Streaming Audio": "from-[#1a3030] to-[#0d2020]",
@@ -1093,7 +1105,7 @@ function Be({ instruction: t, onClick: s }) {
     "Streaming Audio": "from-[#d0e8e8] to-[#bcd8d8]",
     Cable: "from-[#e0d5e8] to-[#d0c0d8]",
     OOH: "from-[#e8e5d0] to-[#d8d5c0]"
-  }, i = a ? p[t.mediaType] || p.TV : b[t.mediaType] || b.TV;
+  }, l = a ? p[t.mediaType] || p.TV : b[t.mediaType] || b.TV;
   return /* @__PURE__ */ e.jsxs(
     j.div,
     {
@@ -1109,7 +1121,7 @@ function Be({ instruction: t, onClick: s }) {
         relative w-14 ${c} cursor-pointer group
         rounded-l-sm rounded-r-md
         flex flex-col items-center justify-between py-3
-        bg-gradient-to-b ${i}
+        bg-gradient-to-b ${l}
         ${a ? "" : r ? "book-glow-sent" : "book-glow-pending"}
         ${a ? "shadow-[2px_2px_8px_rgba(0,0,0,0.1),-1px_0_3px_rgba(0,0,0,0.05)]" : ""}
       `,
@@ -1235,8 +1247,8 @@ function Ve({
   light: r = !1
 }) {
   if (s.length === 0) return null;
-  const n = s.reduce(
-    (p, i) => (p[i.mediaType] || (p[i.mediaType] = []), p[i.mediaType].push(i), p),
+  const i = s.reduce(
+    (p, l) => (p[l.mediaType] || (p[l.mediaType] = []), p[l.mediaType].push(l), p),
     {}
   ), b = [
     "TV",
@@ -1245,8 +1257,8 @@ function Ve({
     "Cable",
     "OOH"
   ].filter((p) => {
-    var i;
-    return ((i = n[p]) == null ? void 0 : i.length) > 0;
+    var l;
+    return ((l = i[p]) == null ? void 0 : l.length) > 0;
   });
   return /* @__PURE__ */ e.jsxs(
     j.div,
@@ -1320,8 +1332,8 @@ function Ve({
             )
           ] })
         ] }),
-        b.map((p, i) => {
-          const m = n[p], x = new Set(m.map((g) => g.market)).size;
+        b.map((p, l) => {
+          const m = i[p], x = new Set(m.map((g) => g.market)).size;
           return /* @__PURE__ */ e.jsxs(
             j.div,
             {
@@ -1334,7 +1346,7 @@ function Ve({
                 x: 0
               },
               transition: {
-                delay: i * 0.1,
+                delay: l * 0.1,
                 duration: 0.4
               },
               className: "mb-12 relative",
@@ -1398,7 +1410,7 @@ function Ve({
                         y: 0
                       },
                       transition: {
-                        delay: i * 0.1 + w * 0.03
+                        delay: l * 0.1 + w * 0.03
                       },
                       children: /* @__PURE__ */ e.jsx(
                         Be,
@@ -1442,13 +1454,13 @@ function Ee() {
     [880, 1320].forEach((c, b) => {
       const p = t.createOscillator();
       p.type = "sine", p.frequency.value = c;
-      const i = t.createGain(), m = s + b * 0.06;
-      i.gain.setValueAtTime(0, m), i.gain.linearRampToValueAtTime(0.07, m + 0.01), i.gain.exponentialRampToValueAtTime(1e-3, m + 0.8), p.connect(i), i.connect(t.destination), p.start(m), p.stop(m + 0.8);
+      const l = t.createGain(), m = s + b * 0.06;
+      l.gain.setValueAtTime(0, m), l.gain.linearRampToValueAtTime(0.07, m + 0.01), l.gain.exponentialRampToValueAtTime(1e-3, m + 0.8), p.connect(l), l.connect(t.destination), p.start(m), p.stop(m + 0.8);
     });
     const r = t.createOscillator();
     r.type = "sine", r.frequency.value = 2640;
-    const n = t.createGain();
-    n.gain.setValueAtTime(0, s + 0.1), n.gain.linearRampToValueAtTime(0.025, s + 0.12), n.gain.exponentialRampToValueAtTime(1e-3, s + 0.5), r.connect(n), n.connect(t.destination), r.start(s + 0.1), r.stop(s + 0.5), setTimeout(() => t.close(), 1200);
+    const i = t.createGain();
+    i.gain.setValueAtTime(0, s + 0.1), i.gain.linearRampToValueAtTime(0.025, s + 0.12), i.gain.exponentialRampToValueAtTime(1e-3, s + 0.5), r.connect(i), i.connect(t.destination), r.start(s + 0.1), r.stop(s + 0.5), setTimeout(() => t.close(), 1200);
   } catch {
   }
 }
@@ -1465,15 +1477,15 @@ function Ke() {
   try {
     const t = A(), s = t.currentTime;
     [1047, 1319, 1568, 2093].forEach((b, p) => {
-      const i = t.createOscillator();
-      i.type = "sine", i.frequency.value = b;
+      const l = t.createOscillator();
+      l.type = "sine", l.frequency.value = b;
       const m = t.createGain(), x = s + p * 0.1;
-      m.gain.setValueAtTime(0, x), m.gain.linearRampToValueAtTime(0.06, x + 0.01), m.gain.exponentialRampToValueAtTime(1e-3, x + 0.6), i.connect(m), m.connect(t.destination), i.start(x), i.stop(x + 0.6);
+      m.gain.setValueAtTime(0, x), m.gain.linearRampToValueAtTime(0.06, x + 0.01), m.gain.exponentialRampToValueAtTime(1e-3, x + 0.6), l.connect(m), m.connect(t.destination), l.start(x), l.stop(x + 0.6);
     });
     const r = t.createOscillator();
     r.type = "sine", r.frequency.value = 3136;
-    const n = t.createGain(), c = s + 0.4;
-    n.gain.setValueAtTime(0, c), n.gain.linearRampToValueAtTime(0.04, c + 0.01), n.gain.exponentialRampToValueAtTime(1e-3, c + 0.5), r.connect(n), n.connect(t.destination), r.start(c), r.stop(c + 0.5), setTimeout(() => t.close(), 1500);
+    const i = t.createGain(), c = s + 0.4;
+    i.gain.setValueAtTime(0, c), i.gain.linearRampToValueAtTime(0.04, c + 0.01), i.gain.exponentialRampToValueAtTime(1e-3, c + 0.5), r.connect(i), i.connect(t.destination), r.start(c), r.stop(c + 0.5), setTimeout(() => t.close(), 1500);
   } catch {
   }
 }
@@ -1509,8 +1521,8 @@ function We({
   }[t.market] || t.market.slice(0, 3).toUpperCase(), b = () => {
     He(), s();
   }, p = () => {
-    Ke(), i("send");
-  }, i = (m) => {
+    Ke(), l("send");
+  }, l = (m) => {
     const x = typeof window < "u" && window.MegaraLibraryActions || {}, g = t == null ? void 0 : t.historyIdx;
     typeof x[m] == "function" && typeof g == "number" && (x[m](g), m === "delete" && s());
   };
@@ -1622,22 +1634,22 @@ function We({
                       "All Week": "bg-green-100 border-green-200",
                       "Holiday Only": "bg-red-100 border-red-200"
                     }, g = {};
-                    r.forEach((l) => {
-                      const h = l.notes && m.indexOf(l.notes) >= 0 ? l.notes : "All Week";
-                      g[h] || (g[h] = []), g[h].push(l);
+                    r.forEach((o) => {
+                      const h = o.notes && m.indexOf(o.notes) >= 0 ? o.notes : "All Week";
+                      g[h] || (g[h] = []), g[h].push(o);
                     });
                     const w = [
-                      ...m.filter((l) => {
+                      ...m.filter((o) => {
                         var h;
-                        return (h = g[l]) == null ? void 0 : h.length;
+                        return (h = g[o]) == null ? void 0 : h.length;
                       }),
-                      ...Object.keys(g).filter((l) => !m.includes(l))
+                      ...Object.keys(g).filter((o) => !m.includes(o))
                     ], d = [];
-                    return w.forEach((l) => {
-                      const h = x[l] || "bg-gray-100 border-gray-200";
+                    return w.forEach((o) => {
+                      const h = x[o] || "bg-gray-100 border-gray-200";
                       d.push(
-                        /* @__PURE__ */ e.jsx("tr", { className: `${h} border-b`, children: /* @__PURE__ */ e.jsx("td", { colSpan: 5, className: "py-1.5 px-3 font-bold text-gray-800 uppercase text-xs", children: l }) }, "hdr-" + l)
-                      ), g[l].forEach((y, k) => {
+                        /* @__PURE__ */ e.jsx("tr", { className: `${h} border-b`, children: /* @__PURE__ */ e.jsx("td", { colSpan: 5, className: "py-1.5 px-3 font-bold text-gray-800 uppercase text-xs", children: o }) }, "hdr-" + o)
+                      ), g[o].forEach((y, k) => {
                         d.push(
                           /* @__PURE__ */ e.jsxs(
                             "tr",
@@ -1651,7 +1663,7 @@ function We({
                                 /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-500 text-xs", children: y.notes })
                               ]
                             },
-                            l + "-" + k
+                            o + "-" + k
                           )
                         );
                       });
@@ -1782,7 +1794,7 @@ function We({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
-                        onClick: () => i("edit"),
+                        onClick: () => l("edit"),
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
@@ -1800,7 +1812,7 @@ function We({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
-                        onClick: () => i("view"),
+                        onClick: () => l("view"),
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group font-medium ${a ? "border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100" : "border-magic-teal/40 bg-magic-teal/10 text-magic-teal hover:bg-magic-teal/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
@@ -1818,7 +1830,7 @@ function We({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
-                        onClick: () => i("print"),
+                        onClick: () => l("print"),
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
@@ -1854,7 +1866,7 @@ function We({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
-                        onClick: () => i("copyTo"),
+                        onClick: () => l("copyTo"),
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
@@ -1880,10 +1892,10 @@ function We({
                   /* @__PURE__ */ e.jsx("div", { className: "px-6 pb-6 relative z-10", children: /* @__PURE__ */ e.jsxs(
                     "button",
                     {
-                      onClick: () => i("delete"),
+                      onClick: () => l("delete"),
                       className: `w-full py-2.5 px-4 rounded border text-sm flex items-center justify-center gap-2 transition-colors ${a ? "border-red-200 text-red-500 hover:bg-red-50" : "border-red-900/40 text-red-400 hover:bg-red-900/20"}`,
                       children: [
-                        /* @__PURE__ */ e.jsx(Me, { size: 16 }),
+                        /* @__PURE__ */ e.jsx(Le, { size: 16 }),
                         " Delete"
                       ]
                     }
@@ -1899,12 +1911,12 @@ function We({
 }
 const O = H(!1);
 function Ue() {
-  const [t, s] = N(!1), [a, r] = N("Postman Law"), [n, c] = N(!1), [b, p] = N(null);
+  const [t, s] = N(!1), [a, r] = N("Postman Law"), [i, c] = N(!1), [b, p] = N(null);
   z(() => {
     t ? document.body.classList.add("light") : document.body.classList.remove("light");
   }, [t]);
-  const i = K(() => {
-    const o = [
+  const l = K(() => {
+    const n = [
       "soul-teal",
       "soul-purple",
       "soul-gold",
@@ -1912,19 +1924,19 @@ function Ue() {
     ];
     return Array.from({
       length: 60
-    }).map((v, M) => ({
-      id: M,
+    }).map((v, L) => ({
+      id: L,
       left: `${Math.random() * 100}vw`,
       bottom: `${-10 + Math.random() * 20}px`,
       size: 1 + Math.random() * 4,
-      type: o[M % o.length],
+      type: n[L % n.length],
       delay: `${Math.random() * 20}s`,
       duration: `${8 + Math.random() * 18}s`
     }));
   }, []), m = {
-    "Postman Law": $.filter((o) => o.brand === "Postman Law").length,
-    "Wettermark Keith": $.filter((o) => o.brand === "Wettermark Keith").length
-  }, x = $.filter((o) => o.brand === a), g = n ? x : x.filter((o) => !o.archived), w = x.filter((o) => o.archived).length, d = [
+    "Postman Law": $.filter((n) => n.brand === "Postman Law").length,
+    "Wettermark Keith": $.filter((n) => n.brand === "Wettermark Keith").length
+  }, x = $.filter((n) => n.brand === a), g = i ? x : x.filter((n) => !n.archived), w = x.filter((n) => n.archived).length, d = [
     "January",
     "February",
     "March",
@@ -1937,13 +1949,13 @@ function Ue() {
     "October",
     "November",
     "December"
-  ], l = Array.from(new Set(g.map((o) => o.month))), h = d.filter((o) => l.includes(o)).reverse(), y = g.reduce(
-    (o, v) => (o[v.month] || (o[v.month] = []), o[v.month].push(v), o),
+  ], o = Array.from(new Set(g.map((n) => n.month))), h = d.filter((n) => o.includes(n)).reverse(), y = g.reduce(
+    (n, v) => (n[v.month] || (n[v.month] = []), n[v.month].push(v), n),
     {}
-  ), k = h.filter((o) => {
+  ), k = h.filter((n) => {
     var v;
-    return ((v = y[o]) == null ? void 0 : v.length) > 0;
-  }), B = new Set(g.map((o) => o.market)).size, f = t;
+    return ((v = y[n]) == null ? void 0 : v.length) > 0;
+  }), B = new Set(g.map((n) => n.market)).size, f = t;
   return /* @__PURE__ */ e.jsx(O.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
     "div",
     {
@@ -1980,21 +1992,21 @@ function Ue() {
             className: `absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-64 rounded-full blur-[80px] pointer-events-none z-0 transition-colors duration-700 ${f ? "bg-amber-200/15" : "bg-magic-gold/3"}`
           }
         ),
-        i.map(
-          (o) => /* @__PURE__ */ e.jsx(
+        l.map(
+          (n) => /* @__PURE__ */ e.jsx(
             "div",
             {
-              className: `soul-particle ${o.type}`,
+              className: `soul-particle ${n.type}`,
               style: {
-                left: o.left,
-                bottom: o.bottom,
-                width: `${o.size}px`,
-                height: `${o.size}px`,
-                "--delay": o.delay,
-                "--duration": o.duration
+                left: n.left,
+                bottom: n.bottom,
+                width: `${n.size}px`,
+                height: `${n.size}px`,
+                "--delay": n.delay,
+                "--duration": n.duration
               }
             },
-            o.id
+            n.id
           )
         ),
         /* @__PURE__ */ e.jsx(
@@ -2008,8 +2020,8 @@ function Ue() {
             totalInstructions: g.length,
             totalMarkets: B,
             archivedCount: w,
-            showArchived: n,
-            onToggleArchived: () => c((o) => !o)
+            showArchived: i,
+            onToggleArchived: () => c((n) => !n)
           }
         ),
         /* @__PURE__ */ e.jsx(
@@ -2042,15 +2054,15 @@ function Ue() {
             }
           ),
           /* @__PURE__ */ e.jsx("div", { className: "max-w-6xl mx-auto relative z-10", children: k.map(
-            (o) => /* @__PURE__ */ e.jsx("div", { id: `month-${o}`, children: /* @__PURE__ */ e.jsx(
+            (n) => /* @__PURE__ */ e.jsx("div", { id: `month-${n}`, children: /* @__PURE__ */ e.jsx(
               Ve,
               {
-                month: o,
-                instructions: y[o],
+                month: n,
+                instructions: y[n],
                 onBookClick: p,
                 light: f
               }
-            ) }, o)
+            ) }, n)
           ) })
         ] }) }),
         /* @__PURE__ */ e.jsx(

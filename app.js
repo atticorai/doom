@@ -7034,6 +7034,57 @@ Be direct and actionable. No generic advice. Every market recommendation must re
             log("Restore from backup",chosen.src+" — "+chosen.data.length+" records restored");
             notify("Restored "+chosen.data.length+" records from "+chosen.src+".");
           },
+          relinkCreative:async()=>{
+            // Re-syncs every trafficHistory record with the current ISCI
+            // registry. For each record's iscis[], looks up the registry by
+            // code+dma and fills in title/dur/fileUrl so metrics + AI Planner
+            // + Traffic Tracker all see matching creative data. Also repairs
+            // combined=true on PL records whose est string contains "+" (so
+            // the Tracker's TV-combined match works again).
+            const pw=prompt("Admin password — re-link all traffic records to the ISCI registry:");
+            if(!pw)return;
+            const ok=await verifyAuth(pw,"admin");
+            if(!ok){alert("Wrong password");return}
+            let enriched=0,combinedFixed=0,orphanCodes=0;
+            const byCodeDma=new Map();
+            iscis.forEach(i=>{byCodeDma.set(i.code+"|"+(i.dma||""),i);byCodeDma.set(i.code,i)});
+            const next=trafficHistory.map(h=>{
+              const hDma=normMkt(h.market)||h.market||"";
+              const newIscis=(h.iscis||[]).map(r=>{
+                if(!r||!r.code)return r;
+                const full=byCodeDma.get(r.code+"|"+hDma)||byCodeDma.get(r.code);
+                if(!full){orphanCodes++;return r}
+                enriched++;
+                return{
+                  ...r,
+                  title:r.title||full.title||"",
+                  dur:r.dur||full.dur||"",
+                  fileUrl:full.fileUrl||r.fileUrl||"",
+                  category:full.category||full.caseType||r.category||"",
+                  valueProp:full.valueProp||r.valueProp||"",
+                  vo:full.vo||r.vo||"",
+                };
+              });
+              let out={...h,iscis:newIscis};
+              // Repair the combined flag — TV records with "+" in est are combined
+              if(h.media==="TV"&&(h.est||"").indexOf("+")>=0&&!h.combined){
+                out.combined=true;
+                combinedFixed++;
+              }
+              return out;
+            });
+            backupBeforeSave("trafficHistory",next);
+            trafficFbCountRef.current=next.length;
+            setTrafficHistoryRaw(next);
+            try{
+              await db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(next),ts:Date.now()});
+              log("Relink Creative",enriched+" ISCI rows enriched · "+combinedFixed+" combined flags repaired · "+orphanCodes+" codes not in registry");
+              notify("Re-linked: "+enriched+" ISCIs enriched, "+combinedFixed+" combined flags fixed"+(orphanCodes?", "+orphanCodes+" orphan codes":""));
+            }catch(e){
+              console.error("Relink save failed:",e);
+              notify("Re-link save FAILED: "+(e.message||e));
+            }
+          },
           loadTrafficSource:async()=>{
             // Fetches /traffic-source.zip, unzips, parses every PDF through
             // the same extractPdfText / parseTrafficText the manual import
