@@ -5732,17 +5732,35 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
     // before the first "## " heading (drop it), empty sections, and
     // Claude switching between "## " and "**Title**" — if no sections
     // parse we surface the raw text so the result is always viewable.
+    // Each section's title is matched to the most-relevant Muse by
+    // keyword so Calliope (Coverage) doesn't end up narrating
+    // "Staleness Analysis" — that swap was making the cards look broken.
+    const matchMuseByTitle=(title)=>{
+      const t=(title||"").toLowerCase();
+      if(/stale|stagnat|aging|fatigue/.test(t))return MUSES.find(m=>m.role==="Staleness")||MUSES[2];
+      if(/coverage|gap|missing|absent/.test(t))return MUSES.find(m=>m.role==="Coverage")||MUSES[0];
+      if(/mix|category|creative|tag|value\s*prop|vo|variety/.test(t))return MUSES.find(m=>m.role==="Creative Mix")||MUSES[1];
+      if(/rotation|plan|percent|balance|allocate/.test(t))return MUSES.find(m=>m.role==="Rotation Balance")||MUSES[3];
+      if(/trend|history|historical|pattern|market[- ]specific|recommendation/.test(t))return MUSES.find(m=>m.role==="History")||MUSES[4];
+      return MUSES[0];
+    };
     const parseMuseSections=(text)=>{
       if(!text)return null;
       const firstIdx=text.search(/^##\s+/m);
       const body=firstIdx>=0?text.slice(firstIdx):text;
       const parts=body.split(/^##\s+/m).filter(s=>s&&s.trim());
       if(!parts.length)return null;
-      return parts.map((s,i)=>{
+      const usedMuses=new Set();
+      return parts.map((s)=>{
         const lines=s.trim().split("\n");
         const title=(lines[0]||"").trim();
         const content=lines.slice(1).join("\n").trim();
-        const muse=MUSES[i%MUSES.length];
+        // Prefer first-match Muse; if she's already used, fall back to
+        // any unused Muse, then to the matched one again so 6 sections
+        // still distribute reasonably across 5 muses.
+        let muse=matchMuseByTitle(title);
+        if(usedMuses.has(muse.name)){const free=MUSES.find(m=>!usedMuses.has(m.name));if(free)muse=free}
+        usedMuses.add(muse.name);
         return{title,body:content,muse};
       });
     };
@@ -5771,26 +5789,35 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
         {planLoading?"🎵 The Muses are deliberating...":"🎭 Summon the Muses — Analyze "+planBrand}
       </button>
       {planError&&<div style={{padding:12,borderRadius:8,background:"rgba(232,90,122,.1)",border:"1px solid rgba(232,90,122,.2)",color:"#E85A7A",fontSize:13}}>The Muses encountered an error: {planError}</div>}
-      {/* Results — each section narrated by a Muse. If sections parsed,
-          show the Muse cards; if not, fall back to the raw response so
-          the Muses' output is always viewable. */}
+      {/* Results — Muse cards in a 2-column grid. Each card shows its
+          section title, has its own scrollable body capped at viewport
+          height, and is matched to a topic-appropriate Muse. */}
       {museSections&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0"}}>
           <div style={{fontSize:14,color:"#C4A0C8",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif"}}>"Listen well, for we sing of {planBrand}'s traffic rotation…"</div>
           <button onClick={()=>{navigator.clipboard.writeText(planResult);notify("Copied Muses' prophecy")}} style={{padding:"4px 10px",borderRadius:6,border:"1px solid #4a3565",background:"transparent",color:"#C4A0C8",fontSize:11,fontWeight:600,cursor:"pointer"}}>📋 Copy full text</button>
         </div>
-        {museSections.map((s,i)=><MuseCard key={i} muse={s.muse} content={
-          <div>
-            <div style={{fontSize:14,fontWeight:800,color:s.muse.color,fontFamily:"'Cormorant Garamond',serif",marginBottom:6}}>{s.title}</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(380px,1fr))",gap:12}}>
+        {museSections.map((s,i)=><div key={i} style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid "+s.muse.color+"30",borderRadius:12,padding:0,position:"relative",overflow:"hidden",display:"flex",flexDirection:"column",maxHeight:"70vh"}}>
+          <div style={{height:3,background:`linear-gradient(90deg,${s.muse.color},${s.muse.color}44)`}}/>
+          <div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderBottom:"1px solid "+s.muse.color+"20",background:`linear-gradient(135deg,${s.muse.color}15,transparent)`}}>
+            <span style={{fontSize:24}}>{s.muse.icon}</span>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:11,color:s.muse.color,fontWeight:700,textTransform:"uppercase",letterSpacing:1.2,opacity:.85}}>{s.muse.name} · {s.muse.role}</div>
+              <div style={{fontSize:15,fontWeight:800,color:"#E8DFF0",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.3,marginTop:1,lineHeight:1.2}}>{s.title}</div>
+            </div>
+          </div>
+          <div style={{padding:"12px 14px",overflowY:"auto",fontSize:12.5,color:"#E8DFF0",lineHeight:1.55}}>
             {s.body.split("\n").map((line,li)=>{
               if(!line.trim())return<div key={li} style={{height:4}}/>;
-              if(line.startsWith("### "))return<div key={li} style={{fontSize:12,fontWeight:700,color:"#D4A040",marginTop:6}}>{line.replace(/^#+\s*/,"")}</div>;
-              if(line.startsWith("- ")||line.startsWith("* "))return<div key={li} style={{paddingLeft:12,position:"relative",fontSize:12}}><span style={{position:"absolute",left:2,color:s.muse.color}}>♪</span>{line.replace(/^[-*]\s*/,"").replace(/\*\*/g,"")}</div>;
-              if(line.startsWith("**"))return<div key={li} style={{fontWeight:700,color:"#E8DFF0",fontSize:12}}>{line.replace(/\*\*/g,"")}</div>;
-              return<div key={li} style={{fontSize:12}}>{line.replace(/\*\*/g,"")}</div>;
+              if(line.startsWith("### "))return<div key={li} style={{fontSize:12.5,fontWeight:700,color:"#D4A040",marginTop:8,marginBottom:2,letterSpacing:.3}}>{line.replace(/^#+\s*/,"")}</div>;
+              if(line.startsWith("- ")||line.startsWith("* "))return<div key={li} style={{paddingLeft:14,position:"relative",marginBottom:3}}><span style={{position:"absolute",left:0,color:s.muse.color,fontWeight:700}}>♪</span>{line.replace(/^[-*]\s*/,"").replace(/\*\*(.+?)\*\*/g,"$1")}</div>;
+              if(line.startsWith("**"))return<div key={li} style={{fontWeight:700,color:"#F0E8F8",marginTop:6,marginBottom:2}}>{line.replace(/\*\*/g,"")}</div>;
+              return<div key={li} style={{marginBottom:3}}>{line.replace(/\*\*(.+?)\*\*/g,"$1")}</div>;
             })}
           </div>
-        }/>)}
+        </div>)}
+        </div>
       </div>}
       {planResult&&!museSections&&<div style={{padding:14,background:"#2d1f42",border:"1px solid #4a3565",borderRadius:10,whiteSpace:"pre-wrap",fontSize:13,color:"#E8DFF0",lineHeight:1.6,fontFamily:"'Cormorant Garamond',serif"}}>
         <div style={{fontSize:12,color:"#D4A040",fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>🎭 The Muses spoke — (sections didn't parse, raw prophecy below)</div>
