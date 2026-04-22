@@ -6992,9 +6992,12 @@ Be direct and actionable. No generic advice. Every market recommendation must re
             if(!pw)return;
             const ok=await verifyAuth(pw,"admin");
             if(!ok){alert("Wrong password");return}
+            // Match by the specific comment / estimate fingerprints Claude
+            // injected — NOT by month — so placeholders that got cloned into
+            // other months (or had their month field edited) still get caught.
             const isClaudePlaceholder=(h)=>{
-              if(h.brand==="Postman Law"&&h.month==="April"&&h.ts==="2026-03-30T12:00:00.000Z"&&h.comments&&h.comments.indexOf("If you buy has no bookends")>=0)return true;
-              if(h.brand==="Postman Law"&&h.month==="April"&&h.isOoh&&h.est==="OOH-MSP-PL"&&h.comments&&h.comments.indexOf("Wilkins Media")>=0&&h.ts==="2026-03-25T12:00:00.000Z")return true;
+              if(h.brand==="Postman Law"&&h.comments&&h.comments.indexOf("If you buy has no bookends, run as standalones")>=0)return true;
+              if(h.brand==="Postman Law"&&h.isOoh&&h.est==="OOH-MSP-PL"&&h.comments&&h.comments.indexOf("Wilkins Media")>=0)return true;
               return false;
             };
             const toRemove=trafficHistory.filter(isClaudePlaceholder);
