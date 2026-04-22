@@ -1622,7 +1622,44 @@ const App=()=>{
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);saveToDb("iscis",updated);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
       {showTagMgr&&<Cd style={{padding:14,marginTop:8}}>
-        <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:8}}>🏷 Manage Categories, Value Props & VOs</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD"}}>🏷 Manage Categories, Value Props & VOs</div>
+          <Btn small onClick={()=>{
+            const wkCount=iscis.filter(i=>i.brand==="Wettermark Keith").length;
+            if(!wkCount){notify("No WK ISCIs to re-tag");return}
+            if(!confirm("Re-run title-based tagging across all "+wkCount+" WK ISCIs? This overwrites the current Category (and fills empty VOs with Chris Keith). Intentional — use this when the auto-tag needs correcting."))return;
+            let changed=0;const seenCats=new Set();
+            setIscis(prev=>{
+              const next=prev.map(i=>{
+                if(i.brand!=="Wettermark Keith")return i;
+                const t=(i.title||"").toLowerCase();
+                let cat;
+                if(/on.?the.?job|working man/i.test(t))cat="Workers Comp";
+                else if(/car wreck|auto accident|mother.?s wreck|distracted|cell phone/i.test(t))cat="Auto Accidents";
+                else if(/trucking|commercial vehicle|commercial accident/i.test(t))cat="Trucking/Commercial";
+                else if(/premise|premises/i.test(t))cat="Premises Liability";
+                else if(/christmas|thanksgiving|holiday|happy/i.test(t))cat="Holiday/Seasonal";
+                else cat="Brand";
+                seenCats.add(cat);
+                const vo=i.vo||"Chris Keith";
+                if(i.category!==cat||i.caseType!==cat||i.vo!==vo)changed++;
+                return{...i,category:cat,caseType:cat,vo:vo};
+              });
+              saveToDb("iscis",next);
+              return next;
+            });
+            setCustomFields(prev=>{
+              const wkPrev=prev["Wettermark Keith"]||{categories:[],valueProps:[],vos:[]};
+              const mergedCats=Array.from(new Set([...(wkPrev.categories||[]),...seenCats]));
+              const mergedVos=Array.from(new Set([...(wkPrev.vos||[]),"Chris Keith"]));
+              const next={...prev,"Wettermark Keith":{...wkPrev,categories:mergedCats,vos:mergedVos}};
+              try{db.collection("appData").doc("customTags").set({data:JSON.stringify(next),ts:Date.now()}).catch(()=>{})}catch(e){}
+              return next;
+            });
+            log("WK Re-tag",changed+" ISCIs updated");
+            notify(changed?("Re-tagged "+changed+" WK ISCIs by title"):"All WK ISCIs already match title rules");
+          }} color="#D4A040">⟳ Re-tag WK by Title</Btn>
+        </div>
         {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
           return<div key={brand} style={{marginBottom:16}}>
           <div style={{fontSize:13,fontWeight:800,color:bc,marginBottom:6}}>{brand}</div>
