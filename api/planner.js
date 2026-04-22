@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { model, max_tokens, system, messages } = req.body || {};
+    const { model, max_tokens, system, messages, stream } = req.body || {};
 
     const safeModel = ALLOWED_MODELS.includes(model) ? model : 'claude-sonnet-4-6';
     const safeMaxTokens = Math.min(Math.max(parseInt(max_tokens) || 4000, 1), MAX_TOKENS_CAP);
@@ -49,11 +49,56 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid system prompt format' });
     }
 
-    // Hard-stop the upstream call slightly before the function timeout so
-    // we can return a readable error instead of Vercel killing us cold.
+    // Streaming branch — proxy SSE straight through to the client so the
+    // user sees Muses appearing in real time. Dramatically better UX than
+    // a 40-second dead-air wait; also avoids the Vercel timeout killing
+    // a slow-to-complete call cold.
+    if (stream) {
+      const upstream = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: safeModel,
+          max_tokens: safeMaxTokens,
+          system: typeof system === 'string' ? system : '',
+          messages: Array.isArray(messages) ? messages : [],
+          stream: true
+        })
+      });
+
+      if (!upstream.ok || !upstream.body) {
+        const errText = await upstream.text().catch(() => '');
+        res.status(upstream.status || 500).json({ error: errText || 'Upstream stream failed' });
+        return;
+      }
+
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
+      res.flushHeaders && res.flushHeaders();
+
+      const reader = upstream.body.getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          res.write(Buffer.from(value));
+        }
+      } catch (streamErr) {
+        console.error('Stream error:', streamErr);
+      }
+      res.end();
+      return;
+    }
+
+    // Non-streaming fallback — kept for callers that don't want SSE.
     const controller = new AbortController();
     const abortTimer = setTimeout(() => controller.abort(), 55000);
-
     let response;
     try {
       response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -74,19 +119,17 @@ module.exports = async function handler(req, res) {
     } catch (fetchErr) {
       clearTimeout(abortTimer);
       if (fetchErr.name === 'AbortError') {
-        return res.status(504).json({ error: 'AI request timed out (55s) — try a shorter prompt or fewer tokens' });
+        return res.status(504).json({ error: 'AI request timed out (55s)' });
       }
       throw fetchErr;
     }
     clearTimeout(abortTimer);
 
     const data = await response.json();
-
     if (!response.ok) {
       console.error('Anthropic API error:', response.status, data);
       return res.status(response.status).json({ error: data?.error?.message || 'AI request failed', upstream: data });
     }
-
     return res.status(200).json(data);
   } catch (error) {
     console.error('Planner error:', error);

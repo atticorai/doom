@@ -5701,20 +5701,47 @@ For each market, recommend the specific rotation — which ISCI codes stay, whic
 
 Be direct and actionable. No generic advice. Every recommendation must tie back to specific ISCI codes, specific market context, or specific data from the payload.`;
 
+      // Streaming: proxy returns SSE from Anthropic. Parse text deltas
+      // and update planResult incrementally so the user sees the Muses
+      // speaking in real time instead of a 40-second dead-air wait.
       const resp=await fetch("/api/planner",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-4-6",
           max_tokens:6000,
+          stream:true,
           system:systemPrompt,
           messages:[{role:"user",content:"Here is the current rotation data for "+brand+":\n\n"+dataPayload+"\n\nPlease analyze and provide your recommendations."}]
         })
       });
       if(!resp.ok){let detail="";try{const errJson=await resp.json();detail=errJson.error||errJson.message||JSON.stringify(errJson)}catch(e){try{detail=await resp.text()}catch(e2){detail="(no body)"}}throw new Error("API "+resp.status+": "+detail)}
-      const data=await resp.json();
-      const text=data.content?.map(c=>c.text||"").join("\n")||"No response";
-      setPlanResult(text);
+      if(!resp.body){throw new Error("No response body from stream")}
+      const reader=resp.body.getReader();
+      const decoder=new TextDecoder();
+      let buffer="";let accumulated="";
+      while(true){
+        const{done,value}=await reader.read();
+        if(done)break;
+        buffer+=decoder.decode(value,{stream:true});
+        // Process complete SSE events (delimited by blank lines).
+        const events=buffer.split("\n\n");
+        buffer=events.pop()||"";
+        for(const ev of events){
+          const dataLine=ev.split("\n").find(l=>l.startsWith("data: "));
+          if(!dataLine)continue;
+          const payload=dataLine.slice(6).trim();
+          if(!payload||payload==="[DONE]")continue;
+          try{
+            const j=JSON.parse(payload);
+            if(j.type==="content_block_delta"&&j.delta?.text){accumulated+=j.delta.text;setPlanResult(accumulated)}
+            else if(j.type==="message_stop"){/* end */}
+            else if(j.type==="error"){throw new Error(j.error?.message||"Stream error")}
+          }catch(parseErr){console.warn("SSE parse error:",parseErr,payload)}
+        }
+      }
+      if(!accumulated)throw new Error("Stream returned no text");
+      setPlanResult(accumulated);
     }catch(e){
       setPlanError(e.message);
     }finally{
