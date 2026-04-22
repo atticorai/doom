@@ -6872,7 +6872,28 @@ Be direct and actionable. No generic advice. Every market recommendation must re
           x+='</body></html>';
           return x;
         };
-        const data=trafficHistory.map((h,i)=>{
+        // Dedup per brand|market|media|month slot. Prefer records with
+        // status="sent" (the user actually sent/fixed those), then newest
+        // ts. This is why your hand-corrected records were getting buried
+        // by older auto-generated dupes for the same slot.
+        const _slotKey=(h)=>(h.brand||"")+"|"+((normMkt(h.market)||h.market)||"")+"|"+(h.media||"")+"|"+(h.month||"")+"|"+(h.isOoh?"OOH":"")+"|"+(h.vendor||"");
+        const _slotScore=(h)=>{
+          let s=0;
+          if(h.status==="sent")s+=1000;
+          else if(h.status==="partial")s+=500;
+          else if(h.status==="imported")s+=200;
+          else if(h.status==="copied")s+=100;
+          if(h.ts){const t=new Date(h.ts).getTime();if(!isNaN(t))s+=Math.floor(t/1e8)}
+          return s;
+        };
+        const _slotBest=new Map();
+        trafficHistory.forEach((h,i)=>{
+          const k=_slotKey(h);
+          const prev=_slotBest.get(k);
+          if(!prev||_slotScore(h)>_slotScore(prev.h)){_slotBest.set(k,{h,i})}
+        });
+        const dedupedEntries=Array.from(_slotBest.values());
+        const data=dedupedEntries.map(({h,i})=>{
           const parts=String(h.month||"").trim().split(/\s+/);
           const monIdx=MO_LIB.indexOf(parts[0]);
           const parsedYear=parseInt(parts[1]);
