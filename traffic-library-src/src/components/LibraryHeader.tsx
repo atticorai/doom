@@ -111,6 +111,15 @@ export function LibraryHeader({
           <button
             onClick={() => {
               const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
+              if (typeof actions.wipeNonApril === 'function') actions.wipeNonApril();
+            }}
+            className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'bg-orange-50 border-orange-400 text-orange-800 hover:bg-orange-100' : 'bg-orange-900/20 border-orange-500/40 text-orange-300 hover:bg-orange-900/30'}`}
+            title="Delete all non-April traffic records. April PL + April WK stay.">
+            ⚠ Wipe Non-April
+          </button>
+          <button
+            onClick={() => {
+              const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
               if (typeof actions.cleanPlaceholders === 'function') actions.cleanPlaceholders();
             }}
             className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100' : 'bg-rose-900/20 border-rose-500/40 text-rose-300 hover:bg-rose-900/30'}`}

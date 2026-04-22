@@ -7029,6 +7029,26 @@ Be direct and actionable. No generic advice. Every market recommendation must re
             log("Restore from backup",chosen.src+" — "+chosen.data.length+" records restored");
             notify("Restored "+chosen.data.length+" records from "+chosen.src+".");
           },
+          wipeNonApril:async()=>{
+            // Deletes every trafficHistory record where month !== "April" for
+            // BOTH brands. April PL and April WK stay (those were built in
+            // Doom properly). Designed to run once before loading the
+            // traffic-source.zip so non-April slots start clean.
+            const pw=prompt("Admin password — WIPE all non-April traffic records (keep April PL + April WK):");
+            if(!pw)return;
+            const ok=await verifyAuth(pw,"admin");
+            if(!ok){alert("Wrong password");return}
+            const toRemove=trafficHistory.filter(h=>h.month!=="April");
+            if(!toRemove.length){notify("No non-April records to wipe.");return}
+            const byBrand={};
+            toRemove.forEach(h=>{const k=h.brand||"?";if(!byBrand[k])byBrand[k]=0;byBrand[k]++});
+            const summary=Object.entries(byBrand).map(([b,n])=>b+": "+n).join(", ");
+            if(!confirm("Delete "+toRemove.length+" non-April records?\n\n"+summary+"\n\nApril records stay. This cannot be undone (but the rotating backup catches it).\n\nContinue?"))return;
+            if(!confirm("Really? "+toRemove.length+" records will be gone."))return;
+            setTrafficHistory(p=>p.filter(h=>h.month==="April"));
+            log("Wipe Non-April",toRemove.length+" records removed");
+            notify("Wiped "+toRemove.length+" non-April records. Firestore now holds only April traffic.");
+          },
           wipeBrand:async(targetBrand)=>{            // Nuclear option — removes ALL trafficHistory records for one
             // brand so the user can re-import cleanly. Admin-gated + double
             // confirm. Does NOT touch the other brand.
