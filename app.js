@@ -762,14 +762,20 @@ const App=()=>{
           const inv={};d.forEach(h=>{const k=(h.brand||"?")+" | "+(h.market||"?")+" | "+(h.media||"?")+" | "+(h.month||"?");if(!inv[k])inv[k]=0;inv[k]++});
           Object.entries(inv).sort().forEach(([k,v])=>console.log("  "+k+(v>1?" (×"+v+")":"")));
           console.log("═══════════════════════════════════════════════");
-          // ═══ DO NOT MODIFY FIRESTORE DATA ON LOAD ═══
-          // Load it. Display it. That's it.
-          // Rendering handles bad values (boolean bookends, bare sched letters) gracefully.
-          // Firestore is the sole source of truth for traffic. All in-code
-          // seed / backfill / placeholder logic was removed on [today].
-          // DO NOT reintroduce it — any auto-written record can silently
-          // overwrite user data on the next save.
-          setTrafficHistory(d);trafficFbCountRef.current=d.length
+          // Normalize market on load so downstream lookups (stations,
+          // estimates, tracker, confirmations) all resolve. PDF imports can
+          // arrive with "Cincinnati, OH" etc.; we strip the state suffix so
+          // normMkt resolves to a 3-letter code. This writes back to
+          // Firestore because setTrafficHistory is the saving setter.
+          const mktClean=d.map(h=>{
+            const raw=String(h.market||"").split(",")[0].trim();
+            const code=normMkt(raw)||raw;
+            const fullName=DM[code]||raw;
+            return (raw&&raw!==fullName)?{...h,market:fullName}:(raw&&h.market!==raw)?{...h,market:raw}:h;
+          });
+          const cleanedCount=mktClean.filter((h,i)=>h.market!==d[i].market).length;
+          if(cleanedCount)console.log("[Market Clean] Normalized "+cleanedCount+" records with dirty market values");
+          setTrafficHistory(mktClean);trafficFbCountRef.current=mktClean.length
         }trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
         if(docs.workMonth?.data)setWorkMonth(JSON.parse(docs.workMonth.data));
         if(docs.confirmations?.data){const d=JSON.parse(docs.confirmations.data);setConfirmations(d)}
@@ -6988,10 +6994,20 @@ Be direct and actionable. No generic advice.`;
             let pdfB64="";try{const pdfUri=await generatePdfBase64(sheetHtml,h);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
             const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+(h.market||"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
             const parseEmails2=(c)=>{if(!c)return[];return c.split(";").map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))};
-            const mediaCompat=(sMed,hMed)=>{if(sMed===hMed)return true;if(sMed==="TV"&&["TV","Sports","Heavy Up","UD/AV","Sponsorship"].includes(hMed))return true;if(sMed==="Radio"&&hMed==="Radio")return true;return false};
-            const mkt=normMkt(h.market)||h.market;
-            const marketStations=stations.filter(s=>s.brand===h.brand&&(normMkt(s.market)===mkt||s.market===h.market)&&mediaCompat(s.media,h.media));
-            if(!marketStations.length){notify("No stations found for "+h.market+" "+h.media);return}
+            const mediaCompat=(sMed,hMed)=>{if(sMed===hMed)return true;if(sMed==="TV"&&["TV","Sports","Heavy Up","UD/AV","Sponsorship"].includes(hMed))return true;if(sMed==="Radio"&&hMed==="Radio")return true;if(sMed==="Cable"&&hMed==="Cable")return true;return false};
+            // Strip any ", STATE" suffix (e.g. "Cincinnati, OH" from PDF
+            // imports) BEFORE normalizing so DM_REV resolves to the 3-letter
+            // code instead of falling back to the dirty string.
+            const cleanHMkt=String(h.market||"").split(",")[0].trim();
+            const mkt=normMkt(cleanHMkt)||cleanHMkt;
+            const marketStations=stations.filter(s=>{
+              if(s.brand!==h.brand)return false;
+              const sMkt=String(s.market||"").split(",")[0].trim();
+              const sCode=normMkt(sMkt)||sMkt;
+              if(sCode!==mkt&&sMkt!==cleanHMkt)return false;
+              return mediaCompat(s.media,h.media);
+            });
+            if(!marketStations.length){notify("No stations found for "+(cleanHMkt||h.market)+" "+h.media+" ("+h.brand+")");console.warn("[Library Send] No stations matched",{brand:h.brand,market:h.market,cleanMarket:cleanHMkt,normalized:mkt,media:h.media,totalStations:stations.length,brandStations:stations.filter(s=>s.brand===h.brand).length});return}
             // Group by ownership — one email per owner group per record
             const ownerGroups={};
             marketStations.forEach(s=>{const grp=s.ownership||s.call;if(!ownerGroups[grp])ownerGroups[grp]=[];ownerGroups[grp].push(s)});
