@@ -6932,16 +6932,22 @@ Be direct and actionable. No generic advice.`;
             }catch(e){notify("Send failed: "+(e.message||e));console.error("Send failed:",e)}
           },
           copyTo:(idx)=>{
+            // Mirrors the main Library's "Copy to…" flow (see ~line 5535):
+            // walks the broadcast CALENDAR for the NEXT entry after this
+            // record's month, swaps the WK monthly estimate when applicable,
+            // checks for a duplicate month, pulls flight dates from CALENDAR.
             const h=trafficHistory[idx];if(!h)return;
-            // Auto-advance to the next month in the calendar sequence.
-            // April -> May -> June -> ... -> December -> January (wraps).
-            const MO_SEQ=["January","February","March","April","May","June","July","August","September","October","November","December"];
-            const curIdxMo=MO_SEQ.indexOf(h.month);
-            if(curIdxMo<0){notify("Can't auto-advance from unknown month: "+(h.month||"(none)"));return}
-            const newMonth=MO_SEQ[(curIdxMo+1)%12];
+            const curCalIdx=CALENDAR.findIndex(c=>c.month===h.month);
+            if(curCalIdx<0){notify("Can't auto-advance from unknown month: "+(h.month||"(none)"));return}
+            const nextCal=CALENDAR[(curCalIdx+1)%CALENDAR.length];
+            const newMonth=nextCal.month;
+            const newFlight=fDs(nextCal.bcStart)+" - "+fDs(nextCal.bcEnd);
+            const WK_MONTH_EST={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};
+            const EST_TO_MONTH=Object.fromEntries(Object.entries(WK_MONTH_EST).map(([m,n])=>[n,m]));
             let newEst=h.est;
-            if(h.brand==="Wettermark Keith"){const map={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};if(map[newMonth])newEst=map[newMonth]}
-            const cm=CALENDAR.find(c=>c.month===newMonth);const newFlight=cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):h.flight;
+            if(h.brand==="Wettermark Keith"&&(EST_TO_MONTH[h.est]||WK_MONTH_EST[h.month])){newEst=WK_MONTH_EST[newMonth]||h.est}
+            const existing=trafficHistory.find(x=>x.brand===h.brand&&x.market===h.market&&x.media===h.media&&x.month===newMonth&&x.status!=="copied");
+            if(existing&&!confirm(h.brand+" "+h.market+" "+h.media+" already has "+newMonth+" traffic (v"+existing.version+"). Copy anyway? This creates a new record — it won't overwrite."))return;
             const copy={...h,ts:new Date().toISOString(),est:newEst,month:newMonth,flight:newFlight,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:"Copied from "+h.month};
             setTrafficHistory(p=>[copy,...p]);
             log("Traffic Copied",h.brand+" "+h.market+" "+h.media+" "+h.month+" → "+newMonth+" (Est "+newEst+")");
