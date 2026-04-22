@@ -5563,6 +5563,8 @@ ${fullText.substring(0,3000)}`}]
   const[planResult,setPlanResult]=useState(null);
   const[planLoading,setPlanLoading]=useState(false);
   const[planError,setPlanError]=useState(null);
+  const[planElapsed,setPlanElapsed]=useState(0);
+  React.useEffect(()=>{if(!planLoading){setPlanElapsed(0);return}const t0=Date.now();const iv=setInterval(()=>setPlanElapsed(Math.floor((Date.now()-t0)/1000)),1000);return()=>clearInterval(iv)},[planLoading]);
 
   const runPlanner=async()=>{
     setPlanLoading(true);setPlanError(null);setPlanResult(null);
@@ -5704,12 +5706,12 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-4-6",
-          max_tokens:12000,
+          max_tokens:6000,
           system:systemPrompt,
           messages:[{role:"user",content:"Here is the current rotation data for "+brand+":\n\n"+dataPayload+"\n\nPlease analyze and provide your recommendations."}]
         })
       });
-      if(!resp.ok)throw new Error("API error: "+resp.status);
+      if(!resp.ok){let detail="";try{const errJson=await resp.json();detail=errJson.error||errJson.message||JSON.stringify(errJson)}catch(e){try{detail=await resp.text()}catch(e2){detail="(no body)"}}throw new Error("API "+resp.status+": "+detail)}
       const data=await resp.json();
       const text=data.content?.map(c=>c.text||"").join("\n")||"No response";
       setPlanResult(text);
@@ -5786,9 +5788,10 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
       </div>
       {/* Run button */}
       <button onClick={runPlanner} disabled={planLoading} style={{padding:"12px 28px",borderRadius:10,border:"none",background:planLoading?"#4a3565":"linear-gradient(135deg,"+MUSES.map(m=>m.color).join(",")+")",color:"#fff",fontSize:15,fontWeight:800,cursor:planLoading?"wait":"pointer",fontFamily:"'Cormorant Garamond',serif",letterSpacing:1,boxShadow:planLoading?"none":"0 4px 20px rgba(155,123,176,.3)",transition:"all .2s"}}>
-        {planLoading?"🎵 The Muses are deliberating...":"🎭 Summon the Muses — Analyze "+planBrand}
+        {planLoading?"🎵 The Muses are deliberating... ("+planElapsed+"s)":"🎭 Summon the Muses — Analyze "+planBrand}
       </button>
-      {planError&&<div style={{padding:12,borderRadius:8,background:"rgba(232,90,122,.1)",border:"1px solid rgba(232,90,122,.2)",color:"#E85A7A",fontSize:13}}>The Muses encountered an error: {planError}</div>}
+      {planLoading&&<div style={{fontSize:12,color:"#9B8EAD",fontStyle:"italic",marginTop:-4}}>Sonnet typically takes 20-45s for a full analysis. If it passes 55s the function will timeout and surface an error — don't panic.</div>}
+      {planError&&<div style={{padding:12,borderRadius:8,background:"rgba(232,90,122,.1)",border:"1px solid rgba(232,90,122,.2)",color:"#E85A7A",fontSize:13,whiteSpace:"pre-wrap",wordBreak:"break-word",fontFamily:"ui-monospace,SFMono-Regular,monospace"}}><b style={{color:"#E85A7A",fontFamily:"inherit"}}>The Muses encountered an error:</b><br/>{planError}</div>}
       {/* Results — Muse cards in a 2-column grid. Each card shows its
           section title, has its own scrollable body capped at viewport
           height, and is matched to a topic-appropriate Muse. */}
