@@ -6933,12 +6933,12 @@ Be direct and actionable. No generic advice.`;
           },
           copyTo:(idx)=>{
             const h=trafficHistory[idx];if(!h)return;
-            const months=CALENDAR.map(c=>c.month);
-            const target=prompt("Copy this record to which month?\nOptions: "+months.join(", "));
-            if(!target)return;
-            const newMonth=months.find(m=>m.toLowerCase()===target.trim().toLowerCase());
-            if(!newMonth){notify("Unknown month: "+target);return}
-            if(newMonth===h.month){notify("Same month — nothing to copy");return}
+            // Auto-advance to the next month in the calendar sequence.
+            // April -> May -> June -> ... -> December -> January (wraps).
+            const MO_SEQ=["January","February","March","April","May","June","July","August","September","October","November","December"];
+            const curIdxMo=MO_SEQ.indexOf(h.month);
+            if(curIdxMo<0){notify("Can't auto-advance from unknown month: "+(h.month||"(none)"));return}
+            const newMonth=MO_SEQ[(curIdxMo+1)%12];
             let newEst=h.est;
             if(h.brand==="Wettermark Keith"){const map={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};if(map[newMonth])newEst=map[newMonth]}
             const cm=CALENDAR.find(c=>c.month===newMonth);const newFlight=cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):h.flight;
