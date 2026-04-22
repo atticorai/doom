@@ -6805,7 +6805,7 @@ Be direct and actionable. No generic advice.`;
           // legible text even when the Library's dark theme is in effect on the
           // host page. Explicit inline `style="color:#..."` spans win via CSS
           // specificity, so brand accents (Client red, Buyer gold) still show.
-          let x='<div class="doom-traffic-sheet" style="padding:28px;background:#fff;color:#1e1233;font-family:Arial,sans-serif"><style>.doom-traffic-sheet,.doom-traffic-sheet *{box-sizing:border-box}.doom-traffic-sheet{color:#1e1233;background:#fff}.doom-traffic-sheet b{font-weight:700}.doom-traffic-sheet table{border-collapse:collapse}.doom-traffic-sheet td,.doom-traffic-sheet th{color:#1e1233}</style>';
+          let x='<html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}html,body{background:#fff;color:#1e1233;font-family:Arial,sans-serif}body{padding:28px}table{width:100%;border-collapse:collapse}b{font-weight:700}td,th{color:#1e1233}</style></head><body>';
           x+='<div style="text-align:center;margin-bottom:14px"><img src="'+logo+'" style="height:48px"/></div>';
           x+=hdr("Agency",getBrandAgency(code));
           x+=hdr("Client",h.brand,bc);
@@ -6861,7 +6861,7 @@ Be direct and actionable. No generic advice.`;
           Object.entries(SCHED_COLORS_SHEET).forEach(([s,c])=>{if(grouped[s])x+='<div style="display:flex;align-items:center;gap:4px;font-size:9px"><div style="width:12px;height:12px;border-radius:2px;background:'+c+'"></div>'+s+'</div>'});
           x+='</div>';
           x+='<div style="margin-top:36px;border-top:2px solid '+bc+';padding-top:8px;color:#1e1233"><div style="display:flex;justify-content:space-between;font-size:13px"><div><b>Accepted by:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div style="background:#fffbeb;padding:7px;font-size:10px;color:#92400e;margin-top:6px;border:1px solid #fde68a">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></div>';
-          x+='</div>';
+          x+='</body></html>';
           return x;
         };
         const data=trafficHistory.map((h,i)=>{

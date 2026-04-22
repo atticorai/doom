@@ -104,7 +104,11 @@ export function BookOpen({
           <div className="flex-1 bg-white overflow-y-auto relative">
             <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-300 to-transparent z-10 pointer-events-none"></div>
             {(instruction as any).sheetHtml ? (
-              <div dangerouslySetInnerHTML={{__html: (instruction as any).sheetHtml}} />
+              <iframe
+                srcDoc={(instruction as any).sheetHtml}
+                title="Traffic Sheet"
+                style={{width:'100%',height:'100%',border:'none',background:'#fff',display:'block'}}
+              />
             ) : (<>
 
             <div className="px-10 pt-8 pb-8">

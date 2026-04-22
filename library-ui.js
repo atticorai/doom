@@ -227,14 +227,14 @@ const ye = [
       key: "96xj49"
     }
   ]
-], ve = u("flame", ye);
+], fe = u("flame", ye);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const fe = [
+const ve = [
   [
     "path",
     {
@@ -242,7 +242,7 @@ const fe = [
       key: "1a8usu"
     }
   ]
-], we = u("pen", fe);
+], we = u("pen", ve);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -431,7 +431,7 @@ function Se({
             className: `ml-3 p-2.5 rounded-full transition-all relative group ${p ? "text-amber-600 hover:bg-amber-100 hover:shadow-[0_0_20px_4px_rgba(217,119,6,0.2)]" : "text-magic-gold hover:bg-white/10 hover:shadow-[0_0_20px_4px_rgba(255,215,0,0.3)]"}`,
             title: "Toggle Illumination",
             children: [
-              t ? /* @__PURE__ */ e.jsx(he, { size: 22 }) : /* @__PURE__ */ e.jsx(ve, { size: 22 }),
+              t ? /* @__PURE__ */ e.jsx(he, { size: 22 }) : /* @__PURE__ */ e.jsx(fe, { size: 22 }),
               /* @__PURE__ */ e.jsx(
                 "div",
                 {
@@ -468,12 +468,12 @@ function Se({
       {
         className: `flex rounded-t-lg border-b overflow-hidden backdrop-blur-sm ${p ? "bg-white/60 border-purple-200" : "bg-underworld-800/60 border-megara-dark/40"}`,
         children: ["Postman Law", "Wettermark Keith"].map((g) => {
-          const h = a === g, v = p ? "text-purple-800 border-purple-600 bg-purple-50" : "text-megara-light border-magic-gold bg-magic-gold/5", j = p ? "text-purple-400 border-transparent hover:text-purple-600 hover:bg-purple-50/50" : "text-megara-light/40 border-transparent hover:text-megara-light/70 hover:bg-white/5";
+          const h = a === g, f = p ? "text-purple-800 border-purple-600 bg-purple-50" : "text-megara-light border-magic-gold bg-magic-gold/5", j = p ? "text-purple-400 border-transparent hover:text-purple-600 hover:bg-purple-50/50" : "text-megara-light/40 border-transparent hover:text-megara-light/70 hover:bg-white/5";
           return /* @__PURE__ */ e.jsxs(
             "button",
             {
               onClick: () => r(g),
-              className: `font-serif px-6 py-3 font-medium text-sm border-b-2 transition-colors ${h ? v : j}`,
+              className: `font-serif px-6 py-3 font-medium text-sm border-b-2 transition-colors ${h ? f : j}`,
               children: [
                 g,
                 /* @__PURE__ */ e.jsxs("span", { className: "text-xs opacity-50 ml-1", children: [
@@ -1004,7 +1004,7 @@ const Oe = [
   Montgomery: "text-market-montgomery",
   Dothan: "text-market-dothan",
   Gadsden: "text-market-gadsden"
-}, Ve = {
+}, De = {
   Chicago: "bg-market-chicago",
   Cincinnati: "bg-market-cincinnati",
   Denver: "bg-market-denver",
@@ -1017,8 +1017,8 @@ const Oe = [
   Dothan: "bg-market-dothan",
   Gadsden: "bg-market-gadsden"
 };
-function De({ instruction: t, onClick: s }) {
-  const a = E(V), r = t.status === "sent", n = parseInt(t.iscis) || 5, l = n > 8 ? "h-48" : n > 5 ? "h-44" : "h-40", b = {
+function Ve({ instruction: t, onClick: s }) {
+  const a = E(D), r = t.status === "sent", n = parseInt(t.iscis) || 5, l = n > 8 ? "h-48" : n > 5 ? "h-44" : "h-40", b = {
     TV: "from-[#2a1540] to-[#1a0d2e]",
     Radio: "from-[#1a2040] to-[#0d1530]",
     "Streaming Audio": "from-[#1a3030] to-[#0d2020]",
@@ -1079,7 +1079,7 @@ function De({ instruction: t, onClick: s }) {
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `w-full h-3 ${Ve[t.market]} opacity-90 shadow-inner relative z-10`,
+            className: `w-full h-3 ${De[t.market]} opacity-90 shadow-inner relative z-10`,
             children: /* @__PURE__ */ e.jsx("div", { className: "absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" })
           }
         ),
@@ -1338,7 +1338,7 @@ function Be({
                         delay: i * 0.1 + w * 0.03
                       },
                       children: /* @__PURE__ */ e.jsx(
-                        De,
+                        Ve,
                         {
                           instruction: x,
                           onClick: () => a(x)
@@ -1484,7 +1484,14 @@ function Ge({
           children: [
             /* @__PURE__ */ e.jsxs("div", { className: "flex-1 bg-white overflow-y-auto relative", children: [
               /* @__PURE__ */ e.jsx("div", { className: "absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-300 to-transparent z-10 pointer-events-none" }),
-              t.sheetHtml ? /* @__PURE__ */ e.jsx("div", { dangerouslySetInnerHTML: { __html: t.sheetHtml } }) : /* @__PURE__ */ e.jsx(e.Fragment, { children: /* @__PURE__ */ e.jsxs("div", { className: "px-10 pt-8 pb-8", children: [
+              t.sheetHtml ? /* @__PURE__ */ e.jsx(
+                "iframe",
+                {
+                  srcDoc: t.sheetHtml,
+                  title: "Traffic Sheet",
+                  style: { width: "100%", height: "100%", border: "none", background: "#fff", display: "block" }
+                }
+              ) : /* @__PURE__ */ e.jsx(e.Fragment, { children: /* @__PURE__ */ e.jsxs("div", { className: "px-10 pt-8 pb-8", children: [
                 /* @__PURE__ */ e.jsx("div", { className: "text-center mb-6", children: (() => {
                   const m = (typeof window < "u" && window.MegaraLibraryLogos || {})[t.brand];
                   return m ? /* @__PURE__ */ e.jsx("img", { src: m, alt: t.brand, style: { height: 48, margin: "0 auto", display: "block" } }) : /* @__PURE__ */ e.jsx("div", { className: "inline-block border-2 border-gray-800 px-5 py-1.5", children: /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-900 tracking-wider text-lg uppercase", children: t.brand.toUpperCase() }) });
@@ -1567,18 +1574,18 @@ function Ge({
                       const h = m[g] || "bg-gray-100 border-gray-200";
                       p.push(
                         /* @__PURE__ */ e.jsx("tr", { className: `${h} border-b`, children: /* @__PURE__ */ e.jsx("td", { colSpan: 5, className: "py-1.5 px-3 font-bold text-gray-800 uppercase text-xs", children: g }) }, "hdr-" + g)
-                      ), x[g].forEach((v, j) => {
+                      ), x[g].forEach((f, j) => {
                         p.push(
                           /* @__PURE__ */ e.jsxs(
                             "tr",
                             {
                               className: `border-b border-gray-100 ${j % 2 === 0 ? "bg-green-50/40" : "bg-white"} hover:bg-green-50 transition-colors`,
                               children: [
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-600 font-mono text-xs", children: v.dates }),
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-900 font-mono text-xs", children: v.code }),
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: v.length }),
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: v.pct }),
-                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-500 text-xs", children: v.notes })
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-600 font-mono text-xs", children: f.dates }),
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-900 font-mono text-xs", children: f.code }),
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: f.length }),
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-700 font-mono text-xs", children: f.pct }),
+                                /* @__PURE__ */ e.jsx("td", { className: "py-2 px-3 text-gray-500 text-xs", children: f.notes })
                               ]
                             },
                             g + "-" + j
@@ -1827,7 +1834,7 @@ function Ge({
     }
   ) });
 }
-const V = H(!1);
+const D = H(!1);
 function Ue() {
   const [t, s] = N(!1), [a, r] = N("Postman Law"), [n, l] = N(!1), [b, d] = N(null);
   T(() => {
@@ -1842,7 +1849,7 @@ function Ue() {
     ];
     return Array.from({
       length: 60
-    }).map((f, A) => ({
+    }).map((v, A) => ({
       id: A,
       left: `${Math.random() * 100}vw`,
       bottom: `${-10 + Math.random() * 20}px`,
@@ -1867,14 +1874,14 @@ function Ue() {
     "October",
     "November",
     "December"
-  ], g = Array.from(new Set(x.map((o) => o.month))), h = p.filter((o) => g.includes(o)).reverse(), v = x.reduce(
-    (o, f) => (o[f.month] || (o[f.month] = []), o[f.month].push(f), o),
+  ], g = Array.from(new Set(x.map((o) => o.month))), h = p.filter((o) => g.includes(o)).reverse(), f = x.reduce(
+    (o, v) => (o[v.month] || (o[v.month] = []), o[v.month].push(v), o),
     {}
   ), j = h.filter((o) => {
-    var f;
-    return ((f = v[o]) == null ? void 0 : f.length) > 0;
-  }), D = new Set(x.map((o) => o.market)).size, y = t;
-  return /* @__PURE__ */ e.jsx(V.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
+    var v;
+    return ((v = f[o]) == null ? void 0 : v.length) > 0;
+  }), V = new Set(x.map((o) => o.market)).size, y = t;
+  return /* @__PURE__ */ e.jsx(D.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
     "div",
     {
       className: `min-h-screen w-full flex flex-col relative overflow-hidden font-sans transition-colors duration-700 ${y ? "bg-[#f5eef8]" : ""}`,
@@ -1936,7 +1943,7 @@ function Ue() {
             onBrandChange: r,
             brandCounts: c,
             totalInstructions: x.length,
-            totalMarkets: D,
+            totalMarkets: V,
             archivedCount: w,
             showArchived: n,
             onToggleArchived: () => l((o) => !o)
@@ -1976,7 +1983,7 @@ function Ue() {
               Be,
               {
                 month: o,
-                instructions: v[o],
+                instructions: f[o],
                 onBookClick: d,
                 light: y
               }
@@ -1997,5 +2004,5 @@ function Ue() {
 }
 export {
   Ue as App,
-  V as ThemeContext
+  D as ThemeContext
 };
