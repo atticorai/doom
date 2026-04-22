@@ -6709,7 +6709,14 @@ Be direct and actionable. No generic advice.`;
     </div>
     <div style={{flex:1,overflowY:"auto",padding:16}}>
       <AnimatePresence mode="wait" initial={false}>
-        <MDiv key={pg} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}} transition={{duration:0.22,ease:[0.4,0,0.2,1]}}>
+        <MDiv
+          key={pg}
+          initial={{opacity:0,y:28,scale:0.97,filter:"blur(6px)"}}
+          animate={{opacity:1,y:0,scale:1,filter:"blur(0px)"}}
+          exit={{opacity:0,y:-14,scale:0.99,filter:"blur(3px)",transition:{duration:0.18,ease:[0.4,0,1,1]}}}
+          transition={{duration:0.42,ease:[0.22,0.61,0.36,1]}}
+          style={{willChange:"transform,filter,opacity"}}
+        >
           {pg==="dash"&&<Dash/>}
           {pg==="traf"&&<TrafPg/>}
           {pg==="tracker"&&<TrackerPg/>}
