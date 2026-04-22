@@ -7035,16 +7035,24 @@ Be direct and actionable. No generic advice. Every market recommendation must re
             // uses, and REPLACES each matching brand|market|media|month slot
             // in Firestore. Skips any record where month === "April" so
             // April stays sacred. Admin-gated.
-            if(!window.JSZip){notify("JSZip library not loaded yet — refresh and retry.");return}
-            if(!window.pdfjsLib){notify("pdf.js not loaded yet — refresh and retry.");return}
+            if(!window.JSZip){notify("JSZip not loaded — hard-refresh the page (Ctrl+Shift+R) and retry.");return}
+            if(!window.pdfjsLib){notify("pdf.js not loaded — hard-refresh and retry.");return}
             const pw=prompt("Admin password — import all PDFs from /traffic-source.zip:");
             if(!pw)return;
             const ok=await verifyAuth(pw,"admin");
             if(!ok){alert("Wrong password");return}
             notify("Fetching traffic-source.zip…");
             let zipBlob;
-            try{const r=await fetch("/traffic-source.zip");if(!r.ok)throw new Error("HTTP "+r.status);zipBlob=await r.blob()}
-            catch(e){notify("Fetch failed: "+e.message);return}
+            try{
+              const r=await fetch("/traffic-source.zip",{cache:"no-store"});
+              if(!r.ok)throw new Error("HTTP "+r.status);
+              const ct=r.headers.get("content-type")||"";
+              if(ct.includes("text/html")){throw new Error("Got HTML instead of zip — Vercel rewrite is catching the request. Deploy vercel.json update and retry.")}
+              zipBlob=await r.blob();
+              if(zipBlob.size<1000){throw new Error("Zip is only "+zipBlob.size+" bytes — not a real zip")}
+              notify("Downloaded "+Math.round(zipBlob.size/1024)+" KB");
+            }
+            catch(e){notify("Fetch failed: "+e.message);console.error(e);return}
             notify("Unzipping…");
             const zip=await window.JSZip.loadAsync(zipBlob);
             const files=Object.keys(zip.files).filter(n=>!zip.files[n].dir&&n.toLowerCase().endsWith(".pdf"));
