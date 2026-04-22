@@ -132,14 +132,12 @@ export function BookOpen({
   }, [instruction]);
   if (!instruction) return null;
   const isciRows = generateIsciRows(instruction);
-  const marketAbbr =
-  instruction.market === 'Chicago' ?
-  'CHI' :
-  instruction.market === 'Cincinnati' ?
-  'CIN' :
-  instruction.market === 'Denver' ?
-  'DEN' :
-  'MSP';
+  const MARKET_ABBR: Record<string, string> = {
+    Chicago: 'CHI', Cincinnati: 'CIN', Denver: 'DEN', Minneapolis: 'MSP',
+    Birmingham: 'BRM', Huntsville: 'HSV', Knoxville: 'KNX', Chattanooga: 'CHA',
+    Montgomery: 'MTG', Dothan: 'DHN', Gadsden: 'GAD',
+  };
+  const marketAbbr = MARKET_ABBR[instruction.market] || instruction.market.slice(0, 3).toUpperCase();
   const handleClose = () => {
     playBookCloseSound();
     onClose();
@@ -192,7 +190,9 @@ export function BookOpen({
 
               <div className="grid grid-cols-[140px_1fr] gap-y-2.5 text-sm max-w-2xl mb-8">
                 <span className="font-bold text-gray-700">Agency:</span>
-                <span className="text-gray-900">Blackacre Services</span>
+                <span className="text-gray-900">
+                  {instruction.brand === 'Postman Law' ? 'Blackacre Services' : 'WK Advertising Solutions'}
+                </span>
                 <span className="font-bold text-gray-700">Client:</span>
                 <span className="text-purple-600 font-medium">
                   {instruction.brand}
@@ -213,7 +213,7 @@ export function BookOpen({
                   Broadcast Month:
                 </span>
                 <span className="text-red-500 font-medium">
-                  {instruction.month}
+                  {instruction.month}{instruction.year ? ' ' + instruction.year : ''}
                 </span>
                 <span className="font-bold text-gray-700">Flight Dates:</span>
                 <span className="text-gray-900 font-medium">
@@ -223,13 +223,24 @@ export function BookOpen({
                   Version / Links:
                 </span>
                 <span className="text-gray-900">
-                  Version 1 / {marketAbbr} Assets
+                  {instruction.version || 'v1'} / {instruction.market} Assets
                 </span>
-                <span className="font-bold text-gray-700">Comments:</span>
-                <span className="text-gray-600 text-xs leading-relaxed">
-                  If you buy has no bookends, run as standalones, if you have
-                  stand alones run Legal Firepower :15
-                </span>
+                {instruction.comments ? (
+                  <>
+                    <span className="font-bold text-gray-700">Comments:</span>
+                    <span className="text-gray-600 text-xs leading-relaxed">
+                      {instruction.comments}
+                    </span>
+                  </>
+                ) : null}
+                {instruction.stations && instruction.stations.length > 0 ? (
+                  <>
+                    <span className="font-bold text-gray-700">Stations:</span>
+                    <span className="text-gray-600 text-xs leading-relaxed">
+                      {instruction.stations.join(', ')}
+                    </span>
+                  </>
+                ) : null}
               </div>
 
               <table className="w-full text-sm">
@@ -253,36 +264,59 @@ export function BookOpen({
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="bg-green-100 border-b border-green-200">
-                    <td
-                      colSpan={5}
-                      className="py-1.5 px-3 font-bold text-gray-800 uppercase text-xs">
-                      
-                      All Week
-                    </td>
-                  </tr>
-                  {isciRows.map((row, i) =>
-                  <tr
-                    key={i}
-                    className={`border-b border-gray-100 ${i % 2 === 0 ? 'bg-green-50/40' : 'bg-white'} hover:bg-green-50 transition-colors`}>
-                    
-                      <td className="py-2 px-3 text-gray-600 font-mono text-xs">
-                        {row.dates}
-                      </td>
-                      <td className="py-2 px-3 text-gray-900 font-mono text-xs">
-                        {row.code}
-                      </td>
-                      <td className="py-2 px-3 text-gray-700 font-mono text-xs">
-                        {row.length}
-                      </td>
-                      <td className="py-2 px-3 text-gray-700 font-mono text-xs">
-                        {row.pct}
-                      </td>
-                      <td className="py-2 px-3 text-gray-500 text-xs">
-                        {row.notes}
-                      </td>
-                    </tr>
-                  )}
+                  {(() => {
+                    // Group ISCIs by schedule type (M-F Schedule, Weekend Schedule,
+                    // M-F Bookend, etc.), matching the traffic-sheet layout from
+                    // the main app. Falls back to "All Week" when no schedule is set.
+                    const SCHED_ORDER = [
+                      'M-F Schedule', 'M-F Bookend', 'Weekend Schedule',
+                      'Weekend Bookend', 'All Week', 'Holiday Only'
+                    ];
+                    const SCHED_BG: Record<string, string> = {
+                      'M-F Schedule': 'bg-blue-100 border-blue-200',
+                      'M-F Bookend': 'bg-purple-100 border-purple-200',
+                      'Weekend Schedule': 'bg-amber-100 border-amber-200',
+                      'Weekend Bookend': 'bg-pink-100 border-pink-200',
+                      'All Week': 'bg-green-100 border-green-200',
+                      'Holiday Only': 'bg-red-100 border-red-200',
+                    };
+                    const groups: Record<string, typeof isciRows> = {};
+                    isciRows.forEach((row) => {
+                      const key = row.notes && SCHED_ORDER.indexOf(row.notes) >= 0
+                        ? row.notes
+                        : 'All Week';
+                      if (!groups[key]) groups[key] = [];
+                      groups[key].push(row);
+                    });
+                    const orderedKeys = [
+                      ...SCHED_ORDER.filter((k) => groups[k]?.length),
+                      ...Object.keys(groups).filter((k) => !SCHED_ORDER.includes(k))
+                    ];
+                    const out: React.ReactNode[] = [];
+                    orderedKeys.forEach((sched) => {
+                      const bg = SCHED_BG[sched] || 'bg-gray-100 border-gray-200';
+                      out.push(
+                        <tr key={'hdr-' + sched} className={`${bg} border-b`}>
+                          <td colSpan={5} className="py-1.5 px-3 font-bold text-gray-800 uppercase text-xs">
+                            {sched}
+                          </td>
+                        </tr>
+                      );
+                      groups[sched].forEach((row, i) => {
+                        out.push(
+                          <tr key={sched + '-' + i}
+                            className={`border-b border-gray-100 ${i % 2 === 0 ? 'bg-green-50/40' : 'bg-white'} hover:bg-green-50 transition-colors`}>
+                            <td className="py-2 px-3 text-gray-600 font-mono text-xs">{row.dates}</td>
+                            <td className="py-2 px-3 text-gray-900 font-mono text-xs">{row.code}</td>
+                            <td className="py-2 px-3 text-gray-700 font-mono text-xs">{row.length}</td>
+                            <td className="py-2 px-3 text-gray-700 font-mono text-xs">{row.pct}</td>
+                            <td className="py-2 px-3 text-gray-500 text-xs">{row.notes}</td>
+                          </tr>
+                        );
+                      });
+                    });
+                    return out;
+                  })()}
                 </tbody>
               </table>
             </div>
