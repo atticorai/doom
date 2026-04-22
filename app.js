@@ -764,25 +764,11 @@ const App=()=>{
           const inv={};d.forEach(h=>{const k=(h.brand||"?")+" | "+(h.market||"?")+" | "+(h.media||"?")+" | "+(h.month||"?");if(!inv[k])inv[k]=0;inv[k]++});
           Object.entries(inv).sort().forEach(([k,v])=>console.log("  "+k+(v>1?" (×"+v+")":"")));
           console.log("═══════════════════════════════════════════════");
-          // Strip ", STATE" suffix from market on load AND persist the
-          // cleaned records back to Firestore. No state abbreviations are
-          // allowed anywhere in the data — the app uses clean city names
-          // ("Chicago") or 3-letter DMA codes ("CHI"), never "Chicago, IL".
-          const mktClean=d.map(h=>{
-            const raw=String(h.market||"").split(",")[0].trim();
-            const code=normMkt(raw)||raw;
-            const fullName=DM[code]||raw;
-            return (raw&&h.market!==fullName)?{...h,market:fullName}:(h.market!==raw?{...h,market:raw}:h);
-          });
-          const cleanedCount=mktClean.filter((h,i)=>h.market!==d[i].market).length;
-          setTrafficHistory(mktClean);trafficFbCountRef.current=mktClean.length;
-          if(cleanedCount){
-            console.log("[Market Clean] Stripped state suffix from "+cleanedCount+" records — writing clean version back to Firestore");
-            // Bypass the save-guard (count is identical, only market values
-            // changed) — save directly so Firestore matches what's in
-            // memory and next session loads clean.
-            setTimeout(()=>{try{saveToDb("trafficHistory",mktClean);console.log("[Market Clean] Firestore updated")}catch(e){console.error("[Market Clean] Save failed:",e)}},500);
-          }
+          // DO NOT auto-write to Firestore on load — it's the pattern that
+          // has destroyed data before. normMkt handles state suffixes at
+          // every lookup site, so dirty stored values still resolve
+          // correctly. Firestore cleans up naturally as the user edits.
+          setTrafficHistory(d);trafficFbCountRef.current=d.length
         }trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
         if(docs.workMonth?.data)setWorkMonth(JSON.parse(docs.workMonth.data));
         if(docs.confirmations?.data){const d=JSON.parse(docs.confirmations.data);setConfirmations(d)}
