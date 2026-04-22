@@ -7034,8 +7034,18 @@ Be direct and actionable. No generic advice. Every market recommendation must re
             // injected — NOT by month — so placeholders that got cloned into
             // other months (or had their month field edited) still get caught.
             const isClaudePlaceholder=(h)=>{
+              // PL placeholders — "If you buy has no bookends" seed
               if(h.brand==="Postman Law"&&h.comments&&h.comments.indexOf("If you buy has no bookends, run as standalones")>=0)return true;
+              // PL OOH MSP Wilkins Media placeholder
               if(h.brand==="Postman Law"&&h.isOoh&&h.est==="OOH-MSP-PL"&&h.comments&&h.comments.indexOf("Wilkins Media")>=0)return true;
+              // WK placeholders from wk_traffic_v3_nuclear.js — fake estimate
+              // codes like "MTG-WK-TV", "DHN-WK-RAD" (real WK estimates are
+              // 3-digit numbers 210-225, 216-232).
+              if(h.brand==="Wettermark Keith"&&typeof h.est==="string"&&/^[A-Z]{3}-WK-(TV|RAD|RADIO|OOH)$/.test(h.est))return true;
+              // WK placeholders with canned "Version 1 / [Market] Assets"
+              // comment that the nuclear file hardcoded.
+              if(h.brand==="Wettermark Keith"&&h.comments&&/^Version \d+ \/ \w+ Assets$/.test(h.comments))return true;
+              if(h.brand==="Wettermark Keith"&&h.comments&&/^(Dothan|Montgomery|Huntsville|Birmingham|Chattanooga|Knoxville) Radio Assets$/.test(h.comments))return true;
               return false;
             };
             const toRemove=trafficHistory.filter(isClaudePlaceholder);
