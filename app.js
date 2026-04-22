@@ -6821,11 +6821,10 @@ Be direct and actionable. No generic advice.`;
             const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");
             const ML=window.MegaraLibrary;
             if(!ML)return null;
-            // The library uses `fixed inset-0` for its background/vignette/fog
-            // layers. A CSS transform on this wrapper creates a containing
-            // block, so those fixed children are bound to this frame instead
-            // of escaping to the viewport and covering the sidebar.
-            return<div style={{transform:"translateZ(0)",position:"relative",minHeight:"100%",margin:-16}}>
+            // Library backgrounds are absolute (not fixed) so they stay bound
+            // to this frame. BookOpen's modal keeps fixed positioning and can
+            // cover the full viewport including the sidebar when a book opens.
+            return<div style={{position:"relative",minHeight:"100%",margin:-16,overflow:"hidden"}}>
               {React.createElement(ML,{key:libKey})}
             </div>;
           })()}

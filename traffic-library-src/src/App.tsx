@@ -85,28 +85,30 @@ export function App() {
       <div
         className={`min-h-screen w-full flex flex-col relative overflow-hidden font-sans transition-colors duration-700 ${light ? 'bg-[#f5eef8]' : ''}`}>
         
-        {/* Background layers */}
+        {/* Background layers — absolute (not fixed) so they stay bound to the
+            library's own frame when it's embedded in a host app's content
+            column instead of owning the whole viewport. */}
         <div
-          className={`fixed inset-0 pointer-events-none z-0 transition-all duration-700 ${light ? 'bg-[radial-gradient(ellipse_at_top,#f8f0fc,#ede4f3,#e0d4ec)]' : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-underworld-800 via-underworld-900 to-black'}`}>
+          className={`absolute inset-0 pointer-events-none z-0 transition-all duration-700 ${light ? 'bg-[radial-gradient(ellipse_at_top,#f8f0fc,#ede4f3,#e0d4ec)]' : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-underworld-800 via-underworld-900 to-black'}`}>
         </div>
 
         {/* Vignette */}
         <div
-          className={`fixed inset-0 pointer-events-none z-[1] ${light ? 'library-vignette-light' : 'library-vignette'}`}>
+          className={`absolute inset-0 pointer-events-none z-[1] ${light ? 'library-vignette-light' : 'library-vignette'}`}>
         </div>
 
         {/* Bottom fog */}
-        <div className="fixed inset-0 pointer-events-none z-[1] library-fog"></div>
+        <div className="absolute inset-0 pointer-events-none z-[1] library-fog"></div>
 
         {/* Ambient light pools */}
         <div
-          className={`fixed top-0 left-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none z-0 transition-colors duration-700 ${light ? 'bg-purple-300/20' : 'bg-megara-primary/5'}`}>
+          className={`absolute top-0 left-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none z-0 transition-colors duration-700 ${light ? 'bg-purple-300/20' : 'bg-megara-primary/5'}`}>
         </div>
         <div
-          className={`fixed top-1/3 right-1/4 w-80 h-80 rounded-full blur-[100px] pointer-events-none z-0 transition-colors duration-700 ${light ? 'bg-pink-200/20' : 'bg-magic-teal/5'}`}>
+          className={`absolute top-1/3 right-1/4 w-80 h-80 rounded-full blur-[100px] pointer-events-none z-0 transition-colors duration-700 ${light ? 'bg-pink-200/20' : 'bg-magic-teal/5'}`}>
         </div>
         <div
-          className={`fixed bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-64 rounded-full blur-[80px] pointer-events-none z-0 transition-colors duration-700 ${light ? 'bg-amber-200/15' : 'bg-magic-gold/3'}`}>
+          className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-64 rounded-full blur-[80px] pointer-events-none z-0 transition-colors duration-700 ${light ? 'bg-amber-200/15' : 'bg-magic-gold/3'}`}>
         </div>
 
         {/* Soul particles */}
