@@ -5676,24 +5676,28 @@ All recommendations must be specific to the ${nextBroadcastMonth} broadcast mont
 Format: Respond with exactly SIX sections, each introduced by a line starting with "## " (two hash marks + space + section title). The client splits your response on that pattern to assign each section to one of the Muses, so the format is mandatory. Do not use any other top-level headings. Keep each section under 300 words so all six fit within max_tokens.
 
 ## Staleness Analysis
-Which creatives have been running 2+ months and need rotation. Be specific — name the ISCI codes and markets.
+Which creatives have been running 2+ months and need rotation. Be specific — name the ISCI codes and markets. Note case-type saturation: if the same "trucking" or "car wreck" ISCI has run 3+ months in a market, the viewer fatigue is real; recommend a replacement from the bench list with a different value prop.
 
 ## Coverage Gaps
-Which markets are missing media types or creative tags. What needs to be added for ${nextBroadcastMonth}.
+Which markets are missing media types (TV, Radio, Streaming Audio, Cable) or case-type categories (Auto Accident, Trucking, Premises, On-the-Job, Distracted Driving, Brand). What needs to be added for ${nextBroadcastMonth}. Flag any market running a SINGLE case type — that's a weakness for PI brands that want to catch all injury types in the funnel.
 
 ## Creative Mix Analysis
-Analyze THREE dimensions: (a) Category distribution — are case types balanced? (b) Value Prop distribution — is the messaging varied enough? (c) VO distribution — is there enough voice variety? For PI attorneys, categories should cover: auto accidents, trucking, premises liability, brand awareness. Value props should mix: trust, results, local connection, expertise.
+Analyze THREE dimensions: (a) Category balance — are case types weighted toward the market's actual injury drivers? A trucking-corridor market like Chattanooga should over-index trucking; a winter market like Minneapolis should over-index auto/weather. (b) Value prop balance — trust, results, local connection, expertise, no-fee-unless-we-win. (c) VO variety — are you running the same voice across every spot? Fresh VO signals fresh firm to repeat viewers.
 
 ## Trend Recommendations
-What PI advertising approaches are working RIGHT NOW in spring 2026? What should they lean into for ${nextBroadcastMonth} specifically?
+What PI advertising is actually working in spring 2026? Think: TikTok testimonial-style creative crossing to TV, Spanish-language creative in markets with Hispanic growth (Chicago, Denver, Birmingham), mass-tort bleed-over from Camp Lejeune/3M era finishing up, newer mass torts (social media harm to minors, PFAS water, hair relaxer). Recommend which of these fit THIS brand's market footprint.
 
 ## Market-Specific Recommendations
-The payload includes a marketProfiles object with climate, industries, local sports, seasonal accident drivers, and cultural notes for every market in this brand. Use those profiles. Each market gets its own short paragraph that references the actual local context — e.g. "Knoxville: UT home games start September, plan DUI/crash creative cadence around Saturdays." Don't copy the profile text — synthesize it into actionable market guidance.
+Give EVERY market in this brand its own paragraph — don't skip any. Use the marketProfiles object: climate, industries, local sports, seasonal accident drivers, cultural notes, and local media habits. Think like a PI marketer who knows the city:
+- Which case type should dominate this market's mix based on its accident drivers? (e.g. "Dothan's rural ag roads = farm-equipment + rural-highway crashes, push that case type hard")
+- What local event / sports / seasonal moment is coming in ${nextBroadcastMonth}? How should creative lean into it?
+- Demographic nuance — is the audience conservative/trust-driven (Montgomery, Dothan), tech-professional (Huntsville), commuter-heavy (Cincinnati, Chicago), transplant-heavy (Denver)?
+- Any local media quirk — is this a market where Radio still outperforms TV for 45+ audiences, where Streaming Audio is undervalued, where Sponsorship slots win because the local team/station is beloved?
 
 ## ${nextBroadcastMonth} Rotation Plan
-For each market, recommend the specific rotation — which ISCIs to keep, which to swap out, and what new creative types to produce. Use actual ISCI codes and market codes. Ground each market's recommendation in that market's profile so the plan isn't interchangeable between markets.
+For each market, recommend the specific rotation — which ISCI codes stay, which swap out (reference staleIscis and bench), what new creative type to produce. Include rotation percentages (e.g. "Birmingham TV Base: 40% BRMWK25002T trucking, 30% BRMWK25007T auto, 30% BRMWK25011T brand"). Ground every call in that market's profile. Never give a rotation that could be swapped between two different markets without changing anything.
 
-Be direct and actionable. No generic advice.`;
+Be direct and actionable. No generic advice. Every recommendation must tie back to specific ISCI codes, specific market context, or specific data from the payload.`;
 
       const resp=await fetch("/api/planner",{
         method:"POST",
@@ -5724,16 +5728,22 @@ Be direct and actionable. No generic advice.`;
     const months=[...new Set(bt.map(h=>h.month))];
     const markets=[...new Set(bt.map(h=>h.market))];
     const tagged=bi.filter(i=>i.category||i.caseType).length;
-    // Parse AI result into Muse sections
+    // Parse AI result into Muse sections. Tolerates lead-in chatter
+    // before the first "## " heading (drop it), empty sections, and
+    // Claude switching between "## " and "**Title**" — if no sections
+    // parse we surface the raw text so the result is always viewable.
     const parseMuseSections=(text)=>{
       if(!text)return null;
-      const sections=text.split(/^##\s+/m).filter(Boolean);
-      return sections.map((s,i)=>{
+      const firstIdx=text.search(/^##\s+/m);
+      const body=firstIdx>=0?text.slice(firstIdx):text;
+      const parts=body.split(/^##\s+/m).filter(s=>s&&s.trim());
+      if(!parts.length)return null;
+      return parts.map((s,i)=>{
         const lines=s.trim().split("\n");
-        const title=lines[0]||"";
-        const body=lines.slice(1).join("\n").trim();
+        const title=(lines[0]||"").trim();
+        const content=lines.slice(1).join("\n").trim();
         const muse=MUSES[i%MUSES.length];
-        return{title,body,muse};
+        return{title,body:content,muse};
       });
     };
     const museSections=parseMuseSections(planResult);
@@ -5761,9 +5771,14 @@ Be direct and actionable. No generic advice.`;
         {planLoading?"🎵 The Muses are deliberating...":"🎭 Summon the Muses — Analyze "+planBrand}
       </button>
       {planError&&<div style={{padding:12,borderRadius:8,background:"rgba(232,90,122,.1)",border:"1px solid rgba(232,90,122,.2)",color:"#E85A7A",fontSize:13}}>The Muses encountered an error: {planError}</div>}
-      {/* Results — each section narrated by a Muse */}
+      {/* Results — each section narrated by a Muse. If sections parsed,
+          show the Muse cards; if not, fall back to the raw response so
+          the Muses' output is always viewable. */}
       {museSections&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
-        <div style={{fontSize:14,color:"#C4A0C8",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",padding:"8px 0"}}>"Listen well, for we sing of {planBrand}'s traffic rotation…"</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0"}}>
+          <div style={{fontSize:14,color:"#C4A0C8",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif"}}>"Listen well, for we sing of {planBrand}'s traffic rotation…"</div>
+          <button onClick={()=>{navigator.clipboard.writeText(planResult);notify("Copied Muses' prophecy")}} style={{padding:"4px 10px",borderRadius:6,border:"1px solid #4a3565",background:"transparent",color:"#C4A0C8",fontSize:11,fontWeight:600,cursor:"pointer"}}>📋 Copy full text</button>
+        </div>
         {museSections.map((s,i)=><MuseCard key={i} muse={s.muse} content={
           <div>
             <div style={{fontSize:14,fontWeight:800,color:s.muse.color,fontFamily:"'Cormorant Garamond',serif",marginBottom:6}}>{s.title}</div>
@@ -5776,6 +5791,10 @@ Be direct and actionable. No generic advice.`;
             })}
           </div>
         }/>)}
+      </div>}
+      {planResult&&!museSections&&<div style={{padding:14,background:"#2d1f42",border:"1px solid #4a3565",borderRadius:10,whiteSpace:"pre-wrap",fontSize:13,color:"#E8DFF0",lineHeight:1.6,fontFamily:"'Cormorant Garamond',serif"}}>
+        <div style={{fontSize:12,color:"#D4A040",fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>🎭 The Muses spoke — (sections didn't parse, raw prophecy below)</div>
+        {planResult}
       </div>}
       {/* Empty state — Muses waiting */}
       {!planResult&&!planLoading&&!planError&&<div style={{padding:40,textAlign:"center"}}>
