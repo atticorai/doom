@@ -7008,8 +7008,36 @@ Be direct and actionable. No generic advice. Every market recommendation must re
             notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);
           },
           delete:async(idx)=>{const h=trafficHistory[idx];if(!h)return;const pw=prompt("Admin password to delete traffic:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok){alert("Wrong password");return}if(!confirm("Delete "+h.brand+" "+h.market+" "+h.media+" "+h.month+"? This cannot be undone."))return;setTrafficHistory(p=>p.filter((_,j)=>j!==idx));log("Traffic Deleted",h.brand+" "+h.market+" "+h.media+" "+h.month);notify("Traffic deleted")},
-          wipeBrand:async(targetBrand)=>{
-            // Nuclear option — removes ALL trafficHistory records for one
+          restoreFromBackup:async()=>{
+            // Pulls the Firestore backup document (appData/trafficHistory_backup)
+            // which was written right before each save, then also checks
+            // localStorage. Shows counts, lets user pick which to restore.
+            if(!db){notify("Firestore not available");return}
+            const pw=prompt("Admin password — restore trafficHistory from backup:");
+            if(!pw)return;
+            const ok=await verifyAuth(pw,"admin");
+            if(!ok){alert("Wrong password");return}
+            let fsBackup=null;let lsBackup=null;
+            try{const snap=await db.collection("appData").doc("trafficHistory_backup").get();if(snap.exists){const d=snap.data();if(d&&d.data){fsBackup={data:JSON.parse(d.data),ts:d.ts}}}}catch(e){console.warn("Firestore backup read failed:",e)}
+            try{const ls=localStorage.getItem("doom_backup_trafficHistory");if(ls){const j=JSON.parse(ls);if(j&&j.data){lsBackup={data:JSON.parse(j.data),ts:j.ts}}}}catch(e){console.warn("localStorage backup read failed:",e)}
+            if(!fsBackup&&!lsBackup){notify("No backup found in Firestore or localStorage.");return}
+            const cur=trafficHistory.length;
+            const opts=[];
+            if(fsBackup)opts.push("1 = Firestore backup ("+fsBackup.data.length+" records, saved "+new Date(fsBackup.ts).toLocaleString()+")");
+            if(lsBackup)opts.push("2 = localStorage backup ("+lsBackup.data.length+" records, saved "+new Date(lsBackup.ts).toLocaleString()+")");
+            opts.push("Cancel = keep current ("+cur+" records)");
+            const pick=prompt("Current trafficHistory: "+cur+" records.\n\nWhich backup to restore?\n\n"+opts.join("\n"));
+            if(!pick)return;
+            let chosen=null;
+            if(pick.trim()==="1"&&fsBackup)chosen=fsBackup;
+            else if(pick.trim()==="2"&&lsBackup)chosen=lsBackup;
+            if(!chosen){notify("Cancelled.");return}
+            if(!confirm("REPLACE current "+cur+" records with backup ("+chosen.data.length+" records from "+new Date(chosen.ts).toLocaleString()+")?\n\nYour current data will be lost unless it's also in the backup."))return;
+            setTrafficHistory(chosen.data);
+            log("Restore from backup",chosen.data.length+" records restored");
+            notify("Restored "+chosen.data.length+" records from backup.");
+          },
+          wipeBrand:async(targetBrand)=>{            // Nuclear option — removes ALL trafficHistory records for one
             // brand so the user can re-import cleanly. Admin-gated + double
             // confirm. Does NOT touch the other brand.
             const pw=prompt("Admin password — WIPE ALL "+targetBrand+" traffic records from Firestore:");

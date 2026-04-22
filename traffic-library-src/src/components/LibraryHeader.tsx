@@ -102,6 +102,15 @@ export function LibraryHeader({
           <button
             onClick={() => {
               const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
+              if (typeof actions.restoreFromBackup === 'function') actions.restoreFromBackup();
+            }}
+            className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'bg-emerald-50 border-emerald-400 text-emerald-800 hover:bg-emerald-100' : 'bg-emerald-900/20 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/30'}`}
+            title="Restore trafficHistory from Firestore / localStorage backup">
+            ↺ Restore Backup
+          </button>
+          <button
+            onClick={() => {
+              const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
               if (typeof actions.cleanPlaceholders === 'function') actions.cleanPlaceholders();
             }}
             className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100' : 'bg-rose-900/20 border-rose-500/40 text-rose-300 hover:bg-rose-900/30'}`}
