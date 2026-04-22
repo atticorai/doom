@@ -49,7 +49,7 @@ body {
   50% { box-shadow: 0 0 12px 4px currentColor; transform: scale(1.5); }
 }
 .soul-particle {
-  position: absolute;
+  position: fixed;
   border-radius: 50%;
   opacity: 0;
   pointer-events: none;
