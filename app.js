@@ -5192,9 +5192,19 @@ ${fullText.substring(0,3000)}`}]
     };
     const doImport=async()=>{if(!importPreview)return;const pw=prompt("Admin password to import:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Incorrect password");
       const em=normMkt(importPreview.market)||importPreview.market;
-      const existing=trafficHistory.find(h=>h.brand===importPreview.brand&&(normMkt(h.market)||h.market)===em&&h.media===importPreview.media&&h.month===importPreview.month);
-      if(existing){log("Import Skipped",importPreview.brand+" "+em+" "+importPreview.media+" "+importPreview.month+" — record already exists");notify("⚠ Skipped: "+importPreview.market+" "+importPreview.media+" "+importPreview.month+" already exists");setImportText("");setImportPreview(null);setShowImport(false);return}
-      setTrafficHistory(p=>[...p,importPreview]);log("Traffic Import",importPreview.brand+" "+importPreview.market+" "+importPreview.month+" "+importPreview.media);notify(doomPick(DOOM.importClean)+" Imported: "+importPreview.market+" "+importPreview.month);setImportText("");setImportPreview(null);setShowImport(false)};
+      const existingIdx=trafficHistory.findIndex(h=>h.brand===importPreview.brand&&(normMkt(h.market)||h.market)===em&&h.media===importPreview.media&&h.month===importPreview.month);
+      if(existingIdx>=0){
+        const existing=trafficHistory[existingIdx];
+        if(!confirm(importPreview.brand+" "+em+" "+importPreview.media+" "+importPreview.month+" already exists (v"+(existing.version||"1")+", "+(existing.iscis||[]).length+" ISCIs).\n\nREPLACE the existing record with this import? Old record is lost."))return;
+        setTrafficHistory(p=>p.map((h,j)=>j===existingIdx?importPreview:h));
+        log("Traffic Import (Replace)",importPreview.brand+" "+importPreview.market+" "+importPreview.month+" "+importPreview.media);
+        notify("Replaced "+importPreview.market+" "+importPreview.media+" "+importPreview.month+" — "+importPreview.iscis.length+" ISCIs");
+      }else{
+        setTrafficHistory(p=>[...p,importPreview]);
+        log("Traffic Import",importPreview.brand+" "+importPreview.market+" "+importPreview.month+" "+importPreview.media);
+        notify(doomPick(DOOM.importClean)+" Imported: "+importPreview.market+" "+importPreview.month);
+      }
+      setImportText("");setImportPreview(null);setShowImport(false)};
     const brands=[...new Set(trafficHistory.map(h=>h.brand))].sort();
     const mkts=[...new Set(trafficHistory.map(h=>h.market))].sort();
     const medias=[...new Set(trafficHistory.map(h=>h.media))].sort();
@@ -5352,9 +5362,20 @@ ${fullText.substring(0,3000)}`}]
           if(parsed){
             const dupe=checkDuplicate(parsed);
             if(dupe){
-              console.log("IMPORT: DUPLICATE skipped — "+parsed.market+" "+parsed.media+" "+parsed.month);
-              results.push({file:file.name,parsed,text,status:"duplicate",existing:dupe});
-              skipped++;
+              // Replace the existing record instead of skipping — bad
+              // placeholders shouldn't block fresh imports.
+              const existingIdx=trafficHistory.findIndex(h=>h===dupe);
+              if(existingIdx>=0){
+                setTrafficHistory(p=>p.map((h,j)=>j===existingIdx?{...parsed,status:"imported"}:h));
+                log("PDF Import (Replace)",parsed.brand+" "+parsed.market+" "+parsed.month+" "+parsed.media+" ("+parsed.iscis.length+" ISCIs)");
+                results.push({file:file.name,parsed,text,status:"replaced",existing:dupe});
+                imported++;
+              }else{
+                setTrafficHistory(p=>[{...parsed,status:"imported"},...p]);
+                log("PDF Import",parsed.brand+" "+parsed.market+" "+parsed.month+" "+parsed.media+" ("+parsed.iscis.length+" ISCIs)");
+                results.push({file:file.name,parsed,text,status:"imported"});
+                imported++;
+              }
             }else{
               setTrafficHistory(p=>[{...parsed,status:"imported"},...p]);
               log("PDF Import",parsed.brand+" "+parsed.market+" "+parsed.month+" "+parsed.media+" ("+parsed.iscis.length+" ISCIs)");
