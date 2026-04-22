@@ -6823,6 +6823,9 @@ Be direct and actionable. No generic advice.`;
           };
         });
         window.MegaraLibraryData=data;
+        // Logos read by brand by the library's BookOpen (keeps one copy of
+        // each base64 instead of duplicating it into every instruction).
+        window.MegaraLibraryLogos={"Postman Law":LOGO_PL,"Wettermark Keith":LOGO_WK};
         console.log("[MegaraLibrary] piped",data.length,"records from trafficHistory");
         const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");
         const ML=window.MegaraLibrary;

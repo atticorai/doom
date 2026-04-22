@@ -181,11 +181,19 @@ export function BookOpen({
 
             <div className="px-10 pt-8 pb-8">
               <div className="text-center mb-6">
-                <div className="inline-block border-2 border-gray-800 px-5 py-1.5">
-                  <span className="font-bold text-gray-900 tracking-wider text-lg uppercase">
-                    {instruction.brand.toUpperCase()}
-                  </span>
-                </div>
+                {(() => {
+                  const logos = (typeof window !== 'undefined' && (window as any).MegaraLibraryLogos) || {};
+                  const src = logos[instruction.brand];
+                  return src ? (
+                    <img src={src} alt={instruction.brand} style={{height:48,margin:'0 auto',display:'block'}} />
+                  ) : (
+                    <div className="inline-block border-2 border-gray-800 px-5 py-1.5">
+                      <span className="font-bold text-gray-900 tracking-wider text-lg uppercase">
+                        {instruction.brand.toUpperCase()}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="grid grid-cols-[140px_1fr] gap-y-2.5 text-sm max-w-2xl mb-8">
@@ -319,6 +327,24 @@ export function BookOpen({
                   })()}
                 </tbody>
               </table>
+
+              {/* Signature block + 24-hour note — matches the real traffic
+                  sheet layout used elsewhere in the app. */}
+              <div className="mt-9 pt-3 border-t-2 border-purple-400">
+                <div className="flex justify-between text-sm">
+                  <div>
+                    <span className="font-bold text-gray-700">Accepted by:</span>
+                    <span className="inline-block border-b border-gray-400 ml-2 align-bottom" style={{minWidth:220}}>&nbsp;</span>
+                  </div>
+                  <div>
+                    <span className="font-bold text-gray-700">Date:</span>
+                    <span className="inline-block border-b border-gray-400 ml-2 align-bottom" style={{minWidth:120}}>&nbsp;</span>
+                  </div>
+                </div>
+                <div className="mt-2 px-2 py-1.5 bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-relaxed">
+                  Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.
+                </div>
+              </div>
             </div>
           </div>
 
