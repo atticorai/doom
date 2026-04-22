@@ -7029,6 +7029,110 @@ Be direct and actionable. No generic advice. Every market recommendation must re
             log("Restore from backup",chosen.src+" — "+chosen.data.length+" records restored");
             notify("Restored "+chosen.data.length+" records from "+chosen.src+".");
           },
+          loadTrafficSource:async()=>{
+            // Fetches /traffic-source.zip, unzips, parses every PDF through
+            // the same extractPdfText / parseTrafficText the manual import
+            // uses, and REPLACES each matching brand|market|media|month slot
+            // in Firestore. Skips any record where month === "April" so
+            // April stays sacred. Admin-gated.
+            if(!window.JSZip){notify("JSZip library not loaded yet — refresh and retry.");return}
+            if(!window.pdfjsLib){notify("pdf.js not loaded yet — refresh and retry.");return}
+            const pw=prompt("Admin password — import all PDFs from /traffic-source.zip:");
+            if(!pw)return;
+            const ok=await verifyAuth(pw,"admin");
+            if(!ok){alert("Wrong password");return}
+            notify("Fetching traffic-source.zip…");
+            let zipBlob;
+            try{const r=await fetch("/traffic-source.zip");if(!r.ok)throw new Error("HTTP "+r.status);zipBlob=await r.blob()}
+            catch(e){notify("Fetch failed: "+e.message);return}
+            notify("Unzipping…");
+            const zip=await window.JSZip.loadAsync(zipBlob);
+            const files=Object.keys(zip.files).filter(n=>!zip.files[n].dir&&n.toLowerCase().endsWith(".pdf"));
+            if(!files.length){notify("No PDFs in the zip.");return}
+            const extractPdfTextLocal=async(pdfDoc)=>{
+              let text="";
+              for(let pi=1;pi<=pdfDoc.numPages;pi++){
+                const page=await pdfDoc.getPage(pi);
+                const tc=await page.getTextContent();
+                const rows={};
+                tc.items.forEach(item=>{if(!item.str||!item.str.trim())return;const y=item.transform?Math.round(item.transform[5]):0;const x=item.transform?Math.round(item.transform[4]):0;let rk=y;const nearby=Object.keys(rows).map(Number).find(k=>Math.abs(k-y)<=3);if(nearby!==undefined)rk=nearby;if(!rows[rk])rows[rk]=[];rows[rk].push({x,text:item.str})});
+                Object.keys(rows).map(Number).sort((a,b)=>b-a).forEach(y=>{text+=rows[y].sort((a,b)=>a.x-b.x).map(i=>i.text).join(" ")+"\n"});
+              }
+              return text;
+            };
+            // Minimal inline parser mirroring LibraryPg.parseTrafficText
+            const parseLocal=(text)=>{
+              try{
+                const t=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+                const getField=(label)=>{const re=new RegExp(label.replace(/\//g,"\\/")+"\\s*:\\s*(.+?)(?:\\n|$)","i");const m=t.match(re);return m?m[1].trim():""};
+                let brand=getField("Client")||"";
+                let market=getField("Market")||"";
+                let buyer=getField("Buyer")||"";
+                let media=getField("Media")||"TV";
+                let month=(getField("Broadcast Month")||"").split(/\s+/)[0];
+                let flight=getField("Flight Dates")||"";
+                let versionRaw=getField("Version/ Links")||getField("Version")||"";
+                let comments=getField("Comments")||"";
+                const version=versionRaw.match(/(\d+)/)?.[1]||"1";
+                let dma=normMkt(market)||(market.length<=4?market.replace(/[^A-Z]/gi,"").toUpperCase().substring(0,3):market.substring(0,3).toUpperCase());
+                if(!dma)dma="UNK";
+                if(brand.toLowerCase().includes("postman"))brand="Postman Law";
+                else if(brand.toLowerCase().includes("wettermark"))brand="Wettermark Keith";
+                const lines=t.split("\n");const iscis=[];
+                const codePat=/([A-Z]{3,4}(?:PL|WK)\d{4,7}[A-Z0-9])/;
+                for(const line of lines){
+                  const m=line.match(codePat);if(!m)continue;
+                  const code=m[1];
+                  const rest=line.substring(line.indexOf(code)+code.length).trim();
+                  const durMatch=rest.match(/:(\d{2})\b/);
+                  const dur=durMatch?durMatch[1]:"30";
+                  const pctMatch=rest.match(/(\d{1,2}(?:\.\d+)?)\s*%/);
+                  const pct=pctMatch?pctMatch[1]:"";
+                  let title=rest.split(/\s+:/)[0].trim();
+                  const bookendMatch=rest.match(/(?:Bookend\s*)?:(\d{2})\s+([A-D])\b/);
+                  const bookend=bookendMatch?"Bookend :"+bookendMatch[1]+" "+bookendMatch[2]:"";
+                  const schedMatch=rest.match(/(Monday\s*-\s*Friday\s*Schedule|M-F\s*Schedule|Weekend\s*Schedule|M-F\s*Bookend|Weekend\s*Bookend|All\s*Week|Holiday\s*Only)/i);
+                  const schedType=schedMatch?schedMatch[1].replace(/Monday\s*-\s*Friday\s*Schedule/i,"M-F Schedule"):"";
+                  iscis.push({code,title,dur,pct,sched:schedType||"All Week",bookend});
+                }
+                // Dedup by code, prefer entries with pct
+                const seen=new Set();const uniq=[];
+                iscis.forEach(r=>{if(seen.has(r.code)){const ex=uniq.find(u=>u.code===r.code);if(ex&&!ex.pct&&r.pct)Object.assign(ex,r);return}seen.add(r.code);uniq.push(r)});
+                if(!uniq.length)return null;
+                return{est:dma+"-"+(brand==="Postman Law"?"PL":"WK")+"-"+media,brand,market:dma,media,buyer,month,version:parseInt(version)||1,stations:[],ts:new Date().toISOString(),comments,isRevision:false,combined:false,iscis:uniq,flight,status:"source"};
+              }catch(e){console.error("Parse error:",e);return null}
+            };
+            let parsed=0,skipped=0,failed=0;const parsedRecords=[];
+            for(const name of files){
+              try{
+                const buf=await zip.files[name].async("arraybuffer");
+                const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+                const text=await extractPdfTextLocal(pdf);
+                const rec=parseLocal(text);
+                if(!rec){failed++;console.warn("Zip parse failed:",name);continue}
+                if(rec.month==="April"){skipped++;continue} // April is sacred
+                parsedRecords.push(rec);
+                parsed++;
+              }catch(e){failed++;console.error("Zip file error:",name,e)}
+            }
+            if(!parsedRecords.length){notify("No records parsed from zip. "+failed+" failed, "+skipped+" skipped.");return}
+            if(!confirm("Zip parsed: "+parsed+" records ready to import.\n\n"+skipped+" April records were skipped (sacred).\n"+failed+" PDFs failed to parse.\n\nThis will REPLACE each matching brand|market|media|month slot in Firestore. Continue?"))return;
+            // Merge: replace matching slots, add new ones
+            const slotKey=(h)=>(h.brand||"")+"|"+(normMkt(h.market)||h.market||"")+"|"+(h.media||"")+"|"+(h.month||"");
+            setTrafficHistory(prev=>{
+              const map=new Map();
+              prev.forEach(h=>map.set(slotKey(h),h));
+              parsedRecords.forEach(r=>map.set(slotKey(r),r));
+              const next=Array.from(map.values());
+              // Bypass drop guard (this is intentional replace, not shrink)
+              backupBeforeSave("trafficHistory",next);
+              trafficFbCountRef.current=next.length;
+              try{db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(next),ts:Date.now()})}catch(e){console.error("Source import save failed:",e)}
+              return next;
+            });
+            log("Traffic Source Load",parsed+" records imported from traffic-source.zip");
+            notify("Imported "+parsed+" records from zip. "+skipped+" April skipped, "+failed+" failed.");
+          },
           wipeNonApril:async()=>{
             // Deletes every trafficHistory record where month !== "April" for
             // BOTH brands. April PL and April WK stay (those were built in
@@ -7045,9 +7149,15 @@ Be direct and actionable. No generic advice. Every market recommendation must re
             const summary=Object.entries(byBrand).map(([b,n])=>b+": "+n).join(", ");
             if(!confirm("Delete "+toRemove.length+" non-April records?\n\n"+summary+"\n\nApril records stay. This cannot be undone (but the rotating backup catches it).\n\nContinue?"))return;
             if(!confirm("Really? "+toRemove.length+" records will be gone."))return;
-            setTrafficHistory(p=>p.filter(h=>h.month==="April"));
+            // Bypass the setTrafficHistoryAndSave 20% drop guard — this wipe
+            // is intentional and would otherwise be silently blocked.
+            const next=trafficHistory.filter(h=>h.month==="April");
+            backupBeforeSave("trafficHistory",next);
+            trafficFbCountRef.current=next.length;
+            setTrafficHistoryRaw(next);
+            try{await db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(next),ts:Date.now()})}catch(e){console.error("Wipe save failed:",e)}
             log("Wipe Non-April",toRemove.length+" records removed");
-            notify("Wiped "+toRemove.length+" non-April records. Firestore now holds only April traffic.");
+            notify("Wiped "+toRemove.length+" non-April records. "+next.length+" April records remain.");
           },
           wipeBrand:async(targetBrand)=>{            // Nuclear option — removes ALL trafficHistory records for one
             // brand so the user can re-import cleanly. Admin-gated + double

@@ -120,6 +120,15 @@ export function LibraryHeader({
           <button
             onClick={() => {
               const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
+              if (typeof actions.loadTrafficSource === 'function') actions.loadTrafficSource();
+            }}
+            className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 font-semibold ${light ? 'bg-cyan-50 border-cyan-400 text-cyan-800 hover:bg-cyan-100' : 'bg-cyan-900/20 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/30'}`}
+            title="Fetch /traffic-source.zip and replace matching Firestore records with the PDFs inside. April records are skipped.">
+            📦 Load Traffic Source
+          </button>
+          <button
+            onClick={() => {
+              const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
               if (typeof actions.cleanPlaceholders === 'function') actions.cleanPlaceholders();
             }}
             className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100' : 'bg-rose-900/20 border-rose-500/40 text-rose-300 hover:bg-rose-900/30'}`}

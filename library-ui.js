@@ -1,6 +1,6 @@
-import V, { forwardRef as I, createElement as z, useState as N, useEffect as T, useContext as E, createContext as H, useMemo as K } from "react";
-import { motion as j, AnimatePresence as W } from "framer-motion";
-var R = { exports: {} }, _ = {};
+import V, { forwardRef as I, createElement as T, useState as N, useEffect as z, useContext as E, createContext as H, useMemo as K } from "react";
+import { motion as j, AnimatePresence as F } from "framer-motion";
+var S = { exports: {} }, _ = {};
 /**
  * @license React
  * react-jsx-runtime.production.min.js
@@ -10,8 +10,8 @@ var R = { exports: {} }, _ = {};
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-var F = V, G = Symbol.for("react.element"), q = Symbol.for("react.fragment"), U = Object.prototype.hasOwnProperty, Y = F.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, J = { key: !0, ref: !0, __self: !0, __source: !0 };
-function S(t, s, a) {
+var W = V, G = Symbol.for("react.element"), q = Symbol.for("react.fragment"), U = Object.prototype.hasOwnProperty, Y = W.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, J = { key: !0, ref: !0, __self: !0, __source: !0 };
+function R(t, s, a) {
   var r, n = {}, c = null, b = null;
   a !== void 0 && (c = "" + a), s.key !== void 0 && (c = "" + s.key), s.ref !== void 0 && (b = s.ref);
   for (r in s) U.call(s, r) && !J.hasOwnProperty(r) && (n[r] = s[r]);
@@ -19,10 +19,10 @@ function S(t, s, a) {
   return { $$typeof: G, type: t, key: c, ref: b, props: n, _owner: Y.current };
 }
 _.Fragment = q;
-_.jsx = S;
-_.jsxs = S;
-R.exports = _;
-var e = R.exports;
+_.jsx = R;
+_.jsxs = R;
+S.exports = _;
+var e = S.exports;
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -73,7 +73,7 @@ const te = I(
     children: c,
     iconNode: b,
     ...p
-  }, i) => z(
+  }, i) => T(
     "svg",
     {
       ref: i,
@@ -87,7 +87,7 @@ const te = I(
       ...p
     },
     [
-      ...b.map(([m, x]) => z(m, x)),
+      ...b.map(([m, x]) => T(m, x)),
       ...Array.isArray(c) ? c : [c]
     ]
   )
@@ -100,7 +100,7 @@ const te = I(
  */
 const u = (t, s) => {
   const a = I(
-    ({ className: r, ...n }, c) => z(te, {
+    ({ className: r, ...n }, c) => T(te, {
       ref: c,
       iconNode: s,
       className: P(
@@ -286,7 +286,7 @@ const _e = [
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const ze = [
+const Te = [
   [
     "path",
     {
@@ -295,7 +295,7 @@ const ze = [
     }
   ],
   ["path", { d: "m21.854 2.147-10.94 10.939", key: "12cjpa" }]
-], Te = u("send", ze);
+], ze = u("send", Te);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -319,7 +319,7 @@ const Le = [
   ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
   ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
 ], Ie = u("x", Le);
-function Re({
+function Se({
   isLightMode: t,
   toggleTheme: s,
   brand: a,
@@ -339,7 +339,7 @@ function Re({
     `I don't do "lost files." Try someone else.`,
     "Megara doesn't forget. Megara doesn't forgive late sends."
   ], [g, w] = N(0), d = t;
-  return T(() => {
+  return z(() => {
     const l = setInterval(() => {
       w((h) => (h + 1) % x.length);
     }, 8e3);
@@ -446,6 +446,18 @@ function Re({
             className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${d ? "bg-orange-50 border-orange-400 text-orange-800 hover:bg-orange-100" : "bg-orange-900/20 border-orange-500/40 text-orange-300 hover:bg-orange-900/30"}`,
             title: "Delete all non-April traffic records. April PL + April WK stay.",
             children: "⚠ Wipe Non-April"
+          }
+        ),
+        /* @__PURE__ */ e.jsx(
+          "button",
+          {
+            onClick: () => {
+              const l = typeof window < "u" && window.MegaraLibraryActions || {};
+              typeof l.loadTrafficSource == "function" && l.loadTrafficSource();
+            },
+            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 font-semibold ${d ? "bg-cyan-50 border-cyan-400 text-cyan-800 hover:bg-cyan-100" : "bg-cyan-900/20 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/30"}`,
+            title: "Fetch /traffic-source.zip and replace matching Firestore records with the PDFs inside. April records are skipped.",
+            children: "📦 Load Traffic Source"
           }
         ),
         /* @__PURE__ */ e.jsx(
@@ -616,7 +628,7 @@ function Re({
     )
   ] });
 }
-const Se = {
+const Re = {
   April: "001.04",
   March: "001.03",
   December: "001.12"
@@ -666,7 +678,7 @@ function Pe({
                 "span",
                 {
                   className: `font-mono text-[10px] font-bold tracking-wider ${a ? "text-purple-400 group-hover:text-purple-600" : "text-magic-teal/40 group-hover:text-magic-teal/70"}`,
-                  children: Se[n] || "001"
+                  children: Re[n] || "001"
                 }
               ),
               /* @__PURE__ */ e.jsx(
@@ -708,7 +720,7 @@ function Pe({
     );
   }) }) });
 }
-const Oe = [
+const De = [
   // Postman Law - April - TV
   {
     id: "1",
@@ -1029,7 +1041,7 @@ const Oe = [
     buyer: "Lynn Cortelezzi",
     status: "pending"
   }
-], C = () => typeof window < "u" && window.MegaraLibraryData ? window.MegaraLibraryData : Oe, $ = new Proxy([], {
+], C = () => typeof window < "u" && window.MegaraLibraryData ? window.MegaraLibraryData : De, $ = new Proxy([], {
   get(t, s) {
     const a = C(), r = a[s];
     return typeof r == "function" ? r.bind(a) : r;
@@ -1043,7 +1055,7 @@ const Oe = [
   getOwnPropertyDescriptor(t, s) {
     return Object.getOwnPropertyDescriptor(C(), s);
   }
-}), O = {
+}), D = {
   Chicago: "text-market-chicago",
   Cincinnati: "text-market-cincinnati",
   Denver: "text-market-denver",
@@ -1055,7 +1067,7 @@ const Oe = [
   Montgomery: "text-market-montgomery",
   Dothan: "text-market-dothan",
   Gadsden: "text-market-gadsden"
-}, Be = {
+}, Oe = {
   Chicago: "bg-market-chicago",
   Cincinnati: "bg-market-cincinnati",
   Denver: "bg-market-denver",
@@ -1068,8 +1080,8 @@ const Oe = [
   Dothan: "bg-market-dothan",
   Gadsden: "bg-market-gadsden"
 };
-function De({ instruction: t, onClick: s }) {
-  const a = E(B), r = t.status === "sent", n = parseInt(t.iscis) || 5, c = n > 8 ? "h-48" : n > 5 ? "h-44" : "h-40", b = {
+function Be({ instruction: t, onClick: s }) {
+  const a = E(O), r = t.status === "sent", n = parseInt(t.iscis) || 5, c = n > 8 ? "h-48" : n > 5 ? "h-44" : "h-40", b = {
     TV: "from-[#2a1540] to-[#1a0d2e]",
     Radio: "from-[#1a2040] to-[#0d1530]",
     "Streaming Audio": "from-[#1a3030] to-[#0d2020]",
@@ -1130,7 +1142,7 @@ function De({ instruction: t, onClick: s }) {
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `w-full h-3 ${Be[t.market]} opacity-90 shadow-inner relative z-10`,
+            className: `w-full h-3 ${Oe[t.market]} opacity-90 shadow-inner relative z-10`,
             children: /* @__PURE__ */ e.jsx("div", { className: "absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" })
           }
         ),
@@ -1177,7 +1189,7 @@ function De({ instruction: t, onClick: s }) {
               /* @__PURE__ */ e.jsx(
                 "div",
                 {
-                  className: `font-bold text-sm ${O[t.market]}`,
+                  className: `font-bold text-sm ${D[t.market]}`,
                   children: t.market
                 }
               ),
@@ -1389,7 +1401,7 @@ function Ve({
                         delay: i * 0.1 + w * 0.03
                       },
                       children: /* @__PURE__ */ e.jsx(
-                        De,
+                        Be,
                         {
                           instruction: g,
                           onClick: () => a(g)
@@ -1465,7 +1477,7 @@ function Ke() {
   } catch {
   }
 }
-function We(t) {
+function Fe(t) {
   return (t.iscisDetail || []).map((a) => ({
     dates: a.sched || t.dateRange,
     code: a.code + (a.title ? " - " + a.title : ""),
@@ -1474,15 +1486,15 @@ function We(t) {
     notes: a.bookend || a.sched || ""
   }));
 }
-function Fe({
+function We({
   instruction: t,
   onClose: s,
   light: a = !1
 }) {
-  if (T(() => {
+  if (z(() => {
     t && Ee();
   }, [t]), !t) return null;
-  const r = We(t), c = {
+  const r = Fe(t), c = {
     Chicago: "CHI",
     Cincinnati: "CIN",
     Denver: "DEN",
@@ -1502,7 +1514,7 @@ function Fe({
     const x = typeof window < "u" && window.MegaraLibraryActions || {}, g = t == null ? void 0 : t.historyIdx;
     typeof x[m] == "function" && typeof g == "number" && (x[m](g), m === "delete" && s());
   };
-  return /* @__PURE__ */ e.jsx(W, { children: /* @__PURE__ */ e.jsx(
+  return /* @__PURE__ */ e.jsx(F, { children: /* @__PURE__ */ e.jsx(
     "div",
     {
       className: `fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-6 ${a ? "bg-black/40" : "bg-black/70"}`,
@@ -1706,7 +1718,7 @@ function Fe({
                         /* @__PURE__ */ e.jsx(
                           "span",
                           {
-                            className: `font-serif text-2xl font-bold ${O[t.market]}`,
+                            className: `font-serif text-2xl font-bold ${D[t.market]}`,
                             children: t.market
                           }
                         ),
@@ -1828,7 +1840,7 @@ function Fe({
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            Te,
+                            ze,
                             {
                               size: 16,
                               className: "text-megara-primary group-hover:scale-110 transition-transform group-hover:translate-x-0.5"
@@ -1885,10 +1897,10 @@ function Fe({
     }
   ) });
 }
-const B = H(!1);
+const O = H(!1);
 function Ue() {
   const [t, s] = N(!1), [a, r] = N("Postman Law"), [n, c] = N(!0), [b, p] = N(null);
-  T(() => {
+  z(() => {
     t ? document.body.classList.add("light") : document.body.classList.remove("light");
   }, [t]);
   const i = K(() => {
@@ -1931,8 +1943,8 @@ function Ue() {
   ), k = h.filter((o) => {
     var v;
     return ((v = y[o]) == null ? void 0 : v.length) > 0;
-  }), D = new Set(g.map((o) => o.market)).size, f = t;
-  return /* @__PURE__ */ e.jsx(B.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
+  }), B = new Set(g.map((o) => o.market)).size, f = t;
+  return /* @__PURE__ */ e.jsx(O.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
     "div",
     {
       className: `min-h-screen w-full flex flex-col relative overflow-hidden font-sans transition-colors duration-700 ${f ? "bg-[#f5eef8]" : ""}`,
@@ -1986,7 +1998,7 @@ function Ue() {
           )
         ),
         /* @__PURE__ */ e.jsx(
-          Re,
+          Se,
           {
             isLightMode: t,
             toggleTheme: () => s(!t),
@@ -1994,7 +2006,7 @@ function Ue() {
             onBrandChange: r,
             brandCounts: m,
             totalInstructions: g.length,
-            totalMarkets: D,
+            totalMarkets: B,
             archivedCount: w,
             showArchived: n,
             onToggleArchived: () => c((o) => !o)
@@ -2042,7 +2054,7 @@ function Ue() {
           ) })
         ] }) }),
         /* @__PURE__ */ e.jsx(
-          Fe,
+          We,
           {
             instruction: b,
             onClose: () => p(null),
@@ -2055,5 +2067,5 @@ function Ue() {
 }
 export {
   Ue as App,
-  B as ThemeContext
+  O as ThemeContext
 };
