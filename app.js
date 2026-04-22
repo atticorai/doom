@@ -6879,11 +6879,20 @@ Be direct and actionable. No generic advice. Every market recommendation must re
         const _slotKey=(h)=>(h.brand||"")+"|"+((normMkt(h.market)||h.market)||"")+"|"+(h.media||"")+"|"+(h.month||"")+"|"+(h.isOoh?"OOH":"")+"|"+(h.vendor||"");
         const _slotScore=(h)=>{
           let s=0;
-          if(h.status==="sent")s+=1000;
-          else if(h.status==="partial")s+=500;
-          else if(h.status==="imported")s+=200;
-          else if(h.status==="copied")s+=100;
-          if(h.ts){const t=new Date(h.ts).getTime();if(!isNaN(t))s+=Math.floor(t/1e8)}
+          // Richer record wins — a curated WK January TV sheet has 20+
+          // ISCIs across multiple schedule groups; an auto-created or
+          // placeholder shell has a handful. Weight ISCI count heavily so
+          // the curated record always beats the stub for the same slot.
+          s+=(h.iscis||[]).length*50;
+          // Schedule-type variety is another curated signal (M-F / Weekend
+          // / Bookend / All Week vs. everything dumped in All Week).
+          const schedTypes=new Set((h.iscis||[]).map(r=>r.sched||"All Week"));
+          s+=schedTypes.size*100;
+          if(h.status==="sent")s+=500;
+          else if(h.status==="partial")s+=250;
+          else if(h.status==="imported")s+=100;
+          else if(h.status==="copied")s+=50;
+          if(h.ts){const t=new Date(h.ts).getTime();if(!isNaN(t))s+=Math.floor(t/1e9)}
           return s;
         };
         const _slotBest=new Map();
@@ -6928,6 +6937,28 @@ Be direct and actionable. No generic advice. Every market recommendation must re
         // Logos read by brand by the library's BookOpen (keeps one copy of
         // each base64 instead of duplicating it into every instruction).
         window.MegaraLibraryLogos={"Postman Law":LOGO_PL,"Wettermark Keith":LOGO_WK};
+        // Debug helper — open devtools and run
+        //   MegaraLibraryDebug("Wettermark Keith","Montgomery","Radio","January")
+        // to dump every Firestore trafficHistory record for that exact slot,
+        // plus which one the Library picked after dedup. That tells us at a
+        // glance whether the data in Firestore is the problem or the render is.
+        window.MegaraLibraryDebug=(brandF,marketF,mediaF,monthF)=>{
+          const all=trafficHistory.map((h,i)=>({i,h})).filter(({h})=>{
+            if(brandF&&h.brand!==brandF)return false;
+            if(marketF){const hm=(DM[h.market]||h.market);if(hm!==marketF&&h.market!==marketF)return false}
+            if(mediaF&&h.media!==mediaF)return false;
+            if(monthF&&h.month!==monthF)return false;
+            return true;
+          });
+          console.log("=== trafficHistory slot "+[brandF,marketF,mediaF,monthF].join(" | ")+" ===");
+          console.log(all.length+" record(s) in Firestore for that slot");
+          all.forEach(({i,h})=>{
+            console.log("  #"+i+" ts="+(h.ts||"(none)")+" status="+(h.status||"(none)")+" combined="+(h.combined?"yes":"no")+" est="+(h.est||"")+" iscis="+(h.iscis||[]).length+" ("+(h.iscis||[]).map(r=>r.code).join(", ")+")");
+          });
+          const picked=data.find(d=>d.brand===brandF&&d.market===marketF&&d.mediaType===mediaF&&d.month===monthF);
+          if(picked){console.log("Library is showing historyIdx="+picked.historyIdx);}
+          else console.log("Library has NO record for that slot (all filtered out or none exist).");
+        };
         // Button handlers for the right-page actions. BookOpen calls these
         // by name through window.MegaraLibraryActions, receiving the
         // instruction.historyIdx set on each record below.
