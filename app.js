@@ -5885,24 +5885,19 @@ Be direct and actionable. No generic advice.`;
     const buyToMedia={"TV Base":"TV","TV Sponsorship":"TV","TV UD/AV":"TV","TV Sports":"TV","Cable":"Cable","Heavy Up":"TV","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
     // Find traffic record for a market + buy type + month
     const getStatus=(mkt,buyType)=>{
-      const media=buyToMedia[buyType];const group=buyToGroup[buyType];
+      const media=buyToMedia[buyType];
       const mktCode=Object.entries(DM).find(([_,n])=>n===mkt)?.[0]||"";
-      // Check traffic history
+      // Lenient match: any record that exists for this brand+month+market
+      // with the right media category counts as sent. No group-level
+      // splitting — if you built a TV rotation for April, every TV buy
+      // type (Base/Sponsorship/UD-AV/Sports/Heavy Up) lights up.
       const rec=trafficHistory.find(h=>{
-        if(h.brand!==trackerBrand||h.month!==trackerMonth)return false;
-        // Match market (handle both code and full name, and multi-market records)
+        if(h.brand!==trackerBrand)return false;
+        if(!(h.month===trackerMonth||(typeof h.month==="string"&&h.month.split(/\s+/)[0]===trackerMonth)))return false;
         const hMkt=normMkt(h.market)||h.market;
         const matchMkt=hMkt===mktCode||h.market===mkt||(h.market||"").includes(mkt);
         if(!matchMkt)return false;
-        // Combined if the flag is set OR the est string has "+" (multi-estimate)
-        const hIsCombined=h.combined||(typeof h.est==="string"&&h.est.indexOf("+")>=0);
-        if(media==="TV"&&h.media==="TV"&&hIsCombined)return true;
-        if(h.media===media){
-          if(!group||!h.group)return true;
-          if(h.group===group)return true;
-          if(hIsCombined)return true;
-        }
-        return false;
+        return h.media===media;
       });
       if(!rec)return{status:"empty",est:null,rec:null};
       // Any record in this slot counts as "sent" — the record only exists in
@@ -5924,14 +5919,6 @@ Be direct and actionable. No generic advice.`;
     const builtCells=mkts.reduce((a,m)=>a+buyTypes.filter(bt=>getStatus(m,bt).status==="built").length,0);
     const emptyCells=totalCells-sentCells-builtCells-mkts.reduce((a,m)=>a+buyTypes.filter(bt=>{const s=getStatus(m,bt).status;return s==="copied"||s==="partial"}).length,0);
     const pct=totalCells?Math.round((sentCells/totalCells)*100):0;
-    // Diagnostic: dump what Firestore has for the currently-selected brand +
-    // month so devtools console shows exactly which records exist and why
-    // empty cells are empty. Runs every render but is free to run.
-    const _diag=trafficHistory.filter(h=>h.brand===trackerBrand&&h.month===trackerMonth).map(h=>({
-      est:h.est,market:h.market,media:h.media,group:h.group||"(none)",combined:!!h.combined,hasPlus:(h.est||"").indexOf("+")>=0,status:h.status||"(none)",iscis:(h.iscis||[]).length
-    }));
-    if(typeof window!=="undefined")window.__trackerDiag={brand:trackerBrand,month:trackerMonth,count:_diag.length,records:_diag};
-    console.log("[TrackerDiag] "+trackerBrand+" · "+trackerMonth+" · "+_diag.length+" records:",_diag);
     // Smart alerts
     const alerts=[];
     mkts.forEach(mkt=>{
