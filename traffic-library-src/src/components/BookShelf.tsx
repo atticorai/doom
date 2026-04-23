@@ -28,9 +28,16 @@ export function BookShelf({
   'Radio',
   'Streaming Audio',
   'Cable',
+  'Digital',
+  'Display',
   'OOH'];
 
-  const sortedMedia = mediaOrder.filter((m) => groupedByMedia[m]?.length > 0);
+  // Show the known-order types first, then anything else the data pipe
+  // surfaces (custom / combined media strings) so nothing hides just
+  // because it wasn't in the hardcoded list.
+  const knownMedia = mediaOrder.filter((m) => groupedByMedia[m]?.length > 0);
+  const extraMedia = Object.keys(groupedByMedia).filter((m) => !mediaOrder.includes(m as MediaType) && groupedByMedia[m]?.length > 0);
+  const sortedMedia = [...knownMedia, ...extraMedia];
   return (
     <motion.div
       initial={{
