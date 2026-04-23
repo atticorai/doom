@@ -5994,14 +5994,19 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
       // Lenient match: any record that exists for this brand+month+market
       // with the right media category counts as sent. No group-level
       // splitting — if you built a TV rotation for April, every TV buy
-      // type (Base/Sponsorship/UD-AV/Sports/Heavy Up) lights up.
+      // type (Base/Sponsorship/UD-AV/Sports/Heavy Up) lights up. Combined
+      // estimates store media as "TV / Cable" etc., so split on " / "
+      // and treat any component match as a hit.
       const rec=trafficHistory.find(h=>{
         if(h.brand!==trackerBrand)return false;
         if(!(h.month===trackerMonth||(typeof h.month==="string"&&h.month.split(/\s+/)[0]===trackerMonth)))return false;
         const hMkt=normMkt(h.market)||h.market;
-        const matchMkt=hMkt===mktCode||h.market===mkt||(h.market||"").includes(mkt);
+        // Combined records have market like "Chicago / Cincinnati / ..."
+        const hMarkets=String(h.market||"").split(/\s*\/\s*/);
+        const matchMkt=hMkt===mktCode||hMarkets.some(m=>m===mkt||normMkt(m)===mktCode);
         if(!matchMkt)return false;
-        return h.media===media;
+        const hMedias=String(h.media||"").split(/\s*\/\s*/);
+        return hMedias.includes(media);
       });
       if(!rec)return{status:"empty",est:null,rec:null};
       // Any record in this slot counts as "sent" — the record only exists in
@@ -7003,14 +7008,20 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
           const year=!isNaN(parsedYear)?parsedYear:(monIdx>curIdx+2?curYear-1:curYear);
           const effDate=monIdx>=0?new Date(year,monIdx,1):(h.ts?new Date(h.ts):null);
           const archived=effDate?effDate<archCutoff:true;
+          // Combined estimates save market as "Chicago / Cincinnati / ..."
+          // and media as "TV / Cable" — pick the first component so the
+          // Library shelves and BookShelf recognize them (its mediaOrder
+          // only lists single types like 'TV', 'Radio', etc.).
+          const mktRaw=String(h.market||"").split(/\s*\/\s*/)[0];
+          const mediaRaw=String(h.media||"").split(/\s*\/\s*/)[0];
           return{
             id:(h.ts?String(h.ts):"tmp")+"_"+i,
             historyIdx:i,
             brand:h.brand,
             // Strip ", STATE" suffix if the record came from a PDF parse that
             // captured the full "Chicago, IL" label in the Market field.
-            market:((DM[h.market]||h.market)||"").split(",")[0].trim(),
-            mediaType:h.media,
+            market:((DM[mktRaw]||mktRaw)||"").split(",")[0].trim(),
+            mediaType:mediaRaw,
             month:parts[0]||h.month,
             estimate:h.est||"",
             version:h.version?("v"+h.version):"",
