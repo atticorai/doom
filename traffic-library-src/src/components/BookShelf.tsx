@@ -113,8 +113,8 @@ export function BookShelf({
               
               <h3
                 className={`font-serif text-xs font-bold tracking-widest uppercase drop-shadow-md ${light ? 'text-purple-800' : 'text-yellow-100'}`}>
-                
-                {mediaType}
+
+                {mediaType === 'Cable' ? 'TV/Cable' : mediaType}
                 <span
                   className={`opacity-50 normal-case ml-2 font-sans text-[10px] ${light ? 'text-purple-600' : ''}`}>
                   

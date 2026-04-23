@@ -148,7 +148,7 @@ export function BookOpen({
                 </span>
                 <span className="font-bold text-gray-700">Media:</span>
                 <span className="text-green-600 font-medium">
-                  {instruction.mediaType}
+                  {instruction.mediaType === 'Cable' ? 'TV/Cable' : instruction.mediaType}
                 </span>
                 <span className="font-bold text-gray-700">
                   Broadcast Month:

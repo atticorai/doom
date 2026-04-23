@@ -1274,7 +1274,7 @@ const App=()=>{
     };
     hdr("Agency","Atticor Media");hdr("Client",trafficRec.brand,bc);
     hdr("Market",trafficRec.market);hdr("Buyer",trafficRec.buyer,[217,119,6]);
-    hdr("Estimate",trafficRec.est);hdr("Media",trafficRec.media,[37,99,235]);
+    hdr("Estimate",trafficRec.est);hdr("Media",trafficRec.media==="Cable"?"TV/Cable":trafficRec.media,[37,99,235]);
     hdr("Month",trafficRec.month,bc);hdr("Flight",trafficRec.flight);
     hdr("Version","V"+S(trafficRec.version));
     if(trafficRec.comments)hdr("Comments",trafficRec.comments);
@@ -6041,7 +6041,7 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
           <table style={{width:"100%",borderCollapse:"collapse"}}>
             <thead><tr>
               <th style={{padding:"8px 10px",fontSize:11,fontWeight:800,color:"#D4A040",textTransform:"uppercase",letterSpacing:1,borderBottom:"2px solid rgba(212,160,64,.2)",textAlign:"left",position:"sticky",left:0,background:"linear-gradient(180deg,#2d1f42,#261840)",zIndex:2,minWidth:120}}>Market</th>
-              {buyTypes.map(bt=><th key={bt} style={{padding:"6px 8px",fontSize:9,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase",letterSpacing:.5,borderBottom:"2px solid rgba(212,160,64,.2)",textAlign:"center",background:"linear-gradient(180deg,#2d1f42,#261840)",minWidth:70,whiteSpace:"nowrap"}}>{bt}</th>)}
+              {buyTypes.map(bt=><th key={bt} style={{padding:"6px 8px",fontSize:9,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase",letterSpacing:.5,borderBottom:"2px solid rgba(212,160,64,.2)",textAlign:"center",background:"linear-gradient(180deg,#2d1f42,#261840)",minWidth:70,whiteSpace:"nowrap"}}>{bt==="Cable"?"TV/Cable":bt}</th>)}
             </tr></thead>
             <tbody>{mkts.map(mkt=>{
               const dma=Object.entries(DM).find(([_,n])=>n===mkt)?.[0]||"";
@@ -6921,7 +6921,7 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
           const isCombined=(h.combined===true)||estNums.length>1;
           if(isCombined){
             x+=hdr("Estimate(s)",estNums.length+" combined estimates");
-            x+=hdr("Media",h.media,h.isOoh?"#D4A040":"#4AC8E8");
+            x+=hdr("Media",h.media==="Cable"?"TV/Cable":h.media,h.isOoh?"#D4A040":"#4AC8E8");
             const hMkt=normMkt(h.market)||h.market;
             const subs=estNums.map(n=>estimates.find(e=>e.num===n&&e.brand===h.brand&&((normMkt(e.market)||e.market)===hMkt||e.market===h.market))).filter(Boolean);
             const buyTypes=[...new Set(subs.map(e=>e.group))].join(", ");
@@ -6934,7 +6934,7 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
             x+='</tbody></table>';
           }else{
             x+=hdr("Estimate(s)",estStr);
-            x+=hdr("Media",h.media,h.isOoh?"#D4A040":"#4AC8E8");
+            x+=hdr("Media",h.media==="Cable"?"TV/Cable":h.media,h.isOoh?"#D4A040":"#4AC8E8");
             const stas=(h.stations&&h.stations.length)?h.stations:[];
             if(stas.length)x+=hdr("Stations ("+stas.length+")",stas.join(", "));
           }

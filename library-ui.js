@@ -12,11 +12,11 @@ var R = { exports: {} }, C = {};
  */
 var W = B, G = Symbol.for("react.element"), q = Symbol.for("react.fragment"), U = Object.prototype.hasOwnProperty, Y = W.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, J = { key: !0, ref: !0, __self: !0, __source: !0 };
 function S(t, s, a) {
-  var r, o = {}, c = null, g = null;
+  var r, n = {}, c = null, g = null;
   a !== void 0 && (c = "" + a), s.key !== void 0 && (c = "" + s.key), s.ref !== void 0 && (g = s.ref);
-  for (r in s) U.call(s, r) && !J.hasOwnProperty(r) && (o[r] = s[r]);
-  if (t && t.defaultProps) for (r in s = t.defaultProps, s) o[r] === void 0 && (o[r] = s[r]);
-  return { $$typeof: G, type: t, key: c, ref: g, props: o, _owner: Y.current };
+  for (r in s) U.call(s, r) && !J.hasOwnProperty(r) && (n[r] = s[r]);
+  if (t && t.defaultProps) for (r in s = t.defaultProps, s) n[r] === void 0 && (n[r] = s[r]);
+  return { $$typeof: G, type: t, key: c, ref: g, props: n, _owner: Y.current };
 }
 C.Fragment = q;
 C.jsx = S;
@@ -69,7 +69,7 @@ const te = I(
     size: s = 24,
     strokeWidth: a = 2,
     absoluteStrokeWidth: r,
-    className: o = "",
+    className: n = "",
     children: c,
     iconNode: g,
     ...x
@@ -82,12 +82,12 @@ const te = I(
       height: s,
       stroke: t,
       strokeWidth: r ? Number(a) * 24 / Number(s) : a,
-      className: P("lucide", o),
+      className: P("lucide", n),
       ...!c && !Q(x) && { "aria-hidden": "true" },
       ...x
     },
     [
-      ...g.map(([n, d]) => z(n, d)),
+      ...g.map(([o, d]) => z(o, d)),
       ...Array.isArray(c) ? c : [c]
     ]
   )
@@ -100,7 +100,7 @@ const te = I(
  */
 const u = (t, s) => {
   const a = I(
-    ({ className: r, ...o }, c) => z(te, {
+    ({ className: r, ...n }, c) => z(te, {
       ref: c,
       iconNode: s,
       className: P(
@@ -108,7 +108,7 @@ const u = (t, s) => {
         `lucide-${t}`,
         r
       ),
-      ...o
+      ...n
     })
   );
   return a.displayName = L(t), a;
@@ -340,17 +340,17 @@ const Pe = [
   ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
   ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
 ], De = u("x", Pe);
-function Oe({
+function Ve({
   isLightMode: t,
   toggleTheme: s,
   brand: a,
   onBrandChange: r,
-  brandCounts: o,
+  brandCounts: n,
   totalInstructions: c,
   totalMarkets: g,
   archivedCount: x,
   showArchived: p,
-  onToggleArchived: n
+  onToggleArchived: o
 }) {
   const d = [
     "I remember every version. Every mistake.",
@@ -514,7 +514,7 @@ function Oe({
                 m,
                 /* @__PURE__ */ e.jsxs("span", { className: "text-xs opacity-50 ml-1", children: [
                   "(",
-                  o[m],
+                  n[m],
                   ")"
                 ] })
               ]
@@ -551,7 +551,7 @@ function Oe({
       /* @__PURE__ */ e.jsxs(
         "button",
         {
-          onClick: n,
+          onClick: o,
           className: `flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm backdrop-blur-sm transition-colors cursor-pointer ${l ? p ? "border-amber-400 bg-amber-50" : "border-purple-200 bg-white/60 hover:border-purple-400" : p ? "border-magic-gold/60 bg-magic-gold/10" : "border-megara-dark/25 bg-underworld-800/40 hover:border-magic-gold/40"}`,
           children: [
             /* @__PURE__ */ e.jsx(
@@ -601,7 +601,7 @@ function Oe({
     )
   ] });
 }
-const Ve = {
+const Oe = {
   April: "001.04",
   March: "001.03",
   December: "001.12"
@@ -611,16 +611,16 @@ function Be({
   months: s,
   light: a = !1
 }) {
-  const r = (o) => {
-    const c = document.getElementById(`month-${o}`);
+  const r = (n) => {
+    const c = document.getElementById(`month-${n}`);
     c && c.scrollIntoView({
       behavior: "smooth",
       block: "start"
     });
   };
-  return /* @__PURE__ */ e.jsx("div", { className: "relative z-10 px-8 pb-6", children: /* @__PURE__ */ e.jsx("div", { className: "flex gap-3 flex-wrap", children: s.map((o, c) => {
+  return /* @__PURE__ */ e.jsx("div", { className: "relative z-10 px-8 pb-6", children: /* @__PURE__ */ e.jsx("div", { className: "flex gap-3 flex-wrap", children: s.map((n, c) => {
     const g = t.filter(
-      (x) => x.month === o
+      (x) => x.month === n
     ).length;
     return /* @__PURE__ */ e.jsxs(
       j.button,
@@ -636,7 +636,7 @@ function Be({
         transition: {
           delay: c * 0.06
         },
-        onClick: () => r(o),
+        onClick: () => r(n),
         className: `relative group flex flex-col w-32 rounded-t-sm rounded-b-md overflow-hidden transition-all ${a ? "bg-white/70 border border-purple-200 hover:border-purple-400 hover:bg-white hover:shadow-[0_0_15px_rgba(147,51,234,0.15)]" : "bg-underworld-800/80 border border-megara-dark/30 hover:border-magic-teal/40 hover:bg-underworld-700/50 hover:shadow-glow-teal"}`,
         children: [
           /* @__PURE__ */ e.jsx(
@@ -651,7 +651,7 @@ function Be({
                 "span",
                 {
                   className: `font-mono text-[10px] font-bold tracking-wider ${a ? "text-purple-400 group-hover:text-purple-600" : "text-magic-teal/40 group-hover:text-magic-teal/70"}`,
-                  children: Ve[o] || "001"
+                  children: Oe[n] || "001"
                 }
               ),
               /* @__PURE__ */ e.jsx(
@@ -666,7 +666,7 @@ function Be({
               "span",
               {
                 className: `font-serif text-sm font-medium text-left transition-colors ${a ? "text-purple-700/70 group-hover:text-purple-800" : "text-megara-light/60 group-hover:text-megara-light/80"}`,
-                children: o
+                children: n
               }
             ),
             /* @__PURE__ */ e.jsxs(
@@ -689,7 +689,7 @@ function Be({
           )
         ]
       },
-      o
+      n
     );
   }) }) });
 }
@@ -1054,7 +1054,7 @@ const Ee = [
   Gadsden: "bg-market-gadsden"
 };
 function Ke({ instruction: t, onClick: s }) {
-  const a = E(O), r = t.status === "sent", o = parseInt(t.iscis) || 5, c = o > 8 ? "h-48" : o > 5 ? "h-44" : "h-40", g = {
+  const a = E(V), r = t.status === "sent", n = parseInt(t.iscis) || 5, c = n > 8 ? "h-48" : n > 5 ? "h-44" : "h-40", g = {
     TV: "from-[#2a1540] to-[#1a0d2e]",
     Radio: "from-[#1a2040] to-[#0d1530]",
     "Streaming Audio": "from-[#1a3030] to-[#0d2020]",
@@ -1208,8 +1208,8 @@ function Fe({
   light: r = !1
 }) {
   if (s.length === 0) return null;
-  const o = s.reduce(
-    (n, d) => (n[d.mediaType] || (n[d.mediaType] = []), n[d.mediaType].push(d), n),
+  const n = s.reduce(
+    (o, d) => (o[d.mediaType] || (o[d.mediaType] = []), o[d.mediaType].push(d), o),
     {}
   ), c = [
     "TV",
@@ -1219,12 +1219,12 @@ function Fe({
     "Digital",
     "Display",
     "OOH"
-  ], g = c.filter((n) => {
+  ], g = c.filter((o) => {
     var d;
-    return ((d = o[n]) == null ? void 0 : d.length) > 0;
-  }), x = Object.keys(o).filter((n) => {
+    return ((d = n[o]) == null ? void 0 : d.length) > 0;
+  }), x = Object.keys(n).filter((o) => {
     var d;
-    return !c.includes(n) && ((d = o[n]) == null ? void 0 : d.length) > 0;
+    return !c.includes(o) && ((d = n[o]) == null ? void 0 : d.length) > 0;
   }), p = [...g, ...x];
   return /* @__PURE__ */ e.jsxs(
     j.div,
@@ -1298,8 +1298,8 @@ function Fe({
             )
           ] })
         ] }),
-        p.map((n, d) => {
-          const b = o[n], v = new Set(b.map((l) => l.market)).size;
+        p.map((o, d) => {
+          const b = n[o], v = new Set(b.map((l) => l.market)).size;
           return /* @__PURE__ */ e.jsxs(
             j.div,
             {
@@ -1327,7 +1327,7 @@ function Fe({
                         {
                           className: `font-serif text-xs font-bold tracking-widest uppercase drop-shadow-md ${r ? "text-purple-800" : "text-yellow-100"}`,
                           children: [
-                            n,
+                            o === "Cable" ? "TV/Cable" : o,
                             /* @__PURE__ */ e.jsxs(
                               "span",
                               {
@@ -1406,7 +1406,7 @@ function Fe({
                 )
               ]
             },
-            n
+            o
           );
         })
       ]
@@ -1420,13 +1420,13 @@ function We() {
     [880, 1320].forEach((c, g) => {
       const x = t.createOscillator();
       x.type = "sine", x.frequency.value = c;
-      const p = t.createGain(), n = s + g * 0.06;
-      p.gain.setValueAtTime(0, n), p.gain.linearRampToValueAtTime(0.07, n + 0.01), p.gain.exponentialRampToValueAtTime(1e-3, n + 0.8), x.connect(p), p.connect(t.destination), x.start(n), x.stop(n + 0.8);
+      const p = t.createGain(), o = s + g * 0.06;
+      p.gain.setValueAtTime(0, o), p.gain.linearRampToValueAtTime(0.07, o + 0.01), p.gain.exponentialRampToValueAtTime(1e-3, o + 0.8), x.connect(p), p.connect(t.destination), x.start(o), x.stop(o + 0.8);
     });
     const r = t.createOscillator();
     r.type = "sine", r.frequency.value = 2640;
-    const o = t.createGain();
-    o.gain.setValueAtTime(0, s + 0.1), o.gain.linearRampToValueAtTime(0.025, s + 0.12), o.gain.exponentialRampToValueAtTime(1e-3, s + 0.5), r.connect(o), o.connect(t.destination), r.start(s + 0.1), r.stop(s + 0.5), setTimeout(() => t.close(), 1200);
+    const n = t.createGain();
+    n.gain.setValueAtTime(0, s + 0.1), n.gain.linearRampToValueAtTime(0.025, s + 0.12), n.gain.exponentialRampToValueAtTime(1e-3, s + 0.5), r.connect(n), n.connect(t.destination), r.start(s + 0.1), r.stop(s + 0.5), setTimeout(() => t.close(), 1200);
   } catch {
   }
 }
@@ -1445,13 +1445,13 @@ function qe() {
     [1047, 1319, 1568, 2093].forEach((g, x) => {
       const p = t.createOscillator();
       p.type = "sine", p.frequency.value = g;
-      const n = t.createGain(), d = s + x * 0.1;
-      n.gain.setValueAtTime(0, d), n.gain.linearRampToValueAtTime(0.06, d + 0.01), n.gain.exponentialRampToValueAtTime(1e-3, d + 0.6), p.connect(n), n.connect(t.destination), p.start(d), p.stop(d + 0.6);
+      const o = t.createGain(), d = s + x * 0.1;
+      o.gain.setValueAtTime(0, d), o.gain.linearRampToValueAtTime(0.06, d + 0.01), o.gain.exponentialRampToValueAtTime(1e-3, d + 0.6), p.connect(o), o.connect(t.destination), p.start(d), p.stop(d + 0.6);
     });
     const r = t.createOscillator();
     r.type = "sine", r.frequency.value = 3136;
-    const o = t.createGain(), c = s + 0.4;
-    o.gain.setValueAtTime(0, c), o.gain.linearRampToValueAtTime(0.04, c + 0.01), o.gain.exponentialRampToValueAtTime(1e-3, c + 0.5), r.connect(o), o.connect(t.destination), r.start(c), r.stop(c + 0.5), setTimeout(() => t.close(), 1500);
+    const n = t.createGain(), c = s + 0.4;
+    n.gain.setValueAtTime(0, c), n.gain.linearRampToValueAtTime(0.04, c + 0.01), n.gain.exponentialRampToValueAtTime(1e-3, c + 0.5), r.connect(n), n.connect(t.destination), r.start(c), r.stop(c + 0.5), setTimeout(() => t.close(), 1500);
   } catch {
   }
 }
@@ -1488,9 +1488,9 @@ function Ye({
     Ge(), s();
   }, x = () => {
     qe(), p("send");
-  }, p = (n) => {
+  }, p = (o) => {
     const d = typeof window < "u" && window.MegaraLibraryActions || {}, b = t == null ? void 0 : t.historyIdx;
-    typeof d[n] == "function" && typeof b == "number" && (d[n](b), n === "delete" && s());
+    typeof d[o] == "function" && typeof b == "number" && (d[o](b), o === "delete" && s());
   };
   return /* @__PURE__ */ e.jsx(F, { children: /* @__PURE__ */ e.jsx(
     "div",
@@ -1521,7 +1521,7 @@ function Ye({
             stiffness: 180
           },
           className: `w-full max-w-6xl h-[85vh] flex rounded-lg overflow-hidden ${a ? "shadow-[0_0_40px_rgba(147,51,234,0.1),0_25px_50px_rgba(0,0,0,0.2)]" : "shadow-[0_0_60px_rgba(200,80,192,0.15),0_25px_50px_rgba(0,0,0,0.5)]"}`,
-          onClick: (n) => n.stopPropagation(),
+          onClick: (o) => o.stopPropagation(),
           children: [
             /* @__PURE__ */ e.jsxs("div", { className: "flex-1 bg-white overflow-y-auto relative", children: [
               /* @__PURE__ */ e.jsx("div", { className: "absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-300 to-transparent z-10 pointer-events-none" }),
@@ -1552,7 +1552,7 @@ function Ye({
                   /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-700", children: "Buyer:" }),
                   /* @__PURE__ */ e.jsx("span", { className: "text-purple-600 font-medium", children: t.buyer }),
                   /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-700", children: "Media:" }),
-                  /* @__PURE__ */ e.jsx("span", { className: "text-green-600 font-medium", children: t.mediaType }),
+                  /* @__PURE__ */ e.jsx("span", { className: "text-green-600 font-medium", children: t.mediaType === "Cable" ? "TV/Cable" : t.mediaType }),
                   /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-700", children: "Broadcast Month:" }),
                   /* @__PURE__ */ e.jsxs("span", { className: "text-red-500 font-medium", children: [
                     t.month,
@@ -1585,7 +1585,7 @@ function Ye({
                     /* @__PURE__ */ e.jsx("th", { className: "text-left py-2.5 px-3 text-gray-500 font-semibold uppercase text-[10px] tracking-wider w-20", children: "Notes" })
                   ] }) }),
                   /* @__PURE__ */ e.jsx("tbody", { children: (() => {
-                    const n = [
+                    const o = [
                       "M-F Schedule",
                       "M-F Bookend",
                       "Weekend Schedule",
@@ -1601,15 +1601,15 @@ function Ye({
                       "Holiday Only": "bg-red-100 border-red-200"
                     }, b = {};
                     r.forEach((m) => {
-                      const h = m.notes && n.indexOf(m.notes) >= 0 ? m.notes : "All Week";
+                      const h = m.notes && o.indexOf(m.notes) >= 0 ? m.notes : "All Week";
                       b[h] || (b[h] = []), b[h].push(m);
                     });
                     const v = [
-                      ...n.filter((m) => {
+                      ...o.filter((m) => {
                         var h;
                         return (h = b[m]) == null ? void 0 : h.length;
                       }),
-                      ...Object.keys(b).filter((m) => !n.includes(m))
+                      ...Object.keys(b).filter((m) => !o.includes(m))
                     ], l = [];
                     return v.forEach((m) => {
                       const h = d[m] || "bg-gray-100 border-gray-200";
@@ -1894,9 +1894,9 @@ function Ye({
     }
   ) });
 }
-const O = H(!1);
+const V = H(!1);
 function Xe() {
-  const [t, s] = N(!1), [a, r] = N("Postman Law"), [o, c] = N(!1), [g, x] = N(null);
+  const [t, s] = N(!1), [a, r] = N("Postman Law"), [n, c] = N(!1), [g, x] = N(null);
   T(() => {
     t ? document.body.classList.add("light") : document.body.classList.remove("light");
   }, [t]);
@@ -1918,10 +1918,10 @@ function Xe() {
       delay: `${Math.random() * 20}s`,
       duration: `${8 + Math.random() * 18}s`
     }));
-  }, []), n = {
+  }, []), o = {
     "Postman Law": $.filter((i) => i.brand === "Postman Law").length,
     "Wettermark Keith": $.filter((i) => i.brand === "Wettermark Keith").length
-  }, d = $.filter((i) => i.brand === a), b = o ? d : d.filter((i) => !i.archived), v = d.filter((i) => i.archived).length, l = [
+  }, d = $.filter((i) => i.brand === a), b = n ? d : d.filter((i) => !i.archived), v = d.filter((i) => i.archived).length, l = [
     "January",
     "February",
     "March",
@@ -1940,8 +1940,8 @@ function Xe() {
   ), k = h.filter((i) => {
     var w;
     return ((w = f[i]) == null ? void 0 : w.length) > 0;
-  }), V = new Set(b.map((i) => i.market)).size, y = t;
-  return /* @__PURE__ */ e.jsx(O.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
+  }), O = new Set(b.map((i) => i.market)).size, y = t;
+  return /* @__PURE__ */ e.jsx(V.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
     "div",
     {
       className: `min-h-screen w-full flex flex-col relative overflow-hidden font-sans transition-colors duration-700 ${y ? "bg-[#f5eef8]" : ""}`,
@@ -1995,17 +1995,17 @@ function Xe() {
           )
         ),
         /* @__PURE__ */ e.jsx(
-          Oe,
+          Ve,
           {
             isLightMode: t,
             toggleTheme: () => s(!t),
             brand: a,
             onBrandChange: r,
-            brandCounts: n,
+            brandCounts: o,
             totalInstructions: b.length,
-            totalMarkets: V,
+            totalMarkets: O,
             archivedCount: v,
-            showArchived: o,
+            showArchived: n,
             onToggleArchived: () => c((i) => !i)
           }
         ),
@@ -2064,5 +2064,5 @@ function Xe() {
 }
 export {
   Xe as App,
-  O as ThemeContext
+  V as ThemeContext
 };
