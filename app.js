@@ -1235,140 +1235,32 @@ const App=()=>{
   }
   const notify=useCallback(m=>{setToast(m);setTimeout(()=>setToast(null),3e3)},[]);
   // Generate PDF with clickable links using jsPDF text rendering (not html2canvas)
+  // Snapshot the HTML traffic sheet and drop it straight into a PDF.
+  // The sheet is already a real CSS table with proper wrapping — stop
+  // reimplementing PDF layout in jsPDF.text() calls that don't know
+  // how to wrap or measure. trafficRec is still accepted (old callers
+  // pass it) but no longer used here; the renderSheet HTML already has
+  // everything the PDF needs. Creative file URLs stay in the email
+  // body (see Send action) so they're one click away without relying
+  // on fragile PDF link annotations.
   const generatePdfBase64=async(html,trafficRec)=>{
-    // If no traffic record passed, fall back to canvas method for non-traffic uses
-    if(!trafficRec){
-      const iframe=document.createElement("iframe");
-      iframe.style.cssText="position:fixed;left:-9999px;width:850px;height:1200px;border:none";
-      iframe.sandbox="allow-same-origin";
-      document.body.appendChild(iframe);
-      try{
-        iframe.contentDocument.open();iframe.contentDocument.write(html);iframe.contentDocument.close();
-        await new Promise(r=>setTimeout(r,500));
-        const canvas=await html2canvas(iframe.contentDocument.body,{scale:2,useCORS:true,width:850});
-        document.body.removeChild(iframe);
-        const{jsPDF}=window.jspdf;const pdf=new jsPDF("p","mm","a4");
-        const imgW=210;const imgH=(canvas.height*imgW)/canvas.width;
-        const pageH=297;let yy=0;
-        while(yy<imgH){if(yy>0)pdf.addPage();pdf.addImage(canvas.toDataURL("image/jpeg",0.95),"JPEG",0,-yy,imgW,imgH);yy+=pageH;}
-        return pdf.output("datauristring");
-      }catch(pdfErr){if(iframe.parentNode)document.body.removeChild(iframe);throw pdfErr;}
-    }
-    // ═══ Native jsPDF with clickable links ═══
-    const{jsPDF:JP}=window.jspdf;const pdf=new JP("p","mm","a4");
-    const pw=210;const ph=297;const mx=14;const cw=pw-2*mx;let y=16;
-    const S=v=>v==null?"":String(v);
-    const bc=trafficRec.brand==="Postman Law"?[124,58,237]:[217,119,6];
-    const checkPage=(need)=>{if(y+need>ph-14){pdf.addPage();y=14}};
-    // Blend an rgb color toward white by `amt` (0=original, 1=white). Use
-    // instead of passing opacity to setFillColor — jsPDF treats 4 numeric
-    // args as CMYK, which is why previous versions rendered data rows as
-    // nearly black. Pre-blend, then pass plain rgb.
-    const tint=(c,amt)=>[Math.round(c[0]+(255-c[0])*amt),Math.round(c[1]+(255-c[1])*amt),Math.round(c[2]+(255-c[2])*amt)];
-    // Brand logo at top (matches the on-screen HTML sheet)
-    try{const logoSrc=trafficRec.brand==="Postman Law"?LOGO_PL:LOGO_WK;if(logoSrc){pdf.addImage(logoSrc,"PNG",pw/2-18,y-2,36,10);y+=11}}catch(e){/* logo fails silently, text header still renders */}
-    // Header
-    pdf.setFont("helvetica","bold");pdf.setFontSize(16);pdf.setTextColor(bc[0],bc[1],bc[2]);
-    pdf.text(S(trafficRec.brand).toUpperCase(),pw/2,y,{align:"center"});y+=5;
-    pdf.setFontSize(8);pdf.setTextColor(120,120,120);
-    pdf.text((trafficRec.media||"TV").toUpperCase()+" TRAFFIC INSTRUCTIONS",pw/2,y,{align:"center"});y+=8;
-    // Info fields — fall back to estimate lookup so Market/Buyer/Brand
-    // don't render as blank labels if the stored record is missing them.
-    const estRec=trafficRec.est?estimates.find(e=>e.num===String(trafficRec.est).split(/\s*[+\/]\s*/)[0]):null;
-    const brandLabel=trafficRec.brand||estRec?.brand||"";
-    const marketRaw=trafficRec.market||estRec?.market||"";
-    const marketLabel=DM[marketRaw]||marketRaw||"—";
-    const buyerLabel=trafficRec.buyer||estRec?.buyer||"—";
-    const hdr=(label,value,color)=>{
-      checkPage(4);pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(100,100,100);
-      pdf.text(label+":",mx,y);pdf.setFont("helvetica","normal");
-      if(color)pdf.setTextColor(color[0],color[1],color[2]);else pdf.setTextColor(0,0,0);
-      pdf.text(S(value),mx+32,y);y+=4;
-    };
-    hdr("Agency","Atticor Media");hdr("Client",brandLabel,bc);
-    hdr("Market",marketLabel);hdr("Buyer",buyerLabel,[217,119,6]);
-    hdr("Estimate",trafficRec.est);hdr("Media",trafficRec.media,[37,99,235]);
-    hdr("Month",trafficRec.month,bc);hdr("Flight",trafficRec.flight);
-    hdr("Version","V"+S(trafficRec.version));
-    if(trafficRec.comments)hdr("Comments",trafficRec.comments);
-    y+=2;pdf.setDrawColor(bc[0],bc[1],bc[2]);pdf.setLineWidth(0.5);pdf.line(mx,y,mx+cw,y);y+=6;
-    // Rotation table header. Wider title column so long creative names
-    // don't wrap so aggressively; the other columns stay narrow.
-    checkPage(10);
-    const cols=[30,78,10,12,32];const colX=[mx];for(let i=1;i<cols.length;i++)colX.push(colX[i-1]+cols[i-1]);
-    pdf.setFillColor(243,237,249);pdf.rect(mx,y-3,cw,5,"F");
-    pdf.setFont("helvetica","bold");pdf.setFontSize(7);pdf.setTextColor(90,77,107);
-    ["FLIGHT","ISCI CODE & TITLE","DUR","ROT%","SCHEDULE"].forEach((h,i)=>{pdf.text(h,colX[i]+1,y)});
-    y+=4;pdf.setLineWidth(0.3);pdf.setDrawColor(0,0,0);pdf.line(mx,y,mx+cw,y);y+=4;
-    // ISCI rows grouped by schedule
-    const isciRows=trafficRec.iscis||[];
-    const schedGroups={};isciRows.forEach(r=>{const s=r.sched||"All Week";if(!schedGroups[s])schedGroups[s]=[];schedGroups[s].push(r)});
-    const SCHED_ORDER_PDF=["M-F Schedule","Weekend Schedule","All Week","M-F Bookend","Weekend Bookend","Holiday Only"];
-    const schedColors={"M-F Schedule":[219,234,254],"Weekend Schedule":[254,249,195],"All Week":[240,253,244],"M-F Bookend":[237,233,254],"Weekend Bookend":[255,237,213],"Holiday Only":[254,226,226]};
-    const allScheds=[...SCHED_ORDER_PDF.filter(s=>schedGroups[s]),...Object.keys(schedGroups).filter(s=>!SCHED_ORDER_PDF.includes(s))];
-    allScheds.forEach(sched=>{
-      const items=schedGroups[sched];if(!items)return;
-      checkPage(8);
-      const sc=schedColors[sched]||[248,250,252];
-      pdf.setFillColor(sc[0],sc[1],sc[2]);pdf.rect(mx,y-3,cw,4.5,"F");
-      pdf.setFont("helvetica","bold");pdf.setFontSize(7);pdf.setTextColor(60,60,60);
-      pdf.text(sched.toUpperCase(),mx+2,y);y+=5;
-      pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
-      const rowBg=tint(sc,0.55);
-      const LH=3.6;const rowPad=1.4;
-      items.sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0)).forEach((r,ri)=>{
-        // Measure how many lines the title will wrap into, so row height
-        // = (lines × line-height) + padding. Prevents the next row from
-        // being drawn on top of a 2-line title.
-        pdf.setFont("helvetica","bold");pdf.setFontSize(8);
-        const titleLines=pdf.splitTextToSize(S(r.code)+" - "+S(r.title),cols[1]-2);
-        const bkNote=(typeof r.bookend==="string"&&r.bookend&&r.bookend!=="true"&&r.bookend!=="false")?r.bookend:sched;
-        const schedLines=pdf.splitTextToSize(bkNote,cols[4]-2);
-        const lineCount=Math.max(titleLines.length,schedLines.length,1);
-        const rowH=lineCount*LH+rowPad;
-        checkPage(rowH+1);
-        if(ri%2===0){pdf.setFillColor(rowBg[0],rowBg[1],rowBg[2]);pdf.rect(mx,y-LH+0.5,cw,rowH,"F")}
-        pdf.setTextColor(30,30,30);
-        pdf.setFont("helvetica","normal");
-        pdf.text(S(trafficRec.flight),colX[0]+1,y);
-        pdf.setFont("helvetica","bold");pdf.text(titleLines,colX[1]+1,y);
-        pdf.setFont("helvetica","normal");
-        pdf.text(":"+S(r.dur),colX[2]+1,y);
-        pdf.text(r.pct?S(r.pct).replace("%","")+"%":"",colX[3]+1,y);
-        pdf.text(schedLines,colX[4]+1,y);
-        y+=rowH;
-      });
-    });
-    // Creative file links (CLICKABLE)
-    const filesWithLinks=(trafficRec.iscis||[]).filter(r=>{const full=iscis.find(i=>i.code===r.code);return full&&full.fileUrl});
-    if(filesWithLinks.length>0){
-      y+=4;checkPage(12);
-      pdf.setFillColor(240,249,255);pdf.rect(mx,y-3,cw,4+filesWithLinks.length*4,"F");
-      pdf.setFont("helvetica","bold");pdf.setFontSize(7);pdf.setTextColor(3,105,161);
-      pdf.text("CREATIVE FILES — CLICK TO DOWNLOAD",mx+2,y);y+=4;
-      pdf.setFont("helvetica","normal");pdf.setFontSize(8);
-      filesWithLinks.forEach(r=>{
-        checkPage(5);
-        const full=iscis.find(i=>i.code===r.code);
-        if(full&&full.fileUrl){
-          pdf.setTextColor(37,99,235);
-          const linkText=S(r.code)+" — "+S(r.title);
-          pdf.textWithLink(linkText,mx+4,y,{url:full.fileUrl});
-          y+=4;
-        }
-      });
-      pdf.setTextColor(0,0,0);
-    }
-    // Signature
-    y+=8;checkPage(14);
-    pdf.setDrawColor(bc[0],bc[1],bc[2]);pdf.setLineWidth(0.5);pdf.line(mx,y,mx+cw,y);y+=5;
-    pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
-    pdf.text("Accepted by: _________________________",mx,y);pdf.text("Date: _______________",mx+cw-60,y);y+=6;
-    const noteBg=tint(bc,0.92);
-    pdf.setFillColor(noteBg[0],noteBg[1],noteBg[2]);pdf.rect(mx,y-3,cw,8,"F");
-    pdf.setFont("helvetica","italic");pdf.setFontSize(7);pdf.setTextColor(bc[0],bc[1],bc[2]);
-    pdf.text("Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.",mx+2,y+1);
-    return pdf.output("datauristring");
+    const iframe=document.createElement("iframe");
+    iframe.style.cssText="position:fixed;left:-9999px;top:0;width:900px;height:1400px;border:none;background:#fff";
+    iframe.sandbox="allow-same-origin";
+    document.body.appendChild(iframe);
+    try{
+      iframe.contentDocument.open();iframe.contentDocument.write(html);iframe.contentDocument.close();
+      // Wait for inline images (logo) + layout to settle.
+      await new Promise(r=>setTimeout(r,600));
+      const canvas=await html2canvas(iframe.contentDocument.body,{scale:2,useCORS:true,backgroundColor:"#ffffff",width:900,windowWidth:900});
+      document.body.removeChild(iframe);
+      const{jsPDF}=window.jspdf;const pdf=new jsPDF("p","mm","a4");
+      const imgW=210;const imgH=(canvas.height*imgW)/canvas.width;
+      const pageH=297;let yy=0;
+      const dataUrl=canvas.toDataURL("image/jpeg",0.95);
+      while(yy<imgH){if(yy>0)pdf.addPage();pdf.addImage(dataUrl,"JPEG",0,-yy,imgW,imgH);yy+=pageH}
+      return pdf.output("datauristring");
+    }catch(pdfErr){if(iframe.parentNode)document.body.removeChild(iframe);throw pdfErr}
   };
   // Native jsPDF generator for digital traffic — produces clickable links
   const generateDigitalTrafficPdf=function(opts){
