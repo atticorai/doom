@@ -1272,23 +1272,30 @@ const App=()=>{
     pdf.text(S(trafficRec.brand).toUpperCase(),pw/2,y,{align:"center"});y+=5;
     pdf.setFontSize(8);pdf.setTextColor(120,120,120);
     pdf.text((trafficRec.media||"TV").toUpperCase()+" TRAFFIC INSTRUCTIONS",pw/2,y,{align:"center"});y+=8;
-    // Info fields
+    // Info fields — fall back to estimate lookup so Market/Buyer/Brand
+    // don't render as blank labels if the stored record is missing them.
+    const estRec=trafficRec.est?estimates.find(e=>e.num===String(trafficRec.est).split(/\s*[+\/]\s*/)[0]):null;
+    const brandLabel=trafficRec.brand||estRec?.brand||"";
+    const marketRaw=trafficRec.market||estRec?.market||"";
+    const marketLabel=DM[marketRaw]||marketRaw||"—";
+    const buyerLabel=trafficRec.buyer||estRec?.buyer||"—";
     const hdr=(label,value,color)=>{
       checkPage(4);pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(100,100,100);
       pdf.text(label+":",mx,y);pdf.setFont("helvetica","normal");
       if(color)pdf.setTextColor(color[0],color[1],color[2]);else pdf.setTextColor(0,0,0);
       pdf.text(S(value),mx+32,y);y+=4;
     };
-    hdr("Agency","Atticor Media");hdr("Client",trafficRec.brand,bc);
-    hdr("Market",trafficRec.market);hdr("Buyer",trafficRec.buyer,[217,119,6]);
+    hdr("Agency","Atticor Media");hdr("Client",brandLabel,bc);
+    hdr("Market",marketLabel);hdr("Buyer",buyerLabel,[217,119,6]);
     hdr("Estimate",trafficRec.est);hdr("Media",trafficRec.media,[37,99,235]);
     hdr("Month",trafficRec.month,bc);hdr("Flight",trafficRec.flight);
     hdr("Version","V"+S(trafficRec.version));
     if(trafficRec.comments)hdr("Comments",trafficRec.comments);
     y+=2;pdf.setDrawColor(bc[0],bc[1],bc[2]);pdf.setLineWidth(0.5);pdf.line(mx,y,mx+cw,y);y+=6;
-    // Rotation table header
+    // Rotation table header. Wider title column so long creative names
+    // don't wrap so aggressively; the other columns stay narrow.
     checkPage(10);
-    const cols=[34,60,12,12,40];const colX=[mx];for(let i=1;i<cols.length;i++)colX.push(colX[i-1]+cols[i-1]);
+    const cols=[30,78,10,12,32];const colX=[mx];for(let i=1;i<cols.length;i++)colX.push(colX[i-1]+cols[i-1]);
     pdf.setFillColor(243,237,249);pdf.rect(mx,y-3,cw,5,"F");
     pdf.setFont("helvetica","bold");pdf.setFontSize(7);pdf.setTextColor(90,77,107);
     ["FLIGHT","ISCI CODE & TITLE","DUR","ROT%","SCHEDULE"].forEach((h,i)=>{pdf.text(h,colX[i]+1,y)});
@@ -1308,18 +1315,28 @@ const App=()=>{
       pdf.text(sched.toUpperCase(),mx+2,y);y+=5;
       pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
       const rowBg=tint(sc,0.55);
+      const LH=3.6;const rowPad=1.4;
       items.sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0)).forEach((r,ri)=>{
-        checkPage(5);
-        if(ri%2===0){pdf.setFillColor(rowBg[0],rowBg[1],rowBg[2]);pdf.rect(mx,y-3,cw,4.5,"F")}
+        // Measure how many lines the title will wrap into, so row height
+        // = (lines × line-height) + padding. Prevents the next row from
+        // being drawn on top of a 2-line title.
+        pdf.setFont("helvetica","bold");pdf.setFontSize(8);
+        const titleLines=pdf.splitTextToSize(S(r.code)+" - "+S(r.title),cols[1]-2);
+        const bkNote=(typeof r.bookend==="string"&&r.bookend&&r.bookend!=="true"&&r.bookend!=="false")?r.bookend:sched;
+        const schedLines=pdf.splitTextToSize(bkNote,cols[4]-2);
+        const lineCount=Math.max(titleLines.length,schedLines.length,1);
+        const rowH=lineCount*LH+rowPad;
+        checkPage(rowH+1);
+        if(ri%2===0){pdf.setFillColor(rowBg[0],rowBg[1],rowBg[2]);pdf.rect(mx,y-LH+0.5,cw,rowH,"F")}
         pdf.setTextColor(30,30,30);
+        pdf.setFont("helvetica","normal");
         pdf.text(S(trafficRec.flight),colX[0]+1,y);
-        pdf.setFont("helvetica","bold");pdf.text(S(r.code)+" - "+S(r.title),colX[1]+1,y,{maxWidth:cols[1]-2});
+        pdf.setFont("helvetica","bold");pdf.text(titleLines,colX[1]+1,y);
         pdf.setFont("helvetica","normal");
         pdf.text(":"+S(r.dur),colX[2]+1,y);
         pdf.text(r.pct?S(r.pct).replace("%","")+"%":"",colX[3]+1,y);
-        const bkNote=(typeof r.bookend==="string"&&r.bookend&&r.bookend!=="true"&&r.bookend!=="false")?r.bookend:sched;
-        pdf.text(bkNote,colX[4]+1,y);
-        y+=4.5;
+        pdf.text(schedLines,colX[4]+1,y);
+        y+=rowH;
       });
     });
     // Creative file links (CLICKABLE)
