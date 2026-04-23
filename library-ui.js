@@ -1,6 +1,6 @@
 import B, { forwardRef as I, createElement as z, useState as N, useEffect as T, useContext as E, createContext as H, useMemo as K } from "react";
-import { motion as j, AnimatePresence as W } from "framer-motion";
-var S = { exports: {} }, C = {};
+import { motion as j, AnimatePresence as F } from "framer-motion";
+var R = { exports: {} }, C = {};
 /**
  * @license React
  * react-jsx-runtime.production.min.js
@@ -10,8 +10,8 @@ var S = { exports: {} }, C = {};
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-var F = B, G = Symbol.for("react.element"), q = Symbol.for("react.fragment"), U = Object.prototype.hasOwnProperty, Y = F.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, J = { key: !0, ref: !0, __self: !0, __source: !0 };
-function R(t, s, a) {
+var W = B, G = Symbol.for("react.element"), q = Symbol.for("react.fragment"), U = Object.prototype.hasOwnProperty, Y = W.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, J = { key: !0, ref: !0, __self: !0, __source: !0 };
+function S(t, s, a) {
   var r, o = {}, c = null, g = null;
   a !== void 0 && (c = "" + a), s.key !== void 0 && (c = "" + s.key), s.ref !== void 0 && (g = s.ref);
   for (r in s) U.call(s, r) && !J.hasOwnProperty(r) && (o[r] = s[r]);
@@ -19,10 +19,10 @@ function R(t, s, a) {
   return { $$typeof: G, type: t, key: c, ref: g, props: o, _owner: Y.current };
 }
 C.Fragment = q;
-C.jsx = R;
-C.jsxs = R;
-S.exports = C;
-var e = S.exports;
+C.jsx = S;
+C.jsxs = S;
+R.exports = C;
+var e = R.exports;
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -288,9 +288,9 @@ const Ce = [
  * See the LICENSE file in the root directory of this source tree.
  */
 const ze = [
-  ["path", { d: "m21 21-4.34-4.34", key: "14j7rj" }],
-  ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
-], Te = u("search", ze);
+  ["path", { d: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8", key: "1357e3" }],
+  ["path", { d: "M3 3v5h5", key: "1xhq8a" }]
+], Te = u("rotate-ccw", ze);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -298,6 +298,16 @@ const ze = [
  * See the LICENSE file in the root directory of this source tree.
  */
 const Me = [
+  ["path", { d: "m21 21-4.34-4.34", key: "14j7rj" }],
+  ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
+], Ae = u("search", Me);
+/**
+ * @license lucide-react v0.522.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Le = [
   [
     "path",
     {
@@ -306,31 +316,31 @@ const Me = [
     }
   ],
   ["path", { d: "m21.854 2.147-10.94 10.939", key: "12cjpa" }]
-], Ae = u("send", Me);
+], Ie = u("send", Le);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const Le = [
+const Re = [
   ["path", { d: "M3 6h18", key: "d0wm0j" }],
   ["path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", key: "4alrt4" }],
   ["path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", key: "v07s0e" }],
   ["line", { x1: "10", x2: "10", y1: "11", y2: "17", key: "1uufr5" }],
   ["line", { x1: "14", x2: "14", y1: "11", y2: "17", key: "xtxkd" }]
-], Ie = u("trash-2", Le);
+], Se = u("trash-2", Re);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const Se = [
+const Pe = [
   ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
   ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
-], Re = u("x", Se);
-function Pe({
+], De = u("x", Pe);
+function Oe({
   isLightMode: t,
   toggleTheme: s,
   brand: a,
@@ -405,6 +415,21 @@ function Pe({
         )
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-3", children: [
+        /* @__PURE__ */ e.jsxs(
+          "button",
+          {
+            onClick: () => {
+              const m = typeof window < "u" && window.MegaraLibraryActions || {};
+              typeof m.restoreFromBackup == "function" ? m.restoreFromBackup() : alert("Restore not available in this build");
+            },
+            title: "Restore trafficHistory from a timestamped backup snapshot (10 rotating slots in Firestore + localStorage)",
+            className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${l ? "border-rose-300 text-rose-700 hover:bg-rose-100" : "border-rose-500/40 text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"}`,
+            children: [
+              /* @__PURE__ */ e.jsx(Te, { size: 16 }),
+              " Restore Backup"
+            ]
+          }
+        ),
         /* @__PURE__ */ e.jsxs(
           "button",
           {
@@ -502,7 +527,7 @@ function Pe({
     /* @__PURE__ */ e.jsxs("div", { className: "flex gap-4 items-center w-full", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "relative flex-1 group", children: [
         /* @__PURE__ */ e.jsx(
-          Te,
+          Ae,
           {
             className: `absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${l ? "text-purple-400 group-focus-within:text-purple-600" : "text-magic-teal/50 group-focus-within:text-magic-teal"}`,
             size: 18
@@ -576,12 +601,12 @@ function Pe({
     )
   ] });
 }
-const De = {
+const Ve = {
   April: "001.04",
   March: "001.03",
   December: "001.12"
 };
-function Oe({
+function Be({
   instructions: t,
   months: s,
   light: a = !1
@@ -626,7 +651,7 @@ function Oe({
                 "span",
                 {
                   className: `font-mono text-[10px] font-bold tracking-wider ${a ? "text-purple-400 group-hover:text-purple-600" : "text-magic-teal/40 group-hover:text-magic-teal/70"}`,
-                  children: De[o] || "001"
+                  children: Ve[o] || "001"
                 }
               ),
               /* @__PURE__ */ e.jsx(
@@ -668,7 +693,7 @@ function Oe({
     );
   }) }) });
 }
-const Ve = [
+const Ee = [
   // Postman Law - April - TV
   {
     id: "1",
@@ -989,7 +1014,7 @@ const Ve = [
     buyer: "Lynn Cortelezzi",
     status: "pending"
   }
-], _ = () => typeof window < "u" && window.MegaraLibraryData ? window.MegaraLibraryData : Ve, $ = new Proxy([], {
+], _ = () => typeof window < "u" && window.MegaraLibraryData ? window.MegaraLibraryData : Ee, $ = new Proxy([], {
   get(t, s) {
     const a = _(), r = a[s];
     return typeof r == "function" ? r.bind(a) : r;
@@ -1015,7 +1040,7 @@ const Ve = [
   Montgomery: "text-market-montgomery",
   Dothan: "text-market-dothan",
   Gadsden: "text-market-gadsden"
-}, Be = {
+}, He = {
   Chicago: "bg-market-chicago",
   Cincinnati: "bg-market-cincinnati",
   Denver: "bg-market-denver",
@@ -1028,7 +1053,7 @@ const Ve = [
   Dothan: "bg-market-dothan",
   Gadsden: "bg-market-gadsden"
 };
-function Ee({ instruction: t, onClick: s }) {
+function Ke({ instruction: t, onClick: s }) {
   const a = E(O), r = t.status === "sent", o = parseInt(t.iscis) || 5, c = o > 8 ? "h-48" : o > 5 ? "h-44" : "h-40", g = {
     TV: "from-[#2a1540] to-[#1a0d2e]",
     Radio: "from-[#1a2040] to-[#0d1530]",
@@ -1090,7 +1115,7 @@ function Ee({ instruction: t, onClick: s }) {
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `w-full h-3 ${Be[t.market]} opacity-90 shadow-inner relative z-10`,
+            className: `w-full h-3 ${He[t.market]} opacity-90 shadow-inner relative z-10`,
             children: /* @__PURE__ */ e.jsx("div", { className: "absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" })
           }
         ),
@@ -1176,7 +1201,7 @@ function Ee({ instruction: t, onClick: s }) {
     }
   );
 }
-function He({
+function Fe({
   month: t,
   instructions: s,
   onBookClick: a,
@@ -1354,7 +1379,7 @@ function He({
                         delay: d * 0.1 + m * 0.03
                       },
                       children: /* @__PURE__ */ e.jsx(
-                        Ee,
+                        Ke,
                         {
                           instruction: l,
                           onClick: () => a(l)
@@ -1389,7 +1414,7 @@ function He({
   );
 }
 const M = () => new (window.AudioContext || window.webkitAudioContext)();
-function Ke() {
+function We() {
   try {
     const t = M(), s = t.currentTime;
     [880, 1320].forEach((c, g) => {
@@ -1405,7 +1430,7 @@ function Ke() {
   } catch {
   }
 }
-function We() {
+function Ge() {
   try {
     const t = M(), s = t.currentTime, a = t.createOscillator();
     a.type = "sine", a.frequency.setValueAtTime(440, s), a.frequency.exponentialRampToValueAtTime(220, s + 0.08);
@@ -1414,7 +1439,7 @@ function We() {
   } catch {
   }
 }
-function Fe() {
+function qe() {
   try {
     const t = M(), s = t.currentTime;
     [1047, 1319, 1568, 2093].forEach((g, x) => {
@@ -1430,7 +1455,7 @@ function Fe() {
   } catch {
   }
 }
-function Ge(t) {
+function Ue(t) {
   return (t.iscisDetail || []).map((a) => ({
     dates: a.sched || t.dateRange,
     code: a.code + (a.title ? " - " + a.title : ""),
@@ -1439,15 +1464,15 @@ function Ge(t) {
     notes: a.bookend || a.sched || ""
   }));
 }
-function qe({
+function Ye({
   instruction: t,
   onClose: s,
   light: a = !1
 }) {
   if (T(() => {
-    t && Ke();
+    t && We();
   }, [t]), !t) return null;
-  const r = Ge(t), c = {
+  const r = Ue(t), c = {
     Chicago: "CHI",
     Cincinnati: "CIN",
     Denver: "DEN",
@@ -1460,14 +1485,14 @@ function qe({
     Dothan: "DHN",
     Gadsden: "GAD"
   }[t.market] || t.market.slice(0, 3).toUpperCase(), g = () => {
-    We(), s();
+    Ge(), s();
   }, x = () => {
-    Fe(), p("send");
+    qe(), p("send");
   }, p = (n) => {
     const d = typeof window < "u" && window.MegaraLibraryActions || {}, b = t == null ? void 0 : t.historyIdx;
     typeof d[n] == "function" && typeof b == "number" && (d[n](b), n === "delete" && s());
   };
-  return /* @__PURE__ */ e.jsx(W, { children: /* @__PURE__ */ e.jsx(
+  return /* @__PURE__ */ e.jsx(F, { children: /* @__PURE__ */ e.jsx(
     "div",
     {
       className: `fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-6 ${a ? "bg-black/40" : "bg-black/70"}`,
@@ -1660,7 +1685,7 @@ function qe({
                     {
                       onClick: g,
                       className: `p-2 rounded-full transition-colors ${a ? "text-purple-400 hover:text-purple-700 hover:bg-purple-100" : "text-megara-light/60 hover:text-megara-light hover:bg-white/10"}`,
-                      children: /* @__PURE__ */ e.jsx(Re, { size: 20 })
+                      children: /* @__PURE__ */ e.jsx(De, { size: 20 })
                     }
                   ) }),
                   /* @__PURE__ */ e.jsxs(
@@ -1812,7 +1837,7 @@ function qe({
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            Ae,
+                            Ie,
                             {
                               size: 16,
                               className: "text-megara-primary group-hover:scale-110 transition-transform group-hover:translate-x-0.5"
@@ -1855,7 +1880,7 @@ function qe({
                       onClick: () => p("delete"),
                       className: `w-full py-2.5 px-4 rounded border text-sm flex items-center justify-center gap-2 transition-colors ${a ? "border-red-200 text-red-500 hover:bg-red-50" : "border-red-900/40 text-red-400 hover:bg-red-900/20"}`,
                       children: [
-                        /* @__PURE__ */ e.jsx(Ie, { size: 16 }),
+                        /* @__PURE__ */ e.jsx(Se, { size: 16 }),
                         " Delete"
                       ]
                     }
@@ -1870,7 +1895,7 @@ function qe({
   ) });
 }
 const O = H(!1);
-function Je() {
+function Xe() {
   const [t, s] = N(!1), [a, r] = N("Postman Law"), [o, c] = N(!1), [g, x] = N(null);
   T(() => {
     t ? document.body.classList.add("light") : document.body.classList.remove("light");
@@ -1970,7 +1995,7 @@ function Je() {
           )
         ),
         /* @__PURE__ */ e.jsx(
-          Pe,
+          Oe,
           {
             isLightMode: t,
             toggleTheme: () => s(!t),
@@ -1985,7 +2010,7 @@ function Je() {
           }
         ),
         /* @__PURE__ */ e.jsx(
-          Oe,
+          Be,
           {
             instructions: b,
             months: k,
@@ -2015,7 +2040,7 @@ function Je() {
           ),
           /* @__PURE__ */ e.jsx("div", { className: "max-w-6xl mx-auto relative z-10", children: k.map(
             (i) => /* @__PURE__ */ e.jsx("div", { id: `month-${i}`, children: /* @__PURE__ */ e.jsx(
-              He,
+              Fe,
               {
                 month: i,
                 instructions: f[i],
@@ -2026,7 +2051,7 @@ function Je() {
           ) })
         ] }) }),
         /* @__PURE__ */ e.jsx(
-          qe,
+          Ye,
           {
             instruction: g,
             onClose: () => x(null),
@@ -2038,6 +2063,6 @@ function Je() {
   ) });
 }
 export {
-  Je as App,
+  Xe as App,
   O as ThemeContext
 };

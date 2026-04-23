@@ -6,7 +6,8 @@ import {
   Plus,
   Flame,
   FlameKindling,
-  Archive } from
+  Archive,
+  RotateCcw } from
 'lucide-react';
 type Brand = 'Postman Law' | 'Wettermark Keith';
 interface LibraryHeaderProps {
@@ -85,8 +86,18 @@ export function LibraryHeader({
 
         <div className="flex items-center gap-3">
           <button
+            onClick={() => {
+              const actions = (typeof window !== 'undefined' && (window as any).MegaraLibraryActions) || {};
+              if (typeof actions.restoreFromBackup === 'function') actions.restoreFromBackup();
+              else alert('Restore not available in this build');
+            }}
+            title="Restore trafficHistory from a timestamped backup snapshot (10 rotating slots in Firestore + localStorage)"
+            className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'border-rose-300 text-rose-700 hover:bg-rose-100' : 'border-rose-500/40 text-rose-300 hover:bg-rose-500/10 hover:text-rose-200'}`}>
+            <RotateCcw size={16} /> Restore Backup
+          </button>
+          <button
             className={`px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${light ? 'border-purple-300 text-purple-700 hover:bg-purple-100' : 'border-megara-dark/40 text-megara-light/70 hover:bg-megara-dark/20 hover:text-megara-light'}`}>
-            
+
             <Download size={16} /> Export CSV
           </button>
           <button
