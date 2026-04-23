@@ -312,6 +312,10 @@ const DM_REV=Object.fromEntries(Object.entries(DM).flatMap(([c,n])=>[[n,c],[n.to
 // Strips ", STATE" suffix (e.g. "Chicago, IL" → "CHI") so PDF-imported
 // records match cleanly against stations/estimates that use clean names.
 const normMkt=(m)=>{if(!m)return"";const raw=String(m).trim();const v=raw.split(",")[0].trim();if(DM[v])return v;const found=DM_REV[v]||DM_REV[v.toLowerCase()];if(found)return found;const entry=Object.entries(DM).find(([_,n])=>n.toLowerCase()===v.toLowerCase());return entry?entry[0]:v};
+// Single source of truth for media display labels — call this anywhere
+// the user sees a media type ("Cable" → "TV/Cable", etc.). Storage,
+// filters, and lookups still use the raw key.
+const mediaLabel=(m)=>{if(!m)return"";if(m==="Cable")return"TV/Cable";return m};
 const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
 const BRANDS=[
   {code:"PL",name:"Postman Law",agency:"Blackacre Services",logo:LOGO_PL,color:"#9b7bb0",colorBg:"#F0E8F8"},
@@ -1125,7 +1129,7 @@ const App=()=>{
             {[
               ["Estimate",estNum],
               ["Market",est?.market||""],
-              ["Media",est?.media?(est.media+(est.group?" ("+est.group+")":"")):""],
+              ["Media",est?.media?(mediaLabel(est.media)+(est.group?" ("+est.group+")":"")):""],
               ["Broadcast Month",airing?.month||trafficHistory.find(h=>h.est===estNum)?.month||workMonth||""],
               ...(airing?.version?[["Version","v"+airing.version]]:[]),
               ["Agency","Atticor"]
@@ -1260,6 +1264,10 @@ const App=()=>{
     const S=v=>v==null?"":String(v);
     const bc=trafficRec.brand==="Postman Law"?[124,58,237]:[217,119,6];
     const checkPage=(need)=>{if(y+need>ph-14){pdf.addPage();y=14}};
+    // Pre-blend colors toward white instead of passing opacity as a 4th
+    // arg — some jsPDF versions interpret (r,g,b,a) as CMYK and render
+    // data rows near-black. Using plain 3-arg RGB avoids that entirely.
+    const tint=(c,amt)=>[Math.round(c[0]+(255-c[0])*amt),Math.round(c[1]+(255-c[1])*amt),Math.round(c[2]+(255-c[2])*amt)];
     // Header
     pdf.setFont("helvetica","bold");pdf.setFontSize(14);pdf.setTextColor(bc[0],bc[1],bc[2]);
     pdf.text(S(trafficRec.brand).toUpperCase(),pw/2,y,{align:"center"});y+=5;
@@ -1274,7 +1282,7 @@ const App=()=>{
     };
     hdr("Agency","Atticor Media");hdr("Client",trafficRec.brand,bc);
     hdr("Market",trafficRec.market);hdr("Buyer",trafficRec.buyer,[217,119,6]);
-    hdr("Estimate",trafficRec.est);hdr("Media",trafficRec.media==="Cable"?"TV/Cable":trafficRec.media,[37,99,235]);
+    hdr("Estimate",trafficRec.est);hdr("Media",mediaLabel(trafficRec.media),[37,99,235]);
     hdr("Month",trafficRec.month,bc);hdr("Flight",trafficRec.flight);
     hdr("Version","V"+S(trafficRec.version));
     if(trafficRec.comments)hdr("Comments",trafficRec.comments);
@@ -1300,17 +1308,26 @@ const App=()=>{
       pdf.setFont("helvetica","bold");pdf.setFontSize(7);pdf.setTextColor(60,60,60);
       pdf.text(sched.toUpperCase(),mx+2,y);y+=5;
       pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
+      const rowBg=tint(sc,0.7);
+      const LH=3.6;const rowPad=1.4;
       items.sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0)).forEach(r=>{
-        checkPage(5);
-        pdf.setFillColor(sc[0],sc[1],sc[2],0.3);pdf.rect(mx,y-3,cw,4.5,"F");
+        // Measure the wrapped title so the row is tall enough and the
+        // next row doesn't get drawn on top of a 2-line wrap.
+        pdf.setFont("helvetica","bold");pdf.setFontSize(8);
+        const titleLines=pdf.splitTextToSize(S(r.code)+" - "+S(r.title),cols[1]-2);
+        const bkNote=(typeof r.bookend==="string"&&r.bookend&&r.bookend!=="true"&&r.bookend!=="false")?r.bookend:sched;
+        const schedLines=pdf.splitTextToSize(bkNote,cols[4]-2);
+        const rowH=Math.max(titleLines.length,schedLines.length,1)*LH+rowPad;
+        checkPage(rowH+1);
+        pdf.setFillColor(rowBg[0],rowBg[1],rowBg[2]);pdf.rect(mx,y-LH+0.5,cw,rowH,"F");
+        pdf.setFont("helvetica","normal");
         pdf.text(S(trafficRec.flight),colX[0]+1,y);
-        pdf.setFont("helvetica","bold");pdf.text(S(r.code)+" - "+S(r.title),colX[1]+1,y,{maxWidth:cols[1]-2});
+        pdf.setFont("helvetica","bold");pdf.text(titleLines,colX[1]+1,y);
         pdf.setFont("helvetica","normal");
         pdf.text(":"+S(r.dur),colX[2]+1,y);
         pdf.text(r.pct?S(r.pct).replace("%","")+"%":"",colX[3]+1,y);
-        const bkNote=(typeof r.bookend==="string"&&r.bookend&&r.bookend!=="true"&&r.bookend!=="false")?r.bookend:sched;
-        pdf.text(bkNote,colX[4]+1,y);
-        y+=4.5;
+        pdf.text(schedLines,colX[4]+1,y);
+        y+=rowH;
       });
     });
     // Creative file links (CLICKABLE)
@@ -1338,7 +1355,8 @@ const App=()=>{
     pdf.setDrawColor(bc[0],bc[1],bc[2]);pdf.setLineWidth(0.5);pdf.line(mx,y,mx+cw,y);y+=5;
     pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
     pdf.text("Accepted by: _________________________",mx,y);pdf.text("Date: _______________",mx+cw-60,y);y+=6;
-    pdf.setFillColor(bc[0],bc[1],bc[2],0.08);pdf.rect(mx,y-3,cw,8,"F");
+    const noteBg=tint(bc,0.92);
+    pdf.setFillColor(noteBg[0],noteBg[1],noteBg[2]);pdf.rect(mx,y-3,cw,8,"F");
     pdf.setFont("helvetica","normal");pdf.setFontSize(7);pdf.setTextColor(bc[0],bc[1],bc[2]);
     pdf.text("Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.",mx+2,y);
     return pdf.output("datauristring");
@@ -1911,7 +1929,7 @@ const App=()=>{
       h+=hdr("Market",est.market);
       h+=hdr("Buyer",est.buyer,"#D4A040");
       h+=hdr("Estimate(s)",est._combined?est._combined.length+" combined estimates":est.num);
-      h+=hdr("Media",est._combined?[...new Set(est._combined.map(e=>e.media))].join(", "):est.media,"#4AC8E8");
+      h+=hdr("Media",est._combined?[...new Set(est._combined.map(e=>mediaLabel(e.media)))].join(", "):mediaLabel(est.media),"#4AC8E8");
       h+=hdr("Buy Type(s)",est._combined?[...new Set(est._combined.map(e=>e.group))].join(", "):est.group);
       if(est._combined){
         h+='<table style="margin:8px 0;font-size:11px;border:1px solid #ddd"><thead><tr style="background:#F0E8F8"><th style="padding:4px 8px;text-align:left;color:#5b21b6">Estimate</th><th style="padding:4px 8px;text-align:left;color:#5b21b6">Buy Type</th><th style="padding:4px 8px;text-align:left;color:#5b21b6">Stations</th></tr></thead><tbody>';
@@ -5234,7 +5252,7 @@ ${fullText.substring(0,3000)}`}]
       x+='<div style="text-align:center;margin-bottom:14px"><img src="'+lg+'" style="height:48px"/></div>';
       x+=hd("Agency",getBrandAgency(h.brand));
       x+=hd("Client",h.brand,bc);x+=hd("Market",(DM[normMkt(h.market)]||h.market)+(normMkt(h.market)?" ("+normMkt(h.market)+")":""));x+=hd("Buyer",h.buyer,"#D4A040");
-      x+=hd("Media",h.media,h.isOoh?"#D4A040":"#4AC8E8");x+=hd("Broadcast Month",h.month,"#E85A7A");
+      x+=hd("Media",mediaLabel(h.media),h.isOoh?"#D4A040":"#4AC8E8");x+=hd("Broadcast Month",h.month,"#E85A7A");
       if(h.isOoh&&h.postDates)x+=hd("Post Dates",h.postDates,"#1e1233");
       else if(h.flight)x+=hd("Flight Dates",h.flight,"#1e1233");
       if(h.isOoh&&h.versionLinks)x+=hd("Version/ Links",h.versionLinks);
@@ -6921,7 +6939,7 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
           const isCombined=(h.combined===true)||estNums.length>1;
           if(isCombined){
             x+=hdr("Estimate(s)",estNums.length+" combined estimates");
-            x+=hdr("Media",h.media==="Cable"?"TV/Cable":h.media,h.isOoh?"#D4A040":"#4AC8E8");
+            x+=hdr("Media",mediaLabel(h.media),h.isOoh?"#D4A040":"#4AC8E8");
             const hMkt=normMkt(h.market)||h.market;
             const subs=estNums.map(n=>estimates.find(e=>e.num===n&&e.brand===h.brand&&((normMkt(e.market)||e.market)===hMkt||e.market===h.market))).filter(Boolean);
             const buyTypes=[...new Set(subs.map(e=>e.group))].join(", ");
@@ -6934,7 +6952,7 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
             x+='</tbody></table>';
           }else{
             x+=hdr("Estimate(s)",estStr);
-            x+=hdr("Media",h.media==="Cable"?"TV/Cable":h.media,h.isOoh?"#D4A040":"#4AC8E8");
+            x+=hdr("Media",mediaLabel(h.media),h.isOoh?"#D4A040":"#4AC8E8");
             const stas=(h.stations&&h.stations.length)?h.stations:[];
             if(stas.length)x+=hdr("Stations ("+stas.length+")",stas.join(", "));
           }
