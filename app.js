@@ -3983,6 +3983,59 @@ const App=()=>{
     return Object.values(nowAiring).some(a=>a.iscis?.some(r=>r.code===code));
   },[nowAiring]);
 
+  // Edit traffic modal — kept as a real component (not an inline IIFE)
+  // so its useState hooks don't break the rules-of-hooks. Earlier the
+  // modal was defined inline with `(()=>{const[editIscis]=useState(...)})()`
+  // which React treated as an invalid hook call, so Edit from the
+  // Megara Library book blanked the page for every brand.
+  const EditTrafficModal=({editIdx,onClose})=>{
+    const eh=trafficHistory[editIdx];
+    const SCHED_OPTS=["M-F Schedule","Weekend Schedule","M-F Bookend","Weekend Bookend","All Week","Holiday Only"];
+    const[editIscis,setEditIscis]=useState(()=>JSON.parse(JSON.stringify(eh?.iscis||[])));
+    const[editMeta,setEditMeta]=useState({month:eh?.month||"",flight:eh?.flight||"",version:eh?.version||"1",comments:eh?.comments||""});
+    if(!eh)return null;
+    const updI=(idx,k,v)=>setEditIscis(p=>p.map((r,i)=>i===idx?{...r,[k]:v}:r));
+    const saveEdit=()=>{
+      const validIscis=editIscis.filter(r=>r.code&&r.code.trim());
+      if(!validIscis.length){alert("Cannot save — no ISCIs with codes. Add at least one ISCI.");return}
+      setTrafficHistory(p=>p.map((h,i)=>i===editIdx?{...h,iscis:validIscis,month:editMeta.month,flight:editMeta.flight,version:editMeta.version,comments:editMeta.comments}:h));
+      log("Traffic Edited",eh.brand+" "+eh.market+" "+eh.media+" "+editMeta.month);
+      notify("Traffic updated — "+validIscis.length+" ISCIs");
+      onClose();
+    };
+    const addRow=()=>setEditIscis(p=>[...p,{code:"",title:"",dur:"30",pct:"",sched:"All Week",bookend:""}]);
+    const delRow=(idx)=>setEditIscis(p=>p.filter((_,i)=>i!==idx));
+    return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={onClose} wide>
+      <div style={{display:"flex",gap:8,marginBottom:8}}>
+        <Sel label="Month" options={CALENDAR.map(c=>c.month)} value={editMeta.month} onChange={v=>{const cm=CALENDAR.find(c=>c.month===v);setEditMeta(p=>({...p,month:v,flight:cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):p.flight}))}}/>
+        <Inp label="Flight" value={editMeta.flight} onChange={e=>setEditMeta(p=>({...p,flight:e.target.value}))}/>
+        <Inp label="Version" value={editMeta.version} onChange={e=>setEditMeta(p=>({...p,version:e.target.value}))} style={{width:50}}/>
+      </div>
+      <Inp label="Comments" value={editMeta.comments} onChange={e=>setEditMeta(p=>({...p,comments:e.target.value}))}/>
+      <div style={{overflowX:"auto",maxHeight:400,marginTop:8,border:"1px solid #4a3565",borderRadius:7}}>
+        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
+          <TH w="140">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="50">%</TH><TH w="130">Schedule</TH><TH w="100">Bookend</TH><TH w="30">✕</TH>
+        </tr></thead><tbody>
+        {editIscis.map((r,idx)=><tr key={idx}>
+          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.code} onChange={e=>updI(idx,"code",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,fontFamily:"monospace",background:"#1e1233",color:"#E8DFF0"}}/></td>
+          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.title} onChange={e=>updI(idx,"title",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></td>
+          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.dur} onChange={e=>updI(idx,"dur",e.target.value)} style={{width:35,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
+          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.pct} onChange={e=>updI(idx,"pct",e.target.value.replace(/[^0-9.]/g,""))} data-pct-input="true" onKeyDown={e=>{if(e.key==="Tab"||e.key==="Enter"){e.preventDefault();const all=[...document.querySelectorAll('[data-pct-input]')];const ci=all.indexOf(e.target);if(ci>-1&&ci<all.length-1)all[ci+1].focus()}}} style={{width:40,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
+          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><select value={r.sched} onChange={e=>updI(idx,"sched",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}>{SCHED_OPTS.map(s=><option key={s}>{s}</option>)}</select></td>
+          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.bookend||""} onChange={e=>updI(idx,"bookend",e.target.value)} placeholder="e.g. Bookend :15 A" style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/></td>
+          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42",textAlign:"center"}}><button onClick={()=>delRow(idx)} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button></td>
+        </tr>)}</tbody></table>
+      </div>
+      <div style={{display:"flex",gap:6,marginTop:8}}>
+        <Btn small onClick={addRow}>+ Add Row</Btn>
+        <div style={{marginLeft:"auto",display:"flex",gap:6}}>
+          <Btn small onClick={onClose}>Cancel</Btn>
+          <Btn small primary onClick={saveEdit}>Save Changes</Btn>
+        </div>
+      </div>
+    </Mod>;
+  };
+
   const EditIsciMod=({isci,idx})=>{
     const locked=isIsciSent(isci.code);
     const[unlocked,setUnlocked]=useState(false);
@@ -7485,48 +7538,7 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
     {modal?.t==="buildRot"&&<RotBuilder est={modal.est} pool={modal.pool} workMonth={workMonth} _revise={modal._revise}/>}
     {modal?.t==="buildStream"&&<StreamBuilder est={modal.est} pool={modal.pool} workMonth={workMonth}/>}
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
-    {editTrafficIdx!==null&&(()=>{
-      const eh=trafficHistory[editTrafficIdx];if(!eh)return null;
-      const SCHED_OPTS=["M-F Schedule","Weekend Schedule","M-F Bookend","Weekend Bookend","All Week","Holiday Only"];
-      const[editIscis,setEditIscis]=useState(()=>JSON.parse(JSON.stringify(eh.iscis||[])));
-      const[editMeta,setEditMeta]=useState({month:eh.month||"",flight:eh.flight||"",version:eh.version||"1",comments:eh.comments||""});
-      const updI=(idx,k,v)=>setEditIscis(p=>p.map((r,i)=>i===idx?{...r,[k]:v}:r));
-      const saveEdit=()=>{
-        const validIscis=editIscis.filter(r=>r.code&&r.code.trim());
-        if(!validIscis.length){alert("Cannot save — no ISCIs with codes. Add at least one ISCI.");return}
-        setTrafficHistory(p=>p.map((h,i)=>i===editTrafficIdx?{...h,iscis:validIscis,month:editMeta.month,flight:editMeta.flight,version:editMeta.version,comments:editMeta.comments}:h));log("Traffic Edited",eh.brand+" "+eh.market+" "+eh.media+" "+editMeta.month);notify("Traffic updated — "+validIscis.length+" ISCIs");setEditTrafficIdx(null)};
-      const addRow=()=>setEditIscis(p=>[...p,{code:"",title:"",dur:"30",pct:"",sched:"All Week",bookend:""}]);
-      const delRow=(idx)=>setEditIscis(p=>p.filter((_,i)=>i!==idx));
-      return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={()=>setEditTrafficIdx(null)} wide>
-        <div style={{display:"flex",gap:8,marginBottom:8}}>
-          <Sel label="Month" options={CALENDAR.map(c=>c.month)} value={editMeta.month} onChange={v=>{const cm=CALENDAR.find(c=>c.month===v);setEditMeta(p=>({...p,month:v,flight:cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):p.flight}))}}/>
-          <Inp label="Flight" value={editMeta.flight} onChange={e=>setEditMeta(p=>({...p,flight:e.target.value}))}/>
-          <Inp label="Version" value={editMeta.version} onChange={e=>setEditMeta(p=>({...p,version:e.target.value}))} style={{width:50}}/>
-        </div>
-        <Inp label="Comments" value={editMeta.comments} onChange={e=>setEditMeta(p=>({...p,comments:e.target.value}))}/>
-        <div style={{overflowX:"auto",maxHeight:400,marginTop:8,border:"1px solid #4a3565",borderRadius:7}}>
-          <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
-            <TH w="140">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="50">%</TH><TH w="130">Schedule</TH><TH w="100">Bookend</TH><TH w="30">✕</TH>
-          </tr></thead><tbody>
-          {editIscis.map((r,idx)=><tr key={idx}>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.code} onChange={e=>updI(idx,"code",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,fontFamily:"monospace",background:"#1e1233",color:"#E8DFF0"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.title} onChange={e=>updI(idx,"title",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.dur} onChange={e=>updI(idx,"dur",e.target.value)} style={{width:35,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.pct} onChange={e=>updI(idx,"pct",e.target.value.replace(/[^0-9.]/g,""))} data-pct-input="true" onKeyDown={e=>{if(e.key==="Tab"||e.key==="Enter"){e.preventDefault();const all=[...document.querySelectorAll('[data-pct-input]')];const ci=all.indexOf(e.target);if(ci>-1&&ci<all.length-1)all[ci+1].focus()}}} style={{width:40,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><select value={r.sched} onChange={e=>updI(idx,"sched",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}>{SCHED_OPTS.map(s=><option key={s}>{s}</option>)}</select></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.bookend||""} onChange={e=>updI(idx,"bookend",e.target.value)} placeholder="e.g. Bookend :15 A" style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42",textAlign:"center"}}><button onClick={()=>delRow(idx)} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button></td>
-          </tr>)}</tbody></table>
-        </div>
-        <div style={{display:"flex",gap:6,marginTop:8}}>
-          <Btn small onClick={addRow}>+ Add Row</Btn>
-          <div style={{marginLeft:"auto",display:"flex",gap:6}}>
-            <Btn small onClick={()=>setEditTrafficIdx(null)}>Cancel</Btn>
-            <Btn small primary onClick={saveEdit}>Save Changes</Btn>
-          </div>
-        </div>
-      </Mod>
-    })()}
+    {editTrafficIdx!==null&&trafficHistory[editTrafficIdx]&&<EditTrafficModal editIdx={editTrafficIdx} onClose={()=>setEditTrafficIdx(null)}/>}
     {modal?.t==="linkEst"&&(()=>{const s=modal.station;const linked=getStaEsts(s);
       const matching=estimates.filter(e=>e.market===s.market&&e.brand===s.brand);
       const others=estimates.filter(e=>!(e.market===s.market&&e.brand===s.brand));
