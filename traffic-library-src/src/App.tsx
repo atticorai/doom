@@ -147,6 +147,32 @@ export function App() {
           months={sortedMonths}
           light={light} />
 
+        {/* Visible month x media breakdown — so you can see at a glance
+            what records are actually in the library without digging through
+            shelves or opening the console. Counts reflect exactly what
+            window.MegaraLibraryData has for this brand. */}
+        <div className={`px-8 pb-2 text-xs font-mono tracking-wide ${light ? 'text-purple-700/70' : 'text-megara-light/50'}`}>
+          <span className={`font-serif text-sm font-bold tracking-widest uppercase ${light ? 'text-purple-900' : 'text-magic-gold'}`}>{brand} ledger:</span>{' '}
+          <span>{brandOnly.length} total · {brandData.length} shown{archivedCount ? ` · ${archivedCount} archived` : ''}</span>
+          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
+            {(() => {
+              const counts: Record<string, Record<string, number>> = {};
+              brandOnly.forEach((i: any) => {
+                const m = i.month || '?';
+                const t = i.mediaType || '?';
+                if (!counts[m]) counts[m] = {};
+                counts[m][t] = (counts[m][t] || 0) + 1;
+              });
+              const MONTH_ORDER = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+              return MONTH_ORDER.filter(m => counts[m]).reverse().map(m => (
+                <span key={m}>
+                  <b className={light ? 'text-purple-800' : 'text-megara-light/70'}>{m}:</b>{' '}
+                  {Object.entries(counts[m]).map(([t, n]) => `${t}(${n})`).join(' ')}
+                </span>
+              ));
+            })()}
+          </div>
+        </div>
 
         <main className="flex-1 overflow-y-auto hide-scrollbar flex flex-col relative z-10">
           <div className="px-8 pb-32 flex-1 relative">
