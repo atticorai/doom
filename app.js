@@ -7530,7 +7530,12 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
           },
         };
         console.log("[MegaraLibrary] piped",data.length,"records from trafficHistory");
-        const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");
+        // Hash every record's ts + status into the key so ANY change to
+        // trafficHistory (add, update, reorder) forces the Library to
+        // remount with fresh data. Previous key only watched length + first
+        // ts, which missed in-place updates from Send / Edit / Copy-to and
+        // left the library stale.
+        const libKey="lib_"+trafficHistory.length+"_"+trafficHistory.map(h=>(h.ts||"")+"|"+(h.status||"")+"|"+(h.version||"")+"|"+(h.iscis?.length||0)).join("_").slice(0,200);
         const ML=window.MegaraLibrary;
         if(!ML)return null;
         return<div style={{position:"relative",minHeight:"100%",margin:-16,overflow:"hidden"}}>
