@@ -1310,21 +1310,25 @@ const App=()=>{
       pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
       const rowBg=tint(sc,0.7);
       const LH=3.6;const rowPad=1.4;
+      const validBkPdf=b=>typeof b==="string"&&b&&b!=="true"&&b!=="false";
       items.sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0)).forEach(r=>{
         // Measure the wrapped title so the row is tall enough and the
         // next row doesn't get drawn on top of a 2-line wrap.
         pdf.setFont("helvetica","bold");pdf.setFontSize(8);
         const titleLines=pdf.splitTextToSize(S(r.code)+" - "+S(r.title),cols[1]-2);
-        const bkNote=(typeof r.bookend==="string"&&r.bookend&&r.bookend!=="true"&&r.bookend!=="false")?r.bookend:sched;
+        const hasBk=validBkPdf(r.bookend);
+        const lenStr=hasBk?r.bookend:(r.dur?":"+r.dur:"");
+        const lenLines=pdf.splitTextToSize(lenStr,cols[2]-2);
+        const bkNote=hasBk?r.bookend:sched;
         const schedLines=pdf.splitTextToSize(bkNote,cols[4]-2);
-        const rowH=Math.max(titleLines.length,schedLines.length,1)*LH+rowPad;
+        const rowH=Math.max(titleLines.length,schedLines.length,lenLines.length,1)*LH+rowPad;
         checkPage(rowH+1);
         pdf.setFillColor(rowBg[0],rowBg[1],rowBg[2]);pdf.rect(mx,y-LH+0.5,cw,rowH,"F");
         pdf.setFont("helvetica","normal");
         pdf.text(S(trafficRec.flight),colX[0]+1,y);
         pdf.setFont("helvetica","bold");pdf.text(titleLines,colX[1]+1,y);
         pdf.setFont("helvetica","normal");
-        pdf.text(":"+S(r.dur),colX[2]+1,y);
+        pdf.text(lenLines,colX[2]+1,y);
         pdf.text(r.pct?S(r.pct).replace("%","")+"%":"",colX[3]+1,y);
         pdf.text(schedLines,colX[4]+1,y);
         y+=rowH;
@@ -1952,13 +1956,13 @@ const App=()=>{
       SCHED_ORDER.forEach(s=>{if(!grouped[s])return;const bg=SCHED_COLORS[s]||"#2d1f42";const items=grouped[s].sort((a,b)=>(parseInt(b.isci.dur)||0)-(parseInt(a.isci.dur)||0));
         h+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
         items.forEach(r=>{const len=validBk(r.bookend)?r.bookend:":"+r.isci.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk(r.bookend)?r.bookend:s;
-          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>:'+r.isci.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
+          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>'+len+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
         });
       });
       Object.keys(grouped).filter(s=>!SCHED_ORDER.includes(s)).forEach(s=>{const bg="#F0E8F8";const items=grouped[s].sort((a,b)=>(parseInt(b.isci.dur)||0)-(parseInt(a.isci.dur)||0));
         h+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
         items.forEach(r=>{const len=validBk(r.bookend)?r.bookend:":"+r.isci.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk(r.bookend)?r.bookend:s;
-          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>:'+r.isci.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
+          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>'+len+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
         });
       });
       h+='</tbody></table>';
