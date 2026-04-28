@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="ooh-clump-report-2026-04-29-3";
+const __APP_VERSION__="ooh-june26-tag-2026-04-29-2";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -1043,7 +1043,7 @@ const App=()=>{
   const[estBrand,setEstBrand]=useState("Postman Law");
   const[staBrand,setStaBrand]=useState("Postman Law");
   // OOH WK page state (lifted to prevent remount on photo upload)
-  const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");const[oohMapColorBy,setOohMapColorBy]=useState("market");const[oohClumpReport,setOohClumpReport]=useState(null);
+  const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");const[oohMapColorBy,setOohMapColorBy]=useState("market");
   const[oohEditId,setOohEditId]=useState(null);const[oohEditVal,setOohEditVal]=useState("");
   const[oohPhotoPanel,setOohPhotoPanel]=useState(null);
   const[oohLines,setOohLines]=useState([{flight:"",isci:"",units:"",notes:""}]);
@@ -3102,30 +3102,6 @@ const App=()=>{
       log("OOH June26 Clear",Object.keys(WK_JUNE26_CREATIVE).length+" boards cleared");
       notify("Cleared June 2026 temp tags");
     };
-    // Clumping check — for each creative theme, find pairs of tagged boards
-    // within 0.5 mi (driver sees both on same trip) or 0.5–1 mi (same area).
-    // Anything tighter than 0.5 mi is the "superclose" case the user is
-    // worried about — same creative twice on one drive.
-    const checkClumping=()=>{
-      const haversine=(a,b)=>{const R=3958.8;const r=d=>d*Math.PI/180;const dLat=r(b[0]-a[0]),dLng=r(b[1]-a[1]);const x=Math.sin(dLat/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(x))};
-      const byTheme={};
-      pops.forEach(p=>{if(!p.isci||!WK_COORDS[p.boardId])return;(byTheme[p.isci]||=[]).push({id:p.boardId,co:WK_COORDS[p.boardId]})});
-      const report=[];
-      Object.entries(byTheme).forEach(([isci,boards])=>{
-        if(boards.length<2)return;
-        const label=creativeColors[isci]?creativeColors[isci].label:isci;
-        const tight=[],mod=[];
-        for(let i=0;i<boards.length;i++)for(let j=i+1;j<boards.length;j++){
-          const d=haversine(boards[i].co,boards[j].co);
-          if(d<0.5)tight.push({a:boards[i].id,b:boards[j].id,d});
-          else if(d<1)mod.push({a:boards[i].id,b:boards[j].id,d});
-        }
-        tight.sort((x,y)=>x.d-y.d);mod.sort((x,y)=>x.d-y.d);
-        report.push({theme:label,total:boards.length,tight,mod,color:creativeColors[isci]?creativeColors[isci].color:"#9B8EAD"});
-      });
-      report.sort((x,y)=>y.tight.length-x.tight.length);
-      setOohClumpReport(report.length?report:"none");
-    };
 
     const PhotoModal=({p,onClose})=>{
       const close=POP_IMGS[p.closeImg];const dist=POP_IMGS[p.distImg];
@@ -3220,7 +3196,6 @@ const App=()=>{
           <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"} color="#9b7bb0">📑 Contracts</Btn>
           <Btn small onClick={applyJune26} color="#5BC4A0">🎨 Apply June '26</Btn>
           <Btn small onClick={clearJune26} color="#E85A7A">⊘ Clear June '26</Btn>
-          <Btn small onClick={checkClumping} color="#4AC8E8">📏 Check Clumping</Btn>
         </div>
       </div>
       <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
@@ -3246,35 +3221,6 @@ const App=()=>{
           <div style={{fontSize:13,color:"#9B8EAD"}}>{fl.length} active{tagged?" · "+tagged+" ISCI tagged":""}</div>
         </div>
       </div>
-
-      {oohClumpReport&&<Cd><div style={{padding:12}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-          <div style={{fontSize:15,fontWeight:700,color:"#F0E8F8"}}>📏 Creative Clumping Report</div>
-          <Btn small onClick={()=>setOohClumpReport(null)} color="#6B5E80">Close</Btn>
-        </div>
-        {oohClumpReport==="none"?<div style={{fontSize:13,color:"#9B8EAD"}}>No tagged boards found. Apply creative tags first.</div>:
-        oohClumpReport.length===0?<div style={{fontSize:13,color:"#5BC4A0"}}>✓ Every tagged creative is solo or sufficiently spaced. No clumping detected.</div>:
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          <div style={{fontSize:12,color:"#9B8EAD",lineHeight:1.5}}>
-            <span style={{color:"#E85A7A",fontWeight:700}}>Tight (&lt; 0.5 mi)</span> = same trip / same intersection.
-            <span style={{color:"#D4A040",fontWeight:700,marginLeft:10}}>Moderate (0.5–1 mi)</span> = same neighborhood.
-          </div>
-          {oohClumpReport.map(r=><div key={r.theme} style={{background:"#1e1233",border:"1px solid "+r.color+"55",borderLeft:"4px solid "+r.color,borderRadius:6,padding:10}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-              <div style={{fontSize:14,fontWeight:700,color:r.color}}>{r.theme}</div>
-              <div style={{fontSize:12,color:"#9B8EAD"}}>{r.total} boards · <span style={{color:r.tight.length>0?"#E85A7A":"#5BC4A0",fontWeight:700}}>{r.tight.length} tight</span> · <span style={{color:"#D4A040"}}>{r.mod.length} moderate</span></div>
-            </div>
-            {r.tight.length>0&&<div style={{marginBottom:r.mod.length?6:0}}>
-              <div style={{fontSize:11,color:"#E85A7A",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:3}}>⚠ Superclose pairs (&lt; 0.5 mi)</div>
-              {r.tight.map((p,i)=><div key={i} style={{fontSize:12,color:"#E8DFF0",fontFamily:"monospace",padding:"2px 0"}}>{p.a} ↔ {p.b} <span style={{color:"#9B8EAD"}}>· {p.d.toFixed(2)} mi</span></div>)}
-            </div>}
-            {r.mod.length>0&&<div>
-              <div style={{fontSize:11,color:"#D4A040",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:3}}>Moderate pairs (0.5–1 mi)</div>
-              {r.mod.map((p,i)=><div key={i} style={{fontSize:12,color:"#9B8EAD",fontFamily:"monospace",padding:"1px 0"}}>{p.a} ↔ {p.b} · {p.d.toFixed(2)} mi</div>)}
-            </div>}
-          </div>)}
-        </div>}
-      </div></Cd>}
 
       {viewMode==="cards"?<CardGrid/>:
        viewMode==="map"?<Cd><div style={{padding:10}}>
