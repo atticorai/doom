@@ -1240,7 +1240,7 @@ const App=()=>{
   const notify=useCallback(m=>{setToast(m);setTimeout(()=>setToast(null),3e3)},[]);
   // Generate PDF with clickable links using jsPDF text rendering (not html2canvas)
   const generatePdfBase64=async(html,trafficRec)=>{
-    // No trafficRec → html2canvas fallback (e.g. preview / digital tools)
+    // If no traffic record passed, fall back to canvas method for non-traffic uses
     if(!trafficRec){
       const iframe=document.createElement("iframe");
       iframe.style.cssText="position:fixed;left:-9999px;width:850px;height:1200px;border:none";
@@ -1258,164 +1258,93 @@ const App=()=>{
         return pdf.output("datauristring");
       }catch(pdfErr){if(iframe.parentNode)document.body.removeChild(iframe);throw pdfErr;}
     }
-    // ═══ Native jsPDF — selectable text + clickable creative links,
-    // matches the renderSheet HTML layout 1:1 (logo, info fields with
-    // Buy Type(s), combined-estimate sub-table, ISCI rotation table
-    // with bookend labels in the Length column, signature, plain
-    // 24-hour note). No 4-arg setFillColor anywhere — that's the
-    // CMYK trap that causes dark rows.
+    // ═══ Native jsPDF with clickable links ═══
     const{jsPDF:JP}=window.jspdf;const pdf=new JP("p","mm","a4");
-    const pw=210;const ph=297;const mx=14;const cw=pw-2*mx;let y=14;
+    const pw=210;const ph=297;const mx=14;const cw=pw-2*mx;let y=16;
     const S=v=>v==null?"":String(v);
-    const isPL=trafficRec.brand==="Postman Law";
-    const bc=isPL?[124,58,237]:[217,119,6]; // brand color (purple/gold)
+    const bc=trafficRec.brand==="Postman Law"?[124,58,237]:[217,119,6];
     const checkPage=(need)=>{if(y+need>ph-14){pdf.addPage();y=14}};
-    // Brand logo at top center
-    try{const logoSrc=isPL?LOGO_PL:LOGO_WK;if(logoSrc){pdf.addImage(logoSrc,"PNG",pw/2-22,y,44,12);y+=14}}catch(e){y+=2}
-    // Subtitle: "<MEDIA> TRAFFIC INSTRUCTIONS"
-    pdf.setFont("helvetica","bold");pdf.setFontSize(9);pdf.setTextColor(110,110,110);
-    pdf.text(mediaLabel(trafficRec.media||"TV").toUpperCase()+" TRAFFIC INSTRUCTIONS",pw/2,y,{align:"center"});y+=8;
-    // Info field renderer — label in gray, value in given color (or black)
+    // Header
+    pdf.setFont("helvetica","bold");pdf.setFontSize(14);pdf.setTextColor(bc[0],bc[1],bc[2]);
+    pdf.text(S(trafficRec.brand).toUpperCase(),pw/2,y,{align:"center"});y+=5;
+    pdf.setFontSize(8);pdf.setTextColor(100,100,100);
+    pdf.text((trafficRec.media||"TV").toUpperCase()+" TRAFFIC INSTRUCTIONS",pw/2,y,{align:"center"});y+=8;
+    // Info fields
     const hdr=(label,value,color)=>{
-      checkPage(5);
-      pdf.setFont("helvetica","bold");pdf.setFontSize(9);pdf.setTextColor(85,85,85);
-      pdf.text(label+":",mx,y);
-      pdf.setFont("helvetica",color?"bold":"normal");
-      if(color)pdf.setTextColor(color[0],color[1],color[2]);else pdf.setTextColor(30,30,30);
-      pdf.text(S(value),mx+34,y);
-      y+=4.5;
+      checkPage(4);pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(100,100,100);
+      pdf.text(label+":",mx,y);pdf.setFont("helvetica","normal");
+      if(color)pdf.setTextColor(color[0],color[1],color[2]);else pdf.setTextColor(0,0,0);
+      pdf.text(S(value),mx+32,y);y+=4;
     };
-    // Resolve combined estimates and look up sub-est records for
-    // Buy Type(s) and the per-est station rows.
-    const estStr=trafficRec.est||"";
-    const estNums=estStr.split(/\s*[+\/]\s*/).map(s=>s.trim()).filter(Boolean);
-    const isCombined=(trafficRec.combined===true)||estNums.length>1;
-    const hMkt=normMkt(trafficRec.market)||trafficRec.market||"";
-    const subs=isCombined?estNums.map(n=>estimates.find(e=>e.num===n&&e.brand===trafficRec.brand&&((normMkt(e.market)||e.market)===hMkt||e.market===trafficRec.market))).filter(Boolean):[];
-    const buyTypes=isCombined?[...new Set(subs.map(e=>e.group))].filter(Boolean).join(", "):"";
-    // Info fields — match the on-screen sheet order
-    hdr("Agency",getBrandAgency(isPL?"PL":"WK"));
-    hdr("Client",trafficRec.brand,bc);
-    hdr("Market",DM[trafficRec.market]||trafficRec.market);
-    hdr("Buyer",trafficRec.buyer,[212,160,64]);
-    hdr("Estimate(s)",isCombined?(estNums.length+" combined estimates"):estStr);
-    hdr("Media",mediaLabel(trafficRec.media),[74,200,232]);
-    if(isCombined&&buyTypes)hdr("Buy Type(s)",buyTypes);
-    // Combined-estimate sub-table: Estimate / Buy Type / Stations
-    if(isCombined&&subs.length){
-      checkPage(8+subs.length*5);
-      const subCols=[18,40,cw-18-40];const subColX=[mx,mx+18,mx+18+40];
-      pdf.setFillColor(240,232,249);pdf.rect(mx,y-3,cw,5,"F");
-      pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(91,33,182);
-      ["Estimate","Buy Type","Stations"].forEach((h,i)=>{pdf.text(h,subColX[i]+1,y)});
-      y+=4;
-      pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(30,30,30);
-      subs.forEach(ce=>{
-        const stas=getEstStations(ce);
-        const callsStr=stas.length?stas.map(s=>s.call).join(", "):"—";
-        const callsLines=pdf.splitTextToSize(callsStr,subCols[2]-2);
-        const rowH=Math.max(callsLines.length,1)*3.4+1.2;
-        checkPage(rowH+1);
-        pdf.setFont("helvetica","bold");pdf.text(ce.num,subColX[0]+1,y);
-        pdf.setFont("helvetica","normal");pdf.text(ce.group||"",subColX[1]+1,y);
-        pdf.setFontSize(7.5);pdf.text(callsLines,subColX[2]+1,y);pdf.setFontSize(8);
-        y+=rowH;
-        pdf.setDrawColor(235,235,235);pdf.setLineWidth(0.1);pdf.line(mx,y-1.5,mx+cw,y-1.5);
-      });
-      y+=1;
-    }else if(!isCombined){
-      const stas=trafficRec.stations||[];
-      if(stas.length)hdr("Stations ("+stas.length+")",stas.join(", "));
-    }
-    // Remaining info fields after the optional sub-table
-    hdr("Broadcast Month",trafficRec.month,[232,90,122]);
-    hdr("Flight Dates",trafficRec.flight);
-    hdr("Version/ Links","Version "+S(trafficRec.version||"1")+" / "+S(trafficRec.market)+" Assets");
+    hdr("Agency","Atticor Media");hdr("Client",trafficRec.brand,bc);
+    hdr("Market",trafficRec.market);hdr("Buyer",trafficRec.buyer,[217,119,6]);
+    hdr("Estimate",trafficRec.est);hdr("Media",trafficRec.media,[37,99,235]);
+    hdr("Month",trafficRec.month,bc);hdr("Flight",trafficRec.flight);
+    hdr("Version","V"+S(trafficRec.version));
     if(trafficRec.comments)hdr("Comments",trafficRec.comments);
-    y+=2;
-    // ISCI rotation table
+    y+=2;pdf.setDrawColor(bc[0],bc[1],bc[2]);pdf.setLineWidth(0.5);pdf.line(mx,y,mx+cw,y);y+=6;
+    // Rotation table header
     checkPage(10);
-    const cols=[26,80,18,12,32];const colX=[mx];for(let i=1;i<cols.length;i++)colX.push(colX[i-1]+cols[i-1]);
-    pdf.setFillColor(240,232,249);pdf.rect(mx,y-3,cw,5,"F");
-    pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(91,33,182);
-    ["Flight Dates","ISCI Codes & Title:","Length:","%","Notes:"].forEach((h,i)=>{pdf.text(h,colX[i]+1,y)});
-    y+=4;pdf.setDrawColor(50,50,50);pdf.setLineWidth(0.4);pdf.line(mx,y-1,mx+cw,y-1);y+=2.5;
+    const cols=[34,60,12,12,40];const colX=[mx];for(let i=1;i<cols.length;i++)colX.push(colX[i-1]+cols[i-1]);
+    pdf.setFillColor(243,237,249);pdf.rect(mx,y-3,cw,5,"F");
+    pdf.setFont("helvetica","bold");pdf.setFontSize(7);pdf.setTextColor(90,77,107);
+    ["FLIGHT","ISCI CODE & TITLE","DUR","ROT%","SCHEDULE"].forEach((h,i)=>{pdf.text(h,colX[i]+1,y)});
+    y+=4;pdf.setLineWidth(0.3);pdf.setDrawColor(0,0,0);pdf.line(mx,y,mx+cw,y);y+=4;
+    // ISCI rows grouped by schedule
     const isciRows=trafficRec.iscis||[];
-    const grouped={};isciRows.forEach(r=>{const s=r.sched||"All Week";if(!grouped[s])grouped[s]=[];grouped[s].push(r)});
-    const SCHED_ORDER_PDF=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
-    const schedColors={"M-F Schedule":[219,234,254],"M-F Bookend":[237,233,254],"Weekend Schedule":[254,243,199],"Weekend Bookend":[252,231,243],"All Week":[220,252,231],"Holiday Only":[254,226,226]};
-    const validBk=b=>typeof b==="string"&&b&&b!=="true"&&b!=="false";
-    const allScheds=[...SCHED_ORDER_PDF.filter(s=>grouped[s]),...Object.keys(grouped).filter(s=>!SCHED_ORDER_PDF.includes(s))];
+    const schedGroups={};isciRows.forEach(r=>{const s=r.sched||"All Week";if(!schedGroups[s])schedGroups[s]=[];schedGroups[s].push(r)});
+    const SCHED_ORDER_PDF=["M-F Schedule","Weekend Schedule","All Week","M-F Bookend","Weekend Bookend","Holiday Only"];
+    const schedColors={"M-F Schedule":[219,234,254],"Weekend Schedule":[254,249,195],"All Week":[240,253,244],"M-F Bookend":[237,233,254],"Weekend Bookend":[255,237,213],"Holiday Only":[254,226,226]};
+    const allScheds=[...SCHED_ORDER_PDF.filter(s=>schedGroups[s]),...Object.keys(schedGroups).filter(s=>!SCHED_ORDER_PDF.includes(s))];
     allScheds.forEach(sched=>{
-      const items=grouped[sched];if(!items)return;
-      const sc=schedColors[sched]||[240,232,249];
+      const items=schedGroups[sched];if(!items)return;
       checkPage(8);
+      const sc=schedColors[sched]||[248,250,252];
       pdf.setFillColor(sc[0],sc[1],sc[2]);pdf.rect(mx,y-3,cw,4.5,"F");
-      pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(60,60,60);
+      pdf.setFont("helvetica","bold");pdf.setFontSize(7);pdf.setTextColor(60,60,60);
       pdf.text(sched.toUpperCase(),mx+2,y);y+=5;
-      pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(30,30,30);
+      pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
       items.sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0)).forEach(r=>{
-        // Length: bookend label if valid, else ":dur" (matches renderSheet)
-        const len=validBk(r.bookend)?r.bookend:(r.dur?":"+r.dur:"");
-        const note=validBk(r.bookend)?r.bookend:sched;
-        const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";
-        pdf.setFont("helvetica","bold");pdf.setFontSize(8);
-        const titleLines=pdf.splitTextToSize(S(r.code)+" - "+S(r.title),cols[1]-2);
-        pdf.setFont("helvetica","normal");
-        const noteLines=pdf.splitTextToSize(note,cols[4]-2);
-        const lineCount=Math.max(titleLines.length,noteLines.length,1);
-        const LH=3.6;const rowH=lineCount*LH+1.4;
-        checkPage(rowH+1);
-        pdf.setFontSize(8);pdf.setTextColor(30,30,30);
+        checkPage(5);
+        pdf.setFillColor(sc[0],sc[1],sc[2],0.3);pdf.rect(mx,y-3,cw,4.5,"F");
         pdf.text(S(trafficRec.flight),colX[0]+1,y);
-        pdf.setFont("helvetica","bold");pdf.text(titleLines,colX[1]+1,y);
+        pdf.setFont("helvetica","bold");pdf.text(S(r.code)+" - "+S(r.title),colX[1]+1,y,{maxWidth:cols[1]-2});
         pdf.setFont("helvetica","normal");
-        pdf.text(len,colX[2]+1,y);
-        pdf.setFont("helvetica","bold");pdf.text(pct,colX[3]+1,y);
-        pdf.setFont("helvetica","normal");pdf.setFontSize(7.5);pdf.setTextColor(85,85,85);
-        pdf.text(noteLines,colX[4]+1,y);
-        pdf.setFontSize(8);pdf.setTextColor(30,30,30);
-        y+=rowH;
-        pdf.setDrawColor(235,235,235);pdf.setLineWidth(0.1);pdf.line(mx,y-1.5,mx+cw,y-1.5);
+        pdf.text(":"+S(r.dur),colX[2]+1,y);
+        pdf.text(r.pct?S(r.pct).replace("%","")+"%":"",colX[3]+1,y);
+        const bkNote=(typeof r.bookend==="string"&&r.bookend&&r.bookend!=="true"&&r.bookend!=="false")?r.bookend:sched;
+        pdf.text(bkNote,colX[4]+1,y);
+        y+=4.5;
       });
     });
-    // Schedule legend
-    y+=2;checkPage(6);
-    let legX=mx;
-    pdf.setFont("helvetica","normal");pdf.setFontSize(7);
-    Object.entries(schedColors).forEach(([s,c])=>{
-      if(!grouped[s])return;
-      const w=pdf.getTextWidth(s)+8;
-      if(legX+w>mx+cw){y+=4;legX=mx}
-      pdf.setFillColor(c[0],c[1],c[2]);pdf.rect(legX,y-2.5,3,3,"F");
-      pdf.setTextColor(85,85,85);pdf.text(s,legX+4,y);
-      legX+=w;
-    });
-    y+=4;
-    // Creative file links — clickable
-    const filesWithLinks=(trafficRec.iscis||[]).map(r=>{const full=iscis.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:r.title||full.title||"",url:full.fileUrl}:null}).filter(Boolean);
+    // Creative file links (CLICKABLE)
+    const filesWithLinks=(trafficRec.iscis||[]).filter(r=>{const full=iscis.find(i=>i.code===r.code);return full&&full.fileUrl});
     if(filesWithLinks.length>0){
-      y+=4;checkPage(8+filesWithLinks.length*4);
-      pdf.setFillColor(240,249,255);pdf.rect(mx,y-3,cw,4+filesWithLinks.length*4+2,"F");
-      pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(3,105,161);
+      y+=4;checkPage(12);
+      pdf.setFillColor(240,249,255);pdf.rect(mx,y-3,cw,4+filesWithLinks.length*4,"F");
+      pdf.setFont("helvetica","bold");pdf.setFontSize(7);pdf.setTextColor(3,105,161);
       pdf.text("CREATIVE FILES — CLICK TO DOWNLOAD",mx+2,y);y+=4;
       pdf.setFont("helvetica","normal");pdf.setFontSize(8);
       filesWithLinks.forEach(r=>{
         checkPage(5);
-        pdf.setTextColor(37,99,235);
-        pdf.textWithLink(S(r.code)+" — "+S(r.title),mx+4,y,{url:r.url});
-        y+=4;
+        const full=iscis.find(i=>i.code===r.code);
+        if(full&&full.fileUrl){
+          pdf.setTextColor(37,99,235);
+          const linkText=S(r.code)+" — "+S(r.title);
+          pdf.textWithLink(linkText,mx+4,y,{url:full.fileUrl});
+          y+=4;
+        }
       });
-      pdf.setTextColor(30,30,30);
+      pdf.setTextColor(0,0,0);
     }
-    // Signature line and 24-hour note (note is plain text — no fill box)
+    // Signature
     y+=8;checkPage(14);
     pdf.setDrawColor(bc[0],bc[1],bc[2]);pdf.setLineWidth(0.5);pdf.line(mx,y,mx+cw,y);y+=5;
-    pdf.setFont("helvetica","bold");pdf.setFontSize(9);pdf.setTextColor(30,30,30);
-    pdf.text("Accepted by: _________________________",mx,y);
-    pdf.text("Date: _______________",mx+cw-60,y);y+=6;
-    pdf.setFont("helvetica","italic");pdf.setFontSize(7.5);pdf.setTextColor(bc[0],bc[1],bc[2]);
-    pdf.text("Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.",mx,y);
+    pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
+    pdf.text("Accepted by: _________________________",mx,y);pdf.text("Date: _______________",mx+cw-60,y);y+=6;
+    pdf.setFillColor(bc[0],bc[1],bc[2],0.08);pdf.rect(mx,y-3,cw,8,"F");
+    pdf.setFont("helvetica","normal");pdf.setFontSize(7);pdf.setTextColor(bc[0],bc[1],bc[2]);
+    pdf.text("Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.",mx+2,y);
     return pdf.output("datauristring");
   };
   // Native jsPDF generator for digital traffic — produces clickable links
