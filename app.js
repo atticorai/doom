@@ -5941,7 +5941,7 @@ Rules:
         </div>
         <div style={{flex:1}}/>
         <button onClick={runPlanner} disabled={planLoading} style={{padding:"8px 18px",borderRadius:7,border:"none",background:planLoading?"#4a3565":"linear-gradient(135deg,#9b7bb0,#D4A040)",color:"#fff",fontSize:13,fontWeight:800,cursor:planLoading?"not-allowed":"pointer",letterSpacing:.5,boxShadow:planLoading?"none":"0 4px 16px rgba(155,123,176,.3)"}}>
-          {planLoading?"🧠 Thinking…":(recs?"🔄 Re-run AI":"🧠 Run AI — "+planBrand)}
+          {planLoading?"🧠 Thinking…":(playbook?"🔄 Re-run AI":"🧠 Run AI — "+planBrand)}
         </button>
       </div>
       {planError&&<div style={{padding:10,borderRadius:8,background:"rgba(232,90,122,.1)",border:"1px solid rgba(232,90,122,.2)",color:"#E85A7A",fontSize:12,whiteSpace:"pre-wrap",fontFamily:"ui-monospace,monospace"}}>{planError}</div>}
