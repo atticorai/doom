@@ -7495,9 +7495,6 @@ Rules:
               {React.createElement(ML,{key:libKey})}
             </div>;
           })()}
-              see the IIFE below the AnimatePresence close. The wrapper
-              applies a transform that creates a containing block for
-              fixed descendants, which would trap BookOpen's modal. */}
           {pg==="planner"&&PlannerPg()}
           {pg==="notif"&&pages["notif"]}
           {pg==="docs"&&<DocsPg/>}
