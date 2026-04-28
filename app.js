@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="ooh-june26-tag-2026-04-29-2";
+const __APP_VERSION__="ooh-revert-2026-04-29-1";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -1043,7 +1043,7 @@ const App=()=>{
   const[estBrand,setEstBrand]=useState("Postman Law");
   const[staBrand,setStaBrand]=useState("Postman Law");
   // OOH WK page state (lifted to prevent remount on photo upload)
-  const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");const[oohMapColorBy,setOohMapColorBy]=useState("market");
+  const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");
   const[oohEditId,setOohEditId]=useState(null);const[oohEditVal,setOohEditVal]=useState("");
   const[oohPhotoPanel,setOohPhotoPanel]=useState(null);
   const[oohLines,setOohLines]=useState([{flight:"",isci:"",units:"",notes:""}]);
@@ -3085,23 +3085,6 @@ const App=()=>{
     const isciTitle=(code)=>{if(!code)return"";const m=iscis.find(i=>i.code===code);return m?m.title:""};
 
     const dmaColors={BRM:"#D4A040",MTG:"#E85A7A",GAD:"#059669",CHA:"#4AC8E8"};
-    // June 2026 creative tagging — temp ISCIs derived from JPG filenames so
-    // the user can spot creative-theme clumping on the heat map without
-    // producing real creative codes yet. Apply / Clear via toolbar buttons.
-    const WK_JUNE26_CREATIVE={"GAD-LMR-3331":"JUNE26-3ITSPERSONALCHRISIMAGE","GAD-LMR-4183":"JUNE26-1ITSPERSONALNOIMAGE","GAD-LMR-4244":"JUNE26-3ITSPERSONALCHRISIMAGE","BRM-LMR-5701":"JUNE26-1ITSPERSONALNOIMAGE","GAD-LMR-7000":"JUNE26-3ITSPERSONALCHRISIMAGE","BRM-LMR-8381":"JUNE26-4SOUTHERNJUSTICECHRISIMAGE","BRM-LMR-8561":"JUNE26-4SOUTHERNJUSTICECHRISIMAGE","BRM-LMR-8808":"JUNE26-3ITSPERSONALCHRISIMAGE","BRM-LMR-8815":"JUNE26-HOLD","BRM-LMR-8861":"JUNE26-3ITSPERSONALCHRISIMAGE","BRM-LMR-9063":"JUNE26-4SOUTHERNJUSTICECHRISIMAGE","BRM-LMR-9207":"JUNE26-3ITSPERSONALCHRISIMAGE","BRM-LMR-9243":"JUNE26-3ITSPERSONALCHRISIMAGE","BRM-LMR-10031":"JUNE26-4SOUTHERNJUSTICECHRISIMAGE","BRM-LMR-10137":"JUNE26-3ITSPERSONALCHRISIMAGE","BRM-LMR-10985":"JUNE26-3ITSPERSONALCHRISIMAGE","BRM-LMR-11297":"JUNE26-3ITSPERSONALCHRISIMAGE","BRM-LMR-12922":"JUNE26-4SOUTHERNJUSTICECHRISIMAGE","BRM-LMR-12954":"JUNE26-3ITSPERSONALCHRISIMAGE","BRM-LMR-13008":"JUNE26-4SOUTHERNJUSTICECHRISIMAGE","BRM-LMR-13034":"JUNE26-4SOUTHERNJUSTICECHRISIMAGE","BRM-LMR-13102":"JUNE26-4SOUTHERNJUSTICECHRISIMAGE","BRM-LMR-13128":"JUNE26-3ITSPERSONALCHRISIMAGE","BRM-LMR-13251":"JUNE26-3ITSPERSONALCHRISIMAGE","BRM-LMR-40173":"JUNE26-3ITSPERSONALCHRISIMAGE","GAD-LMR-50008":"JUNE26-1ITSPERSONALNOIMAGE","GAD-LMR-50011":"JUNE26-3ITSPERSONALCHRISIMAGE","BRM-LMR-50021":"JUNE26-3ITSPERSONALCHRISIMAGE","GAD-LMR-60001":"JUNE26-POSTER-NOIMAGE","GAD-LMR-60045":"JUNE26-POSTER-NOIMAGE","GAD-LMR-60067":"JUNE26-POSTER-NOIMAGE","GAD-LMR-60069":"JUNE26-1ITSPERSONALNOIMAGE","BRM-LMR-60109":"JUNE26-1ITSPERSONALNOIMAGE","BRM-LMR-78527":"JUNE26-3ITSPERSONALCHRISIMAGE","BRM-LMR-90001":"JUNE26-4SOUTHERNJUSTICECHRISIMAGE","GAD-LMR-93175":"JUNE26-1ITSPERSONALNOIMAGE","GAD-LMR-93455":"JUNE26-3ITSPERSONALCHRISIMAGE","GAD-LMR-93515":"JUNE26-3ITSPERSONALCHRISIMAGE"};
-    const creativeColors={"JUNE26-4SOUTHERNJUSTICECHRISIMAGE":{label:"Southern Justice (Chris)",color:"#9b7bb0"},"JUNE26-3ITSPERSONALCHRISIMAGE":{label:"It's Personal (Chris)",color:"#4AC8E8"},"JUNE26-1ITSPERSONALNOIMAGE":{label:"It's Personal (no image)",color:"#5BC4A0"},"JUNE26-POSTER-NOIMAGE":{label:"Poster (no image)",color:"#D4A040"},"JUNE26-HOLD":{label:"Hold — design pending",color:"#E85A7A"}};
-    const applyJune26=()=>{
-      if(!confirm("Apply June 2026 temp creative tags to "+Object.keys(WK_JUNE26_CREATIVE).length+" boards? Sets a temp ISCI on each so they show on the heat map color-coded by creative."))return;
-      setPops(prev=>prev.map(p=>WK_JUNE26_CREATIVE[p.boardId]?{...p,isci:WK_JUNE26_CREATIVE[p.boardId]}:p));
-      log("OOH June26 Apply",Object.keys(WK_JUNE26_CREATIVE).length+" boards tagged");
-      notify(Object.keys(WK_JUNE26_CREATIVE).length+" boards tagged with June 2026 creative — switch to Map view + Color: Creative");
-    };
-    const clearJune26=()=>{
-      if(!confirm("Clear June 2026 temp tags from those boards? Restores them to whatever was assigned before."))return;
-      setPops(prev=>prev.map(p=>WK_JUNE26_CREATIVE[p.boardId]?{...p,isci:""}:p));
-      log("OOH June26 Clear",Object.keys(WK_JUNE26_CREATIVE).length+" boards cleared");
-      notify("Cleared June 2026 temp tags");
-    };
 
     const PhotoModal=({p,onClose})=>{
       const close=POP_IMGS[p.closeImg];const dist=POP_IMGS[p.distImg];
@@ -3194,8 +3177,6 @@ const App=()=>{
           <Btn small onClick={()=>setViewMode("ref")} primary={viewMode==="ref"}>📋 Reference</Btn>
           <Btn small onClick={()=>setViewMode("traffic")} primary={viewMode==="traffic"} color="#D4A040">📡 Traffic</Btn>
           <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"} color="#9b7bb0">📑 Contracts</Btn>
-          <Btn small onClick={applyJune26} color="#5BC4A0">🎨 Apply June '26</Btn>
-          <Btn small onClick={clearJune26} color="#E85A7A">⊘ Clear June '26</Btn>
         </div>
       </div>
       <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
@@ -3223,21 +3204,10 @@ const App=()=>{
       </div>
 
       {viewMode==="cards"?<CardGrid/>:
-       viewMode==="map"?<Cd><div style={{padding:10}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-          <div style={{fontSize:14,fontWeight:700}}>📍 WK OOH Board Locations</div>
-          <div style={{display:"flex",gap:4,alignItems:"center"}}>
-            <span style={{fontSize:11,color:"#9B8EAD",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginRight:4}}>Color by:</span>
-            <Btn small onClick={()=>setOohMapColorBy("market")} primary={oohMapColorBy!=="creative"}>Market</Btn>
-            <Btn small onClick={()=>setOohMapColorBy("creative")} primary={oohMapColorBy==="creative"} color="#9b7bb0">Creative</Btn>
-          </div>
-        </div>
-        <OohMap pins={fl.map(p=>{const co=WK_COORDS[p.boardId];return{id:p.boardId,lat:co?co[0]:0,lng:co?co[1]:0,location:p.location,vendor:p.vendor,size:p.size,status:p.isci?"ISCI: "+p.isci:"Active",impressions:p.impressions,market:p.dma,isci:p.isci||"",closeImg:p.closeImg}})} colorFn={oohMapColorBy==="creative"?(p=>{const isci=p.isci||"";if(creativeColors[isci])return creativeColors[isci].color;return"#4a3565"}):(p=>dmaColors[p.market]||"#D4A040")} height={420}/>
-        {oohMapColorBy==="creative"?<div style={{display:"flex",gap:10,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>
-          {Object.entries(creativeColors).filter(([k])=>fl.some(p=>p.isci===k)).map(([k,v])=>{const n=fl.filter(p=>p.isci===k).length;return<div key={k} style={{display:"flex",gap:4,alignItems:"center",fontSize:12}}><div style={{width:10,height:10,borderRadius:5,background:v.color}}/>{v.label} <span style={{color:"#9B8EAD"}}>({n})</span></div>})}
-          {fl.filter(p=>!p.isci).length>0&&<div style={{display:"flex",gap:4,alignItems:"center",fontSize:12}}><div style={{width:10,height:10,borderRadius:5,background:"#4a3565",border:"1px solid #6B5E80"}}/>Untagged <span style={{color:"#9B8EAD"}}>({fl.filter(p=>!p.isci).length})</span></div>}
-        </div>:<div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center"}}>{Object.entries(dmaColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{k}</div>)}</div>}
-        <div style={{fontSize:14,color:"#9B8EAD",marginTop:4,textAlign:"center"}}>{fl.filter(p=>WK_COORDS[p.boardId]).length} of {fl.length} boards have coordinates{oohMapColorBy==="creative"?` · ${fl.filter(p=>p.isci).length} tagged`:""}</div>
+       viewMode==="map"?<Cd><div style={{padding:10}}><div style={{fontSize:14,fontWeight:700,marginBottom:6}}>📍 WK OOH Board Locations</div>
+        <OohMap pins={fl.map(p=>{const co=WK_COORDS[p.boardId];return{id:p.boardId,lat:co?co[0]:0,lng:co?co[1]:0,location:p.location,vendor:p.vendor,size:p.size,status:p.isci?"ISCI: "+p.isci:"Active",impressions:p.impressions,market:p.dma,closeImg:p.closeImg}})} colorFn={p=>dmaColors[p.market]||"#D4A040"} height={420}/>
+        <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center"}}>{Object.entries(dmaColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{k}</div>)}</div>
+        <div style={{fontSize:14,color:"#9B8EAD",marginTop:4,textAlign:"center"}}>{fl.filter(p=>WK_COORDS[p.boardId]).length} of {fl.length} boards have coordinates</div>
        </div></Cd>:
        viewMode==="ref"?<Cd><div style={{padding:10}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
           <div style={{fontSize:14,fontWeight:700}}>📋 WK OOH Reference — Board × Vendor × Contract × Status</div>
