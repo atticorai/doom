@@ -5714,51 +5714,23 @@ OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence:
   "marketStrategies": [
     {
       "market": "Chattanooga",
-      "local_truth": "2–3 sentences naming the structural truth of this city that matters for PI advertising. e.g. 'Chattanooga sits at the I-24/I-75 junction — one of the heaviest commercial-trucking chokepoints in the country. The metro doesn't have to chase trucking cases; the cases drive in. VW Chattanooga keeps a manufacturing workforce on shift work that funnels into morning radio drive-time.' Real, structural, local.",
-      "calendar_moments": [
-        {"when": "Mid-${nextBroadcastMonth}", "what": "Specific event/holiday/sports moment in this market for this month — Memorial Day rideshare night, NCAA Lacrosse finals, UT spring scrimmage, etc.", "case_type": "Case-type angle this moment unlocks (Trucking / Auto / DUI / Premises / etc.)", "creative_pull": "Plain-English direction for which kind of spot to emphasize that week"}
-      ],
-      "rotation_call": {
-        "running_too_long": "1 sentence naming spots/themes that have been carrying too much weight. e.g. 'Mother's Wreck has been doing the heavy lifting in 30s for three straight months — viewers can recite it.'",
-        "swap_in": "1 sentence suggesting what to dial UP based on the creative mix. e.g. 'Push trucking-angle inventory harder — you're at 8% of the rotation in a market where commercial vehicles cause >40% of fatal PI cases.' No ISCI codes — speak in case-type / theme language."
-      },
-      "muse_chorus": {
-        "calliope": "Calliope's dramatic-eloquent take, or null (one line, in voice)",
-        "thalia": "Thalia's comic-tragic take, or null (one line)",
-        "melpomene": "Melpomene's lamenting take, or null (one line)",
-        "terpsichore": "Terpsichore's dance metaphor, or null (one line)",
-        "clio": "Clio's archival/seasonal-pattern take, or null (one line)"
-      },
-      "spot_concepts": [
-        {
-          "title": "Spot title — punchy, script-slug style",
-          "duration": "30",
-          "case_type": "Trucking / Auto Accident / Premises / Workers Comp / etc.",
-          "open_on": "First 2 seconds — specific visual. Actor archetype + setting + action.",
-          "story_beats": "3–4 short beats describing the spot's arc in plain English.",
-          "vo_line": "The actual VO line you'd record. Quoted.",
-          "tone": "Two adjectives directing actor / VO. e.g. 'protective, working-class'",
-          "why_it_lands": "1 sentence — why this works in THIS market right now."
-        }
-      ],
-      "what_to_avoid": "1 sentence — creative trap to skip in this market for this month.",
-      "the_pitch_line": "ONE sentence the user uses when pitching this market's plan to the client. Real strategy talk, not deck bullets."
+      "memo": "**MULTI-PARAGRAPH MARKDOWN PROSE in Megara's voice** — read as a strategy memo, not a fact sheet. Open by naming what's actually true about this city that matters for PI advertising — the I-24/I-75 commercial-trucking chokepoint, the VW Chattanooga manufacturing workforce on shift schedules, the river-valley humidity that turns into severe weather. Then transition into what's happening THIS month — specific events, weekends, holidays, sports, weather, moments. Tie each calendar moment explicitly to a case-type angle and to which creative theme should be running that week. Then call out which themes are doing too much work in the current rotation and what should be dialed up — speak in theme/case-type language, no ISCI codes. Inline, drop in 1–3 spot concepts as block quotes (use markdown > prefix). Each concept opens with a script-slug title in bold, then continues with what we see, what we hear, the actual VO line in italic quotes, and the case-type angle. End with a single one-line pitch line the user can hand to the client. Use real second-person voice ('you'). No headers, no bullet lists, no field labels — flowing prose only. 4–8 paragraphs total."
     }
   ]
 }
 \`\`\`
 
 Rules:
-- 1–3 spot_concepts per market. Quality over quantity. Every concept must lean on a SPECIFIC local detail from the market profile.
-- 'open_on' must be visually concrete. 'A man at his desk' fails. 'A UT freshman's mom packing the back of a Suburban while a Volunteer-orange flag flaps in the rearview' passes.
-- 'vo_line' is the actual line. Not 'we explain X'. Write the line. e.g. "Move-out weekend turns into the wrong kind of accident faster than you'd think."
-- 'tone' captures the actor / VO direction in 2 adjectives — give a real reading direction.
-- muse_chorus: only fill the slots where a Muse has a pointed in-character thing to say about THIS market THIS month. Set the rest to null. Don't force all five every time.
-- megara_verdict: tell a STORY. 'Birmingham's setting up nicely — UAB shift change at 7am gives you a captive radio drive-time audience and your trucking inventory is matched to the Northbound 65 freight spike. Run with it.'
-- big_idea: this is the single thematic concept that should run across all markets — like a campaign theme. Should feel like ad-agency thinking, not media-buying thinking.
-- DO NOT mention staleness counts. DO NOT list ISCI codes. DO NOT recommend swaps. The user knows what's stale — give her CREATIVE direction, not a metrics summary.
-- No corporate-speak. No 'leverage' / 'optimize' / 'amplify'. Write like a human creative director.
-- JSON only. No markdown headers outside the code fence.`;
+- The memo IS the deliverable. No structured fields. Markdown prose.
+- Use **bold** for spot-concept titles. Use _italics_ for the VO line you'd record (always quoted). Use blockquotes (> ) for the spot-concept blocks.
+- Write second-person to the user. 'You're sitting on a trucking corridor and you're running auto-accident creative.' Direct, not abstract.
+- Reference real local detail — UT scrimmage, Hyundai shift, peanut harvest, Maxwell AFB, Lookouts opening day, Riverbend Festival. Not generic 'spring season'.
+- Speak in case-type/theme language for rotation calls. NO ISCI codes. NO percentages. NO staleness counts. The user has dashboards for that.
+- Megara is the narrator. Snarky, dry, confident. The Muses can show up as parenthetical interjections IF they have something pointed to say — '(Melpomene sighs about this one — she has a point: that 30 has run since February...)'. Optional, not required.
+- megara_verdict: 2–3 sentences setting up the brand for the month.
+- big_idea: campaign-theme thinking — 6-word title + tagline + why-now.
+- No corporate-speak. No 'leverage' / 'optimize' / 'amplify'. Write like a real human creative director who's been doing PI advertising for fifteen years.
+- JSON only. No markdown headers outside the code fence. Inside each memo string, markdown is welcome.`;
 
       const resp=await fetch("/api/planner",{
         method:"POST",
@@ -5966,74 +5938,36 @@ Rules:
         {playbook.big_idea.tagline&&<div style={{fontSize:13,color:"#C4A0C8",fontStyle:"italic",marginBottom:8}}>"{playbook.big_idea.tagline}"</div>}
         {playbook.big_idea.why_now&&<div style={{fontSize:12,color:"#9B8EAD"}}><b style={{color:"#D4A040"}}>Why now:</b> {playbook.big_idea.why_now}</div>}
       </div>}
-      {/* Per-market creative strategies (new schema) */}
+      {/* Per-market memo — pure prose, markdown rendered */}
       {hasMarketStrategies&&<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        {playbook.marketStrategies.map((ms,i)=><div key={i} style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid rgba(196,160,200,.25)",borderRadius:12,padding:18}}>
-          <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:10,paddingBottom:8,borderBottom:"1px solid rgba(212,160,64,.2)"}}>
-            <div style={{fontSize:18,fontWeight:800,color:"#F0E8F8",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.3}}>📍 {ms.market}</div>
+        {playbook.marketStrategies.map((ms,i)=><div key={i} style={{background:"linear-gradient(180deg,#fdfaf3,#f5efe2)",borderRadius:12,padding:"28px 36px",boxShadow:"0 8px 32px rgba(30,18,51,.4)",color:"#1e1233",fontFamily:"'Cormorant Garamond',Georgia,serif",lineHeight:1.7,fontSize:16,position:"relative"}}>
+          <div style={{position:"absolute",top:0,left:36,right:36,height:3,background:"linear-gradient(90deg,#9b7bb0,#D4A040,#9b7bb0)"}}/>
+          <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:14,paddingBottom:10,borderBottom:"1px solid rgba(155,123,176,.25)"}}>
+            <span style={{fontSize:11,color:"#9b7bb0",fontWeight:800,textTransform:"uppercase",letterSpacing:2,fontFamily:"-apple-system,sans-serif"}}>📍 Market Memo</span>
+            <span style={{fontSize:24,fontWeight:700,color:"#1e1233",letterSpacing:.3}}>{ms.market}</span>
+            <span style={{marginLeft:"auto",fontSize:11,color:"#9b7bb0",fontStyle:"italic"}}>— Megara, on {monthA||"the month ahead"}</span>
           </div>
-          {/* Local truth — the structural reality of this city */}
-          {(ms.local_truth||ms.the_moment)&&<div style={{marginBottom:10,padding:"10px 14px",background:"rgba(155,123,176,.08)",borderLeft:"3px solid #9b7bb0",borderRadius:6}}>
-            <div style={{fontSize:10,fontWeight:800,color:"#9b7bb0",textTransform:"uppercase",letterSpacing:1.2,marginBottom:4}}>Local Truth</div>
-            <div style={{fontSize:13,color:"#E8DFF0",lineHeight:1.6}}>{ms.local_truth||ms.the_moment}</div>
-          </div>}
-          {ms.audience_state&&<div style={{marginBottom:10,padding:"10px 14px",background:"rgba(74,200,232,.08)",borderLeft:"3px solid #4AC8E8",borderRadius:6}}>
-            <div style={{fontSize:10,fontWeight:800,color:"#4AC8E8",textTransform:"uppercase",letterSpacing:1.2,marginBottom:4}}>Audience State</div>
-            <div style={{fontSize:13,color:"#E8DFF0",lineHeight:1.6}}>{ms.audience_state}</div>
-          </div>}
-          {/* Calendar moments — holiday/sports/event → case-type linkage */}
-          {ms.calendar_moments&&Array.isArray(ms.calendar_moments)&&ms.calendar_moments.length>0&&<div style={{marginBottom:10}}>
-            <div style={{fontSize:11,fontWeight:800,color:"#5BC4A0",textTransform:"uppercase",letterSpacing:1.2,marginBottom:6}}>📅 Calendar Moments → Case Types</div>
-            <div style={{display:"flex",flexDirection:"column",gap:6}}>{ms.calendar_moments.map((cm,j)=><div key={j} style={{padding:"8px 12px",background:"#1e1233",border:"1px solid rgba(91,196,160,.25)",borderRadius:6}}>
-              <div style={{display:"flex",gap:8,alignItems:"baseline",marginBottom:3,flexWrap:"wrap"}}>
-                {cm.when&&<span style={{fontSize:10,padding:"2px 7px",borderRadius:4,background:"rgba(91,196,160,.15)",color:"#5BC4A0",fontWeight:800}}>{cm.when}</span>}
-                <span style={{fontSize:13,color:"#F0E8F8",fontWeight:700}}>{cm.what}</span>
-                {cm.case_type&&<span style={{fontSize:10,padding:"2px 7px",borderRadius:4,background:"rgba(212,160,64,.15)",color:"#D4A040",fontWeight:800}}>{cm.case_type}</span>}
-              </div>
-              {cm.creative_pull&&<div style={{fontSize:11,color:"#9B8EAD",fontStyle:"italic",marginTop:3}}>{cm.creative_pull}</div>}
-            </div>)}</div>
-          </div>}
-          {/* Rotation call — what's running too long, what to dial up */}
-          {ms.rotation_call&&(ms.rotation_call.running_too_long||ms.rotation_call.swap_in)&&<div style={{marginBottom:10,padding:"10px 14px",background:"rgba(212,160,64,.08)",border:"1px solid rgba(212,160,64,.25)",borderRadius:6}}>
-            <div style={{fontSize:10,fontWeight:800,color:"#D4A040",textTransform:"uppercase",letterSpacing:1.2,marginBottom:6}}>🔁 Rotation Call</div>
-            {ms.rotation_call.running_too_long&&<div style={{fontSize:12,color:"#E8DFF0",lineHeight:1.5,marginBottom:5}}><b style={{color:"#E85A7A"}}>Carrying too much:</b> {ms.rotation_call.running_too_long}</div>}
-            {ms.rotation_call.swap_in&&<div style={{fontSize:12,color:"#E8DFF0",lineHeight:1.5}}><b style={{color:"#5BC4A0"}}>Dial up:</b> {ms.rotation_call.swap_in}</div>}
-          </div>}
-          {/* Muse chorus */}
-          {ms.muse_chorus&&Object.entries(ms.muse_chorus).filter(([k,v])=>v).length>0&&<div style={{marginBottom:12,padding:12,background:"#1e1233",borderRadius:6}}>
-            <div style={{fontSize:10,fontWeight:800,color:"#C4A0C8",textTransform:"uppercase",letterSpacing:1.2,marginBottom:6}}>🎭 Chorus</div>
-            <div style={{display:"flex",flexDirection:"column",gap:5}}>
-              {Object.entries(ms.muse_chorus).filter(([k,v])=>v).map(([k,v])=>{const muse=museShort[k];return muse?<div key={k} style={{display:"flex",gap:8,fontSize:12}}>
-                <span style={{color:muse.color,fontWeight:800,minWidth:104,fontFamily:"'Cormorant Garamond',serif"}}>{muse.icon} {muse.name}</span>
-                <span style={{flex:1,color:"#E8DFF0",fontStyle:"italic",lineHeight:1.5}}>{v}</span>
-              </div>:null})}
-            </div>
-          </div>}
-          {/* Spot concepts */}
-          {ms.spot_concepts&&Array.isArray(ms.spot_concepts)&&ms.spot_concepts.length>0&&<div style={{marginBottom:10}}>
-            <div style={{fontSize:11,fontWeight:800,color:"#D4A040",textTransform:"uppercase",letterSpacing:1.5,marginBottom:8}}>🎬 Spot Concepts</div>
-            <div style={{display:"flex",flexDirection:"column",gap:10}}>{ms.spot_concepts.map((c,j)=><div key={j} style={{padding:14,background:"#1e1233",border:"1px solid rgba(212,160,64,.25)",borderRadius:8}}>
-              <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:8,paddingBottom:6,borderBottom:"1px solid #2d1f42"}}>
-                <span style={{fontSize:15,fontWeight:800,color:"#F0E8F8",fontFamily:"'Cormorant Garamond',serif"}}>{c.title}</span>
-                {c.duration&&<span style={{fontSize:10,padding:"2px 7px",borderRadius:4,background:"rgba(74,200,232,.15)",color:"#4AC8E8",fontWeight:800}}>:{c.duration}</span>}
-              </div>
-              {c.open_on&&<div style={{marginBottom:6,fontSize:12}}><span style={{color:"#9b7bb0",fontWeight:700,marginRight:6}}>OPEN ON:</span><span style={{color:"#E8DFF0"}}>{c.open_on}</span></div>}
-              {c.story_beats&&<div style={{marginBottom:6,fontSize:12,color:"#E8DFF0",lineHeight:1.6}}><span style={{color:"#9b7bb0",fontWeight:700,marginRight:6}}>BEATS:</span>{c.story_beats}</div>}
-              {c.vo_line&&<div style={{margin:"8px 0",padding:"8px 12px",background:"rgba(212,160,64,.08)",borderLeft:"2px solid #D4A040",borderRadius:4,fontSize:13,color:"#F0E8F8",fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic"}}>"{c.vo_line}"</div>}
-              <div style={{display:"flex",gap:14,fontSize:11,color:"#9B8EAD",flexWrap:"wrap",marginTop:6}}>
-                {c.tone&&<span><b style={{color:"#C4A0C8"}}>Tone:</b> {c.tone}</span>}
-              </div>
-              {c.why_it_lands&&<div style={{marginTop:6,fontSize:11,color:"#9B8EAD",fontStyle:"italic"}}><b style={{color:"#5BC4A0",fontStyle:"normal"}}>Why it lands:</b> {c.why_it_lands}</div>}
-            </div>)}</div>
-          </div>}
-          {ms.what_to_avoid&&<div style={{marginTop:8,padding:"8px 12px",background:"rgba(232,90,122,.08)",borderLeft:"3px solid #E85A7A",borderRadius:6}}>
-            <span style={{fontSize:10,fontWeight:800,color:"#E85A7A",textTransform:"uppercase",letterSpacing:1.2,marginRight:8}}>⚠ Skip</span>
-            <span style={{fontSize:12,color:"#E8DFF0"}}>{ms.what_to_avoid}</span>
-          </div>}
-          {ms.the_pitch_line&&<div style={{marginTop:10,padding:"10px 14px",background:"linear-gradient(135deg,rgba(91,196,160,.1),rgba(74,200,232,.05))",border:"1px solid rgba(91,196,160,.25)",borderRadius:6}}>
-            <div style={{fontSize:10,fontWeight:800,color:"#5BC4A0",textTransform:"uppercase",letterSpacing:1.2,marginBottom:3}}>📣 Pitch Line</div>
-            <div style={{fontSize:13,color:"#E8DFF0",fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic"}}>"{ms.the_pitch_line}"</div>
-          </div>}
+          {ms.memo&&ms.memo.split(/\n\n+/).map((para,j)=>{
+            const isQuote=/^>\s/.test(para);
+            const text=isQuote?para.replace(/^>\s*/gm,""):para;
+            const renderInline=(s)=>{
+              const parts=[];let last=0;
+              const re=/\*\*([^*]+)\*\*|_([^_]+)_|"([^"]+)"|\b(?:Calliope|Thalia|Melpomene|Terpsichore|Clio)\b/g;
+              let m;while((m=re.exec(s))!==null){
+                if(m.index>last)parts.push(s.slice(last,m.index));
+                if(m[1])parts.push(<b key={m.index} style={{fontWeight:700,color:"#1e1233"}}>{m[1]}</b>);
+                else if(m[2])parts.push(<i key={m.index} style={{fontStyle:"italic",color:"#7c2d6f"}}>{m[2]}</i>);
+                else if(m[3])parts.push(<span key={m.index} style={{fontStyle:"italic",color:"#9b7bb0"}}>"{m[3]}"</span>);
+                else parts.push(<span key={m.index} style={{color:"#9b7bb0",fontWeight:600}}>{m[0]}</span>);
+                last=m.index+m[0].length;
+              }
+              if(last<s.length)parts.push(s.slice(last));
+              return parts;
+            };
+            return isQuote
+              ?<blockquote key={j} style={{margin:"14px 0",padding:"12px 18px",borderLeft:"4px solid #9b7bb0",background:"rgba(155,123,176,.08)",borderRadius:"0 6px 6px 0",fontSize:15,color:"#2d1f42"}}>{renderInline(text)}</blockquote>
+              :<p key={j} style={{margin:"0 0 14px"}}>{renderInline(para)}</p>;
+          })}
         </div>)}
       </div>}
       {/* Per-market playbooks (legacy schema) */}
