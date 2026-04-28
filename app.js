@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="ooh-clumpfeat-revert-2026-04-29-5";
+const __APP_VERSION__="edit-traffic-isci-picker-2026-04-29-6";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -3956,20 +3956,33 @@ const App=()=>{
     const SCHED_OPTS=["M-F Schedule","Weekend Schedule","M-F Bookend","Weekend Bookend","All Week","Holiday Only"];
     const[editIscis,setEditIscis]=useState(()=>JSON.parse(JSON.stringify(eh?.iscis||[])));
     const[editMeta,setEditMeta]=useState({month:eh?.month||"",flight:eh?.flight||"",version:eh?.version||"1",comments:eh?.comments||""});
+    const[isciSearch,setIsciSearch]=useState("");
     if(!eh)return null;
-    // Pool of ISCIs available to pick — filtered to this record's
-    // brand, DMA, and a media-compatible suffix. Keeps the dropdown
-    // short enough to be useful instead of dumping 500+ codes.
+    // ISCI pool — brand + DMA scope, with media-compatible suffix records
+    // sorted to the top so the user can pick the matching ones first but
+    // still pick a different-suffix code if needed (no hard filter).
     const SUFFIX_FOR_MEDIA={"TV":"T","Cable":"T","TV / Cable":"T","Sports":"T","Heavy Up":"T","Sponsorship":"T","UD/AV":"T","Radio":"R","Streaming Audio":"S","OOH":"O","Digital":"D","Display":"B"};
     const ehDma=normMkt(eh.market)||eh.market||"";
     const wantSuffix=SUFFIX_FOR_MEDIA[(String(eh.media||"").split(/\s*\/\s*/)[0])]||SUFFIX_FOR_MEDIA[eh.media]||"T";
-    const isciPool=iscis.filter(i=>i.brand===eh.brand&&i.active&&(i.dma||"")===ehDma&&i.suffix===wantSuffix).sort((a,b)=>a.code.localeCompare(b.code));
+    const isciPool=iscis.filter(i=>i.brand===eh.brand&&i.active&&(i.dma||"")===ehDma).sort((a,b)=>{const am=a.suffix===wantSuffix?0:1,bm=b.suffix===wantSuffix?0:1;if(am!==bm)return am-bm;return a.code.localeCompare(b.code)});
+    const matchSuffix=isciPool.filter(i=>i.suffix===wantSuffix).length;
+    const q=isciSearch.trim().toLowerCase();
+    const filteredPool=q?isciPool.filter(i=>i.code.toLowerCase().includes(q)||(i.title||"").toLowerCase().includes(q)):isciPool;
     const updI=(idx,k,v)=>setEditIscis(p=>p.map((r,i)=>i===idx?{...r,[k]:v}:r));
     // Pick from registry: fills code + title + dur from the ISCI record
     const pickIsci=(idx,code)=>{
       const reg=iscis.find(i=>i.code===code&&(i.dma||"")===ehDma)||iscis.find(i=>i.code===code);
       if(!reg){updI(idx,"code",code);return}
       setEditIscis(p=>p.map((r,i)=>i===idx?{...r,code:reg.code,title:reg.title||r.title,dur:reg.dur||r.dur}:r));
+    };
+    // Click a pool entry → fill first empty row, else append a new row
+    const addFromPool=(reg)=>{
+      setEditIscis(p=>{
+        const emptyIdx=p.findIndex(r=>!r.code||!r.code.trim());
+        const filled={code:reg.code,title:reg.title||"",dur:reg.dur||"30",pct:"",sched:"All Week",bookend:""};
+        if(emptyIdx>=0)return p.map((r,i)=>i===emptyIdx?{...r,code:reg.code,title:reg.title||r.title||"",dur:reg.dur||r.dur||"30"}:r);
+        return[...p,filled];
+      });
     };
     const saveEdit=()=>{
       const validIscis=editIscis.filter(r=>r.code&&r.code.trim());
@@ -3981,6 +3994,7 @@ const App=()=>{
     };
     const addRow=()=>setEditIscis(p=>[...p,{code:"",title:"",dur:"30",pct:"",sched:"All Week",bookend:""}]);
     const delRow=(idx)=>setEditIscis(p=>p.filter((_,i)=>i!==idx));
+    const usedCodes=new Set(editIscis.map(r=>r.code).filter(Boolean));
     return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={onClose} wide>
       <div style={{display:"flex",gap:8,marginBottom:8}}>
         <Sel label="Month" options={CALENDAR.map(c=>c.month)} value={editMeta.month} onChange={v=>{const cm=CALENDAR.find(c=>c.month===v);setEditMeta(p=>({...p,month:v,flight:cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):p.flight}))}}/>
@@ -3988,31 +4002,55 @@ const App=()=>{
         <Inp label="Version" value={editMeta.version} onChange={e=>setEditMeta(p=>({...p,version:e.target.value}))} style={{width:50}}/>
       </div>
       <Inp label="Comments" value={editMeta.comments} onChange={e=>setEditMeta(p=>({...p,comments:e.target.value}))}/>
-      <div style={{fontSize:11,color:"#9B8EAD",marginTop:6,marginBottom:2}}>{isciPool.length} {eh.brand} {(DM[ehDma]||ehDma)} ISCIs available — click an ISCI cell to pick from the list, or type a code.</div>
-      <datalist id={"isci-pool-"+editIdx}>
-        {isciPool.map(i=><option key={i.code} value={i.code}>{i.title?(i.code+" — "+i.title):i.code}</option>)}
-      </datalist>
-      <div style={{overflowX:"auto",maxHeight:400,marginTop:4,border:"1px solid #4a3565",borderRadius:7}}>
-        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
-          <TH w="180">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="50">%</TH><TH w="130">Schedule</TH><TH w="100">Bookend</TH><TH w="30">✕</TH>
-        </tr></thead><tbody>
-        {editIscis.map((r,idx)=><tr key={idx}>
-          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}>
-            <input list={"isci-pool-"+editIdx} value={r.code} onChange={e=>pickIsci(idx,e.target.value)} placeholder="Pick or type ISCI…" style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,fontFamily:"monospace",background:"#1e1233",color:"#E8DFF0"}}/>
-          </td>
-          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.title} onChange={e=>updI(idx,"title",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></td>
-          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.dur} onChange={e=>updI(idx,"dur",e.target.value)} style={{width:35,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
-          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.pct} onChange={e=>updI(idx,"pct",e.target.value.replace(/[^0-9.]/g,""))} data-pct-input="true" onKeyDown={e=>{if(e.key==="Tab"||e.key==="Enter"){e.preventDefault();const all=[...document.querySelectorAll('[data-pct-input]')];const ci=all.indexOf(e.target);if(ci>-1&&ci<all.length-1)all[ci+1].focus()}}} style={{width:40,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
-          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><select value={r.sched} onChange={e=>updI(idx,"sched",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}>{SCHED_OPTS.map(s=><option key={s}>{s}</option>)}</select></td>
-          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.bookend||""} onChange={e=>updI(idx,"bookend",e.target.value)} placeholder="e.g. Bookend :15 A" style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/></td>
-          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42",textAlign:"center"}}><button onClick={()=>delRow(idx)} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button></td>
-        </tr>)}</tbody></table>
-      </div>
-      <div style={{display:"flex",gap:6,marginTop:8}}>
-        <Btn small onClick={addRow}>+ Add Row</Btn>
-        <div style={{marginLeft:"auto",display:"flex",gap:6}}>
-          <Btn small onClick={onClose}>Cancel</Btn>
-          <Btn small primary onClick={saveEdit}>Save Changes</Btn>
+      <div style={{display:"flex",gap:8,marginTop:8,alignItems:"flex-start"}}>
+        {/* ISCI picker side panel — shows every eligible ISCI for this brand
+            + market, click to add to the rotation. Search box filters live. */}
+        <div style={{flex:"0 0 240px",border:"1px solid #4a3565",borderRadius:7,background:"#1e1233",display:"flex",flexDirection:"column",maxHeight:440,overflow:"hidden"}}>
+          <div style={{padding:"6px 8px",borderBottom:"1px solid #4a3565",background:"#2d1f42"}}>
+            <div style={{fontSize:11,color:"#D4A040",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:3}}>📚 ISCI Picker</div>
+            <div style={{fontSize:10,color:"#9B8EAD",marginBottom:4}}>{eh.brand} · {DM[ehDma]||ehDma} · {matchSuffix} match {wantSuffix}-type · {isciPool.length} total</div>
+            <input value={isciSearch} onChange={e=>setIsciSearch(e.target.value)} placeholder="Search code or title…" style={{width:"100%",padding:"3px 6px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/>
+          </div>
+          <div style={{overflowY:"auto",flex:1}}>
+            {filteredPool.length===0?<div style={{padding:10,fontSize:11,color:"#9B8EAD",textAlign:"center"}}>No ISCIs match.</div>:
+            filteredPool.map(i=>{const isUsed=usedCodes.has(i.code);const isMatch=i.suffix===wantSuffix;return<div key={i.code+"|"+i.dma} onClick={()=>!isUsed&&addFromPool(i)} style={{padding:"5px 8px",borderBottom:"1px solid #2d1f42",cursor:isUsed?"default":"pointer",opacity:isUsed?.45:1,background:isUsed?"#2d1f42":"transparent"}} onMouseEnter={e=>{if(!isUsed)e.currentTarget.style.background="#3a2a55"}} onMouseLeave={e=>{if(!isUsed)e.currentTarget.style.background="transparent"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+                <div style={{fontFamily:"monospace",fontSize:11,color:isMatch?"#4AC8E8":"#9B8EAD",fontWeight:600}}>{i.code}</div>
+                <div style={{fontSize:10,color:"#9B8EAD"}}>{i.dur}s{!isMatch&&" ·"+i.suffix}</div>
+              </div>
+              <div style={{fontSize:11,color:"#E8DFF0",lineHeight:1.2,marginTop:1}}>{i.title||"—"}</div>
+              {isUsed&&<div style={{fontSize:9,color:"#5BC4A0",fontWeight:700,marginTop:1}}>✓ added</div>}
+            </div>})}
+          </div>
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:11,color:"#9B8EAD",marginBottom:4}}>Click an ISCI on the left to add it, or type a code in the row below.</div>
+          <datalist id={"isci-pool-"+editIdx}>
+            {isciPool.map(i=><option key={i.code+"|"+i.dma} value={i.code}>{i.title?(i.code+" — "+i.title):i.code}</option>)}
+          </datalist>
+          <div style={{overflowX:"auto",maxHeight:400,border:"1px solid #4a3565",borderRadius:7}}>
+            <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
+              <TH w="160">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="50">%</TH><TH w="130">Schedule</TH><TH w="100">Bookend</TH><TH w="30">✕</TH>
+            </tr></thead><tbody>
+            {editIscis.map((r,idx)=><tr key={idx}>
+              <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}>
+                <input list={"isci-pool-"+editIdx} value={r.code} onChange={e=>pickIsci(idx,e.target.value)} placeholder="Pick or type ISCI…" style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,fontFamily:"monospace",background:"#1e1233",color:"#E8DFF0"}}/>
+              </td>
+              <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.title} onChange={e=>updI(idx,"title",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></td>
+              <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.dur} onChange={e=>updI(idx,"dur",e.target.value)} style={{width:35,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
+              <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.pct} onChange={e=>updI(idx,"pct",e.target.value.replace(/[^0-9.]/g,""))} data-pct-input="true" onKeyDown={e=>{if(e.key==="Tab"||e.key==="Enter"){e.preventDefault();const all=[...document.querySelectorAll('[data-pct-input]')];const ci=all.indexOf(e.target);if(ci>-1&&ci<all.length-1)all[ci+1].focus()}}} style={{width:40,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
+              <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><select value={r.sched} onChange={e=>updI(idx,"sched",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}>{SCHED_OPTS.map(s=><option key={s}>{s}</option>)}</select></td>
+              <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.bookend||""} onChange={e=>updI(idx,"bookend",e.target.value)} placeholder="e.g. Bookend :15 A" style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/></td>
+              <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42",textAlign:"center"}}><button onClick={()=>delRow(idx)} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button></td>
+            </tr>)}</tbody></table>
+          </div>
+          <div style={{display:"flex",gap:6,marginTop:8}}>
+            <Btn small onClick={addRow}>+ Empty Row</Btn>
+            <div style={{marginLeft:"auto",display:"flex",gap:6}}>
+              <Btn small onClick={onClose}>Cancel</Btn>
+              <Btn small primary onClick={saveEdit}>Save Changes</Btn>
+            </div>
+          </div>
         </div>
       </div>
     </Mod>;
