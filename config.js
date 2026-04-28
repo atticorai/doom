@@ -149,3 +149,36 @@ const OohMap=({pins,colorFn,labelFn,height,showHeat})=>{
   </div>;
 };
 
+// Defensive: explicitly attach commonly-referenced top-level identifiers
+// to window so app.js can find them regardless of how Babel-standalone
+// scopes module-typed scripts. Without this, OohMap was throwing
+// "ReferenceError: OohMap is not defined" inside OohPg render.
+if (typeof window !== "undefined") {
+  if (typeof B !== "undefined") window.B = B;
+  if (typeof Btn !== "undefined") window.Btn = Btn;
+  if (typeof Inp !== "undefined") window.Inp = Inp;
+  if (typeof Sel !== "undefined") window.Sel = Sel;
+  if (typeof OohMap !== "undefined") window.OohMap = OohMap;
+  if (typeof CASE_TYPES !== "undefined") window.CASE_TYPES = CASE_TYPES;
+  if (typeof VALUE_PROPS !== "undefined") window.VALUE_PROPS = VALUE_PROPS;
+  if (typeof ISCIS_INIT !== "undefined") window.ISCIS_INIT = ISCIS_INIT;
+  if (typeof ESTIMATES !== "undefined") window.ESTIMATES = ESTIMATES;
+  if (typeof STATIONS !== "undefined") window.STATIONS = STATIONS;
+  if (typeof CALENDAR !== "undefined") window.CALENDAR = CALENDAR;
+  if (typeof POSTINGS !== "undefined") window.POSTINGS = POSTINGS;
+  if (typeof DM !== "undefined") window.DM = DM;
+  if (typeof DL !== "undefined") window.DL = DL;
+  if (typeof BRANDS !== "undefined") window.BRANDS = BRANDS;
+  if (typeof MEDIA !== "undefined") window.MEDIA = MEDIA;
+  if (typeof OOH_TYPES !== "undefined") window.OOH_TYPES = OOH_TYPES;
+  if (typeof SUFFIXES !== "undefined") window.SUFFIXES = SUFFIXES;
+  if (typeof OOH_SUFFIXES !== "undefined") window.OOH_SUFFIXES = OOH_SUFFIXES;
+  if (typeof OOH_TYPE_MAP !== "undefined") window.OOH_TYPE_MAP = OOH_TYPE_MAP;
+  if (typeof EG !== "undefined") window.EG = EG;
+  if (typeof SCHED !== "undefined") window.SCHED = SCHED;
+  if (typeof BOOKENDS !== "undefined") window.BOOKENDS = BOOKENDS;
+  if (typeof OOH_CREATIVE_CAL !== "undefined") window.OOH_CREATIVE_CAL = OOH_CREATIVE_CAL;
+  if (typeof oohCalType !== "undefined") window.oohCalType = oohCalType;
+  if (typeof oohCalStatus !== "undefined") window.oohCalStatus = oohCalStatus;
+}
+
