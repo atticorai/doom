@@ -1938,13 +1938,13 @@ const App=()=>{
       SCHED_ORDER.forEach(s=>{if(!grouped[s])return;const bg=SCHED_COLORS[s]||"#2d1f42";const items=grouped[s].sort((a,b)=>(parseInt(b.isci.dur)||0)-(parseInt(a.isci.dur)||0));
         h+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
         items.forEach(r=>{const len=validBk(r.bookend)?r.bookend:":"+r.isci.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk(r.bookend)?r.bookend:s;
-          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>:'+r.isci.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
+          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>'+len+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
         });
       });
       Object.keys(grouped).filter(s=>!SCHED_ORDER.includes(s)).forEach(s=>{const bg="#F0E8F8";const items=grouped[s].sort((a,b)=>(parseInt(b.isci.dur)||0)-(parseInt(a.isci.dur)||0));
         h+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
         items.forEach(r=>{const len=validBk(r.bookend)?r.bookend:":"+r.isci.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk(r.bookend)?r.bookend:s;
-          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>:'+r.isci.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
+          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>'+len+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
         });
       });
       h+='</tbody></table>';
