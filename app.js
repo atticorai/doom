@@ -5583,6 +5583,7 @@ ${fullText.substring(0,3000)}`}]
   const[planResult,setPlanResult]=useState(null);
   const[planLoading,setPlanLoading]=useState(false);
   const[planError,setPlanError]=useState(null);
+  const[planCompare,setPlanCompare]=useState(false);
 
   const runPlanner=async()=>{
     setPlanLoading(true);setPlanError(null);setPlanResult(null);
@@ -5668,27 +5669,38 @@ ${fullText.substring(0,3000)}`}]
         totalInRotation:inRotation.size
       });
 
-      const systemPrompt=`You are a media planning AI for Atticor, a media buying agency managing TV, Radio, Digital, and Streaming Audio advertising for personal injury law firms.
+      const systemPrompt=`You are a media planning AI for Atticor, a media buying agency managing TV, Radio, Cable, Streaming Audio, Digital, and OOH advertising for personal injury law firms in 2026.
 
-TODAY'S DATE: ${nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
-CURRENT BROADCAST MONTH: ${currentBroadcastMonth}
-PLANNING FOR: ${nextBroadcastMonth} (next broadcast month)
+TODAY: ${nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
+CURRENT MONTH: ${currentBroadcastMonth}
+PLANNING FOR: ${nextBroadcastMonth}
 
-All recommendations must be specific to the ${nextBroadcastMonth} broadcast month. Do NOT recommend holiday creative, New Year's content, or any seasonal themes that are not relevant to ${nextBroadcastMonth}. Think about what matters for PI advertising in ${MO_FULL[(curMoIdx+1)%12]}: spring driving season, motorcycle accidents, construction zone injuries, distracted driving awareness, prom/graduation season DUIs, etc — whatever is actually relevant to the upcoming month.
+You receive a JSON payload with the brand's current state. Return a structured JSON response with FORWARD-LOOKING recommendations — what they need to DO for ${nextBroadcastMonth}, NOT a recap of mistakes.
 
-Analyze the data and provide:
+OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence with this exact shape:
 
-1. STALENESS ANALYSIS: Which creatives have been running 2+ months and need rotation. Be specific — name the ISCI codes and markets.
+\`\`\`json
+{
+  "priorities": [
+    {
+      "priority": 1,
+      "title": "Short imperative — 8 words max",
+      "market": "Market name (or 'All markets')",
+      "media": "TV / Radio / etc (omit if cross-media)",
+      "why": "One sentence explaining the gap or opportunity",
+      "action": "Concrete step the user takes — what to build, swap, or add",
+      "iscis": ["CINPL2630010T","CINPL2615014T"]
+    }
+  ]
+}
+\`\`\`
 
-2. COVERAGE GAPS: Which markets are missing media types or creative tags. What needs to be added for ${nextBroadcastMonth}.
-
-3. CREATIVE MIX ANALYSIS: Analyze THREE dimensions: (a) Category distribution — are case types balanced? (b) Value Prop distribution — is the messaging varied enough? (c) VO distribution — is there enough voice variety? For PI attorneys, categories should cover: auto accidents, trucking, premises liability, brand awareness. Value props should mix: trust, results, local connection, expertise.
-
-4. TREND RECOMMENDATIONS: What PI advertising approaches are working RIGHT NOW in spring 2026? What should they lean into for ${nextBroadcastMonth} specifically?
-
-5. ${nextBroadcastMonth.toUpperCase()} ROTATION PLAN: For each market, recommend the specific rotation — which ISCIs to keep, which to swap out, and what new creative types to produce. Use actual ISCI codes and market codes.
-
-Be direct and actionable. No generic advice.`;
+Rules:
+- 6–10 priorities total. Order by priority 1 (highest) to 4 (lowest). 1 = blocking gap (no creative for a market+media), 2 = stale rotation needs swap, 3 = mix imbalance, 4 = nice-to-have / seasonal lean-in.
+- Every priority must reference a SPECIFIC market or be marked 'All markets'. No generic advice like "balance your categories" with no market attached.
+- 'iscis' is the actual ISCI codes the user should keep, swap in, or produce — pulled from benchISCIs or staleIscis in the payload.
+- Think forward to ${nextBroadcastMonth}: what's seasonally relevant (motorcycle season, construction zones, NCAA finals, prom DUIs, etc.), what's missing per market, what creative diversity needs adding.
+- No paragraphs. No "Staleness Analysis" headers. JSON only.`;
 
       const resp=await fetch("/api/planner",{
         method:"POST",
@@ -5711,84 +5723,176 @@ Be direct and actionable. No generic advice.`;
     }
   };
 
-  const PlannerPg=()=>{
-    const bc=planBrand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");
-    const brand=planBrand;
+  // Build a structured report from local state for one brand —
+  // coverage matrix, stale list, category mix, top recs scratch.
+  // No LLM needed for the data section.
+  const buildBrandReport=(brand)=>{
+    const MO=["January","February","March","April","May","June","July","August","September","October","November","December"];
     const bt=trafficHistory.filter(h=>h.brand===brand);
-    const bi=iscis.filter(i=>i.brand===brand&&i.active);
-    const months=[...new Set(bt.map(h=>h.month))];
-    const markets=[...new Set(bt.map(h=>h.market))];
-    const tagged=bi.filter(i=>i.category||i.caseType).length;
-    // Parse AI result into Muse sections
-    const parseMuseSections=(text)=>{
-      if(!text)return null;
-      const sections=text.split(/^##\s+/m).filter(Boolean);
-      return sections.map((s,i)=>{
-        const lines=s.trim().split("\n");
-        const title=lines[0]||"";
-        const body=lines.slice(1).join("\n").trim();
-        const muse=MUSES[i%MUSES.length];
-        return{title,body,muse};
+    const bi=iscis.filter(i=>i.brand===brand&&i.active&&i.suffix!=="O");
+    const allMarkets=brand==="Postman Law"?["Chicago","Cincinnati","Denver","Minneapolis"]:["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan"];
+    const mediaList=["TV","Radio","Streaming Audio","Cable","Digital","OOH"];
+    const mediaSplit=(m)=>String(m||"").split(/\s*\/\s*/);
+    const months=[...new Set(bt.map(h=>h.month).filter(Boolean))].sort((a,b)=>MO.indexOf(b)-MO.indexOf(a));
+    const latestMonth=months[0]||"";
+    // Coverage matrix: market × media has data for the latest month?
+    const coverage=allMarkets.map(m=>({
+      market:m,
+      cells:mediaList.map(med=>{
+        const rec=bt.find(h=>(normMkt(h.market)===normMkt(m)||h.market===m||mediaSplit(h.market).some(x=>normMkt(x)===normMkt(m)))&&mediaSplit(h.media).includes(med)&&h.month===latestMonth);
+        return{media:med,status:rec?(rec.status==="sent"?"sent":rec.status==="copied"?"copied":"built"):"empty",rec};
+      })
+    }));
+    // Staleness — ISCIs running 2+ months in same brand+market
+    const isciRuns={};
+    bt.forEach(h=>{(h.iscis||[]).forEach(r=>{
+      if(!r||!r.code)return;
+      const key=r.code+"|"+(normMkt(h.market)||h.market);
+      if(!isciRuns[key])isciRuns[key]={code:r.code,market:DM[normMkt(h.market)]||h.market,title:r.title||"",months:new Set()};
+      isciRuns[key].months.add(h.month);
+    })});
+    const stale=Object.values(isciRuns).filter(r=>r.months.size>=2).map(r=>({...r,months:[...r.months],count:r.months.size})).sort((a,b)=>b.count-a.count);
+    // Category distribution by market
+    const catByMarket={};
+    bt.filter(h=>h.month===latestMonth).forEach(h=>{
+      const mkt=DM[normMkt(h.market)]||h.market;
+      if(!catByMarket[mkt])catByMarket[mkt]={};
+      (h.iscis||[]).forEach(r=>{
+        const full=iscis.find(i=>i.code===r.code);
+        const cat=full?.category||full?.caseType||"Untagged";
+        catByMarket[mkt][cat]=(catByMarket[mkt][cat]||0)+1;
       });
+    });
+    return{
+      brand,latestMonth,
+      stats:{markets:allMarkets.length,activeIscis:bi.length,monthsOfData:months.length,instructions:bt.length,tagged:bi.filter(i=>i.category||i.caseType).length},
+      coverage,stale,catByMarket,
+      bench:bi.filter(i=>!bt.some(h=>(h.iscis||[]).some(r=>r.code===i.code))).map(i=>({code:i.code,title:i.title,market:DM[i.dma]||i.dma,media:i.media,category:i.category||i.caseType||""})),
     };
-    const museSections=parseMuseSections(planResult);
-    return<div style={{display:"flex",flexDirection:"column",gap:12}}>
-      <PageHead title="The Muses — AI Rotation Planner" pgKey="planner"/>
-      <div style={{fontSize:13,color:"#C4A0C8",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",marginTop:-8,marginBottom:4}}>"We are the Muses, goddesses of the arts and proclaimers of heroes…"</div>
-      {/* Brand Tabs */}
-      <div style={{display:"flex",gap:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b;const c=b==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");return<button key={b} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null)}} style={{padding:"8px 20px",fontSize:13,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#6B5E80",borderRadius:"8px 8px 0 0"}}>{b}</button>})}
-        <div style={{flex:1,borderBottom:"2px solid #4a3565"}}/>
-      </div>
-      {/* Muse stat cards — each Muse owns a stat */}
-      <div style={{display:"flex",gap:8,flexWrap:"wrap",borderTop:"2px solid "+bc,paddingTop:14}}>
-        {[{muse:MUSES[0],val:markets.length,label:"Markets",sub:"coverage"},{muse:MUSES[1],val:bi.length,label:"Active ISCIs",sub:"creative mix"},{muse:MUSES[2],val:months.length,label:"Months of Data",sub:"staleness check"},{muse:MUSES[3],val:bt.length,label:"Instructions",sub:"rotation balance"},{muse:MUSES[4],val:tagged+"/"+bi.length,label:"ISCIs Tagged",sub:"historical context"}].map((s,i)=>
-          <div key={i} style={{flex:"1 1 140px",minWidth:140,background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid "+s.muse.color+"25",borderRadius:10,padding:"10px 12px",position:"relative",overflow:"hidden"}}>
-            <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:s.muse.color}}/>
-            <div style={{fontSize:10,color:s.muse.color,fontWeight:700,textTransform:"uppercase",letterSpacing:.8}}>{s.muse.icon} {s.muse.name}</div>
-            <div style={{fontSize:22,fontWeight:800,color:"#E8DFF0",marginTop:2}}>{s.val}</div>
-            <div style={{fontSize:10,color:"#6B5E80"}}>{s.label} · {s.sub}</div>
-          </div>
-        )}
-      </div>
-      {/* Run button */}
-      <button onClick={runPlanner} disabled={planLoading} style={{padding:"12px 28px",borderRadius:10,border:"none",background:planLoading?"#4a3565":"linear-gradient(135deg,"+MUSES.map(m=>m.color).join(",")+")",color:"#fff",fontSize:15,fontWeight:800,cursor:planLoading?"wait":"pointer",fontFamily:"'Cormorant Garamond',serif",letterSpacing:1,boxShadow:planLoading?"none":"0 4px 20px rgba(155,123,176,.3)",transition:"all .2s"}}>
-        {planLoading?"🎵 The Muses are deliberating...":"🎭 Summon the Muses — Analyze "+planBrand}
-      </button>
-      {planError&&<div style={{padding:12,borderRadius:8,background:"rgba(232,90,122,.1)",border:"1px solid rgba(232,90,122,.2)",color:"#E85A7A",fontSize:13}}>The Muses encountered an error: {planError}</div>}
-      {/* Results — each section narrated by a Muse */}
-      {museSections&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
-        <div style={{fontSize:14,color:"#C4A0C8",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",padding:"8px 0"}}>"Listen well, for we sing of {planBrand}'s traffic rotation…"</div>
-        {museSections.map((s,i)=><MuseCard key={i} muse={s.muse} content={
-          <div>
-            <div style={{fontSize:14,fontWeight:800,color:s.muse.color,fontFamily:"'Cormorant Garamond',serif",marginBottom:6}}>{s.title}</div>
-            {s.body.split("\n").map((line,li)=>{
-              if(!line.trim())return<div key={li} style={{height:4}}/>;
-              if(line.startsWith("### "))return<div key={li} style={{fontSize:12,fontWeight:700,color:"#D4A040",marginTop:6}}>{line.replace(/^#+\s*/,"")}</div>;
-              if(line.startsWith("- ")||line.startsWith("* "))return<div key={li} style={{paddingLeft:12,position:"relative",fontSize:12}}><span style={{position:"absolute",left:2,color:s.muse.color}}>♪</span>{line.replace(/^[-*]\s*/,"").replace(/\*\*/g,"")}</div>;
-              if(line.startsWith("**"))return<div key={li} style={{fontWeight:700,color:"#E8DFF0",fontSize:12}}>{line.replace(/\*\*/g,"")}</div>;
-              return<div key={li} style={{fontSize:12}}>{line.replace(/\*\*/g,"")}</div>;
-            })}
-          </div>
-        }/>)}
-      </div>}
-      {/* Empty state — Muses waiting */}
-      {!planResult&&!planLoading&&!planError&&<div style={{padding:40,textAlign:"center"}}>
-        <div style={{display:"flex",justifyContent:"center",gap:12,marginBottom:16}}>
-          {MUSES.map((m,i)=><div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-            <div style={{width:48,height:48,borderRadius:"50%",background:"linear-gradient(135deg,"+m.color+"20,"+m.color+"08)",border:"2px solid "+m.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>{m.icon}</div>
-            <div style={{fontSize:10,fontWeight:700,color:m.color}}>{m.name}</div>
-            <div style={{fontSize:9,color:"#6B5E80"}}>{m.role}</div>
-          </div>)}
-        </div>
-        <div style={{fontSize:16,fontWeight:700,color:"#C4A0C8",fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic"}}>"Summon us, and we shall sing of your rotation's destiny."</div>
-        <div style={{fontSize:12,color:"#6B5E80",marginTop:6}}>The Muses will analyze traffic history, ISCI tags, market coverage, and creative staleness.</div>
-      </div>}
-      {/* Loading — Muses deliberating */}
-      {planLoading&&<div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-        {MUSES.map((m,i)=><MuseCard key={i} muse={m} loading={true}/>)}
-      </div>}
+  };
+  // Parse the AI recommendations result (JSON or markdown) into a
+  // structured priority list. Tries JSON first; falls back to
+  // splitting on '## ' or numbered lines.
+  const parseAiRecommendations=(text)=>{
+    if(!text)return null;
+    try{
+      const m=text.match(/```json\s*([\s\S]*?)```/);
+      const json=JSON.parse(m?m[1]:text);
+      if(json&&Array.isArray(json.priorities))return json.priorities;
+    }catch(e){}
+    const sections=text.split(/^##\s+/m).filter(Boolean);
+    return sections.map(s=>{const lines=s.trim().split("\n");return{title:lines[0]||"",body:lines.slice(1).join("\n").trim()}});
+  };
+  const recColors={1:"#E85A7A",2:"#D4A040",3:"#4AC8E8",4:"#5BC4A0"};
+  const ReportSection=({title,children})=><div style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid rgba(196,160,200,.2)",borderRadius:10,padding:14,marginTop:10}}><div style={{fontSize:12,fontWeight:800,color:"#D4A040",textTransform:"uppercase",letterSpacing:1.5,marginBottom:10,paddingBottom:6,borderBottom:"1px solid rgba(212,160,64,.2)"}}>{title}</div>{children}</div>;
+  const StatusDot=({status})=>{const cMap={sent:"#5BC4A0",built:"#D4A040",copied:"#9b7bb0",partial:"#E85A7A",empty:"transparent"};const c=cMap[status]||"transparent";return<div style={{width:14,height:14,borderRadius:3,background:c,border:status==="empty"?"1px solid #4a3565":"none",margin:"0 auto"}} title={status}/>};
+  const renderReport=(r,wide)=>r?<div style={{display:"flex",flexDirection:"column",gap:0}}>
+    {/* Stats strip */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6,marginBottom:6}}>
+      {[{l:"Markets",v:r.stats.markets},{l:"Active ISCIs",v:r.stats.activeIscis},{l:"Months Tracked",v:r.stats.monthsOfData},{l:"Records",v:r.stats.instructions},{l:"Tagged",v:r.stats.tagged+"/"+r.stats.activeIscis}].map((s,i)=><div key={i} style={{background:"#2d1f42",border:"1px solid #4a3565",borderRadius:6,padding:"6px 8px"}}>
+        <div style={{fontSize:9,color:"#9B8EAD",textTransform:"uppercase",letterSpacing:.6,fontWeight:700}}>{s.l}</div>
+        <div style={{fontSize:18,fontWeight:800,color:"#E8DFF0"}}>{s.v}</div>
+      </div>)}
     </div>
+    <ReportSection title={"Coverage — "+(r.latestMonth||"latest month")}>
+      <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+        <thead><tr><th style={{textAlign:"left",padding:"4px 6px",color:"#9B8EAD",fontSize:10,textTransform:"uppercase",letterSpacing:.5}}>Market</th>
+          {["TV","Radio","Streaming Audio","Cable","Digital","OOH"].map(m=><th key={m} style={{padding:"4px 6px",color:"#9B8EAD",fontSize:10,textTransform:"uppercase",letterSpacing:.5,textAlign:"center"}}>{m==="Cable"?"TV/Cbl":m==="Streaming Audio"?"Stream":m}</th>)}
+        </tr></thead>
+        <tbody>{r.coverage.map(row=><tr key={row.market} style={{borderTop:"1px solid #2d1f42"}}>
+          <td style={{padding:"5px 6px",color:"#E8DFF0",fontWeight:600}}>{row.market}</td>
+          {row.cells.map((c,i)=><td key={i} style={{padding:"5px 6px",textAlign:"center"}}><StatusDot status={c.status}/></td>)}
+        </tr>)}</tbody>
+      </table>
+      <div style={{marginTop:8,display:"flex",gap:10,fontSize:10,color:"#9B8EAD",flexWrap:"wrap"}}>
+        <span><span style={{display:"inline-block",width:9,height:9,background:"#5BC4A0",borderRadius:2,marginRight:3,verticalAlign:"middle"}}/>Sent</span>
+        <span><span style={{display:"inline-block",width:9,height:9,background:"#D4A040",borderRadius:2,marginRight:3,verticalAlign:"middle"}}/>Built</span>
+        <span><span style={{display:"inline-block",width:9,height:9,background:"#9b7bb0",borderRadius:2,marginRight:3,verticalAlign:"middle"}}/>Copied</span>
+        <span><span style={{display:"inline-block",width:9,height:9,border:"1px solid #4a3565",borderRadius:2,marginRight:3,verticalAlign:"middle"}}/>Empty</span>
+      </div>
+    </ReportSection>
+    <ReportSection title={"Stale Creative ("+r.stale.length+")"}>
+      {r.stale.length===0?<div style={{fontSize:12,color:"#5BC4A0",fontStyle:"italic"}}>No ISCIs running 2+ months — fresh rotation.</div>:
+      <div style={{maxHeight:200,overflowY:"auto"}}>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+          <thead style={{position:"sticky",top:0,background:"#2d1f42"}}><tr>
+            <th style={{textAlign:"left",padding:"4px 6px",color:"#9B8EAD",fontSize:10,textTransform:"uppercase",letterSpacing:.5}}>ISCI</th>
+            <th style={{textAlign:"left",padding:"4px 6px",color:"#9B8EAD",fontSize:10,textTransform:"uppercase",letterSpacing:.5}}>Title</th>
+            <th style={{textAlign:"left",padding:"4px 6px",color:"#9B8EAD",fontSize:10,textTransform:"uppercase",letterSpacing:.5}}>Market</th>
+            <th style={{textAlign:"center",padding:"4px 6px",color:"#9B8EAD",fontSize:10,textTransform:"uppercase",letterSpacing:.5}}>Months</th>
+          </tr></thead>
+          <tbody>{r.stale.slice(0,wide?80:30).map((s,i)=><tr key={i} style={{borderTop:"1px solid #2d1f42"}}>
+            <td style={{padding:"4px 6px",fontFamily:"monospace",color:"#E8DFF0"}}>{s.code}</td>
+            <td style={{padding:"4px 6px",color:"#9B8EAD"}}>{s.title||"—"}</td>
+            <td style={{padding:"4px 6px",color:"#C4A0C8"}}>{s.market}</td>
+            <td style={{padding:"4px 6px",textAlign:"center",color:s.count>=3?"#E85A7A":"#D4A040",fontWeight:700}}>{s.count}</td>
+          </tr>)}</tbody>
+        </table>
+      </div>}
+    </ReportSection>
+    <ReportSection title={"Category Mix — "+(r.latestMonth||"latest")}>
+      {Object.keys(r.catByMarket).length===0?<div style={{fontSize:12,color:"#9B8EAD",fontStyle:"italic"}}>No data for this month yet.</div>:
+      <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+        <tbody>{Object.entries(r.catByMarket).map(([mkt,cats])=>{const total=Object.values(cats).reduce((a,b)=>a+b,0);return<tr key={mkt} style={{borderTop:"1px solid #2d1f42"}}>
+          <td style={{padding:"5px 6px",color:"#E8DFF0",fontWeight:600,whiteSpace:"nowrap"}}>{mkt}</td>
+          <td style={{padding:"5px 6px"}}><div style={{display:"flex",height:14,borderRadius:3,overflow:"hidden",background:"#1e1233"}}>
+            {Object.entries(cats).map(([cat,n])=>{const pct=Math.round(n/total*100);const colors=["#9b7bb0","#4AC8E8","#D4A040","#5BC4A0","#E85A7A","#C4A0C8"];const ci=Object.keys(cats).indexOf(cat);return<div key={cat} title={cat+": "+n+" ("+pct+"%)"} style={{width:pct+"%",background:colors[ci%colors.length]}}/>})}
+          </div>
+          <div style={{display:"flex",gap:8,fontSize:9,color:"#9B8EAD",marginTop:3,flexWrap:"wrap"}}>{Object.entries(cats).map(([cat,n])=>{const pct=Math.round(n/total*100);return<span key={cat}>{cat} {pct}%</span>})}</div></td>
+        </tr>})}</tbody>
+      </table>}
+    </ReportSection>
+    <ReportSection title={"Bench — Active ISCIs not currently in rotation ("+r.bench.length+")"}>
+      {r.bench.length===0?<div style={{fontSize:12,color:"#9B8EAD",fontStyle:"italic"}}>None — every active ISCI is in some rotation.</div>:
+      <div style={{maxHeight:160,overflowY:"auto",fontSize:11,color:"#C4A0C8"}}>
+        {r.bench.slice(0,wide?60:20).map((b,i)=><div key={i} style={{padding:"3px 0",borderBottom:"1px solid #2d1f42",display:"flex",gap:8}}>
+          <span style={{fontFamily:"monospace",color:"#E8DFF0",minWidth:160}}>{b.code}</span>
+          <span style={{flex:1}}>{b.title||"—"}</span>
+          <span style={{color:"#9B8EAD",fontSize:10}}>{b.market} · {b.media}</span>
+        </div>)}
+      </div>}
+    </ReportSection>
+  </div>:null;
+
+  const PlannerPg=()=>{
+    const reportPL=buildBrandReport("Postman Law");
+    const reportWK=buildBrandReport("Wettermark Keith");
+    const report=planBrand==="Postman Law"?reportPL:reportWK;
+    const recs=parseAiRecommendations(planResult);
+    const isJsonRecs=recs&&recs.length&&recs[0]&&typeof recs[0].title==="string"&&typeof recs[0].action==="string";
+    return<div style={{display:"flex",flexDirection:"column",gap:10}}>
+      <PageHead title="Planner Report" pgKey="planner" sub="Coverage, staleness, mix, recommendations"/>
+      <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+        {/* Brand Tabs (disabled while compare is on) */}
+        <div style={{display:"flex",gap:0,opacity:planCompare?.45:1}}>
+          {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b&&!planCompare;const c=b==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");return<button key={b} disabled={planCompare} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null)}} style={{padding:"7px 18px",fontSize:13,fontWeight:800,cursor:planCompare?"not-allowed":"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#6B5E80",borderRadius:"8px 8px 0 0"}}>{b}</button>})}
+        </div>
+        <button onClick={()=>setPlanCompare(p=>!p)} style={{padding:"6px 14px",borderRadius:6,border:"1px solid "+(planCompare?"#D4A040":"#4a3565"),background:planCompare?"rgba(212,160,64,.12)":"transparent",color:planCompare?"#D4A040":"#9B8EAD",fontSize:12,fontWeight:700,cursor:"pointer"}}>{planCompare?"✓ Comparing both":"⇄ Compare PL vs WK"}</button>
+        <div style={{flex:1}}/>
+        <button onClick={runPlanner} disabled={planLoading||planCompare} title={planCompare?"Switch to a single brand to run AI":""} style={{padding:"7px 16px",borderRadius:7,border:"none",background:planLoading||planCompare?"#4a3565":"linear-gradient(135deg,#9b7bb0,#D4A040)",color:"#fff",fontSize:12,fontWeight:800,cursor:planLoading||planCompare?"not-allowed":"pointer",letterSpacing:.5}}>
+          {planLoading?"AI deliberating…":"🧠 AI Recommendations — "+planBrand}
+        </button>
+      </div>
+      {planError&&<div style={{padding:10,borderRadius:8,background:"rgba(232,90,122,.1)",border:"1px solid rgba(232,90,122,.2)",color:"#E85A7A",fontSize:12,whiteSpace:"pre-wrap",fontFamily:"ui-monospace,monospace"}}>{planError}</div>}
+      {planCompare?<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+        <div><div style={{fontSize:14,fontWeight:800,color:getBrandColor("PL"),marginBottom:4}}>Postman Law</div>{renderReport(reportPL,false)}</div>
+        <div><div style={{fontSize:14,fontWeight:800,color:getBrandColor("WK"),marginBottom:4}}>Wettermark Keith</div>{renderReport(reportWK,false)}</div>
+      </div>:renderReport(report,true)}
+      {recs&&!planCompare&&<ReportSection title={"AI Recommendations — "+planBrand}>
+        {isJsonRecs?<div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {recs.map((r,i)=><div key={i} style={{padding:10,borderRadius:8,background:"#2d1f42",border:"1px solid "+(recColors[r.priority]||"#4a3565"),borderLeft:"4px solid "+(recColors[r.priority]||"#4a3565"),display:"flex",gap:10}}>
+            <div style={{fontSize:18,fontWeight:800,color:recColors[r.priority]||"#9B8EAD",minWidth:24,textAlign:"center"}}>{r.priority||(i+1)}</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:800,color:"#E8DFF0"}}>{r.title}</div>
+              {r.market&&<div style={{fontSize:10,color:"#D4A040",marginTop:1,textTransform:"uppercase",letterSpacing:.6,fontWeight:700}}>{r.market}{r.media?" · "+r.media:""}</div>}
+              {r.why&&<div style={{fontSize:11,color:"#9B8EAD",marginTop:4}}><b style={{color:"#C4A0C8"}}>Why:</b> {r.why}</div>}
+              <div style={{fontSize:11,color:"#E8DFF0",marginTop:4}}><b style={{color:"#5BC4A0"}}>Do:</b> {r.action}</div>
+              {r.iscis&&Array.isArray(r.iscis)&&r.iscis.length>0&&<div style={{fontSize:10,color:"#4AC8E8",marginTop:4,fontFamily:"monospace"}}>{r.iscis.join(", ")}</div>}
+            </div>
+          </div>)}
+        </div>:<div style={{whiteSpace:"pre-wrap",fontSize:12,color:"#E8DFF0",lineHeight:1.6}}>{planResult}</div>}
+      </ReportSection>}
+    </div>;
   };
 
   // ── OOH HUB (sub-app) ──────────────────────────────────
