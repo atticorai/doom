@@ -5651,6 +5651,22 @@ ${fullText.substring(0,3000)}`}]
       const nextBroadcastMonth=MO_FULL[(curMoIdx+1)%12]+" "+(curMoIdx===11?nowDate.getFullYear()+1:nowDate.getFullYear());
       const currentBroadcastMonth=MO_FULL[curMoIdx]+" "+nowDate.getFullYear();
 
+      // Market profiles — climate, accident drivers, sports, demographics,
+      // industries, cultural notes. AI uses these to give recommendations
+      // tied to local context, not generic PI advice.
+      const MARKET_PROFILES={
+        Chicago:{state:"IL",climate:"harsh winters, lake-effect snow, severe summer storms",population:"dense urban + large commuter zone, large Hispanic population (Pilsen, Little Village)",industries:"finance, tech, manufacturing, logistics",sports:"Bears (NFL), Cubs/White Sox (MLB), Bulls (NBA), Blackhawks (NHL)",seasonal:"winter ice/snow rear-ends Dec-Feb, motorcycle season Apr-Oct, road-construction zones April-Nov",notes:"Dan Ryan, Kennedy, Edens expressways drive trucking/commercial accident volume; Spanish-language creative under-indexed for the audience size; Wrigley summer = pedestrian/DUI volume"},
+        Cincinnati:{state:"OH",climate:"four seasons, icy winters, humid summers, river fog",population:"mid-size metro, heavy commuter bleed from KY/IN tri-state",industries:"P&G HQ, healthcare, manufacturing, FedEx/DHL hubs nearby",sports:"Bengals (NFL), Reds (MLB), FC Cincinnati (MLS), UC Bearcats",seasonal:"I-71/I-75 trucking corridor accidents year-round, riverboat/Reds opening day = DUI spike",notes:"river bridges add tri-state jurisdiction complexity; commercial-vehicle PI is heavy"},
+        Denver:{state:"CO",climate:"high altitude, heavy mountain snow Nov-Apr, dry summers",population:"fast-growing transplant-heavy metro, recreational economy",industries:"aerospace, tech, outdoor rec, cannabis, oil/gas",sports:"Broncos (NFL), Nuggets (NBA), Avalanche (NHL), Rockies (MLB)",seasonal:"I-70 mountain-pass crashes Dec-Mar, ski-traffic accidents weekends, motorcycle Apr-Oct, summer outdoor rec injuries",notes:"new-resident drivers unfamiliar with mountain driving; cannabis-impaired DUI is a distinct PI angle (legal but causes crashes)"},
+        Minneapolis:{state:"MN",climate:"brutal winters, frequent blizzards, short humid summers",population:"Twin Cities metro, affluent, progressive, high education",industries:"healthcare, finance, manufacturing, Target/Best Buy HQ, 3M",sports:"Vikings (NFL), Twins (MLB), Timberwolves (NBA), Wild (NHL)",seasonal:"extreme winter weather crashes Dec-Mar (highest seasonal swing of any market), construction-zone season May-Oct",notes:"snow/ice highest-volume PI driver; messaging should feel local to MN — Minnesota Nice tone, winter-gear visuals"},
+        Birmingham:{state:"AL",climate:"warm humid summers, mild winters, severe spring storms (Apr peak)",population:"largest AL metro, medical/banking hub, growing Hispanic population",industries:"healthcare (UAB, Children's), banking (Regions), steel/manufacturing legacy",sports:"Alabama/Auburn college football dominates (SEC), Birmingham Stallions (UFL), Barons",seasonal:"spring tornado season (Apr peak) disrupts roads, year-round I-65/I-20 trucking, summer storms",notes:"college football Saturdays Sep-Dec = DUI/crash spikes; SEC fandom is central to culture; UAB hospital workforce = workers comp angle"},
+        Huntsville:{state:"AL",climate:"mild humid, severe spring storms",population:"fast-growing tech metro, highest-educated in AL, military families",industries:"NASA Marshall, Redstone Arsenal, defense, aerospace, tech",sports:"Alabama/Auburn college football, Huntsville Havoc (ECHL)",seasonal:"I-565 commuter crashes year-round, spring tornado disruption, college football Saturdays",notes:"tech-professional audience — messaging can be more technical/results-driven; military adjacency means DOD-employee specific cases; affluent target"},
+        Knoxville:{state:"TN",climate:"four seasons, moderate winters, hot summers",population:"college town + Smokies tourism, retiree migration",industries:"UT, TVA, Oak Ridge National Lab, tourism",sports:"Tennessee Volunteers (college football dominant), Lady Vols",seasonal:"orange-Saturday DUI volume Sep-Nov (UT home games), summer Smokies tourism crashes (out-of-state drivers), winter I-40 weather, spring scrimmage in May",notes:"truck-route commerce (I-40, I-75); spring orange-and-white game brings DUI spike same as fall; out-of-state tourism = unfamiliar driver crashes"},
+        Chattanooga:{state:"TN",climate:"four seasons, mild, river valley humidity",population:"mid-size, revitalized downtown, outdoor-rec destination",industries:"VW manufacturing, logistics, freight rail (largest single-rail-line in US), outdoor recreation",sports:"Tennessee Volunteers, Chattanooga FC, Lookouts (minor-league baseball)",seasonal:"I-24/I-75 trucking corridor year-round (national chokepoint), summer river/outdoor injury season",notes:"unusually high commercial-vehicle PI volume for the metro size due to interstate junction; VW workforce = workers comp"},
+        Montgomery:{state:"AL",climate:"warm humid, mild winters",population:"state capital, civil rights heritage city, lower income vs Birmingham",industries:"government, Hyundai manufacturing, military (Maxwell AFB)",sports:"Alabama/Auburn college football, Biscuits (minor-league)",seasonal:"I-65 north-south trucking corridor, spring storm disruption",notes:"capital + military audience; conservative-leaning, faith-anchored messaging works; civil rights tourism brings out-of-state visitors who don't know roads; Hyundai plant = manufacturing accident angle"},
+        Dothan:{state:"AL",climate:"warm humid, mild winters",population:"small market, agricultural center (Peanut Capital), aging skewing",industries:"agriculture (peanuts), healthcare (Southeast Health regional hospital), military spillover (Fort Novosel/Rucker)",sports:"Alabama/Auburn college football, high-school football is huge",seasonal:"farm-equipment road accidents year-round, rural highway crashes, hurricane spillover Aug-Oct",notes:"rural audience — straight-talking direct messaging works best; agricultural/farm-vehicle accidents are a distinct PI angle (combines, tractors); limited local TV inventory; Fort Novosel = aviation injury angle"},
+      };
+      const relevantProfiles={};markets.forEach(m=>{const cleanM=String(m||"").split(/[,/]/)[0].trim();if(MARKET_PROFILES[cleanM])relevantProfiles[cleanM]=MARKET_PROFILES[cleanM]});
       const dataPayload=JSON.stringify({
         brand,
         todaysDate:nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}),
@@ -5665,6 +5681,7 @@ ${fullText.substring(0,3000)}`}]
         valuePropDistribution:vpCounts,
         voDistribution:voCounts,
         marketBreakdown,
+        marketProfiles:relevantProfiles,
         benchISCIs:bench.slice(0,80),
         totalActiveISCIs:brandIscis.length,
         totalInRotation:inRotation.size
@@ -5676,7 +5693,13 @@ TODAY: ${nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"nu
 CURRENT MONTH: ${currentBroadcastMonth}
 PLANNING FOR: ${nextBroadcastMonth}
 
-You receive a JSON payload with the brand's current state. Return a structured JSON response with FORWARD-LOOKING recommendations — what they need to DO for ${nextBroadcastMonth}, NOT a recap of mistakes.
+You receive a JSON payload with the brand's current state PLUS marketProfiles (climate, industries, sports, accident drivers, demographics, cultural notes per market). Use those profiles aggressively — the user wants strategic context they can't get from the data alone.
+
+YOUR JOB is to recommend FORWARD-LOOKING actions for ${nextBroadcastMonth} that:
+- Tie creative gaps to specific case types the market actually needs (e.g. trucking-corridor markets need a Trucking case-type angle; manufacturing markets need a Workers Comp / On-the-Job angle; agricultural markets need a Farm-Equipment angle).
+- Tie rotation timing to local seasonal hooks (e.g. UT spring scrimmage in May → Saturday DUI weight in Knoxville; Mountain pass season in Denver Apr-Oct → motorcycle creative; spring tornado season in Birmingham/Huntsville → severe weather context).
+- Generate concrete creative concept ideas (a 1-sentence brief — NOT "produce a new spot" — say WHAT it should depict and which case-type angle).
+- Flag PI case-type opportunities that map to the market's industries (state capital / military bases / college towns / manufacturing hubs each unlock different case-type angles).
 
 OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence with this exact shape:
 
@@ -5688,8 +5711,11 @@ OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence with 
       "title": "Short imperative — 8 words max",
       "market": "Market name (or 'All markets')",
       "media": "TV / Radio / etc (omit if cross-media)",
-      "why": "One sentence explaining the gap or opportunity",
-      "action": "Concrete step the user takes — what to build, swap, or add",
+      "case_type": "Case-type angle this addresses (Auto Accident / Trucking / Workers Comp / Premises / Farm-Equipment / etc.)",
+      "seasonal_hook": "Local seasonal moment for ${nextBroadcastMonth} this leans into (one phrase from market profile)",
+      "why": "One sentence explaining the gap or opportunity, grounded in market profile",
+      "action": "Concrete step — swap which ISCI, build a new spot for which angle, add which media",
+      "concept": "If asking the user to produce new creative, a 1-sentence brief: what it depicts + case-type angle (omit if just a swap)",
       "iscis": ["CINPL2630010T","CINPL2615014T"]
     }
   ]
@@ -5697,8 +5723,10 @@ OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence with 
 \`\`\`
 
 Rules:
-- 6–10 priorities total. Order by priority 1 (highest) to 4 (lowest). 1 = blocking gap (no creative for a market+media), 2 = stale rotation needs swap, 3 = mix imbalance, 4 = nice-to-have / seasonal lean-in.
-- Every priority must reference a SPECIFIC market or be marked 'All markets'. No generic advice like "balance your categories" with no market attached.
+- 6–10 priorities. Priority levels: 1 = blocking gap (no creative for market+media), 2 = stale rotation swap, 3 = mix imbalance / case-type missing for market context, 4 = seasonal lean-in.
+- Every priority must reference a SPECIFIC market (or 'All markets') AND a SPECIFIC case-type. No generic balance-your-mix advice.
+- 'concept' field appears whenever you're asking the user to BUILD new creative. Skip it for swap-only priorities.
+- Seasonal hooks must come from the marketProfiles in the payload — UT scrimmage, Hyundai workforce, mountain pass season, tornado spring, etc. Use the actual local context, not generic spring talking points.
 - 'iscis' is the actual ISCI codes the user should keep, swap in, or produce — pulled from benchISCIs or staleIscis in the payload.
 - Think forward to ${nextBroadcastMonth}: what's seasonally relevant (motorcycle season, construction zones, NCAA finals, prom DUIs, etc.), what's missing per market, what creative diversity needs adding.
 - No paragraphs. No "Staleness Analysis" headers. JSON only.`;
@@ -5898,9 +5926,11 @@ Rules:
             <div style={{fontSize:18,fontWeight:800,color:recColors[r.priority]||"#9B8EAD",minWidth:24,textAlign:"center"}}>{r.priority||(i+1)}</div>
             <div style={{flex:1}}>
               <div style={{fontSize:13,fontWeight:800,color:"#E8DFF0"}}>{r.title}</div>
-              {r.market&&<div style={{fontSize:10,color:"#D4A040",marginTop:1,textTransform:"uppercase",letterSpacing:.6,fontWeight:700}}>{r.market}{r.media?" · "+r.media:""}</div>}
+              {r.market&&<div style={{fontSize:10,color:"#D4A040",marginTop:1,textTransform:"uppercase",letterSpacing:.6,fontWeight:700}}>{r.market}{r.media?" · "+r.media:""}{r.case_type?" · "+r.case_type:""}</div>}
+              {r.seasonal_hook&&<div style={{fontSize:10,color:"#5BC4A0",marginTop:2,fontStyle:"italic"}}>📅 {r.seasonal_hook}</div>}
               {r.why&&<div style={{fontSize:11,color:"#9B8EAD",marginTop:4}}><b style={{color:"#C4A0C8"}}>Why:</b> {r.why}</div>}
               <div style={{fontSize:11,color:"#E8DFF0",marginTop:4}}><b style={{color:"#5BC4A0"}}>Do:</b> {r.action}</div>
+              {r.concept&&<div style={{fontSize:11,color:"#E8DFF0",marginTop:4,padding:"5px 8px",background:"rgba(155,123,176,.12)",borderRadius:4,borderLeft:"2px solid #9b7bb0"}}><b style={{color:"#9b7bb0"}}>Concept:</b> {r.concept}</div>}
               {r.iscis&&Array.isArray(r.iscis)&&r.iscis.length>0&&<div style={{fontSize:10,color:"#4AC8E8",marginTop:4,fontFamily:"monospace"}}>{r.iscis.join(", ")}</div>}
             </div>
           </div>)}
