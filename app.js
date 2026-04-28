@@ -5901,7 +5901,7 @@ Rules:
     // Muses by short key for the chorus interjections
     const museShort={calliope:MUSES.find(m=>m.name==="Calliope"),thalia:MUSES.find(m=>m.name==="Thalia"),melpomene:MUSES.find(m=>m.name==="Melpomene"),terpsichore:MUSES.find(m=>m.name==="Terpsichore"),clio:MUSES.find(m=>m.name==="Clio")};
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <PageHead title="Planner Report" pgKey="planner" sub="Coverage, staleness, mix, AI priorities"/>
+      <PageHead title="The Muses" pgKey="planner" sub="Megara's strategy memo for the next broadcast month"/>
       <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
         {/* Brand tabs */}
         <div style={{display:"flex",gap:0}}>
@@ -6060,14 +6060,6 @@ Rules:
       {planLoading&&<div style={{padding:24,textAlign:"center"}}>
         <div style={{display:"flex",justifyContent:"center",gap:8,flexWrap:"wrap"}}>{MUSES.map((m,i)=><div key={i} style={{padding:"8px 12px",borderRadius:8,background:"#2d1f42",border:"1px solid "+m.color+"30",fontSize:11,color:m.color,fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif"}}>{m.icon} {doomPick(m.voice)}</div>)}</div>
       </div>}
-      {/* Live data report (collapsible-ish — small at bottom for quick reference) */}
-      <div style={{marginTop:14,opacity:.85}}>
-        <div style={{fontSize:11,color:"#6B5E80",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>📊 Live Data Snapshot</div>
-        {isCompare?<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-          <div><div style={{fontSize:13,fontWeight:800,color:"#D4A040",marginBottom:4}}>{monthA}</div>{renderReport(reportA,false)}</div>
-          <div><div style={{fontSize:13,fontWeight:800,color:"#4AC8E8",marginBottom:4}}>{monthB}</div>{renderReport(reportB,false)}</div>
-        </div>:renderReport(reportA,true)}
-      </div>
     </div>;
   };
 
