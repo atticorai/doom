@@ -3946,6 +3946,57 @@ const App=()=>{
     return Object.values(nowAiring).some(a=>a.iscis?.some(r=>r.code===code));
   },[nowAiring]);
 
+  // Edit Traffic modal — real function component so its useState
+  // hooks don't violate rules-of-hooks (the inline IIFE version
+  // blanked the screen when invoked from the Megara Library book).
+  const EditTrafficModal=({editIdx,onClose})=>{
+    const eh=trafficHistory[editIdx];
+    const SCHED_OPTS=["M-F Schedule","Weekend Schedule","M-F Bookend","Weekend Bookend","All Week","Holiday Only"];
+    const[editIscis,setEditIscis]=useState(()=>JSON.parse(JSON.stringify(eh?.iscis||[])));
+    const[editMeta,setEditMeta]=useState({month:eh?.month||"",flight:eh?.flight||"",version:eh?.version||"1",comments:eh?.comments||""});
+    if(!eh)return null;
+    const updI=(idx,k,v)=>setEditIscis(p=>p.map((r,i)=>i===idx?{...r,[k]:v}:r));
+    const saveEdit=()=>{
+      const validIscis=editIscis.filter(r=>r.code&&r.code.trim());
+      if(!validIscis.length){alert("Cannot save — no ISCIs with codes. Add at least one ISCI.");return}
+      setTrafficHistory(p=>p.map((h,i)=>i===editIdx?{...h,iscis:validIscis,month:editMeta.month,flight:editMeta.flight,version:editMeta.version,comments:editMeta.comments}:h));
+      log("Traffic Edited",eh.brand+" "+eh.market+" "+eh.media+" "+editMeta.month);
+      notify("Traffic updated — "+validIscis.length+" ISCIs");
+      onClose();
+    };
+    const addRow=()=>setEditIscis(p=>[...p,{code:"",title:"",dur:"30",pct:"",sched:"All Week",bookend:""}]);
+    const delRow=(idx)=>setEditIscis(p=>p.filter((_,i)=>i!==idx));
+    return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={onClose} wide>
+      <div style={{display:"flex",gap:8,marginBottom:8}}>
+        <Sel label="Month" options={CALENDAR.map(c=>c.month)} value={editMeta.month} onChange={v=>{const cm=CALENDAR.find(c=>c.month===v);setEditMeta(p=>({...p,month:v,flight:cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):p.flight}))}}/>
+        <Inp label="Flight" value={editMeta.flight} onChange={e=>setEditMeta(p=>({...p,flight:e.target.value}))}/>
+        <Inp label="Version" value={editMeta.version} onChange={e=>setEditMeta(p=>({...p,version:e.target.value}))} style={{width:50}}/>
+      </div>
+      <Inp label="Comments" value={editMeta.comments} onChange={e=>setEditMeta(p=>({...p,comments:e.target.value}))}/>
+      <div style={{overflowX:"auto",maxHeight:400,marginTop:8,border:"1px solid #4a3565",borderRadius:7}}>
+        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
+          <TH w="140">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="50">%</TH><TH w="130">Schedule</TH><TH w="100">Bookend</TH><TH w="30">✕</TH>
+        </tr></thead><tbody>
+        {editIscis.map((r,idx)=><tr key={idx}>
+          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.code} onChange={e=>updI(idx,"code",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,fontFamily:"monospace",background:"#1e1233",color:"#E8DFF0"}}/></td>
+          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.title} onChange={e=>updI(idx,"title",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></td>
+          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.dur} onChange={e=>updI(idx,"dur",e.target.value)} style={{width:35,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
+          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.pct} onChange={e=>updI(idx,"pct",e.target.value.replace(/[^0-9.]/g,""))} data-pct-input="true" onKeyDown={e=>{if(e.key==="Tab"||e.key==="Enter"){e.preventDefault();const all=[...document.querySelectorAll('[data-pct-input]')];const ci=all.indexOf(e.target);if(ci>-1&&ci<all.length-1)all[ci+1].focus()}}} style={{width:40,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
+          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><select value={r.sched} onChange={e=>updI(idx,"sched",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}>{SCHED_OPTS.map(s=><option key={s}>{s}</option>)}</select></td>
+          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.bookend||""} onChange={e=>updI(idx,"bookend",e.target.value)} placeholder="e.g. Bookend :15 A" style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/></td>
+          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42",textAlign:"center"}}><button onClick={()=>delRow(idx)} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button></td>
+        </tr>)}</tbody></table>
+      </div>
+      <div style={{display:"flex",gap:6,marginTop:8}}>
+        <Btn small onClick={addRow}>+ Add Row</Btn>
+        <div style={{marginLeft:"auto",display:"flex",gap:6}}>
+          <Btn small onClick={onClose}>Cancel</Btn>
+          <Btn small primary onClick={saveEdit}>Save Changes</Btn>
+        </div>
+      </div>
+    </Mod>;
+  };
+
   const EditIsciMod=({isci,idx})=>{
     const locked=isIsciSent(isci.code);
     const[unlocked,setUnlocked]=useState(false);
@@ -6908,6 +6959,29 @@ Be direct and actionable. No generic advice.`;
               edit:(idx)=>{if(typeof idx==="number"){setEditTrafficIdx(idx);notify("Edit Traffic — changes save back to Firestore")}},
               view:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close()},
               print:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close();w.focus();setTimeout(()=>w.print(),300)},
+              preview:async(idx)=>{
+                // Dry-run of the Send pipeline. Generates the real PDF
+                // and shows recipients / subject / body in a popup so
+                // the user can verify the email looks right BEFORE
+                // anything goes out. Does NOT call /api/send-traffic.
+                const h=trafficHistory[idx];if(!h)return;
+                notify("Building preview — no emails will be sent…");
+                const sheetHtml=data[idx]?.sheetHtml||"";
+                let pdfUri="";try{pdfUri=await generatePdfBase64(sheetHtml,h)}catch(pe){notify("PDF gen failed: "+pe.message);return}
+                const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+(h.market||"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
+                const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
+                const recipients=[...new Set(linkedStations.map(s=>s.contact).filter(Boolean).flatMap(c=>c.split(/[,;]\s*/)))].filter(Boolean);
+                const buyerCc=BUYER_EMAILS[h.buyer]||"";
+                const ccList=[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(", ");
+                const subj=(h.brand||"")+" - Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+(h.market||"");
+                const body="Hello,<br><br>Please find the attached traffic instructions for "+(h.brand||"")+" — "+(h.market||"")+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br><b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br><a href=\"#\" onclick=\"return false\" style=\"display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0\">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
+                const stationList=linkedStations.length?linkedStations.map(s=>s.call+" ("+(s.contact||"no email")+")").join("<br>"):'<span style="color:#b91c1c">No stations linked — Send would fail.</span>';
+                const previewHtml='<!doctype html><html><head><meta charset="UTF-8"><title>Send Preview — '+h.brand+' '+h.market+' '+h.media+'</title><style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f9fafb;color:#111827}header{background:linear-gradient(135deg,#1e1233,#2a1a3e);color:#E8DFF0;padding:18px 24px}h1{margin:0 0 4px;font-size:20px;font-weight:700}.banner{display:inline-block;padding:4px 10px;background:#D4A040;color:#1e1233;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-right:10px}.meta{color:#9B8EAD;font-size:13px;margin-top:6px}main{padding:24px;max-width:900px;margin:0 auto}.pdfbtn{display:inline-block;padding:10px 18px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin-bottom:20px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px;color:#374151}.card b{color:#1e1233}</style></head><body><header><div><span class="banner">PREVIEW — NOT SENT</span><span style="color:#D4A040;font-weight:700">'+h.brand+' · '+h.market+' · '+h.media+' · '+h.month+' · v'+(h.version||"1")+'</span></div><h1>'+recipients.length+' recipient(s) · '+linkedStations.length+' linked station(s)</h1><div class="meta">Nothing has been sent. The Confirm Receipt button is disabled.</div></header><main><a class="pdfbtn" href="'+pdfUri+'" download="'+pdfName+'" target="_blank">📄 Open the actual PDF attachment</a><div class="card"><b>Subject:</b> '+subj+'</div><div class="card"><b>To:</b> '+(recipients.length?recipients.join(", "):'<span style="color:#b91c1c">(no recipients — Send would fail)</span>')+'</div><div class="card"><b>Cc:</b> '+ccList+'</div><div class="card"><b>Attachment:</b> '+pdfName+'</div><div class="card"><b>Stations linked to this record:</b><br>'+stationList+'</div><div class="card"><b>Email body:</b><br><div style="margin-top:8px;padding:10px;background:#fafafa;border-radius:6px;line-height:1.5">'+body+'</div></div></main></body></html>';
+                const w=window.open("","","width=1100,height=900");
+                if(!w){notify("Popup blocked — allow popups to see preview");return}
+                w.document.write(previewHtml);w.document.close();w.focus();
+                notify("Preview ready — nothing sent. "+recipients.length+" recipient(s).");
+              },
               send:async(idx)=>{
                 const h=trafficHistory[idx];if(!h)return;
                 if(!confirm("Send traffic?\n\n"+h.brand+" · "+(DM[h.market]||h.market)+" · "+(h.media||"")+" · "+h.month+" · v"+(h.version||"1")+"\n"+(h.iscis||[]).length+" ISCIs\n\nThis will email all linked stations."))return;
@@ -7261,48 +7335,7 @@ Be direct and actionable. No generic advice.`;
     {modal?.t==="buildRot"&&<RotBuilder est={modal.est} pool={modal.pool} workMonth={workMonth} _revise={modal._revise}/>}
     {modal?.t==="buildStream"&&<StreamBuilder est={modal.est} pool={modal.pool} workMonth={workMonth}/>}
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
-    {editTrafficIdx!==null&&(()=>{
-      const eh=trafficHistory[editTrafficIdx];if(!eh)return null;
-      const SCHED_OPTS=["M-F Schedule","Weekend Schedule","M-F Bookend","Weekend Bookend","All Week","Holiday Only"];
-      const[editIscis,setEditIscis]=useState(()=>JSON.parse(JSON.stringify(eh.iscis||[])));
-      const[editMeta,setEditMeta]=useState({month:eh.month||"",flight:eh.flight||"",version:eh.version||"1",comments:eh.comments||""});
-      const updI=(idx,k,v)=>setEditIscis(p=>p.map((r,i)=>i===idx?{...r,[k]:v}:r));
-      const saveEdit=()=>{
-        const validIscis=editIscis.filter(r=>r.code&&r.code.trim());
-        if(!validIscis.length){alert("Cannot save — no ISCIs with codes. Add at least one ISCI.");return}
-        setTrafficHistory(p=>p.map((h,i)=>i===editTrafficIdx?{...h,iscis:validIscis,month:editMeta.month,flight:editMeta.flight,version:editMeta.version,comments:editMeta.comments}:h));log("Traffic Edited",eh.brand+" "+eh.market+" "+eh.media+" "+editMeta.month);notify("Traffic updated — "+validIscis.length+" ISCIs");setEditTrafficIdx(null)};
-      const addRow=()=>setEditIscis(p=>[...p,{code:"",title:"",dur:"30",pct:"",sched:"All Week",bookend:""}]);
-      const delRow=(idx)=>setEditIscis(p=>p.filter((_,i)=>i!==idx));
-      return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={()=>setEditTrafficIdx(null)} wide>
-        <div style={{display:"flex",gap:8,marginBottom:8}}>
-          <Sel label="Month" options={CALENDAR.map(c=>c.month)} value={editMeta.month} onChange={v=>{const cm=CALENDAR.find(c=>c.month===v);setEditMeta(p=>({...p,month:v,flight:cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):p.flight}))}}/>
-          <Inp label="Flight" value={editMeta.flight} onChange={e=>setEditMeta(p=>({...p,flight:e.target.value}))}/>
-          <Inp label="Version" value={editMeta.version} onChange={e=>setEditMeta(p=>({...p,version:e.target.value}))} style={{width:50}}/>
-        </div>
-        <Inp label="Comments" value={editMeta.comments} onChange={e=>setEditMeta(p=>({...p,comments:e.target.value}))}/>
-        <div style={{overflowX:"auto",maxHeight:400,marginTop:8,border:"1px solid #4a3565",borderRadius:7}}>
-          <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
-            <TH w="140">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="50">%</TH><TH w="130">Schedule</TH><TH w="100">Bookend</TH><TH w="30">✕</TH>
-          </tr></thead><tbody>
-          {editIscis.map((r,idx)=><tr key={idx}>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.code} onChange={e=>updI(idx,"code",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,fontFamily:"monospace",background:"#1e1233",color:"#E8DFF0"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.title} onChange={e=>updI(idx,"title",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.dur} onChange={e=>updI(idx,"dur",e.target.value)} style={{width:35,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.pct} onChange={e=>updI(idx,"pct",e.target.value.replace(/[^0-9.]/g,""))} data-pct-input="true" onKeyDown={e=>{if(e.key==="Tab"||e.key==="Enter"){e.preventDefault();const all=[...document.querySelectorAll('[data-pct-input]')];const ci=all.indexOf(e.target);if(ci>-1&&ci<all.length-1)all[ci+1].focus()}}} style={{width:40,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><select value={r.sched} onChange={e=>updI(idx,"sched",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}>{SCHED_OPTS.map(s=><option key={s}>{s}</option>)}</select></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.bookend||""} onChange={e=>updI(idx,"bookend",e.target.value)} placeholder="e.g. Bookend :15 A" style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/></td>
-            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42",textAlign:"center"}}><button onClick={()=>delRow(idx)} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button></td>
-          </tr>)}</tbody></table>
-        </div>
-        <div style={{display:"flex",gap:6,marginTop:8}}>
-          <Btn small onClick={addRow}>+ Add Row</Btn>
-          <div style={{marginLeft:"auto",display:"flex",gap:6}}>
-            <Btn small onClick={()=>setEditTrafficIdx(null)}>Cancel</Btn>
-            <Btn small primary onClick={saveEdit}>Save Changes</Btn>
-          </div>
-        </div>
-      </Mod>
-    })()}
+    {editTrafficIdx!==null&&trafficHistory[editTrafficIdx]&&<EditTrafficModal editIdx={editTrafficIdx} onClose={()=>setEditTrafficIdx(null)}/>}
     {modal?.t==="linkEst"&&(()=>{const s=modal.station;const linked=getStaEsts(s);
       const matching=estimates.filter(e=>e.market===s.market&&e.brand===s.brand);
       const others=estimates.filter(e=>!(e.market===s.market&&e.brand===s.brand));

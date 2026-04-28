@@ -1,6 +1,6 @@
-import B, { forwardRef as L, createElement as z, useState as N, useEffect as T, useContext as E, createContext as H, useMemo as K } from "react";
-import { motion as k, AnimatePresence as W } from "framer-motion";
-var S = { exports: {} }, C = {};
+import E, { forwardRef as S, createElement as z, useState as N, useEffect as T, useContext as H, createContext as K, useMemo as W } from "react";
+import { motion as k, AnimatePresence as F } from "framer-motion";
+var R = { exports: {} }, C = {};
 /**
  * @license React
  * react-jsx-runtime.production.min.js
@@ -10,32 +10,32 @@ var S = { exports: {} }, C = {};
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-var G = B, F = Symbol.for("react.element"), q = Symbol.for("react.fragment"), U = Object.prototype.hasOwnProperty, Y = G.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, J = { key: !0, ref: !0, __self: !0, __source: !0 };
-function R(t, s, a) {
+var G = E, q = Symbol.for("react.element"), U = Symbol.for("react.fragment"), Y = Object.prototype.hasOwnProperty, J = G.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, Z = { key: !0, ref: !0, __self: !0, __source: !0 };
+function P(t, s, a) {
   var r, n = {}, l = null, b = null;
   a !== void 0 && (l = "" + a), s.key !== void 0 && (l = "" + s.key), s.ref !== void 0 && (b = s.ref);
-  for (r in s) U.call(s, r) && !J.hasOwnProperty(r) && (n[r] = s[r]);
+  for (r in s) Y.call(s, r) && !Z.hasOwnProperty(r) && (n[r] = s[r]);
   if (t && t.defaultProps) for (r in s = t.defaultProps, s) n[r] === void 0 && (n[r] = s[r]);
-  return { $$typeof: F, type: t, key: l, ref: b, props: n, _owner: Y.current };
+  return { $$typeof: q, type: t, key: l, ref: b, props: n, _owner: J.current };
 }
-C.Fragment = q;
-C.jsx = R;
-C.jsxs = R;
-S.exports = C;
-var e = S.exports;
+C.Fragment = U;
+C.jsx = P;
+C.jsxs = P;
+R.exports = C;
+var e = R.exports;
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const Z = (t) => t.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase(), X = (t) => t.replace(
+const X = (t) => t.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase(), Q = (t) => t.replace(
   /^([A-Z])|[\s-_]+(\w)/g,
   (s, a, r) => r ? r.toUpperCase() : a.toLowerCase()
 ), I = (t) => {
-  const s = X(t);
+  const s = Q(t);
   return s.charAt(0).toUpperCase() + s.slice(1);
-}, P = (...t) => t.filter((s, a, r) => !!s && s.trim() !== "" && r.indexOf(s) === a).join(" ").trim(), Q = (t) => {
+}, D = (...t) => t.filter((s, a, r) => !!s && s.trim() !== "" && r.indexOf(s) === a).join(" ").trim(), ee = (t) => {
   for (const s in t)
     if (s.startsWith("aria-") || s === "role" || s === "title")
       return !0;
@@ -46,7 +46,7 @@ const Z = (t) => t.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase(), X = (t)
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-var ee = {
+var te = {
   xmlns: "http://www.w3.org/2000/svg",
   width: 24,
   height: 24,
@@ -63,7 +63,7 @@ var ee = {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const te = L(
+const ae = S(
   ({
     color: t = "currentColor",
     size: s = 24,
@@ -77,13 +77,13 @@ const te = L(
     "svg",
     {
       ref: i,
-      ...ee,
+      ...te,
       width: s,
       height: s,
       stroke: t,
       strokeWidth: r ? Number(a) * 24 / Number(s) : a,
-      className: P("lucide", n),
-      ...!l && !Q(d) && { "aria-hidden": "true" },
+      className: D("lucide", n),
+      ...!l && !ee(d) && { "aria-hidden": "true" },
       ...d
     },
     [
@@ -99,12 +99,12 @@ const te = L(
  * See the LICENSE file in the root directory of this source tree.
  */
 const u = (t, s) => {
-  const a = L(
-    ({ className: r, ...n }, l) => z(te, {
+  const a = S(
+    ({ className: r, ...n }, l) => z(ae, {
       ref: l,
       iconNode: s,
-      className: P(
-        `lucide-${Z(I(t))}`,
+      className: D(
+        `lucide-${X(I(t))}`,
         `lucide-${t}`,
         r
       ),
@@ -119,18 +119,18 @@ const u = (t, s) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const ae = [
+const re = [
   ["rect", { width: "20", height: "5", x: "2", y: "3", rx: "1", key: "1wp1u1" }],
   ["path", { d: "M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8", key: "1s80jp" }],
   ["path", { d: "M10 12h4", key: "a56b0p" }]
-], re = u("archive", ae);
+], se = u("archive", re);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const se = [
+const oe = [
   ["path", { d: "M10.268 21a2 2 0 0 0 3.464 0", key: "vwvbt9" }],
   [
     "path",
@@ -139,54 +139,54 @@ const se = [
       key: "11g9vi"
     }
   ]
-], oe = u("bell", se);
+], ne = u("bell", oe);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const ne = [
+const ie = [
   ["path", { d: "M8 2v4", key: "1cmpym" }],
   ["path", { d: "M16 2v4", key: "4m81vk" }],
   ["rect", { width: "18", height: "18", x: "3", y: "4", rx: "2", key: "1hopcy" }],
   ["path", { d: "M3 10h18", key: "8toen8" }]
-], ie = u("calendar", ne);
+], le = u("calendar", ie);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const le = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]], de = u("chevron-down", le);
+const de = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]], ce = u("chevron-down", de);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const ce = [
+const pe = [
   ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
   ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
-], pe = u("copy", ce);
+], me = u("copy", pe);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const me = [
+const xe = [
   ["path", { d: "M12 15V3", key: "m9g1x1" }],
   ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
   ["path", { d: "m7 10 5 5 5-5", key: "brsn70" }]
-], xe = u("download", me);
+], ge = u("download", xe);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const ge = [
+const be = [
   [
     "path",
     {
@@ -195,7 +195,7 @@ const ge = [
     }
   ],
   ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
-], be = u("eye", ge);
+], L = u("eye", be);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -399,7 +399,7 @@ function Se({
           {
             className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${p ? "border-purple-300 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light/70 hover:bg-megara-dark/20 hover:text-megara-light"}`,
             children: [
-              /* @__PURE__ */ e.jsx(xe, { size: 16 }),
+              /* @__PURE__ */ e.jsx(ge, { size: 16 }),
               " Export CSV"
             ]
           }
@@ -409,7 +409,7 @@ function Se({
           {
             className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${p ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100" : "bg-magic-gold/10 border-magic-gold/40 text-magic-gold hover:bg-magic-gold/20 hover:shadow-glow-gold"}`,
             children: [
-              /* @__PURE__ */ e.jsx(oe, { size: 16 }),
+              /* @__PURE__ */ e.jsx(ne, { size: 16 }),
               " Send Reminders"
             ]
           }
@@ -519,7 +519,7 @@ function Se({
           className: `flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm backdrop-blur-sm transition-colors cursor-pointer ${p ? i ? "border-amber-400 bg-amber-50" : "border-purple-200 bg-white/60 hover:border-purple-400" : i ? "border-magic-gold/60 bg-magic-gold/10" : "border-megara-dark/25 bg-underworld-800/40 hover:border-magic-gold/40"}`,
           children: [
             /* @__PURE__ */ e.jsx(
-              re,
+              se,
               {
                 size: 16,
                 className: p ? "text-amber-600/70" : "text-magic-gold/70"
@@ -619,7 +619,7 @@ function Pe({
                 }
               ),
               /* @__PURE__ */ e.jsx(
-                ie,
+                le,
                 {
                   size: 14,
                   className: `transition-colors ${a ? "text-purple-300 group-hover:text-purple-500" : "text-magic-teal/30 group-hover:text-magic-teal/60"}`
@@ -657,7 +657,7 @@ function Pe({
     );
   }) }) });
 }
-const Oe = [
+const De = [
   // Postman Law - April - TV
   {
     id: "1",
@@ -978,7 +978,7 @@ const Oe = [
     buyer: "Lynn Cortelezzi",
     status: "pending"
   }
-], _ = () => typeof window < "u" && window.MegaraLibraryData ? window.MegaraLibraryData : Oe, $ = new Proxy([], {
+], _ = () => typeof window < "u" && window.MegaraLibraryData ? window.MegaraLibraryData : De, $ = new Proxy([], {
   get(t, s) {
     const a = _(), r = a[s];
     return typeof r == "function" ? r.bind(a) : r;
@@ -1004,7 +1004,7 @@ const Oe = [
   Montgomery: "text-market-montgomery",
   Dothan: "text-market-dothan",
   Gadsden: "text-market-gadsden"
-}, De = {
+}, Oe = {
   Chicago: "bg-market-chicago",
   Cincinnati: "bg-market-cincinnati",
   Denver: "bg-market-denver",
@@ -1018,7 +1018,7 @@ const Oe = [
   Gadsden: "bg-market-gadsden"
 };
 function Ve({ instruction: t, onClick: s }) {
-  const a = E(D), r = t.status === "sent", n = parseInt(t.iscis) || 5, l = n > 8 ? "h-48" : n > 5 ? "h-44" : "h-40", b = {
+  const a = H(V), r = t.status === "sent", n = parseInt(t.iscis) || 5, l = n > 8 ? "h-48" : n > 5 ? "h-44" : "h-40", b = {
     TV: "from-[#2a1540] to-[#1a0d2e]",
     Radio: "from-[#1a2040] to-[#0d1530]",
     "Streaming Audio": "from-[#1a3030] to-[#0d2020]",
@@ -1079,7 +1079,7 @@ function Ve({ instruction: t, onClick: s }) {
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `w-full h-3 ${De[t.market]} opacity-90 shadow-inner relative z-10`,
+            className: `w-full h-3 ${Oe[t.market]} opacity-90 shadow-inner relative z-10`,
             children: /* @__PURE__ */ e.jsx("div", { className: "absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" })
           }
         ),
@@ -1423,7 +1423,7 @@ function We(t) {
     notes: a.bookend || a.sched || ""
   }));
 }
-function Ge({
+function Fe({
   instruction: t,
   onClose: s,
   light: a = !1
@@ -1451,7 +1451,7 @@ function Ge({
     const m = typeof window < "u" && window.MegaraLibraryActions || {}, x = t == null ? void 0 : t.historyIdx;
     typeof m[c] == "function" && typeof x == "number" && (m[c](x), c === "delete" && s());
   };
-  return /* @__PURE__ */ e.jsx(W, { children: /* @__PURE__ */ e.jsx(
+  return /* @__PURE__ */ e.jsx(F, { children: /* @__PURE__ */ e.jsx(
     "div",
     {
       className: `fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-6 ${a ? "bg-black/40" : "bg-black/70"}`,
@@ -1741,7 +1741,7 @@ function Ge({
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group font-medium ${a ? "border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100" : "border-magic-teal/40 bg-magic-teal/10 text-magic-teal hover:bg-magic-teal/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            be,
+                            L,
                             {
                               size: 16,
                               className: "group-hover:scale-110 transition-transform"
@@ -1773,6 +1773,25 @@ function Ge({
                     /* @__PURE__ */ e.jsxs(
                       "button",
                       {
+                        onClick: () => i("preview"),
+                        title: "Dry-run — shows the PDF + email body, nothing is sent",
+                        className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-teal-300 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-magic-teal/40 bg-magic-teal/10 text-magic-teal hover:bg-magic-teal/20"}`,
+                        children: [
+                          /* @__PURE__ */ e.jsx(
+                            L,
+                            {
+                              size: 16,
+                              className: "group-hover:scale-110 transition-transform"
+                            }
+                          ),
+                          " ",
+                          "Preview Send"
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ e.jsxs(
+                      "button",
+                      {
                         onClick: d,
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
@@ -1795,7 +1814,7 @@ function Ge({
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            pe,
+                            me,
                             {
                               size: 16,
                               className: `group-hover:scale-110 transition-transform ${a ? "text-purple-400" : "text-megara-light/60"}`
@@ -1804,7 +1823,7 @@ function Ge({
                           " ",
                           "Copy to...",
                           /* @__PURE__ */ e.jsx(
-                            de,
+                            ce,
                             {
                               size: 14,
                               className: `ml-auto ${a ? "text-purple-300" : "text-megara-light/40"}`
@@ -1834,13 +1853,13 @@ function Ge({
     }
   ) });
 }
-const D = H(!1);
+const V = K(!1);
 function Ue() {
   const [t, s] = N(!1), [a, r] = N("Postman Law"), [n, l] = N(!1), [b, d] = N(null);
   T(() => {
     t ? document.body.classList.add("light") : document.body.classList.remove("light");
   }, [t]);
-  const i = K(() => {
+  const i = W(() => {
     const o = [
       "soul-teal",
       "soul-purple",
@@ -1880,8 +1899,8 @@ function Ue() {
   ), j = h.filter((o) => {
     var v;
     return ((v = f[o]) == null ? void 0 : v.length) > 0;
-  }), V = new Set(x.map((o) => o.market)).size, y = t;
-  return /* @__PURE__ */ e.jsx(D.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
+  }), B = new Set(x.map((o) => o.market)).size, y = t;
+  return /* @__PURE__ */ e.jsx(V.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
     "div",
     {
       className: `min-h-screen w-full flex flex-col relative overflow-hidden font-sans transition-colors duration-700 ${y ? "bg-[#f5eef8]" : ""}`,
@@ -1943,7 +1962,7 @@ function Ue() {
             onBrandChange: r,
             brandCounts: c,
             totalInstructions: x.length,
-            totalMarkets: V,
+            totalMarkets: B,
             archivedCount: w,
             showArchived: n,
             onToggleArchived: () => l((o) => !o)
@@ -1991,7 +2010,7 @@ function Ue() {
           ) })
         ] }) }),
         /* @__PURE__ */ e.jsx(
-          Ge,
+          Fe,
           {
             instruction: b,
             onClose: () => d(null),
@@ -2004,5 +2023,5 @@ function Ue() {
 }
 export {
   Ue as App,
-  D as ThemeContext
+  V as ThemeContext
 };
