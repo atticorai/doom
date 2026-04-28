@@ -5667,12 +5667,34 @@ ${fullText.substring(0,3000)}`}]
         Dothan:{state:"AL",climate:"warm humid, mild winters",population:"small market, agricultural center (Peanut Capital), aging skewing",industries:"agriculture (peanuts), healthcare (Southeast Health regional hospital), military spillover (Fort Novosel/Rucker)",sports:"Alabama/Auburn college football, high-school football is huge",seasonal:"farm-equipment road accidents year-round, rural highway crashes, hurricane spillover Aug-Oct",notes:"rural audience — straight-talking direct messaging works best; agricultural/farm-vehicle accidents are a distinct PI angle (combines, tractors); limited local TV inventory; Fort Novosel = aviation injury angle"},
       };
       const relevantProfiles={};markets.forEach(m=>{const cleanM=String(m||"").split(/[,/]/)[0].trim();if(MARKET_PROFILES[cleanM])relevantProfiles[cleanM]=MARKET_PROFILES[cleanM]});
+      // Prior-month rotation snapshot — what actually ran in the most
+      // recent fully-trafficked month, per market + media. AI uses this
+      // as the baseline to EVOLVE for next month, not to build from
+      // scratch. Skips records with status "copied" (those are unsent).
+      const MO_ALL=["January","February","March","April","May","June","July","August","September","October","November","December"];
+      const sentMonths=[...new Set(brandTraffic.filter(h=>h.status==="sent"||h.status==="print_only").map(h=>h.month))].sort((a,b)=>MO_ALL.indexOf(b)-MO_ALL.indexOf(a));
+      const priorMonth=sentMonths[0]||latestMonth;
+      const priorMonthRotation=markets.map(m=>{
+        const recs=brandTraffic.filter(h=>h.market===m&&h.month===priorMonth);
+        return{
+          market:m,
+          media:recs.map(h=>{
+            const isciRows=(h.iscis||[]).map(r=>{
+              const full=iscis.find(i=>i.code===r.code);
+              return{code:r.code,title:r.title||full?.title||"",case_type:full?.category||full?.caseType||"Untagged",weight:r.pct,sched:r.sched||"All Week",bookend:r.bookend||""};
+            });
+            return{media:h.media,est:h.est,version:h.version,bookend_pairs:isciRows.filter(r=>r.bookend).reduce((acc,r)=>{const k=r.sched+"|"+r.bookend.replace(/[A-Z]$/i,"").trim();if(!acc[k])acc[k]=[];acc[k].push({code:r.code,bookend:r.bookend});return acc},{}),iscis:isciRows};
+          })
+        };
+      }).filter(m=>m.media.length>0);
       const dataPayload=JSON.stringify({
         brand,
         todaysDate:nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}),
         currentBroadcastMonth,
         nextBroadcastMonth,
         latestMonthInData:latestMonth,
+        priorMonth,
+        priorMonthRotation,
         markets,mediaTypes,
         availableCategories:brandFields.categories,
         availableValueProps:brandFields.valueProps,
@@ -5692,8 +5714,11 @@ ${fullText.substring(0,3000)}`}]
 TODAY: ${nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
 CURRENT MONTH: ${currentBroadcastMonth}
 PLANNING FOR: ${nextBroadcastMonth}
+PRIOR-MONTH BASELINE: The payload includes 'priorMonthRotation' — the actual ISCIs / weights / bookend pairs that ran (or built) in the most recent fully-trafficked month per market. THIS is the baseline you evolve from. You are not building rotations from scratch.
 
 You're a creative-strategy ghostwriter for a media buying agency. The brand vibe is PERSONAL INJURY LAW FIRM advertising — think direct-response with heart, confident-protector tone, neighbors-fighting-for-neighbors. Local credibility matters. Trust signals matter. The audience is people who just got hurt or know someone who did — they need a firm that feels like it's already on their side.
+
+YOUR JOB for ${nextBroadcastMonth}: take each market's PRIOR-MONTH rotation (priorMonthRotation in the payload) and evolve it. Keep what's working. Retire what's stale (cross-reference staleIscis). Sub in fresh ISCIs from the bench (benchISCIs) to fill the angle gaps. Adjust weights to match the case-types this market needs. Output the resulting ${nextBroadcastMonth} mock rotation — real ISCI codes, weights that actually add to ~100%, bookend pairs that pair :15s sharing a case-type angle.
 
 The user has Tracker / Library / Metrics pages already — they show staleness counts, coverage matrices, ISCI inventories. DO NOT restate any of that. Your job is to produce CREATIVE STRATEGY they can hand to a producer or pitch to the client.
 
@@ -5722,19 +5747,20 @@ OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence:
       "retire": [
         {"code":"CHAWK2630003T","title":"Mother's Wreck_30","reason":"Running 4 months — viewers can recite it"}
       ],
+      "evolution_note": "1 sentence on what's CHANGING from priorMonth to ${nextBroadcastMonth} — e.g. 'Pulling Mother's Wreck after a 4-month run, swapping in trucking-angle 30s, holding the auto-accident bookend pair that's been working.'",
       "mock_rotation": {
         "headline": "Trucking-led 30s, auto-accident bookends, brand goes to maintenance",
         "thirties": [
-          {"code":"CHAWK2630014T","title":"Trucking Two_30","case_type":"Trucking","weight":"35%"},
-          {"code":"CHAWK2630002T","title":"Award Winning_30","case_type":"Brand","weight":"15%"},
-          {"code":"CHAWK2630004T","title":"Personal_30","case_type":"Premises","weight":"25%"},
-          {"code":"CHAWK2630006T","title":"Weekends_30","case_type":"Auto Accident","weight":"25%"}
+          {"code":"CHAWK2630014T","title":"Trucking Two_30","case_type":"Trucking","weight":"35%","change":"new"},
+          {"code":"CHAWK2630002T","title":"Award Winning_30","case_type":"Brand","weight":"15%","change":"down from 30%"},
+          {"code":"CHAWK2630004T","title":"Personal_30","case_type":"Premises","weight":"25%","change":"hold"},
+          {"code":"CHAWK2630006T","title":"Weekends_30","case_type":"Auto Accident","weight":"25%","change":"hold"}
         ],
         "fifteens": [
-          {"code":"CHAWK2615014T","title":"Auto Accident_15","case_type":"Auto Accident","weight":"30%"}
+          {"code":"CHAWK2615014T","title":"Auto Accident_15","case_type":"Auto Accident","weight":"30%","change":"hold"}
         ],
         "bookend_pairs": [
-          {"slot":"M-F Bookend A","spots":[{"code":"CHAWK2615009T","title":"Commercial Vehicle"},{"code":"CHAWK2615003T","title":"Trucking Two_15"}],"reason":"Drive-time freight audience"}
+          {"slot":"M-F Bookend A","spots":[{"code":"CHAWK2615009T","title":"Commercial Vehicle"},{"code":"CHAWK2615003T","title":"Trucking Two_15"}],"reason":"Drive-time freight audience","change":"new pair"}
         ]
       },
       "spot_concept": {
@@ -5748,11 +5774,14 @@ OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence:
 \`\`\`
 
 Rules:
-- Be CONCISE. The user has Tracker / Library for data. This is strategic snapshot — 3-4 angles, a retire list, a mock rotation built from THEIR actual ISCI codes.
+- Be CONCISE. The user has Tracker / Library for data. This is strategic snapshot — 3-4 angles, a retire list, an EVOLVED mock rotation from the prior-month baseline.
 - 'angles': 2-4 SHORT bullets. 'Trucking is huge here.' 'Workers comp is needed.' Don't ramble about I-70 mile markers. The user knows the geography.
 - 'retire': pull from staleIscis in the payload. List 1-4 codes that have been running too long with one-sentence reasons.
-- 'mock_rotation.thirties' / '.fifteens': pull REAL ISCI codes from the brand's bench / non-stale inventory in the payload. Each entry: code, title, case_type tag, weight. Weights add to ~100%. This is what the trafficker actually runs.
-- 'mock_rotation.bookend_pairs': pair real :15 ISCI codes that share a case-type angle. Reference codes from the payload.
+- 'evolution_note': 1 sentence on what's actually CHANGING from prior month → next month. Reference the prior-month rotation explicitly.
+- 'mock_rotation' MUST start from priorMonthRotation. For each market, look at what RAN last month, then evolve it. KEEP the spots that aren't stale and aren't on the retire list. SWAP OUT stale codes for fresh bench codes that fill the angle gaps. ADJUST weights to the case-types this market needs for ${nextBroadcastMonth}.
+- Each rotation entry includes a 'change' field: 'new' (added this month), 'hold' (carried over from prior month, same weight), 'up from X%' / 'down from X%' (carried but reweighted), or 'swapped from CODE' (replaced a specific prior-month spot).
+- 'mock_rotation.thirties' / '.fifteens': REAL ISCI codes only — from priorMonthRotation (kept), benchISCIs (added), or the wider brand inventory. Weights add to ~100%.
+- 'mock_rotation.bookend_pairs': pair real :15 ISCI codes that share a case-type angle. Mark new pairs vs holds.
 - 'spot_concept': ONE new spot per market — what's missing in the inventory that the angles call for. Brief is 2 sentences max.
 - megara_verdict: 2 sentences setting up the brand for the month. Snarky, dry, confident.
 - big_idea: 6-word campaign theme + one-line tagline + one-sentence why-now.
@@ -5977,8 +6006,11 @@ Rules:
             <span style={{fontSize:18,fontWeight:800,color:"#F0E8F8",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.3}}>📍 {ms.market}</span>
             {ms.mock_rotation?.headline&&<span style={{fontSize:12,color:"#C4A0C8",fontStyle:"italic",marginLeft:"auto"}}>{ms.mock_rotation.headline}</span>}
           </div>
-          {ms.angles&&Array.isArray(ms.angles)&&ms.angles.length>0&&<div style={{marginBottom:14,display:"flex",flexDirection:"column",gap:5}}>
+          {ms.angles&&Array.isArray(ms.angles)&&ms.angles.length>0&&<div style={{marginBottom:10,display:"flex",flexDirection:"column",gap:5}}>
             {ms.angles.map((a,j)=><div key={j} style={{display:"flex",gap:8,fontSize:13,color:"#E8DFF0"}}><span style={{color:"#D4A040",fontWeight:800}}>▸</span><span style={{flex:1}}>{a}</span></div>)}
+          </div>}
+          {ms.evolution_note&&<div style={{marginBottom:14,padding:"7px 11px",background:"rgba(74,200,232,.08)",borderLeft:"3px solid #4AC8E8",borderRadius:5,fontSize:12,color:"#E8DFF0",fontStyle:"italic"}}>
+            <span style={{color:"#4AC8E8",fontWeight:700,fontStyle:"normal",marginRight:6}}>↳ Evolving from {playbook.priorMonth||"last month"}:</span>{ms.evolution_note}
           </div>}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,alignItems:"start"}}>
             {/* Mock rotation column */}
@@ -5987,20 +6019,22 @@ Rules:
               {ms.mock_rotation?.thirties&&Array.isArray(ms.mock_rotation.thirties)&&ms.mock_rotation.thirties.length>0&&<div style={{marginBottom:10}}>
                 <div style={{fontSize:9,fontWeight:700,color:"#9B8EAD",letterSpacing:.6,marginBottom:4}}>30s</div>
                 <div style={{display:"flex",borderRadius:4,overflow:"hidden",height:6,marginBottom:5}}>{ms.mock_rotation.thirties.map((s,j)=>{const pct=parseInt(s.weight)||0;return<div key={j} title={s.title+" "+s.weight} style={{width:s.weight,minWidth:0,background:themeColor(s.case_type)}}/>})}</div>
-                {ms.mock_rotation.thirties.map((s,j)=><div key={j} style={{display:"flex",gap:6,fontSize:11,padding:"3px 0",color:"#E8DFF0"}}>
+                {ms.mock_rotation.thirties.map((s,j)=>{const ch=s.change||"";const isNew=/new/i.test(ch);const isHold=/hold/i.test(ch);const isUp=/up/i.test(ch);const isDown=/down/i.test(ch);const isSwap=/swap/i.test(ch);const chColor=isNew?"#5BC4A0":isHold?"#9B8EAD":isUp?"#D4A040":isDown?"#E85A7A":isSwap?"#9b7bb0":"#9B8EAD";return<div key={j} style={{display:"flex",gap:6,fontSize:11,padding:"3px 0",color:"#E8DFF0",alignItems:"center"}}>
                   <span style={{minWidth:42,color:themeColor(s.case_type),fontWeight:700}}>{s.weight}</span>
                   <span style={{fontFamily:"monospace",color:"#4AC8E8",fontSize:10,minWidth:130}}>{s.code}</span>
                   <span style={{flex:1,color:"#C4A0C8"}}>{s.title}</span>
-                </div>)}
+                  {ch&&<span style={{fontSize:9,padding:"1px 6px",borderRadius:3,background:chColor+"22",color:chColor,fontWeight:700,whiteSpace:"nowrap"}}>{ch}</span>}
+                </div>})}
               </div>}
               {ms.mock_rotation?.fifteens&&Array.isArray(ms.mock_rotation.fifteens)&&ms.mock_rotation.fifteens.length>0&&<div style={{marginBottom:10}}>
                 <div style={{fontSize:9,fontWeight:700,color:"#9B8EAD",letterSpacing:.6,marginBottom:4}}>15s</div>
                 <div style={{display:"flex",borderRadius:4,overflow:"hidden",height:6,marginBottom:5}}>{ms.mock_rotation.fifteens.map((s,j)=>{const pct=parseInt(s.weight)||0;return<div key={j} title={s.title+" "+s.weight} style={{width:s.weight,minWidth:0,background:themeColor(s.case_type)}}/>})}</div>
-                {ms.mock_rotation.fifteens.map((s,j)=><div key={j} style={{display:"flex",gap:6,fontSize:11,padding:"3px 0",color:"#E8DFF0"}}>
+                {ms.mock_rotation.fifteens.map((s,j)=>{const ch=s.change||"";const isNew=/new/i.test(ch);const isHold=/hold/i.test(ch);const isUp=/up/i.test(ch);const isDown=/down/i.test(ch);const isSwap=/swap/i.test(ch);const chColor=isNew?"#5BC4A0":isHold?"#9B8EAD":isUp?"#D4A040":isDown?"#E85A7A":isSwap?"#9b7bb0":"#9B8EAD";return<div key={j} style={{display:"flex",gap:6,fontSize:11,padding:"3px 0",color:"#E8DFF0",alignItems:"center"}}>
                   <span style={{minWidth:42,color:themeColor(s.case_type),fontWeight:700}}>{s.weight}</span>
                   <span style={{fontFamily:"monospace",color:"#4AC8E8",fontSize:10,minWidth:130}}>{s.code}</span>
                   <span style={{flex:1,color:"#C4A0C8"}}>{s.title}</span>
-                </div>)}
+                  {ch&&<span style={{fontSize:9,padding:"1px 6px",borderRadius:3,background:chColor+"22",color:chColor,fontWeight:700,whiteSpace:"nowrap"}}>{ch}</span>}
+                </div>})}
               </div>}
               {ms.mock_rotation?.bookend_pairs&&Array.isArray(ms.mock_rotation.bookend_pairs)&&ms.mock_rotation.bookend_pairs.length>0&&<div>
                 <div style={{fontSize:9,fontWeight:700,color:"#9B8EAD",letterSpacing:.6,marginBottom:4}}>Bookends</div>
