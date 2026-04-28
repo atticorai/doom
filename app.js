@@ -5711,27 +5711,36 @@ OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence:
     "tagline": "A throwaway tagline that captures the theme — single sentence, like a script chyron",
     "why_now": "One sentence — what's happening in spring 2026 that makes this the moment for this idea"
   },
-  "marketStrategies": [
+  "marketSnapshots": [
     {
       "market": "Chattanooga",
-      "memo": "**MULTI-PARAGRAPH MARKDOWN PROSE in Megara's voice** — read as a strategy memo, not a fact sheet. Open by naming what's actually true about this city that matters for PI advertising — the I-24/I-75 commercial-trucking chokepoint, the VW Chattanooga manufacturing workforce on shift schedules, the river-valley humidity that turns into severe weather. Then transition into what's happening THIS month — specific events, weekends, holidays, sports, weather, moments. Tie each calendar moment explicitly to a case-type angle and to which creative theme should be running that week. Then call out which themes are doing too much work in the current rotation and what should be dialed up — speak in theme/case-type language, no ISCI codes. Inline, drop in 1–3 spot concepts as block quotes (use markdown > prefix). Each concept opens with a script-slug title in bold, then continues with what we see, what we hear, the actual VO line in italic quotes, and the case-type angle. End with a single one-line pitch line the user can hand to the client. Use real second-person voice ('you'). No headers, no bullet lists, no field labels — flowing prose only. 4–8 paragraphs total.",
-      "rotation": {
-        "headline": "One-sentence rotation thesis for this market this month — e.g. 'Lean trucking and commercial-vehicle hard, hold auto accident steady, drop the brand spots back to maintenance weight.'",
-        "thirties_split": [
-          {"theme":"Trucking","weight":"40%","note":"Drive-time radio + Saturday CBS sports — captive trucker / commuter audience"},
-          {"theme":"Auto Accident","weight":"30%","note":"Steady backbone — pair with severe-weather creative when storms hit"},
-          {"theme":"Premises","weight":"20%","note":"Carry on weekend programming"},
-          {"theme":"Brand","weight":"10%","note":"Pull back to maintenance weight while case-type creative does the work"}
+      "angles": [
+        "Trucking is huge here — push hard",
+        "Workers comp angle is missing — VW workforce should be hearing it",
+        "Premises liability needs more weight, especially weekend"
+      ],
+      "retire": [
+        {"code":"CHAWK2630003T","title":"Mother's Wreck_30","reason":"Running 4 months — viewers can recite it"}
+      ],
+      "mock_rotation": {
+        "headline": "Trucking-led 30s, auto-accident bookends, brand goes to maintenance",
+        "thirties": [
+          {"code":"CHAWK2630014T","title":"Trucking Two_30","case_type":"Trucking","weight":"35%"},
+          {"code":"CHAWK2630002T","title":"Award Winning_30","case_type":"Brand","weight":"15%"},
+          {"code":"CHAWK2630004T","title":"Personal_30","case_type":"Premises","weight":"25%"},
+          {"code":"CHAWK2630006T","title":"Weekends_30","case_type":"Auto Accident","weight":"25%"}
         ],
-        "fifteens_split": [
-          {"theme":"Auto Accident","weight":"35%","note":"…"},
-          {"theme":"Trucking","weight":"35%","note":"…"}
+        "fifteens": [
+          {"code":"CHAWK2615014T","title":"Auto Accident_15","case_type":"Auto Accident","weight":"30%"}
         ],
         "bookend_pairs": [
-          {"slot":"M-F Bookend A","themes":"Trucking + Commercial Vehicle","why":"Drive-time freight audience — pair reinforces"},
-          {"slot":"Weekend Bookend A","themes":"Auto Accident + Premises","why":"Weekend warrior viewers — broader injury net"}
-        ],
-        "schedule_call": "One sentence on schedule weighting — 'Heavy M-F drive-time on radio. Anchor TV 30s in evening news. Bookend Saturday afternoon with the trucking pair when SEC is on.'"
+          {"slot":"M-F Bookend A","spots":[{"code":"CHAWK2615009T","title":"Commercial Vehicle"},{"code":"CHAWK2615003T","title":"Trucking Two_15"}],"reason":"Drive-time freight audience"}
+        ]
+      },
+      "spot_concept": {
+        "title": "Title for ONE new spot the market needs",
+        "case_type": "Workers Comp",
+        "brief": "2 sentence brief — what we see, what the VO says, the angle. No fluff."
       }
     }
   ]
@@ -5739,20 +5748,18 @@ OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence:
 \`\`\`
 
 Rules:
-- The memo IS the strategic prose. The rotation object IS the executable plan. Both are required.
-- 'rotation.thirties_split' / 'fifteens_split' must add to ~100%. Use the brand's actual case-type tags from availableCategories. If the brand doesn't run :15s in this market, set fifteens_split to []. Same for any media not active.
-- 'rotation.bookend_pairs' references CASE-TYPE / THEME pairs only — NOT ISCI codes. The user maps theme → her own ISCIs.
-- 'rotation.headline' is the executable summary line — what would the trafficker tell the team to run.
-- Keep this concrete and tied to the local truth in the memo. If the memo says 'lean trucking', the rotation must show 30%+ trucking weight.
-- Use **bold** for spot-concept titles in the memo. Use _italics_ for the VO line you'd record (always quoted). Use blockquotes (> ) for spot-concept blocks.
-- Write second-person to the user. 'You're sitting on a trucking corridor and you're running auto-accident creative.' Direct, not abstract.
-- Reference real local detail — UT scrimmage, Hyundai shift, peanut harvest, Maxwell AFB, Lookouts opening day, Riverbend Festival. Not generic 'spring season'.
-- Speak in case-type/theme language for rotation calls. NO ISCI codes. NO staleness counts. The user has dashboards for that.
-- Megara is the narrator. Snarky, dry, confident. The Muses can show up as parenthetical interjections IF they have something pointed to say. Optional, not required.
-- megara_verdict: 2–3 sentences setting up the brand for the month.
-- big_idea: campaign-theme thinking — 6-word title + tagline + why-now.
-- No corporate-speak. No 'leverage' / 'optimize' / 'amplify'. Write like a real human creative director who's been doing PI advertising for fifteen years.
-- JSON only. No markdown headers outside the code fence. Inside each memo string, markdown is welcome.`;
+- Be CONCISE. The user has Tracker / Library for data. This is strategic snapshot — 3-4 angles, a retire list, a mock rotation built from THEIR actual ISCI codes.
+- 'angles': 2-4 SHORT bullets. 'Trucking is huge here.' 'Workers comp is needed.' Don't ramble about I-70 mile markers. The user knows the geography.
+- 'retire': pull from staleIscis in the payload. List 1-4 codes that have been running too long with one-sentence reasons.
+- 'mock_rotation.thirties' / '.fifteens': pull REAL ISCI codes from the brand's bench / non-stale inventory in the payload. Each entry: code, title, case_type tag, weight. Weights add to ~100%. This is what the trafficker actually runs.
+- 'mock_rotation.bookend_pairs': pair real :15 ISCI codes that share a case-type angle. Reference codes from the payload.
+- 'spot_concept': ONE new spot per market — what's missing in the inventory that the angles call for. Brief is 2 sentences max.
+- megara_verdict: 2 sentences setting up the brand for the month. Snarky, dry, confident.
+- big_idea: 6-word campaign theme + one-line tagline + one-sentence why-now.
+- DON'T write paragraph memos. DON'T explain interstate highway numbers. DON'T narrate calendar moments. The user wants a quick, useful snapshot.
+- DO use the brand's actual case-type tags from availableCategories. Workers Comp / Trucking / Auto Accident / Premises / Brand etc.
+- DO use real ISCI codes from staleIscis (for retire) and from non-stale inventory (for mock_rotation).
+- No corporate-speak. JSON only.`;
 
       const resp=await fetch("/api/planner",{
         method:"POST",
@@ -5833,7 +5840,7 @@ Rules:
     try{
       const m=text.match(/```json\s*([\s\S]*?)```/);
       const json=JSON.parse(m?m[1]:text);
-      if(json&&(Array.isArray(json.marketStrategies)||Array.isArray(json.marketPlans)||Array.isArray(json.priorities)))return json;
+      if(json&&(Array.isArray(json.marketSnapshots)||Array.isArray(json.marketStrategies)||Array.isArray(json.marketPlans)||Array.isArray(json.priorities)))return json;
     }catch(e){}
     return{raw:text};
   };
@@ -5917,6 +5924,7 @@ Rules:
     const reportA=buildBrandReport(planBrand,monthA);
     const reportB=isCompare?buildBrandReport(planBrand,monthB):null;
     const playbook=parseAiPlaybook(planResult);
+    const hasMarketSnapshots=playbook&&Array.isArray(playbook.marketSnapshots)&&playbook.marketSnapshots.length>0;
     const hasMarketStrategies=playbook&&Array.isArray(playbook.marketStrategies)&&playbook.marketStrategies.length>0;
     const hasMarketPlans=playbook&&Array.isArray(playbook.marketPlans)&&playbook.marketPlans.length>0;
     const hasPriorities=playbook&&Array.isArray(playbook.priorities)&&playbook.priorities.length>0;
@@ -5960,8 +5968,69 @@ Rules:
         {playbook.big_idea.tagline&&<div style={{fontSize:13,color:"#C4A0C8",fontStyle:"italic",marginBottom:8}}>"{playbook.big_idea.tagline}"</div>}
         {playbook.big_idea.why_now&&<div style={{fontSize:12,color:"#9B8EAD"}}><b style={{color:"#D4A040"}}>Why now:</b> {playbook.big_idea.why_now}</div>}
       </div>}
-      {/* Per-market memo — pure prose, markdown rendered */}
-      {hasMarketStrategies&&<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      {/* Per-market snapshot — concise angles + retire + mock rotation */}
+      {hasMarketSnapshots&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+        {playbook.marketSnapshots.map((ms,i)=>{
+          const themeColor=(ct)=>{const map={"Trucking":"#D4A040","Auto Accident":"#4AC8E8","Premises":"#5BC4A0","Workers Comp":"#9b7bb0","Brand":"#C4A0C8","Distracted Driving":"#E85A7A","On The Job Injury":"#9b7bb0","Holiday":"#D4A040","Commercial Vehicle":"#D4A040","Trucking Two":"#D4A040","Trucking One":"#D4A040"};return map[ct]||"#9B8EAD"};
+          return<div key={i} style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid rgba(196,160,200,.25)",borderRadius:12,padding:"18px 22px"}}>
+          <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:12,paddingBottom:8,borderBottom:"1px solid rgba(212,160,64,.2)"}}>
+            <span style={{fontSize:18,fontWeight:800,color:"#F0E8F8",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.3}}>📍 {ms.market}</span>
+            {ms.mock_rotation?.headline&&<span style={{fontSize:12,color:"#C4A0C8",fontStyle:"italic",marginLeft:"auto"}}>{ms.mock_rotation.headline}</span>}
+          </div>
+          {ms.angles&&Array.isArray(ms.angles)&&ms.angles.length>0&&<div style={{marginBottom:14,display:"flex",flexDirection:"column",gap:5}}>
+            {ms.angles.map((a,j)=><div key={j} style={{display:"flex",gap:8,fontSize:13,color:"#E8DFF0"}}><span style={{color:"#D4A040",fontWeight:800}}>▸</span><span style={{flex:1}}>{a}</span></div>)}
+          </div>}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,alignItems:"start"}}>
+            {/* Mock rotation column */}
+            <div>
+              <div style={{fontSize:10,fontWeight:800,color:"#5BC4A0",textTransform:"uppercase",letterSpacing:1.5,marginBottom:8}}>🎯 Mock Rotation</div>
+              {ms.mock_rotation?.thirties&&Array.isArray(ms.mock_rotation.thirties)&&ms.mock_rotation.thirties.length>0&&<div style={{marginBottom:10}}>
+                <div style={{fontSize:9,fontWeight:700,color:"#9B8EAD",letterSpacing:.6,marginBottom:4}}>30s</div>
+                <div style={{display:"flex",borderRadius:4,overflow:"hidden",height:6,marginBottom:5}}>{ms.mock_rotation.thirties.map((s,j)=>{const pct=parseInt(s.weight)||0;return<div key={j} title={s.title+" "+s.weight} style={{width:s.weight,minWidth:0,background:themeColor(s.case_type)}}/>})}</div>
+                {ms.mock_rotation.thirties.map((s,j)=><div key={j} style={{display:"flex",gap:6,fontSize:11,padding:"3px 0",color:"#E8DFF0"}}>
+                  <span style={{minWidth:42,color:themeColor(s.case_type),fontWeight:700}}>{s.weight}</span>
+                  <span style={{fontFamily:"monospace",color:"#4AC8E8",fontSize:10,minWidth:130}}>{s.code}</span>
+                  <span style={{flex:1,color:"#C4A0C8"}}>{s.title}</span>
+                </div>)}
+              </div>}
+              {ms.mock_rotation?.fifteens&&Array.isArray(ms.mock_rotation.fifteens)&&ms.mock_rotation.fifteens.length>0&&<div style={{marginBottom:10}}>
+                <div style={{fontSize:9,fontWeight:700,color:"#9B8EAD",letterSpacing:.6,marginBottom:4}}>15s</div>
+                <div style={{display:"flex",borderRadius:4,overflow:"hidden",height:6,marginBottom:5}}>{ms.mock_rotation.fifteens.map((s,j)=>{const pct=parseInt(s.weight)||0;return<div key={j} title={s.title+" "+s.weight} style={{width:s.weight,minWidth:0,background:themeColor(s.case_type)}}/>})}</div>
+                {ms.mock_rotation.fifteens.map((s,j)=><div key={j} style={{display:"flex",gap:6,fontSize:11,padding:"3px 0",color:"#E8DFF0"}}>
+                  <span style={{minWidth:42,color:themeColor(s.case_type),fontWeight:700}}>{s.weight}</span>
+                  <span style={{fontFamily:"monospace",color:"#4AC8E8",fontSize:10,minWidth:130}}>{s.code}</span>
+                  <span style={{flex:1,color:"#C4A0C8"}}>{s.title}</span>
+                </div>)}
+              </div>}
+              {ms.mock_rotation?.bookend_pairs&&Array.isArray(ms.mock_rotation.bookend_pairs)&&ms.mock_rotation.bookend_pairs.length>0&&<div>
+                <div style={{fontSize:9,fontWeight:700,color:"#9B8EAD",letterSpacing:.6,marginBottom:4}}>Bookends</div>
+                {ms.mock_rotation.bookend_pairs.map((b,j)=><div key={j} style={{padding:"4px 0",fontSize:11,color:"#E8DFF0"}}>
+                  <span style={{color:"#5BC4A0",fontWeight:700,marginRight:6}}>{b.slot}:</span>
+                  {Array.isArray(b.spots)?b.spots.map((sp,k)=>{const c=typeof sp==="string"?sp:sp.code;const t=typeof sp==="string"?"":sp.title;return<span key={k} style={{marginRight:6}}><span style={{fontFamily:"monospace",color:"#4AC8E8",fontSize:10}}>{c}</span>{t&&<span style={{color:"#C4A0C8"}}> {t}</span>}{k<b.spots.length-1?" + ":""}</span>}):null}
+                  {b.reason&&<span style={{color:"#9B8EAD",fontStyle:"italic",marginLeft:6}}>— {b.reason}</span>}
+                </div>)}
+              </div>}
+            </div>
+            {/* Retire + new concept column */}
+            <div>
+              {ms.retire&&Array.isArray(ms.retire)&&ms.retire.length>0&&<div style={{marginBottom:12}}>
+                <div style={{fontSize:10,fontWeight:800,color:"#E85A7A",textTransform:"uppercase",letterSpacing:1.5,marginBottom:6}}>🗑 Retire</div>
+                {ms.retire.map((r,j)=><div key={j} style={{padding:"5px 0",fontSize:11}}>
+                  <div><span style={{fontFamily:"monospace",color:"#E85A7A",fontWeight:700,fontSize:10,marginRight:6}}>{r.code}</span><span style={{color:"#C4A0C8"}}>{r.title}</span></div>
+                  {r.reason&&<div style={{color:"#9B8EAD",marginTop:1,fontSize:10,fontStyle:"italic"}}>{r.reason}</div>}
+                </div>)}
+              </div>}
+              {ms.spot_concept&&ms.spot_concept.title&&<div style={{padding:10,background:"rgba(155,123,176,.08)",border:"1px solid rgba(155,123,176,.25)",borderRadius:6}}>
+                <div style={{fontSize:10,fontWeight:800,color:"#9b7bb0",textTransform:"uppercase",letterSpacing:1.5,marginBottom:5}}>🎬 New Spot Idea</div>
+                <div style={{fontSize:13,fontWeight:800,color:"#F0E8F8",marginBottom:3}}>{ms.spot_concept.title}{ms.spot_concept.case_type&&<span style={{fontSize:10,padding:"1px 6px",borderRadius:3,background:"rgba(212,160,64,.15)",color:"#D4A040",fontWeight:700,marginLeft:6}}>{ms.spot_concept.case_type}</span>}</div>
+                {ms.spot_concept.brief&&<div style={{fontSize:11,color:"#E8DFF0",lineHeight:1.5}}>{ms.spot_concept.brief}</div>}
+              </div>}
+            </div>
+          </div>
+        </div>;})}
+      </div>}
+      {/* Per-market memo — pure prose, markdown rendered (legacy) */}
+      {!hasMarketSnapshots&&hasMarketStrategies&&<div style={{display:"flex",flexDirection:"column",gap:14}}>
         {playbook.marketStrategies.map((ms,i)=><div key={i} style={{background:"linear-gradient(180deg,#fdfaf3,#f5efe2)",borderRadius:12,padding:"28px 36px",boxShadow:"0 8px 32px rgba(30,18,51,.4)",color:"#1e1233",fontFamily:"'Cormorant Garamond',Georgia,serif",lineHeight:1.7,fontSize:16,position:"relative"}}>
           <div style={{position:"absolute",top:0,left:36,right:36,height:3,background:"linear-gradient(90deg,#9b7bb0,#D4A040,#9b7bb0)"}}/>
           <div style={{display:"flex",alignItems:"baseline",gap:10,marginBottom:14,paddingBottom:10,borderBottom:"1px solid rgba(155,123,176,.25)"}}>
