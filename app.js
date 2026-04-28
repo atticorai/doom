@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="ooh-clump-report-2026-04-29-3";
+const __APP_VERSION__="ooh-clump-report-2026-04-29-4";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -3102,14 +3102,14 @@ const App=()=>{
       log("OOH June26 Clear",Object.keys(WK_JUNE26_CREATIVE).length+" boards cleared");
       notify("Cleared June 2026 temp tags");
     };
-    // Clumping check — for each creative theme, find pairs of tagged boards
-    // within 0.5 mi (driver sees both on same trip) or 0.5–1 mi (same area).
-    // Anything tighter than 0.5 mi is the "superclose" case the user is
-    // worried about — same creative twice on one drive.
+    // Clumping check — runs ONLY on the 38 June '26 boards using the planned
+    // WK_JUNE26_CREATIVE mapping (not whatever ISCI is currently on the
+    // board), so it answers "are these 38 too close?" regardless of whether
+    // Apply has been clicked. One-shot diagnostic — remove after review.
     const checkClumping=()=>{
       const haversine=(a,b)=>{const R=3958.8;const r=d=>d*Math.PI/180;const dLat=r(b[0]-a[0]),dLng=r(b[1]-a[1]);const x=Math.sin(dLat/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(x))};
       const byTheme={};
-      pops.forEach(p=>{if(!p.isci||!WK_COORDS[p.boardId])return;(byTheme[p.isci]||=[]).push({id:p.boardId,co:WK_COORDS[p.boardId]})});
+      Object.entries(WK_JUNE26_CREATIVE).forEach(([id,isci])=>{const co=WK_COORDS[id];if(!co)return;(byTheme[isci]||=[]).push({id,co})});
       const report=[];
       Object.entries(byTheme).forEach(([isci,boards])=>{
         if(boards.length<2)return;
@@ -3220,7 +3220,7 @@ const App=()=>{
           <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"} color="#9b7bb0">📑 Contracts</Btn>
           <Btn small onClick={applyJune26} color="#5BC4A0">🎨 Apply June '26</Btn>
           <Btn small onClick={clearJune26} color="#E85A7A">⊘ Clear June '26</Btn>
-          <Btn small onClick={checkClumping} color="#4AC8E8">📏 Check Clumping</Btn>
+          <Btn small onClick={checkClumping} color="#4AC8E8">📏 Check June '26 Clumping</Btn>
         </div>
       </div>
       <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
@@ -3249,10 +3249,10 @@ const App=()=>{
 
       {oohClumpReport&&<Cd><div style={{padding:12}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-          <div style={{fontSize:15,fontWeight:700,color:"#F0E8F8"}}>📏 Creative Clumping Report</div>
+          <div style={{fontSize:15,fontWeight:700,color:"#F0E8F8"}}>📏 June '26 Clumping Report — 38 boards</div>
           <Btn small onClick={()=>setOohClumpReport(null)} color="#6B5E80">Close</Btn>
         </div>
-        {oohClumpReport==="none"?<div style={{fontSize:13,color:"#9B8EAD"}}>No tagged boards found. Apply creative tags first.</div>:
+        {oohClumpReport==="none"?<div style={{fontSize:13,color:"#9B8EAD"}}>No coordinates found for the 38 June '26 boards.</div>:
         oohClumpReport.length===0?<div style={{fontSize:13,color:"#5BC4A0"}}>✓ Every tagged creative is solo or sufficiently spaced. No clumping detected.</div>:
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           <div style={{fontSize:12,color:"#9B8EAD",lineHeight:1.5}}>
