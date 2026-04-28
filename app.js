@@ -5714,19 +5714,41 @@ OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence:
   "marketStrategies": [
     {
       "market": "Chattanooga",
-      "memo": "**MULTI-PARAGRAPH MARKDOWN PROSE in Megara's voice** — read as a strategy memo, not a fact sheet. Open by naming what's actually true about this city that matters for PI advertising — the I-24/I-75 commercial-trucking chokepoint, the VW Chattanooga manufacturing workforce on shift schedules, the river-valley humidity that turns into severe weather. Then transition into what's happening THIS month — specific events, weekends, holidays, sports, weather, moments. Tie each calendar moment explicitly to a case-type angle and to which creative theme should be running that week. Then call out which themes are doing too much work in the current rotation and what should be dialed up — speak in theme/case-type language, no ISCI codes. Inline, drop in 1–3 spot concepts as block quotes (use markdown > prefix). Each concept opens with a script-slug title in bold, then continues with what we see, what we hear, the actual VO line in italic quotes, and the case-type angle. End with a single one-line pitch line the user can hand to the client. Use real second-person voice ('you'). No headers, no bullet lists, no field labels — flowing prose only. 4–8 paragraphs total."
+      "memo": "**MULTI-PARAGRAPH MARKDOWN PROSE in Megara's voice** — read as a strategy memo, not a fact sheet. Open by naming what's actually true about this city that matters for PI advertising — the I-24/I-75 commercial-trucking chokepoint, the VW Chattanooga manufacturing workforce on shift schedules, the river-valley humidity that turns into severe weather. Then transition into what's happening THIS month — specific events, weekends, holidays, sports, weather, moments. Tie each calendar moment explicitly to a case-type angle and to which creative theme should be running that week. Then call out which themes are doing too much work in the current rotation and what should be dialed up — speak in theme/case-type language, no ISCI codes. Inline, drop in 1–3 spot concepts as block quotes (use markdown > prefix). Each concept opens with a script-slug title in bold, then continues with what we see, what we hear, the actual VO line in italic quotes, and the case-type angle. End with a single one-line pitch line the user can hand to the client. Use real second-person voice ('you'). No headers, no bullet lists, no field labels — flowing prose only. 4–8 paragraphs total.",
+      "rotation": {
+        "headline": "One-sentence rotation thesis for this market this month — e.g. 'Lean trucking and commercial-vehicle hard, hold auto accident steady, drop the brand spots back to maintenance weight.'",
+        "thirties_split": [
+          {"theme":"Trucking","weight":"40%","note":"Drive-time radio + Saturday CBS sports — captive trucker / commuter audience"},
+          {"theme":"Auto Accident","weight":"30%","note":"Steady backbone — pair with severe-weather creative when storms hit"},
+          {"theme":"Premises","weight":"20%","note":"Carry on weekend programming"},
+          {"theme":"Brand","weight":"10%","note":"Pull back to maintenance weight while case-type creative does the work"}
+        ],
+        "fifteens_split": [
+          {"theme":"Auto Accident","weight":"35%","note":"…"},
+          {"theme":"Trucking","weight":"35%","note":"…"}
+        ],
+        "bookend_pairs": [
+          {"slot":"M-F Bookend A","themes":"Trucking + Commercial Vehicle","why":"Drive-time freight audience — pair reinforces"},
+          {"slot":"Weekend Bookend A","themes":"Auto Accident + Premises","why":"Weekend warrior viewers — broader injury net"}
+        ],
+        "schedule_call": "One sentence on schedule weighting — 'Heavy M-F drive-time on radio. Anchor TV 30s in evening news. Bookend Saturday afternoon with the trucking pair when SEC is on.'"
+      }
     }
   ]
 }
 \`\`\`
 
 Rules:
-- The memo IS the deliverable. No structured fields. Markdown prose.
-- Use **bold** for spot-concept titles. Use _italics_ for the VO line you'd record (always quoted). Use blockquotes (> ) for the spot-concept blocks.
+- The memo IS the strategic prose. The rotation object IS the executable plan. Both are required.
+- 'rotation.thirties_split' / 'fifteens_split' must add to ~100%. Use the brand's actual case-type tags from availableCategories. If the brand doesn't run :15s in this market, set fifteens_split to []. Same for any media not active.
+- 'rotation.bookend_pairs' references CASE-TYPE / THEME pairs only — NOT ISCI codes. The user maps theme → her own ISCIs.
+- 'rotation.headline' is the executable summary line — what would the trafficker tell the team to run.
+- Keep this concrete and tied to the local truth in the memo. If the memo says 'lean trucking', the rotation must show 30%+ trucking weight.
+- Use **bold** for spot-concept titles in the memo. Use _italics_ for the VO line you'd record (always quoted). Use blockquotes (> ) for spot-concept blocks.
 - Write second-person to the user. 'You're sitting on a trucking corridor and you're running auto-accident creative.' Direct, not abstract.
 - Reference real local detail — UT scrimmage, Hyundai shift, peanut harvest, Maxwell AFB, Lookouts opening day, Riverbend Festival. Not generic 'spring season'.
-- Speak in case-type/theme language for rotation calls. NO ISCI codes. NO percentages. NO staleness counts. The user has dashboards for that.
-- Megara is the narrator. Snarky, dry, confident. The Muses can show up as parenthetical interjections IF they have something pointed to say — '(Melpomene sighs about this one — she has a point: that 30 has run since February...)'. Optional, not required.
+- Speak in case-type/theme language for rotation calls. NO ISCI codes. NO staleness counts. The user has dashboards for that.
+- Megara is the narrator. Snarky, dry, confident. The Muses can show up as parenthetical interjections IF they have something pointed to say. Optional, not required.
 - megara_verdict: 2–3 sentences setting up the brand for the month.
 - big_idea: campaign-theme thinking — 6-word title + tagline + why-now.
 - No corporate-speak. No 'leverage' / 'optimize' / 'amplify'. Write like a real human creative director who's been doing PI advertising for fifteen years.
@@ -5968,6 +5990,28 @@ Rules:
               ?<blockquote key={j} style={{margin:"14px 0",padding:"12px 18px",borderLeft:"4px solid #9b7bb0",background:"rgba(155,123,176,.08)",borderRadius:"0 6px 6px 0",fontSize:15,color:"#2d1f42"}}>{renderInline(text)}</blockquote>
               :<p key={j} style={{margin:"0 0 14px"}}>{renderInline(para)}</p>;
           })}
+          {/* The Rotation — concrete weights + bookend pairs in case-type language */}
+          {ms.rotation&&<div style={{marginTop:18,padding:"18px 20px",background:"linear-gradient(135deg,rgba(155,123,176,.07),rgba(212,160,64,.05))",border:"1px solid rgba(155,123,176,.25)",borderRadius:8,fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"}}>
+            <div style={{fontSize:11,fontWeight:800,color:"#9b7bb0",textTransform:"uppercase",letterSpacing:2,marginBottom:8}}>The Rotation — {ms.market}</div>
+            {ms.rotation.headline&&<div style={{fontSize:14,color:"#1e1233",fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",marginBottom:12,paddingBottom:10,borderBottom:"1px solid rgba(155,123,176,.2)"}}>"{ms.rotation.headline}"</div>}
+            {ms.rotation.thirties_split&&Array.isArray(ms.rotation.thirties_split)&&ms.rotation.thirties_split.length>0&&<div style={{marginBottom:10}}>
+              <div style={{fontSize:10,fontWeight:800,color:"#7c2d6f",letterSpacing:1,marginBottom:5}}>30s</div>
+              <div style={{display:"flex",borderRadius:5,overflow:"hidden",height:22,marginBottom:4}}>{ms.rotation.thirties_split.map((s,j)=>{const colors=["#9b7bb0","#D4A040","#5BC4A0","#4AC8E8","#E85A7A","#C4A0C8"];const pct=parseInt(s.weight)||0;return<div key={j} title={s.theme+" "+s.weight} style={{width:s.weight,minWidth:0,background:colors[j%colors.length],display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:10,fontWeight:700}}>{pct>=12?s.theme:""}</div>})}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3,fontSize:12,color:"#2d1f42"}}>{ms.rotation.thirties_split.map((s,j)=><div key={j}><b style={{color:"#7c2d6f"}}>{s.theme} {s.weight}</b>{s.note?<span style={{color:"#5b3d6e",marginLeft:6,fontStyle:"italic"}}>— {s.note}</span>:""}</div>)}</div>
+            </div>}
+            {ms.rotation.fifteens_split&&Array.isArray(ms.rotation.fifteens_split)&&ms.rotation.fifteens_split.length>0&&<div style={{marginBottom:10}}>
+              <div style={{fontSize:10,fontWeight:800,color:"#7c2d6f",letterSpacing:1,marginBottom:5}}>15s</div>
+              <div style={{display:"flex",borderRadius:5,overflow:"hidden",height:18,marginBottom:4}}>{ms.rotation.fifteens_split.map((s,j)=>{const colors=["#9b7bb0","#D4A040","#5BC4A0","#4AC8E8","#E85A7A","#C4A0C8"];const pct=parseInt(s.weight)||0;return<div key={j} title={s.theme+" "+s.weight} style={{width:s.weight,minWidth:0,background:colors[j%colors.length],display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:10,fontWeight:700}}>{pct>=12?s.theme:""}</div>})}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3,fontSize:12,color:"#2d1f42"}}>{ms.rotation.fifteens_split.map((s,j)=><div key={j}><b style={{color:"#7c2d6f"}}>{s.theme} {s.weight}</b>{s.note?<span style={{color:"#5b3d6e",marginLeft:6,fontStyle:"italic"}}>— {s.note}</span>:""}</div>)}</div>
+            </div>}
+            {ms.rotation.bookend_pairs&&Array.isArray(ms.rotation.bookend_pairs)&&ms.rotation.bookend_pairs.length>0&&<div style={{marginBottom:10}}>
+              <div style={{fontSize:10,fontWeight:800,color:"#7c2d6f",letterSpacing:1,marginBottom:5}}>Bookend pairings</div>
+              {ms.rotation.bookend_pairs.map((b,j)=><div key={j} style={{padding:"5px 0",fontSize:12,color:"#2d1f42"}}>
+                <b style={{color:"#7c2d6f"}}>{b.slot}:</b> <span style={{fontWeight:600}}>{b.themes}</span>{b.why?<span style={{color:"#5b3d6e",marginLeft:6,fontStyle:"italic"}}>— {b.why}</span>:""}
+              </div>)}
+            </div>}
+            {ms.rotation.schedule_call&&<div style={{fontSize:12,color:"#2d1f42",fontStyle:"italic",paddingTop:8,borderTop:"1px solid rgba(155,123,176,.2)"}}>📅 {ms.rotation.schedule_call}</div>}
+          </div>}
         </div>)}
       </div>}
       {/* Per-market playbooks (legacy schema) */}
