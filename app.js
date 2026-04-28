@@ -866,8 +866,11 @@ const App=()=>{
     if(fbCountRef&&fbCountRef.current>10){
       const dropPct=1-(data.length/fbCountRef.current);
       if(dropPct>0.2){
+        const lostN=fbCountRef.current-data.length;
+        const msg="⚠ SAVE BLOCKED — protected "+lostN+" "+collection+" record(s) from being deleted ("+fbCountRef.current+"→"+data.length+", "+Math.round(dropPct*100)+"% drop). Your data is safe.";
         console.error("SAVE BLOCKED ["+collection+"]: count dropped from "+fbCountRef.current+" to "+data.length+" ("+Math.round(dropPct*100)+"% loss)");
         log("Save Blocked","⚠ "+collection+" save blocked: "+fbCountRef.current+"→"+data.length+" ("+Math.round(dropPct*100)+"% drop)");
+        try{notify(msg)}catch(e){}
         return false;
       }
     }
