@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="tag-and-copy-save-2026-04-29-16";
+const __APP_VERSION__="pdf-cmyk-fix-restored-2026-04-29-17";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -1318,7 +1318,11 @@ const App=()=>{
       pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
       items.sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0)).forEach(r=>{
         checkPage(5);
-        pdf.setFillColor(sc[0],sc[1],sc[2],0.3);pdf.rect(mx,y-3,cw,4.5,"F");
+        // Data rows render on white. The 4-arg setFillColor(r,g,b,a)
+        // that used to draw a 30%-alpha tint here was being read as
+        // CMYK by jsPDF and producing near-black rows on the user's
+        // build. Cleaner without it — schedule header stripe is
+        // enough visual structure.
         pdf.text(S(trafficRec.flight),colX[0]+1,y);
         pdf.setFont("helvetica","bold");pdf.text(S(r.code)+" - "+S(r.title),colX[1]+1,y,{maxWidth:cols[1]-2});
         pdf.setFont("helvetica","normal");
@@ -1354,7 +1358,9 @@ const App=()=>{
     pdf.setDrawColor(bc[0],bc[1],bc[2]);pdf.setLineWidth(0.5);pdf.line(mx,y,mx+cw,y);y+=5;
     pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
     pdf.text("Accepted by: _________________________",mx,y);pdf.text("Date: _______________",mx+cw-60,y);y+=6;
-    pdf.setFillColor(bc[0],bc[1],bc[2],0.08);pdf.rect(mx,y-3,cw,8,"F");
+    // 4-arg setFillColor(r,g,b,0.08) was producing a dark CMYK box
+    // around the 24-hour note instead of a faint tint. Render the
+    // note as plain text in the brand color — no background.
     pdf.setFont("helvetica","normal");pdf.setFontSize(7);pdf.setTextColor(bc[0],bc[1],bc[2]);
     pdf.text("Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.",mx+2,y);
     return pdf.output("datauristring");
