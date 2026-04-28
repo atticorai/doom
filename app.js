@@ -6724,7 +6724,524 @@ Be direct and actionable. No generic advice.`;
           {pg==="est"&&<EstPg/>}
           {pg==="sta"&&<StaPg/>}
           {pg==="metrics"&&<MetricsPg/>}
-          {/* Library is rendered OUTSIDE this page-transition wrapper —
+          {pg==="library"&&(()=>{
+            // Library is rendered OUTSIDE the MDiv page-transition wrapper
+            // because that wrapper applies a transform (for opacity/scale/blur
+            // animations) which creates a containing block for fixed descendants.
+            // BookOpen's `fixed inset-0` modal needs to escape to the viewport so
+            // clicking a book actually covers the screen.
+            const MO_LIB=["January","February","March","April","May","June","July","August","September","October","November","December"];
+            const now=new Date();const curIdx=now.getMonth();const curYear=now.getFullYear();
+            // Archive anything whose inferred broadcast year is before the
+            // current calendar year. Nov / Dec with no year stamp get inferred
+            // as last year (since they're "ahead" of the current month by more
+            // than 2), so they land in 2025 and archive. Jan-Apr 2026 stay
+            // visible as current.
+            const archCutoff=new Date(curYear,0,1);
+            // Render the exact same traffic sheet the main app emits (see
+            // buildSheetHtml in RotBuilder). The library displays the result via
+            // dangerouslySetInnerHTML in the left page so what you see matches
+            // what was sent / printed / emailed.
+            const SCHED_COLORS_SHEET={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#dcfce7","Holiday Only":"#fee2e2"};
+            const SCHED_ORDER_SHEET=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
+            const renderSheet=(h)=>{
+              const code=h.brand==="Postman Law"?"PL":"WK";
+              const bc=getBrandColor(code);const bcBg=getBrandBg(code);
+              const logo=code==="PL"?LOGO_PL:LOGO_WK;
+              const hdr=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0;color:#1e1233"><b style="min-width:140px;color:#555;font-weight:700">'+l+':</b><span style="color:'+(c||'#1e1233')+';font-weight:'+(c?'600':'500')+'">'+(v==null?"":v)+'</span></div>';
+              // Scoped <style> forces the sheet to render as white paper with dark
+              // legible text even when the Library's dark theme is in effect on the
+              // host page. Explicit inline `style="color:#..."` spans win via CSS
+              // specificity, so brand accents (Client red, Buyer gold) still show.
+              let x='<html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}html,body{background:#fff;color:#1e1233;font-family:Arial,sans-serif}body{padding:28px}table{width:100%;border-collapse:collapse}b{font-weight:700}td,th{color:#1e1233}</style></head><body>';
+              x+='<div style="text-align:center;margin-bottom:14px"><img src="'+logo+'" style="height:48px"/></div>';
+              x+=hdr("Agency",getBrandAgency(code));
+              x+=hdr("Client",h.brand,bc);
+              x+=hdr("Market",DM[h.market]||h.market);
+              x+=hdr("Buyer",h.buyer,"#D4A040");
+              const estStr=h.est||"";
+              const estNums=estStr.split(/\s*[+\/]\s*/).map(s=>s.trim()).filter(Boolean);
+              const isCombined=(h.combined===true)||estNums.length>1;
+              if(isCombined){
+                x+=hdr("Estimate(s)",estNums.length+" combined estimates");
+                x+=hdr("Media",h.media,h.isOoh?"#D4A040":"#4AC8E8");
+                const hMkt=normMkt(h.market)||h.market;
+                const subs=estNums.map(n=>estimates.find(e=>e.num===n&&e.brand===h.brand&&((normMkt(e.market)||e.market)===hMkt||e.market===h.market))).filter(Boolean);
+                const buyTypes=[...new Set(subs.map(e=>e.group))].join(", ");
+                if(buyTypes)x+=hdr("Buy Type(s)",buyTypes);
+                x+='<table style="margin:8px 0;font-size:11px;border:1px solid #ddd;width:100%;border-collapse:collapse"><thead><tr style="background:#F0E8F8"><th style="padding:4px 8px;text-align:left;color:#5b21b6">Estimate</th><th style="padding:4px 8px;text-align:left;color:#5b21b6">Buy Type</th><th style="padding:4px 8px;text-align:left;color:#5b21b6">Stations</th></tr></thead><tbody>';
+                subs.forEach(ce=>{
+                  const stas=getEstStations(ce);
+                  x+='<tr><td style="padding:3px 8px;font-weight:700;border-bottom:1px solid #eee">'+ce.num+'</td><td style="padding:3px 8px;border-bottom:1px solid #eee">'+ce.group+'</td><td style="padding:3px 8px;border-bottom:1px solid #eee;font-size:10px">'+(stas.length?stas.map(s=>s.call).join(", "):"—")+'</td></tr>';
+                });
+                x+='</tbody></table>';
+              }else{
+                x+=hdr("Estimate(s)",estStr);
+                x+=hdr("Media",h.media,h.isOoh?"#D4A040":"#4AC8E8");
+                const stas=(h.stations&&h.stations.length)?h.stations:[];
+                if(stas.length)x+=hdr("Stations ("+stas.length+")",stas.join(", "));
+              }
+              x+=hdr("Broadcast Month",h.month,"#E85A7A");
+              if(h.isOoh&&h.postDates)x+=hdr("Post Dates",h.postDates,"#1e1233");
+              else if(h.flight)x+=hdr("Flight Dates",h.flight,"#1e1233");
+              x+=hdr("Version/ Links","Version "+(h.version||"1")+" / "+h.market+" Assets");
+              if(h.comments)x+=hdr("Comments",h.comments);
+              const thCell='background:#F0E8F8;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#6B5E80';
+              const tdCell='padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)';
+              x+='<table style="width:100%;border-collapse:collapse;margin-top:14px"><thead><tr><th style="'+thCell+'">Flight Dates</th><th style="'+thCell+'">ISCI Codes &amp; Title:</th><th style="'+thCell+'">Length:</th><th style="'+thCell+'">%</th><th style="'+thCell+'">Notes:</th></tr></thead><tbody>';
+              const grouped={};
+              (h.iscis||[]).forEach(r=>{const s=r.sched||"All Week";if(!grouped[s])grouped[s]=[];grouped[s].push(r)});
+              const validBk=b=>typeof b==="string"&&b&&b!=="true"&&b!=="false";
+              const renderGroup=(s,bg)=>{
+                const items=(grouped[s]||[]).slice().sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0));
+                x+='<tr><td colspan="5" style="padding:5px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid rgba(0,0,0,.1);background:'+bg+'">'+s+'</td></tr>';
+                items.forEach(r=>{
+                  const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";
+                  const note=validBk(r.bookend)?r.bookend:s;
+                  const length=validBk(r.bookend)?r.bookend:(r.dur?":"+r.dur:"");
+                  x+='<tr style="background:'+bg+'44"><td style="'+tdCell+'">'+(h.flight||"")+'</td><td style="'+tdCell+';font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td style="'+tdCell+'">'+length+'</td><td style="'+tdCell+';font-weight:600">'+pct+'</td><td style="'+tdCell+';font-size:10px;color:#555">'+note+'</td></tr>';
+                });
+              };
+              SCHED_ORDER_SHEET.forEach(s=>{if(grouped[s])renderGroup(s,SCHED_COLORS_SHEET[s])});
+              Object.keys(grouped).filter(s=>!SCHED_ORDER_SHEET.includes(s)).forEach(s=>renderGroup(s,"#F0E8F8"));
+              x+='</tbody></table>';
+              x+='<div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">';
+              Object.entries(SCHED_COLORS_SHEET).forEach(([s,c])=>{if(grouped[s])x+='<div style="display:flex;align-items:center;gap:4px;font-size:9px"><div style="width:12px;height:12px;border-radius:2px;background:'+c+'"></div>'+s+'</div>'});
+              x+='</div>';
+              x+='<div style="margin-top:36px;border-top:2px solid '+bc+';padding-top:8px;color:#1e1233"><div style="display:flex;justify-content:space-between;font-size:13px"><div><b>Accepted by:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div style="background:#fffbeb;padding:7px;font-size:10px;color:#92400e;margin-top:6px;border:1px solid #fde68a">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></div>';
+              x+='</body></html>';
+              return x;
+            };
+            // No dedup — show every trafficHistory record, including duplicates
+            // and archived, so the correct stored version is always visible.
+            const dedupedEntries=trafficHistory.map((h,i)=>({h,i}));
+            const data=dedupedEntries.map(({h,i})=>{
+              const parts=String(h.month||"").trim().split(/\s+/);
+              const monIdx=MO_LIB.indexOf(parts[0]);
+              const parsedYear=parseInt(parts[1]);
+              const year=!isNaN(parsedYear)?parsedYear:(monIdx>curIdx+2?curYear-1:curYear);
+              const effDate=monIdx>=0?new Date(year,monIdx,1):(h.ts?new Date(h.ts):null);
+              const archived=effDate?effDate<archCutoff:true;
+              // Combined records save market/media as 'Chicago / Cincinnati'
+              // and 'TV / Cable'. The Library shelves only know single
+              // values, so split on the first ' / ' for display grouping.
+              const mktRaw=String(h.market||"").split(/\s*\/\s*/)[0];
+              const mediaRaw=String(h.media||"").split(/\s*\/\s*/)[0];
+              return{
+                id:(h.ts?String(h.ts):"tmp")+"_"+i,
+                historyIdx:i,
+                brand:h.brand,
+                market:DM[mktRaw]||mktRaw,
+                mediaType:mediaRaw,
+                month:parts[0]||h.month,
+                estimate:h.est||"",
+                version:h.version?("v"+h.version):"",
+                iscis:(h.iscis?.length||0)+" ISCIs"+(h.stations?.length?(" · "+h.stations.length+" stations"):""),
+                dateRange:h.flight||"",
+                buyer:h.buyer||"",
+                status:h.status==="sent"?"sent":"pending",
+                // Enrich each ISCI entry at render time from the registry so
+                // title / dur / fileUrl / category / vo stay in sync with
+                // whatever's in the ISCI registry. User values on the record
+                // win if present.
+                iscisDetail:(h.iscis||[]).map(r=>{
+                  if(!r||!r.code)return r;
+                  const hDma=normMkt(h.market)||h.market||"";
+                  const full=iscis.find(i=>i.code===r.code&&(i.dma||"")===hDma)||iscis.find(i=>i.code===r.code);
+                  return{
+                    code:r.code,
+                    title:r.title||full?.title||"",
+                    dur:r.dur||full?.dur||"",
+                    pct:r.pct,
+                    sched:r.sched,
+                    bookend:r.bookend,
+                    units:r.units,
+                    fileUrl:full?.fileUrl||r.fileUrl||"",
+                    category:full?.category||full?.caseType||r.category||"",
+                    vo:full?.vo||r.vo||"",
+                  };
+                }),
+                stations:h.stations||[],
+                ts:h.ts,
+                year:year,
+                archived:archived,
+                comments:h.comments||"",
+                sheetHtml:renderSheet(h),
+              };
+            });
+            window.MegaraLibraryData=data;
+            // Logos read by brand by the library's BookOpen (keeps one copy of
+            // each base64 instead of duplicating it into every instruction).
+            window.MegaraLibraryLogos={"Postman Law":LOGO_PL,"Wettermark Keith":LOGO_WK};
+            // Debug helper — open devtools and run
+            //   MegaraLibraryDebug("Wettermark Keith","Montgomery","Radio","January")
+            // to dump every Firestore trafficHistory record for that exact slot,
+            // plus which one the Library picked after dedup. That tells us at a
+            // glance whether the data in Firestore is the problem or the render is.
+            window.MegaraLibraryDebug=(brandF,marketF,mediaF,monthF)=>{
+              const all=trafficHistory.map((h,i)=>({i,h})).filter(({h})=>{
+                if(brandF&&h.brand!==brandF)return false;
+                if(marketF){const hm=(DM[h.market]||h.market);if(hm!==marketF&&h.market!==marketF)return false}
+                if(mediaF&&h.media!==mediaF)return false;
+                if(monthF&&h.month!==monthF)return false;
+                return true;
+              });
+              console.log("=== trafficHistory slot "+[brandF,marketF,mediaF,monthF].join(" | ")+" ===");
+              console.log(all.length+" record(s) in Firestore for that slot");
+              all.forEach(({i,h})=>{
+                console.log("  #"+i+" ts="+(h.ts||"(none)")+" status="+(h.status||"(none)")+" combined="+(h.combined?"yes":"no")+" est="+(h.est||"")+" iscis="+(h.iscis||[]).length+" ("+(h.iscis||[]).map(r=>r.code).join(", ")+")");
+              });
+              const picked=data.find(d=>d.brand===brandF&&d.market===marketF&&d.mediaType===mediaF&&d.month===monthF);
+              if(picked){console.log("Library is showing historyIdx="+picked.historyIdx);}
+              else console.log("Library has NO record for that slot (all filtered out or none exist).");
+            };
+            // Button handlers for the right-page actions. BookOpen calls these
+            // by name through window.MegaraLibraryActions, receiving the
+            // instruction.historyIdx set on each record below.
+            window.MegaraLibraryActions={
+              edit:(idx)=>{if(typeof idx==="number"){setEditTrafficIdx(idx);notify("Edit Traffic — changes save back to Firestore")}},
+              view:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close()},
+              print:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close();w.focus();setTimeout(()=>w.print(),300)},
+              send:async(idx)=>{
+                const h=trafficHistory[idx];if(!h)return;
+                if(!confirm("Send traffic?\n\n"+h.brand+" · "+(DM[h.market]||h.market)+" · "+(h.media||"")+" · "+h.month+" · v"+(h.version||"1")+"\n"+(h.iscis||[]).length+" ISCIs\n\nThis will email all linked stations."))return;
+                const note=(prompt("Add a note to this email (optional):")||"").trim();
+                const sheetHtml=data[idx]?.sheetHtml||"";
+                let pdfB64="";try{const pdfUri=await generatePdfBase64(sheetHtml,h);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
+                const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+(h.market||"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
+                const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
+                const recipients=[...new Set(linkedStations.map(s=>s.contact).filter(Boolean).flatMap(c=>c.split(/[,;]\s*/)))].filter(Boolean);
+                if(!recipients.length){notify("No station email contacts found for this record — link stations in the Stations page first.");return}
+                const buyerCc=BUYER_EMAILS[h.buyer]||"";
+                const ccList=[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(",");
+                const confirmBase=window.location.href.split("?")[0];
+                let emailBody="Hello,<br><br>Please find the attached traffic instructions for "+(h.brand||"")+" — "+(h.market||"")+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br>";
+                if(note)emailBody+="<b>Note:</b> "+note+"<br><br>";
+                emailBody+="<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
+                emailBody+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmBase+'?confirm='+(h.est||"")+'&sta=resend&tok=auto" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager';
+                const subj=(h.brand||"")+" - Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+(h.market||"");
+                notify("Sending to "+recipients.length+" recipient"+(recipients.length===1?"":"s")+"...");
+                try{
+                  const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients.join(","),cc:ccList,subject:subj,message:emailBody,pdfBase64:pdfB64,pdfName:pdfName})});
+                  if(resp.ok){notify(doomPick(DOOM.send));log("Traffic Sent",h.brand+" "+h.market+" "+h.media+" "+h.month+" v"+(h.version||"1"))}
+                  else throw new Error("n8n "+resp.status);
+                }catch(e){notify("Send failed: "+(e.message||e));console.error("Send failed:",e)}
+              },
+              copyTo:(idx)=>{
+                // Mirrors the main Library's "Copy to…" flow (see ~line 5535):
+                // walks the broadcast CALENDAR for the NEXT entry after this
+                // record's month, swaps the WK monthly estimate when applicable,
+                // checks for a duplicate month, pulls flight dates from CALENDAR.
+                const h=trafficHistory[idx];if(!h)return;
+                const curCalIdx=CALENDAR.findIndex(c=>c.month===h.month);
+                if(curCalIdx<0){notify("Can't auto-advance from unknown month: "+(h.month||"(none)"));return}
+                const nextCal=CALENDAR[(curCalIdx+1)%CALENDAR.length];
+                const newMonth=nextCal.month;
+                const newFlight=fDs(nextCal.bcStart)+" - "+fDs(nextCal.bcEnd);
+                const WK_MONTH_EST={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};
+                const EST_TO_MONTH=Object.fromEntries(Object.entries(WK_MONTH_EST).map(([m,n])=>[n,m]));
+                let newEst=h.est;
+                if(h.brand==="Wettermark Keith"&&(EST_TO_MONTH[h.est]||WK_MONTH_EST[h.month])){newEst=WK_MONTH_EST[newMonth]||h.est}
+                const existing=trafficHistory.find(x=>x.brand===h.brand&&x.market===h.market&&x.media===h.media&&x.month===newMonth&&x.status!=="copied");
+                if(existing&&!confirm(h.brand+" "+h.market+" "+h.media+" already has "+newMonth+" traffic (v"+existing.version+"). Copy anyway? This creates a new record — it won't overwrite."))return;
+                const copy={...h,ts:new Date().toISOString(),est:newEst,month:newMonth,flight:newFlight,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:"Copied from "+h.month};
+                setTrafficHistory(p=>[copy,...p]);
+                log("Traffic Copied",h.brand+" "+h.market+" "+h.media+" "+h.month+" → "+newMonth+" (Est "+newEst+")");
+                notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);
+              },
+              delete:async(idx)=>{const h=trafficHistory[idx];if(!h)return;const pw=prompt("Admin password to delete traffic:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok){alert("Wrong password");return}if(!confirm("Delete "+h.brand+" "+h.market+" "+h.media+" "+h.month+"? This cannot be undone."))return;setTrafficHistory(p=>p.filter((_,j)=>j!==idx));log("Traffic Deleted",h.brand+" "+h.market+" "+h.media+" "+h.month);notify("Traffic deleted")},
+              restoreFromBackup:async()=>{
+                // Pulls every available backup — the single "latest" backup plus
+                // the rotating 10-slot history from both Firestore and
+                // localStorage. User picks by record count + timestamp.
+                if(!db){notify("Firestore not available");return}
+                const pw=prompt("Admin password — restore trafficHistory from backup:");
+                if(!pw)return;
+                const ok=await verifyAuth(pw,"admin");
+                if(!ok){alert("Wrong password");return}
+                const found=[];
+                // Latest single backup (Firestore)
+                try{const s=await db.collection("appData").doc("trafficHistory_backup").get();if(s.exists){const d=s.data();if(d&&d.data)found.push({src:"FS latest",ts:d.ts,data:JSON.parse(d.data)})}}catch(e){}
+                // Rotating slots 0..9 (Firestore)
+                for(let i=0;i<10;i++){
+                  try{const s=await db.collection("appData").doc("trafficHistory_backup_s"+i).get();if(s.exists){const d=s.data();if(d&&d.data)found.push({src:"FS slot "+i,ts:d.ts,data:JSON.parse(d.data)})}}catch(e){}
+                }
+                // localStorage
+                try{const ls=localStorage.getItem("doom_backup_trafficHistory");if(ls){const j=JSON.parse(ls);if(j&&j.data)found.push({src:"LS latest",ts:j.ts,data:JSON.parse(j.data)})}}catch(e){}
+                for(let i=0;i<10;i++){
+                  try{const ls=localStorage.getItem("doom_backup_trafficHistory_s"+i);if(ls){const j=JSON.parse(ls);if(j&&j.data)found.push({src:"LS slot "+i,ts:j.ts,data:JSON.parse(j.data)})}}catch(e){}
+                }
+                if(!found.length){notify("No backups found anywhere.");return}
+                // Sort newest first
+                found.sort((a,b)=>(b.ts||0)-(a.ts||0));
+                const cur=trafficHistory.length;
+                const lines=found.map((b,i)=>(i+1)+" = "+b.src+" · "+b.data.length+" records · "+new Date(b.ts).toLocaleString());
+                const pick=prompt("Current: "+cur+" records.\n\nPick a backup (type the number) or Cancel:\n\n"+lines.join("\n"));
+                if(!pick)return;
+                const n=parseInt(pick.trim())-1;
+                const chosen=found[n];
+                if(!chosen){notify("Invalid selection.");return}
+                if(!confirm("REPLACE current "+cur+" records with "+chosen.src+" ("+chosen.data.length+" records from "+new Date(chosen.ts).toLocaleString()+")?"))return;
+                setTrafficHistory(chosen.data);
+                log("Restore from backup",chosen.src+" — "+chosen.data.length+" records restored");
+                notify("Restored "+chosen.data.length+" records from "+chosen.src+".");
+              },
+              relinkCreative:async()=>{
+                // Re-syncs every trafficHistory record with the current ISCI
+                // registry. For each record's iscis[], looks up the registry by
+                // code+dma and fills in title/dur/fileUrl so metrics + AI Planner
+                // + Traffic Tracker all see matching creative data. Also repairs
+                // combined=true on PL records whose est string contains "+" (so
+                // the Tracker's TV-combined match works again).
+                const pw=prompt("Admin password — re-link all traffic records to the ISCI registry:");
+                if(!pw)return;
+                const ok=await verifyAuth(pw,"admin");
+                if(!ok){alert("Wrong password");return}
+                let enriched=0,combinedFixed=0,orphanCodes=0;
+                const byCodeDma=new Map();
+                iscis.forEach(i=>{byCodeDma.set(i.code+"|"+(i.dma||""),i);byCodeDma.set(i.code,i)});
+                const next=trafficHistory.map(h=>{
+                  const hDma=normMkt(h.market)||h.market||"";
+                  const newIscis=(h.iscis||[]).map(r=>{
+                    if(!r||!r.code)return r;
+                    const full=byCodeDma.get(r.code+"|"+hDma)||byCodeDma.get(r.code);
+                    if(!full){orphanCodes++;return r}
+                    enriched++;
+                    return{
+                      ...r,
+                      title:r.title||full.title||"",
+                      dur:r.dur||full.dur||"",
+                      fileUrl:full.fileUrl||r.fileUrl||"",
+                      category:full.category||full.caseType||r.category||"",
+                      valueProp:full.valueProp||r.valueProp||"",
+                      vo:full.vo||r.vo||"",
+                    };
+                  });
+                  let out={...h,iscis:newIscis};
+                  // Repair the combined flag — TV records with "+" in est are combined
+                  if(h.media==="TV"&&(h.est||"").indexOf("+")>=0&&!h.combined){
+                    out.combined=true;
+                    combinedFixed++;
+                  }
+                  return out;
+                });
+                backupBeforeSave("trafficHistory",next);
+                trafficFbCountRef.current=next.length;
+                setTrafficHistoryRaw(next);
+                try{
+                  await db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(next),ts:Date.now()});
+                  log("Relink Creative",enriched+" ISCI rows enriched · "+combinedFixed+" combined flags repaired · "+orphanCodes+" codes not in registry");
+                  notify("Re-linked: "+enriched+" ISCIs enriched, "+combinedFixed+" combined flags fixed"+(orphanCodes?", "+orphanCodes+" orphan codes":""));
+                }catch(e){
+                  console.error("Relink save failed:",e);
+                  notify("Re-link save FAILED: "+(e.message||e));
+                }
+              },
+              loadTrafficSource:async()=>{
+                // Fetches /traffic-source.zip, unzips, parses every PDF through
+                // the same extractPdfText / parseTrafficText the manual import
+                // uses, and REPLACES each matching brand|market|media|month slot
+                // in Firestore. Skips any record where month === "April" so
+                // April stays sacred. Admin-gated.
+                if(!window.JSZip){notify("JSZip not loaded — hard-refresh the page (Ctrl+Shift+R) and retry.");return}
+                if(!window.pdfjsLib){notify("pdf.js not loaded — hard-refresh and retry.");return}
+                const pw=prompt("Admin password — import all PDFs from /traffic-source.zip:");
+                if(!pw)return;
+                const ok=await verifyAuth(pw,"admin");
+                if(!ok){alert("Wrong password");return}
+                notify("Fetching traffic-source.zip…");
+                let zipBlob;
+                try{
+                  const r=await fetch("/traffic-source.zip",{cache:"no-store"});
+                  if(!r.ok)throw new Error("HTTP "+r.status);
+                  const ct=r.headers.get("content-type")||"";
+                  if(ct.includes("text/html")){throw new Error("Got HTML instead of zip — Vercel rewrite is catching the request. Deploy vercel.json update and retry.")}
+                  zipBlob=await r.blob();
+                  if(zipBlob.size<1000){throw new Error("Zip is only "+zipBlob.size+" bytes — not a real zip")}
+                  notify("Downloaded "+Math.round(zipBlob.size/1024)+" KB");
+                }
+                catch(e){notify("Fetch failed: "+e.message);console.error(e);return}
+                notify("Unzipping…");
+                const zip=await window.JSZip.loadAsync(zipBlob);
+                const files=Object.keys(zip.files).filter(n=>!zip.files[n].dir&&n.toLowerCase().endsWith(".pdf"));
+                if(!files.length){notify("No PDFs in the zip.");return}
+                const extractPdfTextLocal=async(pdfDoc)=>{
+                  let text="";
+                  for(let pi=1;pi<=pdfDoc.numPages;pi++){
+                    const page=await pdfDoc.getPage(pi);
+                    const tc=await page.getTextContent();
+                    const rows={};
+                    tc.items.forEach(item=>{if(!item.str||!item.str.trim())return;const y=item.transform?Math.round(item.transform[5]):0;const x=item.transform?Math.round(item.transform[4]):0;let rk=y;const nearby=Object.keys(rows).map(Number).find(k=>Math.abs(k-y)<=3);if(nearby!==undefined)rk=nearby;if(!rows[rk])rows[rk]=[];rows[rk].push({x,text:item.str})});
+                    Object.keys(rows).map(Number).sort((a,b)=>b-a).forEach(y=>{text+=rows[y].sort((a,b)=>a.x-b.x).map(i=>i.text).join(" ")+"\n"});
+                  }
+                  return text;
+                };
+                // Minimal inline parser mirroring LibraryPg.parseTrafficText
+                const parseLocal=(text)=>{
+                  try{
+                    const t=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+                    const getField=(label)=>{const re=new RegExp(label.replace(/\//g,"\\/")+"\\s*:\\s*(.+?)(?:\\n|$)","i");const m=t.match(re);return m?m[1].trim():""};
+                    let brand=getField("Client")||"";
+                    let market=getField("Market")||"";
+                    let buyer=getField("Buyer")||"";
+                    let media=getField("Media")||"TV";
+                    let month=(getField("Broadcast Month")||"").split(/\s+/)[0];
+                    let flight=getField("Flight Dates")||"";
+                    let versionRaw=getField("Version/ Links")||getField("Version")||"";
+                    let comments=getField("Comments")||"";
+                    const version=versionRaw.match(/(\d+)/)?.[1]||"1";
+                    let dma=normMkt(market)||(market.length<=4?market.replace(/[^A-Z]/gi,"").toUpperCase().substring(0,3):market.substring(0,3).toUpperCase());
+                    if(!dma)dma="UNK";
+                    if(brand.toLowerCase().includes("postman"))brand="Postman Law";
+                    else if(brand.toLowerCase().includes("wettermark"))brand="Wettermark Keith";
+                    const lines=t.split("\n");const iscis=[];
+                    const codePat=/([A-Z]{3,4}(?:PL|WK)\d{4,7}[A-Z0-9])/;
+                    for(const line of lines){
+                      const m=line.match(codePat);if(!m)continue;
+                      const code=m[1];
+                      const rest=line.substring(line.indexOf(code)+code.length).trim();
+                      const durMatch=rest.match(/:(\d{2})\b/);
+                      const dur=durMatch?durMatch[1]:"30";
+                      const pctMatch=rest.match(/(\d{1,2}(?:\.\d+)?)\s*%/);
+                      const pct=pctMatch?pctMatch[1]:"";
+                      let title=rest.split(/\s+:/)[0].trim();
+                      const bookendMatch=rest.match(/(?:Bookend\s*)?:(\d{2})\s+([A-D])\b/);
+                      const bookend=bookendMatch?"Bookend :"+bookendMatch[1]+" "+bookendMatch[2]:"";
+                      const schedMatch=rest.match(/(Monday\s*-\s*Friday\s*Schedule|M-F\s*Schedule|Weekend\s*Schedule|M-F\s*Bookend|Weekend\s*Bookend|All\s*Week|Holiday\s*Only)/i);
+                      const schedType=schedMatch?schedMatch[1].replace(/Monday\s*-\s*Friday\s*Schedule/i,"M-F Schedule"):"";
+                      iscis.push({code,title,dur,pct,sched:schedType||"All Week",bookend});
+                    }
+                    // Dedup by code, prefer entries with pct
+                    const seen=new Set();const uniq=[];
+                    iscis.forEach(r=>{if(seen.has(r.code)){const ex=uniq.find(u=>u.code===r.code);if(ex&&!ex.pct&&r.pct)Object.assign(ex,r);return}seen.add(r.code);uniq.push(r)});
+                    if(!uniq.length)return null;
+                    return{est:dma+"-"+(brand==="Postman Law"?"PL":"WK")+"-"+media,brand,market:dma,media,buyer,month,version:parseInt(version)||1,stations:[],ts:new Date().toISOString(),comments,isRevision:false,combined:false,iscis:uniq,flight,status:"sent"};
+                  }catch(e){console.error("Parse error:",e);return null}
+                };
+                let parsed=0,skipped=0,failed=0;const parsedRecords=[];
+                notify("Parsing "+files.length+" PDFs…");
+                for(let fi=0;fi<files.length;fi++){
+                  const name=files[fi];
+                  try{
+                    const buf=await zip.files[name].async("arraybuffer");
+                    const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+                    const text=await extractPdfTextLocal(pdf);
+                    const rec=parseLocal(text);
+                    if(!rec){failed++;console.warn("[LoadSource] parse returned null for:",name);continue}
+                    if(rec.month==="April"){skipped++;continue}
+                    parsedRecords.push(rec);
+                    parsed++;
+                    if((fi+1)%10===0)notify("Parsed "+(fi+1)+"/"+files.length+"…");
+                  }catch(e){failed++;console.error("[LoadSource] error on",name,e)}
+                }
+                console.log("[LoadSource] parsed=",parsed,"skipped(April)=",skipped,"failed=",failed,"records=",parsedRecords);
+                if(!parsedRecords.length){notify("No records parsed. failed="+failed+" skipped(April)="+skipped+". Check console for why.");return}
+                if(!confirm("Zip parsed: "+parsed+" records ready to import.\n\n"+skipped+" April records were skipped (sacred).\n"+failed+" PDFs failed to parse.\n\nThis will REPLACE each matching brand|market|media|month slot in Firestore. Continue?"))return;
+                // Merge: replace matching slots, add new ones
+                const slotKey=(h)=>(h.brand||"")+"|"+(normMkt(h.market)||h.market||"")+"|"+(h.media||"")+"|"+(h.month||"");
+                const map=new Map();
+                trafficHistory.forEach(h=>map.set(slotKey(h),h));
+                parsedRecords.forEach(r=>map.set(slotKey(r),r));
+                const next=Array.from(map.values());
+                console.log("[LoadSource] merged: prev="+trafficHistory.length+" + new="+parsedRecords.length+" = "+next.length);
+                // Direct Firestore write (bypass drop guard + React batching issues)
+                backupBeforeSave("trafficHistory",next);
+                trafficFbCountRef.current=next.length;
+                setTrafficHistoryRaw(next);
+                try{
+                  await db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(next),ts:Date.now()});
+                  log("Traffic Source Load",parsed+" records imported from traffic-source.zip");
+                  notify("✓ Imported "+parsed+" records. "+skipped+" April skipped, "+failed+" failed. Firestore now has "+next.length+" total.");
+                }catch(e){
+                  console.error("[LoadSource] Firestore save failed:",e);
+                  notify("Firestore save FAILED: "+(e.message||e)+". State updated locally; refresh will revert.");
+                }
+              },
+              wipeNonApril:async()=>{
+                // Deletes every trafficHistory record where month !== "April" for
+                // BOTH brands. April PL and April WK stay (those were built in
+                // Doom properly). Designed to run once before loading the
+                // traffic-source.zip so non-April slots start clean.
+                const pw=prompt("Admin password — WIPE all non-April traffic records (keep April PL + April WK):");
+                if(!pw)return;
+                const ok=await verifyAuth(pw,"admin");
+                if(!ok){alert("Wrong password");return}
+                const toRemove=trafficHistory.filter(h=>h.month!=="April");
+                if(!toRemove.length){notify("No non-April records to wipe.");return}
+                const byBrand={};
+                toRemove.forEach(h=>{const k=h.brand||"?";if(!byBrand[k])byBrand[k]=0;byBrand[k]++});
+                const summary=Object.entries(byBrand).map(([b,n])=>b+": "+n).join(", ");
+                if(!confirm("Delete "+toRemove.length+" non-April records?\n\n"+summary+"\n\nApril records stay. This cannot be undone (but the rotating backup catches it).\n\nContinue?"))return;
+                if(!confirm("Really? "+toRemove.length+" records will be gone."))return;
+                // Bypass the setTrafficHistoryAndSave 20% drop guard — this wipe
+                // is intentional and would otherwise be silently blocked.
+                const next=trafficHistory.filter(h=>h.month==="April");
+                backupBeforeSave("trafficHistory",next);
+                trafficFbCountRef.current=next.length;
+                setTrafficHistoryRaw(next);
+                try{await db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(next),ts:Date.now()})}catch(e){console.error("Wipe save failed:",e)}
+                log("Wipe Non-April",toRemove.length+" records removed");
+                notify("Wiped "+toRemove.length+" non-April records. "+next.length+" April records remain.");
+              },
+              wipeBrand:async(targetBrand)=>{            // Nuclear option — removes ALL trafficHistory records for one
+                // brand so the user can re-import cleanly. Admin-gated + double
+                // confirm. Does NOT touch the other brand.
+                const pw=prompt("Admin password — WIPE ALL "+targetBrand+" traffic records from Firestore:");
+                if(!pw)return;
+                const ok=await verifyAuth(pw,"admin");
+                if(!ok){alert("Wrong password");return}
+                const toRemove=trafficHistory.filter(h=>h.brand===targetBrand);
+                if(!toRemove.length){notify("No "+targetBrand+" records in Firestore.");return}
+                const months=[...new Set(toRemove.map(h=>h.month))].sort();
+                if(!confirm("DELETE ALL "+toRemove.length+" "+targetBrand+" records?\n\nMonths present: "+months.join(", ")+"\n\nThis cannot be undone. Re-import from PDFs after."))return;
+                if(!confirm("Really delete ALL "+targetBrand+" traffic? Type-of-action: WIPE. Cannot be undone."))return;
+                setTrafficHistory(p=>p.filter(h=>h.brand!==targetBrand));
+                log("Brand Wipe",targetBrand+" — "+toRemove.length+" records removed");
+                notify("Wiped "+toRemove.length+" "+targetBrand+" records. Import fresh now.");
+              },
+              cleanPlaceholders:async()=>{
+                const pw=prompt("Admin password — clean Claude-injected placeholders out of Firestore:");
+                if(!pw)return;
+                const ok=await verifyAuth(pw,"admin");
+                if(!ok){alert("Wrong password");return}
+                // Match by the specific comment / estimate fingerprints Claude
+                // injected — NOT by month — so placeholders that got cloned into
+                // other months (or had their month field edited) still get caught.
+                const isClaudePlaceholder=(h)=>{
+                  // PL placeholders — "If you buy has no bookends" seed
+                  if(h.brand==="Postman Law"&&h.comments&&h.comments.indexOf("If you buy has no bookends, run as standalones")>=0)return true;
+                  // PL OOH MSP Wilkins Media placeholder
+                  if(h.brand==="Postman Law"&&h.isOoh&&h.est==="OOH-MSP-PL"&&h.comments&&h.comments.indexOf("Wilkins Media")>=0)return true;
+                  // WK placeholders from wk_traffic_v3_nuclear.js — fake estimate
+                  // codes like "MTG-WK-TV", "DHN-WK-RAD" (real WK estimates are
+                  // 3-digit numbers 210-225, 216-232).
+                  if(h.brand==="Wettermark Keith"&&typeof h.est==="string"&&/^[A-Z]{3}-WK-(TV|RAD|RADIO|OOH)$/.test(h.est))return true;
+                  // WK placeholders with canned "Version 1 / [Market] Assets"
+                  // comment that the nuclear file hardcoded.
+                  if(h.brand==="Wettermark Keith"&&h.comments&&/^Version \d+ \/ \w+ Assets$/.test(h.comments))return true;
+                  if(h.brand==="Wettermark Keith"&&h.comments&&/^(Dothan|Montgomery|Huntsville|Birmingham|Chattanooga|Knoxville) Radio Assets$/.test(h.comments))return true;
+                  return false;
+                };
+                const toRemove=trafficHistory.filter(isClaudePlaceholder);
+                if(!toRemove.length){notify("No Claude placeholders found in Firestore — you're clean.");return}
+                if(!confirm("Found "+toRemove.length+" placeholder record(s) to delete:\n\n"+toRemove.map(h=>h.brand+" · "+h.market+" · "+h.media+" · "+h.month).join("\n")+"\n\nDelete from Firestore?"))return;
+                setTrafficHistory(p=>p.filter(h=>!isClaudePlaceholder(h)));
+                log("Cleanup",toRemove.length+" placeholder records removed");
+                notify("Deleted "+toRemove.length+" placeholder record(s).");
+              },
+            };
+            console.log("[MegaraLibrary] piped",data.length,"records from trafficHistory");
+            const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");
+            const ML=window.MegaraLibrary;
+            if(!ML)return null;
+            // Wrapper: full viewport height minus the host's top padding,
+            // negative margin to cancel the page padding so the Library
+            // paints edge-to-edge. No overflow:hidden — the Library has
+            // its own internal scroll inside <main overflow-y-auto>.
+            return<div style={{position:"relative",height:"100vh",margin:-16}}>
+              {React.createElement(ML,{key:libKey})}
+            </div>;
+          })()}
               see the IIFE below the AnimatePresence close. The wrapper
               applies a transform that creates a containing block for
               fixed descendants, which would trap BookOpen's modal. */}
@@ -6734,515 +7251,6 @@ Be direct and actionable. No generic advice.`;
         </MDiv>
       </AnimatePresence>
     </div>
-      {pg==="library"&&(()=>{
-        // Library is rendered OUTSIDE the MDiv page-transition wrapper
-        // because that wrapper applies a transform (for opacity/scale/blur
-        // animations) which creates a containing block for fixed descendants.
-        // BookOpen's `fixed inset-0` modal needs to escape to the viewport so
-        // clicking a book actually covers the screen.
-        const MO_LIB=["January","February","March","April","May","June","July","August","September","October","November","December"];
-        const now=new Date();const curIdx=now.getMonth();const curYear=now.getFullYear();
-        // Archive anything whose inferred broadcast year is before the
-        // current calendar year. Nov / Dec with no year stamp get inferred
-        // as last year (since they're "ahead" of the current month by more
-        // than 2), so they land in 2025 and archive. Jan-Apr 2026 stay
-        // visible as current.
-        const archCutoff=new Date(curYear,0,1);
-        // Render the exact same traffic sheet the main app emits (see
-        // buildSheetHtml in RotBuilder). The library displays the result via
-        // dangerouslySetInnerHTML in the left page so what you see matches
-        // what was sent / printed / emailed.
-        const SCHED_COLORS_SHEET={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#dcfce7","Holiday Only":"#fee2e2"};
-        const SCHED_ORDER_SHEET=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
-        const renderSheet=(h)=>{
-          const code=h.brand==="Postman Law"?"PL":"WK";
-          const bc=getBrandColor(code);const bcBg=getBrandBg(code);
-          const logo=code==="PL"?LOGO_PL:LOGO_WK;
-          const hdr=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0;color:#1e1233"><b style="min-width:140px;color:#555;font-weight:700">'+l+':</b><span style="color:'+(c||'#1e1233')+';font-weight:'+(c?'600':'500')+'">'+(v==null?"":v)+'</span></div>';
-          // Scoped <style> forces the sheet to render as white paper with dark
-          // legible text even when the Library's dark theme is in effect on the
-          // host page. Explicit inline `style="color:#..."` spans win via CSS
-          // specificity, so brand accents (Client red, Buyer gold) still show.
-          let x='<html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}html,body{background:#fff;color:#1e1233;font-family:Arial,sans-serif}body{padding:28px}table{width:100%;border-collapse:collapse}b{font-weight:700}td,th{color:#1e1233}</style></head><body>';
-          x+='<div style="text-align:center;margin-bottom:14px"><img src="'+logo+'" style="height:48px"/></div>';
-          x+=hdr("Agency",getBrandAgency(code));
-          x+=hdr("Client",h.brand,bc);
-          x+=hdr("Market",DM[h.market]||h.market);
-          x+=hdr("Buyer",h.buyer,"#D4A040");
-          const estStr=h.est||"";
-          const estNums=estStr.split(/\s*[+\/]\s*/).map(s=>s.trim()).filter(Boolean);
-          const isCombined=(h.combined===true)||estNums.length>1;
-          if(isCombined){
-            x+=hdr("Estimate(s)",estNums.length+" combined estimates");
-            x+=hdr("Media",h.media,h.isOoh?"#D4A040":"#4AC8E8");
-            const hMkt=normMkt(h.market)||h.market;
-            const subs=estNums.map(n=>estimates.find(e=>e.num===n&&e.brand===h.brand&&((normMkt(e.market)||e.market)===hMkt||e.market===h.market))).filter(Boolean);
-            const buyTypes=[...new Set(subs.map(e=>e.group))].join(", ");
-            if(buyTypes)x+=hdr("Buy Type(s)",buyTypes);
-            x+='<table style="margin:8px 0;font-size:11px;border:1px solid #ddd;width:100%;border-collapse:collapse"><thead><tr style="background:#F0E8F8"><th style="padding:4px 8px;text-align:left;color:#5b21b6">Estimate</th><th style="padding:4px 8px;text-align:left;color:#5b21b6">Buy Type</th><th style="padding:4px 8px;text-align:left;color:#5b21b6">Stations</th></tr></thead><tbody>';
-            subs.forEach(ce=>{
-              const stas=getEstStations(ce);
-              x+='<tr><td style="padding:3px 8px;font-weight:700;border-bottom:1px solid #eee">'+ce.num+'</td><td style="padding:3px 8px;border-bottom:1px solid #eee">'+ce.group+'</td><td style="padding:3px 8px;border-bottom:1px solid #eee;font-size:10px">'+(stas.length?stas.map(s=>s.call).join(", "):"—")+'</td></tr>';
-            });
-            x+='</tbody></table>';
-          }else{
-            x+=hdr("Estimate(s)",estStr);
-            x+=hdr("Media",h.media,h.isOoh?"#D4A040":"#4AC8E8");
-            const stas=(h.stations&&h.stations.length)?h.stations:[];
-            if(stas.length)x+=hdr("Stations ("+stas.length+")",stas.join(", "));
-          }
-          x+=hdr("Broadcast Month",h.month,"#E85A7A");
-          if(h.isOoh&&h.postDates)x+=hdr("Post Dates",h.postDates,"#1e1233");
-          else if(h.flight)x+=hdr("Flight Dates",h.flight,"#1e1233");
-          x+=hdr("Version/ Links","Version "+(h.version||"1")+" / "+h.market+" Assets");
-          if(h.comments)x+=hdr("Comments",h.comments);
-          const thCell='background:#F0E8F8;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#6B5E80';
-          const tdCell='padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)';
-          x+='<table style="width:100%;border-collapse:collapse;margin-top:14px"><thead><tr><th style="'+thCell+'">Flight Dates</th><th style="'+thCell+'">ISCI Codes &amp; Title:</th><th style="'+thCell+'">Length:</th><th style="'+thCell+'">%</th><th style="'+thCell+'">Notes:</th></tr></thead><tbody>';
-          const grouped={};
-          (h.iscis||[]).forEach(r=>{const s=r.sched||"All Week";if(!grouped[s])grouped[s]=[];grouped[s].push(r)});
-          const validBk=b=>typeof b==="string"&&b&&b!=="true"&&b!=="false";
-          const renderGroup=(s,bg)=>{
-            const items=(grouped[s]||[]).slice().sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0));
-            x+='<tr><td colspan="5" style="padding:5px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid rgba(0,0,0,.1);background:'+bg+'">'+s+'</td></tr>';
-            items.forEach(r=>{
-              const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";
-              const note=validBk(r.bookend)?r.bookend:s;
-              const length=validBk(r.bookend)?r.bookend:(r.dur?":"+r.dur:"");
-              x+='<tr style="background:'+bg+'44"><td style="'+tdCell+'">'+(h.flight||"")+'</td><td style="'+tdCell+';font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td style="'+tdCell+'">'+length+'</td><td style="'+tdCell+';font-weight:600">'+pct+'</td><td style="'+tdCell+';font-size:10px;color:#555">'+note+'</td></tr>';
-            });
-          };
-          SCHED_ORDER_SHEET.forEach(s=>{if(grouped[s])renderGroup(s,SCHED_COLORS_SHEET[s])});
-          Object.keys(grouped).filter(s=>!SCHED_ORDER_SHEET.includes(s)).forEach(s=>renderGroup(s,"#F0E8F8"));
-          x+='</tbody></table>';
-          x+='<div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">';
-          Object.entries(SCHED_COLORS_SHEET).forEach(([s,c])=>{if(grouped[s])x+='<div style="display:flex;align-items:center;gap:4px;font-size:9px"><div style="width:12px;height:12px;border-radius:2px;background:'+c+'"></div>'+s+'</div>'});
-          x+='</div>';
-          x+='<div style="margin-top:36px;border-top:2px solid '+bc+';padding-top:8px;color:#1e1233"><div style="display:flex;justify-content:space-between;font-size:13px"><div><b>Accepted by:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div style="background:#fffbeb;padding:7px;font-size:10px;color:#92400e;margin-top:6px;border:1px solid #fde68a">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></div>';
-          x+='</body></html>';
-          return x;
-        };
-        // No dedup — show every trafficHistory record, including duplicates
-        // and archived, so the correct stored version is always visible.
-        const dedupedEntries=trafficHistory.map((h,i)=>({h,i}));
-        const data=dedupedEntries.map(({h,i})=>{
-          const parts=String(h.month||"").trim().split(/\s+/);
-          const monIdx=MO_LIB.indexOf(parts[0]);
-          const parsedYear=parseInt(parts[1]);
-          const year=!isNaN(parsedYear)?parsedYear:(monIdx>curIdx+2?curYear-1:curYear);
-          const effDate=monIdx>=0?new Date(year,monIdx,1):(h.ts?new Date(h.ts):null);
-          const archived=effDate?effDate<archCutoff:true;
-          return{
-            id:(h.ts?String(h.ts):"tmp")+"_"+i,
-            historyIdx:i,
-            brand:h.brand,
-            market:DM[h.market]||h.market,
-            mediaType:h.media,
-            month:parts[0]||h.month,
-            estimate:h.est||"",
-            version:h.version?("v"+h.version):"",
-            iscis:(h.iscis?.length||0)+" ISCIs"+(h.stations?.length?(" · "+h.stations.length+" stations"):""),
-            dateRange:h.flight||"",
-            buyer:h.buyer||"",
-            status:h.status==="sent"?"sent":"pending",
-            // Enrich each ISCI entry at render time from the registry so
-            // title / dur / fileUrl / category / vo stay in sync with
-            // whatever's in the ISCI registry. User values on the record
-            // win if present.
-            iscisDetail:(h.iscis||[]).map(r=>{
-              if(!r||!r.code)return r;
-              const hDma=normMkt(h.market)||h.market||"";
-              const full=iscis.find(i=>i.code===r.code&&(i.dma||"")===hDma)||iscis.find(i=>i.code===r.code);
-              return{
-                code:r.code,
-                title:r.title||full?.title||"",
-                dur:r.dur||full?.dur||"",
-                pct:r.pct,
-                sched:r.sched,
-                bookend:r.bookend,
-                units:r.units,
-                fileUrl:full?.fileUrl||r.fileUrl||"",
-                category:full?.category||full?.caseType||r.category||"",
-                vo:full?.vo||r.vo||"",
-              };
-            }),
-            stations:h.stations||[],
-            ts:h.ts,
-            year:year,
-            archived:archived,
-            comments:h.comments||"",
-            sheetHtml:renderSheet(h),
-          };
-        });
-        window.MegaraLibraryData=data;
-        // Logos read by brand by the library's BookOpen (keeps one copy of
-        // each base64 instead of duplicating it into every instruction).
-        window.MegaraLibraryLogos={"Postman Law":LOGO_PL,"Wettermark Keith":LOGO_WK};
-        // Debug helper — open devtools and run
-        //   MegaraLibraryDebug("Wettermark Keith","Montgomery","Radio","January")
-        // to dump every Firestore trafficHistory record for that exact slot,
-        // plus which one the Library picked after dedup. That tells us at a
-        // glance whether the data in Firestore is the problem or the render is.
-        window.MegaraLibraryDebug=(brandF,marketF,mediaF,monthF)=>{
-          const all=trafficHistory.map((h,i)=>({i,h})).filter(({h})=>{
-            if(brandF&&h.brand!==brandF)return false;
-            if(marketF){const hm=(DM[h.market]||h.market);if(hm!==marketF&&h.market!==marketF)return false}
-            if(mediaF&&h.media!==mediaF)return false;
-            if(monthF&&h.month!==monthF)return false;
-            return true;
-          });
-          console.log("=== trafficHistory slot "+[brandF,marketF,mediaF,monthF].join(" | ")+" ===");
-          console.log(all.length+" record(s) in Firestore for that slot");
-          all.forEach(({i,h})=>{
-            console.log("  #"+i+" ts="+(h.ts||"(none)")+" status="+(h.status||"(none)")+" combined="+(h.combined?"yes":"no")+" est="+(h.est||"")+" iscis="+(h.iscis||[]).length+" ("+(h.iscis||[]).map(r=>r.code).join(", ")+")");
-          });
-          const picked=data.find(d=>d.brand===brandF&&d.market===marketF&&d.mediaType===mediaF&&d.month===monthF);
-          if(picked){console.log("Library is showing historyIdx="+picked.historyIdx);}
-          else console.log("Library has NO record for that slot (all filtered out or none exist).");
-        };
-        // Button handlers for the right-page actions. BookOpen calls these
-        // by name through window.MegaraLibraryActions, receiving the
-        // instruction.historyIdx set on each record below.
-        window.MegaraLibraryActions={
-          edit:(idx)=>{if(typeof idx==="number"){setEditTrafficIdx(idx);notify("Edit Traffic — changes save back to Firestore")}},
-          view:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close()},
-          print:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close();w.focus();setTimeout(()=>w.print(),300)},
-          send:async(idx)=>{
-            const h=trafficHistory[idx];if(!h)return;
-            if(!confirm("Send traffic?\n\n"+h.brand+" · "+(DM[h.market]||h.market)+" · "+(h.media||"")+" · "+h.month+" · v"+(h.version||"1")+"\n"+(h.iscis||[]).length+" ISCIs\n\nThis will email all linked stations."))return;
-            const note=(prompt("Add a note to this email (optional):")||"").trim();
-            const sheetHtml=data[idx]?.sheetHtml||"";
-            let pdfB64="";try{const pdfUri=await generatePdfBase64(sheetHtml,h);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
-            const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+(h.market||"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
-            const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
-            const recipients=[...new Set(linkedStations.map(s=>s.contact).filter(Boolean).flatMap(c=>c.split(/[,;]\s*/)))].filter(Boolean);
-            if(!recipients.length){notify("No station email contacts found for this record — link stations in the Stations page first.");return}
-            const buyerCc=BUYER_EMAILS[h.buyer]||"";
-            const ccList=[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(",");
-            const confirmBase=window.location.href.split("?")[0];
-            let emailBody="Hello,<br><br>Please find the attached traffic instructions for "+(h.brand||"")+" — "+(h.market||"")+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br>";
-            if(note)emailBody+="<b>Note:</b> "+note+"<br><br>";
-            emailBody+="<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
-            emailBody+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmBase+'?confirm='+(h.est||"")+'&sta=resend&tok=auto" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager';
-            const subj=(h.brand||"")+" - Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+(h.market||"");
-            notify("Sending to "+recipients.length+" recipient"+(recipients.length===1?"":"s")+"...");
-            try{
-              const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients.join(","),cc:ccList,subject:subj,message:emailBody,pdfBase64:pdfB64,pdfName:pdfName})});
-              if(resp.ok){notify(doomPick(DOOM.send));log("Traffic Sent",h.brand+" "+h.market+" "+h.media+" "+h.month+" v"+(h.version||"1"))}
-              else throw new Error("n8n "+resp.status);
-            }catch(e){notify("Send failed: "+(e.message||e));console.error("Send failed:",e)}
-          },
-          copyTo:(idx)=>{
-            // Mirrors the main Library's "Copy to…" flow (see ~line 5535):
-            // walks the broadcast CALENDAR for the NEXT entry after this
-            // record's month, swaps the WK monthly estimate when applicable,
-            // checks for a duplicate month, pulls flight dates from CALENDAR.
-            const h=trafficHistory[idx];if(!h)return;
-            const curCalIdx=CALENDAR.findIndex(c=>c.month===h.month);
-            if(curCalIdx<0){notify("Can't auto-advance from unknown month: "+(h.month||"(none)"));return}
-            const nextCal=CALENDAR[(curCalIdx+1)%CALENDAR.length];
-            const newMonth=nextCal.month;
-            const newFlight=fDs(nextCal.bcStart)+" - "+fDs(nextCal.bcEnd);
-            const WK_MONTH_EST={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};
-            const EST_TO_MONTH=Object.fromEntries(Object.entries(WK_MONTH_EST).map(([m,n])=>[n,m]));
-            let newEst=h.est;
-            if(h.brand==="Wettermark Keith"&&(EST_TO_MONTH[h.est]||WK_MONTH_EST[h.month])){newEst=WK_MONTH_EST[newMonth]||h.est}
-            const existing=trafficHistory.find(x=>x.brand===h.brand&&x.market===h.market&&x.media===h.media&&x.month===newMonth&&x.status!=="copied");
-            if(existing&&!confirm(h.brand+" "+h.market+" "+h.media+" already has "+newMonth+" traffic (v"+existing.version+"). Copy anyway? This creates a new record — it won't overwrite."))return;
-            const copy={...h,ts:new Date().toISOString(),est:newEst,month:newMonth,flight:newFlight,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:"Copied from "+h.month};
-            setTrafficHistory(p=>[copy,...p]);
-            log("Traffic Copied",h.brand+" "+h.market+" "+h.media+" "+h.month+" → "+newMonth+" (Est "+newEst+")");
-            notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);
-          },
-          delete:async(idx)=>{const h=trafficHistory[idx];if(!h)return;const pw=prompt("Admin password to delete traffic:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok){alert("Wrong password");return}if(!confirm("Delete "+h.brand+" "+h.market+" "+h.media+" "+h.month+"? This cannot be undone."))return;setTrafficHistory(p=>p.filter((_,j)=>j!==idx));log("Traffic Deleted",h.brand+" "+h.market+" "+h.media+" "+h.month);notify("Traffic deleted")},
-          restoreFromBackup:async()=>{
-            // Pulls every available backup — the single "latest" backup plus
-            // the rotating 10-slot history from both Firestore and
-            // localStorage. User picks by record count + timestamp.
-            if(!db){notify("Firestore not available");return}
-            const pw=prompt("Admin password — restore trafficHistory from backup:");
-            if(!pw)return;
-            const ok=await verifyAuth(pw,"admin");
-            if(!ok){alert("Wrong password");return}
-            const found=[];
-            // Latest single backup (Firestore)
-            try{const s=await db.collection("appData").doc("trafficHistory_backup").get();if(s.exists){const d=s.data();if(d&&d.data)found.push({src:"FS latest",ts:d.ts,data:JSON.parse(d.data)})}}catch(e){}
-            // Rotating slots 0..9 (Firestore)
-            for(let i=0;i<10;i++){
-              try{const s=await db.collection("appData").doc("trafficHistory_backup_s"+i).get();if(s.exists){const d=s.data();if(d&&d.data)found.push({src:"FS slot "+i,ts:d.ts,data:JSON.parse(d.data)})}}catch(e){}
-            }
-            // localStorage
-            try{const ls=localStorage.getItem("doom_backup_trafficHistory");if(ls){const j=JSON.parse(ls);if(j&&j.data)found.push({src:"LS latest",ts:j.ts,data:JSON.parse(j.data)})}}catch(e){}
-            for(let i=0;i<10;i++){
-              try{const ls=localStorage.getItem("doom_backup_trafficHistory_s"+i);if(ls){const j=JSON.parse(ls);if(j&&j.data)found.push({src:"LS slot "+i,ts:j.ts,data:JSON.parse(j.data)})}}catch(e){}
-            }
-            if(!found.length){notify("No backups found anywhere.");return}
-            // Sort newest first
-            found.sort((a,b)=>(b.ts||0)-(a.ts||0));
-            const cur=trafficHistory.length;
-            const lines=found.map((b,i)=>(i+1)+" = "+b.src+" · "+b.data.length+" records · "+new Date(b.ts).toLocaleString());
-            const pick=prompt("Current: "+cur+" records.\n\nPick a backup (type the number) or Cancel:\n\n"+lines.join("\n"));
-            if(!pick)return;
-            const n=parseInt(pick.trim())-1;
-            const chosen=found[n];
-            if(!chosen){notify("Invalid selection.");return}
-            if(!confirm("REPLACE current "+cur+" records with "+chosen.src+" ("+chosen.data.length+" records from "+new Date(chosen.ts).toLocaleString()+")?"))return;
-            setTrafficHistory(chosen.data);
-            log("Restore from backup",chosen.src+" — "+chosen.data.length+" records restored");
-            notify("Restored "+chosen.data.length+" records from "+chosen.src+".");
-          },
-          relinkCreative:async()=>{
-            // Re-syncs every trafficHistory record with the current ISCI
-            // registry. For each record's iscis[], looks up the registry by
-            // code+dma and fills in title/dur/fileUrl so metrics + AI Planner
-            // + Traffic Tracker all see matching creative data. Also repairs
-            // combined=true on PL records whose est string contains "+" (so
-            // the Tracker's TV-combined match works again).
-            const pw=prompt("Admin password — re-link all traffic records to the ISCI registry:");
-            if(!pw)return;
-            const ok=await verifyAuth(pw,"admin");
-            if(!ok){alert("Wrong password");return}
-            let enriched=0,combinedFixed=0,orphanCodes=0;
-            const byCodeDma=new Map();
-            iscis.forEach(i=>{byCodeDma.set(i.code+"|"+(i.dma||""),i);byCodeDma.set(i.code,i)});
-            const next=trafficHistory.map(h=>{
-              const hDma=normMkt(h.market)||h.market||"";
-              const newIscis=(h.iscis||[]).map(r=>{
-                if(!r||!r.code)return r;
-                const full=byCodeDma.get(r.code+"|"+hDma)||byCodeDma.get(r.code);
-                if(!full){orphanCodes++;return r}
-                enriched++;
-                return{
-                  ...r,
-                  title:r.title||full.title||"",
-                  dur:r.dur||full.dur||"",
-                  fileUrl:full.fileUrl||r.fileUrl||"",
-                  category:full.category||full.caseType||r.category||"",
-                  valueProp:full.valueProp||r.valueProp||"",
-                  vo:full.vo||r.vo||"",
-                };
-              });
-              let out={...h,iscis:newIscis};
-              // Repair the combined flag — TV records with "+" in est are combined
-              if(h.media==="TV"&&(h.est||"").indexOf("+")>=0&&!h.combined){
-                out.combined=true;
-                combinedFixed++;
-              }
-              return out;
-            });
-            backupBeforeSave("trafficHistory",next);
-            trafficFbCountRef.current=next.length;
-            setTrafficHistoryRaw(next);
-            try{
-              await db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(next),ts:Date.now()});
-              log("Relink Creative",enriched+" ISCI rows enriched · "+combinedFixed+" combined flags repaired · "+orphanCodes+" codes not in registry");
-              notify("Re-linked: "+enriched+" ISCIs enriched, "+combinedFixed+" combined flags fixed"+(orphanCodes?", "+orphanCodes+" orphan codes":""));
-            }catch(e){
-              console.error("Relink save failed:",e);
-              notify("Re-link save FAILED: "+(e.message||e));
-            }
-          },
-          loadTrafficSource:async()=>{
-            // Fetches /traffic-source.zip, unzips, parses every PDF through
-            // the same extractPdfText / parseTrafficText the manual import
-            // uses, and REPLACES each matching brand|market|media|month slot
-            // in Firestore. Skips any record where month === "April" so
-            // April stays sacred. Admin-gated.
-            if(!window.JSZip){notify("JSZip not loaded — hard-refresh the page (Ctrl+Shift+R) and retry.");return}
-            if(!window.pdfjsLib){notify("pdf.js not loaded — hard-refresh and retry.");return}
-            const pw=prompt("Admin password — import all PDFs from /traffic-source.zip:");
-            if(!pw)return;
-            const ok=await verifyAuth(pw,"admin");
-            if(!ok){alert("Wrong password");return}
-            notify("Fetching traffic-source.zip…");
-            let zipBlob;
-            try{
-              const r=await fetch("/traffic-source.zip",{cache:"no-store"});
-              if(!r.ok)throw new Error("HTTP "+r.status);
-              const ct=r.headers.get("content-type")||"";
-              if(ct.includes("text/html")){throw new Error("Got HTML instead of zip — Vercel rewrite is catching the request. Deploy vercel.json update and retry.")}
-              zipBlob=await r.blob();
-              if(zipBlob.size<1000){throw new Error("Zip is only "+zipBlob.size+" bytes — not a real zip")}
-              notify("Downloaded "+Math.round(zipBlob.size/1024)+" KB");
-            }
-            catch(e){notify("Fetch failed: "+e.message);console.error(e);return}
-            notify("Unzipping…");
-            const zip=await window.JSZip.loadAsync(zipBlob);
-            const files=Object.keys(zip.files).filter(n=>!zip.files[n].dir&&n.toLowerCase().endsWith(".pdf"));
-            if(!files.length){notify("No PDFs in the zip.");return}
-            const extractPdfTextLocal=async(pdfDoc)=>{
-              let text="";
-              for(let pi=1;pi<=pdfDoc.numPages;pi++){
-                const page=await pdfDoc.getPage(pi);
-                const tc=await page.getTextContent();
-                const rows={};
-                tc.items.forEach(item=>{if(!item.str||!item.str.trim())return;const y=item.transform?Math.round(item.transform[5]):0;const x=item.transform?Math.round(item.transform[4]):0;let rk=y;const nearby=Object.keys(rows).map(Number).find(k=>Math.abs(k-y)<=3);if(nearby!==undefined)rk=nearby;if(!rows[rk])rows[rk]=[];rows[rk].push({x,text:item.str})});
-                Object.keys(rows).map(Number).sort((a,b)=>b-a).forEach(y=>{text+=rows[y].sort((a,b)=>a.x-b.x).map(i=>i.text).join(" ")+"\n"});
-              }
-              return text;
-            };
-            // Minimal inline parser mirroring LibraryPg.parseTrafficText
-            const parseLocal=(text)=>{
-              try{
-                const t=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
-                const getField=(label)=>{const re=new RegExp(label.replace(/\//g,"\\/")+"\\s*:\\s*(.+?)(?:\\n|$)","i");const m=t.match(re);return m?m[1].trim():""};
-                let brand=getField("Client")||"";
-                let market=getField("Market")||"";
-                let buyer=getField("Buyer")||"";
-                let media=getField("Media")||"TV";
-                let month=(getField("Broadcast Month")||"").split(/\s+/)[0];
-                let flight=getField("Flight Dates")||"";
-                let versionRaw=getField("Version/ Links")||getField("Version")||"";
-                let comments=getField("Comments")||"";
-                const version=versionRaw.match(/(\d+)/)?.[1]||"1";
-                let dma=normMkt(market)||(market.length<=4?market.replace(/[^A-Z]/gi,"").toUpperCase().substring(0,3):market.substring(0,3).toUpperCase());
-                if(!dma)dma="UNK";
-                if(brand.toLowerCase().includes("postman"))brand="Postman Law";
-                else if(brand.toLowerCase().includes("wettermark"))brand="Wettermark Keith";
-                const lines=t.split("\n");const iscis=[];
-                const codePat=/([A-Z]{3,4}(?:PL|WK)\d{4,7}[A-Z0-9])/;
-                for(const line of lines){
-                  const m=line.match(codePat);if(!m)continue;
-                  const code=m[1];
-                  const rest=line.substring(line.indexOf(code)+code.length).trim();
-                  const durMatch=rest.match(/:(\d{2})\b/);
-                  const dur=durMatch?durMatch[1]:"30";
-                  const pctMatch=rest.match(/(\d{1,2}(?:\.\d+)?)\s*%/);
-                  const pct=pctMatch?pctMatch[1]:"";
-                  let title=rest.split(/\s+:/)[0].trim();
-                  const bookendMatch=rest.match(/(?:Bookend\s*)?:(\d{2})\s+([A-D])\b/);
-                  const bookend=bookendMatch?"Bookend :"+bookendMatch[1]+" "+bookendMatch[2]:"";
-                  const schedMatch=rest.match(/(Monday\s*-\s*Friday\s*Schedule|M-F\s*Schedule|Weekend\s*Schedule|M-F\s*Bookend|Weekend\s*Bookend|All\s*Week|Holiday\s*Only)/i);
-                  const schedType=schedMatch?schedMatch[1].replace(/Monday\s*-\s*Friday\s*Schedule/i,"M-F Schedule"):"";
-                  iscis.push({code,title,dur,pct,sched:schedType||"All Week",bookend});
-                }
-                // Dedup by code, prefer entries with pct
-                const seen=new Set();const uniq=[];
-                iscis.forEach(r=>{if(seen.has(r.code)){const ex=uniq.find(u=>u.code===r.code);if(ex&&!ex.pct&&r.pct)Object.assign(ex,r);return}seen.add(r.code);uniq.push(r)});
-                if(!uniq.length)return null;
-                return{est:dma+"-"+(brand==="Postman Law"?"PL":"WK")+"-"+media,brand,market:dma,media,buyer,month,version:parseInt(version)||1,stations:[],ts:new Date().toISOString(),comments,isRevision:false,combined:false,iscis:uniq,flight,status:"sent"};
-              }catch(e){console.error("Parse error:",e);return null}
-            };
-            let parsed=0,skipped=0,failed=0;const parsedRecords=[];
-            notify("Parsing "+files.length+" PDFs…");
-            for(let fi=0;fi<files.length;fi++){
-              const name=files[fi];
-              try{
-                const buf=await zip.files[name].async("arraybuffer");
-                const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
-                const text=await extractPdfTextLocal(pdf);
-                const rec=parseLocal(text);
-                if(!rec){failed++;console.warn("[LoadSource] parse returned null for:",name);continue}
-                if(rec.month==="April"){skipped++;continue}
-                parsedRecords.push(rec);
-                parsed++;
-                if((fi+1)%10===0)notify("Parsed "+(fi+1)+"/"+files.length+"…");
-              }catch(e){failed++;console.error("[LoadSource] error on",name,e)}
-            }
-            console.log("[LoadSource] parsed=",parsed,"skipped(April)=",skipped,"failed=",failed,"records=",parsedRecords);
-            if(!parsedRecords.length){notify("No records parsed. failed="+failed+" skipped(April)="+skipped+". Check console for why.");return}
-            if(!confirm("Zip parsed: "+parsed+" records ready to import.\n\n"+skipped+" April records were skipped (sacred).\n"+failed+" PDFs failed to parse.\n\nThis will REPLACE each matching brand|market|media|month slot in Firestore. Continue?"))return;
-            // Merge: replace matching slots, add new ones
-            const slotKey=(h)=>(h.brand||"")+"|"+(normMkt(h.market)||h.market||"")+"|"+(h.media||"")+"|"+(h.month||"");
-            const map=new Map();
-            trafficHistory.forEach(h=>map.set(slotKey(h),h));
-            parsedRecords.forEach(r=>map.set(slotKey(r),r));
-            const next=Array.from(map.values());
-            console.log("[LoadSource] merged: prev="+trafficHistory.length+" + new="+parsedRecords.length+" = "+next.length);
-            // Direct Firestore write (bypass drop guard + React batching issues)
-            backupBeforeSave("trafficHistory",next);
-            trafficFbCountRef.current=next.length;
-            setTrafficHistoryRaw(next);
-            try{
-              await db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(next),ts:Date.now()});
-              log("Traffic Source Load",parsed+" records imported from traffic-source.zip");
-              notify("✓ Imported "+parsed+" records. "+skipped+" April skipped, "+failed+" failed. Firestore now has "+next.length+" total.");
-            }catch(e){
-              console.error("[LoadSource] Firestore save failed:",e);
-              notify("Firestore save FAILED: "+(e.message||e)+". State updated locally; refresh will revert.");
-            }
-          },
-          wipeNonApril:async()=>{
-            // Deletes every trafficHistory record where month !== "April" for
-            // BOTH brands. April PL and April WK stay (those were built in
-            // Doom properly). Designed to run once before loading the
-            // traffic-source.zip so non-April slots start clean.
-            const pw=prompt("Admin password — WIPE all non-April traffic records (keep April PL + April WK):");
-            if(!pw)return;
-            const ok=await verifyAuth(pw,"admin");
-            if(!ok){alert("Wrong password");return}
-            const toRemove=trafficHistory.filter(h=>h.month!=="April");
-            if(!toRemove.length){notify("No non-April records to wipe.");return}
-            const byBrand={};
-            toRemove.forEach(h=>{const k=h.brand||"?";if(!byBrand[k])byBrand[k]=0;byBrand[k]++});
-            const summary=Object.entries(byBrand).map(([b,n])=>b+": "+n).join(", ");
-            if(!confirm("Delete "+toRemove.length+" non-April records?\n\n"+summary+"\n\nApril records stay. This cannot be undone (but the rotating backup catches it).\n\nContinue?"))return;
-            if(!confirm("Really? "+toRemove.length+" records will be gone."))return;
-            // Bypass the setTrafficHistoryAndSave 20% drop guard — this wipe
-            // is intentional and would otherwise be silently blocked.
-            const next=trafficHistory.filter(h=>h.month==="April");
-            backupBeforeSave("trafficHistory",next);
-            trafficFbCountRef.current=next.length;
-            setTrafficHistoryRaw(next);
-            try{await db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(next),ts:Date.now()})}catch(e){console.error("Wipe save failed:",e)}
-            log("Wipe Non-April",toRemove.length+" records removed");
-            notify("Wiped "+toRemove.length+" non-April records. "+next.length+" April records remain.");
-          },
-          wipeBrand:async(targetBrand)=>{            // Nuclear option — removes ALL trafficHistory records for one
-            // brand so the user can re-import cleanly. Admin-gated + double
-            // confirm. Does NOT touch the other brand.
-            const pw=prompt("Admin password — WIPE ALL "+targetBrand+" traffic records from Firestore:");
-            if(!pw)return;
-            const ok=await verifyAuth(pw,"admin");
-            if(!ok){alert("Wrong password");return}
-            const toRemove=trafficHistory.filter(h=>h.brand===targetBrand);
-            if(!toRemove.length){notify("No "+targetBrand+" records in Firestore.");return}
-            const months=[...new Set(toRemove.map(h=>h.month))].sort();
-            if(!confirm("DELETE ALL "+toRemove.length+" "+targetBrand+" records?\n\nMonths present: "+months.join(", ")+"\n\nThis cannot be undone. Re-import from PDFs after."))return;
-            if(!confirm("Really delete ALL "+targetBrand+" traffic? Type-of-action: WIPE. Cannot be undone."))return;
-            setTrafficHistory(p=>p.filter(h=>h.brand!==targetBrand));
-            log("Brand Wipe",targetBrand+" — "+toRemove.length+" records removed");
-            notify("Wiped "+toRemove.length+" "+targetBrand+" records. Import fresh now.");
-          },
-          cleanPlaceholders:async()=>{
-            const pw=prompt("Admin password — clean Claude-injected placeholders out of Firestore:");
-            if(!pw)return;
-            const ok=await verifyAuth(pw,"admin");
-            if(!ok){alert("Wrong password");return}
-            // Match by the specific comment / estimate fingerprints Claude
-            // injected — NOT by month — so placeholders that got cloned into
-            // other months (or had their month field edited) still get caught.
-            const isClaudePlaceholder=(h)=>{
-              // PL placeholders — "If you buy has no bookends" seed
-              if(h.brand==="Postman Law"&&h.comments&&h.comments.indexOf("If you buy has no bookends, run as standalones")>=0)return true;
-              // PL OOH MSP Wilkins Media placeholder
-              if(h.brand==="Postman Law"&&h.isOoh&&h.est==="OOH-MSP-PL"&&h.comments&&h.comments.indexOf("Wilkins Media")>=0)return true;
-              // WK placeholders from wk_traffic_v3_nuclear.js — fake estimate
-              // codes like "MTG-WK-TV", "DHN-WK-RAD" (real WK estimates are
-              // 3-digit numbers 210-225, 216-232).
-              if(h.brand==="Wettermark Keith"&&typeof h.est==="string"&&/^[A-Z]{3}-WK-(TV|RAD|RADIO|OOH)$/.test(h.est))return true;
-              // WK placeholders with canned "Version 1 / [Market] Assets"
-              // comment that the nuclear file hardcoded.
-              if(h.brand==="Wettermark Keith"&&h.comments&&/^Version \d+ \/ \w+ Assets$/.test(h.comments))return true;
-              if(h.brand==="Wettermark Keith"&&h.comments&&/^(Dothan|Montgomery|Huntsville|Birmingham|Chattanooga|Knoxville) Radio Assets$/.test(h.comments))return true;
-              return false;
-            };
-            const toRemove=trafficHistory.filter(isClaudePlaceholder);
-            if(!toRemove.length){notify("No Claude placeholders found in Firestore — you're clean.");return}
-            if(!confirm("Found "+toRemove.length+" placeholder record(s) to delete:\n\n"+toRemove.map(h=>h.brand+" · "+h.market+" · "+h.media+" · "+h.month).join("\n")+"\n\nDelete from Firestore?"))return;
-            setTrafficHistory(p=>p.filter(h=>!isClaudePlaceholder(h)));
-            log("Cleanup",toRemove.length+" placeholder records removed");
-            notify("Deleted "+toRemove.length+" placeholder record(s).");
-          },
-        };
-        console.log("[MegaraLibrary] piped",data.length,"records from trafficHistory");
-        const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");
-        const ML=window.MegaraLibrary;
-        if(!ML)return null;
-        return<div style={{position:"relative",minHeight:"100%",margin:-16,overflow:"hidden"}}>
-          {React.createElement(ML,{key:libKey})}
-        </div>;
-      })()}
     {(modal==="newIsci"||modal?.t==="newIsci")&&<NewIsciMod defaultMedia={modal?.defaultMedia||null}/>}
     {modal?.t==="buildRot"&&<RotBuilder est={modal.est} pool={modal.pool} workMonth={workMonth} _revise={modal._revise}/>}
     {modal?.t==="buildStream"&&<StreamBuilder est={modal.est} pool={modal.pool} workMonth={workMonth}/>}
