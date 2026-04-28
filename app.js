@@ -897,7 +897,10 @@ const App=()=>{
         if(trafficFbCountRef.current>5){
           const dropPct=1-(next.length/trafficFbCountRef.current);
           if(dropPct>0.2){
+            const msg="⚠ SAVE BLOCKED — protected "+(trafficFbCountRef.current-next.length)+" traffic record(s) from being deleted ("+trafficFbCountRef.current+"→"+next.length+", "+Math.round(dropPct*100)+"% drop). Your data is safe.";
             console.error("SAVE BLOCKED [trafficHistory]: count dropped from "+trafficFbCountRef.current+" to "+next.length+" ("+Math.round(dropPct*100)+"% loss)");
+            try{notify(msg)}catch(e){}
+            try{log("Save Blocked","trafficHistory: "+trafficFbCountRef.current+"→"+next.length+" ("+Math.round(dropPct*100)+"% drop) — REVERTED")}catch(e){}
             return prev; // Return previous state, don't save
           }
         }
