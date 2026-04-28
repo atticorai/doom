@@ -5583,7 +5583,8 @@ ${fullText.substring(0,3000)}`}]
   const[planResult,setPlanResult]=useState(null);
   const[planLoading,setPlanLoading]=useState(false);
   const[planError,setPlanError]=useState(null);
-  const[planCompare,setPlanCompare]=useState(false);
+  const[planMonthA,setPlanMonthA]=useState("");
+  const[planMonthB,setPlanMonthB]=useState("");
 
   const runPlanner=async()=>{
     setPlanLoading(true);setPlanError(null);setPlanResult(null);
@@ -5726,7 +5727,7 @@ Rules:
   // Build a structured report from local state for one brand —
   // coverage matrix, stale list, category mix, top recs scratch.
   // No LLM needed for the data section.
-  const buildBrandReport=(brand)=>{
+  const buildBrandReport=(brand,forMonth)=>{
     const MO=["January","February","March","April","May","June","July","August","September","October","November","December"];
     const bt=trafficHistory.filter(h=>h.brand===brand);
     const bi=iscis.filter(i=>i.brand===brand&&i.active&&i.suffix!=="O");
@@ -5734,8 +5735,8 @@ Rules:
     const mediaList=["TV","Radio","Streaming Audio","Cable","Digital","OOH"];
     const mediaSplit=(m)=>String(m||"").split(/\s*\/\s*/);
     const months=[...new Set(bt.map(h=>h.month).filter(Boolean))].sort((a,b)=>MO.indexOf(b)-MO.indexOf(a));
-    const latestMonth=months[0]||"";
-    // Coverage matrix: market × media has data for the latest month?
+    const latestMonth=forMonth||months[0]||"";
+    // Coverage matrix: market × media has data for the target month?
     const coverage=allMarkets.map(m=>({
       market:m,
       cells:mediaList.map(med=>{
@@ -5764,7 +5765,7 @@ Rules:
       });
     });
     return{
-      brand,latestMonth,
+      brand,latestMonth,monthsAvailable:months,
       stats:{markets:allMarkets.length,activeIscis:bi.length,monthsOfData:months.length,instructions:bt.length,tagged:bi.filter(i=>i.category||i.caseType).length},
       coverage,stale,catByMarket,
       bench:bi.filter(i=>!bt.some(h=>(h.iscis||[]).some(r=>r.code===i.code))).map(i=>({code:i.code,title:i.title,market:DM[i.dma]||i.dma,media:i.media,category:i.category||i.caseType||""})),
@@ -5855,30 +5856,43 @@ Rules:
   </div>:null;
 
   const PlannerPg=()=>{
-    const reportPL=buildBrandReport("Postman Law");
-    const reportWK=buildBrandReport("Wettermark Keith");
-    const report=planBrand==="Postman Law"?reportPL:reportWK;
+    const baseReport=buildBrandReport(planBrand);
+    const monthsAvail=baseReport.monthsAvailable;
+    const monthA=planMonthA||monthsAvail[0]||"";
+    const monthB=planMonthB||monthsAvail[1]||"";
+    const isCompare=!!(planMonthA&&planMonthB&&planMonthA!==planMonthB);
+    const reportA=buildBrandReport(planBrand,monthA);
+    const reportB=isCompare?buildBrandReport(planBrand,monthB):null;
     const recs=parseAiRecommendations(planResult);
     const isJsonRecs=recs&&recs.length&&recs[0]&&typeof recs[0].title==="string"&&typeof recs[0].action==="string";
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <PageHead title="Planner Report" pgKey="planner" sub="Coverage, staleness, mix, recommendations"/>
+      <PageHead title="Planner Report" pgKey="planner" sub="Coverage, staleness, mix, AI priorities"/>
       <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-        {/* Brand Tabs (disabled while compare is on) */}
-        <div style={{display:"flex",gap:0,opacity:planCompare?.45:1}}>
-          {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b&&!planCompare;const c=b==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");return<button key={b} disabled={planCompare} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null)}} style={{padding:"7px 18px",fontSize:13,fontWeight:800,cursor:planCompare?"not-allowed":"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#6B5E80",borderRadius:"8px 8px 0 0"}}>{b}</button>})}
+        {/* Brand tabs */}
+        <div style={{display:"flex",gap:0}}>
+          {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b;const c=b==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");return<button key={b} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null);setPlanMonthA("");setPlanMonthB("")}} style={{padding:"7px 18px",fontSize:13,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#6B5E80",borderRadius:"8px 8px 0 0"}}>{b}</button>})}
         </div>
-        <button onClick={()=>setPlanCompare(p=>!p)} style={{padding:"6px 14px",borderRadius:6,border:"1px solid "+(planCompare?"#D4A040":"#4a3565"),background:planCompare?"rgba(212,160,64,.12)":"transparent",color:planCompare?"#D4A040":"#9B8EAD",fontSize:12,fontWeight:700,cursor:"pointer"}}>{planCompare?"✓ Comparing both":"⇄ Compare PL vs WK"}</button>
+        {/* Month picker — Month A (or single view) */}
+        <div style={{display:"flex",alignItems:"center",gap:6,marginLeft:8}}>
+          <span style={{fontSize:11,color:"#9B8EAD",fontWeight:700,textTransform:"uppercase",letterSpacing:.5}}>Month:</span>
+          <select value={monthA} onChange={e=>setPlanMonthA(e.target.value)} style={{padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0",cursor:"pointer"}}>
+            {monthsAvail.map(m=><option key={m} value={m}>{m}</option>)}
+          </select>
+          <span style={{fontSize:11,color:"#9B8EAD",fontWeight:700,textTransform:"uppercase",letterSpacing:.5}}>vs</span>
+          <select value={planMonthB} onChange={e=>setPlanMonthB(e.target.value)} style={{padding:"5px 8px",borderRadius:5,border:"1px solid "+(planMonthB?"#D4A040":"#4a3565"),fontSize:12,background:planMonthB?"rgba(212,160,64,.12)":"#1e1233",color:planMonthB?"#D4A040":"#9B8EAD",cursor:"pointer"}}>
+            <option value="">— pick to compare —</option>
+            {monthsAvail.filter(m=>m!==monthA).map(m=><option key={m} value={m}>{m}</option>)}
+          </select>
+          {isCompare&&<button onClick={()=>{setPlanMonthA("");setPlanMonthB("")}} style={{fontSize:11,color:"#9B8EAD",background:"transparent",border:"none",cursor:"pointer",textDecoration:"underline"}}>clear</button>}
+        </div>
         <div style={{flex:1}}/>
-        <button onClick={runPlanner} disabled={planLoading||planCompare} title={planCompare?"Switch to a single brand to run AI":""} style={{padding:"7px 16px",borderRadius:7,border:"none",background:planLoading||planCompare?"#4a3565":"linear-gradient(135deg,#9b7bb0,#D4A040)",color:"#fff",fontSize:12,fontWeight:800,cursor:planLoading||planCompare?"not-allowed":"pointer",letterSpacing:.5}}>
-          {planLoading?"AI deliberating…":"🧠 AI Recommendations — "+planBrand}
+        <button onClick={runPlanner} disabled={planLoading} style={{padding:"8px 18px",borderRadius:7,border:"none",background:planLoading?"#4a3565":"linear-gradient(135deg,#9b7bb0,#D4A040)",color:"#fff",fontSize:13,fontWeight:800,cursor:planLoading?"not-allowed":"pointer",letterSpacing:.5,boxShadow:planLoading?"none":"0 4px 16px rgba(155,123,176,.3)"}}>
+          {planLoading?"🧠 Thinking…":(recs?"🔄 Re-run AI":"🧠 Run AI — "+planBrand)}
         </button>
       </div>
       {planError&&<div style={{padding:10,borderRadius:8,background:"rgba(232,90,122,.1)",border:"1px solid rgba(232,90,122,.2)",color:"#E85A7A",fontSize:12,whiteSpace:"pre-wrap",fontFamily:"ui-monospace,monospace"}}>{planError}</div>}
-      {planCompare?<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-        <div><div style={{fontSize:14,fontWeight:800,color:getBrandColor("PL"),marginBottom:4}}>Postman Law</div>{renderReport(reportPL,false)}</div>
-        <div><div style={{fontSize:14,fontWeight:800,color:getBrandColor("WK"),marginBottom:4}}>Wettermark Keith</div>{renderReport(reportWK,false)}</div>
-      </div>:renderReport(report,true)}
-      {recs&&!planCompare&&<ReportSection title={"AI Recommendations — "+planBrand}>
+      {/* AI Priorities — top of the page when present */}
+      {recs&&<ReportSection title={"AI Priorities — "+planBrand+(monthA?" · "+monthA:"")}>
         {isJsonRecs?<div style={{display:"flex",flexDirection:"column",gap:8}}>
           {recs.map((r,i)=><div key={i} style={{padding:10,borderRadius:8,background:"#2d1f42",border:"1px solid "+(recColors[r.priority]||"#4a3565"),borderLeft:"4px solid "+(recColors[r.priority]||"#4a3565"),display:"flex",gap:10}}>
             <div style={{fontSize:18,fontWeight:800,color:recColors[r.priority]||"#9B8EAD",minWidth:24,textAlign:"center"}}>{r.priority||(i+1)}</div>
@@ -5892,6 +5906,12 @@ Rules:
           </div>)}
         </div>:<div style={{whiteSpace:"pre-wrap",fontSize:12,color:"#E8DFF0",lineHeight:1.6}}>{planResult}</div>}
       </ReportSection>}
+      {!recs&&!planLoading&&<div style={{padding:14,borderRadius:8,background:"rgba(155,123,176,.08)",border:"1px dashed rgba(155,123,176,.3)",color:"#C4A0C8",fontSize:12,fontStyle:"italic"}}>Click <b>Run AI</b> above to generate priority recommendations for {planBrand} {monthA}. Forward-looking — what to build, swap, or add. The data tables below are live from your Firestore right now.</div>}
+      {/* Live data report — single month, or side-by-side compare */}
+      {isCompare?<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+        <div><div style={{fontSize:14,fontWeight:800,color:"#D4A040",marginBottom:4,textTransform:"uppercase",letterSpacing:1}}>{monthA}</div>{renderReport(reportA,false)}</div>
+        <div><div style={{fontSize:14,fontWeight:800,color:"#4AC8E8",marginBottom:4,textTransform:"uppercase",letterSpacing:1}}>{monthB}</div>{renderReport(reportB,false)}</div>
+      </div>:renderReport(reportA,true)}
     </div>;
   };
 
