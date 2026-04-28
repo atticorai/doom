@@ -308,14 +308,8 @@ const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const base=D_
 const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery"};
 // Reverse map: full name → code (case-insensitive lookup for market normalization)
 const DM_REV=Object.fromEntries(Object.entries(DM).flatMap(([c,n])=>[[n,c],[n.toLowerCase(),c],[c,c],[c.toLowerCase(),c]]));
-// Normalize any market value (code or full name) to its 3-letter code.
-// Strips ", STATE" suffix (e.g. "Chicago, IL" → "CHI") so PDF-imported
-// records match cleanly against stations/estimates that use clean names.
-const normMkt=(m)=>{if(!m)return"";const raw=String(m).trim();const v=raw.split(",")[0].trim();if(DM[v])return v;const found=DM_REV[v]||DM_REV[v.toLowerCase()];if(found)return found;const entry=Object.entries(DM).find(([_,n])=>n.toLowerCase()===v.toLowerCase());return entry?entry[0]:v};
-// Single source of truth for media display labels — call this anywhere
-// the user sees a media type ("Cable" → "TV/Cable", etc.). Storage,
-// filters, and lookups still use the raw key.
-const mediaLabel=(m)=>{if(!m)return"";if(m==="Cable")return"TV/Cable";return m};
+// Normalize any market value (code or full name) to its 3-letter code
+const normMkt=(m)=>{if(!m)return"";const v=m.trim();if(DM[v])return v;const found=DM_REV[v]||DM_REV[v.toLowerCase()];if(found)return found;const entry=Object.entries(DM).find(([_,n])=>n.toLowerCase()===v.toLowerCase());return entry?entry[0]:v};
 const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
 const BRANDS=[
   {code:"PL",name:"Postman Law",agency:"Blackacre Services",logo:LOGO_PL,color:"#9b7bb0",colorBg:"#F0E8F8"},
@@ -680,12 +674,10 @@ const App=()=>{
           // Always add back missing seed ISCIs — better to recover than lose
           const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||"")));
           const all=[...enhanced,...missing];
-          // WK titles self-describe the case type — just apply the rule on
-          // every WK ISCI, every load. VO = Chris Keith, always. No merging
-          // of stale names, no "user edits stick" guard for WK categories
-          // (old names were placeholders, not edits).
-          const WK_TARGET_CATS=["Workers Comp","Auto Accidents","Trucking/Commercial","Premises Liability","Holiday/Seasonal","Brand"];
+          // Assign WK categories and VO — only if empty or generic. User edits stick.
+          const GENERIC=new Set(["","Personal Injury (General)","—"]);
           all.forEach(i=>{if(i.brand!=="Wettermark Keith")return;
+            if(!GENERIC.has(i.category||""))return; // User already set a specific category — leave it
             const t=(i.title||"").toLowerCase();
             if(/on.?the.?job|working man/i.test(t))i.category=i.caseType="Workers Comp";
             else if(/car wreck|auto accident|mother.?s wreck|distracted|cell phone/i.test(t))i.category=i.caseType="Auto Accidents";
@@ -693,16 +685,7 @@ const App=()=>{
             else if(/premise|premises/i.test(t))i.category=i.caseType="Premises Liability";
             else if(/christmas|thanksgiving|holiday|happy/i.test(t))i.category=i.caseType="Holiday/Seasonal";
             else i.category=i.caseType="Brand";
-            i.vo="Chris Keith";
-            // WK has no Value Prop dimension — blank it if anything slipped in.
-            i.valueProp="";
-          });
-          // Replace WK customFields with the canonical set. No stale names,
-          // no empty Value Props section.
-          setCustomFields(prev=>{
-            const next={...prev,"Wettermark Keith":{categories:[...WK_TARGET_CATS],valueProps:[],vos:["Chris Keith"]}};
-            try{db.collection("appData").doc("customTags").set({data:JSON.stringify(next),ts:Date.now()}).catch(()=>{})}catch(e){}
-            return next;
+            if(!i.vo)i.vo="Chris Keith";
           });
           if(missing.length>0)console.warn("ISCI RESTORE: "+missing.length+" seed ISCIs were missing from Firestore — restored");
           console.log("ISCI load: "+enhanced.length+" from Firestore + "+missing.length+" restored = "+all.length+" total");
@@ -768,11 +751,40 @@ const App=()=>{
           const inv={};d.forEach(h=>{const k=(h.brand||"?")+" | "+(h.market||"?")+" | "+(h.media||"?")+" | "+(h.month||"?");if(!inv[k])inv[k]=0;inv[k]++});
           Object.entries(inv).sort().forEach(([k,v])=>console.log("  "+k+(v>1?" (×"+v+")":"")));
           console.log("═══════════════════════════════════════════════");
-          // DO NOT auto-write to Firestore on load — it's the pattern that
-          // has destroyed data before. normMkt handles state suffixes at
-          // every lookup site, so dirty stored values still resolve
-          // correctly. Firestore cleans up naturally as the user edits.
-          setTrafficHistory(d);trafficFbCountRef.current=d.length
+          // ═══ DO NOT MODIFY FIRESTORE DATA ON LOAD ═══
+          // Load it. Display it. That's it.
+          // Rendering handles bad values (boolean bookends, bare sched letters) gracefully.
+          // One-time: seed PL April TV + Radio traffic if missing
+          const PL_APRIL_SEED=[];
+          const mktMatch=(a,b)=>a===b||(normMkt(a)||a)===(normMkt(b)||b);
+          const hasPLAprilTV=(mkt)=>d.some(h=>h.brand==="Postman Law"&&mktMatch(h.market,mkt)&&h.media==="TV"&&h.month==="April"&&h.status!=="copied");
+          const hasPLAprilRadio=(mkt)=>d.some(h=>h.brand==="Postman Law"&&mktMatch(h.market,mkt)&&h.media==="Radio"&&h.month==="April"&&h.status!=="copied");
+          const tvIscis={
+            CHI:[{code:"CHIPL2660004T",title:"Why Postman_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CHIPL2660002T",title:"Supreme Court_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CHIPL2630013T",title:"Warren's Story_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2630012T",title:"Local Lawyers_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2630011T",title:"Legal Firepower_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2630010T",title:"Justice & Representation_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2615014T",title:"Warren's Story_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CHIPL2615013T",title:"Local Lawyers_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CHIPL2615012T",title:"Legal Firepower_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"},{code:"CHIPL2615011T",title:"Justice & Representation_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"}],
+            CIN:[{code:"CINPL2660004T",title:"Why Postman_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CINPL2660002T",title:"Supreme Court_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CINPL2630013T",title:"Warren's Story_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2630012T",title:"Local Lawyers_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2630011T",title:"Legal Firepower_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2630010T",title:"Justice & Representation_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2615014T",title:"Warren's Story_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CINPL2615013T",title:"Local Lawyers_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CINPL2615012T",title:"Legal Firepower_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"},{code:"CINPL2615011T",title:"Justice & Representation_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"}],
+            DEN:[{code:"DENPL2660004T",title:"Why Postman_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"DENPL2660002T",title:"Supreme Court_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"DENPL2630013T",title:"Warren's Story_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"DENPL2630012T",title:"Local Lawyers_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"DENPL2630011T",title:"Legal Firepower_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"DENPL2630010T",title:"Justice & Representation_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"DENPL2615014T",title:"Warren's Story_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"DENPL2615013T",title:"Local Lawyers_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"DENPL2615012T",title:"Legal Firepower_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"},{code:"DENPL2615011T",title:"Justice & Representation_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"}],
+            MSP:[{code:"MSPPL2660005T",title:"Supreme Court_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"MSPPL2660004T",title:"Why Postman_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"MSPPL2630013T",title:"Warren's Story_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"MSPPL2630012T",title:"Local Lawyers_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"MSPPL2630011T",title:"Legal Firepower_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"MSPPL2630010T",title:"Justice & Representation_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"MSPPL2615014T",title:"Warren's Story_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"MSPPL2615013T",title:"Local Lawyers_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"MSPPL2615012T",title:"Legal Firepower_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"},{code:"MSPPL2615011T",title:"Justice & Representation_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"}]
+          };
+          const tvEsts={CHI:"2609 + 2610 + 2611 + 2612 + 2614",CIN:"2617 + 2618 + 2619 + 2620 + 2622",DEN:"2625 + 2626 + 2627 + 2628 + 2630",MSP:"2601 + 2602 + 2603 + 2604 + 2606"};
+          const tvBuyer={CHI:"Lynn Cortelezzi",CIN:"Lynn Cortelezzi",DEN:"Lynn Cortelezzi",MSP:"Ken Lazar"};
+          const radioIscis={
+            CHI:[{code:"CHIPL2630001R",title:"To Do List",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"CHIPL2630002R",title:"We Fight",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"CHIPL2630010R",title:"Peace of Mind – One Stop Shop_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"CHIPL2630008R",title:"Peace of Mind – One Call for Everything_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"CHIPL2615001R",title:"To Do List",dur:"15",pct:"15",sched:"All Week",bookend:"Bookend :15 A"},{code:"CHIPL2615002R",title:"We Fight",dur:"15",pct:"15",sched:"All Week",bookend:"Bookend :15 A"},{code:"CHIPL2615006R",title:"Peace of Mind – We Handle it All_15",dur:"15",pct:"35",sched:"All Week",bookend:""},{code:"CHIPL2615005R",title:"Peace of Mind – No More Chasing Insurance_15",dur:"15",pct:"35",sched:"All Week",bookend:""}],
+            CIN:[{code:"CINPL2630002R",title:"We Fight",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"CINPL2630001R",title:"To Do List",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"CINPL2630010R",title:"Peace of Mind – One Stop Shop_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"CINPL2630008R",title:"Peace of Mind – One Call for Everything_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"CINPL2615002R",title:"We Fight",dur:"15",pct:"15",sched:"All Week",bookend:"Bookend :15 A"},{code:"CINPL2615001R",title:"To Do List",dur:"15",pct:"15",sched:"All Week",bookend:"Bookend :15 A"},{code:"CINPL2615006R",title:"Peace of Mind – We Handle it All_15",dur:"15",pct:"35",sched:"All Week",bookend:""},{code:"CINPL2615005R",title:"Peace of Mind – No More Chasing Insurance_15",dur:"15",pct:"35",sched:"All Week",bookend:""}],
+            DEN:[{code:"DENPL2630002R",title:"We Fight",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"DENPL2630001R",title:"To Do List",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"DENPL2630010R",title:"Peace of Mind – One Stop Shop_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"DENPL2630008R",title:"Peace of Mind – One Call for Everything_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"DENPL2615002R",title:"We Fight",dur:"15",pct:"15",sched:"All Week",bookend:""},{code:"DENPL2615001R",title:"To Do List",dur:"15",pct:"15",sched:"All Week",bookend:""},{code:"DENPL2615006R",title:"Peace of Mind – We Handle it All_15",dur:"15",pct:"35",sched:"All Week",bookend:""},{code:"DENPL2615005R",title:"Peace of Mind – No More Chasing Insurance_15",dur:"15",pct:"35",sched:"All Week",bookend:""}]
+          };
+          const radioEsts={CHI:"2615",CIN:"2623",DEN:"2631"};
+          Object.entries(tvIscis).forEach(([dma,isciList])=>{const mkt=DM[dma];if(!hasPLAprilTV(mkt)){PL_APRIL_SEED.push({ts:"2026-03-30T12:00:00.000Z",est:tvEsts[dma],brand:"Postman Law",market:mkt,media:"TV",buyer:tvBuyer[dma],month:"April",flight:"3/30 - 4/26",version:"1",comments:"If you buy has no bookends, run as standalones, if you have stand alones run Legal Firepower :15",combined:true,iscis:isciList,stations:[],status:"sent",isRevision:false,prevVersion:null})}});
+          Object.entries(radioIscis).forEach(([dma,isciList])=>{const mkt=DM[dma];if(!hasPLAprilRadio(mkt)){PL_APRIL_SEED.push({ts:"2026-03-30T12:00:00.000Z",est:radioEsts[dma],brand:"Postman Law",market:mkt,media:"Radio",buyer:tvBuyer[dma],month:"April",flight:"3/30 - 4/26",version:"1",comments:"",combined:false,iscis:isciList,stations:[],status:"sent",isRevision:false,prevVersion:null})}});
+          // OOH: Wilkins Media MSP Digital Bulletins
+          const hasPLAprilOohMsp=d.some(h=>h.brand==="Postman Law"&&(h.market==="MSP"||h.market==="Minneapolis")&&h.media==="OOH"&&h.month==="April"&&h.isOoh);
+          if(!hasPLAprilOohMsp){PL_APRIL_SEED.push({ts:"2026-03-25T12:00:00.000Z",est:"OOH-MSP-PL",brand:"Postman Law",market:"MSP",media:"OOH",buyer:"Ken Lazar",month:"April",flight:"3/30",version:"1",comments:"V1 MSP Digital Bulletins | Vendor: Wilkins Media",combined:false,iscis:[{code:"MSPPL26DB001O",title:"PL Digital Bulletin - 208x720 - MSP - Cityscape - MinneapolisIA",dur:"",pct:"33",sched:"All Week",bookend:"",units:"1"},{code:"MSPPL26DB002O",title:"PL Digital Bulletin - 208x720 - MSP - MascotTriangle - MinneapolisIA",dur:"",pct:"33",sched:"All Week",bookend:"",units:"1"},{code:"MSPPL26DB003O",title:"PL Digital Bulletin - 208x720 - MSP - MascotTriangle - MinneapolisIALogo",dur:"",pct:"34",sched:"All Week",bookend:"",units:"1"}],stations:[],status:"sent",isOoh:true,totalUnits:3,vendor:"Wilkins Media",isRevision:false,prevVersion:null})}
+          if(PL_APRIL_SEED.length>0)console.warn("PL April seed: restored "+PL_APRIL_SEED.length+" traffic records");
+          // Restore missing seed records (additive only — never removes or modifies existing)
+          const seedTraffic=typeof TRAFFIC_HISTORY_INIT!=="undefined"?TRAFFIC_HISTORY_INIT:[];
+          const missingFromSeed=seedTraffic.filter(seed=>!d.some(h=>h.brand===seed.brand&&h.est===seed.est&&(h.market===seed.market||(normMkt(h.market)||h.market)===(normMkt(seed.market)||seed.market))&&h.month===seed.month&&h.media===seed.media));
+          if(missingFromSeed.length>0)console.warn("Seed restore: "+missingFromSeed.length+" records missing — adding back");
+          const final=[...PL_APRIL_SEED,...missingFromSeed,...d];
+          setTrafficHistory(final);trafficFbCountRef.current=final.length
         }trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
         if(docs.workMonth?.data)setWorkMonth(JSON.parse(docs.workMonth.data));
         if(docs.confirmations?.data){const d=JSON.parse(docs.confirmations.data);setConfirmations(d)}
@@ -843,17 +855,9 @@ const App=()=>{
   // Backup before save — keeps last known good state in localStorage (no Firestore permissions needed)
   const backupBeforeSave=(collection,data)=>{
     try{
-      // Single newest-state backup (latest only) — kept for compatibility.
       localStorage.setItem("doom_backup_"+collection,JSON.stringify({data:JSON.stringify(data),ts:Date.now()}));
+      // Also try Firestore backup (may fail depending on rules — that's OK)
       db.collection("appData").doc(collection+"_backup").set({data:JSON.stringify(data),ts:Date.now(),backupOf:collection}).catch(()=>{});
-      // Rotating 10-slot history so we never lose more than 10 saves back.
-      // Slot id cycles 0..9. Written in parallel to the single backup above.
-      const slotKey="doom_backup_slot_"+collection;
-      let slot=0;try{slot=(parseInt(localStorage.getItem(slotKey)||"0")+1)%10}catch(_){}
-      localStorage.setItem(slotKey,String(slot));
-      const payload={data:JSON.stringify(data),ts:Date.now(),backupOf:collection,slot};
-      localStorage.setItem("doom_backup_"+collection+"_s"+slot,JSON.stringify(payload));
-      db.collection("appData").doc(collection+"_backup_s"+slot).set(payload).catch(()=>{});
     }catch(e){}
   };
 
@@ -1129,7 +1133,7 @@ const App=()=>{
             {[
               ["Estimate",estNum],
               ["Market",est?.market||""],
-              ["Media",est?.media?(mediaLabel(est.media)+(est.group?" ("+est.group+")":"")):""],
+              ["Media",est?.media?(est.media+(est.group?" ("+est.group+")":"")):""],
               ["Broadcast Month",airing?.month||trafficHistory.find(h=>h.est===estNum)?.month||workMonth||""],
               ...(airing?.version?[["Version","v"+airing.version]]:[]),
               ["Agency","Atticor"]
@@ -1600,44 +1604,11 @@ const App=()=>{
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);saveToDb("iscis",updated);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
       {showTagMgr&&<Cd style={{padding:14,marginTop:8}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD"}}>🏷 Manage Categories, Value Props & VOs</div>
-          <Btn small onClick={()=>{
-            const wkCount=iscis.filter(i=>i.brand==="Wettermark Keith").length;
-            if(!wkCount){notify("No WK ISCIs to re-tag");return}
-            if(!confirm("Re-tag all "+wkCount+" WK ISCIs by title? Replaces Category, sets VO = Chris Keith, clears Value Prop, and resets the WK dropdowns to exactly the 6 canonical case types."))return;
-            const WK_TARGET=["Workers Comp","Auto Accidents","Trucking/Commercial","Premises Liability","Holiday/Seasonal","Brand"];
-            let changed=0;
-            setIscis(prev=>{
-              const next=prev.map(i=>{
-                if(i.brand!=="Wettermark Keith")return i;
-                const t=(i.title||"").toLowerCase();
-                let cat;
-                if(/on.?the.?job|working man/i.test(t))cat="Workers Comp";
-                else if(/car wreck|auto accident|mother.?s wreck|distracted|cell phone/i.test(t))cat="Auto Accidents";
-                else if(/trucking|commercial vehicle|commercial accident/i.test(t))cat="Trucking/Commercial";
-                else if(/premise|premises/i.test(t))cat="Premises Liability";
-                else if(/christmas|thanksgiving|holiday|happy/i.test(t))cat="Holiday/Seasonal";
-                else cat="Brand";
-                if(i.category!==cat||i.caseType!==cat||i.vo!=="Chris Keith"||i.valueProp)changed++;
-                return{...i,category:cat,caseType:cat,vo:"Chris Keith",valueProp:""};
-              });
-              saveToDb("iscis",next);
-              return next;
-            });
-            setCustomFields(prev=>{
-              const next={...prev,"Wettermark Keith":{categories:[...WK_TARGET],valueProps:[],vos:["Chris Keith"]}};
-              try{db.collection("appData").doc("customTags").set({data:JSON.stringify(next),ts:Date.now()}).catch(()=>{})}catch(e){}
-              return next;
-            });
-            log("WK Re-tag",changed+" ISCIs updated");
-            notify("Re-tagged "+changed+" WK ISCIs by title");
-          }} color="#D4A040">⟳ Re-tag WK by Title</Btn>
-        </div>
+        <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:8}}>🏷 Manage Categories, Value Props & VOs</div>
         {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
           return<div key={brand} style={{marginBottom:16}}>
           <div style={{fontSize:13,fontWeight:800,color:bc,marginBottom:6}}>{brand}</div>
-          {(brand==="Wettermark Keith"?[{key:"categories",label:"Categories",color:"#4AC8E8"},{key:"vos",label:"VOs",color:"#D4A040"}]:[{key:"categories",label:"Categories",color:"#4AC8E8"},{key:"valueProps",label:"Value Props",color:"#5BC4A0"},{key:"vos",label:"VOs",color:"#D4A040"}]).map(({key,label,color})=><div key={key} style={{marginBottom:8}}>
+          {[{key:"categories",label:"Categories",color:"#4AC8E8"},{key:"valueProps",label:"Value Props",color:"#5BC4A0"},{key:"vos",label:"VOs",color:"#D4A040"}].map(({key,label,color})=><div key={key} style={{marginBottom:8}}>
             <div style={{fontSize:12,fontWeight:700,color,marginBottom:3,textTransform:"uppercase"}}>{label}</div>
             <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:4}}>
               {(bf[key]||[]).map(t=><span key={t} style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 7px",borderRadius:4,background:color+"15",color,fontSize:11,fontWeight:600}}>
@@ -1915,7 +1886,7 @@ const App=()=>{
       h+=hdr("Market",est.market);
       h+=hdr("Buyer",est.buyer,"#D4A040");
       h+=hdr("Estimate(s)",est._combined?est._combined.length+" combined estimates":est.num);
-      h+=hdr("Media",est._combined?[...new Set(est._combined.map(e=>mediaLabel(e.media)))].join(", "):mediaLabel(est.media),"#4AC8E8");
+      h+=hdr("Media",est._combined?[...new Set(est._combined.map(e=>e.media))].join(", "):est.media,"#4AC8E8");
       h+=hdr("Buy Type(s)",est._combined?[...new Set(est._combined.map(e=>e.group))].join(", "):est.group);
       if(est._combined){
         h+='<table style="margin:8px 0;font-size:11px;border:1px solid #ddd"><thead><tr style="background:#F0E8F8"><th style="padding:4px 8px;text-align:left;color:#5b21b6">Estimate</th><th style="padding:4px 8px;text-align:left;color:#5b21b6">Buy Type</th><th style="padding:4px 8px;text-align:left;color:#5b21b6">Stations</th></tr></thead><tbody>';
@@ -1938,13 +1909,13 @@ const App=()=>{
       SCHED_ORDER.forEach(s=>{if(!grouped[s])return;const bg=SCHED_COLORS[s]||"#2d1f42";const items=grouped[s].sort((a,b)=>(parseInt(b.isci.dur)||0)-(parseInt(a.isci.dur)||0));
         h+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
         items.forEach(r=>{const len=validBk(r.bookend)?r.bookend:":"+r.isci.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk(r.bookend)?r.bookend:s;
-          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>'+len+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
+          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>:'+r.isci.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
         });
       });
       Object.keys(grouped).filter(s=>!SCHED_ORDER.includes(s)).forEach(s=>{const bg="#F0E8F8";const items=grouped[s].sort((a,b)=>(parseInt(b.isci.dur)||0)-(parseInt(a.isci.dur)||0));
         h+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
         items.forEach(r=>{const len=validBk(r.bookend)?r.bookend:":"+r.isci.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk(r.bookend)?r.bookend:s;
-          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>'+len+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
+          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>:'+r.isci.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
         });
       });
       h+='</tbody></table>';
@@ -3969,59 +3940,6 @@ const App=()=>{
     return Object.values(nowAiring).some(a=>a.iscis?.some(r=>r.code===code));
   },[nowAiring]);
 
-  // Edit traffic modal — kept as a real component (not an inline IIFE)
-  // so its useState hooks don't break the rules-of-hooks. Earlier the
-  // modal was defined inline with `(()=>{const[editIscis]=useState(...)})()`
-  // which React treated as an invalid hook call, so Edit from the
-  // Megara Library book blanked the page for every brand.
-  const EditTrafficModal=({editIdx,onClose})=>{
-    const eh=trafficHistory[editIdx];
-    const SCHED_OPTS=["M-F Schedule","Weekend Schedule","M-F Bookend","Weekend Bookend","All Week","Holiday Only"];
-    const[editIscis,setEditIscis]=useState(()=>JSON.parse(JSON.stringify(eh?.iscis||[])));
-    const[editMeta,setEditMeta]=useState({month:eh?.month||"",flight:eh?.flight||"",version:eh?.version||"1",comments:eh?.comments||""});
-    if(!eh)return null;
-    const updI=(idx,k,v)=>setEditIscis(p=>p.map((r,i)=>i===idx?{...r,[k]:v}:r));
-    const saveEdit=()=>{
-      const validIscis=editIscis.filter(r=>r.code&&r.code.trim());
-      if(!validIscis.length){alert("Cannot save — no ISCIs with codes. Add at least one ISCI.");return}
-      setTrafficHistory(p=>p.map((h,i)=>i===editIdx?{...h,iscis:validIscis,month:editMeta.month,flight:editMeta.flight,version:editMeta.version,comments:editMeta.comments}:h));
-      log("Traffic Edited",eh.brand+" "+eh.market+" "+eh.media+" "+editMeta.month);
-      notify("Traffic updated — "+validIscis.length+" ISCIs");
-      onClose();
-    };
-    const addRow=()=>setEditIscis(p=>[...p,{code:"",title:"",dur:"30",pct:"",sched:"All Week",bookend:""}]);
-    const delRow=(idx)=>setEditIscis(p=>p.filter((_,i)=>i!==idx));
-    return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={onClose} wide>
-      <div style={{display:"flex",gap:8,marginBottom:8}}>
-        <Sel label="Month" options={CALENDAR.map(c=>c.month)} value={editMeta.month} onChange={v=>{const cm=CALENDAR.find(c=>c.month===v);setEditMeta(p=>({...p,month:v,flight:cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):p.flight}))}}/>
-        <Inp label="Flight" value={editMeta.flight} onChange={e=>setEditMeta(p=>({...p,flight:e.target.value}))}/>
-        <Inp label="Version" value={editMeta.version} onChange={e=>setEditMeta(p=>({...p,version:e.target.value}))} style={{width:50}}/>
-      </div>
-      <Inp label="Comments" value={editMeta.comments} onChange={e=>setEditMeta(p=>({...p,comments:e.target.value}))}/>
-      <div style={{overflowX:"auto",maxHeight:400,marginTop:8,border:"1px solid #4a3565",borderRadius:7}}>
-        <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
-          <TH w="140">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="50">%</TH><TH w="130">Schedule</TH><TH w="100">Bookend</TH><TH w="30">✕</TH>
-        </tr></thead><tbody>
-        {editIscis.map((r,idx)=><tr key={idx}>
-          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.code} onChange={e=>updI(idx,"code",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,fontFamily:"monospace",background:"#1e1233",color:"#E8DFF0"}}/></td>
-          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.title} onChange={e=>updI(idx,"title",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></td>
-          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.dur} onChange={e=>updI(idx,"dur",e.target.value)} style={{width:35,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
-          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.pct} onChange={e=>updI(idx,"pct",e.target.value.replace(/[^0-9.]/g,""))} data-pct-input="true" onKeyDown={e=>{if(e.key==="Tab"||e.key==="Enter"){e.preventDefault();const all=[...document.querySelectorAll('[data-pct-input]')];const ci=all.indexOf(e.target);if(ci>-1&&ci<all.length-1)all[ci+1].focus()}}} style={{width:40,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
-          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><select value={r.sched} onChange={e=>updI(idx,"sched",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}>{SCHED_OPTS.map(s=><option key={s}>{s}</option>)}</select></td>
-          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.bookend||""} onChange={e=>updI(idx,"bookend",e.target.value)} placeholder="e.g. Bookend :15 A" style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/></td>
-          <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42",textAlign:"center"}}><button onClick={()=>delRow(idx)} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button></td>
-        </tr>)}</tbody></table>
-      </div>
-      <div style={{display:"flex",gap:6,marginTop:8}}>
-        <Btn small onClick={addRow}>+ Add Row</Btn>
-        <div style={{marginLeft:"auto",display:"flex",gap:6}}>
-          <Btn small onClick={onClose}>Cancel</Btn>
-          <Btn small primary onClick={saveEdit}>Save Changes</Btn>
-        </div>
-      </div>
-    </Mod>;
-  };
-
   const EditIsciMod=({isci,idx})=>{
     const locked=isIsciSent(isci.code);
     const[unlocked,setUnlocked]=useState(false);
@@ -5233,19 +5151,9 @@ ${fullText.substring(0,3000)}`}]
     };
     const doImport=async()=>{if(!importPreview)return;const pw=prompt("Admin password to import:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Incorrect password");
       const em=normMkt(importPreview.market)||importPreview.market;
-      const existingIdx=trafficHistory.findIndex(h=>h.brand===importPreview.brand&&(normMkt(h.market)||h.market)===em&&h.media===importPreview.media&&h.month===importPreview.month);
-      if(existingIdx>=0){
-        const existing=trafficHistory[existingIdx];
-        if(!confirm(importPreview.brand+" "+em+" "+importPreview.media+" "+importPreview.month+" already exists (v"+(existing.version||"1")+", "+(existing.iscis||[]).length+" ISCIs).\n\nREPLACE the existing record with this import? Old record is lost."))return;
-        setTrafficHistory(p=>p.map((h,j)=>j===existingIdx?importPreview:h));
-        log("Traffic Import (Replace)",importPreview.brand+" "+importPreview.market+" "+importPreview.month+" "+importPreview.media);
-        notify("Replaced "+importPreview.market+" "+importPreview.media+" "+importPreview.month+" — "+importPreview.iscis.length+" ISCIs");
-      }else{
-        setTrafficHistory(p=>[...p,importPreview]);
-        log("Traffic Import",importPreview.brand+" "+importPreview.market+" "+importPreview.month+" "+importPreview.media);
-        notify(doomPick(DOOM.importClean)+" Imported: "+importPreview.market+" "+importPreview.month);
-      }
-      setImportText("");setImportPreview(null);setShowImport(false)};
+      const existing=trafficHistory.find(h=>h.brand===importPreview.brand&&(normMkt(h.market)||h.market)===em&&h.media===importPreview.media&&h.month===importPreview.month);
+      if(existing){log("Import Skipped",importPreview.brand+" "+em+" "+importPreview.media+" "+importPreview.month+" — record already exists");notify("⚠ Skipped: "+importPreview.market+" "+importPreview.media+" "+importPreview.month+" already exists");setImportText("");setImportPreview(null);setShowImport(false);return}
+      setTrafficHistory(p=>[...p,importPreview]);log("Traffic Import",importPreview.brand+" "+importPreview.market+" "+importPreview.month+" "+importPreview.media);notify(doomPick(DOOM.importClean)+" Imported: "+importPreview.market+" "+importPreview.month);setImportText("");setImportPreview(null);setShowImport(false)};
     const brands=[...new Set(trafficHistory.map(h=>h.brand))].sort();
     const mkts=[...new Set(trafficHistory.map(h=>h.market))].sort();
     const medias=[...new Set(trafficHistory.map(h=>h.media))].sort();
@@ -5291,7 +5199,7 @@ ${fullText.substring(0,3000)}`}]
       x+='<div style="text-align:center;margin-bottom:14px"><img src="'+lg+'" style="height:48px"/></div>';
       x+=hd("Agency",getBrandAgency(h.brand));
       x+=hd("Client",h.brand,bc);x+=hd("Market",(DM[normMkt(h.market)]||h.market)+(normMkt(h.market)?" ("+normMkt(h.market)+")":""));x+=hd("Buyer",h.buyer,"#D4A040");
-      x+=hd("Media",mediaLabel(h.media),h.isOoh?"#D4A040":"#4AC8E8");x+=hd("Broadcast Month",h.month,"#E85A7A");
+      x+=hd("Media",h.media,h.isOoh?"#D4A040":"#4AC8E8");x+=hd("Broadcast Month",h.month,"#E85A7A");
       if(h.isOoh&&h.postDates)x+=hd("Post Dates",h.postDates,"#1e1233");
       else if(h.flight)x+=hd("Flight Dates",h.flight,"#1e1233");
       if(h.isOoh&&h.versionLinks)x+=hd("Version/ Links",h.versionLinks);
@@ -5403,20 +5311,9 @@ ${fullText.substring(0,3000)}`}]
           if(parsed){
             const dupe=checkDuplicate(parsed);
             if(dupe){
-              // Replace the existing record instead of skipping — bad
-              // placeholders shouldn't block fresh imports.
-              const existingIdx=trafficHistory.findIndex(h=>h===dupe);
-              if(existingIdx>=0){
-                setTrafficHistory(p=>p.map((h,j)=>j===existingIdx?{...parsed,status:"imported"}:h));
-                log("PDF Import (Replace)",parsed.brand+" "+parsed.market+" "+parsed.month+" "+parsed.media+" ("+parsed.iscis.length+" ISCIs)");
-                results.push({file:file.name,parsed,text,status:"replaced",existing:dupe});
-                imported++;
-              }else{
-                setTrafficHistory(p=>[{...parsed,status:"imported"},...p]);
-                log("PDF Import",parsed.brand+" "+parsed.market+" "+parsed.month+" "+parsed.media+" ("+parsed.iscis.length+" ISCIs)");
-                results.push({file:file.name,parsed,text,status:"imported"});
-                imported++;
-              }
+              console.log("IMPORT: DUPLICATE skipped — "+parsed.market+" "+parsed.media+" "+parsed.month);
+              results.push({file:file.name,parsed,text,status:"duplicate",existing:dupe});
+              skipped++;
             }else{
               setTrafficHistory(p=>[{...parsed,status:"imported"},...p]);
               log("PDF Import",parsed.brand+" "+parsed.market+" "+parsed.month+" "+parsed.media+" ("+parsed.iscis.length+" ISCIs)");
@@ -5610,8 +5507,6 @@ ${fullText.substring(0,3000)}`}]
   const[planResult,setPlanResult]=useState(null);
   const[planLoading,setPlanLoading]=useState(false);
   const[planError,setPlanError]=useState(null);
-  const[planElapsed,setPlanElapsed]=useState(0);
-  React.useEffect(()=>{if(!planLoading){setPlanElapsed(0);return}const t0=Date.now();const iv=setInterval(()=>setPlanElapsed(Math.floor((Date.now()-t0)/1000)),1000);return()=>clearInterval(iv)},[planLoading]);
 
   const runPlanner=async()=>{
     setPlanLoading(true);setPlanError(null);setPlanResult(null);
@@ -5678,22 +5573,6 @@ ${fullText.substring(0,3000)}`}]
       const nextBroadcastMonth=MO_FULL[(curMoIdx+1)%12]+" "+(curMoIdx===11?nowDate.getFullYear()+1:nowDate.getFullYear());
       const currentBroadcastMonth=MO_FULL[curMoIdx]+" "+nowDate.getFullYear();
 
-      // Market profiles — climate, demographics, typical accident drivers,
-      // major local events / sports / industries. The Muses use these to
-      // tailor recommendations per market instead of giving generic advice.
-      const MARKET_PROFILES={
-        Chicago:{state:"IL",climate:"harsh winters, lake-effect snow, severe summer storms",population:"dense urban + large commuter zone",industries:"finance, tech, manufacturing, logistics",sports:"Bears (NFL), Cubs/White Sox (MLB), Bulls (NBA), Blackhawks (NHL)",seasonal:"winter ice/snow collisions, summer motorcycle season, road-construction zones April-Nov",notes:"dense expressway network (Dan Ryan, Kennedy, Edens) drives trucking/commercial accident volume; winter weather = rear-end and black-ice crashes"},
-        Cincinnati:{state:"OH",climate:"four seasons, icy winters, humid summers",population:"mid-size metro, heavy commuter bleed from KY/IN",industries:"P&G, healthcare, manufacturing, logistics (FedEx, DHL hubs nearby)",sports:"Bengals (NFL), Reds (MLB), FC Cincinnati (MLS)",seasonal:"I-71/I-75 trucking corridor accidents year-round, winter weather collisions",notes:"river-city, bridges add to commuter crash patterns; tri-state line means jurisdiction complexity"},
-        Denver:{state:"CO",climate:"high altitude, heavy mountain snow in winter, dry summers",population:"fast-growing metro, transplant heavy",industries:"aerospace, tech, outdoor rec, cannabis, oil/gas",sports:"Broncos (NFL), Nuggets (NBA), Avalanche (NHL), Rockies (MLB)",seasonal:"I-70 mountain-pass crashes, ski-traffic accidents, summer outdoor recreation injuries",notes:"altitude + new residents unfamiliar with mountain driving; cannabis DUI is a distinct PI angle"},
-        Minneapolis:{state:"MN",climate:"brutal winters, frequent blizzards, short humid summers",population:"Twin Cities metro, affluent, progressive",industries:"healthcare, finance, manufacturing, Target/Best Buy HQ",sports:"Vikings (NFL), Twins (MLB), Timberwolves (NBA), Wild (NHL)",seasonal:"extreme winter weather crashes Dec-Mar, construction-zone season May-Oct",notes:"snow/ice highest-volume PI driver; winter gear matters in creative — messaging should feel local to MN"},
-        Birmingham:{state:"AL",climate:"warm, humid summers, mild winters, severe spring storms",population:"largest AL metro, medical/banking hub",industries:"healthcare (UAB), banking, steel/manufacturing legacy",sports:"Alabama/Auburn college football dominates; Birmingham Stallions (UFL)",seasonal:"spring tornado season disrupts roads; year-round I-65/I-20 trucking traffic",notes:"college football Saturdays = DUI/crash spikes; SEC fandom is central to culture — any brand play should respect that"},
-        Huntsville:{state:"AL",climate:"mild, humid, severe spring storms",population:"fast-growing tech metro, highest-educated in AL",industries:"NASA, Redstone Arsenal, defense, aerospace, tech",sports:"Alabama/Auburn college football, Huntsville Havoc (ECHL)",seasonal:"I-565 commuter crashes, spring tornado disruption",notes:"tech-professional audience — messaging can be more technical/results-driven; military adjacency matters"},
-        Knoxville:{state:"TN",climate:"four seasons, moderate winters, hot summers",population:"college town + Smokies tourism",industries:"UT, TVA, Oak Ridge National Lab, tourism",sports:"Tennessee Volunteers (college football dominant)",seasonal:"UT football Saturdays, summer Smokies tourism, winter I-40 weather crashes",notes:"orange-Saturday DUI volume in fall; Smokies tourism = out-of-state driver crashes; truck-route commerce (I-40, I-75)"},
-        Chattanooga:{state:"TN",climate:"four seasons, mild, river valley humidity",population:"mid-size, revitalized downtown, outdoor-rec destination",industries:"VW manufacturing, logistics, freight rail, outdoor recreation",sports:"Tennessee Volunteers, Chattanooga FC, minor-league baseball",seasonal:"I-24/I-75 trucking corridor year-round, summer river/outdoor injury season",notes:"national trucking chokepoint — commercial-vehicle PI volume is unusually high for the metro size"},
-        Montgomery:{state:"AL",climate:"warm, humid, mild winters",population:"state capital, civil rights heritage city",industries:"government, Hyundai manufacturing, military (Maxwell AFB)",sports:"Alabama/Auburn college football, Biscuits (minor-league)",seasonal:"I-65 north-south trucking corridor, spring storm disruption",notes:"capital + military audience; conservative-leaning; civil rights tourism brings visitors who don't know the roads"},
-        Dothan:{state:"AL",climate:"warm, humid, mild winters",population:"small market, agricultural center (Peanut Capital)",industries:"agriculture (peanuts), healthcare (Southeast Health regional hospital), military spillover (Fort Novosel, Ft. Rucker)",sports:"Alabama/Auburn college football, high-school football is huge",seasonal:"farm-equipment road accidents, rural highway crashes year-round",notes:"rural audience — straight-talking messaging works best; agricultural/farm-vehicle accidents are a distinct angle; limited local TV inventory"},
-      };
-      const relevantProfiles={};markets.forEach(m=>{if(MARKET_PROFILES[m])relevantProfiles[m]=MARKET_PROFILES[m]});
       const dataPayload=JSON.stringify({
         brand,
         todaysDate:nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}),
@@ -5708,7 +5587,6 @@ ${fullText.substring(0,3000)}`}]
         valuePropDistribution:vpCounts,
         voDistribution:voCounts,
         marketBreakdown,
-        marketProfiles:relevantProfiles,
         benchISCIs:bench.slice(0,80),
         totalActiveISCIs:brandIscis.length,
         totalInRotation:inRotation.size
@@ -5722,73 +5600,34 @@ PLANNING FOR: ${nextBroadcastMonth} (next broadcast month)
 
 All recommendations must be specific to the ${nextBroadcastMonth} broadcast month. Do NOT recommend holiday creative, New Year's content, or any seasonal themes that are not relevant to ${nextBroadcastMonth}. Think about what matters for PI advertising in ${MO_FULL[(curMoIdx+1)%12]}: spring driving season, motorcycle accidents, construction zone injuries, distracted driving awareness, prom/graduation season DUIs, etc — whatever is actually relevant to the upcoming month.
 
-Format: Respond with exactly SIX sections, each introduced by a line starting with "## " (two hash marks + space + section title). The client splits your response on that pattern to assign each section to one of the Muses, so the format is mandatory. Do not use any other top-level headings. Keep each section under 300 words so all six fit within max_tokens.
+Analyze the data and provide:
 
-## Staleness Analysis
-Which creatives have been running 2+ months and need rotation. Be specific — name the ISCI codes and markets. Note case-type saturation: if the same "trucking" or "car wreck" ISCI has run 3+ months in a market, the viewer fatigue is real; recommend a replacement from the bench list with a different value prop.
+1. STALENESS ANALYSIS: Which creatives have been running 2+ months and need rotation. Be specific — name the ISCI codes and markets.
 
-## Coverage Gaps
-Which markets are missing media types (TV, Radio, Streaming Audio, Cable) or case-type categories (Auto Accident, Trucking, Premises, On-the-Job, Distracted Driving, Brand). What needs to be added for ${nextBroadcastMonth}. Flag any market running a SINGLE case type — that's a weakness for PI brands that want to catch all injury types in the funnel.
+2. COVERAGE GAPS: Which markets are missing media types or creative tags. What needs to be added for ${nextBroadcastMonth}.
 
-## Creative Mix Analysis
-Analyze THREE dimensions: (a) Category balance — are case types weighted toward the market's actual injury drivers? A trucking-corridor market like Chattanooga should over-index trucking; a winter market like Minneapolis should over-index auto/weather. (b) Value prop balance — trust, results, local connection, expertise, no-fee-unless-we-win. (c) VO variety — are you running the same voice across every spot? Fresh VO signals fresh firm to repeat viewers.
+3. CREATIVE MIX ANALYSIS: Analyze THREE dimensions: (a) Category distribution — are case types balanced? (b) Value Prop distribution — is the messaging varied enough? (c) VO distribution — is there enough voice variety? For PI attorneys, categories should cover: auto accidents, trucking, premises liability, brand awareness. Value props should mix: trust, results, local connection, expertise.
 
-## Trend Recommendations
-What PI advertising is actually working in spring 2026? Think: TikTok testimonial-style creative crossing to TV, Spanish-language creative in markets with Hispanic growth (Chicago, Denver, Birmingham), mass-tort bleed-over from Camp Lejeune/3M era finishing up, newer mass torts (social media harm to minors, PFAS water, hair relaxer). Recommend which of these fit THIS brand's market footprint.
+4. TREND RECOMMENDATIONS: What PI advertising approaches are working RIGHT NOW in spring 2026? What should they lean into for ${nextBroadcastMonth} specifically?
 
-## Market-Specific Recommendations
-Give EVERY market in this brand its own paragraph — don't skip any. Use the marketProfiles object: climate, industries, local sports, seasonal accident drivers, cultural notes, and local media habits. Think like a PI marketer who knows the city:
-- Which case type should dominate this market's mix based on its accident drivers? (e.g. "Dothan's rural ag roads = farm-equipment + rural-highway crashes, push that case type hard")
-- What local event / sports / seasonal moment is coming in ${nextBroadcastMonth}? How should creative lean into it?
-- Demographic nuance — is the audience conservative/trust-driven (Montgomery, Dothan), tech-professional (Huntsville), commuter-heavy (Cincinnati, Chicago), transplant-heavy (Denver)?
-- Any local media quirk — is this a market where Radio still outperforms TV for 45+ audiences, where Streaming Audio is undervalued, where Sponsorship slots win because the local team/station is beloved?
+5. ${nextBroadcastMonth.toUpperCase()} ROTATION PLAN: For each market, recommend the specific rotation — which ISCIs to keep, which to swap out, and what new creative types to produce. Use actual ISCI codes and market codes.
 
-## ${nextBroadcastMonth} Rotation Plan
-For each market, recommend the specific rotation — which ISCI codes stay, which swap out (reference staleIscis and bench), what new creative type to produce. Include rotation percentages (e.g. "Birmingham TV Base: 40% BRMWK25002T trucking, 30% BRMWK25007T auto, 30% BRMWK25011T brand"). Ground every call in that market's profile. Never give a rotation that could be swapped between two different markets without changing anything.
+Be direct and actionable. No generic advice.`;
 
-Be direct and actionable. No generic advice. Every recommendation must tie back to specific ISCI codes, specific market context, or specific data from the payload.`;
-
-      // Streaming: proxy returns SSE from Anthropic. Parse text deltas
-      // and update planResult incrementally so the user sees the Muses
-      // speaking in real time instead of a 40-second dead-air wait.
       const resp=await fetch("/api/planner",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
-          model:"claude-sonnet-4-6",
-          max_tokens:6000,
-          stream:true,
+          model:"claude-sonnet-4-20250514",
+          max_tokens:4000,
           system:systemPrompt,
           messages:[{role:"user",content:"Here is the current rotation data for "+brand+":\n\n"+dataPayload+"\n\nPlease analyze and provide your recommendations."}]
         })
       });
-      if(!resp.ok){let detail="";try{const errJson=await resp.json();detail=errJson.error||errJson.message||JSON.stringify(errJson)}catch(e){try{detail=await resp.text()}catch(e2){detail="(no body)"}}throw new Error("API "+resp.status+": "+detail)}
-      if(!resp.body){throw new Error("No response body from stream")}
-      const reader=resp.body.getReader();
-      const decoder=new TextDecoder();
-      let buffer="";let accumulated="";
-      while(true){
-        const{done,value}=await reader.read();
-        if(done)break;
-        buffer+=decoder.decode(value,{stream:true});
-        // Process complete SSE events (delimited by blank lines).
-        const events=buffer.split("\n\n");
-        buffer=events.pop()||"";
-        for(const ev of events){
-          const dataLine=ev.split("\n").find(l=>l.startsWith("data: "));
-          if(!dataLine)continue;
-          const payload=dataLine.slice(6).trim();
-          if(!payload||payload==="[DONE]")continue;
-          try{
-            const j=JSON.parse(payload);
-            if(j.type==="content_block_delta"&&j.delta?.text){accumulated+=j.delta.text;setPlanResult(accumulated)}
-            else if(j.type==="message_stop"){/* end */}
-            else if(j.type==="error"){throw new Error(j.error?.message||"Stream error")}
-          }catch(parseErr){console.warn("SSE parse error:",parseErr,payload)}
-        }
-      }
-      if(!accumulated)throw new Error("Stream returned no text");
-      setPlanResult(accumulated);
+      if(!resp.ok)throw new Error("API error: "+resp.status);
+      const data=await resp.json();
+      const text=data.content?.map(c=>c.text||"").join("\n")||"No response";
+      setPlanResult(text);
     }catch(e){
       setPlanError(e.message);
     }finally{
@@ -5804,40 +5643,16 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
     const months=[...new Set(bt.map(h=>h.month))];
     const markets=[...new Set(bt.map(h=>h.market))];
     const tagged=bi.filter(i=>i.category||i.caseType).length;
-    // Parse AI result into Muse sections. Tolerates lead-in chatter
-    // before the first "## " heading (drop it), empty sections, and
-    // Claude switching between "## " and "**Title**" — if no sections
-    // parse we surface the raw text so the result is always viewable.
-    // Each section's title is matched to the most-relevant Muse by
-    // keyword so Calliope (Coverage) doesn't end up narrating
-    // "Staleness Analysis" — that swap was making the cards look broken.
-    const matchMuseByTitle=(title)=>{
-      const t=(title||"").toLowerCase();
-      if(/stale|stagnat|aging|fatigue/.test(t))return MUSES.find(m=>m.role==="Staleness")||MUSES[2];
-      if(/coverage|gap|missing|absent/.test(t))return MUSES.find(m=>m.role==="Coverage")||MUSES[0];
-      if(/mix|category|creative|tag|value\s*prop|vo|variety/.test(t))return MUSES.find(m=>m.role==="Creative Mix")||MUSES[1];
-      if(/rotation|plan|percent|balance|allocate/.test(t))return MUSES.find(m=>m.role==="Rotation Balance")||MUSES[3];
-      if(/trend|history|historical|pattern|market[- ]specific|recommendation/.test(t))return MUSES.find(m=>m.role==="History")||MUSES[4];
-      return MUSES[0];
-    };
+    // Parse AI result into Muse sections
     const parseMuseSections=(text)=>{
       if(!text)return null;
-      const firstIdx=text.search(/^##\s+/m);
-      const body=firstIdx>=0?text.slice(firstIdx):text;
-      const parts=body.split(/^##\s+/m).filter(s=>s&&s.trim());
-      if(!parts.length)return null;
-      const usedMuses=new Set();
-      return parts.map((s)=>{
+      const sections=text.split(/^##\s+/m).filter(Boolean);
+      return sections.map((s,i)=>{
         const lines=s.trim().split("\n");
-        const title=(lines[0]||"").trim();
-        const content=lines.slice(1).join("\n").trim();
-        // Prefer first-match Muse; if she's already used, fall back to
-        // any unused Muse, then to the matched one again so 6 sections
-        // still distribute reasonably across 5 muses.
-        let muse=matchMuseByTitle(title);
-        if(usedMuses.has(muse.name)){const free=MUSES.find(m=>!usedMuses.has(m.name));if(free)muse=free}
-        usedMuses.add(muse.name);
-        return{title,body:content,muse};
+        const title=lines[0]||"";
+        const body=lines.slice(1).join("\n").trim();
+        const muse=MUSES[i%MUSES.length];
+        return{title,body,muse};
       });
     };
     const museSections=parseMuseSections(planResult);
@@ -5862,43 +5677,24 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
       </div>
       {/* Run button */}
       <button onClick={runPlanner} disabled={planLoading} style={{padding:"12px 28px",borderRadius:10,border:"none",background:planLoading?"#4a3565":"linear-gradient(135deg,"+MUSES.map(m=>m.color).join(",")+")",color:"#fff",fontSize:15,fontWeight:800,cursor:planLoading?"wait":"pointer",fontFamily:"'Cormorant Garamond',serif",letterSpacing:1,boxShadow:planLoading?"none":"0 4px 20px rgba(155,123,176,.3)",transition:"all .2s"}}>
-        {planLoading?"🎵 The Muses are deliberating... ("+planElapsed+"s)":"🎭 Summon the Muses — Analyze "+planBrand}
+        {planLoading?"🎵 The Muses are deliberating...":"🎭 Summon the Muses — Analyze "+planBrand}
       </button>
-      {planLoading&&<div style={{fontSize:12,color:"#9B8EAD",fontStyle:"italic",marginTop:-4}}>Sonnet typically takes 20-45s for a full analysis. If it passes 55s the function will timeout and surface an error — don't panic.</div>}
-      {planError&&<div style={{padding:12,borderRadius:8,background:"rgba(232,90,122,.1)",border:"1px solid rgba(232,90,122,.2)",color:"#E85A7A",fontSize:13,whiteSpace:"pre-wrap",wordBreak:"break-word",fontFamily:"ui-monospace,SFMono-Regular,monospace"}}><b style={{color:"#E85A7A",fontFamily:"inherit"}}>The Muses encountered an error:</b><br/>{planError}</div>}
-      {/* Results — Muse cards in a 2-column grid. Each card shows its
-          section title, has its own scrollable body capped at viewport
-          height, and is matched to a topic-appropriate Muse. */}
+      {planError&&<div style={{padding:12,borderRadius:8,background:"rgba(232,90,122,.1)",border:"1px solid rgba(232,90,122,.2)",color:"#E85A7A",fontSize:13}}>The Muses encountered an error: {planError}</div>}
+      {/* Results — each section narrated by a Muse */}
       {museSections&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0"}}>
-          <div style={{fontSize:14,color:"#C4A0C8",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif"}}>"Listen well, for we sing of {planBrand}'s traffic rotation…"</div>
-          <button onClick={()=>{navigator.clipboard.writeText(planResult);notify("Copied Muses' prophecy")}} style={{padding:"4px 10px",borderRadius:6,border:"1px solid #4a3565",background:"transparent",color:"#C4A0C8",fontSize:11,fontWeight:600,cursor:"pointer"}}>📋 Copy full text</button>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(380px,1fr))",gap:12}}>
-        {museSections.map((s,i)=><div key={i} style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid "+s.muse.color+"30",borderRadius:12,padding:0,position:"relative",overflow:"hidden",display:"flex",flexDirection:"column",maxHeight:"70vh"}}>
-          <div style={{height:3,background:`linear-gradient(90deg,${s.muse.color},${s.muse.color}44)`}}/>
-          <div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderBottom:"1px solid "+s.muse.color+"20",background:`linear-gradient(135deg,${s.muse.color}15,transparent)`}}>
-            <span style={{fontSize:24}}>{s.muse.icon}</span>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:11,color:s.muse.color,fontWeight:700,textTransform:"uppercase",letterSpacing:1.2,opacity:.85}}>{s.muse.name} · {s.muse.role}</div>
-              <div style={{fontSize:15,fontWeight:800,color:"#E8DFF0",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.3,marginTop:1,lineHeight:1.2}}>{s.title}</div>
-            </div>
-          </div>
-          <div style={{padding:"12px 14px",overflowY:"auto",fontSize:12.5,color:"#E8DFF0",lineHeight:1.55}}>
+        <div style={{fontSize:14,color:"#C4A0C8",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",padding:"8px 0"}}>"Listen well, for we sing of {planBrand}'s traffic rotation…"</div>
+        {museSections.map((s,i)=><MuseCard key={i} muse={s.muse} content={
+          <div>
+            <div style={{fontSize:14,fontWeight:800,color:s.muse.color,fontFamily:"'Cormorant Garamond',serif",marginBottom:6}}>{s.title}</div>
             {s.body.split("\n").map((line,li)=>{
               if(!line.trim())return<div key={li} style={{height:4}}/>;
-              if(line.startsWith("### "))return<div key={li} style={{fontSize:12.5,fontWeight:700,color:"#D4A040",marginTop:8,marginBottom:2,letterSpacing:.3}}>{line.replace(/^#+\s*/,"")}</div>;
-              if(line.startsWith("- ")||line.startsWith("* "))return<div key={li} style={{paddingLeft:14,position:"relative",marginBottom:3}}><span style={{position:"absolute",left:0,color:s.muse.color,fontWeight:700}}>♪</span>{line.replace(/^[-*]\s*/,"").replace(/\*\*(.+?)\*\*/g,"$1")}</div>;
-              if(line.startsWith("**"))return<div key={li} style={{fontWeight:700,color:"#F0E8F8",marginTop:6,marginBottom:2}}>{line.replace(/\*\*/g,"")}</div>;
-              return<div key={li} style={{marginBottom:3}}>{line.replace(/\*\*(.+?)\*\*/g,"$1")}</div>;
+              if(line.startsWith("### "))return<div key={li} style={{fontSize:12,fontWeight:700,color:"#D4A040",marginTop:6}}>{line.replace(/^#+\s*/,"")}</div>;
+              if(line.startsWith("- ")||line.startsWith("* "))return<div key={li} style={{paddingLeft:12,position:"relative",fontSize:12}}><span style={{position:"absolute",left:2,color:s.muse.color}}>♪</span>{line.replace(/^[-*]\s*/,"").replace(/\*\*/g,"")}</div>;
+              if(line.startsWith("**"))return<div key={li} style={{fontWeight:700,color:"#E8DFF0",fontSize:12}}>{line.replace(/\*\*/g,"")}</div>;
+              return<div key={li} style={{fontSize:12}}>{line.replace(/\*\*/g,"")}</div>;
             })}
           </div>
-        </div>)}
-        </div>
-      </div>}
-      {planResult&&!museSections&&<div style={{padding:14,background:"#2d1f42",border:"1px solid #4a3565",borderRadius:10,whiteSpace:"pre-wrap",fontSize:13,color:"#E8DFF0",lineHeight:1.6,fontFamily:"'Cormorant Garamond',serif"}}>
-        <div style={{fontSize:12,color:"#D4A040",fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>🎭 The Muses spoke — (sections didn't parse, raw prophecy below)</div>
-        {planResult}
+        }/>)}
       </div>}
       {/* Empty state — Muses waiting */}
       {!planResult&&!planLoading&&!planError&&<div style={{padding:40,textAlign:"center"}}>
@@ -6017,32 +5813,29 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
     const buyToMedia={"TV Base":"TV","TV Sponsorship":"TV","TV UD/AV":"TV","TV Sports":"TV","Cable":"Cable","Heavy Up":"TV","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
     // Find traffic record for a market + buy type + month
     const getStatus=(mkt,buyType)=>{
-      const media=buyToMedia[buyType];
+      const media=buyToMedia[buyType];const group=buyToGroup[buyType];
       const mktCode=Object.entries(DM).find(([_,n])=>n===mkt)?.[0]||"";
-      // Lenient match: any record that exists for this brand+month+market
-      // with the right media category counts as sent. No group-level
-      // splitting — if you built a TV rotation for April, every TV buy
-      // type (Base/Sponsorship/UD-AV/Sports/Heavy Up) lights up. Combined
-      // estimates store media as "TV / Cable" etc., so split on " / "
-      // and treat any component match as a hit.
+      // Check traffic history
       const rec=trafficHistory.find(h=>{
-        if(h.brand!==trackerBrand)return false;
-        if(!(h.month===trackerMonth||(typeof h.month==="string"&&h.month.split(/\s+/)[0]===trackerMonth)))return false;
+        if(h.brand!==trackerBrand||h.month!==trackerMonth)return false;
+        // Match market (handle both code and full name, and multi-market records)
         const hMkt=normMkt(h.market)||h.market;
-        // Combined records have market like "Chicago / Cincinnati / ..."
-        const hMarkets=String(h.market||"").split(/\s*\/\s*/);
-        const matchMkt=hMkt===mktCode||hMarkets.some(m=>m===mkt||normMkt(m)===mktCode);
+        const matchMkt=hMkt===mktCode||h.market===mkt||(h.market||"").includes(mkt);
         if(!matchMkt)return false;
-        const hMedias=String(h.media||"").split(/\s*\/\s*/);
-        return hMedias.includes(media);
+        // For TV buy types, combined estimates cover all TV groups
+        if(media==="TV"&&h.media==="TV"&&h.combined)return true;
+        if(h.media===media){
+          if(!group||!h.group)return true;
+          if(h.group===group)return true;
+          if(h.combined)return true;
+        }
+        return false;
       });
       if(!rec)return{status:"empty",est:null,rec:null};
-      // Any record in this slot counts as "sent" — the record only exists in
-      // Firestore because it was sent / imported / built and persisted.
-      // Granular statuses ("copied", "partial") still win if explicitly set.
+      if(rec.status==="sent")return{status:"sent",est:rec.est,rec};
       if(rec.status==="copied")return{status:"copied",est:rec.est,rec};
       if(rec.status==="partial")return{status:"partial",est:rec.est,rec};
-      return{status:"sent",est:rec.est,rec};
+      return{status:"built",est:rec.est,rec};
     };
     // Find estimate number for a market + buy type
     const getEst=(mkt,buyType)=>{
@@ -6098,7 +5891,7 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
           <table style={{width:"100%",borderCollapse:"collapse"}}>
             <thead><tr>
               <th style={{padding:"8px 10px",fontSize:11,fontWeight:800,color:"#D4A040",textTransform:"uppercase",letterSpacing:1,borderBottom:"2px solid rgba(212,160,64,.2)",textAlign:"left",position:"sticky",left:0,background:"linear-gradient(180deg,#2d1f42,#261840)",zIndex:2,minWidth:120}}>Market</th>
-              {buyTypes.map(bt=><th key={bt} style={{padding:"6px 8px",fontSize:9,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase",letterSpacing:.5,borderBottom:"2px solid rgba(212,160,64,.2)",textAlign:"center",background:"linear-gradient(180deg,#2d1f42,#261840)",minWidth:70,whiteSpace:"nowrap"}}>{bt==="Cable"?"TV/Cable":bt}</th>)}
+              {buyTypes.map(bt=><th key={bt} style={{padding:"6px 8px",fontSize:9,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase",letterSpacing:.5,borderBottom:"2px solid rgba(212,160,64,.2)",textAlign:"center",background:"linear-gradient(180deg,#2d1f42,#261840)",minWidth:70,whiteSpace:"nowrap"}}>{bt}</th>)}
             </tr></thead>
             <tbody>{mkts.map(mkt=>{
               const dma=Object.entries(DM).find(([_,n])=>n===mkt)?.[0]||"";
@@ -6914,9 +6707,9 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
       <nav style={{flex:1,padding:"3px 0"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:(pg===n.id&&!isOohHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 12px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative",transition:"all .15s",letterSpacing:a?.3:0}} onMouseEnter={e=>{if(!a)e.currentTarget.style.background="rgba(155,123,176,.06)"}} onMouseLeave={e=>{if(!a)e.currentTarget.style.background="transparent"}}><span style={{fontSize:14}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:12,fontWeight:800,padding:"1px 6px",borderRadius:10,background:typeof badge==="number"?"#E85A7A":"#D4A040",color:"#fff",boxShadow:typeof badge==="number"?"0 2px 8px rgba(232,90,122,.3)":"0 2px 8px rgba(212,160,64,.3)"}}>{badge}</span>}</button>})}</nav>
       <div style={{padding:"10px 12px",borderTop:"1px solid rgba(212,160,64,.1)",fontSize:12,color:"#6B5E80"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,color:"#D4A040",letterSpacing:1}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #4a3565",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#9B8EAD",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:"#5BC4A0"}}>Synced {Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago"}</span>}</div></div>
     </div>
-    <div style={{flex:1,overflowY:"auto",padding:16,position:"relative"}}>
+    <div style={{flex:1,overflowY:"auto",padding:16}}>
       <AnimatePresence mode="wait" initial={false}>
-        {pg!=="library"&&<MDiv
+        <MDiv
           key={pg}
           initial={{opacity:0,y:28,scale:0.97,filter:"blur(6px)"}}
           animate={{opacity:1,y:0,scale:1,filter:"blur(0px)"}}
@@ -6931,605 +6724,59 @@ Be direct and actionable. No generic advice. Every recommendation must tie back 
           {pg==="est"&&<EstPg/>}
           {pg==="sta"&&<StaPg/>}
           {pg==="metrics"&&<MetricsPg/>}
+          {pg==="library"&&LibraryPg()}
           {pg==="planner"&&PlannerPg()}
           {pg==="notif"&&pages["notif"]}
           {pg==="docs"&&<DocsPg/>}
-        </MDiv>}
+        </MDiv>
       </AnimatePresence>
-      {pg==="library"&&(()=>{
-        // Library is rendered OUTSIDE the MDiv page-transition wrapper
-        // because that wrapper applies a transform (for opacity/scale/blur
-        // animations) which creates a containing block for fixed descendants.
-        // BookOpen's `fixed inset-0` modal needs to escape to the viewport so
-        // clicking a book actually covers the screen.
-        const MO_LIB=["January","February","March","April","May","June","July","August","September","October","November","December"];
-        const now=new Date();const curIdx=now.getMonth();const curYear=now.getFullYear();
-        // Archive cutoff = first day of (current month - 2). Matches the
-        // main app's Tracker logic (app.js ~5213). From April 2026 that's
-        // Feb 1, 2026, so Jan 2026, Dec 2025, Nov 2025 etc. all archive.
-        // Records with month name only (no year) get their year inferred:
-        // months > curIdx+2 must be from last year, since a record for
-        // "December" in April can't mean next December — that's 8 months
-        // ahead, and we only plan ~2 months forward.
-        const archCutoff=new Date(curYear,curIdx-2,1);
-        // Render the exact same traffic sheet the main app emits (see
-        // buildSheetHtml in RotBuilder). The library displays the result via
-        // dangerouslySetInnerHTML in the left page so what you see matches
-        // what was sent / printed / emailed.
-        const SCHED_COLORS_SHEET={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#dcfce7","Holiday Only":"#fee2e2"};
-        const SCHED_ORDER_SHEET=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
-        const renderSheet=(h)=>{
-          const code=h.brand==="Postman Law"?"PL":"WK";
-          const bc=getBrandColor(code);const bcBg=getBrandBg(code);
-          const logo=code==="PL"?LOGO_PL:LOGO_WK;
-          const hdr=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0;color:#1e1233"><b style="min-width:140px;color:#555;font-weight:700">'+l+':</b><span style="color:'+(c||'#1e1233')+';font-weight:'+(c?'600':'500')+'">'+(v==null?"":v)+'</span></div>';
-          // Scoped <style> forces the sheet to render as white paper with dark
-          // legible text even when the Library's dark theme is in effect on the
-          // host page. Explicit inline `style="color:#..."` spans win via CSS
-          // specificity, so brand accents (Client red, Buyer gold) still show.
-          let x='<html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}html,body{background:#fff;color:#1e1233;font-family:Arial,sans-serif}body{padding:28px}table{width:100%;border-collapse:collapse}b{font-weight:700}td,th{color:#1e1233}</style></head><body>';
-          x+='<div style="text-align:center;margin-bottom:14px"><img src="'+logo+'" style="height:48px"/></div>';
-          x+=hdr("Agency",getBrandAgency(code));
-          x+=hdr("Client",h.brand,bc);
-          x+=hdr("Market",DM[h.market]||h.market);
-          x+=hdr("Buyer",h.buyer,"#D4A040");
-          const estStr=h.est||"";
-          const estNums=estStr.split(/\s*[+\/]\s*/).map(s=>s.trim()).filter(Boolean);
-          const isCombined=(h.combined===true)||estNums.length>1;
-          if(isCombined){
-            x+=hdr("Estimate(s)",estNums.length+" combined estimates");
-            x+=hdr("Media",mediaLabel(h.media),h.isOoh?"#D4A040":"#4AC8E8");
-            const hMkt=normMkt(h.market)||h.market;
-            const subs=estNums.map(n=>estimates.find(e=>e.num===n&&e.brand===h.brand&&((normMkt(e.market)||e.market)===hMkt||e.market===h.market))).filter(Boolean);
-            const buyTypes=[...new Set(subs.map(e=>e.group))].join(", ");
-            if(buyTypes)x+=hdr("Buy Type(s)",buyTypes);
-            x+='<table style="margin:8px 0;font-size:11px;border:1px solid #ddd;width:100%;border-collapse:collapse"><thead><tr style="background:#F0E8F8"><th style="padding:4px 8px;text-align:left;color:#5b21b6">Estimate</th><th style="padding:4px 8px;text-align:left;color:#5b21b6">Buy Type</th><th style="padding:4px 8px;text-align:left;color:#5b21b6">Stations</th></tr></thead><tbody>';
-            subs.forEach(ce=>{
-              const stas=getEstStations(ce);
-              x+='<tr><td style="padding:3px 8px;font-weight:700;border-bottom:1px solid #eee">'+ce.num+'</td><td style="padding:3px 8px;border-bottom:1px solid #eee">'+ce.group+'</td><td style="padding:3px 8px;border-bottom:1px solid #eee;font-size:10px">'+(stas.length?stas.map(s=>s.call).join(", "):"—")+'</td></tr>';
-            });
-            x+='</tbody></table>';
-          }else{
-            x+=hdr("Estimate(s)",estStr);
-            x+=hdr("Media",mediaLabel(h.media),h.isOoh?"#D4A040":"#4AC8E8");
-            const stas=(h.stations&&h.stations.length)?h.stations:[];
-            if(stas.length)x+=hdr("Stations ("+stas.length+")",stas.join(", "));
-          }
-          x+=hdr("Broadcast Month",h.month,"#E85A7A");
-          if(h.isOoh&&h.postDates)x+=hdr("Post Dates",h.postDates,"#1e1233");
-          else if(h.flight)x+=hdr("Flight Dates",h.flight,"#1e1233");
-          x+=hdr("Version/ Links","Version "+(h.version||"1")+" / "+h.market+" Assets");
-          if(h.comments)x+=hdr("Comments",h.comments);
-          const thCell='background:#F0E8F8;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#6B5E80';
-          const tdCell='padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)';
-          x+='<table style="width:100%;border-collapse:collapse;margin-top:14px"><thead><tr><th style="'+thCell+'">Flight Dates</th><th style="'+thCell+'">ISCI Codes &amp; Title:</th><th style="'+thCell+'">Length:</th><th style="'+thCell+'">%</th><th style="'+thCell+'">Notes:</th></tr></thead><tbody>';
-          const grouped={};
-          (h.iscis||[]).forEach(r=>{const s=r.sched||"All Week";if(!grouped[s])grouped[s]=[];grouped[s].push(r)});
-          const validBk=b=>typeof b==="string"&&b&&b!=="true"&&b!=="false";
-          const renderGroup=(s,bg)=>{
-            const items=(grouped[s]||[]).slice().sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0));
-            x+='<tr><td colspan="5" style="padding:5px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid rgba(0,0,0,.1);background:'+bg+'">'+s+'</td></tr>';
-            items.forEach(r=>{
-              const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";
-              const note=validBk(r.bookend)?r.bookend:s;
-              const length=validBk(r.bookend)?r.bookend:(r.dur?":"+r.dur:"");
-              x+='<tr style="background:'+bg+'44"><td style="'+tdCell+'">'+(h.flight||"")+'</td><td style="'+tdCell+';font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td style="'+tdCell+'">'+length+'</td><td style="'+tdCell+';font-weight:600">'+pct+'</td><td style="'+tdCell+';font-size:10px;color:#555">'+note+'</td></tr>';
-            });
-          };
-          SCHED_ORDER_SHEET.forEach(s=>{if(grouped[s])renderGroup(s,SCHED_COLORS_SHEET[s])});
-          Object.keys(grouped).filter(s=>!SCHED_ORDER_SHEET.includes(s)).forEach(s=>renderGroup(s,"#F0E8F8"));
-          x+='</tbody></table>';
-          x+='<div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">';
-          Object.entries(SCHED_COLORS_SHEET).forEach(([s,c])=>{if(grouped[s])x+='<div style="display:flex;align-items:center;gap:4px;font-size:9px"><div style="width:12px;height:12px;border-radius:2px;background:'+c+'"></div>'+s+'</div>'});
-          x+='</div>';
-          x+='<div style="margin-top:36px;border-top:2px solid '+bc+';padding-top:8px;color:#1e1233"><div style="display:flex;justify-content:space-between;font-size:13px"><div><b>Accepted by:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div style="background:#fffbeb;padding:7px;font-size:10px;color:#92400e;margin-top:6px;border:1px solid #fde68a">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></div>';
-          x+='</body></html>';
-          return x;
-        };
-        // No dedup — show every trafficHistory record, including duplicates
-        // and archived, so the correct stored version is always visible.
-        const dedupedEntries=trafficHistory.map((h,i)=>({h,i}));
-        const data=dedupedEntries.map(({h,i})=>{
-          const parts=String(h.month||"").trim().split(/\s+/);
-          const monIdx=MO_LIB.indexOf(parts[0]);
-          const parsedYear=parseInt(parts[1]);
-          const year=!isNaN(parsedYear)?parsedYear:(monIdx>curIdx+2?curYear-1:curYear);
-          const effDate=monIdx>=0?new Date(year,monIdx,1):(h.ts?new Date(h.ts):null);
-          const archived=effDate?effDate<archCutoff:true;
-          // Combined estimates save market as "Chicago / Cincinnati / ..."
-          // and media as "TV / Cable" — pick the first component so the
-          // Library shelves and BookShelf recognize them (its mediaOrder
-          // only lists single types like 'TV', 'Radio', etc.).
-          const mktRaw=String(h.market||"").split(/\s*\/\s*/)[0];
-          const mediaRaw=String(h.media||"").split(/\s*\/\s*/)[0];
-          return{
-            id:(h.ts?String(h.ts):"tmp")+"_"+i,
-            historyIdx:i,
-            brand:h.brand,
-            // Strip ", STATE" suffix if the record came from a PDF parse that
-            // captured the full "Chicago, IL" label in the Market field.
-            market:((DM[mktRaw]||mktRaw)||"").split(",")[0].trim(),
-            mediaType:mediaRaw,
-            month:parts[0]||h.month,
-            estimate:h.est||"",
-            version:h.version?("v"+h.version):"",
-            iscis:(h.iscis?.length||0)+" ISCIs"+(h.stations?.length?(" · "+h.stations.length+" stations"):""),
-            dateRange:h.flight||"",
-            buyer:h.buyer||"",
-            status:h.status==="sent"?"sent":"pending",
-            // Enrich each ISCI entry at render time from the registry so
-            // title / dur / fileUrl / category / vo stay in sync with
-            // whatever's in the ISCI registry. User values on the record
-            // win if present.
-            iscisDetail:(h.iscis||[]).map(r=>{
-              if(!r||!r.code)return r;
-              const hDma=normMkt(h.market)||h.market||"";
-              const full=iscis.find(i=>i.code===r.code&&(i.dma||"")===hDma)||iscis.find(i=>i.code===r.code);
-              return{
-                code:r.code,
-                title:r.title||full?.title||"",
-                dur:r.dur||full?.dur||"",
-                pct:r.pct,
-                sched:r.sched,
-                bookend:r.bookend,
-                units:r.units,
-                fileUrl:full?.fileUrl||r.fileUrl||"",
-                category:full?.category||full?.caseType||r.category||"",
-                vo:full?.vo||r.vo||"",
-              };
-            }),
-            stations:h.stations||[],
-            ts:h.ts,
-            year:year,
-            archived:archived,
-            comments:h.comments||"",
-            sheetHtml:renderSheet(h),
-          };
-        });
-        window.MegaraLibraryData=data;
-        // Logos read by brand by the library's BookOpen (keeps one copy of
-        // each base64 instead of duplicating it into every instruction).
-        window.MegaraLibraryLogos={"Postman Law":LOGO_PL,"Wettermark Keith":LOGO_WK};
-        // Debug helper — open devtools and run
-        //   MegaraLibraryDebug("Wettermark Keith","Montgomery","Radio","January")
-        // to dump every Firestore trafficHistory record for that exact slot,
-        // plus which one the Library picked after dedup. That tells us at a
-        // glance whether the data in Firestore is the problem or the render is.
-        window.MegaraLibraryDebug=(brandF,marketF,mediaF,monthF)=>{
-          const all=trafficHistory.map((h,i)=>({i,h})).filter(({h})=>{
-            if(brandF&&h.brand!==brandF)return false;
-            if(marketF){const hm=(DM[h.market]||h.market);if(hm!==marketF&&h.market!==marketF)return false}
-            if(mediaF&&h.media!==mediaF)return false;
-            if(monthF&&h.month!==monthF)return false;
-            return true;
-          });
-          console.log("=== trafficHistory slot "+[brandF,marketF,mediaF,monthF].join(" | ")+" ===");
-          console.log(all.length+" record(s) in Firestore for that slot");
-          all.forEach(({i,h})=>{
-            console.log("  #"+i+" ts="+(h.ts||"(none)")+" status="+(h.status||"(none)")+" combined="+(h.combined?"yes":"no")+" est="+(h.est||"")+" iscis="+(h.iscis||[]).length+" ("+(h.iscis||[]).map(r=>r.code).join(", ")+")");
-          });
-          const picked=data.find(d=>d.brand===brandF&&d.market===marketF&&d.mediaType===mediaF&&d.month===monthF);
-          if(picked){console.log("Library is showing historyIdx="+picked.historyIdx);}
-          else console.log("Library has NO record for that slot (all filtered out or none exist).");
-        };
-        // Button handlers for the right-page actions. BookOpen calls these
-        // by name through window.MegaraLibraryActions, receiving the
-        // instruction.historyIdx set on each record below.
-        window.MegaraLibraryActions={
-          edit:(idx)=>{if(typeof idx==="number"){setEditTrafficIdx(idx);notify("Edit Traffic — changes save back to Firestore")}},
-          view:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close()},
-          print:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close();w.focus();setTimeout(()=>w.print(),300)},
-          preview:async(idx)=>{
-            // Dry-run of the full send pipeline — generates the real PDF,
-            // computes recipients/CC/subject/body, but DOES NOT call
-            // /api/send-traffic. Opens the PDF in one tab and a second
-            // window showing exactly what the vendor would see in their
-            // inbox (subject, to/cc, rendered body HTML, attachment name).
-            const h=trafficHistory[idx];if(!h)return;
-            notify("Building preview — no emails will be sent…");
-            const sheetHtml=data[idx]?.sheetHtml||"";
-            let pdfUri="";try{pdfUri=await generatePdfBase64(sheetHtml,h)}catch(pe){notify("PDF generation failed: "+pe.message);return}
-            const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+(h.market||"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
-            const parseEmails2=(c)=>{if(!c)return[];return c.split(";").map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))};
-            const mediaCompat=(sMed,hMed)=>{if(sMed===hMed)return true;if(sMed==="TV"&&["TV","Sports","Heavy Up","UD/AV","Sponsorship"].includes(hMed))return true;if(sMed==="Radio"&&hMed==="Radio")return true;if(sMed==="Cable"&&hMed==="Cable")return true;return false};
-            const mkt=normMkt(h.market);
-            const marketStations=stations.filter(s=>s.brand===h.brand&&normMkt(s.market)===mkt&&mediaCompat(s.media,h.media));
-            const ownerGroups={};marketStations.forEach(s=>{const grp=s.ownership||s.call;if(!ownerGroups[grp])ownerGroups[grp]=[];ownerGroups[grp].push(s)});
-            const grpKeys=Object.keys(ownerGroups);
-            const buyerCc=BUYER_EMAILS[h.buyer]||"";
-            const ccList=[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(", ");
-            const isciObjs=(h.iscis||[]).map(ic=>{const full=iscis.find(i=>i.code===ic.code);return full?{code:ic.code,title:ic.title,fileUrl:full.fileUrl}:null}).filter(Boolean);
-            const creativeLinks=isciObjs.filter(i=>i.fileUrl).length>0?"<br><br><b>Creative Files:</b><br>"+isciObjs.filter(i=>i.fileUrl).map(i=>'<a href="'+i.fileUrl+'">'+i.code+" — "+i.title+"</a>").join("<br>"):"";
-            const subj="Atticor | "+(h.brand||"")+" "+(h.market||"")+" "+(h.media||"")+" Traffic Instructions | "+(h.month||"")+" | Est "+(h.est||"");
-            // Build preview panel — one card per ownership group
-            let groupsHtml="";
-            if(!grpKeys.length){groupsHtml='<div style="padding:16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b">No stations match — nothing would be sent.</div>'}
-            else grpKeys.forEach(grpKey=>{
-              const grpStas=ownerGroups[grpKey];
-              const grpEmails=[...new Set(grpStas.flatMap(s=>parseEmails2(s.contact)))];
-              const staCalls=grpStas.map(s=>s.call);
-              const confirmBtns=grpStas.map(s=>'<a href="#" onclick="return false" style="display:inline-block;padding:6px 16px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:4px 2px">Confirm '+s.call+'</a>').join(" ");
-              const body="Hello,<br><br>Please find the attached traffic instructions for Est "+(h.est||"")+" — "+(h.brand||"")+", "+(h.market||"")+", "+(h.media||"")+".<br><br><b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Version:</b> "+(h.version||"")+"<br><b>Station(s):</b> "+staCalls.join(", ")+creativeLinks+"<br><br>Please confirm receipt of this traffic within 24 hours:<br>"+confirmBtns+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
-              groupsHtml+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:16px;overflow:hidden"><div style="background:#f3f4f6;padding:10px 14px;border-bottom:1px solid #e5e7eb;font-weight:700;color:#1e1233">'+grpKey+' <span style="font-weight:400;color:#6b7280;font-size:13px">— '+grpStas.length+' station(s): '+staCalls.join(", ")+'</span></div><div style="padding:14px;font-size:13px;color:#374151"><div><b>To:</b> '+(grpEmails.length?grpEmails.join(", "):'<span style="color:#b91c1c">(no emails on file — would fail)</span>')+'</div><div><b>Cc:</b> '+ccList+'</div><div><b>Subject:</b> '+subj+'</div><div><b>Attachment:</b> '+pdfName+'</div><div style="margin-top:12px;padding:14px;background:#fafafa;border-radius:6px;color:#1e1233;line-height:1.6">'+body+'</div></div></div>'
-            });
-            const recipientCount=grpKeys.reduce((n,k)=>n+[...new Set(ownerGroups[k].flatMap(s=>parseEmails2(s.contact)))].length,0);
-            const previewHtml='<!doctype html><html><head><meta charset="UTF-8"><title>Send Preview — '+h.brand+' '+h.market+' '+h.media+'</title><style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f9fafb;color:#111827}header{background:linear-gradient(135deg,#1e1233,#2a1a3e);color:#E8DFF0;padding:18px 24px;box-shadow:0 2px 8px rgba(0,0,0,.1)}h1{margin:0 0 4px;font-size:20px;font-weight:700}.banner{display:inline-block;padding:4px 10px;background:#D4A040;color:#1e1233;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-right:10px}.meta{color:#9B8EAD;font-size:13px;margin-top:6px}main{padding:24px;max-width:900px;margin:0 auto}.pdfbtn{display:inline-block;padding:10px 18px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin-bottom:20px}</style></head><body><header><div><span class="banner">PREVIEW — NOT SENT</span><span style="color:#D4A040;font-weight:700">'+h.brand+' · '+h.market+' · '+h.media+' · '+h.month+' · v'+(h.version||"1")+'</span></div><h1>'+grpKeys.length+' ownership group(s), '+recipientCount+' recipient email(s) total</h1><div class="meta">This is exactly what the vendor would receive. Nothing has been sent. Confirm buttons are disabled.</div></header><main><a class="pdfbtn" href="'+pdfUri+'" download="'+pdfName+'" target="_blank">📄 Open the actual PDF attachment</a>'+groupsHtml+'</main></body></html>';
-            const w=window.open("","","width=1100,height=900");
-            if(!w){notify("Popup blocked — allow popups to see the preview");return}
-            w.document.write(previewHtml);w.document.close();w.focus();
-            notify("Preview ready — nothing sent. "+grpKeys.length+" group(s), "+recipientCount+" recipient(s).");
-          },
-          send:async(idx)=>{
-            // Mirrors the main Traffic Library's resend flow (app.js ~line
-            // 5491+): look up stations by market + brand + media-compatible
-            // (so TV variants share station list), group by ownership, send
-            // ONE email per ownership group with per-station confirm buttons,
-            // generate fresh confirmation tokens for each station, update
-            // record status on success.
-            const h=trafficHistory[idx];if(!h)return;
-            if(!confirm("Send traffic?\n\n"+h.brand+" · "+(DM[h.market]||h.market)+" · "+(h.media||"")+" · "+h.month+" · v"+(h.version||"1")+"\n"+(h.iscis||[]).length+" ISCIs\n\nThis will email all linked stations."))return;
-            const resendNote=(prompt("Add a note to this email (optional):")||"").trim();
-            const sheetHtml=data[idx]?.sheetHtml||"";
-            let pdfB64="";try{const pdfUri=await generatePdfBase64(sheetHtml,h);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
-            const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+(h.market||"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
-            const parseEmails2=(c)=>{if(!c)return[];return c.split(";").map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))};
-            const mediaCompat=(sMed,hMed)=>{if(sMed===hMed)return true;if(sMed==="TV"&&["TV","Sports","Heavy Up","UD/AV","Sponsorship"].includes(hMed))return true;if(sMed==="Radio"&&hMed==="Radio")return true;if(sMed==="Cable"&&hMed==="Cable")return true;return false};
-            const mkt=normMkt(h.market);
-            const marketStations=stations.filter(s=>s.brand===h.brand&&normMkt(s.market)===mkt&&mediaCompat(s.media,h.media));
-            if(!marketStations.length){notify("No stations found for "+h.market+" "+h.media);return}
-            // Group by ownership — one email per owner group per record
-            const ownerGroups={};
-            marketStations.forEach(s=>{const grp=s.ownership||s.call;if(!ownerGroups[grp])ownerGroups[grp]=[];ownerGroups[grp].push(s)});
-            const grpKeys=Object.keys(ownerGroups);
-            notify("Sending to "+grpKeys.length+" ownership group(s)…");
-            // Fresh confirmation tokens per station
-            const resendKey=akFromHistory(h);
-            const resendTokens={};
-            marketStations.forEach(s=>{resendTokens[s.call]={confirmed:false,token:genToken()}});
-            setConfirmations(p=>({...p,[resendKey]:{...(p[resendKey]||{}),...resendTokens}}));
-            const buyerCc=BUYER_EMAILS[h.buyer]||"";
-            const ccList=[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(",");
-            const isciObjs=(h.iscis||[]).map(ic=>{const full=iscis.find(i=>i.code===ic.code);return full?{code:ic.code,title:ic.title,fileUrl:full.fileUrl}:null}).filter(Boolean);
-            const creativeLinks=isciObjs.filter(i=>i.fileUrl).length>0?"<br><br><b>Creative Files:</b><br>"+isciObjs.filter(i=>i.fileUrl).map(i=>'<a href="'+i.fileUrl+'">'+i.code+" — "+i.title+"</a>").join("<br>"):"";
-            let sent=0,failed=0;
-            const confirmBase=window.location.href.split("?")[0];
-            for(const grpKey of grpKeys){
-              const grpStas=ownerGroups[grpKey];
-              const grpEmails=[...new Set(grpStas.flatMap(s=>parseEmails2(s.contact)))].join(",");
-              if(!grpEmails){failed+=grpStas.length;continue}
-              const staCalls=grpStas.map(s=>s.call);
-              const subj="Atticor | "+(h.brand||"")+" "+(h.market||"")+" "+(h.media||"")+" Traffic Instructions | "+(h.month||"")+" | Est "+(h.est||"");
-              const noteHtml=resendNote?"<b>Note:</b> "+resendNote+"<br><br>":"";
-              const confirmBtns=grpStas.map(s=>{const tok=resendTokens[s.call]?.token||"auto";const url=confirmBase+"?confirm="+(h.est||"")+"&sta="+s.call+"&tok="+encodeURIComponent(tok);return'<a href="'+url+'" style="display:inline-block;padding:6px 16px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:4px 2px">Confirm '+s.call+'</a>'}).join(" ");
-              const body="Hello,<br><br>Please find the attached traffic instructions for Est "+(h.est||"")+" — "+(h.brand||"")+", "+(h.market||"")+", "+(h.media||"")+".<br><br>"+noteHtml+"<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Version:</b> "+(h.version||"")+"<br><b>Station(s):</b> "+staCalls.join(", ")+creativeLinks+"<br><br>Please confirm receipt of this traffic within 24 hours:<br>"+confirmBtns+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
-              try{const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:grpEmails,cc:ccList,subject:subj,message:body,pdfBase64:pdfB64,pdfName:pdfName})});if(r.ok)sent+=grpStas.length;else failed+=grpStas.length}catch(e){failed+=grpStas.length;console.error("Send group failed:",grpKey,e)}
-            }
-            notify(doomPick(DOOM.send)+" "+sent+" sent"+(failed?" ("+failed+" failed)":""));
-            log("Traffic Sent",h.market+" "+h.media+" "+h.month+" — "+sent+" sent to "+grpKeys.length+" ownership groups");
-            if(sent>0)setTrafficHistory(p=>p.map((r,j)=>j===idx?{...r,status:failed?"partial":"sent",statusNote:sent+" sent"+(failed?" · "+failed+" failed":"")}:r));
-          },
-          copyTo:(idx)=>{
-            // Mirrors the main Library's "Copy to…" flow (see ~line 5535):
-            // walks the broadcast CALENDAR for the NEXT entry after this
-            // record's month, swaps the WK monthly estimate when applicable,
-            // checks for a duplicate month, pulls flight dates from CALENDAR.
-            const h=trafficHistory[idx];if(!h)return;
-            const curCalIdx=CALENDAR.findIndex(c=>c.month===h.month);
-            if(curCalIdx<0){notify("Can't auto-advance from unknown month: "+(h.month||"(none)"));return}
-            const nextCal=CALENDAR[(curCalIdx+1)%CALENDAR.length];
-            const newMonth=nextCal.month;
-            const newFlight=fDs(nextCal.bcStart)+" - "+fDs(nextCal.bcEnd);
-            const WK_MONTH_EST={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};
-            const EST_TO_MONTH=Object.fromEntries(Object.entries(WK_MONTH_EST).map(([m,n])=>[n,m]));
-            let newEst=h.est;
-            if(h.brand==="Wettermark Keith"&&(EST_TO_MONTH[h.est]||WK_MONTH_EST[h.month])){newEst=WK_MONTH_EST[newMonth]||h.est}
-            const existing=trafficHistory.find(x=>x.brand===h.brand&&x.market===h.market&&x.media===h.media&&x.month===newMonth&&x.status!=="copied");
-            if(existing&&!confirm(h.brand+" "+h.market+" "+h.media+" already has "+newMonth+" traffic (v"+existing.version+"). Copy anyway? This creates a new record — it won't overwrite."))return;
-            const copy={...h,ts:new Date().toISOString(),est:newEst,month:newMonth,flight:newFlight,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:"Copied from "+h.month};
-            setTrafficHistory(p=>[copy,...p]);
-            log("Traffic Copied",h.brand+" "+h.market+" "+h.media+" "+h.month+" → "+newMonth+" (Est "+newEst+")");
-            notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);
-          },
-          delete:async(idx)=>{const h=trafficHistory[idx];if(!h)return;const pw=prompt("Admin password to delete traffic:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok){alert("Wrong password");return}if(!confirm("Delete "+h.brand+" "+h.market+" "+h.media+" "+h.month+"? This cannot be undone."))return;setTrafficHistory(p=>p.filter((_,j)=>j!==idx));log("Traffic Deleted",h.brand+" "+h.market+" "+h.media+" "+h.month);notify("Traffic deleted")},
-          restoreFromBackup:async()=>{
-            // Pulls every available backup — the single "latest" backup plus
-            // the rotating 10-slot history from both Firestore and
-            // localStorage. User picks by record count + timestamp.
-            if(!db){notify("Firestore not available");return}
-            const pw=prompt("Admin password — restore trafficHistory from backup:");
-            if(!pw)return;
-            const ok=await verifyAuth(pw,"admin");
-            if(!ok){alert("Wrong password");return}
-            const found=[];
-            // Latest single backup (Firestore)
-            try{const s=await db.collection("appData").doc("trafficHistory_backup").get();if(s.exists){const d=s.data();if(d&&d.data)found.push({src:"FS latest",ts:d.ts,data:JSON.parse(d.data)})}}catch(e){}
-            // Rotating slots 0..9 (Firestore)
-            for(let i=0;i<10;i++){
-              try{const s=await db.collection("appData").doc("trafficHistory_backup_s"+i).get();if(s.exists){const d=s.data();if(d&&d.data)found.push({src:"FS slot "+i,ts:d.ts,data:JSON.parse(d.data)})}}catch(e){}
-            }
-            // localStorage
-            try{const ls=localStorage.getItem("doom_backup_trafficHistory");if(ls){const j=JSON.parse(ls);if(j&&j.data)found.push({src:"LS latest",ts:j.ts,data:JSON.parse(j.data)})}}catch(e){}
-            for(let i=0;i<10;i++){
-              try{const ls=localStorage.getItem("doom_backup_trafficHistory_s"+i);if(ls){const j=JSON.parse(ls);if(j&&j.data)found.push({src:"LS slot "+i,ts:j.ts,data:JSON.parse(j.data)})}}catch(e){}
-            }
-            if(!found.length){notify("No backups found anywhere.");return}
-            // Sort newest first
-            found.sort((a,b)=>(b.ts||0)-(a.ts||0));
-            const cur=trafficHistory.length;
-            const lines=found.map((b,i)=>(i+1)+" = "+b.src+" · "+b.data.length+" records · "+new Date(b.ts).toLocaleString());
-            const pick=prompt("Current: "+cur+" records.\n\nPick a backup (type the number) or Cancel:\n\n"+lines.join("\n"));
-            if(!pick)return;
-            const n=parseInt(pick.trim())-1;
-            const chosen=found[n];
-            if(!chosen){notify("Invalid selection.");return}
-            if(!confirm("REPLACE current "+cur+" records with "+chosen.src+" ("+chosen.data.length+" records from "+new Date(chosen.ts).toLocaleString()+")?"))return;
-            setTrafficHistory(chosen.data);
-            log("Restore from backup",chosen.src+" — "+chosen.data.length+" records restored");
-            notify("Restored "+chosen.data.length+" records from "+chosen.src+".");
-          },
-          relinkCreative:async()=>{
-            // Re-syncs every trafficHistory record with the current ISCI
-            // registry. For each record's iscis[], looks up the registry by
-            // code+dma and fills in title/dur/fileUrl so metrics + AI Planner
-            // + Traffic Tracker all see matching creative data. Also repairs
-            // combined=true on PL records whose est string contains "+" (so
-            // the Tracker's TV-combined match works again).
-            const pw=prompt("Admin password — re-link all traffic records to the ISCI registry:");
-            if(!pw)return;
-            const ok=await verifyAuth(pw,"admin");
-            if(!ok){alert("Wrong password");return}
-            let enriched=0,combinedFixed=0,orphanCodes=0;
-            const byCodeDma=new Map();
-            iscis.forEach(i=>{byCodeDma.set(i.code+"|"+(i.dma||""),i);byCodeDma.set(i.code,i)});
-            const next=trafficHistory.map(h=>{
-              const hDma=normMkt(h.market)||h.market||"";
-              const newIscis=(h.iscis||[]).map(r=>{
-                if(!r||!r.code)return r;
-                const full=byCodeDma.get(r.code+"|"+hDma)||byCodeDma.get(r.code);
-                if(!full){orphanCodes++;return r}
-                enriched++;
-                return{
-                  ...r,
-                  title:r.title||full.title||"",
-                  dur:r.dur||full.dur||"",
-                  fileUrl:full.fileUrl||r.fileUrl||"",
-                  category:full.category||full.caseType||r.category||"",
-                  valueProp:full.valueProp||r.valueProp||"",
-                  vo:full.vo||r.vo||"",
-                };
-              });
-              let out={...h,iscis:newIscis};
-              // Repair the combined flag — TV records with "+" in est are combined
-              if(h.media==="TV"&&(h.est||"").indexOf("+")>=0&&!h.combined){
-                out.combined=true;
-                combinedFixed++;
-              }
-              return out;
-            });
-            backupBeforeSave("trafficHistory",next);
-            trafficFbCountRef.current=next.length;
-            setTrafficHistoryRaw(next);
-            try{
-              await db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(next),ts:Date.now()});
-              log("Relink Creative",enriched+" ISCI rows enriched · "+combinedFixed+" combined flags repaired · "+orphanCodes+" codes not in registry");
-              notify("Re-linked: "+enriched+" ISCIs enriched, "+combinedFixed+" combined flags fixed"+(orphanCodes?", "+orphanCodes+" orphan codes":""));
-            }catch(e){
-              console.error("Relink save failed:",e);
-              notify("Re-link save FAILED: "+(e.message||e));
-            }
-          },
-          loadTrafficSource:async()=>{
-            // Fetches /traffic-source.zip, unzips, parses every PDF through
-            // the same extractPdfText / parseTrafficText the manual import
-            // uses, and REPLACES each matching brand|market|media|month slot
-            // in Firestore. Skips any record where month === "April" so
-            // April stays sacred. Admin-gated.
-            if(!window.JSZip){notify("JSZip not loaded — hard-refresh the page (Ctrl+Shift+R) and retry.");return}
-            if(!window.pdfjsLib){notify("pdf.js not loaded — hard-refresh and retry.");return}
-            const pw=prompt("Admin password — import all PDFs from /traffic-source.zip:");
-            if(!pw)return;
-            const ok=await verifyAuth(pw,"admin");
-            if(!ok){alert("Wrong password");return}
-            notify("Fetching traffic-source.zip…");
-            let zipBlob;
-            try{
-              const r=await fetch("/traffic-source.zip",{cache:"no-store"});
-              if(!r.ok)throw new Error("HTTP "+r.status);
-              const ct=r.headers.get("content-type")||"";
-              if(ct.includes("text/html")){throw new Error("Got HTML instead of zip — Vercel rewrite is catching the request. Deploy vercel.json update and retry.")}
-              zipBlob=await r.blob();
-              if(zipBlob.size<1000){throw new Error("Zip is only "+zipBlob.size+" bytes — not a real zip")}
-              notify("Downloaded "+Math.round(zipBlob.size/1024)+" KB");
-            }
-            catch(e){notify("Fetch failed: "+e.message);console.error(e);return}
-            notify("Unzipping…");
-            const zip=await window.JSZip.loadAsync(zipBlob);
-            const files=Object.keys(zip.files).filter(n=>!zip.files[n].dir&&n.toLowerCase().endsWith(".pdf"));
-            if(!files.length){notify("No PDFs in the zip.");return}
-            const extractPdfTextLocal=async(pdfDoc)=>{
-              let text="";
-              for(let pi=1;pi<=pdfDoc.numPages;pi++){
-                const page=await pdfDoc.getPage(pi);
-                const tc=await page.getTextContent();
-                const rows={};
-                tc.items.forEach(item=>{if(!item.str||!item.str.trim())return;const y=item.transform?Math.round(item.transform[5]):0;const x=item.transform?Math.round(item.transform[4]):0;let rk=y;const nearby=Object.keys(rows).map(Number).find(k=>Math.abs(k-y)<=3);if(nearby!==undefined)rk=nearby;if(!rows[rk])rows[rk]=[];rows[rk].push({x,text:item.str})});
-                Object.keys(rows).map(Number).sort((a,b)=>b-a).forEach(y=>{text+=rows[y].sort((a,b)=>a.x-b.x).map(i=>i.text).join(" ")+"\n"});
-              }
-              return text;
-            };
-            // Minimal inline parser mirroring LibraryPg.parseTrafficText
-            const parseLocal=(text)=>{
-              try{
-                const t=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
-                const getField=(label)=>{const re=new RegExp(label.replace(/\//g,"\\/")+"\\s*:\\s*(.+?)(?:\\n|$)","i");const m=t.match(re);return m?m[1].trim():""};
-                let brand=getField("Client")||"";
-                let market=getField("Market")||"";
-                let buyer=getField("Buyer")||"";
-                let media=getField("Media")||"TV";
-                let month=(getField("Broadcast Month")||"").split(/\s+/)[0];
-                let flight=getField("Flight Dates")||"";
-                let versionRaw=getField("Version/ Links")||getField("Version")||"";
-                let comments=getField("Comments")||"";
-                const version=versionRaw.match(/(\d+)/)?.[1]||"1";
-                let dma=normMkt(market)||(market.length<=4?market.replace(/[^A-Z]/gi,"").toUpperCase().substring(0,3):market.substring(0,3).toUpperCase());
-                if(!dma)dma="UNK";
-                if(brand.toLowerCase().includes("postman"))brand="Postman Law";
-                else if(brand.toLowerCase().includes("wettermark"))brand="Wettermark Keith";
-                const lines=t.split("\n");const iscis=[];
-                const codePat=/([A-Z]{3,4}(?:PL|WK)\d{4,7}[A-Z0-9])/;
-                for(const line of lines){
-                  const m=line.match(codePat);if(!m)continue;
-                  const code=m[1];
-                  const rest=line.substring(line.indexOf(code)+code.length).trim();
-                  const durMatch=rest.match(/:(\d{2})\b/);
-                  const dur=durMatch?durMatch[1]:"30";
-                  const pctMatch=rest.match(/(\d{1,2}(?:\.\d+)?)\s*%/);
-                  const pct=pctMatch?pctMatch[1]:"";
-                  let title=rest.split(/\s+:/)[0].trim();
-                  const bookendMatch=rest.match(/(?:Bookend\s*)?:(\d{2})\s+([A-D])\b/);
-                  const bookend=bookendMatch?"Bookend :"+bookendMatch[1]+" "+bookendMatch[2]:"";
-                  const schedMatch=rest.match(/(Monday\s*-\s*Friday\s*Schedule|M-F\s*Schedule|Weekend\s*Schedule|M-F\s*Bookend|Weekend\s*Bookend|All\s*Week|Holiday\s*Only)/i);
-                  const schedType=schedMatch?schedMatch[1].replace(/Monday\s*-\s*Friday\s*Schedule/i,"M-F Schedule"):"";
-                  iscis.push({code,title,dur,pct,sched:schedType||"All Week",bookend});
-                }
-                // Dedup by code, prefer entries with pct
-                const seen=new Set();const uniq=[];
-                iscis.forEach(r=>{if(seen.has(r.code)){const ex=uniq.find(u=>u.code===r.code);if(ex&&!ex.pct&&r.pct)Object.assign(ex,r);return}seen.add(r.code);uniq.push(r)});
-                if(!uniq.length)return null;
-                return{est:dma+"-"+(brand==="Postman Law"?"PL":"WK")+"-"+media,brand,market:dma,media,buyer,month,version:parseInt(version)||1,stations:[],ts:new Date().toISOString(),comments,isRevision:false,combined:false,iscis:uniq,flight,status:"sent"};
-              }catch(e){console.error("Parse error:",e);return null}
-            };
-            let parsed=0,skipped=0,failed=0;const parsedRecords=[];
-            notify("Parsing "+files.length+" PDFs…");
-            for(let fi=0;fi<files.length;fi++){
-              const name=files[fi];
-              try{
-                const buf=await zip.files[name].async("arraybuffer");
-                const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
-                const text=await extractPdfTextLocal(pdf);
-                const rec=parseLocal(text);
-                if(!rec){failed++;console.warn("[LoadSource] parse returned null for:",name);continue}
-                if(rec.month==="April"){skipped++;continue}
-                parsedRecords.push(rec);
-                parsed++;
-                if((fi+1)%10===0)notify("Parsed "+(fi+1)+"/"+files.length+"…");
-              }catch(e){failed++;console.error("[LoadSource] error on",name,e)}
-            }
-            console.log("[LoadSource] parsed=",parsed,"skipped(April)=",skipped,"failed=",failed,"records=",parsedRecords);
-            if(!parsedRecords.length){notify("No records parsed. failed="+failed+" skipped(April)="+skipped+". Check console for why.");return}
-            if(!confirm("Zip parsed: "+parsed+" records ready to import.\n\n"+skipped+" April records were skipped (sacred).\n"+failed+" PDFs failed to parse.\n\nThis will REPLACE each matching brand|market|media|month slot in Firestore. Continue?"))return;
-            // Merge: replace matching slots, add new ones
-            const slotKey=(h)=>(h.brand||"")+"|"+(normMkt(h.market)||h.market||"")+"|"+(h.media||"")+"|"+(h.month||"");
-            const map=new Map();
-            trafficHistory.forEach(h=>map.set(slotKey(h),h));
-            parsedRecords.forEach(r=>map.set(slotKey(r),r));
-            const next=Array.from(map.values());
-            console.log("[LoadSource] merged: prev="+trafficHistory.length+" + new="+parsedRecords.length+" = "+next.length);
-            // Direct Firestore write (bypass drop guard + React batching issues)
-            backupBeforeSave("trafficHistory",next);
-            trafficFbCountRef.current=next.length;
-            setTrafficHistoryRaw(next);
-            try{
-              await db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(next),ts:Date.now()});
-              log("Traffic Source Load",parsed+" records imported from traffic-source.zip");
-              notify("✓ Imported "+parsed+" records. "+skipped+" April skipped, "+failed+" failed. Firestore now has "+next.length+" total.");
-            }catch(e){
-              console.error("[LoadSource] Firestore save failed:",e);
-              notify("Firestore save FAILED: "+(e.message||e)+". State updated locally; refresh will revert.");
-            }
-          },
-          wipeNonApril:async()=>{
-            // Deletes every trafficHistory record where month !== "April" for
-            // BOTH brands. April PL and April WK stay (those were built in
-            // Doom properly). Designed to run once before loading the
-            // traffic-source.zip so non-April slots start clean.
-            const pw=prompt("Admin password — WIPE all non-April traffic records (keep April PL + April WK):");
-            if(!pw)return;
-            const ok=await verifyAuth(pw,"admin");
-            if(!ok){alert("Wrong password");return}
-            const toRemove=trafficHistory.filter(h=>h.month!=="April");
-            if(!toRemove.length){notify("No non-April records to wipe.");return}
-            const byBrand={};
-            toRemove.forEach(h=>{const k=h.brand||"?";if(!byBrand[k])byBrand[k]=0;byBrand[k]++});
-            const summary=Object.entries(byBrand).map(([b,n])=>b+": "+n).join(", ");
-            if(!confirm("Delete "+toRemove.length+" non-April records?\n\n"+summary+"\n\nApril records stay. This cannot be undone (but the rotating backup catches it).\n\nContinue?"))return;
-            if(!confirm("Really? "+toRemove.length+" records will be gone."))return;
-            // Bypass the setTrafficHistoryAndSave 20% drop guard — this wipe
-            // is intentional and would otherwise be silently blocked.
-            const next=trafficHistory.filter(h=>h.month==="April");
-            backupBeforeSave("trafficHistory",next);
-            trafficFbCountRef.current=next.length;
-            setTrafficHistoryRaw(next);
-            try{await db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(next),ts:Date.now()})}catch(e){console.error("Wipe save failed:",e)}
-            log("Wipe Non-April",toRemove.length+" records removed");
-            notify("Wiped "+toRemove.length+" non-April records. "+next.length+" April records remain.");
-          },
-          wipeBrand:async(targetBrand)=>{            // Nuclear option — removes ALL trafficHistory records for one
-            // brand so the user can re-import cleanly. Admin-gated + double
-            // confirm. Does NOT touch the other brand.
-            const pw=prompt("Admin password — WIPE ALL "+targetBrand+" traffic records from Firestore:");
-            if(!pw)return;
-            const ok=await verifyAuth(pw,"admin");
-            if(!ok){alert("Wrong password");return}
-            const toRemove=trafficHistory.filter(h=>h.brand===targetBrand);
-            if(!toRemove.length){notify("No "+targetBrand+" records in Firestore.");return}
-            const months=[...new Set(toRemove.map(h=>h.month))].sort();
-            if(!confirm("DELETE ALL "+toRemove.length+" "+targetBrand+" records?\n\nMonths present: "+months.join(", ")+"\n\nThis cannot be undone. Re-import from PDFs after."))return;
-            if(!confirm("Really delete ALL "+targetBrand+" traffic? Type-of-action: WIPE. Cannot be undone."))return;
-            setTrafficHistory(p=>p.filter(h=>h.brand!==targetBrand));
-            log("Brand Wipe",targetBrand+" — "+toRemove.length+" records removed");
-            notify("Wiped "+toRemove.length+" "+targetBrand+" records. Import fresh now.");
-          },
-          cleanPlaceholders:async()=>{
-            const pw=prompt("Admin password — clean Claude-injected placeholders out of Firestore:");
-            if(!pw)return;
-            const ok=await verifyAuth(pw,"admin");
-            if(!ok){alert("Wrong password");return}
-            // Match by the specific comment / estimate fingerprints Claude
-            // injected — NOT by month — so placeholders that got cloned into
-            // other months (or had their month field edited) still get caught.
-            const isClaudePlaceholder=(h)=>{
-              // PL placeholders — "If you buy has no bookends" seed
-              if(h.brand==="Postman Law"&&h.comments&&h.comments.indexOf("If you buy has no bookends, run as standalones")>=0)return true;
-              // PL OOH MSP Wilkins Media placeholder
-              if(h.brand==="Postman Law"&&h.isOoh&&h.est==="OOH-MSP-PL"&&h.comments&&h.comments.indexOf("Wilkins Media")>=0)return true;
-              // WK placeholders from wk_traffic_v3_nuclear.js — fake estimate
-              // codes like "MTG-WK-TV", "DHN-WK-RAD" (real WK estimates are
-              // 3-digit numbers 210-225, 216-232).
-              if(h.brand==="Wettermark Keith"&&typeof h.est==="string"&&/^[A-Z]{3}-WK-(TV|RAD|RADIO|OOH)$/.test(h.est))return true;
-              // WK placeholders with canned "Version 1 / [Market] Assets"
-              // comment that the nuclear file hardcoded.
-              if(h.brand==="Wettermark Keith"&&h.comments&&/^Version \d+ \/ \w+ Assets$/.test(h.comments))return true;
-              if(h.brand==="Wettermark Keith"&&h.comments&&/^(Dothan|Montgomery|Huntsville|Birmingham|Chattanooga|Knoxville) Radio Assets$/.test(h.comments))return true;
-              return false;
-            };
-            const toRemove=trafficHistory.filter(isClaudePlaceholder);
-            if(!toRemove.length){notify("No Claude placeholders found in Firestore — you're clean.");return}
-            if(!confirm("Found "+toRemove.length+" placeholder record(s) to delete:\n\n"+toRemove.map(h=>h.brand+" · "+h.market+" · "+h.media+" · "+h.month).join("\n")+"\n\nDelete from Firestore?"))return;
-            setTrafficHistory(p=>p.filter(h=>!isClaudePlaceholder(h)));
-            log("Cleanup",toRemove.length+" placeholder records removed");
-            notify("Deleted "+toRemove.length+" placeholder record(s).");
-          },
-        };
-        console.log("[MegaraLibrary] piped",data.length,"records from trafficHistory");
-        // Hash every record's ts + status into the key so ANY change to
-        // trafficHistory (add, update, reorder) forces the Library to
-        // remount with fresh data. Previous key only watched length + first
-        // ts, which missed in-place updates from Send / Edit / Copy-to and
-        // left the library stale.
-        const libKey="lib_"+trafficHistory.length+"_"+trafficHistory.map(h=>(h.ts||"")+"|"+(h.status||"")+"|"+(h.version||"")+"|"+(h.iscis?.length||0)).join("_").slice(0,200);
-        const ML=window.MegaraLibrary;
-        if(!ML)return null;
-        return<div style={{position:"relative",minHeight:"100%",margin:-16,overflow:"hidden"}}>
-          {React.createElement(ML,{key:libKey})}
-        </div>;
-      })()}
     </div>
     {(modal==="newIsci"||modal?.t==="newIsci")&&<NewIsciMod defaultMedia={modal?.defaultMedia||null}/>}
     {modal?.t==="buildRot"&&<RotBuilder est={modal.est} pool={modal.pool} workMonth={workMonth} _revise={modal._revise}/>}
     {modal?.t==="buildStream"&&<StreamBuilder est={modal.est} pool={modal.pool} workMonth={workMonth}/>}
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
-    {editTrafficIdx!==null&&trafficHistory[editTrafficIdx]&&<EditTrafficModal editIdx={editTrafficIdx} onClose={()=>setEditTrafficIdx(null)}/>}
+    {editTrafficIdx!==null&&(()=>{
+      const eh=trafficHistory[editTrafficIdx];if(!eh)return null;
+      const SCHED_OPTS=["M-F Schedule","Weekend Schedule","M-F Bookend","Weekend Bookend","All Week","Holiday Only"];
+      const[editIscis,setEditIscis]=useState(()=>JSON.parse(JSON.stringify(eh.iscis||[])));
+      const[editMeta,setEditMeta]=useState({month:eh.month||"",flight:eh.flight||"",version:eh.version||"1",comments:eh.comments||""});
+      const updI=(idx,k,v)=>setEditIscis(p=>p.map((r,i)=>i===idx?{...r,[k]:v}:r));
+      const saveEdit=()=>{
+        const validIscis=editIscis.filter(r=>r.code&&r.code.trim());
+        if(!validIscis.length){alert("Cannot save — no ISCIs with codes. Add at least one ISCI.");return}
+        setTrafficHistory(p=>p.map((h,i)=>i===editTrafficIdx?{...h,iscis:validIscis,month:editMeta.month,flight:editMeta.flight,version:editMeta.version,comments:editMeta.comments}:h));log("Traffic Edited",eh.brand+" "+eh.market+" "+eh.media+" "+editMeta.month);notify("Traffic updated — "+validIscis.length+" ISCIs");setEditTrafficIdx(null)};
+      const addRow=()=>setEditIscis(p=>[...p,{code:"",title:"",dur:"30",pct:"",sched:"All Week",bookend:""}]);
+      const delRow=(idx)=>setEditIscis(p=>p.filter((_,i)=>i!==idx));
+      return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={()=>setEditTrafficIdx(null)} wide>
+        <div style={{display:"flex",gap:8,marginBottom:8}}>
+          <Sel label="Month" options={CALENDAR.map(c=>c.month)} value={editMeta.month} onChange={v=>{const cm=CALENDAR.find(c=>c.month===v);setEditMeta(p=>({...p,month:v,flight:cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):p.flight}))}}/>
+          <Inp label="Flight" value={editMeta.flight} onChange={e=>setEditMeta(p=>({...p,flight:e.target.value}))}/>
+          <Inp label="Version" value={editMeta.version} onChange={e=>setEditMeta(p=>({...p,version:e.target.value}))} style={{width:50}}/>
+        </div>
+        <Inp label="Comments" value={editMeta.comments} onChange={e=>setEditMeta(p=>({...p,comments:e.target.value}))}/>
+        <div style={{overflowX:"auto",maxHeight:400,marginTop:8,border:"1px solid #4a3565",borderRadius:7}}>
+          <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
+            <TH w="140">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="50">%</TH><TH w="130">Schedule</TH><TH w="100">Bookend</TH><TH w="30">✕</TH>
+          </tr></thead><tbody>
+          {editIscis.map((r,idx)=><tr key={idx}>
+            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.code} onChange={e=>updI(idx,"code",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,fontFamily:"monospace",background:"#1e1233",color:"#E8DFF0"}}/></td>
+            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.title} onChange={e=>updI(idx,"title",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></td>
+            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.dur} onChange={e=>updI(idx,"dur",e.target.value)} style={{width:35,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
+            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.pct} onChange={e=>updI(idx,"pct",e.target.value.replace(/[^0-9.]/g,""))} data-pct-input="true" onKeyDown={e=>{if(e.key==="Tab"||e.key==="Enter"){e.preventDefault();const all=[...document.querySelectorAll('[data-pct-input]')];const ci=all.indexOf(e.target);if(ci>-1&&ci<all.length-1)all[ci+1].focus()}}} style={{width:40,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
+            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><select value={r.sched} onChange={e=>updI(idx,"sched",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}>{SCHED_OPTS.map(s=><option key={s}>{s}</option>)}</select></td>
+            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.bookend||""} onChange={e=>updI(idx,"bookend",e.target.value)} placeholder="e.g. Bookend :15 A" style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/></td>
+            <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42",textAlign:"center"}}><button onClick={()=>delRow(idx)} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button></td>
+          </tr>)}</tbody></table>
+        </div>
+        <div style={{display:"flex",gap:6,marginTop:8}}>
+          <Btn small onClick={addRow}>+ Add Row</Btn>
+          <div style={{marginLeft:"auto",display:"flex",gap:6}}>
+            <Btn small onClick={()=>setEditTrafficIdx(null)}>Cancel</Btn>
+            <Btn small primary onClick={saveEdit}>Save Changes</Btn>
+          </div>
+        </div>
+      </Mod>
+    })()}
     {modal?.t==="linkEst"&&(()=>{const s=modal.station;const linked=getStaEsts(s);
       const matching=estimates.filter(e=>e.market===s.market&&e.brand===s.brand);
       const others=estimates.filter(e=>!(e.market===s.market&&e.brand===s.brand));
