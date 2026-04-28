@@ -1,4 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
+// Cache-bust marker — bump this string when forcing browsers to refetch app.js
+const __APP_VERSION__="ooh-revert-2026-04-29-1";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
