@@ -5693,43 +5693,64 @@ TODAY: ${nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"nu
 CURRENT MONTH: ${currentBroadcastMonth}
 PLANNING FOR: ${nextBroadcastMonth}
 
-You receive a JSON payload with the brand's current state PLUS marketProfiles (climate, industries, sports, accident drivers, demographics, cultural notes per market). Use those profiles aggressively — the user wants strategic context they can't get from the data alone.
+You're channeling THE FIVE MUSES of Hercules — Calliope (Coverage), Thalia (Creative Mix), Melpomene (Staleness — dramatic, sighs), Terpsichore (Rotation Balance — choreography metaphors), Clio (History/Trends). Megara is the voice-over for the brand summary at the top — snarky, competent, dry. Personality matters. Don't be dry corporate. Make planning feel like the Muses arguing about the next month.
 
-YOUR JOB is to recommend FORWARD-LOOKING actions for ${nextBroadcastMonth} that:
-- Tie creative gaps to specific case types the market actually needs (e.g. trucking-corridor markets need a Trucking case-type angle; manufacturing markets need a Workers Comp / On-the-Job angle; agricultural markets need a Farm-Equipment angle).
-- Tie rotation timing to local seasonal hooks (e.g. UT spring scrimmage in May → Saturday DUI weight in Knoxville; Mountain pass season in Denver Apr-Oct → motorcycle creative; spring tornado season in Birmingham/Huntsville → severe weather context).
-- Generate concrete creative concept ideas (a 1-sentence brief — NOT "produce a new spot" — say WHAT it should depict and which case-type angle).
-- Flag PI case-type opportunities that map to the market's industries (state capital / military bases / college towns / manufacturing hubs each unlock different case-type angles).
+You receive a JSON payload with the brand's current state PLUS marketProfiles (climate, industries, sports, accident drivers, demographics, cultural notes per market). Use those profiles aggressively — the user wants STRATEGIC concept generation she can't get from a data table.
 
-OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence with this exact shape:
+YOUR JOB for ${nextBroadcastMonth}: produce a market-by-market PLAYBOOK that gives the user concrete creative briefs, swap recommendations, rotation recipes, and bookend pairings tied to that market's actual local context (UT scrimmage, peanut farms, mountain passes, etc.). The data tables in the app already show staleness/coverage — don't restate them. Translate them into ACTION.
+
+OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence:
 
 \`\`\`json
 {
-  "priorities": [
+  "megara_summary": "1–2 sentences in Megara's voice — dramatic, slightly mocking, but honest. The brand's strategic position for ${nextBroadcastMonth}.",
+  "hero_market": "Strongest market this month",
+  "weakness_market": "Market that needs the most attention",
+  "marketPlans": [
     {
-      "priority": 1,
-      "title": "Short imperative — 8 words max",
-      "market": "Market name (or 'All markets')",
-      "media": "TV / Radio / etc (omit if cross-media)",
-      "case_type": "Case-type angle this addresses (Auto Accident / Trucking / Workers Comp / Premises / Farm-Equipment / etc.)",
-      "seasonal_hook": "Local seasonal moment for ${nextBroadcastMonth} this leans into (one phrase from market profile)",
-      "why": "One sentence explaining the gap or opportunity, grounded in market profile",
-      "action": "Concrete step — swap which ISCI, build a new spot for which angle, add which media",
-      "concept": "If asking the user to produce new creative, a 1-sentence brief: what it depicts + case-type angle (omit if just a swap)",
-      "iscis": ["CINPL2630010T","CINPL2615014T"]
+      "market": "Knoxville",
+      "local_context": "One phrase pulling from the market profile — spring scrimmage, Smokies tourism, I-40 freight, etc.",
+      "muse_voices": {
+        "calliope_coverage": "Coverage take in Calliope's eloquent voice (one line)",
+        "thalia_mix": "Creative mix take in Thalia's dramatic voice (one line)",
+        "melpomene_stale": "Staleness lament if relevant in Melpomene's tragic voice (one line) or null",
+        "terpsichore_rotation": "Rotation choreography note in Terpsichore's dance metaphors (one line)",
+        "clio_trend": "Historical/seasonal pattern observation in Clio's archival voice (one line)"
+      },
+      "case_type_focus": [
+        {"angle":"Trucking","weight":"40%","why":"I-40 freight corridor + May U-Haul move-out spike"}
+      ],
+      "rotation_recipe": "Concrete rotation %: 30s split, bookend pairings, schedule weights",
+      "creative_concepts": [
+        {
+          "title":"Move-out Weekend",
+          "duration":"30",
+          "case_type":"Trucking",
+          "brief":"2-3 sentence brief — what we SEE, what we HEAR, what the call-out is. Pull a real local detail.",
+          "value_prop":"experience with commercial vehicle cases",
+          "vo_direction":"Tone for the voiceover — protective, working-class, Southern drawl, etc."
+        }
+      ],
+      "swaps": [
+        {"swap_out":"KNXWK2630003T","swap_out_label":"Mother's Wreck (running 3+ months)","swap_in":"KNXWK2615009T","swap_in_label":"Commercial Vehicle (bench)","why":"..."}
+      ],
+      "bookend_pairs": [
+        {"slot":"M-F Bookend A","spot_a":"KNXWK2615014T","spot_b":"KNXWK2615009T","reasoning":"Pair commercial-vehicle 15s back-to-back during morning drive when freight traffic peaks"}
+      ]
     }
   ]
 }
 \`\`\`
 
 Rules:
-- 6–10 priorities. Priority levels: 1 = blocking gap (no creative for market+media), 2 = stale rotation swap, 3 = mix imbalance / case-type missing for market context, 4 = seasonal lean-in.
-- Every priority must reference a SPECIFIC market (or 'All markets') AND a SPECIFIC case-type. No generic balance-your-mix advice.
-- 'concept' field appears whenever you're asking the user to BUILD new creative. Skip it for swap-only priorities.
-- Seasonal hooks must come from the marketProfiles in the payload — UT scrimmage, Hyundai workforce, mountain pass season, tornado spring, etc. Use the actual local context, not generic spring talking points.
-- 'iscis' is the actual ISCI codes the user should keep, swap in, or produce — pulled from benchISCIs or staleIscis in the payload.
-- Think forward to ${nextBroadcastMonth}: what's seasonally relevant (motorcycle season, construction zones, NCAA finals, prom DUIs, etc.), what's missing per market, what creative diversity needs adding.
-- No paragraphs. No "Staleness Analysis" headers. JSON only.`;
+- One marketPlan per market that has data in this brand's payload.
+- creative_concepts: 1–2 per market. Only include when there's a genuine creative gap to fill. Each brief must reference a SPECIFIC local detail from the market profile, not generic 'PI lawyer' content.
+- swaps: pull actual ISCI codes from staleIscis (out) and benchISCIs (in). Real codes only.
+- bookend_pairs: pair real :15 ISCI codes that share a case-type angle.
+- muse_voices: keep each Muse's voice in character. Calliope = grandiloquent, Thalia = comic-tragic, Melpomene = sighing/lamenting, Terpsichore = dance/choreography metaphors, Clio = archival/historical-record voice. Set null if a Muse has nothing material to say for this market.
+- megara_summary: this is the verdict line. Snarky, dry, confident. Like 'Birmingham's a mess this month — your trucking inventory's three months stale and you're underweight on premises right when WK's hospital workforce needs noticing. Fix it.'
+- No corporate-speak. No 'leverage' or 'optimize'. Use words a smart human would use.
+- JSON only. No markdown headers outside the code fence.`;
 
       const resp=await fetch("/api/planner",{
         method:"POST",
@@ -5802,15 +5823,17 @@ Rules:
   // Parse the AI recommendations result (JSON or markdown) into a
   // structured priority list. Tries JSON first; falls back to
   // splitting on '## ' or numbered lines.
-  const parseAiRecommendations=(text)=>{
+  // Parse the AI playbook. Returns {megara_summary, hero_market,
+  // weakness_market, marketPlans:[]} or {priorities:[]} (legacy)
+  // or a {raw:text} fallback for free-form responses.
+  const parseAiPlaybook=(text)=>{
     if(!text)return null;
     try{
       const m=text.match(/```json\s*([\s\S]*?)```/);
       const json=JSON.parse(m?m[1]:text);
-      if(json&&Array.isArray(json.priorities))return json.priorities;
+      if(json&&(Array.isArray(json.marketPlans)||Array.isArray(json.priorities)))return json;
     }catch(e){}
-    const sections=text.split(/^##\s+/m).filter(Boolean);
-    return sections.map(s=>{const lines=s.trim().split("\n");return{title:lines[0]||"",body:lines.slice(1).join("\n").trim()}});
+    return{raw:text};
   };
   const recColors={1:"#E85A7A",2:"#D4A040",3:"#4AC8E8",4:"#5BC4A0"};
   const ReportSection=({title,children})=><div style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid rgba(196,160,200,.2)",borderRadius:10,padding:14,marginTop:10}}><div style={{fontSize:12,fontWeight:800,color:"#D4A040",textTransform:"uppercase",letterSpacing:1.5,marginBottom:10,paddingBottom:6,borderBottom:"1px solid rgba(212,160,64,.2)"}}>{title}</div>{children}</div>;
@@ -5891,8 +5914,11 @@ Rules:
     const isCompare=!!(planMonthA&&planMonthB&&planMonthA!==planMonthB);
     const reportA=buildBrandReport(planBrand,monthA);
     const reportB=isCompare?buildBrandReport(planBrand,monthB):null;
-    const recs=parseAiRecommendations(planResult);
-    const isJsonRecs=recs&&recs.length&&recs[0]&&typeof recs[0].title==="string"&&typeof recs[0].action==="string";
+    const playbook=parseAiPlaybook(planResult);
+    const hasMarketPlans=playbook&&Array.isArray(playbook.marketPlans)&&playbook.marketPlans.length>0;
+    const hasPriorities=playbook&&Array.isArray(playbook.priorities)&&playbook.priorities.length>0;
+    // Map muse role keys → constants in MUSES global so we can color-tag voices
+    const museFor={calliope_coverage:MUSES.find(m=>m.name==="Calliope"),thalia_mix:MUSES.find(m=>m.name==="Thalia"),melpomene_stale:MUSES.find(m=>m.name==="Melpomene"),terpsichore_rotation:MUSES.find(m=>m.name==="Terpsichore"),clio_trend:MUSES.find(m=>m.name==="Clio")};
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
       <PageHead title="Planner Report" pgKey="planner" sub="Coverage, staleness, mix, AI priorities"/>
       <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
@@ -5919,29 +5945,113 @@ Rules:
         </button>
       </div>
       {planError&&<div style={{padding:10,borderRadius:8,background:"rgba(232,90,122,.1)",border:"1px solid rgba(232,90,122,.2)",color:"#E85A7A",fontSize:12,whiteSpace:"pre-wrap",fontFamily:"ui-monospace,monospace"}}>{planError}</div>}
-      {/* AI Priorities — top of the page when present */}
-      {recs&&<ReportSection title={"AI Priorities — "+planBrand+(monthA?" · "+monthA:"")}>
-        {isJsonRecs?<div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {recs.map((r,i)=><div key={i} style={{padding:10,borderRadius:8,background:"#2d1f42",border:"1px solid "+(recColors[r.priority]||"#4a3565"),borderLeft:"4px solid "+(recColors[r.priority]||"#4a3565"),display:"flex",gap:10}}>
-            <div style={{fontSize:18,fontWeight:800,color:recColors[r.priority]||"#9B8EAD",minWidth:24,textAlign:"center"}}>{r.priority||(i+1)}</div>
-            <div style={{flex:1}}>
-              <div style={{fontSize:13,fontWeight:800,color:"#E8DFF0"}}>{r.title}</div>
-              {r.market&&<div style={{fontSize:10,color:"#D4A040",marginTop:1,textTransform:"uppercase",letterSpacing:.6,fontWeight:700}}>{r.market}{r.media?" · "+r.media:""}{r.case_type?" · "+r.case_type:""}</div>}
-              {r.seasonal_hook&&<div style={{fontSize:10,color:"#5BC4A0",marginTop:2,fontStyle:"italic"}}>📅 {r.seasonal_hook}</div>}
-              {r.why&&<div style={{fontSize:11,color:"#9B8EAD",marginTop:4}}><b style={{color:"#C4A0C8"}}>Why:</b> {r.why}</div>}
-              <div style={{fontSize:11,color:"#E8DFF0",marginTop:4}}><b style={{color:"#5BC4A0"}}>Do:</b> {r.action}</div>
-              {r.concept&&<div style={{fontSize:11,color:"#E8DFF0",marginTop:4,padding:"5px 8px",background:"rgba(155,123,176,.12)",borderRadius:4,borderLeft:"2px solid #9b7bb0"}}><b style={{color:"#9b7bb0"}}>Concept:</b> {r.concept}</div>}
-              {r.iscis&&Array.isArray(r.iscis)&&r.iscis.length>0&&<div style={{fontSize:10,color:"#4AC8E8",marginTop:4,fontFamily:"monospace"}}>{r.iscis.join(", ")}</div>}
-            </div>
+      {/* Megara summary verse — top of page once AI runs */}
+      {playbook&&playbook.megara_summary&&<div style={{padding:"14px 18px",borderRadius:10,background:"linear-gradient(135deg,rgba(155,123,176,.15),rgba(212,160,64,.08))",border:"1px solid rgba(155,123,176,.3)",borderLeft:"4px solid #9b7bb0"}}>
+        <div style={{fontSize:11,fontWeight:800,color:"#9b7bb0",textTransform:"uppercase",letterSpacing:1.5,marginBottom:4}}>💜 Meg's Verdict</div>
+        <div style={{fontSize:14,color:"#E8DFF0",fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",lineHeight:1.5}}>"{playbook.megara_summary}"</div>
+        {(playbook.hero_market||playbook.weakness_market)&&<div style={{display:"flex",gap:14,marginTop:8,fontSize:11}}>
+          {playbook.hero_market&&<span style={{color:"#5BC4A0"}}><b>★ Hero:</b> {playbook.hero_market}</span>}
+          {playbook.weakness_market&&<span style={{color:"#E85A7A"}}><b>⚠ Weakness:</b> {playbook.weakness_market}</span>}
+        </div>}
+      </div>}
+      {/* Per-market playbooks */}
+      {hasMarketPlans&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {playbook.marketPlans.map((mp,i)=><ReportSection key={i} title={"📍 "+mp.market+(mp.local_context?" — "+mp.local_context:"")}>
+          {/* Muse voices strip */}
+          {mp.muse_voices&&<div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:10,padding:10,background:"#1e1233",borderRadius:6}}>
+            {Object.entries(mp.muse_voices).filter(([k,v])=>v).map(([k,v])=>{const muse=museFor[k];return muse?<div key={k} style={{display:"flex",gap:8,fontSize:12}}>
+              <span style={{color:muse.color,fontWeight:800,minWidth:96,fontFamily:"'Cormorant Garamond',serif"}}>{muse.icon} {muse.name}</span>
+              <span style={{flex:1,color:"#E8DFF0",fontStyle:"italic"}}>{v}</span>
+            </div>:null})}
+          </div>}
+          {/* Case-type focus */}
+          {mp.case_type_focus&&Array.isArray(mp.case_type_focus)&&mp.case_type_focus.length>0&&<div style={{marginBottom:10}}>
+            <div style={{fontSize:10,fontWeight:800,color:"#D4A040",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Case-Type Focus</div>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{mp.case_type_focus.map((c,j)=><div key={j} style={{padding:"5px 10px",borderRadius:6,background:"#2d1f42",border:"1px solid #4a3565",fontSize:11,color:"#E8DFF0"}}>
+              <span style={{color:"#D4A040",fontWeight:800}}>{c.angle}</span>{c.weight&&<span style={{color:"#9B8EAD",marginLeft:4}}>· {c.weight}</span>}{c.why&&<div style={{fontSize:10,color:"#9B8EAD",marginTop:2}}>{c.why}</div>}
+            </div>)}</div>
+          </div>}
+          {/* Rotation recipe */}
+          {mp.rotation_recipe&&<div style={{marginBottom:10,padding:"8px 10px",background:"rgba(74,200,232,.08)",borderRadius:6,borderLeft:"3px solid #4AC8E8"}}>
+            <div style={{fontSize:10,fontWeight:800,color:"#4AC8E8",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>💃 Rotation Recipe</div>
+            <div style={{fontSize:12,color:"#E8DFF0",lineHeight:1.5}}>{mp.rotation_recipe}</div>
+          </div>}
+          {/* Creative concepts */}
+          {mp.creative_concepts&&Array.isArray(mp.creative_concepts)&&mp.creative_concepts.length>0&&<div style={{marginBottom:10}}>
+            <div style={{fontSize:10,fontWeight:800,color:"#9b7bb0",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>🎬 New Creative Concepts</div>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>{mp.creative_concepts.map((c,j)=><div key={j} style={{padding:"8px 10px",background:"#2d1f42",border:"1px solid rgba(155,123,176,.3)",borderRadius:6}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                <span style={{fontSize:13,fontWeight:800,color:"#E8DFF0"}}>{c.title}</span>
+                {c.duration&&<span style={{fontSize:10,padding:"1px 6px",borderRadius:3,background:"#1e1233",color:"#4AC8E8",fontWeight:700}}>:{c.duration}</span>}
+                {c.case_type&&<span style={{fontSize:10,padding:"1px 6px",borderRadius:3,background:"rgba(212,160,64,.15)",color:"#D4A040",fontWeight:700}}>{c.case_type}</span>}
+              </div>
+              <div style={{fontSize:11,color:"#E8DFF0",lineHeight:1.5}}><b style={{color:"#9B8EAD"}}>Brief:</b> {c.brief}</div>
+              {c.value_prop&&<div style={{fontSize:10,color:"#9B8EAD",marginTop:3}}><b style={{color:"#C4A0C8"}}>Value prop:</b> {c.value_prop}</div>}
+              {c.vo_direction&&<div style={{fontSize:10,color:"#9B8EAD",marginTop:2}}><b style={{color:"#C4A0C8"}}>VO:</b> {c.vo_direction}</div>}
+            </div>)}</div>
+          </div>}
+          {/* Swaps */}
+          {mp.swaps&&Array.isArray(mp.swaps)&&mp.swaps.length>0&&<div style={{marginBottom:10}}>
+            <div style={{fontSize:10,fontWeight:800,color:"#E85A7A",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>🔄 Swap Recommendations</div>
+            <div style={{display:"flex",flexDirection:"column",gap:5}}>{mp.swaps.map((s,j)=><div key={j} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 8px",background:"#2d1f42",borderRadius:5,fontSize:11}}>
+              <div style={{flex:1,color:"#E85A7A"}}><span style={{fontFamily:"monospace",fontWeight:700}}>{s.swap_out}</span>{s.swap_out_label&&<span style={{color:"#9B8EAD",marginLeft:6}}>{s.swap_out_label}</span>}</div>
+              <span style={{color:"#9B8EAD"}}>→</span>
+              <div style={{flex:1,color:"#5BC4A0"}}><span style={{fontFamily:"monospace",fontWeight:700}}>{s.swap_in}</span>{s.swap_in_label&&<span style={{color:"#9B8EAD",marginLeft:6}}>{s.swap_in_label}</span>}</div>
+              {s.why&&<div style={{flex:2,color:"#C4A0C8",fontStyle:"italic",fontSize:10}}>{s.why}</div>}
+            </div>)}</div>
+          </div>}
+          {/* Bookend pairs */}
+          {mp.bookend_pairs&&Array.isArray(mp.bookend_pairs)&&mp.bookend_pairs.length>0&&<div>
+            <div style={{fontSize:10,fontWeight:800,color:"#5BC4A0",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>📚 Bookend Pairs</div>
+            <div style={{display:"flex",flexDirection:"column",gap:4}}>{mp.bookend_pairs.map((b,j)=><div key={j} style={{padding:"5px 8px",background:"#2d1f42",borderRadius:5,fontSize:11}}>
+              <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                <span style={{fontSize:9,padding:"1px 5px",borderRadius:3,background:"#1e1233",color:"#5BC4A0",fontWeight:700}}>{b.slot}</span>
+                <span style={{fontFamily:"monospace",color:"#E8DFF0"}}>{b.spot_a}</span>
+                <span style={{color:"#9B8EAD"}}>+</span>
+                <span style={{fontFamily:"monospace",color:"#E8DFF0"}}>{b.spot_b}</span>
+              </div>
+              {b.reasoning&&<div style={{color:"#9B8EAD",marginTop:2,fontSize:10}}>{b.reasoning}</div>}
+            </div>)}</div>
+          </div>}
+        </ReportSection>)}
+      </div>}
+      {/* Legacy priorities fallback */}
+      {!hasMarketPlans&&hasPriorities&&<ReportSection title={"AI Priorities — "+planBrand}>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {playbook.priorities.map((r,i)=><div key={i} style={{padding:10,borderRadius:8,background:"#2d1f42",border:"1px solid "+(recColors[r.priority]||"#4a3565"),borderLeft:"4px solid "+(recColors[r.priority]||"#4a3565")}}>
+            <div style={{fontSize:13,fontWeight:800,color:"#E8DFF0"}}>{r.priority?r.priority+". ":""}{r.title}</div>
+            {r.market&&<div style={{fontSize:10,color:"#D4A040",marginTop:1,textTransform:"uppercase",letterSpacing:.6,fontWeight:700}}>{r.market}{r.media?" · "+r.media:""}{r.case_type?" · "+r.case_type:""}</div>}
+            {r.why&&<div style={{fontSize:11,color:"#9B8EAD",marginTop:4}}><b style={{color:"#C4A0C8"}}>Why:</b> {r.why}</div>}
+            <div style={{fontSize:11,color:"#E8DFF0",marginTop:4}}><b style={{color:"#5BC4A0"}}>Do:</b> {r.action}</div>
           </div>)}
-        </div>:<div style={{whiteSpace:"pre-wrap",fontSize:12,color:"#E8DFF0",lineHeight:1.6}}>{planResult}</div>}
+        </div>
       </ReportSection>}
-      {!recs&&!planLoading&&<div style={{padding:14,borderRadius:8,background:"rgba(155,123,176,.08)",border:"1px dashed rgba(155,123,176,.3)",color:"#C4A0C8",fontSize:12,fontStyle:"italic"}}>Click <b>Run AI</b> above to generate priority recommendations for {planBrand} {monthA}. Forward-looking — what to build, swap, or add. The data tables below are live from your Firestore right now.</div>}
-      {/* Live data report — single month, or side-by-side compare */}
-      {isCompare?<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-        <div><div style={{fontSize:14,fontWeight:800,color:"#D4A040",marginBottom:4,textTransform:"uppercase",letterSpacing:1}}>{monthA}</div>{renderReport(reportA,false)}</div>
-        <div><div style={{fontSize:14,fontWeight:800,color:"#4AC8E8",marginBottom:4,textTransform:"uppercase",letterSpacing:1}}>{monthB}</div>{renderReport(reportB,false)}</div>
-      </div>:renderReport(reportA,true)}
+      {/* Raw fallback when AI ignored the JSON spec */}
+      {playbook&&playbook.raw&&<ReportSection title="AI Output (unstructured)"><div style={{whiteSpace:"pre-wrap",fontSize:12,color:"#E8DFF0",lineHeight:1.6}}>{playbook.raw}</div></ReportSection>}
+      {/* Empty state — Muses waiting */}
+      {!playbook&&!planLoading&&<div style={{padding:24,borderRadius:10,background:"rgba(155,123,176,.06)",border:"1px dashed rgba(155,123,176,.3)",textAlign:"center"}}>
+        <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:14}}>
+          {MUSES.map((m,i)=><div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+            <div style={{width:44,height:44,borderRadius:"50%",background:"linear-gradient(135deg,"+m.color+"22,"+m.color+"08)",border:"2px solid "+m.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>{m.icon}</div>
+            <div style={{fontSize:9,fontWeight:700,color:m.color}}>{m.name}</div>
+            <div style={{fontSize:8,color:"#6B5E80"}}>{m.role}</div>
+          </div>)}
+        </div>
+        <div style={{fontSize:14,color:"#C4A0C8",fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic"}}>"Summon us, mortal — we'll plan {planBrand}'s {monthA||"next"} rotation."</div>
+        <div style={{fontSize:11,color:"#6B5E80",marginTop:6}}>Click <b>Run AI</b> above. The Muses will give you per-market playbooks: case-type focus, rotation recipes, creative concept briefs, swaps, bookend pairs.</div>
+      </div>}
+      {/* Loading — Muses deliberating */}
+      {planLoading&&<div style={{padding:24,textAlign:"center"}}>
+        <div style={{display:"flex",justifyContent:"center",gap:8,flexWrap:"wrap"}}>{MUSES.map((m,i)=><div key={i} style={{padding:"8px 12px",borderRadius:8,background:"#2d1f42",border:"1px solid "+m.color+"30",fontSize:11,color:m.color,fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif"}}>{m.icon} {doomPick(m.voice)}</div>)}</div>
+      </div>}
+      {/* Live data report (collapsible-ish — small at bottom for quick reference) */}
+      <div style={{marginTop:14,opacity:.85}}>
+        <div style={{fontSize:11,color:"#6B5E80",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>📊 Live Data Snapshot</div>
+        {isCompare?<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          <div><div style={{fontSize:13,fontWeight:800,color:"#D4A040",marginBottom:4}}>{monthA}</div>{renderReport(reportA,false)}</div>
+          <div><div style={{fontSize:13,fontWeight:800,color:"#4AC8E8",marginBottom:4}}>{monthB}</div>{renderReport(reportB,false)}</div>
+        </div>:renderReport(reportA,true)}
+      </div>
     </div>;
   };
 
