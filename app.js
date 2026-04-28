@@ -3101,11 +3101,6 @@ const App=()=>{
       log("OOH June26 Clear",Object.keys(WK_JUNE26_CREATIVE).length+" boards cleared");
       notify("Cleared June 2026 temp tags");
     };
-    const colorByCreative=oohMapColorBy==="creative";
-    const wkMapColorFn=colorByCreative?
-      (p=>{const isci=p.isci||"";if(creativeColors[isci])return creativeColors[isci].color;if(!isci)return"#4a3565";let h=0;for(let i=0;i<isci.length;i++)h=(h*31+isci.charCodeAt(i))&0xfff;const palette=["#D4A040","#9b7bb0","#4AC8E8","#5BC4A0","#E85A7A","#C4A0C8","#059669","#ec4899"];return palette[h%palette.length]})
-      :(p=>dmaColors[p.market]||"#D4A040");
-
     const PhotoModal=({p,onClose})=>{
       const close=POP_IMGS[p.closeImg];const dist=POP_IMGS[p.distImg];
       return<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.85)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={onClose}>
@@ -3231,16 +3226,20 @@ const App=()=>{
           <div style={{fontSize:14,fontWeight:700}}>📍 WK OOH Board Locations</div>
           <div style={{display:"flex",gap:4,alignItems:"center"}}>
             <span style={{fontSize:11,color:"#9B8EAD",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginRight:4}}>Color by:</span>
-            <Btn small onClick={()=>setOohMapColorBy("market")} primary={oohMapColorBy==="market"||!oohMapColorBy}>Market</Btn>
+            <Btn small onClick={()=>setOohMapColorBy("market")} primary={oohMapColorBy!=="creative"}>Market</Btn>
             <Btn small onClick={()=>setOohMapColorBy("creative")} primary={oohMapColorBy==="creative"} color="#9b7bb0">Creative</Btn>
           </div>
         </div>
-        <OohMap pins={fl.map(p=>{const co=WK_COORDS[p.boardId];return{id:p.boardId,lat:co?co[0]:0,lng:co?co[1]:0,location:p.location,vendor:p.vendor,size:p.size,status:p.isci?"ISCI: "+p.isci:"Active",impressions:p.impressions,market:p.dma,isci:p.isci,closeImg:p.closeImg}})} colorFn={wkMapColorFn} height={420}/>
-        {colorByCreative?<div style={{display:"flex",gap:10,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>
-          {Object.entries(creativeColors).filter(([k])=>fl.some(p=>p.isci===k)).map(([k,v])=>{const n=fl.filter(p=>p.isci===k).length;return<div key={k} style={{display:"flex",gap:4,alignItems:"center",fontSize:12}}><div style={{width:10,height:10,borderRadius:5,background:v.color}}/>{v.label} <span style={{color:"#9B8EAD"}}>({n})</span></div>})}
-          {fl.filter(p=>!p.isci).length>0&&<div style={{display:"flex",gap:4,alignItems:"center",fontSize:12}}><div style={{width:10,height:10,borderRadius:5,background:"#4a3565",border:"1px solid #6B5E80"}}/>Untagged <span style={{color:"#9B8EAD"}}>({fl.filter(p=>!p.isci).length})</span></div>}
-        </div>:<div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center"}}>{Object.entries(dmaColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{k}</div>)}</div>}
-        <div style={{fontSize:14,color:"#9B8EAD",marginTop:4,textAlign:"center"}}>{fl.filter(p=>WK_COORDS[p.boardId]).length} of {fl.length} boards have coordinates{colorByCreative?` · ${fl.filter(p=>p.isci).length} tagged`:""}</div>
+        <OohMap pins={fl.map(p=>{const co=WK_COORDS[p.boardId];return{id:p.boardId,lat:co?co[0]:0,lng:co?co[1]:0,location:p.location,vendor:p.vendor,size:p.size,status:p.isci?"ISCI: "+p.isci:"Active",impressions:p.impressions,market:p.dma,isci:p.isci||"",closeImg:p.closeImg}})} colorFn={oohMapColorBy==="creative"?(p=>{const isci=p.isci||"";if(creativeColors[isci])return creativeColors[isci].color;return"#4a3565"}):(p=>dmaColors[p.market]||"#D4A040")} height={420}/>
+        <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>
+          {oohMapColorBy==="creative"
+            ?(<>
+              {Object.entries(creativeColors).filter(([k])=>fl.some(p=>p.isci===k)).map(([k,v])=>{const n=fl.filter(p=>p.isci===k).length;return<div key={k} style={{display:"flex",gap:4,alignItems:"center",fontSize:12}}><div style={{width:10,height:10,borderRadius:5,background:v.color}}/>{v.label} <span style={{color:"#9B8EAD"}}>({n})</span></div>})}
+              {fl.filter(p=>!p.isci).length>0&&<div key="untagged" style={{display:"flex",gap:4,alignItems:"center",fontSize:12}}><div style={{width:10,height:10,borderRadius:5,background:"#4a3565",border:"1px solid #6B5E80"}}/>Untagged <span style={{color:"#9B8EAD"}}>({fl.filter(p=>!p.isci).length})</span></div>}
+            </>)
+            :Object.entries(dmaColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{k}</div>)}
+        </div>
+        <div style={{fontSize:14,color:"#9B8EAD",marginTop:4,textAlign:"center"}}>{fl.filter(p=>WK_COORDS[p.boardId]).length} of {fl.length} boards have coordinates</div>
        </div></Cd>:
        viewMode==="ref"?<Cd><div style={{padding:10}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
           <div style={{fontSize:14,fontWeight:700}}>📋 WK OOH Reference — Board × Vendor × Contract × Status</div>
