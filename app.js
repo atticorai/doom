@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="copy-mkt-est-resolve-2026-04-29-25";
+const __APP_VERSION__="logo-aspect-fix-2026-04-29-26";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -1284,8 +1284,17 @@ const App=()=>{
     // args as CMYK, which is why previous versions rendered data rows as
     // nearly black. Pre-blend, then pass plain rgb.
     const tint=(c,amt)=>[Math.round(c[0]+(255-c[0])*amt),Math.round(c[1]+(255-c[1])*amt),Math.round(c[2]+(255-c[2])*amt)];
-    // Brand logo at top (matches the on-screen HTML sheet)
-    try{const logoSrc=trafficRec.brand==="Postman Law"?LOGO_PL:LOGO_WK;if(logoSrc){pdf.addImage(logoSrc,"PNG",pw/2-18,y-2,36,10);y+=11}}catch(e){/* logo fails silently, text header still renders */}
+    // Brand logo at top — preserve aspect ratio per brand so the WK
+    // PNG (4:1) doesn't get vertically stretched into the rotation table.
+    // PL logo is JPEG (~2.67:1), WK logo is PNG (~4.06:1).
+    try{
+      const isPL=trafficRec.brand==="Postman Law";
+      const logoSrc=isPL?LOGO_PL:LOGO_WK;
+      const logoFmt=isPL?"JPEG":"PNG";
+      const logoW=isPL?28:32; // mm
+      const logoH=isPL?logoW/2.67:logoW/4.06;
+      if(logoSrc){pdf.addImage(logoSrc,logoFmt,pw/2-logoW/2,y-2,logoW,logoH);y+=logoH+2}
+    }catch(e){/* logo fails silently, text header still renders */}
     // Header
     pdf.setFont("helvetica","bold");pdf.setFontSize(16);pdf.setTextColor(bc[0],bc[1],bc[2]);
     pdf.text(S(trafficRec.brand).toUpperCase(),pw/2,y,{align:"center"});y+=5;
