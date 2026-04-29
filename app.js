@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="edit-no-picker-panel-2026-04-29-11";
+const __APP_VERSION__="edit-strict-suffix-2026-04-29-12";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -3977,13 +3977,14 @@ const App=()=>{
     const[editIscis,setEditIscis]=useState(()=>JSON.parse(JSON.stringify(eh?.iscis||[])));
     const[editMeta,setEditMeta]=useState({month:eh?.month||"",flight:eh?.flight||"",version:eh?.version||"1",comments:eh?.comments||""});
     if(!eh)return null;
-    // ISCI pool — brand + DMA scope, with media-compatible suffix records
-    // sorted to the top so the user can pick the matching ones first but
-    // still pick a different-suffix code if needed (no hard filter).
+    // ISCI pool — brand + DMA + media-compatible suffix only. TV builds
+    // shouldn't see Radio codes, Radio shouldn't see Display, etc. Orphan
+    // codes already on the rotation are surfaced via dropOpts so editing
+    // a row with a no-longer-eligible code doesn't blank it.
     const SUFFIX_FOR_MEDIA={"TV":"T","Cable":"T","TV / Cable":"T","Sports":"T","Heavy Up":"T","Sponsorship":"T","UD/AV":"T","Radio":"R","Streaming Audio":"S","OOH":"O","Digital":"D","Display":"B"};
     const ehDma=normMkt(eh.market)||eh.market||"";
     const wantSuffix=SUFFIX_FOR_MEDIA[(String(eh.media||"").split(/\s*\/\s*/)[0])]||SUFFIX_FOR_MEDIA[eh.media]||"T";
-    const isciPool=iscis.filter(i=>i.brand===eh.brand&&i.active&&(i.dma||"")===ehDma).sort((a,b)=>{const am=a.suffix===wantSuffix?0:1,bm=b.suffix===wantSuffix?0:1;if(am!==bm)return am-bm;return a.code.localeCompare(b.code)});
+    const isciPool=iscis.filter(i=>i.brand===eh.brand&&i.active&&(i.dma||"")===ehDma&&i.suffix===wantSuffix).sort((a,b)=>a.code.localeCompare(b.code));
     const updI=(idx,k,v)=>setEditIscis(p=>p.map((r,i)=>i===idx?{...r,[k]:v}:r));
     // Pick from registry: fills code + title + dur from the ISCI record
     const pickIsci=(idx,code)=>{
