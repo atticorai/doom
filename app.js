@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="traffic-multislot-2026-04-29-8";
+const __APP_VERSION__="edit-multislot-dropdowns-2026-04-29-9";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -3995,7 +3995,8 @@ const App=()=>{
       if(!reg){updI(idx,"code",code);return}
       setEditIscis(p=>p.map((r,i)=>i===idx?{...r,code:reg.code,title:reg.title||r.title,dur:reg.dur||r.dur}:r));
     };
-    // Click a pool entry → fill first empty row, else append a new row
+    // Click a pool entry → fill first empty row, else append a new row.
+    // Same code can be added multiple times (one per slot).
     const addFromPool=(reg)=>{
       setEditIscis(p=>{
         const emptyIdx=p.findIndex(r=>!r.code||!r.code.trim());
@@ -4004,6 +4005,30 @@ const App=()=>{
         return[...p,filled];
       });
     };
+    // Clone a row into a new schedule slot (auto-pick the next slot the
+    // code isn't already in).
+    const cloneSlot=(idx)=>{
+      setEditIscis(p=>{
+        const r=p[idx];if(!r)return p;
+        const used=new Set(p.filter(x=>x.code===r.code).map(x=>x.sched));
+        const next=SCHED.find(s=>!used.has(s))||SCHED.find(s=>s!==r.sched)||r.sched;
+        const clone={...r,sched:next,pct:"",bookend:""};
+        return[...p.slice(0,idx+1),clone,...p.slice(idx+1)];
+      });
+    };
+    // Per-(sched, dur) validation — same model as the build modal.
+    const slotGroups=(()=>{
+      const g={};
+      editIscis.forEach(r=>{
+        if(!r.code)return;
+        const d=r.dur||"?";const s=r.sched||"All Week";
+        const k=s+"::"+d;
+        if(!g[k])g[k]={sched:s,dur:d,items:[],total:0};
+        g[k].items.push(r);
+        g[k].total+=parseFloat(r.pct)||0;
+      });
+      return g;
+    })();
     const saveEdit=()=>{
       const validIscis=editIscis.filter(r=>r.code&&r.code.trim());
       if(!validIscis.length){alert("Cannot save — no ISCIs with codes. Add at least one ISCI.");return}
@@ -4014,7 +4039,16 @@ const App=()=>{
     };
     const addRow=()=>setEditIscis(p=>[...p,{code:"",title:"",dur:"30",pct:"",sched:"All Week",bookend:""}]);
     const delRow=(idx)=>setEditIscis(p=>p.filter((_,i)=>i!==idx));
-    const usedCodes=new Set(editIscis.map(r=>r.code).filter(Boolean));
+    // Build the dropdown's option list — start with the registry pool and
+    // ensure any orphan codes already in the rotation (deleted/cross-DMA
+    // codes) still appear so we don't blank them out on edit.
+    const dropOpts=(()=>{
+      const seen=new Set();const out=[];
+      isciPool.forEach(i=>{const k=i.code;if(seen.has(k))return;seen.add(k);out.push({code:i.code,title:i.title||"",dur:i.dur||"",suffix:i.suffix||""})});
+      editIscis.forEach(r=>{if(r.code&&!seen.has(r.code)){seen.add(r.code);out.push({code:r.code,title:r.title||"",dur:r.dur||"",suffix:"",orphan:true})}});
+      return out;
+    })();
+    const codeCounts=(()=>{const c={};editIscis.forEach(r=>{if(r.code)c[r.code]=(c[r.code]||0)+1});return c})();
     return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={onClose} wide>
       <div style={{display:"flex",gap:8,marginBottom:8}}>
         <Sel label="Month" options={CALENDAR.map(c=>c.month)} value={editMeta.month} onChange={v=>{const cm=CALENDAR.find(c=>c.month===v);setEditMeta(p=>({...p,month:v,flight:cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):p.flight}))}}/>
@@ -4033,36 +4067,52 @@ const App=()=>{
           </div>
           <div style={{overflowY:"auto",flex:1}}>
             {filteredPool.length===0?<div style={{padding:10,fontSize:11,color:"#9B8EAD",textAlign:"center"}}>No ISCIs match.</div>:
-            filteredPool.map(i=>{const isUsed=usedCodes.has(i.code);const isMatch=i.suffix===wantSuffix;return<div key={i.code+"|"+i.dma} onClick={()=>!isUsed&&addFromPool(i)} style={{padding:"5px 8px",borderBottom:"1px solid #2d1f42",cursor:isUsed?"default":"pointer",opacity:isUsed?.45:1,background:isUsed?"#2d1f42":"transparent"}} onMouseEnter={e=>{if(!isUsed)e.currentTarget.style.background="#3a2a55"}} onMouseLeave={e=>{if(!isUsed)e.currentTarget.style.background="transparent"}}>
+            filteredPool.map(i=>{const inUseCount=codeCounts[i.code]||0;const isMatch=i.suffix===wantSuffix;return<div key={i.code+"|"+i.dma} onClick={()=>addFromPool(i)} style={{padding:"5px 8px",borderBottom:"1px solid #2d1f42",cursor:"pointer"}} onMouseEnter={e=>{e.currentTarget.style.background="#3a2a55"}} onMouseLeave={e=>{e.currentTarget.style.background="transparent"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
                 <div style={{fontFamily:"monospace",fontSize:11,color:isMatch?"#4AC8E8":"#9B8EAD",fontWeight:600}}>{i.code}</div>
                 <div style={{fontSize:10,color:"#9B8EAD"}}>{i.dur}s{!isMatch&&" ·"+i.suffix}</div>
               </div>
               <div style={{fontSize:11,color:"#E8DFF0",lineHeight:1.2,marginTop:1}}>{i.title||"—"}</div>
-              {isUsed&&<div style={{fontSize:9,color:"#5BC4A0",fontWeight:700,marginTop:1}}>✓ added</div>}
+              {inUseCount>0&&<div style={{fontSize:9,color:"#5BC4A0",fontWeight:700,marginTop:1}}>✓ in {inUseCount} slot{inUseCount>1?"s":""}</div>}
             </div>})}
           </div>
         </div>
         <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:11,color:"#9B8EAD",marginBottom:4}}>Click an ISCI on the left to add it, or type a code in the row below.</div>
-          <datalist id={"isci-pool-"+editIdx}>
-            {isciPool.map(i=><option key={i.code+"|"+i.dma} value={i.code}>{i.title?(i.code+" — "+i.title):i.code}</option>)}
-          </datalist>
+          <div style={{fontSize:11,color:"#9B8EAD",marginBottom:4}}>Click an ISCI on the left to add it, or pick from either dropdown in the row.</div>
+          {/* Per-(sched, dur) validation pills — rotates to 100% per slot */}
+          {Object.keys(slotGroups).length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
+            {Object.entries(slotGroups).map(([k,g])=>{const ok=Math.abs(g.total-100)<0.5;return<div key={k} style={{padding:"3px 8px",borderRadius:5,border:`1px solid ${ok?"#5BC4A0":"#E85A7A"}`,background:ok?"#1f3530":"#3a1f35",fontSize:11,fontWeight:700,color:ok?"#5BC4A0":"#E85A7A"}}>:{g.dur} — {g.items.length} spots — {g.total.toFixed(1)}% {ok?"✓":"≠ 100%"}</div>})}
+          </div>}
           <div style={{overflowX:"auto",maxHeight:400,border:"1px solid #4a3565",borderRadius:7}}>
             <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
-              <TH w="160">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="50">%</TH><TH w="130">Schedule</TH><TH w="100">Bookend</TH><TH w="30">✕</TH>
+              <TH w="150">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="45">%</TH><TH w="130">Schedule</TH><TH w="100">Bookend</TH><TH w="60">Action</TH>
             </tr></thead><tbody>
-            {editIscis.map((r,idx)=><tr key={idx}>
+            {editIscis.map((r,idx)=>{const inOpts=dropOpts.some(o=>o.code===r.code);return<tr key={idx}>
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}>
-                <input list={"isci-pool-"+editIdx} value={r.code} onChange={e=>pickIsci(idx,e.target.value)} placeholder="Pick or type ISCI…" style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,fontFamily:"monospace",background:"#1e1233",color:"#E8DFF0"}}/>
+                <select value={r.code||""} onChange={e=>pickIsci(idx,e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,fontFamily:"monospace",background:"#1e1233",color:"#E8DFF0"}}>
+                  <option value="">— pick code —</option>
+                  {!inOpts&&r.code&&<option value={r.code}>{r.code} (current)</option>}
+                  {dropOpts.map(o=><option key={"c-"+o.code} value={o.code}>{o.code}{o.orphan?" ⚠":""}</option>)}
+                </select>
               </td>
-              <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.title} onChange={e=>updI(idx,"title",e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></td>
+              <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}>
+                <select value={r.code||""} onChange={e=>pickIsci(idx,e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0"}}>
+                  <option value="">— pick title —</option>
+                  {!inOpts&&r.code&&<option value={r.code}>{r.title||"(no title)"} (current)</option>}
+                  {dropOpts.map(o=><option key={"t-"+o.code} value={o.code}>{o.title||"(no title)"} — {o.code}</option>)}
+                </select>
+              </td>
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.dur} onChange={e=>updI(idx,"dur",e.target.value)} style={{width:35,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.pct} onChange={e=>updI(idx,"pct",e.target.value.replace(/[^0-9.]/g,""))} data-pct-input="true" onKeyDown={e=>{if(e.key==="Tab"||e.key==="Enter"){e.preventDefault();const all=[...document.querySelectorAll('[data-pct-input]')];const ci=all.indexOf(e.target);if(ci>-1&&ci<all.length-1)all[ci+1].focus()}}} style={{width:40,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><select value={r.sched} onChange={e=>updI(idx,"sched",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}>{SCHED_OPTS.map(s=><option key={s}>{s}</option>)}</select></td>
-              <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.bookend||""} onChange={e=>updI(idx,"bookend",e.target.value)} placeholder="e.g. Bookend :15 A" style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/></td>
-              <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42",textAlign:"center"}}><button onClick={()=>delRow(idx)} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button></td>
-            </tr>)}</tbody></table>
+              <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><select value={r.bookend||""} onChange={e=>updI(idx,"bookend",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}><option value="">None</option>{BOOKENDS.filter(Boolean).map(b=><option key={b}>{b}</option>)}</select></td>
+              <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42",textAlign:"center"}}>
+                <div style={{display:"flex",gap:3,justifyContent:"center",alignItems:"center"}}>
+                  <button onClick={()=>cloneSlot(idx)} title="Add this ISCI to another schedule slot" style={{padding:"1px 4px",borderRadius:3,border:"1px solid #4AC8E8",background:"rgba(74,200,232,.12)",color:"#4AC8E8",cursor:"pointer",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>+ slot</button>
+                  <button onClick={()=>delRow(idx)} title="Remove row" style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:14,fontWeight:800,padding:0}}>×</button>
+                </div>
+              </td>
+            </tr>})}</tbody></table>
           </div>
           <div style={{display:"flex",gap:6,marginTop:8}}>
             <Btn small onClick={addRow}>+ Empty Row</Btn>
