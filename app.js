@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="edit-title-alpha-2026-04-29-14";
+const __APP_VERSION__="bookend-tol-copy-mkt-2026-04-29-15";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -1874,7 +1874,11 @@ const App=()=>{
       return g;
     },[sel]);
 
-    const allValid=Object.values(durGroups).every(g=>Math.abs(g.total-100)<0.5)&&sel.length>0;
+    // Tolerance is 1.5 not 0.5 — when 100 doesn't divide cleanly across N
+    // spots (e.g. 6 bookend :15s at 16.5% = 99, 3 spots at 33.3 = 99.9),
+    // users type 0.5-step values that come up a hair short. 1.5pp covers
+    // the rounding without letting genuinely off rotations through.
+    const allValid=Object.values(durGroups).every(g=>Math.abs(g.total-100)<=1.5)&&sel.length>0;
 
     const[sortCol,setSortCol]=useState("dur");
     const[sortDir,setSortDir]=useState("desc");
@@ -2026,7 +2030,7 @@ const App=()=>{
       {/* Validation summary */}
       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
         {Object.entries(durGroups).map(([key,g])=>{
-          const ok=Math.abs(g.total-100)<0.5;
+          const ok=Math.abs(g.total-100)<=1.5;
           return<div key={key} style={{padding:"4px 10px",borderRadius:6,border:`2px solid ${ok?"#5BC4A0":"#E85A7A"}`,background:ok?"#1f3530":"#3a1f35",fontSize:13,fontWeight:700,color:ok?"#5BC4A0":"#E85A7A"}}>
             :{g.dur} — {g.items.length} spots — {g.total.toFixed(1)}% {ok?"✓":"≠ 100%"}
           </div>;
@@ -4048,7 +4052,7 @@ const App=()=>{
       <div style={{marginTop:8}}>
         {/* Per-(sched, dur) validation pills — each slot rotates to 100% */}
         {Object.keys(slotGroups).length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
-          {Object.entries(slotGroups).map(([k,g])=>{const ok=Math.abs(g.total-100)<0.5;return<div key={k} style={{padding:"3px 8px",borderRadius:5,border:`1px solid ${ok?"#5BC4A0":"#E85A7A"}`,background:ok?"#1f3530":"#3a1f35",fontSize:11,fontWeight:700,color:ok?"#5BC4A0":"#E85A7A"}}>{g.sched} :{g.dur} — {g.items.length} spot{g.items.length===1?"":"s"} — {g.total.toFixed(1)}% {ok?"✓":"≠ 100%"}</div>})}
+          {Object.entries(slotGroups).map(([k,g])=>{const ok=Math.abs(g.total-100)<=1.5;return<div key={k} style={{padding:"3px 8px",borderRadius:5,border:`1px solid ${ok?"#5BC4A0":"#E85A7A"}`,background:ok?"#1f3530":"#3a1f35",fontSize:11,fontWeight:700,color:ok?"#5BC4A0":"#E85A7A"}}>{g.sched} :{g.dur} — {g.items.length} spot{g.items.length===1?"":"s"} — {g.total.toFixed(1)}% {ok?"✓":"≠ 100%"}</div>})}
         </div>}
           <div style={{overflowX:"auto",maxHeight:540,border:"1px solid #4a3565",borderRadius:7}}>
             <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
@@ -5641,7 +5645,28 @@ ${fullText.substring(0,3000)}`}]
                         const EST_TO_MONTH=Object.fromEntries(Object.entries(WK_MONTH_EST).map(([m,n])=>[n,m]));
                         let newEst=h.est;
                         if(h.brand==="Wettermark Keith"&&(EST_TO_MONTH[h.est]||WK_MONTH_EST[h.month])){newEst=WK_MONTH_EST[newMonth]||h.est}
-                        const copy={...h,ts:new Date().toISOString(),est:newEst,month:newMonth,flight:newFlight,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:"Copied from "+h.month};setTrafficHistory(p=>[copy,...p]);log("Traffic Copied",h.brand+" "+h.market+" "+h.media+" "+h.month+" → "+newMonth+" (Est "+newEst+")");notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);e.target.value=""}} style={{padding:"2px 4px",borderRadius:4,border:"1px solid #D4A040",background:"rgba(217,119,6,.1)",color:"#D4A040",fontSize:11,fontWeight:600,cursor:"pointer"}}><option value="">Copy to...</option>{CALENDAR.map(c=><option key={c.month} value={c.month}>{c.month}</option>)}</select>
+                        const copy={...h,ts:new Date().toISOString(),est:newEst,month:newMonth,flight:newFlight,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:"Copied from "+h.month};setTrafficHistory(p=>[copy,...p]);log("Traffic Copied",h.brand+" "+h.market+" "+h.media+" "+h.month+" → "+newMonth+" (Est "+newEst+")");notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);e.target.value=""}} style={{padding:"2px 4px",borderRadius:4,border:"1px solid #D4A040",background:"rgba(217,119,6,.1)",color:"#D4A040",fontSize:11,fontWeight:600,cursor:"pointer"}}><option value="">Copy to month...</option>{CALENDAR.map(c=><option key={c.month} value={c.month}>{c.month}</option>)}</select>
+                      <select onChange={e=>{if(!e.target.value)return;const destMkt=e.target.value;
+                        // Same brand only — markets list per brand
+                        const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"];
+                        if(!brandMkts.includes(destMkt)){e.target.value="";return}
+                        const srcMkt=h.market;
+                        // Existing rotation in dest market for same media+month?
+                        const existing=trafficHistory.find(x=>x.brand===h.brand&&x.market===destMkt&&x.media===h.media&&x.month===h.month&&x.status!=="copied");
+                        if(existing&&!confirm(h.brand+" "+destMkt+" "+h.media+" already has "+h.month+" traffic (v"+existing.version+"). Copy anyway? Creates a new record — won't overwrite.")){e.target.value="";return}
+                        // Swap each ISCI's leading 3-char DMA prefix; titles unchanged.
+                        const newIscis=(h.iscis||[]).map(r=>{const c=String(r.code||"");const swapped=c.startsWith(srcMkt)?destMkt+c.slice(srcMkt.length):c;return{...r,code:swapped}});
+                        const noteParts=["Copied from "+srcMkt];
+                        if(h.brand==="Postman Law")noteParts.push("⚠ review estimate — PL estimates are per-market");
+                        const copy={...h,ts:new Date().toISOString(),market:destMkt,iscis:newIscis,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:noteParts.join(" · ")};
+                        setTrafficHistory(p=>[copy,...p]);
+                        log("Traffic Copied (market)",h.brand+" "+srcMkt+" → "+destMkt+" "+h.media+" "+h.month);
+                        notify("Copied "+h.media+" "+h.month+" to "+destMkt+(h.brand==="Postman Law"?" — review estimate":""));
+                        e.target.value="";
+                      }} style={{padding:"2px 4px",borderRadius:4,border:"1px solid #4AC8E8",background:"rgba(74,200,232,.1)",color:"#4AC8E8",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                        <option value="">Copy to market...</option>
+                        {(h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"]).filter(m=>m!==h.market).map(m=><option key={m} value={m}>{m} — {DM[m]||m}</option>)}
+                      </select>
                     </div>
                   </div>
                   {isOpen&&<div style={{marginTop:8,border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}><iframe srcDoc={bldHtml(h)} style={{width:"100%",height:500,border:"none",background:"#fff"}}/></div>}
