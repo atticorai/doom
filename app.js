@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="pdf-8ef5f3b-2026-04-29-24";
+const __APP_VERSION__="copy-mkt-est-resolve-2026-04-29-25";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -5686,12 +5686,33 @@ ${fullText.substring(0,3000)}`}]
                         if(existing&&!confirm(h.brand+" "+destMkt+" "+h.media+" already has "+h.month+" traffic (v"+existing.version+"). Copy anyway? Creates a new record — won't overwrite.")){e.target.value="";return}
                         // Swap each ISCI's leading 3-char DMA prefix; titles unchanged.
                         const newIscis=(h.iscis||[]).map(r=>{const c=String(r.code||"");const swapped=c.startsWith(srcMkt)?destMkt+c.slice(srcMkt.length):c;return{...r,code:swapped}});
+                        // Resolve destination estimate(s).
+                        // - WK: same monthly est covers all markets, no change.
+                        // - PL: each market has its own per-buy-type estimate. Look up
+                        //   the source est's group (Base/Sponsorship/UD-AV/Sports/
+                        //   Cable/Heavy Up) and find the dest-market estimate with
+                        //   the same brand+group+media. Combined records do this for
+                        //   every estimate in the source list.
+                        let newEst=h.est;
+                        let estNote="";
+                        if(h.brand==="Postman Law"&&h.est){
+                          const srcEstNums=String(h.est).split(/\s*[+\/]\s*/).map(s=>s.trim()).filter(Boolean);
+                          const destEstNums=[];const unresolved=[];
+                          srcEstNums.forEach(num=>{
+                            const srcEst=estimates.find(es=>es.num===num&&es.brand===h.brand);
+                            if(!srcEst){destEstNums.push(num);unresolved.push(num);return}
+                            const destEst=estimates.find(es=>es.brand===h.brand&&(normMkt(es.market)||es.market)===destMkt&&es.group===srcEst.group&&es.media===srcEst.media);
+                            if(destEst)destEstNums.push(destEst.num);else{destEstNums.push(num);unresolved.push(num+" ("+(srcEst.group||"?")+")")}
+                          });
+                          newEst=destEstNums.join(" + ");
+                          if(unresolved.length)estNote="⚠ couldn't resolve "+unresolved.join(", ")+" for "+destMkt;
+                        }
                         const noteParts=["Copied from "+srcMkt];
-                        if(h.brand==="Postman Law")noteParts.push("⚠ review estimate — PL estimates are per-market");
-                        const copy={...h,ts:new Date().toISOString(),market:destMkt,iscis:newIscis,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:noteParts.join(" · ")};
+                        if(estNote)noteParts.push(estNote);
+                        const copy={...h,ts:new Date().toISOString(),market:destMkt,est:newEst,iscis:newIscis,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:noteParts.join(" · ")};
                         setTrafficHistory(p=>{const nx=[copy,...p];saveToDb("trafficHistory",nx);return nx});
-                        log("Traffic Copied (market)",h.brand+" "+srcMkt+" → "+destMkt+" "+h.media+" "+h.month);
-                        notify("Copied "+h.media+" "+h.month+" to "+destMkt+(h.brand==="Postman Law"?" — review estimate":""));
+                        log("Traffic Copied (market)",h.brand+" "+srcMkt+" → "+destMkt+" "+h.media+" "+h.month+" (Est "+h.est+" → "+newEst+")");
+                        notify("Copied "+h.media+" "+h.month+" to "+destMkt+(estNote?" — "+estNote:""));
                         e.target.value="";
                       }} style={{padding:"2px 4px",borderRadius:4,border:"1px solid #4AC8E8",background:"rgba(74,200,232,.1)",color:"#4AC8E8",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                         <option value="">Copy to market...</option>
