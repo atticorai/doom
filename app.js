@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="edit-multislot-dropdowns-2026-04-29-9";
+const __APP_VERSION__="edit-modal-tighter-2026-04-29-10";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -409,7 +409,7 @@ const BrandTabs=({value,onChange,counts})=><div style={{display:"flex",gap:0,mar
   {BRANDS.map(b=>{const active=value===b.name;const ct=counts?(counts[b.name]||0):null;return<button key={b.name} onClick={()=>onChange(b.name)} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?b.color:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?b.color:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b.name}{ct!=null&&<span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span>}</button>})}
   <div style={{flex:1,borderBottom:"2px solid #4a3565"}}/>
 </div>;
-const Mod=({title,onClose,children,wide})=><div style={{position:"fixed",inset:0,background:"rgba(20,12,40,.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1e3,backdropFilter:"blur(8px)"}}><div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(145deg,#2d1f42,#261840)",borderRadius:16,padding:20,border:"1px solid rgba(196,160,200,.12)",width:wide?900:540,maxWidth:"96vw",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 24px 80px rgba(20,12,40,.6),0 0 1px rgba(196,160,200,.2)"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,paddingBottom:10,borderBottom:"1px solid rgba(212,160,64,.15)"}}><h3 style={{margin:0,fontSize:17,fontWeight:800,background:"linear-gradient(90deg,#C4A0C8,#D4A040)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{title}</h3><button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#9B8EAD",padding:4}}>✕</button></div>{children}</div></div>;
+const Mod=({title,onClose,children,wide,xl})=><div style={{position:"fixed",inset:0,background:"rgba(20,12,40,.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1e3,backdropFilter:"blur(8px)"}}><div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(145deg,#2d1f42,#261840)",borderRadius:16,padding:20,border:"1px solid rgba(196,160,200,.12)",width:xl?1320:wide?900:540,maxWidth:"96vw",maxHeight:"94vh",overflowY:"auto",boxShadow:"0 24px 80px rgba(20,12,40,.6),0 0 1px rgba(196,160,200,.2)"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,paddingBottom:10,borderBottom:"1px solid rgba(212,160,64,.15)"}}><h3 style={{margin:0,fontSize:17,fontWeight:800,background:"linear-gradient(90deg,#C4A0C8,#D4A040)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{title}</h3><button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#9B8EAD",padding:4}}>✕</button></div>{children}</div></div>;
 const StatC=({label,value,sub,color,onClick})=><div onClick={onClick} style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid rgba(196,160,200,.1)",borderRadius:12,padding:"12px 14px",cursor:onClick?"pointer":"default",position:"relative",overflow:"hidden",boxShadow:"0 4px 20px rgba(30,18,51,.4)",transition:"all .2s"}} onMouseEnter={e=>{if(onClick){e.currentTarget.style.boxShadow="0 6px 28px rgba(155,123,176,.2)";e.currentTarget.style.borderColor="rgba(196,160,200,.25)"}}} onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 4px 20px rgba(30,18,51,.4)";e.currentTarget.style.borderColor="rgba(196,160,200,.1)"}}><div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${color},${color}88)`}}/><div style={{position:"absolute",top:3,left:0,right:0,height:20,background:`linear-gradient(180deg,${color}12,transparent)`}}/><div style={{fontSize:10,fontWeight:700,color:"#D4A040",textTransform:"uppercase",letterSpacing:1}}>{label}</div><div style={{fontSize:26,fontWeight:800,color:"#E8DFF0",marginTop:2,textShadow:"0 2px 8px rgba(0,0,0,.3)"}}>{value}</div>{sub&&<div style={{fontSize:10,color:"#9B8EAD",marginTop:2}}>{sub}</div>}</div>;
 
 // Drag-and-drop wrapper: wraps any upload zone, calls onFiles(FileList) on drop
@@ -4049,7 +4049,7 @@ const App=()=>{
       return out;
     })();
     const codeCounts=(()=>{const c={};editIscis.forEach(r=>{if(r.code)c[r.code]=(c[r.code]||0)+1});return c})();
-    return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={onClose} wide>
+    return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={onClose} xl>
       <div style={{display:"flex",gap:8,marginBottom:8}}>
         <Sel label="Month" options={CALENDAR.map(c=>c.month)} value={editMeta.month} onChange={v=>{const cm=CALENDAR.find(c=>c.month===v);setEditMeta(p=>({...p,month:v,flight:cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):p.flight}))}}/>
         <Inp label="Flight" value={editMeta.flight} onChange={e=>setEditMeta(p=>({...p,flight:e.target.value}))}/>
@@ -4059,7 +4059,7 @@ const App=()=>{
       <div style={{display:"flex",gap:8,marginTop:8,alignItems:"flex-start"}}>
         {/* ISCI picker side panel — shows every eligible ISCI for this brand
             + market, click to add to the rotation. Search box filters live. */}
-        <div style={{flex:"0 0 240px",border:"1px solid #4a3565",borderRadius:7,background:"#1e1233",display:"flex",flexDirection:"column",maxHeight:440,overflow:"hidden"}}>
+        <div style={{flex:"0 0 260px",border:"1px solid #4a3565",borderRadius:7,background:"#1e1233",display:"flex",flexDirection:"column",maxHeight:580,overflow:"hidden"}}>
           <div style={{padding:"6px 8px",borderBottom:"1px solid #4a3565",background:"#2d1f42"}}>
             <div style={{fontSize:11,color:"#D4A040",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:3}}>📚 ISCI Picker</div>
             <div style={{fontSize:10,color:"#9B8EAD",marginBottom:4}}>{eh.brand} · {DM[ehDma]||ehDma} · {matchSuffix} match {wantSuffix}-type · {isciPool.length} total</div>
@@ -4079,13 +4079,13 @@ const App=()=>{
         </div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:11,color:"#9B8EAD",marginBottom:4}}>Click an ISCI on the left to add it, or pick from either dropdown in the row.</div>
-          {/* Per-(sched, dur) validation pills — rotates to 100% per slot */}
+          {/* Per-(sched, dur) validation pills — each slot rotates to 100% */}
           {Object.keys(slotGroups).length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
-            {Object.entries(slotGroups).map(([k,g])=>{const ok=Math.abs(g.total-100)<0.5;return<div key={k} style={{padding:"3px 8px",borderRadius:5,border:`1px solid ${ok?"#5BC4A0":"#E85A7A"}`,background:ok?"#1f3530":"#3a1f35",fontSize:11,fontWeight:700,color:ok?"#5BC4A0":"#E85A7A"}}>:{g.dur} — {g.items.length} spots — {g.total.toFixed(1)}% {ok?"✓":"≠ 100%"}</div>})}
+            {Object.entries(slotGroups).map(([k,g])=>{const ok=Math.abs(g.total-100)<0.5;return<div key={k} style={{padding:"3px 8px",borderRadius:5,border:`1px solid ${ok?"#5BC4A0":"#E85A7A"}`,background:ok?"#1f3530":"#3a1f35",fontSize:11,fontWeight:700,color:ok?"#5BC4A0":"#E85A7A"}}>{g.sched} :{g.dur} — {g.items.length} spot{g.items.length===1?"":"s"} — {g.total.toFixed(1)}% {ok?"✓":"≠ 100%"}</div>})}
           </div>}
-          <div style={{overflowX:"auto",maxHeight:400,border:"1px solid #4a3565",borderRadius:7}}>
+          <div style={{overflowX:"auto",maxHeight:540,border:"1px solid #4a3565",borderRadius:7}}>
             <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
-              <TH w="150">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="45">%</TH><TH w="130">Schedule</TH><TH w="100">Bookend</TH><TH w="60">Action</TH>
+              <TH w="180">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="45">%</TH><TH w="135">Schedule</TH><TH w="135">Bookend</TH><TH w="60">Action</TH>
             </tr></thead><tbody>
             {editIscis.map((r,idx)=>{const inOpts=dropOpts.some(o=>o.code===r.code);return<tr key={idx}>
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}>
@@ -4099,7 +4099,7 @@ const App=()=>{
                 <select value={r.code||""} onChange={e=>pickIsci(idx,e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0"}}>
                   <option value="">— pick title —</option>
                   {!inOpts&&r.code&&<option value={r.code}>{r.title||"(no title)"} (current)</option>}
-                  {dropOpts.map(o=><option key={"t-"+o.code} value={o.code}>{o.title||"(no title)"} — {o.code}</option>)}
+                  {dropOpts.map(o=><option key={"t-"+o.code} value={o.code}>{o.title||"(no title)"}</option>)}
                 </select>
               </td>
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.dur} onChange={e=>updI(idx,"dur",e.target.value)} style={{width:35,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
