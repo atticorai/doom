@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="view-keep-scroll-2026-04-29-28";
+const __APP_VERSION__="library-copyto-prompt-2026-04-29-29";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -7626,26 +7626,71 @@ Rules:
                 }catch(e){notify("Send failed: "+(e.message||e));console.error("Send failed:",e)}
               },
               copyTo:(idx)=>{
-                // Mirrors the main Library's "Copy to…" flow (see ~line 5535):
-                // walks the broadcast CALENDAR for the NEXT entry after this
-                // record's month, swaps the WK monthly estimate when applicable,
-                // checks for a duplicate month, pulls flight dates from CALENDAR.
+                // BookOpen's "Copy to" button. Prompts the user for a target —
+                // either a month name (copy to that month, same market) or a
+                // 3-letter DMA code (copy to that market, same month). No more
+                // auto-advance to next month — that was hiding both options.
                 const h=trafficHistory[idx];if(!h)return;
-                const curCalIdx=CALENDAR.findIndex(c=>c.month===h.month);
-                if(curCalIdx<0){notify("Can't auto-advance from unknown month: "+(h.month||"(none)"));return}
-                const nextCal=CALENDAR[(curCalIdx+1)%CALENDAR.length];
-                const newMonth=nextCal.month;
-                const newFlight=fDs(nextCal.bcStart)+" - "+fDs(nextCal.bcEnd);
+                const months=CALENDAR.map(c=>c.month);
+                const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"];
+                const srcMkt=normMkt(h.market)||h.market;
+                const monthOpts=months.filter(m=>m!==h.month);
+                const mktOpts=brandMkts.filter(m=>m!==srcMkt);
                 const WK_MONTH_EST={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};
                 const EST_TO_MONTH=Object.fromEntries(Object.entries(WK_MONTH_EST).map(([m,n])=>[n,m]));
-                let newEst=h.est;
-                if(h.brand==="Wettermark Keith"&&(EST_TO_MONTH[h.est]||WK_MONTH_EST[h.month])){newEst=WK_MONTH_EST[newMonth]||h.est}
-                const existing=trafficHistory.find(x=>x.brand===h.brand&&x.market===h.market&&x.media===h.media&&x.month===newMonth&&x.status!=="copied");
-                if(existing&&!confirm(h.brand+" "+h.market+" "+h.media+" already has "+newMonth+" traffic (v"+existing.version+"). Copy anyway? This creates a new record — it won't overwrite."))return;
-                const copy={...h,ts:new Date().toISOString(),est:newEst,month:newMonth,flight:newFlight,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:"Copied from "+h.month};
-                setTrafficHistory(p=>[copy,...p]);
-                log("Traffic Copied",h.brand+" "+h.market+" "+h.media+" "+h.month+" → "+newMonth+" (Est "+newEst+")");
-                notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);
+                const choice=prompt(
+                  "Copy "+(h.market||"")+" "+(h.media||"")+" "+(h.month||"")+" to where?\n\n"+
+                  "  • Type a MONTH name to copy to that month (same market):\n    "+monthOpts.join(", ")+"\n\n"+
+                  "  • Type a 3-letter MARKET code to copy to that market (same month):\n    "+mktOpts.join(", "),
+                  ""
+                );
+                if(!choice)return;
+                const t=choice.trim();
+                const monthHit=months.find(m=>m.toLowerCase()===t.toLowerCase());
+                const mktHit=brandMkts.find(m=>m.toUpperCase()===t.toUpperCase());
+                if(monthHit){
+                  // Month copy — same market, swap WK monthly estimate
+                  const newMonth=monthHit;
+                  const cm=CALENDAR.find(c=>c.month===newMonth);
+                  const newFlight=cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):"";
+                  let newEst=h.est;
+                  if(h.brand==="Wettermark Keith"&&(EST_TO_MONTH[h.est]||WK_MONTH_EST[h.month])){newEst=WK_MONTH_EST[newMonth]||h.est}
+                  const existing=trafficHistory.find(x=>x.brand===h.brand&&x.market===h.market&&x.media===h.media&&x.month===newMonth&&x.status!=="copied");
+                  if(existing&&!confirm(h.brand+" "+h.market+" "+h.media+" already has "+newMonth+" traffic (v"+existing.version+"). Copy anyway?"))return;
+                  const copy={...h,ts:new Date().toISOString(),est:newEst,month:newMonth,flight:newFlight,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:"Copied from "+h.month};
+                  setTrafficHistory(p=>{const nx=[copy,...p];saveToDb("trafficHistory",nx);return nx});
+                  log("Traffic Copied",h.brand+" "+h.market+" "+h.media+" "+h.month+" → "+newMonth+" (Est "+newEst+")");
+                  notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);
+                  return;
+                }
+                if(mktHit){
+                  // Market copy — same month, swap ISCI prefix, resolve PL est
+                  const destMkt=mktHit;
+                  const destFull=DM[destMkt]||destMkt;
+                  const existing=trafficHistory.find(x=>x.brand===h.brand&&(x.market===destMkt||x.market===destFull)&&x.media===h.media&&x.month===h.month&&x.status!=="copied");
+                  if(existing&&!confirm(h.brand+" "+destMkt+" "+h.media+" already has "+h.month+" traffic (v"+existing.version+"). Copy anyway?"))return;
+                  const newIscis=(h.iscis||[]).map(r=>{const c=String(r.code||"");const swapped=c.startsWith(srcMkt)?destMkt+c.slice(srcMkt.length):c;return{...r,code:swapped}});
+                  let newEst=h.est;let estNote="";
+                  if(h.brand==="Postman Law"&&h.est){
+                    const srcEstNums=String(h.est).split(/\s*[+\/]\s*/).map(s=>s.trim()).filter(Boolean);
+                    const destEstNums=[];const unresolved=[];
+                    srcEstNums.forEach(num=>{
+                      const srcEst=estimates.find(es=>es.num===num&&es.brand===h.brand);
+                      if(!srcEst){destEstNums.push(num);unresolved.push(num);return}
+                      const destEst=estimates.find(es=>es.brand===h.brand&&(normMkt(es.market)||es.market)===destMkt&&es.group===srcEst.group&&es.media===srcEst.media);
+                      if(destEst)destEstNums.push(destEst.num);else{destEstNums.push(num);unresolved.push(num+" ("+(srcEst.group||"?")+")")}
+                    });
+                    newEst=destEstNums.join(" + ");
+                    if(unresolved.length)estNote="⚠ couldn't resolve "+unresolved.join(", ");
+                  }
+                  const noteParts=["Copied from "+srcMkt];if(estNote)noteParts.push(estNote);
+                  const copy={...h,ts:new Date().toISOString(),market:destMkt,est:newEst,iscis:newIscis,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:noteParts.join(" · ")};
+                  setTrafficHistory(p=>{const nx=[copy,...p];saveToDb("trafficHistory",nx);return nx});
+                  log("Traffic Copied (market)",h.brand+" "+srcMkt+" → "+destMkt+" "+h.media+" "+h.month+" (Est "+h.est+" → "+newEst+")");
+                  notify("Copied "+h.media+" "+h.month+" to "+destMkt+(estNote?" — "+estNote:""));
+                  return;
+                }
+                notify("Unknown target: '"+t+"'. Type a month name or 3-letter market code.");
               },
               delete:async(idx)=>{const h=trafficHistory[idx];if(!h)return;const pw=prompt("Admin password to delete traffic:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok){alert("Wrong password");return}if(!confirm("Delete "+h.brand+" "+h.market+" "+h.media+" "+h.month+"? This cannot be undone."))return;setTrafficHistory(p=>p.filter((_,j)=>j!==idx));log("Traffic Deleted",h.brand+" "+h.market+" "+h.media+" "+h.month);notify("Traffic deleted")},
               restoreFromBackup:async()=>{
