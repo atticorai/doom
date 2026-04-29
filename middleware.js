@@ -23,6 +23,15 @@ export default function middleware(request) {
   if (isProtected) {
     const cookie = request.headers.get('cookie') || '';
     if (!/dd_session=[a-f0-9]{64}/.test(cookie)) {
+      // Vendor confirmation pages are public — anyone with a valid
+      // confirm token in the URL needs to load the app to render the
+      // portal. The token itself gates what they can see (validated
+      // in app.js). Allow .js + /api/config when the request comes
+      // from a page with ?confirm= in its URL.
+      const referer = request.headers.get('referer') || '';
+      if (/[?&]confirm=/.test(referer) && (pathname.endsWith('.js') || pathname === '/api/config')) {
+        return;
+      }
       return new Response('Unauthorized', { status: 401 });
     }
   }
