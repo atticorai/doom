@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="pdf-pre-megara-library-2026-04-29-20";
+const __APP_VERSION__="pdf-1a167fb-2026-04-29-21";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -1276,10 +1276,17 @@ const App=()=>{
     const S=v=>v==null?"":String(v);
     const bc=trafficRec.brand==="Postman Law"?[124,58,237]:[217,119,6];
     const checkPage=(need)=>{if(y+need>ph-14){pdf.addPage();y=14}};
+    // Blend an rgb color toward white by `amt` (0=original, 1=white). Use
+    // instead of passing opacity to setFillColor — jsPDF treats 4 numeric
+    // args as CMYK, which is why previous versions rendered data rows as
+    // nearly black. Pre-blend, then pass plain rgb.
+    const tint=(c,amt)=>[Math.round(c[0]+(255-c[0])*amt),Math.round(c[1]+(255-c[1])*amt),Math.round(c[2]+(255-c[2])*amt)];
+    // Brand logo at top (matches the on-screen HTML sheet)
+    try{const logoSrc=trafficRec.brand==="Postman Law"?LOGO_PL:LOGO_WK;if(logoSrc){pdf.addImage(logoSrc,"PNG",pw/2-18,y-2,36,10);y+=11}}catch(e){/* logo fails silently, text header still renders */}
     // Header
-    pdf.setFont("helvetica","bold");pdf.setFontSize(14);pdf.setTextColor(bc[0],bc[1],bc[2]);
+    pdf.setFont("helvetica","bold");pdf.setFontSize(16);pdf.setTextColor(bc[0],bc[1],bc[2]);
     pdf.text(S(trafficRec.brand).toUpperCase(),pw/2,y,{align:"center"});y+=5;
-    pdf.setFontSize(8);pdf.setTextColor(100,100,100);
+    pdf.setFontSize(8);pdf.setTextColor(120,120,120);
     pdf.text((trafficRec.media||"TV").toUpperCase()+" TRAFFIC INSTRUCTIONS",pw/2,y,{align:"center"});y+=8;
     // Info fields
     const hdr=(label,value,color)=>{
@@ -1316,9 +1323,11 @@ const App=()=>{
       pdf.setFont("helvetica","bold");pdf.setFontSize(7);pdf.setTextColor(60,60,60);
       pdf.text(sched.toUpperCase(),mx+2,y);y+=5;
       pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
-      items.sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0)).forEach(r=>{
+      const rowBg=tint(sc,0.55);
+      items.sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0)).forEach((r,ri)=>{
         checkPage(5);
-        pdf.setFillColor(sc[0],sc[1],sc[2],0.3);pdf.rect(mx,y-3,cw,4.5,"F");
+        if(ri%2===0){pdf.setFillColor(rowBg[0],rowBg[1],rowBg[2]);pdf.rect(mx,y-3,cw,4.5,"F")}
+        pdf.setTextColor(30,30,30);
         pdf.text(S(trafficRec.flight),colX[0]+1,y);
         pdf.setFont("helvetica","bold");pdf.text(S(r.code)+" - "+S(r.title),colX[1]+1,y,{maxWidth:cols[1]-2});
         pdf.setFont("helvetica","normal");
@@ -1354,9 +1363,10 @@ const App=()=>{
     pdf.setDrawColor(bc[0],bc[1],bc[2]);pdf.setLineWidth(0.5);pdf.line(mx,y,mx+cw,y);y+=5;
     pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
     pdf.text("Accepted by: _________________________",mx,y);pdf.text("Date: _______________",mx+cw-60,y);y+=6;
-    pdf.setFillColor(bc[0],bc[1],bc[2],0.08);pdf.rect(mx,y-3,cw,8,"F");
-    pdf.setFont("helvetica","normal");pdf.setFontSize(7);pdf.setTextColor(bc[0],bc[1],bc[2]);
-    pdf.text("Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.",mx+2,y);
+    const noteBg=tint(bc,0.92);
+    pdf.setFillColor(noteBg[0],noteBg[1],noteBg[2]);pdf.rect(mx,y-3,cw,8,"F");
+    pdf.setFont("helvetica","italic");pdf.setFontSize(7);pdf.setTextColor(bc[0],bc[1],bc[2]);
+    pdf.text("Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.",mx+2,y+1);
     return pdf.output("datauristring");
   };
   // Native jsPDF generator for digital traffic — produces clickable links
