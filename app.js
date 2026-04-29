@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="pdf-ea0e1b9-2026-04-29-23";
+const __APP_VERSION__="pdf-8ef5f3b-2026-04-29-24";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -1271,34 +1271,50 @@ const App=()=>{
         return pdf.output("datauristring");
       }catch(pdfErr){if(iframe.parentNode)document.body.removeChild(iframe);throw pdfErr;}
     }
-    // ═══ Native jsPDF with clickable links ═══
+    // ═══ Native jsPDF — real text (searchable, selectable, copy-pasteable),
+    // clickable creative-file links, and row heights measured via
+    // splitTextToSize so long titles don't overlap the next row.
     const{jsPDF:JP}=window.jspdf;const pdf=new JP("p","mm","a4");
     const pw=210;const ph=297;const mx=14;const cw=pw-2*mx;let y=16;
     const S=v=>v==null?"":String(v);
     const bc=trafficRec.brand==="Postman Law"?[124,58,237]:[217,119,6];
     const checkPage=(need)=>{if(y+need>ph-14){pdf.addPage();y=14}};
+    // Blend an rgb color toward white by `amt` (0=original, 1=white). Use
+    // instead of passing opacity to setFillColor — jsPDF treats 4 numeric
+    // args as CMYK, which is why previous versions rendered data rows as
+    // nearly black. Pre-blend, then pass plain rgb.
+    const tint=(c,amt)=>[Math.round(c[0]+(255-c[0])*amt),Math.round(c[1]+(255-c[1])*amt),Math.round(c[2]+(255-c[2])*amt)];
+    // Brand logo at top (matches the on-screen HTML sheet)
+    try{const logoSrc=trafficRec.brand==="Postman Law"?LOGO_PL:LOGO_WK;if(logoSrc){pdf.addImage(logoSrc,"PNG",pw/2-18,y-2,36,10);y+=11}}catch(e){/* logo fails silently, text header still renders */}
     // Header
-    pdf.setFont("helvetica","bold");pdf.setFontSize(14);pdf.setTextColor(bc[0],bc[1],bc[2]);
+    pdf.setFont("helvetica","bold");pdf.setFontSize(16);pdf.setTextColor(bc[0],bc[1],bc[2]);
     pdf.text(S(trafficRec.brand).toUpperCase(),pw/2,y,{align:"center"});y+=5;
-    pdf.setFontSize(8);pdf.setTextColor(100,100,100);
+    pdf.setFontSize(8);pdf.setTextColor(120,120,120);
     pdf.text((trafficRec.media||"TV").toUpperCase()+" TRAFFIC INSTRUCTIONS",pw/2,y,{align:"center"});y+=8;
-    // Info fields
+    // Info fields — fall back to estimate lookup so Market/Buyer/Brand
+    // don't render as blank labels if the stored record is missing them.
+    const estRec=trafficRec.est?estimates.find(e=>e.num===String(trafficRec.est).split(/\s*[+\/]\s*/)[0]):null;
+    const brandLabel=trafficRec.brand||estRec?.brand||"";
+    const marketRaw=trafficRec.market||estRec?.market||"";
+    const marketLabel=DM[marketRaw]||marketRaw||"—";
+    const buyerLabel=trafficRec.buyer||estRec?.buyer||"—";
     const hdr=(label,value,color)=>{
       checkPage(4);pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(100,100,100);
       pdf.text(label+":",mx,y);pdf.setFont("helvetica","normal");
       if(color)pdf.setTextColor(color[0],color[1],color[2]);else pdf.setTextColor(0,0,0);
       pdf.text(S(value),mx+32,y);y+=4;
     };
-    hdr("Agency","Atticor Media");hdr("Client",trafficRec.brand,bc);
-    hdr("Market",trafficRec.market);hdr("Buyer",trafficRec.buyer,[217,119,6]);
+    hdr("Agency","Atticor Media");hdr("Client",brandLabel,bc);
+    hdr("Market",marketLabel);hdr("Buyer",buyerLabel,[217,119,6]);
     hdr("Estimate",trafficRec.est);hdr("Media",trafficRec.media,[37,99,235]);
     hdr("Month",trafficRec.month,bc);hdr("Flight",trafficRec.flight);
     hdr("Version","V"+S(trafficRec.version));
     if(trafficRec.comments)hdr("Comments",trafficRec.comments);
     y+=2;pdf.setDrawColor(bc[0],bc[1],bc[2]);pdf.setLineWidth(0.5);pdf.line(mx,y,mx+cw,y);y+=6;
-    // Rotation table header
+    // Rotation table header. Wider title column so long creative names
+    // don't wrap so aggressively; the other columns stay narrow.
     checkPage(10);
-    const cols=[34,60,12,12,40];const colX=[mx];for(let i=1;i<cols.length;i++)colX.push(colX[i-1]+cols[i-1]);
+    const cols=[30,78,10,12,32];const colX=[mx];for(let i=1;i<cols.length;i++)colX.push(colX[i-1]+cols[i-1]);
     pdf.setFillColor(243,237,249);pdf.rect(mx,y-3,cw,5,"F");
     pdf.setFont("helvetica","bold");pdf.setFontSize(7);pdf.setTextColor(90,77,107);
     ["FLIGHT","ISCI CODE & TITLE","DUR","ROT%","SCHEDULE"].forEach((h,i)=>{pdf.text(h,colX[i]+1,y)});
@@ -1317,17 +1333,29 @@ const App=()=>{
       pdf.setFont("helvetica","bold");pdf.setFontSize(7);pdf.setTextColor(60,60,60);
       pdf.text(sched.toUpperCase(),mx+2,y);y+=5;
       pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
-      items.sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0)).forEach(r=>{
-        checkPage(5);
-        pdf.setFillColor(sc[0],sc[1],sc[2],0.3);pdf.rect(mx,y-3,cw,4.5,"F");
+      const rowBg=tint(sc,0.55);
+      const LH=3.6;const rowPad=1.4;
+      items.sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0)).forEach((r,ri)=>{
+        // Measure how many lines the title will wrap into, so row height
+        // = (lines × line-height) + padding. Prevents the next row from
+        // being drawn on top of a 2-line title.
+        pdf.setFont("helvetica","bold");pdf.setFontSize(8);
+        const titleLines=pdf.splitTextToSize(S(r.code)+" - "+S(r.title),cols[1]-2);
+        const bkNote=(typeof r.bookend==="string"&&r.bookend&&r.bookend!=="true"&&r.bookend!=="false")?r.bookend:sched;
+        const schedLines=pdf.splitTextToSize(bkNote,cols[4]-2);
+        const lineCount=Math.max(titleLines.length,schedLines.length,1);
+        const rowH=lineCount*LH+rowPad;
+        checkPage(rowH+1);
+        if(ri%2===0){pdf.setFillColor(rowBg[0],rowBg[1],rowBg[2]);pdf.rect(mx,y-LH+0.5,cw,rowH,"F")}
+        pdf.setTextColor(30,30,30);
+        pdf.setFont("helvetica","normal");
         pdf.text(S(trafficRec.flight),colX[0]+1,y);
-        pdf.setFont("helvetica","bold");pdf.text(S(r.code)+" - "+S(r.title),colX[1]+1,y,{maxWidth:cols[1]-2});
+        pdf.setFont("helvetica","bold");pdf.text(titleLines,colX[1]+1,y);
         pdf.setFont("helvetica","normal");
         pdf.text(":"+S(r.dur),colX[2]+1,y);
         pdf.text(r.pct?S(r.pct).replace("%","")+"%":"",colX[3]+1,y);
-        const bkNote=(typeof r.bookend==="string"&&r.bookend&&r.bookend!=="true"&&r.bookend!=="false")?r.bookend:sched;
-        pdf.text(bkNote,colX[4]+1,y);
-        y+=4.5;
+        pdf.text(schedLines,colX[4]+1,y);
+        y+=rowH;
       });
     });
     // Creative file links (CLICKABLE)
@@ -1355,9 +1383,10 @@ const App=()=>{
     pdf.setDrawColor(bc[0],bc[1],bc[2]);pdf.setLineWidth(0.5);pdf.line(mx,y,mx+cw,y);y+=5;
     pdf.setFont("helvetica","bold");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
     pdf.text("Accepted by: _________________________",mx,y);pdf.text("Date: _______________",mx+cw-60,y);y+=6;
-    pdf.setFillColor(bc[0],bc[1],bc[2],0.08);pdf.rect(mx,y-3,cw,8,"F");
-    pdf.setFont("helvetica","normal");pdf.setFontSize(7);pdf.setTextColor(bc[0],bc[1],bc[2]);
-    pdf.text("Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.",mx+2,y);
+    const noteBg=tint(bc,0.92);
+    pdf.setFillColor(noteBg[0],noteBg[1],noteBg[2]);pdf.rect(mx,y-3,cw,8,"F");
+    pdf.setFont("helvetica","italic");pdf.setFontSize(7);pdf.setTextColor(bc[0],bc[1],bc[2]);
+    pdf.text("Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.",mx+2,y+1);
     return pdf.output("datauristring");
   };
   // Native jsPDF generator for digital traffic — produces clickable links
