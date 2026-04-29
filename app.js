@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="copy-mkt-normmkt-2026-04-29-27";
+const __APP_VERSION__="view-keep-scroll-2026-04-29-28";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -5608,7 +5608,20 @@ ${fullText.substring(0,3000)}`}]
                     </div>
                     <div style={{display:"flex",gap:4}}>
                       <button onClick={()=>setEditTrafficIdx(gIdx)} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #D4A040",background:"rgba(217,119,6,.1)",color:"#D4A040",fontSize:12,fontWeight:600,cursor:"pointer"}}>Edit</button>
-                      <button onClick={()=>setHistoryPreviewIdx(isOpen?null:gIdx)} style={{padding:"2px 8px",borderRadius:4,border:"none",background:isOpen?"#4a3565":"#9b7bb0",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>{isOpen?"Close":"View"}</button>
+                      <button onClick={()=>{
+                        // Inserting the 500px iframe re-flows layout and the
+                        // browser loses scroll position — capture both window
+                        // and the in-app scroll container, restore after the
+                        // state update so the user stays on the row they clicked.
+                        const sy=window.scrollY;
+                        const sc=document.querySelector('[style*="overflowY"]');
+                        const csy=sc?sc.scrollTop:null;
+                        setHistoryPreviewIdx(isOpen?null:gIdx);
+                        requestAnimationFrame(()=>{
+                          window.scrollTo(0,sy);
+                          if(sc&&csy!==null)sc.scrollTop=csy;
+                        });
+                      }} style={{padding:"2px 8px",borderRadius:4,border:"none",background:isOpen?"#4a3565":"#9b7bb0",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>{isOpen?"Close":"View"}</button>
                       <button onClick={()=>{const html=bldHtml(h);const w=window.open("","","width=850,height=950");w.document.write(html);w.document.close();w.print()}} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #9b7bb0",background:"#1e1233",color:"#9B8EAD",fontSize:12,fontWeight:600,cursor:"pointer"}}>Print</button>
                       <button onClick={async()=>{
                         if(!confirm("Send traffic?\n\n"+h.brand+" · "+(DM[h.market]||h.market)+" · "+(h.media||"")+" · "+h.month+" · v"+(h.version||"1")+"\n"+(h.iscis||[]).length+" ISCIs\n\nThis will email all linked stations.")){return}
