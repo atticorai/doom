@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="edit-traffic-isci-picker-2026-04-29-6";
+const __APP_VERSION__="traffic-multislot-2026-04-29-7";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -1856,14 +1856,20 @@ const App=()=>{
       if(Object.keys(updates).length>0)setRows(function(p){return p.map(function(r,i){return updates[i]!==undefined?Object.assign({},r,{pct:updates[i]}):r})});
     },[sel.length]);
 
-    // Group selected by duration for validation
+    // Group selected rows by (schedule, duration) — each schedule slot at
+    // each duration is its own rotation that should total 100%. WK fanouts
+    // (M-F Schedule + Weekend Bookend + …) need this; the old global
+    // per-duration sum incorrectly forced everything across all slots to
+    // total 100%.
     const durGroups=useMemo(()=>{
       const g={};
       sel.forEach(r=>{
         const d=r.isci.dur||"?";
-        if(!g[d])g[d]={items:[],total:0};
-        g[d].items.push(r);
-        g[d].total+=parseFloat(r.pct)||0;
+        const s=r.sched||"All Week";
+        const key=s+"::"+d;
+        if(!g[key])g[key]={sched:s,dur:d,items:[],total:0};
+        g[key].items.push(r);
+        g[key].total+=parseFloat(r.pct)||0;
       });
       return g;
     },[sel]);
@@ -2017,12 +2023,12 @@ const App=()=>{
       </div>
       <div style={{height:6}}/>
 
-      {/* Validation summary */}
+      {/* Validation summary — one pill per (schedule, duration) bucket */}
       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
-        {Object.entries(durGroups).map(([dur,g])=>{
+        {Object.entries(durGroups).map(([key,g])=>{
           const ok=Math.abs(g.total-100)<0.5;
-          return<div key={dur} style={{padding:"4px 10px",borderRadius:6,border:`2px solid ${ok?"#5BC4A0":"#E85A7A"}`,background:ok?"#1f3530":"#3a1f35",fontSize:13,fontWeight:700,color:ok?"#5BC4A0":"#E85A7A"}}>
-            :{dur} — {g.items.length} spots — {g.total.toFixed(1)}% {ok?"✓":"≠ 100%"}
+          return<div key={key} style={{padding:"4px 10px",borderRadius:6,border:`2px solid ${ok?"#5BC4A0":"#E85A7A"}`,background:ok?"#1f3530":"#3a1f35",fontSize:13,fontWeight:700,color:ok?"#5BC4A0":"#E85A7A"}}>
+            {g.sched} :{g.dur} — {g.items.length} spots — {g.total.toFixed(1)}% {ok?"✓":"≠ 100%"}
           </div>;
         })}
         {sel.length===0&&<div style={{fontSize:13,color:"#9B8EAD"}}>Select ISCIs below to build rotation</div>}
@@ -2039,11 +2045,22 @@ const App=()=>{
         </tr></thead>
         <tbody>{sorted.map((r,idx)=>{
           const ri=rows.indexOf(r);
-          return<tr key={r.isci.code+idx} style={{background:r.selected?({"M-F Schedule":"#dbeafe44","Weekend Schedule":"#fef3c744","M-F Bookend":"#ede9fe44","Weekend Bookend":"#fce7f344","All Week":"#dcfce744","Holiday Only":"#fee2e244"}[r.sched]||"#f0f9ff"):""}}>
+          // Clone this row into a new schedule slot — same ISCI runs in M-F
+          // AND Weekend Bookend (etc.). The clone sits next to its original
+          // and starts in a different schedule so the user sees it landed.
+          const cloneIntoNewSlot=()=>setRows(p=>{
+            const i=p.indexOf(r);if(i<0)return p;
+            const usedScheds=new Set(p.filter(x=>x.isci.code===r.isci.code&&x.selected).map(x=>x.sched));
+            const nextSched=SCHED.find(s=>!usedScheds.has(s))||SCHED.find(s=>s!==r.sched)||r.sched;
+            const clone={isci:r.isci,pct:"",sched:nextSched,bookend:"",selected:true,_dup:true};
+            return[...p.slice(0,i+1),clone,...p.slice(i+1)];
+          });
+          const removeDup=()=>setRows(p=>p.filter(x=>x!==r));
+          return<tr key={r.isci.code+"|"+idx+(r._dup?"|d":"")} style={{background:r.selected?({"M-F Schedule":"#dbeafe44","Weekend Schedule":"#fef3c744","M-F Bookend":"#ede9fe44","Weekend Bookend":"#fce7f344","All Week":"#dcfce744","Holiday Only":"#fee2e244"}[r.sched]||"#f0f9ff"):""}}>
             <td style={{padding:"3px 5px",textAlign:"center",borderBottom:"1px solid #ede9fe"}}>
-              <input type="checkbox" checked={r.selected} onChange={e=>updRow(ri,"selected",e.target.checked)}/>
+              {r._dup?<button onClick={removeDup} title="Remove this slot" style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:15,fontWeight:800,padding:0}}>×</button>:<input type="checkbox" checked={r.selected} onChange={e=>updRow(ri,"selected",e.target.checked)}/>}
             </td>
-            <td style={{padding:"3px 5px",fontSize:13,fontFamily:"monospace",fontWeight:600,borderBottom:"1px solid #ede9fe"}}>{r.isci.code}{r.isci.fileUrl&&<span title="Creative uploaded" style={{marginLeft:3,fontSize:13,color:"#5BC4A0"}}>📁</span>}</td>
+            <td style={{padding:"3px 5px",fontSize:13,fontFamily:"monospace",fontWeight:600,borderBottom:"1px solid #ede9fe"}}>{r._dup&&<span style={{color:"#9B8EAD",marginRight:3}}>↳</span>}{r.isci.code}{r.isci.fileUrl&&<span title="Creative uploaded" style={{marginLeft:3,fontSize:13,color:"#5BC4A0"}}>📁</span>}</td>
             <td style={{padding:"3px 5px",fontSize:13,borderBottom:"1px solid #ede9fe"}}>{r.isci.title}</td>
             <td style={{padding:"3px 5px",fontSize:13,fontWeight:700,borderBottom:"1px solid #ede9fe",textAlign:"center"}}>{r.isci.media==="OOH"?(OOH_TYPE_MAP[r.isci.dur]||r.isci.dur):":"+r.isci.dur}</td>
             <td style={{padding:"3px 5px",borderBottom:"1px solid #ede9fe"}}>
@@ -2058,10 +2075,13 @@ const App=()=>{
               {r.sched==="__custom"&&<input autoFocus placeholder="Type schedule..." onBlur={e=>{if(e.target.value){setCustomSched(e.target.value);updRow(ri,"sched",e.target.value)}else updRow(ri,"sched","All Week")}} style={{marginTop:2,width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #9b7bb0",fontSize:14}}/>}
             </td>
             <td style={{padding:"3px 5px",borderBottom:"1px solid #ede9fe"}}>
-              {r.selected&&<select value={r.bookend} onChange={e=>updRow(ri,"bookend",e.target.value)} style={{padding:"2px 3px",borderRadius:3,border:"1px solid #9b7bb0",fontSize:14,width:"100%"}}>
-                <option value="">None</option>
-                {BOOKENDS.filter(Boolean).map(b=><option key={b}>{b}</option>)}
-              </select>}
+              <div style={{display:"flex",gap:3,alignItems:"center"}}>
+                {r.selected&&<select value={r.bookend} onChange={e=>updRow(ri,"bookend",e.target.value)} style={{padding:"2px 3px",borderRadius:3,border:"1px solid #9b7bb0",fontSize:14,flex:1}}>
+                  <option value="">None</option>
+                  {BOOKENDS.filter(Boolean).map(b=><option key={b}>{b}</option>)}
+                </select>}
+                {r.selected&&<button onClick={cloneIntoNewSlot} title="Add this ISCI to another schedule slot" style={{padding:"1px 5px",borderRadius:3,border:"1px solid #4AC8E8",background:"rgba(74,200,232,.12)",color:"#4AC8E8",cursor:"pointer",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>+ slot</button>}
+              </div>
             </td>
           </tr>;
         })}</tbody></table>
