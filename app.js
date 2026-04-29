@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="logo-aspect-fix-2026-04-29-26";
+const __APP_VERSION__="copy-mkt-normmkt-2026-04-29-27";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -5689,9 +5689,15 @@ ${fullText.substring(0,3000)}`}]
                         // Same brand only — markets list per brand
                         const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"];
                         if(!brandMkts.includes(destMkt)){e.target.value="";return}
-                        const srcMkt=h.market;
+                        // Normalize source market to its 3-char DMA code so the
+                        // ISCI prefix swap works whether records store "BRM" or
+                        // "Birmingham" (imports/legacy can have either).
+                        const srcMkt=normMkt(h.market)||h.market;
+                        if(srcMkt===destMkt){e.target.value="";return}
                         // Existing rotation in dest market for same media+month?
-                        const existing=trafficHistory.find(x=>x.brand===h.brand&&x.market===destMkt&&x.media===h.media&&x.month===h.month&&x.status!=="copied");
+                        // Match either the DMA code or the full name in storage.
+                        const destFull=DM[destMkt]||destMkt;
+                        const existing=trafficHistory.find(x=>x.brand===h.brand&&(x.market===destMkt||x.market===destFull)&&x.media===h.media&&x.month===h.month&&x.status!=="copied");
                         if(existing&&!confirm(h.brand+" "+destMkt+" "+h.media+" already has "+h.month+" traffic (v"+existing.version+"). Copy anyway? Creates a new record — won't overwrite.")){e.target.value="";return}
                         // Swap each ISCI's leading 3-char DMA prefix; titles unchanged.
                         const newIscis=(h.iscis||[]).map(r=>{const c=String(r.code||"");const swapped=c.startsWith(srcMkt)?destMkt+c.slice(srcMkt.length):c;return{...r,code:swapped}});
@@ -5725,7 +5731,7 @@ ${fullText.substring(0,3000)}`}]
                         e.target.value="";
                       }} style={{padding:"2px 4px",borderRadius:4,border:"1px solid #4AC8E8",background:"rgba(74,200,232,.1)",color:"#4AC8E8",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                         <option value="">Copy to market...</option>
-                        {(h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"]).filter(m=>m!==h.market).map(m=><option key={m} value={m}>{m} — {DM[m]||m}</option>)}
+                        {(h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"]).filter(m=>m!==(normMkt(h.market)||h.market)).map(m=><option key={m} value={m}>{m} — {DM[m]||m}</option>)}
                       </select>
                     </div>
                   </div>
