@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="edit-strict-suffix-2026-04-29-12";
+const __APP_VERSION__="edit-dur-sort-2026-04-29-13";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -3984,7 +3984,7 @@ const App=()=>{
     const SUFFIX_FOR_MEDIA={"TV":"T","Cable":"T","TV / Cable":"T","Sports":"T","Heavy Up":"T","Sponsorship":"T","UD/AV":"T","Radio":"R","Streaming Audio":"S","OOH":"O","Digital":"D","Display":"B"};
     const ehDma=normMkt(eh.market)||eh.market||"";
     const wantSuffix=SUFFIX_FOR_MEDIA[(String(eh.media||"").split(/\s*\/\s*/)[0])]||SUFFIX_FOR_MEDIA[eh.media]||"T";
-    const isciPool=iscis.filter(i=>i.brand===eh.brand&&i.active&&(i.dma||"")===ehDma&&i.suffix===wantSuffix).sort((a,b)=>a.code.localeCompare(b.code));
+    const isciPool=iscis.filter(i=>i.brand===eh.brand&&i.active&&(i.dma||"")===ehDma&&i.suffix===wantSuffix).sort((a,b)=>{const dd=(parseInt(b.dur)||0)-(parseInt(a.dur)||0);if(dd)return dd;return a.code.localeCompare(b.code)});
     const updI=(idx,k,v)=>setEditIscis(p=>p.map((r,i)=>i===idx?{...r,[k]:v}:r));
     // Pick from registry: fills code + title + dur from the ISCI record
     const pickIsci=(idx,code)=>{
@@ -4063,7 +4063,7 @@ const App=()=>{
                 <select value={r.code||""} onChange={e=>pickIsci(idx,e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0"}}>
                   <option value="">— pick title —</option>
                   {!inOpts&&r.code&&<option value={r.code}>{r.title||"(no title)"} (current)</option>}
-                  {dropOpts.map(o=><option key={"t-"+o.code} value={o.code}>{o.title||"(no title)"}</option>)}
+                  {dropOpts.map(o=><option key={"t-"+o.code} value={o.code}>{o.dur?":"+o.dur+" ":""}{o.title||"(no title)"}</option>)}
                 </select>
               </td>
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.dur} onChange={e=>updI(idx,"dur",e.target.value)} style={{width:35,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
