@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="edit-dur-sort-2026-04-29-13";
+const __APP_VERSION__="edit-title-alpha-2026-04-29-14";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -4035,6 +4035,9 @@ const App=()=>{
       editIscis.forEach(r=>{if(r.code&&!seen.has(r.code)){seen.add(r.code);out.push({code:r.code,title:r.title||"",dur:r.dur||"",suffix:"",orphan:true})}});
       return out;
     })();
+    // Title dropdown: same options, sorted by dur desc then title asc so
+    // titles are alphabetical within each :30/:15/:10 group.
+    const titleOpts=[...dropOpts].sort((a,b)=>{const dd=(parseInt(b.dur)||0)-(parseInt(a.dur)||0);if(dd)return dd;return(a.title||"").localeCompare(b.title||"")||a.code.localeCompare(b.code)});
     return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={onClose} xl>
       <div style={{display:"flex",gap:8,marginBottom:8}}>
         <Sel label="Month" options={CALENDAR.map(c=>c.month)} value={editMeta.month} onChange={v=>{const cm=CALENDAR.find(c=>c.month===v);setEditMeta(p=>({...p,month:v,flight:cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):p.flight}))}}/>
@@ -4063,7 +4066,7 @@ const App=()=>{
                 <select value={r.code||""} onChange={e=>pickIsci(idx,e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0"}}>
                   <option value="">— pick title —</option>
                   {!inOpts&&r.code&&<option value={r.code}>{r.title||"(no title)"} (current)</option>}
-                  {dropOpts.map(o=><option key={"t-"+o.code} value={o.code}>{o.dur?":"+o.dur+" ":""}{o.title||"(no title)"}</option>)}
+                  {titleOpts.map(o=><option key={"t-"+o.code} value={o.code}>{o.dur?":"+o.dur+" ":""}{o.title||"(no title)"}</option>)}
                 </select>
               </td>
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.dur} onChange={e=>updI(idx,"dur",e.target.value)} style={{width:35,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
