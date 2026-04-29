@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="library-copyto-prompt-2026-04-29-29";
+const __APP_VERSION__="bldhtml-creative-links-2026-04-29-30";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -5489,6 +5489,14 @@ ${fullText.substring(0,3000)}`}]
       x+='<div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">';
       if(hasSchedTypes){const grouped={};(h.iscis||[]).forEach(r=>{const s=r.sched||"All Week";grouped[s]=true});Object.entries(SCHED_COLORS_LIB).forEach(([s,c])=>{if(grouped[s])x+='<div style="display:flex;align-items:center;gap:4px;font-size:9px"><div style="width:12px;height:12px;border-radius:2px;background:'+c+'"></div>'+s+'</div>'})}
       x+='</div>';
+      // Creative files — clickable in HTML preview, render as plain text after
+      // the URL for the printed copy where links don't survive paper.
+      const filesWithUrls=(h.iscis||[]).map(r=>{const full=iscis.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:r.title||full.title||"",url:full.fileUrl}:null}).filter(Boolean);
+      if(filesWithUrls.length>0){
+        x+='<div style="margin-top:14px;padding:8px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0369a1;letter-spacing:.5px;margin-bottom:5px">Creative Files — Click to Download</div>';
+        filesWithUrls.forEach(r=>{x+='<div style="font-size:11px;margin:2px 0"><a href="'+r.url+'" style="color:#0369a1;text-decoration:underline;font-family:monospace;font-weight:600">'+r.code+'</a> — '+r.title+'</div>'});
+        x+='</div>';
+      }
       x+='<div class="sig"><div style="display:flex;justify-content:space-between"><div><b>Accepted by:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div class="note">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></div>';
       x+='</body></html>';return x;
     };
