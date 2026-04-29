@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="traffic-multislot-2026-04-29-7";
+const __APP_VERSION__="traffic-multislot-2026-04-29-8";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -2023,12 +2023,12 @@ const App=()=>{
       </div>
       <div style={{height:6}}/>
 
-      {/* Validation summary — one pill per (schedule, duration) bucket */}
+      {/* Validation summary */}
       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
         {Object.entries(durGroups).map(([key,g])=>{
           const ok=Math.abs(g.total-100)<0.5;
           return<div key={key} style={{padding:"4px 10px",borderRadius:6,border:`2px solid ${ok?"#5BC4A0":"#E85A7A"}`,background:ok?"#1f3530":"#3a1f35",fontSize:13,fontWeight:700,color:ok?"#5BC4A0":"#E85A7A"}}>
-            {g.sched} :{g.dur} — {g.items.length} spots — {g.total.toFixed(1)}% {ok?"✓":"≠ 100%"}
+            :{g.dur} — {g.items.length} spots — {g.total.toFixed(1)}% {ok?"✓":"≠ 100%"}
           </div>;
         })}
         {sel.length===0&&<div style={{fontSize:13,color:"#9B8EAD"}}>Select ISCIs below to build rotation</div>}
