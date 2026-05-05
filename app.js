@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="remove-test-tv-seed-2026-04-29-31";
+const __APP_VERSION__="monthly-summary-2026-04-29-32";
 
 // Server-side auth verification
 const verifyAuth=async(password,type)=>{
@@ -5770,6 +5770,102 @@ ${fullText.substring(0,3000)}`}]
   const[planLoading,setPlanLoading]=useState(false);
   const[planError,setPlanError]=useState(null);
   const[planMonthA,setPlanMonthA]=useState("");
+  const[monthlyReport,setMonthlyReport]=useState(null);
+  // Monthly traffic/creative summary — walks trafficHistory for the chosen
+  // month and groups by (brand, media). Returns sections only for combos
+  // that actually have records, in the order they typically appear in
+  // the team email update.
+  const buildMonthlyReport=(month)=>{
+    if(!month)return null;
+    const recs=trafficHistory.filter(h=>h.month===month);
+    if(!recs.length)return{month,sections:[]};
+    const order=[
+      {brand:"Wettermark Keith",media:"OOH",label:"WK OOH",ext:".jpg"},
+      {brand:"Wettermark Keith",media:"Radio",label:"WK Radio",ext:".mp3"},
+      {brand:"Wettermark Keith",media:"Streaming Audio",label:"WK Streaming Audio",ext:".mp3"},
+      {brand:"Wettermark Keith",media:"TV",label:"WK TV",ext:".mov"},
+      {brand:"Wettermark Keith",media:"Digital",label:"WK Digital",ext:".mp4"},
+      {brand:"Postman Law",media:"Radio",label:"PL Radio",ext:".mp3"},
+      {brand:"Postman Law",media:"Streaming Audio",label:"PL Streaming Audio",ext:".mp3"},
+      {brand:"Postman Law",media:"TV",label:"PL TV",ext:".mov"},
+      {brand:"Postman Law",media:"Cable",label:"PL Cable",ext:".mov"},
+      {brand:"Postman Law",media:"OOH",label:"PL OOH",ext:".jpg"},
+      {brand:"Postman Law",media:"Digital",label:"PL Digital",ext:".mp4"},
+    ];
+    const sections=[];
+    order.forEach(o=>{
+      const matching=recs.filter(h=>h.brand===o.brand&&(h.media===o.media||(o.media==="TV"&&h.media==="TV / Cable")));
+      if(!matching.length)return;
+      const markets=[...new Set(matching.map(h=>DM[normMkt(h.market)]||h.market))];
+      // Group items by market so the report mirrors the team-email format
+      // (per-market sub-bullets for TV when there are multiple rotation
+      // mixes across markets).
+      const itemsByMarket={};
+      matching.forEach(h=>{
+        const mkt=DM[normMkt(h.market)]||h.market||"—";
+        if(!itemsByMarket[mkt])itemsByMarket[mkt]={market:mkt,seen:new Set(),items:[]};
+        (h.iscis||[]).forEach(r=>{
+          if(!r.code||itemsByMarket[mkt].seen.has(r.code))return;
+          itemsByMarket[mkt].seen.add(r.code);
+          const full=iscis.find(i=>i.code===r.code);
+          itemsByMarket[mkt].items.push({code:r.code,title:r.title||full?.title||"",dur:r.dur||full?.dur||"",url:full?.fileUrl||""});
+        });
+      });
+      const totalIscis=Object.values(itemsByMarket).reduce((n,m)=>n+m.items.length,0);
+      sections.push({label:o.label,brand:o.brand,media:o.media,ext:o.ext,markets,totalIscis,perMarket:Object.values(itemsByMarket)});
+    });
+    return{month,sections};
+  };
+  // Plain-text formatter (Teams/Slack-friendly with bullets)
+  const renderReportText=(report)=>{
+    if(!report)return"";
+    const lines=["Good afternoon team,","","Traffic/Creative Update — "+report.month,""];
+    report.sections.forEach(s=>{
+      lines.push(s.label);
+      lines.push("• "+s.markets.length+" market"+(s.markets.length===1?"":"s")+" — "+s.markets.join(", ")+(s.totalIscis?" · "+s.totalIscis+" ISCI"+(s.totalIscis===1?"":"s"):""));
+      const multiMarket=s.perMarket.length>1;
+      s.perMarket.forEach(m=>{
+        if(multiMarket)lines.push("  ◦ "+m.market+":");
+        m.items.forEach(it=>{
+          const fname=it.code+(it.title?" - "+it.title:"")+s.ext;
+          const indent=multiMarket?"      ":"  ◦ ";
+          lines.push(indent+(it.url?fname+"  ("+it.url+")":fname));
+        });
+      });
+      lines.push("");
+    });
+    return lines.join("\n");
+  };
+  // HTML formatter — clickable creative links for paste into rich email
+  const renderReportHtml=(report)=>{
+    if(!report)return"";
+    let html='<div style="font-family:Arial,sans-serif;font-size:13px;color:#1e1233"><p>Good afternoon team,</p><p><b>Traffic/Creative Update — '+report.month+'</b></p>';
+    report.sections.forEach(s=>{
+      html+='<p style="margin:12px 0 4px"><b>'+s.label+'</b></p><ul style="margin:0;padding-left:20px">';
+      html+='<li>'+s.markets.length+' market'+(s.markets.length===1?'':'s')+' — '+s.markets.join(", ")+(s.totalIscis?' · '+s.totalIscis+' ISCI'+(s.totalIscis===1?'':'s'):'')+'</li>';
+      const multiMarket=s.perMarket.length>1;
+      if(multiMarket){
+        html+='<ul>';
+        s.perMarket.forEach(m=>{
+          html+='<li><b>'+m.market+'</b><ul>';
+          m.items.forEach(it=>{
+            const fname=it.code+(it.title?" - "+it.title:"")+s.ext;
+            html+='<li>'+(it.url?'<a href="'+it.url+'">'+fname+'</a>':fname)+'</li>';
+          });
+          html+='</ul></li>';
+        });
+        html+='</ul>';
+      }else if(s.perMarket[0]){
+        s.perMarket[0].items.forEach(it=>{
+          const fname=it.code+(it.title?" - "+it.title:"")+s.ext;
+          html+='<li>'+(it.url?'<a href="'+it.url+'">'+fname+'</a>':fname)+'</li>';
+        });
+      }
+      html+='</ul>';
+    });
+    html+='</div>';
+    return html;
+  };
   const[planMonthB,setPlanMonthB]=useState("");
 
   const runPlanner=async()=>{
@@ -6166,10 +6262,43 @@ Rules:
           {isCompare&&<button onClick={()=>{setPlanMonthA("");setPlanMonthB("")}} style={{fontSize:11,color:"#9B8EAD",background:"transparent",border:"none",cursor:"pointer",textDecoration:"underline"}}>clear</button>}
         </div>
         <div style={{flex:1}}/>
+        <button onClick={()=>setMonthlyReport(buildMonthlyReport(monthA))} disabled={!monthA} style={{padding:"8px 14px",borderRadius:7,border:"1px solid #4AC8E8",background:"rgba(74,200,232,.1)",color:"#4AC8E8",fontSize:12,fontWeight:700,cursor:monthA?"pointer":"not-allowed",letterSpacing:.3}}>📋 Monthly Summary</button>
         <button onClick={runPlanner} disabled={planLoading} style={{padding:"8px 18px",borderRadius:7,border:"none",background:planLoading?"#4a3565":"linear-gradient(135deg,#9b7bb0,#D4A040)",color:"#fff",fontSize:13,fontWeight:800,cursor:planLoading?"not-allowed":"pointer",letterSpacing:.5,boxShadow:planLoading?"none":"0 4px 16px rgba(155,123,176,.3)"}}>
           {planLoading?"🧠 Thinking…":(playbook?"🔄 Re-run AI":"🧠 Run AI — "+planBrand)}
         </button>
       </div>
+      {/* Monthly Summary panel — both brands, only shows sections with traffic */}
+      {monthlyReport&&<div style={{padding:"14px 18px",borderRadius:10,background:"rgba(74,200,232,.05)",border:"1px solid rgba(74,200,232,.25)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,gap:10,flexWrap:"wrap"}}>
+          <div>
+            <div style={{fontSize:11,fontWeight:800,color:"#4AC8E8",textTransform:"uppercase",letterSpacing:1.5}}>📋 Monthly Summary — {monthlyReport.month}</div>
+            <div style={{fontSize:11,color:"#9B8EAD",marginTop:2}}>Both brands · {monthlyReport.sections.length} section{monthlyReport.sections.length===1?"":"s"} with traffic</div>
+          </div>
+          <div style={{display:"flex",gap:6}}>
+            <button onClick={()=>{navigator.clipboard.writeText(renderReportText(monthlyReport));notify("Plain text copied")}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #4AC8E8",background:"transparent",color:"#4AC8E8",fontSize:11,fontWeight:700,cursor:"pointer"}}>Copy Text</button>
+            <button onClick={()=>{const html=renderReportHtml(monthlyReport);const item=new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([renderReportText(monthlyReport)],{type:"text/plain"})});navigator.clipboard.write([item]).then(()=>notify("Rich HTML copied — paste into email/Teams")).catch(()=>{navigator.clipboard.writeText(html);notify("Copied as HTML markup")})}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #5BC4A0",background:"rgba(91,196,160,.1)",color:"#5BC4A0",fontSize:11,fontWeight:700,cursor:"pointer"}}>Copy Rich (HTML)</button>
+            <button onClick={()=>setMonthlyReport(null)} style={{padding:"5px 10px",borderRadius:6,border:"1px solid #6B5E80",background:"transparent",color:"#9B8EAD",fontSize:11,fontWeight:700,cursor:"pointer"}}>Close</button>
+          </div>
+        </div>
+        {monthlyReport.sections.length===0?<div style={{fontSize:13,color:"#9B8EAD",fontStyle:"italic",padding:"14px 0"}}>No traffic records found for {monthlyReport.month}.</div>:
+        <div style={{background:"#1e1233",border:"1px solid #2d1f42",borderRadius:7,padding:14,maxHeight:520,overflowY:"auto"}}>
+          <div style={{fontSize:13,color:"#E8DFF0",lineHeight:1.55}}>
+            <div style={{marginBottom:10}}>Good afternoon team,</div>
+            <div style={{fontWeight:700,marginBottom:14,color:"#F0E8F8"}}>Traffic/Creative Update — {monthlyReport.month}</div>
+            {monthlyReport.sections.map(s=>{
+              const multiMarket=s.perMarket.length>1;
+              return<div key={s.label} style={{marginBottom:14}}>
+                <div style={{fontSize:14,fontWeight:800,color:s.brand==="Postman Law"?"#9b7bb0":"#D4A040",marginBottom:4}}>{s.label}</div>
+                <ul style={{margin:0,paddingLeft:18,color:"#C4A0C8"}}>
+                  <li style={{marginBottom:4}}>{s.markets.length} market{s.markets.length===1?"":"s"} — {s.markets.join(", ")}{s.totalIscis?` · ${s.totalIscis} ISCI${s.totalIscis===1?"":"s"}`:""}</li>
+                  {multiMarket?<ul style={{paddingLeft:18,margin:"4px 0"}}>{s.perMarket.map(m=><li key={m.market} style={{marginBottom:4}}><b style={{color:"#E8DFF0"}}>{m.market}</b><ul style={{paddingLeft:18,margin:"2px 0"}}>{m.items.map(it=><li key={it.code} style={{fontFamily:"monospace",fontSize:12}}>{it.url?<a href={it.url} target="_blank" rel="noreferrer" style={{color:"#4AC8E8"}}>{it.code}{it.title?" - "+it.title:""}{s.ext}</a>:<span style={{color:"#9B8EAD"}}>{it.code}{it.title?" - "+it.title:""}{s.ext}</span>}</li>)}</ul></li>)}</ul>:
+                  s.perMarket[0]?.items.map(it=><li key={it.code} style={{fontFamily:"monospace",fontSize:12}}>{it.url?<a href={it.url} target="_blank" rel="noreferrer" style={{color:"#4AC8E8"}}>{it.code}{it.title?" - "+it.title:""}{s.ext}</a>:<span style={{color:"#9B8EAD"}}>{it.code}{it.title?" - "+it.title:""}{s.ext}</span>}</li>)}
+                </ul>
+              </div>;
+            })}
+          </div>
+        </div>}
+      </div>}
       {planError&&<div style={{padding:10,borderRadius:8,background:"rgba(232,90,122,.1)",border:"1px solid rgba(232,90,122,.2)",color:"#E85A7A",fontSize:12,whiteSpace:"pre-wrap",fontFamily:"ui-monospace,monospace"}}>{planError}</div>}
       {/* Megara summary verse — top of page once AI runs */}
       {/* Meg's verdict + Big Idea */}
