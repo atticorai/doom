@@ -377,13 +377,22 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
   // On load: show quips while checking auth
   showStatus(pick(quips));
   startQuipCycle();
-  fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"check"})})
-    .then(function(r){return r.json()})
-    .then(function(d){
-      if(d.authenticated){if(d.customToken){window.__pendingCustomToken=d.customToken}loadApp()}
-      else{showLogin()}
-    })
-    .catch(function(){showLogin()});
+  // Vendor confirmation portal: anyone with a ?confirm=... URL goes straight
+  // into the app — the per-station token in the URL is the auth for vendors,
+  // validated client-side by the portal and (after Phase D) server-side by
+  // /api/confirm. Skipping the auth check here is what stops vendors from
+  // hitting the staff password prompt.
+  if(/[?&]confirm=/.test(window.location.search)){
+    loadApp();
+  } else {
+    fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"check"})})
+      .then(function(r){return r.json()})
+      .then(function(d){
+        if(d.authenticated){if(d.customToken){window.__pendingCustomToken=d.customToken}loadApp()}
+        else{showLogin()}
+      })
+      .catch(function(){showLogin()});
+  }
 })();
 </script></div>
 </body></html>
