@@ -1,25 +1,50 @@
 rules_version = '2';
+
+// LOCKDOWN VERSION — DEPLOY ONLY AFTER PRE-FLIGHT CHECKLIST PASSES.
+//
+// Pre-flight (run on a deploy preview before pushing rules to prod):
+//
+//   1. FIREBASE_ADMIN_KEY env var is set in Vercel (paste service-account JSON).
+//   2. Log in to the app. DevTools console must show:
+//        Firebase Auth signed in: atticor-staff
+//   3. Make a small edit (toggle an ISCI active state) and refresh — change
+//      must persist.
+//   4. Click a vendor confirm link. DevTools network tab must show:
+//        POST /api/confirm  ->  200 OK
+//      (NOT 503 — that means Admin SDK isn't configured.)
+//   5. Take a Firestore export from Firebase Console
+//      (Cloud Firestore -> Import/Export -> Export).
+//
+// If any step fails: do NOT deploy these rules. Restore the previous rules
+// from firestore.rules.previous (one-line copy + redeploy).
+//
+// Recovery: `cp firestore.rules.previous firestore.rules &&
+//            firebase deploy --only firestore:rules`
+//
+// What this changes vs. the previous rules:
+//   - reads:  STILL OPEN. Vendor portals and public report pages need it,
+//             and the threat model is mass deletion / corruption, not data
+//             exfiltration. Tightening reads requires a portal refactor that
+//             is out of scope.
+//   - writes: now require request.auth != null. Logged-in staff write through
+//             a Firebase Auth custom token minted by /api/auth (Phase A).
+//             Vendors don't have sessions; their writes go through
+//             /api/confirm (Phase B), which uses the Admin SDK and bypasses
+//             rules entirely.
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default: deny everything
+    // Default: deny everything not explicitly matched.
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // appData collection — where all app state lives
-    // Only allow access from authenticated sessions (server-side writes)
-    // Since this app uses custom session auth (not Firebase Auth),
-    // lock down to admin SDK writes only by denying all client access.
-    // The app reads/writes Firestore from the CLIENT using the Firebase JS SDK,
-    // so we need to allow client access but restrict to the appData collection only.
+    // appData/* — all app state. Reads stay open; writes require auth.
     match /appData/{docId} {
-      // Allow reads — the app needs to load data on startup
       allow read: if true;
 
-      // Allow writes — but only to known document IDs
-      // This prevents creation of arbitrary new collections
-      allow write: if docId in [
+      allow write: if request.auth != null && docId in [
         'iscis',
         'stations',
         'estimates',
@@ -43,14 +68,19 @@ service cloud.firestore {
         'trafficHistory_backup',
         'nowAiring_backup',
         'staEstLinks_backup',
-        'confirmations_backup'
+        'confirmations_backup',
+        // Written by /api/confirm via Admin SDK — Admin bypasses rules so the
+        // entry below isn't strictly required, but keeping it documents the
+        // doc and lets a future admin client enumerate it.
+        'portalRequests'
       ];
     }
 
-    // trafficSheets — stored per estimate+station for confirmation portal
+    // trafficSheets — per estimate+station HTML for the vendor portal preview.
+    // Vendors read; only staff (authed) write.
     match /trafficSheets/{sheetId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if request.auth != null;
     }
   }
 }
