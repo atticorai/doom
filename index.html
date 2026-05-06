@@ -382,7 +382,12 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
   // validated client-side by the portal and (after Phase D) server-side by
   // /api/confirm. Skipping the auth check here is what stops vendors from
   // hitting the staff password prompt.
-  if(/[?&]confirm=/.test(window.location.search)){
+  //
+  // Also detect ?confirm= in the hash fragment (e.g. /#?confirm=...) for
+  // URLs that were generated while a staff member was sitting on a hash-
+  // routed page like #ooh/wk. App.js's confirm-URL parser falls back to the
+  // hash too.
+  if(/[?&]confirm=/.test(window.location.search)||/[?&]confirm=/.test(window.location.hash)){
     loadApp();
   } else {
     fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"check"})})

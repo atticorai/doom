@@ -995,7 +995,7 @@ const App=()=>{
     const newReminders={};let sent=0;let failed=0;
     for(const r of toRemind){
       const subj="Reminder: Please Confirm Traffic Receipt — "+r.h.brand+" "+r.h.market+" "+r.h.media+" | Est "+(r.h.est||"");
-      const baseUrl=window.location.href.split("?")[0];
+      const baseUrl=window.location.href.split("?")[0].split("#")[0];
       const remTok=tokensByKey[akFromHistory(r.h)]?.[r.call]||"";
       const confirmUrl=baseUrl+"?confirm="+encodeURIComponent(r.h.est||"")+"&sta="+encodeURIComponent(r.call)+"&tok="+encodeURIComponent(remTok);
       const isciObjs=(r.h.iscis||[]).map(ic=>{const full=iscis.find(i=>i.code===ic.code);return full?{code:ic.code,title:ic.title,fileUrl:full.fileUrl}:null}).filter(Boolean);
@@ -1152,7 +1152,17 @@ const App=()=>{
   const[lastSynced,setLastSynced]=useState(null);
   React.useEffect(()=>{
     if(!dbLoaded)return;
-    const params=new URLSearchParams(window.location.search);
+    // Read confirm params from either the search string or the hash fragment.
+    // Some legacy URLs were generated while a staff member was sitting on a
+    // hash-routed page (e.g. #ooh/wk), which baked the hash into the prefix
+    // and produced /#?confirm=... links. Those still work.
+    let qs=window.location.search;
+    if(!/[?&]confirm=/.test(qs)){
+      const h=window.location.hash||"";
+      const idx=h.indexOf("?");
+      if(idx>=0)qs="?"+h.slice(idx+1);
+    }
+    const params=new URLSearchParams(qs);
     const rawEstNum=params.get('confirm');const rawSta=params.get('sta');const tok=params.get('tok');
     // Sanitize: estNum must be 3-4 digits (PL 4-digit or WK 3-digit). sta must be alnum/dash/underscore only.
     const estNum=rawEstNum&&/^[0-9]{3,4}$/.test(rawEstNum)?rawEstNum:null;
@@ -2279,7 +2289,7 @@ const App=()=>{
           const filesWithUrls=sel.filter(r=>r.isci.fileUrl);
           const creativeLinks=filesWithUrls.length>0?
             "<br><br><b>Creative Files:</b><br>"+filesWithUrls.map(r=>'<a href="'+r.isci.fileUrl+'">'+r.isci.code+" — "+r.isci.title+'</a>').join("<br>"):"";
-          const baseUrl=window.location.href.split("?")[0];
+          const baseUrl=window.location.href.split("?")[0].split("#")[0];
           // ── GROUP BY OWNERSHIP+MARKET — one email per ownership group within same market ──
           const ownershipGroups={};
           sendable.forEach(s=>{const grp=(s.ownership||s.call)+"||"+est.market;if(!ownershipGroups[grp])ownershipGroups[grp]=[];ownershipGroups[grp].push(s)});
@@ -2877,7 +2887,7 @@ const App=()=>{
           if(!isDigital){var dc6=Object.entries(DM).find(function(e){return e[1].toLowerCase()===est.market.toLowerCase()});var dcCode6=dc6?dc6[0]:"";
             var dispFiles2=iscis.filter(function(i){return i.suffix==="B"&&i.brand===est.brand&&i.dma===dcCode6&&i.active&&i.fileUrl});
             if(dispFiles2.length>0){emailBody2+="<b>Display Banner Files:</b><br>";dispFiles2.forEach(function(d){emailBody2+='<a href="'+d.fileUrl+'">'+d.code+" — "+d.title+"</a><br>"});emailBody2+="<br>"}}
-          var confirmBase2=window.location.href.split("?")[0];
+          var confirmBase2=window.location.href.split("?")[0].split("#")[0];
           var staTag2=isDigital?"ESPN_GKBPS":vendorMode;
           var tok3=reserveToken(ak(est),staTag2);
           var confirmUrl3=confirmBase2+"?confirm="+encodeURIComponent(est.num)+"&sta="+encodeURIComponent(staTag2)+"&tok="+encodeURIComponent(tok3);
@@ -2914,7 +2924,7 @@ const App=()=>{
           emailBody+="<b>Broadcast Month:</b> "+workMonth+"<br><b>Flight Dates:</b> "+flightDates+"<br><b>Estimate:</b> "+est.num+"<br><br>";
           var filesWithUrls=sel.filter(function(r){return r.isci.fileUrl});
           if(filesWithUrls.length>0){emailBody+="<b>Creative Files:</b><br>";filesWithUrls.forEach(function(r){emailBody+='<a href="'+r.isci.fileUrl+'">'+r.isci.code+" - "+r.isci.title+"</a><br>"});emailBody+="<br>"}
-          var confirmBase=window.location.href.split("?")[0];
+          var confirmBase=window.location.href.split("?")[0].split("#")[0];
           var tokGen=reserveToken(ak(est),"Generic");
           var confirmUrl=confirmBase+"?confirm="+encodeURIComponent(est.num)+"&sta=Generic&tok="+encodeURIComponent(tokGen);
           emailBody+='Please confirm receipt:<br><a href="'+confirmUrl+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Media';
@@ -4827,7 +4837,7 @@ ${fullText.substring(0,3000)}`}]
       setDraftEst(est);setSendResult(null);
       const subj=agency+" | "+est.brand+" "+est.market+" "+est.media+" Traffic Instructions | "+(cm?.month||workMonth)+" | Est "+est.num;
       setDraftSubj(subj);
-      var confirmBase5=window.location.href.split("?")[0];
+      var confirmBase5=window.location.href.split("?")[0].split("#")[0];
       if(est.media==="OOH"){
         var tokOoh=reserveToken(ak(est),"OOH_VENDOR");
         var confirmUrlOoh=confirmBase5+"?confirm="+encodeURIComponent(est.num)+"&sta=OOH_VENDOR&tok="+encodeURIComponent(tokOoh);
@@ -5744,7 +5754,7 @@ ${fullText.substring(0,3000)}`}]
                           if(resendNote.trim())emailBody+="<b>Note:</b> "+resendNote.trim()+"<br><br>";
                           emailBody+="<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
                           if(allWithFiles.length>0){emailBody+="<b>Creative Files:</b><br>";allWithFiles.forEach(function(r){var full=iscis.find(function(i){return i.code===r.code});if(full&&full.fileUrl)emailBody+='<a href="'+full.fileUrl+'">'+r.code+" — "+r.title+"</a><br>"});emailBody+="<br>"}
-                          var confirmBase2=window.location.href.split("?")[0];
+                          var confirmBase2=window.location.href.split("?")[0].split("#")[0];
                           var espnTok=reserveToken(akFromHistory(h),"ESPN_GKBPS");
                           var confirmUrl3=confirmBase2+"?confirm="+encodeURIComponent(h.est||"")+"&sta=ESPN_GKBPS&tok="+encodeURIComponent(espnTok);
                           emailBody+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmUrl3+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager';
@@ -5789,7 +5799,7 @@ ${fullText.substring(0,3000)}`}]
                             var staCalls=grpStas.map(function(s){return s.call});
                             var subj2="Atticor | "+(h.brand||"")+" "+(h.market||"")+" "+(h.media||"")+" Traffic Instructions | "+(h.month||"")+" | Est "+(h.est||"");
                             var noteHtml=resendNote.trim()?"<b>Note:</b> "+resendNote.trim()+"<br><br>":"";
-                            var confirmBase4=window.location.href.split("?")[0];
+                            var confirmBase4=window.location.href.split("?")[0].split("#")[0];
                             var confirmBtns=grpStas.map(function(s){var tok=(resendTokens[s.call]&&resendTokens[s.call].token)||reserveToken(resendKey,s.call);var url=confirmBase4+"?confirm="+encodeURIComponent(h.est||"")+"&sta="+encodeURIComponent(s.call)+"&tok="+encodeURIComponent(tok);return'<a href="'+url+'" style="display:inline-block;padding:6px 16px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:4px 2px">Confirm '+s.call+'</a>'}).join(" ");
                             var body2="Hello,<br><br>Please find the attached traffic instructions for Est "+(h.est||"")+" — "+(h.brand||"")+", "+(h.market||"")+", "+(h.media||"")+".<br><br>"+noteHtml+"<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Version:</b> "+(h.version||"")+"<br><b>Station(s):</b> "+staCalls.join(", ")+creativeLinks2+"<br><br>Please confirm receipt of this traffic within 24 hours:<br>"+confirmBtns+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
                             try{var resp3=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:grpEmails,cc:ccListR,subject:subj2,message:body2,pdfBase64:pdfB64,pdfName:pdfName})});if(resp3.ok)sent4+=grpStas.length;else failed3+=grpStas.length}catch(e4){failed3+=grpStas.length}
@@ -7852,7 +7862,7 @@ Rules:
                 if(!recipients.length){notify("No station email contacts found for this record — link stations in the Stations page first.");return}
                 const buyerCc=BUYER_EMAILS[h.buyer]||"";
                 const ccList=[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(",");
-                const confirmBase=window.location.href.split("?")[0];
+                const confirmBase=window.location.href.split("?")[0].split("#")[0];
                 let emailBody="Hello,<br><br>Please find the attached traffic instructions for "+(h.brand||"")+" — "+(h.market||"")+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br>";
                 if(note)emailBody+="<b>Note:</b> "+note+"<br><br>";
                 emailBody+="<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
@@ -8265,7 +8275,7 @@ Rules:
       const sendToStation=async(s)=>{
         const emails=parseEmails(s.contact);if(!emails.length){notify("No email for "+s.call);return}
         const token=conf[s.call]?.token||genToken();
-        const confirmUrl=window.location.href.split("?")[0]+"?confirm="+encodeURIComponent(e.num)+"&sta="+encodeURIComponent(s.call)+"&tok="+encodeURIComponent(token);
+        const confirmUrl=window.location.href.split("?")[0].split("#")[0]+"?confirm="+encodeURIComponent(e.num)+"&sta="+encodeURIComponent(s.call)+"&tok="+encodeURIComponent(token);
         const subj="Atticor | "+e.brand+" "+e.market+" "+e.media+" Traffic Instructions | "+(airing?.month||"")+" | Est "+e.num;
         const body="Hello,<br><br>"+
           "Please find the attached traffic instructions for Est "+e.num+" — "+e.brand+", "+e.market+", "+e.media+".<br><br>"+
@@ -8306,7 +8316,7 @@ Rules:
                 {c?.confirmed?<div style={{textAlign:"right"}}><span style={{fontSize:14,fontWeight:600,color:"#5BC4A0"}}>Confirmed</span><div style={{fontSize:13,color:"#9B8EAD"}}>{new Date(c.ts).toLocaleString()}</div></div>:
                 <div style={{display:"flex",gap:3}}>
                   {emails.length>0&&<button onClick={()=>sendToStation(s)} style={{padding:"3px 8px",borderRadius:4,border:"none",background:"#4AC8E8",color:"#fff",fontSize:14,fontWeight:600,cursor:"pointer"}}>✉ Send</button>}
-                  <button onClick={()=>{const persistedTok=reserveToken(ak(e),s.call);const url=window.location.href.split("?")[0]+"?confirm="+encodeURIComponent(e.num)+"&sta="+encodeURIComponent(s.call)+"&tok="+encodeURIComponent(persistedTok);navigator.clipboard?.writeText(url);notify("Link copied for "+s.call)}} style={{padding:"3px 8px",borderRadius:4,border:"1px solid #9b7bb0",background:"#1e1233",color:"#9B8EAD",fontSize:14,fontWeight:600,cursor:"pointer"}}>Copy Link</button>
+                  <button onClick={()=>{const persistedTok=reserveToken(ak(e),s.call);const url=window.location.href.split("?")[0].split("#")[0]+"?confirm="+encodeURIComponent(e.num)+"&sta="+encodeURIComponent(s.call)+"&tok="+encodeURIComponent(persistedTok);navigator.clipboard?.writeText(url);notify("Link copied for "+s.call)}} style={{padding:"3px 8px",borderRadius:4,border:"1px solid #9b7bb0",background:"#1e1233",color:"#9B8EAD",fontSize:14,fontWeight:600,cursor:"pointer"}}>Copy Link</button>
                   <button onClick={()=>{confirmStation(ak(e),s.call);notify(s.call+" confirmed")}} style={{padding:"3px 8px",borderRadius:4,border:"1px solid #5BC4A0",background:"rgba(22,163,98,.15)",color:"#5BC4A0",fontSize:14,fontWeight:600,cursor:"pointer"}}>Mark</button>
                 </div>}
               </div>
