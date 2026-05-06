@@ -15,7 +15,6 @@ The app's personality IS Megara. Snarky, competent, lording over the user. Her v
 - `data-*.js` — Seed data files (ISCIs, estimates, stations, calendar, OOH postings, etc.)
 - `api/auth.js` — Auth with timing-safe compare, rate limiting, crypto session tokens
 - `api/config.js` — Firebase config endpoint
-- `api/email.js` — EmailJS fallback
 - `api/planner.js` — Claude AI proxy with model whitelist
 - `middleware.js` — Vercel middleware, session validation (64-char hex)
 - `vercel.json` — SPA rewrite
@@ -60,8 +59,7 @@ The app's personality IS Megara. Snarky, competent, lording over the user. Her v
 - `akFromHistory(h)` for traffic history records
 
 ## Email System
-- Primary: n8n webhook (`doomndeliverables.app.n8n.cloud/webhook/...`)
-- Fallback: EmailJS via `/api/email`
+- n8n webhook (`doomndeliverables.app.n8n.cloud/webhook/...`) via `/api/send-traffic`
 - Sends from: `emm.caban@atticor.ai` (Outlook, configured in n8n)
 - CC: buyer email + `emm.caban@atticor.ai`
 - Groups by ownership — ONE email per ownership group per market

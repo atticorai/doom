@@ -2,9 +2,35 @@ const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
 const __APP_VERSION__="monthly-summary-2026-04-29-32";
 
-// Server-side auth verification
+// Server-side auth verification. On successful login, /api/auth may return a
+// Firebase Auth custom token (when FIREBASE_ADMIN_KEY is set on the server) —
+// we sign the client into Firebase Auth so writes survive locked-down Firestore
+// rules. If no customToken is returned, this is a no-op and the app works as
+// before.
+const signInWithFbToken=async(customToken)=>{
+  if(!customToken)return;
+  try{
+    // Firebase init runs concurrently with app.js load — wait for it to land.
+    if(window._firebaseReady)await window._firebaseReady;
+    if(window.fbAuth&&window.fbAuth.signInWithCustomToken){
+      await window.fbAuth.signInWithCustomToken(customToken);
+      console.log("Firebase Auth signed in:",window.fbAuth.currentUser&&window.fbAuth.currentUser.uid);
+    }
+  }catch(e){console.warn("Firebase Auth signin failed:",e&&e.message)}
+};
+// Pick up a custom token stashed by the index.html loader (the initial password
+// prompt) so first-page-loads also sign into Firebase Auth.
+if(typeof window!=="undefined"&&window.__pendingCustomToken){
+  signInWithFbToken(window.__pendingCustomToken);
+  window.__pendingCustomToken=null;
+}
 const verifyAuth=async(password,type)=>{
-  try{const r=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password,type})});const d=await r.json();return d.success===true}catch(e){console.error("Auth check failed:",e);return false}
+  try{
+    const r=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password,type})});
+    const d=await r.json();
+    if(d.success===true&&type==="login"&&d.customToken){await signInWithFbToken(d.customToken)}
+    return d.success===true;
+  }catch(e){console.error("Auth check failed:",e);return false}
 };
 // All emails go through /api/send-traffic (n8n webhook proxy)
 
@@ -605,8 +631,8 @@ const App=()=>{
   // ── FIRESTORE PERSISTENCE ────────────────────────────
   const loadCompleteRef=React.useRef(false);
   const saveToDb=React.useCallback((col,data)=>{
-    if(!loadCompleteRef.current){console.warn("saveToDb BLOCKED (load incomplete):",col);return}
-    try{db.collection("appData").doc(col).set({data:JSON.stringify(data),ts:Date.now()});setLastSynced(new Date())}catch(e){console.warn("Save failed:",col,e)}
+    if(!loadCompleteRef.current){console.warn("saveToDb BLOCKED (load incomplete):",col);return Promise.reject(new Error("load incomplete"))}
+    try{const p=db.collection("appData").doc(col).set({data:JSON.stringify(data),ts:Date.now()});setLastSynced(new Date());return p}catch(e){console.warn("Save failed:",col,e);return Promise.reject(e)}
   },[]);
   // Load all data on mount
   React.useEffect(()=>{
@@ -891,13 +917,17 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(auditLog.length>0)saveToDb("auditLog",auditLog)},[auditLog,dbLoaded]);
   const trafficFbCountRef=React.useRef(0);
   const trafficDirtyRef=React.useRef(false);
+  const trafficSaveTimerRef=React.useRef(null);
   const setTrafficHistoryRaw=setTrafficHistory;
   const setTrafficHistoryAndSave=React.useCallback((updater)=>{
     trafficDirtyRef.current=true;
     setTrafficHistoryRaw(prev=>{
       const next=typeof updater==='function'?updater(prev):updater;
       if(dbLoaded&&trafficLoadedRef.current&&trafficDirtyRef.current&&next.length>0){
-        // Drop guard: block save if traffic count drops >20% from loaded count
+        // Drop guard: block save if traffic count drops >20% from loaded count.
+        // Compares against the LAST PERSISTED count (trafficFbCountRef), which is only
+        // updated after a save acks — that way two rapid edits in <100ms can't hide a
+        // regression by bumping the count before the first save lands.
         if(trafficFbCountRef.current>5){
           const dropPct=1-(next.length/trafficFbCountRef.current);
           if(dropPct>0.2){
@@ -908,9 +938,15 @@ const App=()=>{
             return prev; // Return previous state, don't save
           }
         }
-        trafficFbCountRef.current=next.length;
         backupBeforeSave("trafficHistory",next);
-        setTimeout(()=>saveToDb("trafficHistory",next),100);
+        // Debounce: cancel any pending save and schedule a fresh one. Multiple
+        // rapid edits collapse into a single Firestore write of the latest state.
+        if(trafficSaveTimerRef.current)clearTimeout(trafficSaveTimerRef.current);
+        trafficSaveTimerRef.current=setTimeout(async()=>{
+          trafficSaveTimerRef.current=null;
+          try{await saveToDb("trafficHistory",next);trafficFbCountRef.current=next.length}
+          catch(e){console.warn("trafficHistory save failed:",e)}
+        },100);
       }
       return next;
     });
@@ -936,10 +972,10 @@ const App=()=>{
       if(h.status!=="sent"&&h.status!=="partial")return;
       const sentAt=new Date(h.ts).getTime();
       if(now-sentAt<HOURS_24)return;
-      const conf=confirmations[h.est]||{};
+      const conf=confirmations[akFromHistory(h)]||{};
       h.stations.forEach(call=>{
         if(conf[call]?.confirmed)return;
-        const rKey=h.est+"_"+call+"_v"+(h.version||"1");
+        const rKey=akFromHistory(h)+"_"+call+"_v"+(h.version||"1");
         if(confirmRemindersSent[rKey])return;
         const sta=stations.find(s=>s.call===call);
         if(!sta)return;
@@ -951,11 +987,17 @@ const App=()=>{
     if(!toRemind.length){notify("No pending reminders — all stations confirmed or already reminded");return}
     if(!confirm("Send confirmation reminders to "+toRemind.length+" unconfirmed station(s)?"))return;
     notify("Sending "+toRemind.length+" reminder(s)...");
+    // Ensure every reminded station has a real token stored before any URL is built.
+    // We mutate confirmations once with all the needed tokens so vendors who click later
+    // can be validated against the persisted value.
+    const tokensByKey={};toRemind.forEach(r=>{const k=akFromHistory(r.h);const existing=confirmations[k]?.[r.call]?.token;tokensByKey[k]=tokensByKey[k]||{};tokensByKey[k][r.call]=existing||genToken()});
+    setConfirmations(p=>{const next={...p};Object.entries(tokensByKey).forEach(([k,calls])=>{next[k]={...(next[k]||{})};Object.entries(calls).forEach(([call,token])=>{if(!next[k][call])next[k][call]={confirmed:false,token};else if(!next[k][call].token)next[k][call]={...next[k][call],token}})});try{db.collection("appData").doc("confirmations").set({data:JSON.stringify(next),ts:Date.now()})}catch(e){console.warn("Failed to save confirmations:",e)}return next});
     const newReminders={};let sent=0;let failed=0;
     for(const r of toRemind){
       const subj="Reminder: Please Confirm Traffic Receipt — "+r.h.brand+" "+r.h.market+" "+r.h.media+" | Est "+(r.h.est||"");
       const baseUrl=window.location.href.split("?")[0];
-      const confirmUrl=baseUrl+"?confirm="+encodeURIComponent(r.h.est||"")+"&sta="+encodeURIComponent(r.call)+"&tok=auto";
+      const remTok=tokensByKey[akFromHistory(r.h)]?.[r.call]||"";
+      const confirmUrl=baseUrl+"?confirm="+encodeURIComponent(r.h.est||"")+"&sta="+encodeURIComponent(r.call)+"&tok="+encodeURIComponent(remTok);
       const isciObjs=(r.h.iscis||[]).map(ic=>{const full=iscis.find(i=>i.code===ic.code);return full?{code:ic.code,title:ic.title,fileUrl:full.fileUrl}:null}).filter(Boolean);
       const creativeLinks=isciObjs.filter(i=>i.fileUrl).length>0?"<br><br><b>Creative Files:</b><br>"+isciObjs.filter(i=>i.fileUrl).map(i=>'<a href="'+i.fileUrl+'">'+i.code+" — "+i.title+'</a>').join("<br>"):"";
       const body="Hello,<br><br>This is a reminder that you have not yet confirmed receipt of traffic instructions for <b>"+(r.h.est||"")+" — "+r.h.brand+", "+r.h.market+", "+r.h.media+"</b>.<br><br><b>Broadcast Month:</b> "+(r.h.month||"")+"<br><b>Flight Dates:</b> "+(r.h.flight||"")+"<br><b>Version:</b> "+r.h.version+"<br><b>Station:</b> "+r.call+creativeLinks+"<br><br>The traffic sheet is attached for your reference.<br><br>Please confirm receipt by clicking the link below:<br><a href=\""+confirmUrl+"\">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor";
@@ -1016,6 +1058,37 @@ const App=()=>{
     });
   };
   const getConfirmed=(key)=>confirmations[key]||{};
+  // Reserve (or fetch) a real per-station token and persist it under `key` so the
+  // vendor portal can validate the URL when the recipient clicks. Returns the token
+  // synchronously so callers can drop it into the email URL immediately.
+  const reserveToken=(key,call)=>{
+    const existing=confirmations[key]?.[call]?.token;
+    if(existing)return existing;
+    const token=genToken();
+    setConfirmations(p=>{
+      const next={...p,[key]:{...(p[key]||{}),[call]:{...((p[key]||{})[call]||{confirmed:false}),token}}};
+      try{db.collection("appData").doc("confirmations").set({data:JSON.stringify(next),ts:Date.now()})}catch(e){console.warn("Failed to save confirmations:",e)}
+      return next;
+    });
+    return token;
+  };
+
+  // Vendor portal action helper. Tries POST /api/confirm first; if the server
+  // says 503 (FIREBASE_ADMIN_KEY not configured) or the request can't reach
+  // the server, we return {fallback:true} so the caller writes to Firestore
+  // directly — the legacy path. After Phase D deploys (locked rules), the
+  // fallback writes will start failing for vendors and the server path becomes
+  // the only working path; staff sessions still write directly because they're
+  // signed into Firebase Auth.
+  const portalApi=async(action,args)=>{
+    try{
+      const resp=await fetch("/api/confirm",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({action},args))});
+      if(resp.ok){const j=await resp.json().catch(()=>({}));return{ok:true,body:j}}
+      if(resp.status===503)return{ok:false,fallback:true};
+      const err=await resp.json().catch(()=>({}));
+      return{ok:false,error:err.error||("HTTP "+resp.status),status:resp.status};
+    }catch(e){console.warn("portalApi network error, falling back:",e&&e.message);return{ok:false,fallback:true}}
+  };
 
   // ── CHECK URL FOR CONFIRMATION LINKS ──────────────────
   const[confirmMode,setConfirmMode]=useState(null);
@@ -1080,7 +1153,10 @@ const App=()=>{
   React.useEffect(()=>{
     if(!dbLoaded)return;
     const params=new URLSearchParams(window.location.search);
-    const estNum=params.get('confirm');const sta=params.get('sta');const tok=params.get('tok');
+    const rawEstNum=params.get('confirm');const rawSta=params.get('sta');const tok=params.get('tok');
+    // Sanitize: estNum must be 3-4 digits (PL 4-digit or WK 3-digit). sta must be alnum/dash/underscore only.
+    const estNum=rawEstNum&&/^[0-9]{3,4}$/.test(rawEstNum)?rawEstNum:null;
+    const sta=rawSta&&/^[A-Za-z0-9_-]{1,32}$/.test(rawSta)?rawSta:null;
     if(estNum&&sta){
       const est=estimates.find(e=>e.num===estNum);
       const brand=BRANDS.find(b=>b.name===est?.brand);
@@ -1088,9 +1164,14 @@ const App=()=>{
       const staObj=stations.find(s=>s.call===sta);
       const confirmKey=est&&est.brand==="Wettermark Keith"&&estNum.length<=3?estNum+"|"+(staObj?.market||est?.market||""):estNum;
       const airing=nowAiring[confirmKey];
-      // Validate confirmation token before granting access
+      // Validate confirmation token before granting access.
+      // Real tokens are 32-char hex generated server-issued via genToken(). The legacy
+      // 'auto' skeleton-key is no longer accepted when a stored token exists; it remains
+      // a soft fallback ONLY for legacy records sent before per-station tokens were wired
+      // through (no stored token to compare against).
       const storedToken=confirmations[confirmKey]?.[sta]?.token;
-      if(!tok||(!storedToken&&tok!=='auto')||(storedToken&&tok!==storedToken&&tok!=='auto')){
+      const tokOk=storedToken?(tok===storedToken):(tok==='auto');
+      if(!tokOk){
         console.warn("Invalid or missing confirmation token for",estNum,sta);
         setConfirmMode({estNum,sta,tok:null,est,airing,brand,invalidToken:true});
         return;
@@ -1110,7 +1191,7 @@ const App=()=>{
     const{estNum,sta,est,airing,brand}=confirmMode;
     // Wait for data to load
     if(!dbLoaded){confirmJsx=<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center"}}><div style={{width:72,height:72,borderRadius:16,background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:20,boxShadow:"0 8px 32px rgba(155,123,176,.4)",animation:"pulse 2s ease-in-out infinite"}}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff" opacity=".9"/><path d="M12 5l6 3v8l-6 3-6-3V8l6-3z" fill="#9b7bb0"/><path d="M12 8l3 1.5v5L12 16l-3-1.5v-5L12 8z" fill="#fff"/></svg></div><div style={{fontSize:24,fontWeight:800,color:"#fff",letterSpacing:1}}>ATTICOR</div><div style={{fontSize:12,fontWeight:600,color:"#C4A0C8",letterSpacing:2,marginTop:4}}>MEDIA SERVICES</div><div style={{marginTop:28,width:180,height:3,background:"#2d1f42",borderRadius:2,overflow:"hidden",margin:"0 auto"}}><div style={{width:"40%",height:"100%",background:"linear-gradient(90deg,#9b7bb0,#C4A0C8)",borderRadius:2,animation:"loadBar 1.5s ease-in-out infinite"}}></div></div><div style={{fontSize:13,color:"#64748b",marginTop:16}}>Loading traffic details...</div></div></div>;}else{
-    const alreadyConfirmed=confirmations[estNum]?.[sta]?.confirmed;
+    const alreadyConfirmed=confirmations[confirmKey]?.[sta]?.confirmed;
     // Show full traffic sheet view
     if(showSheet&&sheetHtml){confirmJsx=<div style={{minHeight:"100vh",background:"#fff"}}>
       <div style={{background:"#1e1233",padding:"10px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}}>
@@ -1165,7 +1246,7 @@ const App=()=>{
             <div style={{background:"rgba(22,163,98,.15)",border:"2px solid #5BC4A0",borderRadius:12,padding:24,textAlign:"center"}}>
               <div style={{fontSize:36,marginBottom:8}}>✅</div>
               <div style={{fontSize:24,fontWeight:800,color:"#5BC4A0"}}>Receipt Confirmed</div>
-              <div style={{fontSize:14,color:"#9B8EAD",marginTop:6}}>{alreadyConfirmed?"Confirmed on "+new Date(confirmations[estNum]?.[sta]?.ts||Date.now()).toLocaleString():"Thank you for confirming! You may close this page."}</div>
+              <div style={{fontSize:14,color:"#9B8EAD",marginTop:6}}>{alreadyConfirmed?"Confirmed on "+new Date(confirmations[confirmKey]?.[sta]?.ts||Date.now()).toLocaleString():"Thank you for confirming! You may close this page."}</div>
             </div>:
             <div>
             {/* Email Management Section */}
@@ -1176,15 +1257,23 @@ const App=()=>{
                 <div style={{fontSize:12,color:"#64748b",marginBottom:4}}>Add an email address to receive future traffic for {sta}:</div>
                 <div style={{display:"flex",gap:6}}>
                   <input value={portalAddEmail} onChange={e=>setPortalAddEmail(e.target.value)} placeholder="email@station.com" style={{flex:1,padding:"8px 10px",borderRadius:6,border:"1px solid #4a3565",background:"#2d1f42",color:"#E8DFF0",fontSize:13,outline:"none"}}/>
-                  <button disabled={!portalAddEmail.includes("@")||portalEmailSaved} onClick={()=>{
-                    const stObj=stations.find(s=>s.call===sta);
-                    if(stObj){
-                      const existing=(stObj.contact||"").split(";").map(e=>e.trim()).filter(Boolean);
-                      if(!existing.includes(portalAddEmail.trim())){
-                        const updated=[...existing,portalAddEmail.trim()].join("; ");
-                        setStations(prev=>prev.map(s=>s.call===sta?{...s,contact:updated}:s));
-                        log("Station Email Added",sta+" ← "+portalAddEmail.trim()+" (via portal)");
+                  <button disabled={!portalAddEmail.includes("@")||portalEmailSaved} onClick={async()=>{
+                    const r=await portalApi("addEmail",{confirmKey,sta,token:confirmMode?.tok,email:portalAddEmail.trim()});
+                    if(r.fallback){
+                      // Legacy path: write directly. Once Phase D locks rules
+                      // and FIREBASE_ADMIN_KEY is configured, this branch stops
+                      // firing — server path handles it.
+                      const stObj=stations.find(s=>s.call===sta);
+                      if(stObj){
+                        const existing=(stObj.contact||"").split(";").map(e=>e.trim()).filter(Boolean);
+                        if(!existing.includes(portalAddEmail.trim())){
+                          const updated=[...existing,portalAddEmail.trim()].join("; ");
+                          setStations(prev=>prev.map(s=>s.call===sta?{...s,contact:updated}:s));
+                          log("Station Email Added",sta+" ← "+portalAddEmail.trim()+" (via portal, legacy)");
+                        }
                       }
+                    } else if(r.ok){
+                      log("Station Email Added",sta+" ← "+portalAddEmail.trim()+" (via portal, server)");
                     }
                     setPortalEmailSaved(true);
                   }} style={{padding:"8px 14px",borderRadius:6,border:"none",background:portalEmailSaved?"#5BC4A0":"#a855f7",color:"#fff",fontSize:13,fontWeight:700,cursor:portalEmailSaved?"default":"pointer",opacity:!portalAddEmail.includes("@")?0.5:1}}>
@@ -1197,8 +1286,10 @@ const App=()=>{
                 <div style={{fontSize:12,color:"#64748b",marginBottom:4}}>Need to remove a contact? Leave a note for the traffic coordinator:</div>
                 <div style={{display:"flex",gap:6}}>
                   <input value={portalRemoveNote} onChange={e=>setPortalRemoveNote(e.target.value)} placeholder="e.g., Please remove jsmith@station.com — no longer with us" style={{flex:1,padding:"8px 10px",borderRadius:6,border:"1px solid #4a3565",background:"#2d1f42",color:"#E8DFF0",fontSize:13,outline:"none"}}/>
-                  <button disabled={!portalRemoveNote.trim()||portalNoteSaved} onClick={()=>{
-                    log("Station Remove Request",sta+" — "+portalRemoveNote.trim());
+                  <button disabled={!portalRemoveNote.trim()||portalNoteSaved} onClick={async()=>{
+                    const r=await portalApi("removeNote",{confirmKey,sta,token:confirmMode?.tok,note:portalRemoveNote.trim()});
+                    if(r.fallback){log("Station Remove Request",sta+" — "+portalRemoveNote.trim()+" (legacy)")}
+                    else if(r.ok){log("Station Remove Request",sta+" — "+portalRemoveNote.trim()+" (server)")}
                     setPortalNoteSaved(true);
                   }} style={{padding:"8px 14px",borderRadius:6,border:"none",background:portalNoteSaved?"#5BC4A0":"#D4A040",color:portalNoteSaved?"#fff":"#1e1233",fontSize:13,fontWeight:700,cursor:portalNoteSaved?"default":"pointer",opacity:!portalRemoveNote.trim()?0.5:1}}>
                     {portalNoteSaved?"✓ Sent":"Send"}
@@ -1212,8 +1303,8 @@ const App=()=>{
               if(!stObj||!stObj.ownership)return null;
               const groupStations=stations.filter(s=>s.ownership===stObj.ownership&&s.call!==sta);
               const pendingGroup=groupStations.filter(gs=>{
-                const conf=confirmations[estNum]||{};
-                return !conf[gs.call]?.confirmed&&trafficHistory.some(h=>h.est===estNum&&h.stations&&h.stations.includes(gs.call));
+                const conf=confirmations[confirmKey]||{};
+                return !conf[gs.call]?.confirmed&&trafficHistory.some(h=>akFromHistory(h)===confirmKey&&h.stations&&h.stations.includes(gs.call));
               });
               if(!pendingGroup.length)return null;
               return<div style={{background:"rgba(124,59,237,.1)",border:"1px solid #9b7bb0",borderRadius:10,padding:14,marginBottom:14}}>
@@ -1221,20 +1312,24 @@ const App=()=>{
                 <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:8}}>
                   {pendingGroup.map(gs=><span key={gs.call} style={{fontSize:12,padding:"3px 8px",borderRadius:6,background:"#2d1f42",color:"#9B8EAD",fontWeight:600}}>{gs.call} · {gs.market}</span>)}
                 </div>
-                <button onClick={()=>{
-                  confirmStation(confirmKey,sta);
-                  pendingGroup.forEach(gs=>confirmStation(confirmKey,gs.call));
+                <button onClick={async()=>{
+                  const r=await portalApi("confirm",{confirmKey,sta,token:confirmMode?.tok,siblings:pendingGroup.map(g=>g.call)});
+                  if(r.ok||r.fallback){
+                    confirmStation(confirmKey,sta);
+                    pendingGroup.forEach(gs=>confirmStation(confirmKey,gs.call));
+                  }
                   setConfirmDone(true);
-                  log("Batch Confirmed",sta+" + "+pendingGroup.map(g=>g.call).join(", ")+" — Est "+estNum+" ("+stObj.ownership+")");
+                  log("Batch Confirmed",sta+" + "+pendingGroup.map(g=>g.call).join(", ")+" — Est "+estNum+" ("+stObj.ownership+(r.ok?", server":r.fallback?", legacy":"")+")");
                 }} style={{width:"100%",padding:"12px",borderRadius:8,border:"none",background:"#9b7bb0",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                   ✓ Confirm All {pendingGroup.length+1} Stations ({stObj.ownership})
                 </button>
               </div>;
             })()}
-            <button onClick={()=>{
-              confirmStation(confirmKey,sta);
+            <button onClick={async()=>{
+              const r=await portalApi("confirm",{confirmKey,sta,token:confirmMode?.tok});
+              if(r.ok||r.fallback)confirmStation(confirmKey,sta);
               setConfirmDone(true);
-              log("Confirmed",sta+" confirmed Est "+estNum);
+              log("Confirmed",sta+" confirmed Est "+estNum+(r.ok?" (server)":r.fallback?" (legacy)":""));
             }} style={{width:"100%",padding:"18px 24px",borderRadius:12,border:"none",background:"linear-gradient(135deg,#a855f7,#9b7bb0)",color:"#fff",fontSize:16,fontWeight:800,cursor:"pointer"}}>
               ✓ Confirm Receipt of Traffic Instructions
             </button>
@@ -1647,7 +1742,7 @@ const App=()=>{
     const isciBrandCounts={"Postman Law":iscis.filter(i=>i.brand==="Postman Law"&&i.suffix!=="O"&&i.active).length,"Wettermark Keith":iscis.filter(i=>i.brand==="Wettermark Keith"&&i.suffix!=="O"&&i.active).length};
     const fl=(()=>{const filtered=iscis.filter(i=>i.suffix!=="O"&&i.brand===isciBrand&&(sf.media?i.media===sf.media:true)&&(sf.dma?i.dma===sf.dma:true)&&(isciSearch?`${i.code} ${i.title} ${i.category||""} ${i.valueProp||""} ${i.vo||""}`.toLowerCase().includes(isciSearch.toLowerCase()):true)&&(showOff?true:i.active));return sortRows("isci",filtered,{code:r=>r.code,title:r=>r.title,media:r=>r.media,brand:r=>r.brand,dma:r=>r.dma,dur:r=>parseInt(r.dur)||0,category:r=>r.category||r.caseType||"",valueProp:r=>r.valueProp||"",vo:r=>r.vo||"",status:r=>r.active?"1":"0"})})();
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);saveToDb("iscis",updated);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
+      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
       {showTagMgr&&<Cd style={{padding:14,marginTop:8}}>
         <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:8}}>🏷 Manage Categories, Value Props & VOs</div>
         {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
@@ -1680,7 +1775,7 @@ const App=()=>{
               const uploadNext=(fi)=>{
                 if(fi>=total){
                   setUploadTracker(null);
-                  if(Object.keys(updates).length>0){setIscis(function(prev){var updated=prev.map(function(x,j){return updates[j]?Object.assign({},x,{fileUrl:updates[j]}):x});saveToDb("iscis",updated);return updated})}
+                  if(Object.keys(updates).length>0){setIscis(function(prev){var updated=prev.map(function(x,j){return updates[j]?Object.assign({},x,{fileUrl:updates[j]}):x});return updated})}
                   log("Bulk Creative",matched+" uploaded, "+notFound+" no match, "+failed+" failed");
                   notify(matched+" files uploaded"+(notFound?" | "+notFound+" not matched":"")+(failed?" | "+failed+" failed":""));
                   return;
@@ -1710,7 +1805,7 @@ const App=()=>{
         </DropZone>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div style={{fontSize:12,color:"#94a3b8"}}>ISCIs with creative: <b style={{color:"#5BC4A0"}}>{iscis.filter(i=>i.fileUrl).length}</b> / {iscis.length}</div>
-          <Btn small onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs for existing files...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);saveToDb("iscis",updated);return updated});notify(found+" creative files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found in storage")}}}>🔗 Recover Links</Btn>
+          <Btn small onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs for existing files...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);return updated});notify(found+" creative files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found in storage")}}}>🔗 Recover Links</Btn>
         </div>
       </Cd>}
       {showBulk&&<Cd style={{padding:12}}>
@@ -1741,20 +1836,20 @@ const App=()=>{
       <div style={{display:"flex",gap:3}}>{MEDIA.filter(m=>m!=="OOH").map(m=>{const count=iscis.filter(i=>i.media===m&&i.brand===isciBrand&&i.active&&i.suffix!=="O").length;return<button key={m} onClick={()=>setF("media",sf.media===m?"":m)} style={{flex:1,padding:"4px",borderRadius:6,border:sf.media===m?`2px solid ${mc(m)}`:"1px solid #E8DFF0",background:sf.media===m?mc(m)+"18":"#fff",cursor:"pointer",textAlign:"center",opacity:count?1:0.5}}><div style={{fontSize:14,fontWeight:700,color:mc(m)}}>{m}</div><div style={{fontSize:13,fontWeight:800}}>{count}</div></button>})}</div>
       <div style={{display:"flex",gap:5,alignItems:"end",flexWrap:"wrap"}}>
         <input placeholder="Search..." value={isciSearch} onChange={e=>setIsciSearch(e.target.value)} style={{width:180,padding:"6px 9px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
-        <Sel options={DL.filter(d=>(isciBrand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"]).includes(d.code)).map(d=>({v:d.code,l:`${d.code} - ${d.name}`}))} value={sf.dma} onChange={v=>setF("dma",v)} placeholder="All DMAs"/>
+        <Sel options={DL.filter(d=>(isciBrand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"]).includes(d.code)).map(d=>({v:d.code,l:`${d.code} - ${d.name}`}))} value={sf.dma} onChange={v=>setF("dma",v)} placeholder="All DMAs"/>
         <label style={{fontSize:14,display:"flex",alignItems:"center",gap:3,cursor:"pointer"}}><input type="checkbox" checked={showOff} onChange={e=>setShowOff(e.target.checked)}/> Inactive</label>
         {(sf.media||sf.dma||isciSearch)&&<Btn small onClick={()=>{setSf({brand:"",media:"",dma:"",search:"",estGroup:""});setIsciSearch("")}}>Clear</Btn>}
       </div>
       <Cd><div style={{overflowX:"auto",maxHeight:"calc(100vh - 320px)"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><STH tbl="isci" col="code">ISCI</STH><STH tbl="isci" col="title">Title</STH><STH tbl="isci" col="media">Media</STH><STH tbl="isci" col="dma">DMA</STH><STH tbl="isci" col="dur">Dur</STH><STH tbl="isci" col="category">Category</STH>{showValueProp&&<STH tbl="isci" col="valueProp">Value Prop</STH>}<STH tbl="isci" col="vo">VO</STH><STH tbl="isci" col="status">Status</STH><TH w="60">Actions</TH></tr></thead>
         <tbody>{fl.slice(0,250).map((i,idx)=>{const gi=iscis.findIndex(x=>x.code===i.code&&x.dma===i.dma&&x.media===i.media);return<tr key={i.code+i.dma+i.media} style={{opacity:i.active?1:.45}}>
           <TD m b><span style={{cursor:"pointer",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"editIsci",isci:i,idx:gi})}>{i.code}</span>{isIsciSent(i.code)&&<span title="Locked — sent in traffic" style={{marginLeft:3,fontSize:13,color:"#E85A7A"}}>🔒</span>}{i.fileUrl&&<a href={i.fileUrl} target="_blank" rel="noopener" download title="Download creative" style={{marginLeft:3,fontSize:13,color:"#5BC4A0",textDecoration:"none"}}>📁</a>}</TD><TD>{i.title}</TD><TD><B l={i.media} c={mc(i.media)}/></TD><TD>{i.dma}</TD><TD>{i.media==="OOH"?(OOH_TYPE_MAP[i.dur]||i.dur):i.media==="Display"?(DISPLAY_TYPE_MAP[i.dur]||i.dur):i.dur?`:${i.dur}`:""}</TD>
-          <TD><select value={i.category||i.caseType||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New category:");if(!n||!n.trim())return;const t=n.trim();const nextCF=(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),categories:[...(p[i.brand]?.categories||[]).filter(x=>x!==t),t]}}))(customFields);setCustomFields(nextCF);saveToDb("customTags",nextCF);setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,category:t,caseType:t}:x);saveToDb("iscis",nx);return nx})}else setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,category:v,caseType:v}:x);saveToDb("iscis",nx);return nx})}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #4a3565",background:i.category||i.caseType?"#dbeafe":"#2d1f42",color:"#4a3565",fontWeight:600,maxWidth:100}}>
+          <TD><select value={i.category||i.caseType||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New category:");if(!n||!n.trim())return;const t=n.trim();const nextCF=(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),categories:[...(p[i.brand]?.categories||[]).filter(x=>x!==t),t]}}))(customFields);setCustomFields(nextCF);saveToDb("customTags",nextCF);setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,category:t,caseType:t}:x);return nx})}else setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,category:v,caseType:v}:x);return nx})}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #4a3565",background:i.category||i.caseType?"#dbeafe":"#2d1f42",color:"#4a3565",fontWeight:600,maxWidth:100}}>
             <option value="">—</option>{(customFields[i.brand]?.categories||[]).map(t=><option key={t} value={t}>{t}</option>)}<option value="__add__">＋</option>
           </select></TD>
-          {showValueProp&&<TD><select value={i.valueProp||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New value prop:");if(!n||!n.trim())return;const t=n.trim();const nextCF=(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),valueProps:[...(p[i.brand]?.valueProps||[]).filter(x=>x!==t),t]}}))(customFields);setCustomFields(nextCF);saveToDb("customTags",nextCF);setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,valueProp:t}:x);saveToDb("iscis",nx);return nx})}else setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,valueProp:v}:x);saveToDb("iscis",nx);return nx})}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #4a3565",background:i.valueProp?"#dcfce7":"#2d1f42",color:"#4a3565",fontWeight:600,maxWidth:100}}>
+          {showValueProp&&<TD><select value={i.valueProp||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New value prop:");if(!n||!n.trim())return;const t=n.trim();const nextCF=(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),valueProps:[...(p[i.brand]?.valueProps||[]).filter(x=>x!==t),t]}}))(customFields);setCustomFields(nextCF);saveToDb("customTags",nextCF);setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,valueProp:t}:x);return nx})}else setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,valueProp:v}:x);return nx})}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #4a3565",background:i.valueProp?"#dcfce7":"#2d1f42",color:"#4a3565",fontWeight:600,maxWidth:100}}>
             <option value="">—</option>{(customFields[i.brand]?.valueProps||[]).map(t=><option key={t} value={t}>{t}</option>)}<option value="__add__">＋</option>
           </select></TD>}
-          <TD><select value={i.vo||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New VO:");if(!n||!n.trim())return;const t=n.trim();const nextCF=(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),vos:[...(p[i.brand]?.vos||[]).filter(x=>x!==t),t]}}))(customFields);setCustomFields(nextCF);saveToDb("customTags",nextCF);setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,vo:t}:x);saveToDb("iscis",nx);return nx})}else setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,vo:v}:x);saveToDb("iscis",nx);return nx})}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #4a3565",background:i.vo?"#fef3c7":"#2d1f42",color:"#4a3565",fontWeight:600,maxWidth:100}}>
+          <TD><select value={i.vo||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New VO:");if(!n||!n.trim())return;const t=n.trim();const nextCF=(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),vos:[...(p[i.brand]?.vos||[]).filter(x=>x!==t),t]}}))(customFields);setCustomFields(nextCF);saveToDb("customTags",nextCF);setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,vo:t}:x);return nx})}else setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,vo:v}:x);return nx})}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #4a3565",background:i.vo?"#fef3c7":"#2d1f42",color:"#4a3565",fontWeight:600,maxWidth:100}}>
             <option value="">—</option>{(customFields[i.brand]?.vos||[]).map(t=><option key={t} value={t}>{t}</option>)}<option value="__add__">＋</option>
           </select></TD>
           <TD>{i.active?<B l="Active" c="#5BC4A0"/>:<B l="Off" c="#9ca3af"/>}</TD>
@@ -2784,7 +2879,8 @@ const App=()=>{
             if(dispFiles2.length>0){emailBody2+="<b>Display Banner Files:</b><br>";dispFiles2.forEach(function(d){emailBody2+='<a href="'+d.fileUrl+'">'+d.code+" — "+d.title+"</a><br>"});emailBody2+="<br>"}}
           var confirmBase2=window.location.href.split("?")[0];
           var staTag2=isDigital?"ESPN_GKBPS":vendorMode;
-          var confirmUrl3=confirmBase2+"?confirm="+est.num+"&sta="+staTag2+"&tok=auto";
+          var tok3=reserveToken(ak(est),staTag2);
+          var confirmUrl3=confirmBase2+"?confirm="+encodeURIComponent(est.num)+"&sta="+encodeURIComponent(staTag2)+"&tok="+encodeURIComponent(tok3);
           emailBody2+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmUrl3+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Atticor Media';
           var subj2="Postman Law - "+mediaLabel+" Traffic Instructions - "+workMonth+" V"+version+" - "+est.market+" - "+vendorLabel2;
           var recipients2=isDigital?["jmondo@goodkarmabrands.com","mmetroka@goodkarmabrands.com","jessica.flynn@atticor.ai"]:["jake.jaffe@siriusxm.com","josh.mustachi@siriusxm.com","jessica.flynn@atticor.ai"];
@@ -2819,7 +2915,8 @@ const App=()=>{
           var filesWithUrls=sel.filter(function(r){return r.isci.fileUrl});
           if(filesWithUrls.length>0){emailBody+="<b>Creative Files:</b><br>";filesWithUrls.forEach(function(r){emailBody+='<a href="'+r.isci.fileUrl+'">'+r.isci.code+" - "+r.isci.title+"</a><br>"});emailBody+="<br>"}
           var confirmBase=window.location.href.split("?")[0];
-          var confirmUrl=confirmBase+"?confirm="+est.num+"&sta=Generic&tok=auto";
+          var tokGen=reserveToken(ak(est),"Generic");
+          var confirmUrl=confirmBase+"?confirm="+encodeURIComponent(est.num)+"&sta=Generic&tok="+encodeURIComponent(tokGen);
           emailBody+='Please confirm receipt:<br><a href="'+confirmUrl+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Media';
           var subj="Atticor | "+est.brand+" Streaming Audio Traffic | "+workMonth+" V"+version+" | "+(est.market||"");
           try{
@@ -2863,7 +2960,7 @@ const App=()=>{
     const REASONS=["New market launch","New media type","New flight period","Agency buy plan"];
     const BB={"Postman Law":["Ken Lazar","Lynn Cortelezzi","Hazel Wolf"],"Wettermark Keith":["Amy Coffey"]};
     const BUYER_EMAILS={"Ken Lazar":"ken.lazar@atticor.ai","Lynn Cortelezzi":"lynn.cortelezzi@atticor.ai","Amy Coffey":"acoffey@wkfirm.com","Jessica Flynn":"jessica.flynn@atticor.ai"};
-    const BM={"Postman Law":["Chicago","Cincinnati","Denver","Minneapolis"],"Wettermark Keith":["Birmingham","Chattanooga","Dothan","Gadsden","Huntsville","Knoxville","Montgomery"]};
+    const BM={"Postman Law":["Chicago","Cincinnati","Denver","Minneapolis"],"Wettermark Keith":["Birmingham","Chattanooga","Dothan","Huntsville","Knoxville","Montgomery"]};
     const findSta=()=>{if(!nr.market||!nr.brand||!nr.media)return[];return stations.filter(s=>s.market===nr.market&&s.brand===nr.brand&&(nr.media==="Sports"||nr.media==="Heavy Up"?s.media==="TV":nr.media==="Streaming Audio"?s.media==="Radio":s.media===nr.media))};
     const openC=()=>{setShowAdd(true);setStep(1);setNr({num:nextNum(),market:"",media:"",group:"",campaign:"",buyer:"",brand:"",reason:""});setSugStations([]);setSelStations([])};
     const closeC=()=>{setShowAdd(false);setStep(1)};
@@ -3933,7 +4030,7 @@ const App=()=>{
   const NewIsciMod=({defaultMedia})=>{const[f2,setF2]=useState({brand:"PL",title:"",dur:defaultMedia==="OOH"?"SP":"30",media:defaultMedia||"TV",dmas:[],oohType:"SP",displayType:"MR"});const u2=(k,v)=>setF2(p=>({...p,[k]:v}));
     const isOoh=f2.media==="OOH";
     const isDisplay=f2.media==="Display";
-    const suf=SUFFIXES[f2.media]||"T";const bD=f2.brand==="PL"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"];
+    const suf=SUFFIXES[f2.media]||"T";const bD=f2.brand==="PL"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
     const durField=isOoh?f2.oohType:isDisplay?f2.displayType:f2.dur;
     const brandName=f2.brand==="PL"?"Postman Law":"Wettermark Keith";
     const normTitle=function(t){var s=(t||"").toLowerCase().trim();Object.values(DM).forEach(function(n){s=s.split(n.toLowerCase()).join("")});Object.keys(DM).forEach(function(c){s=s.split(c.toLowerCase()).join("")});return s.replace(/[-–—,_\s]+/g," ").trim()};
@@ -3999,7 +4096,7 @@ const App=()=>{
         </div>}
       </div>
       <div style={{height:8}}/>
-      <Btn primary disabled={!f2.title||!f2.dmas.length} onClick={()=>{const bn=brandName;const safeDmas=f2.dmas.filter(d=>!alreadyRegistered.includes(d));const ni=safeDmas.map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify("All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];saveToDb("iscis",updated);return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""));setModal(null)}}>Register {f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length} ISCI{f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":""}{alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""}</Btn>
+      <Btn primary disabled={!f2.title||!f2.dmas.length} onClick={()=>{const bn=brandName;const safeDmas=f2.dmas.filter(d=>!alreadyRegistered.includes(d));const ni=safeDmas.map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify("All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""));setModal(null)}}>Register {f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length} ISCI{f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":""}{alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""}</Btn>
     </Mod>;
   };
 
@@ -4157,7 +4254,7 @@ const App=()=>{
       task.on("state_changed",
         function(snap){var p=Math.round((snap.bytesTransferred/snap.totalBytes)*100);setUploadPct(p);setUploadTracker({label:"Uploading "+file.name,pct:p})},
         function(err){setUploading(false);setUploadTracker(null);notify("Upload FAILED: "+(err.message||err))},
-        function(){ref.getDownloadURL().then(function(url){eu("fileUrl",url);setIscis(function(prev){var updated=prev.map(function(x,j){return j===idx?Object.assign({},x,{fileUrl:url}):x});saveToDb("iscis",updated);return updated});setUploading(false);setUploadTracker(null);notify(file.name+" uploaded successfully")}).catch(function(err){setUploading(false);setUploadTracker(null);notify("URL fetch failed: "+err.message)})}
+        function(){ref.getDownloadURL().then(function(url){eu("fileUrl",url);setIscis(function(prev){var updated=prev.map(function(x,j){return j===idx?Object.assign({},x,{fileUrl:url}):x});return updated});setUploading(false);setUploadTracker(null);notify(file.name+" uploaded successfully")}).catch(function(err){setUploading(false);setUploadTracker(null);notify("URL fetch failed: "+err.message)})}
       );
     };
     // Find which estimates this ISCI is airing in
@@ -4213,7 +4310,7 @@ const App=()=>{
       </div>
       <div style={{height:10}}/>
       <div style={{display:"flex",gap:6}}>
-        <Btn primary color={locked?"#E85A7A":"#4AC8E8"} onClick={()=>{const changes=[];if(ef.code!==isci.code)changes.push(`code: ${isci.code}→${ef.code}`);if(ef.title!==isci.title)changes.push(`title: ${isci.title}→${ef.title}`);if(ef.dur!==isci.dur)changes.push(`dur: ${isci.dur}→${ef.dur}`);if(ef.media!==isci.media)changes.push(`media: ${isci.media}→${ef.media}`);if(ef.dma!==isci.dma)changes.push(`dma: ${isci.dma}→${ef.dma}`);if(ef.fileUrl!==(isci.fileUrl||""))changes.push(`fileUrl: ${ef.fileUrl?"uploaded":"removed"}`);setIscis(prev=>{const updated=prev.map((x,j)=>j===idx?{...x,...ef}:x);saveToDb("iscis",updated);return updated});log(locked?"⚠ ADMIN ISCI REVISION":"ISCI Edited",`${isci.code}: ${changes.join(", ")||"no changes"}`);notify(`${ef.code} updated${locked?" (admin revision)":""}`);setModal(null)}}>{locked?"⚠ Save Revision":"Save Changes"}</Btn>
+        <Btn primary color={locked?"#E85A7A":"#4AC8E8"} onClick={()=>{const changes=[];if(ef.code!==isci.code)changes.push(`code: ${isci.code}→${ef.code}`);if(ef.title!==isci.title)changes.push(`title: ${isci.title}→${ef.title}`);if(ef.dur!==isci.dur)changes.push(`dur: ${isci.dur}→${ef.dur}`);if(ef.media!==isci.media)changes.push(`media: ${isci.media}→${ef.media}`);if(ef.dma!==isci.dma)changes.push(`dma: ${isci.dma}→${ef.dma}`);if(ef.fileUrl!==(isci.fileUrl||""))changes.push(`fileUrl: ${ef.fileUrl?"uploaded":"removed"}`);setIscis(prev=>{const updated=prev.map((x,j)=>j===idx?{...x,...ef}:x);return updated});log(locked?"⚠ ADMIN ISCI REVISION":"ISCI Edited",`${isci.code}: ${changes.join(", ")||"no changes"}`);notify(`${ef.code} updated${locked?" (admin revision)":""}`);setModal(null)}}>{locked?"⚠ Save Revision":"Save Changes"}</Btn>
         <Btn onClick={()=>setModal(null)}>Cancel</Btn>
         <div style={{marginLeft:"auto"}}><Btn danger onClick={async()=>{if(locked){alert("Cannot delete — this ISCI has been sent in traffic.");return}const pw=prompt("Admin password:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Wrong password");if(!confirm("Permanently delete "+isci.code+"?"))return;setIscis(p=>p.filter((_,j)=>j!==idx));log("ISCI Deleted",isci.code+" — "+isci.title);notify(isci.code+" deleted");setModal(null)}}>🗑 Delete</Btn></div>
       </div>
@@ -4732,7 +4829,8 @@ ${fullText.substring(0,3000)}`}]
       setDraftSubj(subj);
       var confirmBase5=window.location.href.split("?")[0];
       if(est.media==="OOH"){
-        var confirmUrlOoh=confirmBase5+"?confirm="+est.num+"&sta=OOH_VENDOR&tok=auto";
+        var tokOoh=reserveToken(ak(est),"OOH_VENDOR");
+        var confirmUrlOoh=confirmBase5+"?confirm="+encodeURIComponent(est.num)+"&sta=OOH_VENDOR&tok="+encodeURIComponent(tokOoh);
         setDraftBody("Hello,<br><br>Please find the attached traffic instructions for the details below.<br><br>"+
           "<b>CLIENT:</b> "+est.brand+"<br><b>AGENCY:</b> "+agency+"<br><b>MARKET:</b> "+est.market+"<br><b>ESTIMATE:</b> "+est.num+
           "<br><b>MEDIA:</b> Out of Home ("+est.group+")<br><b>FLIGHT DATES:</b> "+flight+"<br><b>BROADCAST MONTH:</b> "+(cm?.month||workMonth)+
@@ -4740,7 +4838,8 @@ ${fullText.substring(0,3000)}`}]
           '<a href="'+confirmUrlOoh+'" style="display:inline-block;padding:10px 24px;background:#D4A040;color:#fff;text-decoration:none;border-radius:6px;font-weight:700">Confirm Receipt</a>'+
           "<br><br>Thank you,<br><br>Emm Caban<br>"+agency);
       } else {
-        var confirmUrlSta=confirmBase5+"?confirm="+est.num+"&sta=STATION&tok=auto";
+        var tokSta=reserveToken(ak(est),"STATION");
+        var confirmUrlSta=confirmBase5+"?confirm="+encodeURIComponent(est.num)+"&sta=STATION&tok="+encodeURIComponent(tokSta);
         setDraftBody("Hello,<br><br>Please find the attached traffic instructions for the details below.<br><br>"+
           "<b>CLIENT:</b> "+est.brand+"<br><b>AGENCY:</b> "+agency+"<br><b>MARKET:</b> "+est.market+"<br><b>ESTIMATE:</b> "+est.num+
           "<br><b>MEDIA:</b> "+est.media+" ("+est.group+")<br><b>BUYER:</b> "+(est.buyer||"TBD")+
@@ -5646,7 +5745,8 @@ ${fullText.substring(0,3000)}`}]
                           emailBody+="<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
                           if(allWithFiles.length>0){emailBody+="<b>Creative Files:</b><br>";allWithFiles.forEach(function(r){var full=iscis.find(function(i){return i.code===r.code});if(full&&full.fileUrl)emailBody+='<a href="'+full.fileUrl+'">'+r.code+" — "+r.title+"</a><br>"});emailBody+="<br>"}
                           var confirmBase2=window.location.href.split("?")[0];
-                          var confirmUrl3=confirmBase2+"?confirm="+(h.est||"")+"&sta=ESPN_GKBPS&tok=auto";
+                          var espnTok=reserveToken(akFromHistory(h),"ESPN_GKBPS");
+                          var confirmUrl3=confirmBase2+"?confirm="+encodeURIComponent(h.est||"")+"&sta=ESPN_GKBPS&tok="+encodeURIComponent(espnTok);
                           emailBody+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmUrl3+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager';
                           var subj=(h.brand||"")+" - Digital Video Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+(h.market||"");
                           var recipients=["jmondo@goodkarmabrands.com","mmetroka@goodkarmabrands.com","jessica.flynn@atticor.ai"];
@@ -5670,11 +5770,16 @@ ${fullText.substring(0,3000)}`}]
                           var sent4=0;var failed3=0;
                           var grpKeys=Object.keys(ownerGroups);
                           notify("Sending to "+grpKeys.length+" group(s)...");
-                          // Generate fresh confirmation tokens for resend
+                          // Preserve existing per-station tokens so links from prior sends still work;
+                          // only mint new ones for stations that don't have one yet.
                           var resendKey=akFromHistory(h);
                           var resendTokens={};
-                          staList.forEach(function(call){resendTokens[call]={confirmed:false,token:genToken()}});
-                          setConfirmations(function(p){var u={};u[resendKey]=Object.assign({},p[resendKey]||{},resendTokens);return Object.assign({},p,u)});
+                          var existingForKey=confirmations[resendKey]||{};
+                          staList.forEach(function(call){
+                            var existingTok=existingForKey[call]&&existingForKey[call].token;
+                            resendTokens[call]={confirmed:!!(existingForKey[call]&&existingForKey[call].confirmed),token:existingTok||genToken()};
+                          });
+                          setConfirmations(function(p){var u={};u[resendKey]=Object.assign({},p[resendKey]||{},resendTokens);try{db.collection("appData").doc("confirmations").set({data:JSON.stringify(Object.assign({},p,u)),ts:Date.now()})}catch(e){console.warn("Failed to save confirmations:",e)}return Object.assign({},p,u)});
                           var isciObjs=(h.iscis||[]).map(function(ic){var full=iscis.find(function(i){return i.code===ic.code});return full?{code:ic.code,title:ic.title,fileUrl:full.fileUrl}:null}).filter(Boolean);
                           var creativeLinks2=isciObjs.filter(function(i){return i.fileUrl}).length>0?"<br><br><b>Creative Files:</b><br>"+isciObjs.filter(function(i){return i.fileUrl}).map(function(i){return'<a href="'+i.fileUrl+'">'+i.code+" — "+i.title+"</a>"}).join("<br>"):"";
                           for(var gi=0;gi<grpKeys.length;gi++){
@@ -5685,7 +5790,7 @@ ${fullText.substring(0,3000)}`}]
                             var subj2="Atticor | "+(h.brand||"")+" "+(h.market||"")+" "+(h.media||"")+" Traffic Instructions | "+(h.month||"")+" | Est "+(h.est||"");
                             var noteHtml=resendNote.trim()?"<b>Note:</b> "+resendNote.trim()+"<br><br>":"";
                             var confirmBase4=window.location.href.split("?")[0];
-                            var confirmBtns=grpStas.map(function(s){var tok=resendTokens[s.call]?resendTokens[s.call].token:"auto";var url=confirmBase4+"?confirm="+(h.est||"")+"&sta="+s.call+"&tok="+encodeURIComponent(tok);return'<a href="'+url+'" style="display:inline-block;padding:6px 16px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:4px 2px">Confirm '+s.call+'</a>'}).join(" ");
+                            var confirmBtns=grpStas.map(function(s){var tok=(resendTokens[s.call]&&resendTokens[s.call].token)||reserveToken(resendKey,s.call);var url=confirmBase4+"?confirm="+encodeURIComponent(h.est||"")+"&sta="+encodeURIComponent(s.call)+"&tok="+encodeURIComponent(tok);return'<a href="'+url+'" style="display:inline-block;padding:6px 16px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:4px 2px">Confirm '+s.call+'</a>'}).join(" ");
                             var body2="Hello,<br><br>Please find the attached traffic instructions for Est "+(h.est||"")+" — "+(h.brand||"")+", "+(h.market||"")+", "+(h.media||"")+".<br><br>"+noteHtml+"<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Version:</b> "+(h.version||"")+"<br><b>Station(s):</b> "+staCalls.join(", ")+creativeLinks2+"<br><br>Please confirm receipt of this traffic within 24 hours:<br>"+confirmBtns+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
                             try{var resp3=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:grpEmails,cc:ccListR,subject:subj2,message:body2,pdfBase64:pdfB64,pdfName:pdfName})});if(resp3.ok)sent4+=grpStas.length;else failed3+=grpStas.length}catch(e4){failed3+=grpStas.length}
                           }
@@ -5706,7 +5811,7 @@ ${fullText.substring(0,3000)}`}]
                         const copy={...h,ts:new Date().toISOString(),est:newEst,month:newMonth,flight:newFlight,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:"Copied from "+h.month};setTrafficHistory(p=>{const nx=[copy,...p];saveToDb("trafficHistory",nx);return nx});log("Traffic Copied",h.brand+" "+h.market+" "+h.media+" "+h.month+" → "+newMonth+" (Est "+newEst+")");notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);e.target.value=""}} style={{padding:"2px 4px",borderRadius:4,border:"1px solid #D4A040",background:"rgba(217,119,6,.1)",color:"#D4A040",fontSize:11,fontWeight:600,cursor:"pointer"}}><option value="">Copy to month...</option>{CALENDAR.map(c=><option key={c.month} value={c.month}>{c.month}</option>)}</select>
                       <select onChange={e=>{if(!e.target.value)return;const destMkt=e.target.value;
                         // Same brand only — markets list per brand
-                        const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"];
+                        const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
                         if(!brandMkts.includes(destMkt)){e.target.value="";return}
                         // Normalize source market to its 3-char DMA code so the
                         // ISCI prefix swap works whether records store "BRM" or
@@ -5750,7 +5855,7 @@ ${fullText.substring(0,3000)}`}]
                         e.target.value="";
                       }} style={{padding:"2px 4px",borderRadius:4,border:"1px solid #4AC8E8",background:"rgba(74,200,232,.1)",color:"#4AC8E8",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                         <option value="">Copy to market...</option>
-                        {(h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"]).filter(m=>m!==(normMkt(h.market)||h.market)).map(m=><option key={m} value={m}>{m} — {DM[m]||m}</option>)}
+                        {(h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"]).filter(m=>m!==(normMkt(h.market)||h.market)).map(m=><option key={m} value={m}>{m} — {DM[m]||m}</option>)}
                       </select>
                     </div>
                   </div>
@@ -6555,7 +6660,7 @@ Rules:
           <div><PageHead title="OOH ISCI Registry" pgKey="ooh" sub={allOoh.filter(i=>i.active).length+" active · "+inactiveOoh.length+" inactive · "+allOoh.filter(i=>i.fileUrl).length+" with creative"}/></div>
           <div style={{display:"flex",gap:4}}>
             <Btn primary onClick={()=>setModal({t:"newIsci",defaultMedia:"OOH"})}>+ Register OOH ISCI</Btn>
-            <Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=allOoh.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active OOH ISCIs have files");return}notify("Scanning "+missing.length+" OOH ISCIs...");let found=0;const updates={};const exts=["jpg","png","pdf","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);saveToDb("iscis",updated);return updated});notify(found+" files recovered!");log("OOH Creative Recovery",found+" files")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn>
+            <Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=allOoh.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active OOH ISCIs have files");return}notify("Scanning "+missing.length+" OOH ISCIs...");let found=0;const updates={};const exts=["jpg","png","pdf","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);return updated});notify(found+" files recovered!");log("OOH Creative Recovery",found+" files")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn>
           </div>
         </div>
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
@@ -7751,7 +7856,8 @@ Rules:
                 let emailBody="Hello,<br><br>Please find the attached traffic instructions for "+(h.brand||"")+" — "+(h.market||"")+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br>";
                 if(note)emailBody+="<b>Note:</b> "+note+"<br><br>";
                 emailBody+="<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
-                emailBody+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmBase+'?confirm='+(h.est||"")+'&sta=resend&tok=auto" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager';
+                const resendTok=reserveToken(akFromHistory(h),"resend");
+                emailBody+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmBase+'?confirm='+encodeURIComponent(h.est||"")+'&sta=resend&tok='+encodeURIComponent(resendTok)+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager';
                 const subj=(h.brand||"")+" - Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+(h.market||"");
                 notify("Sending to "+recipients.length+" recipient"+(recipients.length===1?"":"s")+"...");
                 try{
@@ -7767,7 +7873,7 @@ Rules:
                 // auto-advance to next month — that was hiding both options.
                 const h=trafficHistory[idx];if(!h)return;
                 const months=CALENDAR.map(c=>c.month);
-                const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"];
+                const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
                 const srcMkt=normMkt(h.market)||h.market;
                 const monthOpts=months.filter(m=>m!==h.month);
                 const mktOpts=brandMkts.filter(m=>m!==srcMkt);
@@ -8200,8 +8306,8 @@ Rules:
                 {c?.confirmed?<div style={{textAlign:"right"}}><span style={{fontSize:14,fontWeight:600,color:"#5BC4A0"}}>Confirmed</span><div style={{fontSize:13,color:"#9B8EAD"}}>{new Date(c.ts).toLocaleString()}</div></div>:
                 <div style={{display:"flex",gap:3}}>
                   {emails.length>0&&<button onClick={()=>sendToStation(s)} style={{padding:"3px 8px",borderRadius:4,border:"none",background:"#4AC8E8",color:"#fff",fontSize:14,fontWeight:600,cursor:"pointer"}}>✉ Send</button>}
-                  <button onClick={()=>{const url=window.location.href.split("?")[0]+"?confirm="+e.num+"&sta="+s.call+"&tok="+token;navigator.clipboard?.writeText(url);notify("Link copied for "+s.call)}} style={{padding:"3px 8px",borderRadius:4,border:"1px solid #9b7bb0",background:"#1e1233",color:"#9B8EAD",fontSize:14,fontWeight:600,cursor:"pointer"}}>Copy Link</button>
-                  <button onClick={()=>{confirmStation(e.num,s.call);notify(s.call+" confirmed")}} style={{padding:"3px 8px",borderRadius:4,border:"1px solid #5BC4A0",background:"rgba(22,163,98,.15)",color:"#5BC4A0",fontSize:14,fontWeight:600,cursor:"pointer"}}>Mark</button>
+                  <button onClick={()=>{const persistedTok=reserveToken(ak(e),s.call);const url=window.location.href.split("?")[0]+"?confirm="+encodeURIComponent(e.num)+"&sta="+encodeURIComponent(s.call)+"&tok="+encodeURIComponent(persistedTok);navigator.clipboard?.writeText(url);notify("Link copied for "+s.call)}} style={{padding:"3px 8px",borderRadius:4,border:"1px solid #9b7bb0",background:"#1e1233",color:"#9B8EAD",fontSize:14,fontWeight:600,cursor:"pointer"}}>Copy Link</button>
+                  <button onClick={()=>{confirmStation(ak(e),s.call);notify(s.call+" confirmed")}} style={{padding:"3px 8px",borderRadius:4,border:"1px solid #5BC4A0",background:"rgba(22,163,98,.15)",color:"#5BC4A0",fontSize:14,fontWeight:600,cursor:"pointer"}}>Mark</button>
                 </div>}
               </div>
             </div>})}
@@ -8211,7 +8317,7 @@ Rules:
             let sent=0;for(const s of linked){if(!conf[s.call]?.confirmed){await sendToStation(s);sent++}}
             notify(sent+" emails sent to unconfirmed stations");
           }}>Email All Unconfirmed</Btn>
-          <Btn onClick={()=>{linked.forEach(s=>{if(!conf[s.call]?.confirmed)confirmStation(e.num,s.call)});notify("All stations confirmed")}}>Confirm All</Btn>
+          <Btn onClick={()=>{linked.forEach(s=>{if(!conf[s.call]?.confirmed)confirmStation(ak(e),s.call)});notify("All stations confirmed")}}>Confirm All</Btn>
           <Btn onClick={()=>setModal(null)}>Done</Btn>
         </div>
       </Mod>})()}
