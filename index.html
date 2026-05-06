@@ -280,6 +280,7 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
       "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js",
       "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js",
       "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js",
+      "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js",
       "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
     ];
@@ -298,11 +299,14 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
     chain.then(function(){
       // Init pdf.js worker + Firebase
       pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-      window.db=null;window.storage=null;
+      window.db=null;window.storage=null;window.fbAuth=null;
       window._firebaseReady=fetch("/api/config").then(function(r){return r.json()}).then(function(cfg){
         firebase.initializeApp(cfg);
         window.db=firebase.firestore();
         window.storage=firebase.storage();
+        // firebase.auth() is only used after /api/auth returns a custom token.
+        // Loading the SDK here costs nothing if it never gets used.
+        try{window.fbAuth=firebase.auth()}catch(e){console.warn("firebase.auth unavailable:",e)}
         console.log("Firebase initialized");
       }).catch(function(e){console.error("Firebase init failed:",e)});
 
@@ -356,7 +360,13 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
     fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pw,type:"login"})})
       .then(function(r){return r.json()})
       .then(function(d){
-        if(d.success){loadApp()}
+        if(d.success){
+          // If the server minted a Firebase Auth custom token (FIREBASE_ADMIN_KEY
+          // configured), sign in so locked-down Firestore rules accept our writes.
+          // No token = legacy mode; loadApp regardless.
+          if(d.customToken){window.__pendingCustomToken=d.customToken}
+          loadApp();
+        }
         else{loginBtn.disabled=false;loginBtn.textContent="Let Me In";pwInput.value="";loginError.textContent=pick(wrongQuips);loginError.style.display="block";pwInput.focus()}
       }).catch(function(){loginBtn.disabled=false;loginBtn.textContent="Let Me In";loginError.textContent="Connection error. Try again.";loginError.style.display="block"});
   }
@@ -369,7 +379,10 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
   startQuipCycle();
   fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"check"})})
     .then(function(r){return r.json()})
-    .then(function(d){if(d.authenticated){loadApp()}else{showLogin()}})
+    .then(function(d){
+      if(d.authenticated){if(d.customToken){window.__pendingCustomToken=d.customToken}loadApp()}
+      else{showLogin()}
+    })
     .catch(function(){showLogin()});
 })();
 </script></div>

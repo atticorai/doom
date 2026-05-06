@@ -2,9 +2,35 @@ const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
 const __APP_VERSION__="monthly-summary-2026-04-29-32";
 
-// Server-side auth verification
+// Server-side auth verification. On successful login, /api/auth may return a
+// Firebase Auth custom token (when FIREBASE_ADMIN_KEY is set on the server) —
+// we sign the client into Firebase Auth so writes survive locked-down Firestore
+// rules. If no customToken is returned, this is a no-op and the app works as
+// before.
+const signInWithFbToken=async(customToken)=>{
+  if(!customToken)return;
+  try{
+    // Firebase init runs concurrently with app.js load — wait for it to land.
+    if(window._firebaseReady)await window._firebaseReady;
+    if(window.fbAuth&&window.fbAuth.signInWithCustomToken){
+      await window.fbAuth.signInWithCustomToken(customToken);
+      console.log("Firebase Auth signed in:",window.fbAuth.currentUser&&window.fbAuth.currentUser.uid);
+    }
+  }catch(e){console.warn("Firebase Auth signin failed:",e&&e.message)}
+};
+// Pick up a custom token stashed by the index.html loader (the initial password
+// prompt) so first-page-loads also sign into Firebase Auth.
+if(typeof window!=="undefined"&&window.__pendingCustomToken){
+  signInWithFbToken(window.__pendingCustomToken);
+  window.__pendingCustomToken=null;
+}
 const verifyAuth=async(password,type)=>{
-  try{const r=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password,type})});const d=await r.json();return d.success===true}catch(e){console.error("Auth check failed:",e);return false}
+  try{
+    const r=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password,type})});
+    const d=await r.json();
+    if(d.success===true&&type==="login"&&d.customToken){await signInWithFbToken(d.customToken)}
+    return d.success===true;
+  }catch(e){console.error("Auth check failed:",e);return false}
 };
 // All emails go through /api/send-traffic (n8n webhook proxy)
 

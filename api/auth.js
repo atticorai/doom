@@ -1,4 +1,13 @@
 const crypto = require('crypto');
+const { getAuth } = require('./_admin');
+
+// Stable Firebase Auth uid for any password-authed staff member. The app uses
+// a single shared password for all staff — there's no per-user identity to
+// preserve — so all sessions sign into the same Firebase Auth principal.
+// Tightened Firestore rules check `request.auth != null`, not the uid, so this
+// gives every authed client write access while leaving anonymous clients
+// (vendor portals) blocked.
+const STAFF_UID = 'atticor-staff';
 
 function timingSafeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
@@ -100,7 +109,17 @@ module.exports = async function handler(req, res) {
     const cookie = req.headers.cookie || '';
     const match = cookie.match(/dd_session=([^;]+)/);
     const authenticated = !!(match && sessionSecret && validateSessionToken(decodeURIComponent(match[1]), sessionSecret));
-    return res.status(200).json({ authenticated });
+    // Also mint a Firebase custom token for already-authed clients so they can
+    // sign into Firebase Auth without re-logging in.
+    let customToken = null;
+    if (authenticated) {
+      const adminAuth = getAuth();
+      if (adminAuth) {
+        try { customToken = await adminAuth.createCustomToken(STAFF_UID, { role: 'staff' }); }
+        catch (e) { console.error('createCustomToken (check) failed:', e.message); }
+      }
+    }
+    return res.status(200).json({ authenticated, customToken });
   }
 
   if (!password || typeof password !== 'string') {
@@ -126,6 +145,20 @@ module.exports = async function handler(req, res) {
     if (success) {
       const sessionToken = generateSessionToken(sessionSecret);
       res.setHeader('Set-Cookie', `dd_session=${sessionToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=604800`);
+      // Mint a Firebase Auth custom token if the Admin SDK is configured.
+      // Client uses signInWithCustomToken so locked-down Firestore rules
+      // accept its writes. If FIREBASE_ADMIN_KEY isn't set, customToken is
+      // null and the client skips Firebase Auth — app behaves as before.
+      let customToken = null;
+      const adminAuth = getAuth();
+      if (adminAuth) {
+        try {
+          customToken = await adminAuth.createCustomToken(STAFF_UID, { role: 'staff' });
+        } catch (e) {
+          console.error('createCustomToken failed:', e.message);
+        }
+      }
+      return res.status(200).json({ success, customToken });
     }
     return res.status(200).json({ success });
   }
