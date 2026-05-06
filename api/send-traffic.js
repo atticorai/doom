@@ -1,9 +1,7 @@
 module.exports = async function handler(req, res) {
-  // Session is validated by middleware.js — this is belt-and-suspenders
-  const cookie = req.headers.cookie || '';
-  if (!/dd_session=[a-f0-9]{64}/.test(cookie)) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  // Session validation is handled by middleware.js (HMAC-signed dd_session
+  // cookie). The previous regex-shape check here was stale after the
+  // session-token format changed and rejected every legitimate request.
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
