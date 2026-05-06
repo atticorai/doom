@@ -5,20 +5,50 @@ function timingSafeEqual(a, b) {
   const bufA = Buffer.from(a);
   const bufB = Buffer.from(b);
   if (bufA.length !== bufB.length) {
-    // Compare against self to keep constant time, then return false
     crypto.timingSafeEqual(bufA, bufA);
     return false;
   }
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
-function generateSessionToken() {
-  return crypto.randomBytes(32).toString('hex');
+// Resolve the secret used to sign session tokens. Prefer SESSION_SECRET; fall
+// back to deriving one from the existing passwords so a missing env var does
+// not break login. The fallback is stable across cold-starts as long as the
+// passwords don't change, which means existing sessions stay valid.
+function getSessionSecret() {
+  if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
+  const seed = (process.env.SYS_PASSWORD || '') + '|' + (process.env.ADMIN_PASSWORD || '');
+  if (!seed || seed === '|') return null;
+  return crypto.createHash('sha256').update('dd:session:' + seed).digest('hex');
 }
 
-// Simple in-memory rate limiter
+function b64url(buf) {
+  return Buffer.from(buf).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// Token format: <id>.<expiry>.<sig> where sig = HMAC-SHA256(secret, id+"."+expiry).
+// Replaces the previous "random hex of any 64 chars passes" scheme — middleware
+// can now reject any cookie that isn't issued (and signed) by this server.
+function generateSessionToken(secret) {
+  const id = b64url(crypto.randomBytes(18));
+  const expiry = String(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const sig = b64url(crypto.createHmac('sha256', secret).update(id + '.' + expiry).digest());
+  return id + '.' + expiry + '.' + sig;
+}
+
+function validateSessionToken(token, secret) {
+  if (typeof token !== 'string') return false;
+  const parts = token.split('.');
+  if (parts.length !== 3) return false;
+  const [id, expiry, sig] = parts;
+  if (!/^[A-Za-z0-9_-]+$/.test(id) || !/^[0-9]+$/.test(expiry) || !/^[A-Za-z0-9_-]+$/.test(sig)) return false;
+  if (Number(expiry) < Date.now()) return false;
+  const expected = b64url(crypto.createHmac('sha256', secret).update(id + '.' + expiry).digest());
+  return timingSafeEqual(sig, expected);
+}
+
 const loginAttempts = new Map();
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_WINDOW = 60 * 1000;
 const MAX_ATTEMPTS = 10;
 
 function isRateLimited(ip) {
@@ -62,13 +92,14 @@ module.exports = async function handler(req, res) {
 
   const SYS_PASSWORD = process.env.SYS_PASSWORD;
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+  const sessionSecret = getSessionSecret();
 
-  // Check if user has a valid session cookie
+  // Validate cookie via HMAC instead of just regex shape — this is what closes
+  // the "any 64-char hex string passes" hole the audit flagged.
   if (type === 'check') {
     const cookie = req.headers.cookie || '';
-    // Validate session token format (64-char hex string) instead of just checking existence
-    const match = cookie.match(/dd_session=([a-f0-9]{64})/);
-    const authenticated = !!match;
+    const match = cookie.match(/dd_session=([^;]+)/);
+    const authenticated = !!(match && sessionSecret && validateSessionToken(decodeURIComponent(match[1]), sessionSecret));
     return res.status(200).json({ authenticated });
   }
 
@@ -80,7 +111,10 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Auth not configured' });
   }
 
-  // Rate limiting
+  if (!sessionSecret) {
+    return res.status(500).json({ error: 'Session secret unavailable' });
+  }
+
   const clientIp = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown';
   if (isRateLimited(clientIp)) {
     return res.status(429).json({ error: 'Too many attempts. Try again later.' });
@@ -90,7 +124,7 @@ module.exports = async function handler(req, res) {
     recordAttempt(clientIp);
     const success = timingSafeEqual(password, SYS_PASSWORD);
     if (success) {
-      const sessionToken = generateSessionToken();
+      const sessionToken = generateSessionToken(sessionSecret);
       res.setHeader('Set-Cookie', `dd_session=${sessionToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=604800`);
     }
     return res.status(200).json({ success });
