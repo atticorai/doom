@@ -73,10 +73,16 @@ export default async function middleware(request) {
       // Vendor confirmation pages are public — anyone with a valid confirm
       // token in the URL needs to load the app to render the portal. The
       // per-station token (validated client-side, soon server-side) gates
-      // what they can see. Allow .js + /api/config when the request comes
-      // from a page with ?confirm= in its URL.
+      // what they can see. Allow .js + /api/config when the request looks
+      // like it's coming from a vendor-portal load: either ?confirm= in the
+      // Referer (fragment-less URLs) or a dd_vendor=1 cookie (which the
+      // loader sets when it detects ?confirm= in the URL search OR hash —
+      // browsers strip fragments from Referer, so the cookie covers that
+      // case).
       const referer = request.headers.get('referer') || '';
-      if (/[?&]confirm=/.test(referer) && (pathname.endsWith('.js') || pathname === '/api/config')) {
+      const refererHasConfirm = /[?&]confirm=/.test(referer);
+      const cookieHasVendor = /(?:^|;\s*)dd_vendor=1(?:;|$)/.test(cookie);
+      if ((refererHasConfirm || cookieHasVendor) && (pathname.endsWith('.js') || pathname === '/api/config')) {
         return;
       }
       return new Response('Unauthorized', { status: 401 });
