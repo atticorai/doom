@@ -1183,14 +1183,14 @@ const App=()=>{
       const tokOk=storedToken?(tok===storedToken):(tok==='auto');
       if(!tokOk){
         console.warn("Invalid or missing confirmation token for",estNum,sta);
-        setConfirmMode({estNum,sta,tok:null,est,airing,brand,invalidToken:true});
+        setConfirmMode({estNum,sta,tok:null,est,airing,brand,confirmKey,invalidToken:true});
         return;
       }
       // Try to load saved traffic sheet from Firestore
       try{db.collection("trafficSheets").doc(estNum+"_"+sta).get().then(doc=>{
         if(doc.exists)setSheetHtml(doc.data().html);
       }).catch(err=>{console.warn("Failed to load traffic sheet:",err)})}catch(e){console.warn("Traffic sheet load error:",e)}
-      setConfirmMode({estNum,sta,tok,est,airing,brand});
+      setConfirmMode({estNum,sta,tok,est,airing,brand,confirmKey});
     }
     // Report mode: ?report=wk or ?report=pl
     const reportClient=params.get('report');
@@ -1198,9 +1198,9 @@ const App=()=>{
   },[dbLoaded]);
   // If in confirm mode, render ONLY the vendor portal
   let confirmJsx=null;if(confirmMode){
-    const{estNum,sta,est,airing,brand}=confirmMode;
+    const{estNum,sta,est,airing,brand,confirmKey,invalidToken}=confirmMode;
     // Wait for data to load
-    if(!dbLoaded){confirmJsx=<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center"}}><div style={{width:72,height:72,borderRadius:16,background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:20,boxShadow:"0 8px 32px rgba(155,123,176,.4)",animation:"pulse 2s ease-in-out infinite"}}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff" opacity=".9"/><path d="M12 5l6 3v8l-6 3-6-3V8l6-3z" fill="#9b7bb0"/><path d="M12 8l3 1.5v5L12 16l-3-1.5v-5L12 8z" fill="#fff"/></svg></div><div style={{fontSize:24,fontWeight:800,color:"#fff",letterSpacing:1}}>ATTICOR</div><div style={{fontSize:12,fontWeight:600,color:"#C4A0C8",letterSpacing:2,marginTop:4}}>MEDIA SERVICES</div><div style={{marginTop:28,width:180,height:3,background:"#2d1f42",borderRadius:2,overflow:"hidden",margin:"0 auto"}}><div style={{width:"40%",height:"100%",background:"linear-gradient(90deg,#9b7bb0,#C4A0C8)",borderRadius:2,animation:"loadBar 1.5s ease-in-out infinite"}}></div></div><div style={{fontSize:13,color:"#64748b",marginTop:16}}>Loading traffic details...</div></div></div>;}else{
+    if(!dbLoaded){confirmJsx=<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center"}}><div style={{width:72,height:72,borderRadius:16,background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:20,boxShadow:"0 8px 32px rgba(155,123,176,.4)",animation:"pulse 2s ease-in-out infinite"}}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#fff" opacity=".9"/><path d="M12 5l6 3v8l-6 3-6-3V8l6-3z" fill="#9b7bb0"/><path d="M12 8l3 1.5v5L12 16l-3-1.5v-5L12 8z" fill="#fff"/></svg></div><div style={{fontSize:24,fontWeight:800,color:"#fff",letterSpacing:1}}>ATTICOR</div><div style={{fontSize:12,fontWeight:600,color:"#C4A0C8",letterSpacing:2,marginTop:4}}>MEDIA SERVICES</div><div style={{marginTop:28,width:180,height:3,background:"#2d1f42",borderRadius:2,overflow:"hidden",margin:"0 auto"}}><div style={{width:"40%",height:"100%",background:"linear-gradient(90deg,#9b7bb0,#C4A0C8)",borderRadius:2,animation:"loadBar 1.5s ease-in-out infinite"}}></div></div><div style={{fontSize:13,color:"#64748b",marginTop:16}}>Loading traffic details...</div></div></div>;}else if(invalidToken){confirmJsx=<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}><div style={{background:"#2d1f42",borderRadius:20,boxShadow:"0 8px 40px rgba(0,0,0,.3)",maxWidth:480,padding:"32px 28px",border:"1px solid #4a3565",textAlign:"center"}}><div style={{fontSize:48,marginBottom:12}}>⚠</div><div style={{fontSize:22,fontWeight:800,color:"#E85A7A",marginBottom:8}}>Invalid or expired link</div><div style={{fontSize:14,color:"#9B8EAD",lineHeight:1.5,marginBottom:16}}>This confirmation link is no longer valid. The traffic coordinator may have re-sent the instructions with a new link, or the link was generated incorrectly.</div><div style={{fontSize:13,color:"#64748b"}}>Please reach out to <a href="mailto:emm.caban@atticor.ai" style={{color:"#4AC8E8"}}>emm.caban@atticor.ai</a> for an updated link.</div></div></div>;}else{
     const alreadyConfirmed=confirmations[confirmKey]?.[sta]?.confirmed;
     // Show full traffic sheet view
     if(showSheet&&sheetHtml){confirmJsx=<div style={{minHeight:"100vh",background:"#fff"}}>
