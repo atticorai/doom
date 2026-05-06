@@ -1741,7 +1741,7 @@ const App=()=>{
       <div style={{display:"flex",gap:3}}>{MEDIA.filter(m=>m!=="OOH").map(m=>{const count=iscis.filter(i=>i.media===m&&i.brand===isciBrand&&i.active&&i.suffix!=="O").length;return<button key={m} onClick={()=>setF("media",sf.media===m?"":m)} style={{flex:1,padding:"4px",borderRadius:6,border:sf.media===m?`2px solid ${mc(m)}`:"1px solid #E8DFF0",background:sf.media===m?mc(m)+"18":"#fff",cursor:"pointer",textAlign:"center",opacity:count?1:0.5}}><div style={{fontSize:14,fontWeight:700,color:mc(m)}}>{m}</div><div style={{fontSize:13,fontWeight:800}}>{count}</div></button>})}</div>
       <div style={{display:"flex",gap:5,alignItems:"end",flexWrap:"wrap"}}>
         <input placeholder="Search..." value={isciSearch} onChange={e=>setIsciSearch(e.target.value)} style={{width:180,padding:"6px 9px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
-        <Sel options={DL.filter(d=>(isciBrand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"]).includes(d.code)).map(d=>({v:d.code,l:`${d.code} - ${d.name}`}))} value={sf.dma} onChange={v=>setF("dma",v)} placeholder="All DMAs"/>
+        <Sel options={DL.filter(d=>(isciBrand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"]).includes(d.code)).map(d=>({v:d.code,l:`${d.code} - ${d.name}`}))} value={sf.dma} onChange={v=>setF("dma",v)} placeholder="All DMAs"/>
         <label style={{fontSize:14,display:"flex",alignItems:"center",gap:3,cursor:"pointer"}}><input type="checkbox" checked={showOff} onChange={e=>setShowOff(e.target.checked)}/> Inactive</label>
         {(sf.media||sf.dma||isciSearch)&&<Btn small onClick={()=>{setSf({brand:"",media:"",dma:"",search:"",estGroup:""});setIsciSearch("")}}>Clear</Btn>}
       </div>
@@ -2863,7 +2863,7 @@ const App=()=>{
     const REASONS=["New market launch","New media type","New flight period","Agency buy plan"];
     const BB={"Postman Law":["Ken Lazar","Lynn Cortelezzi","Hazel Wolf"],"Wettermark Keith":["Amy Coffey"]};
     const BUYER_EMAILS={"Ken Lazar":"ken.lazar@atticor.ai","Lynn Cortelezzi":"lynn.cortelezzi@atticor.ai","Amy Coffey":"acoffey@wkfirm.com","Jessica Flynn":"jessica.flynn@atticor.ai"};
-    const BM={"Postman Law":["Chicago","Cincinnati","Denver","Minneapolis"],"Wettermark Keith":["Birmingham","Chattanooga","Dothan","Gadsden","Huntsville","Knoxville","Montgomery"]};
+    const BM={"Postman Law":["Chicago","Cincinnati","Denver","Minneapolis"],"Wettermark Keith":["Birmingham","Chattanooga","Dothan","Huntsville","Knoxville","Montgomery"]};
     const findSta=()=>{if(!nr.market||!nr.brand||!nr.media)return[];return stations.filter(s=>s.market===nr.market&&s.brand===nr.brand&&(nr.media==="Sports"||nr.media==="Heavy Up"?s.media==="TV":nr.media==="Streaming Audio"?s.media==="Radio":s.media===nr.media))};
     const openC=()=>{setShowAdd(true);setStep(1);setNr({num:nextNum(),market:"",media:"",group:"",campaign:"",buyer:"",brand:"",reason:""});setSugStations([]);setSelStations([])};
     const closeC=()=>{setShowAdd(false);setStep(1)};
@@ -3933,7 +3933,7 @@ const App=()=>{
   const NewIsciMod=({defaultMedia})=>{const[f2,setF2]=useState({brand:"PL",title:"",dur:defaultMedia==="OOH"?"SP":"30",media:defaultMedia||"TV",dmas:[],oohType:"SP",displayType:"MR"});const u2=(k,v)=>setF2(p=>({...p,[k]:v}));
     const isOoh=f2.media==="OOH";
     const isDisplay=f2.media==="Display";
-    const suf=SUFFIXES[f2.media]||"T";const bD=f2.brand==="PL"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"];
+    const suf=SUFFIXES[f2.media]||"T";const bD=f2.brand==="PL"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
     const durField=isOoh?f2.oohType:isDisplay?f2.displayType:f2.dur;
     const brandName=f2.brand==="PL"?"Postman Law":"Wettermark Keith";
     const normTitle=function(t){var s=(t||"").toLowerCase().trim();Object.values(DM).forEach(function(n){s=s.split(n.toLowerCase()).join("")});Object.keys(DM).forEach(function(c){s=s.split(c.toLowerCase()).join("")});return s.replace(/[-–—,_\s]+/g," ").trim()};
@@ -5706,7 +5706,7 @@ ${fullText.substring(0,3000)}`}]
                         const copy={...h,ts:new Date().toISOString(),est:newEst,month:newMonth,flight:newFlight,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:"Copied from "+h.month};setTrafficHistory(p=>{const nx=[copy,...p];saveToDb("trafficHistory",nx);return nx});log("Traffic Copied",h.brand+" "+h.market+" "+h.media+" "+h.month+" → "+newMonth+" (Est "+newEst+")");notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);e.target.value=""}} style={{padding:"2px 4px",borderRadius:4,border:"1px solid #D4A040",background:"rgba(217,119,6,.1)",color:"#D4A040",fontSize:11,fontWeight:600,cursor:"pointer"}}><option value="">Copy to month...</option>{CALENDAR.map(c=><option key={c.month} value={c.month}>{c.month}</option>)}</select>
                       <select onChange={e=>{if(!e.target.value)return;const destMkt=e.target.value;
                         // Same brand only — markets list per brand
-                        const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"];
+                        const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
                         if(!brandMkts.includes(destMkt)){e.target.value="";return}
                         // Normalize source market to its 3-char DMA code so the
                         // ISCI prefix swap works whether records store "BRM" or
@@ -5750,7 +5750,7 @@ ${fullText.substring(0,3000)}`}]
                         e.target.value="";
                       }} style={{padding:"2px 4px",borderRadius:4,border:"1px solid #4AC8E8",background:"rgba(74,200,232,.1)",color:"#4AC8E8",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                         <option value="">Copy to market...</option>
-                        {(h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"]).filter(m=>m!==(normMkt(h.market)||h.market)).map(m=><option key={m} value={m}>{m} — {DM[m]||m}</option>)}
+                        {(h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"]).filter(m=>m!==(normMkt(h.market)||h.market)).map(m=><option key={m} value={m}>{m} — {DM[m]||m}</option>)}
                       </select>
                     </div>
                   </div>
@@ -7767,7 +7767,7 @@ Rules:
                 // auto-advance to next month — that was hiding both options.
                 const h=trafficHistory[idx];if(!h)return;
                 const months=CALENDAR.map(c=>c.month);
-                const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","GAD","HSV","KNX","MTG"];
+                const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
                 const srcMkt=normMkt(h.market)||h.market;
                 const monthOpts=months.filter(m=>m!==h.month);
                 const mktOpts=brandMkts.filter(m=>m!==srcMkt);
