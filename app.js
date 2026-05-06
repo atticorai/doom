@@ -1073,6 +1073,23 @@ const App=()=>{
     return token;
   };
 
+  // Vendor portal action helper. Tries POST /api/confirm first; if the server
+  // says 503 (FIREBASE_ADMIN_KEY not configured) or the request can't reach
+  // the server, we return {fallback:true} so the caller writes to Firestore
+  // directly — the legacy path. After Phase D deploys (locked rules), the
+  // fallback writes will start failing for vendors and the server path becomes
+  // the only working path; staff sessions still write directly because they're
+  // signed into Firebase Auth.
+  const portalApi=async(action,args)=>{
+    try{
+      const resp=await fetch("/api/confirm",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({action},args))});
+      if(resp.ok){const j=await resp.json().catch(()=>({}));return{ok:true,body:j}}
+      if(resp.status===503)return{ok:false,fallback:true};
+      const err=await resp.json().catch(()=>({}));
+      return{ok:false,error:err.error||("HTTP "+resp.status),status:resp.status};
+    }catch(e){console.warn("portalApi network error, falling back:",e&&e.message);return{ok:false,fallback:true}}
+  };
+
   // ── CHECK URL FOR CONFIRMATION LINKS ──────────────────
   const[confirmMode,setConfirmMode]=useState(null);
   const[reportMode,setReportMode]=useState(null);
@@ -1240,15 +1257,23 @@ const App=()=>{
                 <div style={{fontSize:12,color:"#64748b",marginBottom:4}}>Add an email address to receive future traffic for {sta}:</div>
                 <div style={{display:"flex",gap:6}}>
                   <input value={portalAddEmail} onChange={e=>setPortalAddEmail(e.target.value)} placeholder="email@station.com" style={{flex:1,padding:"8px 10px",borderRadius:6,border:"1px solid #4a3565",background:"#2d1f42",color:"#E8DFF0",fontSize:13,outline:"none"}}/>
-                  <button disabled={!portalAddEmail.includes("@")||portalEmailSaved} onClick={()=>{
-                    const stObj=stations.find(s=>s.call===sta);
-                    if(stObj){
-                      const existing=(stObj.contact||"").split(";").map(e=>e.trim()).filter(Boolean);
-                      if(!existing.includes(portalAddEmail.trim())){
-                        const updated=[...existing,portalAddEmail.trim()].join("; ");
-                        setStations(prev=>prev.map(s=>s.call===sta?{...s,contact:updated}:s));
-                        log("Station Email Added",sta+" ← "+portalAddEmail.trim()+" (via portal)");
+                  <button disabled={!portalAddEmail.includes("@")||portalEmailSaved} onClick={async()=>{
+                    const r=await portalApi("addEmail",{confirmKey,sta,token:confirmMode?.tok,email:portalAddEmail.trim()});
+                    if(r.fallback){
+                      // Legacy path: write directly. Once Phase D locks rules
+                      // and FIREBASE_ADMIN_KEY is configured, this branch stops
+                      // firing — server path handles it.
+                      const stObj=stations.find(s=>s.call===sta);
+                      if(stObj){
+                        const existing=(stObj.contact||"").split(";").map(e=>e.trim()).filter(Boolean);
+                        if(!existing.includes(portalAddEmail.trim())){
+                          const updated=[...existing,portalAddEmail.trim()].join("; ");
+                          setStations(prev=>prev.map(s=>s.call===sta?{...s,contact:updated}:s));
+                          log("Station Email Added",sta+" ← "+portalAddEmail.trim()+" (via portal, legacy)");
+                        }
                       }
+                    } else if(r.ok){
+                      log("Station Email Added",sta+" ← "+portalAddEmail.trim()+" (via portal, server)");
                     }
                     setPortalEmailSaved(true);
                   }} style={{padding:"8px 14px",borderRadius:6,border:"none",background:portalEmailSaved?"#5BC4A0":"#a855f7",color:"#fff",fontSize:13,fontWeight:700,cursor:portalEmailSaved?"default":"pointer",opacity:!portalAddEmail.includes("@")?0.5:1}}>
@@ -1261,8 +1286,10 @@ const App=()=>{
                 <div style={{fontSize:12,color:"#64748b",marginBottom:4}}>Need to remove a contact? Leave a note for the traffic coordinator:</div>
                 <div style={{display:"flex",gap:6}}>
                   <input value={portalRemoveNote} onChange={e=>setPortalRemoveNote(e.target.value)} placeholder="e.g., Please remove jsmith@station.com — no longer with us" style={{flex:1,padding:"8px 10px",borderRadius:6,border:"1px solid #4a3565",background:"#2d1f42",color:"#E8DFF0",fontSize:13,outline:"none"}}/>
-                  <button disabled={!portalRemoveNote.trim()||portalNoteSaved} onClick={()=>{
-                    log("Station Remove Request",sta+" — "+portalRemoveNote.trim());
+                  <button disabled={!portalRemoveNote.trim()||portalNoteSaved} onClick={async()=>{
+                    const r=await portalApi("removeNote",{confirmKey,sta,token:confirmMode?.tok,note:portalRemoveNote.trim()});
+                    if(r.fallback){log("Station Remove Request",sta+" — "+portalRemoveNote.trim()+" (legacy)")}
+                    else if(r.ok){log("Station Remove Request",sta+" — "+portalRemoveNote.trim()+" (server)")}
                     setPortalNoteSaved(true);
                   }} style={{padding:"8px 14px",borderRadius:6,border:"none",background:portalNoteSaved?"#5BC4A0":"#D4A040",color:portalNoteSaved?"#fff":"#1e1233",fontSize:13,fontWeight:700,cursor:portalNoteSaved?"default":"pointer",opacity:!portalRemoveNote.trim()?0.5:1}}>
                     {portalNoteSaved?"✓ Sent":"Send"}
@@ -1285,20 +1312,24 @@ const App=()=>{
                 <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:8}}>
                   {pendingGroup.map(gs=><span key={gs.call} style={{fontSize:12,padding:"3px 8px",borderRadius:6,background:"#2d1f42",color:"#9B8EAD",fontWeight:600}}>{gs.call} · {gs.market}</span>)}
                 </div>
-                <button onClick={()=>{
-                  confirmStation(confirmKey,sta);
-                  pendingGroup.forEach(gs=>confirmStation(confirmKey,gs.call));
+                <button onClick={async()=>{
+                  const r=await portalApi("confirm",{confirmKey,sta,token:confirmMode?.tok,siblings:pendingGroup.map(g=>g.call)});
+                  if(r.ok||r.fallback){
+                    confirmStation(confirmKey,sta);
+                    pendingGroup.forEach(gs=>confirmStation(confirmKey,gs.call));
+                  }
                   setConfirmDone(true);
-                  log("Batch Confirmed",sta+" + "+pendingGroup.map(g=>g.call).join(", ")+" — Est "+estNum+" ("+stObj.ownership+")");
+                  log("Batch Confirmed",sta+" + "+pendingGroup.map(g=>g.call).join(", ")+" — Est "+estNum+" ("+stObj.ownership+(r.ok?", server":r.fallback?", legacy":"")+")");
                 }} style={{width:"100%",padding:"12px",borderRadius:8,border:"none",background:"#9b7bb0",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>
                   ✓ Confirm All {pendingGroup.length+1} Stations ({stObj.ownership})
                 </button>
               </div>;
             })()}
-            <button onClick={()=>{
-              confirmStation(confirmKey,sta);
+            <button onClick={async()=>{
+              const r=await portalApi("confirm",{confirmKey,sta,token:confirmMode?.tok});
+              if(r.ok||r.fallback)confirmStation(confirmKey,sta);
               setConfirmDone(true);
-              log("Confirmed",sta+" confirmed Est "+estNum);
+              log("Confirmed",sta+" confirmed Est "+estNum+(r.ok?" (server)":r.fallback?" (legacy)":""));
             }} style={{width:"100%",padding:"18px 24px",borderRadius:12,border:"none",background:"linear-gradient(135deg,#a855f7,#9b7bb0)",color:"#fff",fontSize:16,fontWeight:800,cursor:"pointer"}}>
               ✓ Confirm Receipt of Traffic Instructions
             </button>

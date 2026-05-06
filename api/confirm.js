@@ -116,9 +116,37 @@ module.exports = async function handler(req, res) {
   if (action === 'confirm') {
     confirmations[confirmKey] = confirmations[confirmKey] || {};
     confirmations[confirmKey][sta] = Object.assign({}, stored, { confirmed: true, ts });
+    // Optional batch: confirm sibling stations in the same ownership group.
+    // The requesting vendor's token authorizes the batch; the server enforces
+    // that siblings actually share the requestor's ownership in stations data
+    // (so a token can't be replayed to confirm arbitrary stations).
+    const { siblings } = req.body || {};
+    let confirmedSiblings = [];
+    if (Array.isArray(siblings) && siblings.length > 0) {
+      try {
+        const stationsDoc = await db.collection('appData').doc('stations').get();
+        const stationsArr = stationsDoc.exists ? JSON.parse(stationsDoc.data().data || '[]') : [];
+        const requestor = stationsArr.find(s => s.call === sta);
+        const ownership = requestor && requestor.ownership;
+        if (ownership) {
+          const validSiblings = stationsArr
+            .filter(s => s.ownership === ownership && s.call !== sta)
+            .map(s => s.call);
+          siblings
+            .filter(c => isValidSta(c) && validSiblings.includes(c))
+            .forEach(c => {
+              const sibStored = confirmations[confirmKey][c] || { confirmed: false };
+              confirmations[confirmKey][c] = Object.assign({}, sibStored, { confirmed: true, ts });
+              confirmedSiblings.push(c);
+            });
+        }
+      } catch (e) {
+        console.error('confirm/siblings: failed:', e.message);
+      }
+    }
     try {
       await db.collection('appData').doc('confirmations').set({ data: JSON.stringify(confirmations), ts: Date.now() });
-      return res.status(200).json({ ok: true, ts });
+      return res.status(200).json({ ok: true, ts, siblings: confirmedSiblings });
     } catch (e) {
       console.error('confirm: write failed:', e.message);
       return res.status(500).json({ error: 'Write failed' });
