@@ -4186,10 +4186,39 @@ const App=()=>{
     // Title dropdown: same options, sorted by dur desc then title asc so
     // titles are alphabetical within each :30/:15/:10 group.
     const titleOpts=[...dropOpts].sort((a,b)=>{const dd=(parseInt(b.dur)||0)-(parseInt(a.dur)||0);if(dd)return dd;return(a.title||"").localeCompare(b.title||"")||a.code.localeCompare(b.code)});
+    // Broadcast-month bounds for the Flight date pickers. bcStart and bcEnd
+    // are ISO date strings (YYYY-MM-DD). Some months straddle a year boundary,
+    // so the start uses bcStart's year and the end uses bcEnd's year.
+    const _cm=CALENDAR.find(c=>c.month===editMeta.month);
+    const bcStart=_cm?_cm.bcStart:"";
+    const bcEnd=_cm?_cm.bcEnd:"";
+    // Parse the existing flight string ("M/D - M/D") into ISO YYYY-MM-DD using
+    // the bc bounds for the year. Falls back to the bc bounds if unparseable.
+    const _parseHalf=(half,fallbackIso)=>{
+      if(!half||!fallbackIso)return fallbackIso||"";
+      const m=String(half).trim().match(/^(\d{1,2})\/(\d{1,2})$/);
+      if(!m)return fallbackIso;
+      const yr=fallbackIso.slice(0,4);
+      return yr+"-"+String(m[1]).padStart(2,"0")+"-"+String(m[2]).padStart(2,"0");
+    };
+    const _flightHalves=(editMeta.flight||"").split(/\s*-\s*/);
+    const flightStartIso=_parseHalf(_flightHalves[0],bcStart);
+    const flightEndIso=_parseHalf(_flightHalves[1],bcEnd);
+    const _setFlightFromPickers=(startIso,endIso)=>{
+      setEditMeta(p=>({...p,flight:fDs(startIso)+" - "+fDs(endIso)}));
+    };
     return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={onClose} xl>
-      <div style={{display:"flex",gap:8,marginBottom:8}}>
+      <div style={{display:"flex",gap:8,marginBottom:8,alignItems:"flex-end"}}>
         <Sel label="Month" options={CALENDAR.map(c=>c.month)} value={editMeta.month} onChange={v=>{const cm=CALENDAR.find(c=>c.month===v);setEditMeta(p=>({...p,month:v,flight:cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):p.flight}))}}/>
-        <Inp label="Flight" value={editMeta.flight} onChange={e=>setEditMeta(p=>({...p,flight:e.target.value}))}/>
+        <div style={{display:"flex",flexDirection:"column",gap:2,flex:1}}>
+          <label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>Flight Start</label>
+          <input type="date" value={flightStartIso} min={bcStart||undefined} max={bcEnd||undefined} onChange={e=>_setFlightFromPickers(e.target.value,flightEndIso)} style={{padding:"6px 9px",borderRadius:5,border:"1px solid #d1d5db",fontSize:13,outline:"none",width:"100%"}}/>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:2,flex:1}}>
+          <label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>Flight End</label>
+          <input type="date" value={flightEndIso} min={bcStart||undefined} max={bcEnd||undefined} onChange={e=>_setFlightFromPickers(flightStartIso,e.target.value)} style={{padding:"6px 9px",borderRadius:5,border:"1px solid #d1d5db",fontSize:13,outline:"none",width:"100%"}}/>
+        </div>
+        <Inp label="Flight (text)" value={editMeta.flight} onChange={e=>setEditMeta(p=>({...p,flight:e.target.value}))}/>
         <Inp label="Version" value={editMeta.version} onChange={e=>setEditMeta(p=>({...p,version:e.target.value}))} style={{width:50}}/>
       </div>
       <Inp label="Comments" value={editMeta.comments} onChange={e=>setEditMeta(p=>({...p,comments:e.target.value}))}/>
