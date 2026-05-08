@@ -22,10 +22,10 @@ const BRAND_CONFIG = {
     // ── MARKETS ──────────────────────────────────────────────
     // Each market the brand operates in. DMA code is the key.
     markets: {
-      CHI: { name: "Chicago",      state: "IL" },
-      CIN: { name: "Cincinnati",   state: "OH" },
-      DEN: { name: "Denver",       state: "CO" },
-      MSP: { name: "Minneapolis",  state: "MN" },
+      CHI: { name: "Chicago" },
+      CIN: { name: "Cincinnati" },
+      DEN: { name: "Denver" },
+      MSP: { name: "Minneapolis" },
     },
 
     // ── BUYERS ───────────────────────────────────────────────
@@ -150,12 +150,12 @@ const BRAND_CONFIG = {
 
     // ── MARKETS ──────────────────────────────────────────────
     markets: {
-      BRM: { name: "Birmingham",   state: "AL" },
-      HSV: { name: "Huntsville",   state: "AL" },
-      KNX: { name: "Knoxville",    state: "TN" },
-      CHA: { name: "Chattanooga",  state: "TN" },
-      MTG: { name: "Montgomery",   state: "AL" },
-      DHN: { name: "Dothan",       state: "AL" },
+      BRM: { name: "Birmingham" },
+      HSV: { name: "Huntsville" },
+      KNX: { name: "Knoxville" },
+      CHA: { name: "Chattanooga" },
+      MTG: { name: "Montgomery" },
+      DHN: { name: "Dothan" },
     },
 
     // ── BUYERS ───────────────────────────────────────────────
