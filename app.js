@@ -4207,8 +4207,17 @@ const App=()=>{
       return [_parseHalf(halves[0],bcStart),_parseHalf(halves[1],bcEnd)];
     };
     const updRowFlight=(idx,startIso,endIso)=>{
-      setEditIscis(p=>p.map((r,i)=>i===idx?{...r,flight:fDs(startIso)+" - "+fDs(endIso)}:r));
+      const next=fDs(startIso)+" - "+fDs(endIso);
+      // If the new value matches the record default, clear r.flight so the
+      // row falls back to h.flight in renderers and the picker reverts to
+      // showing the default. Avoids " - " or partial strings sticking around.
+      const useFlight=(next!==(editMeta.flight||"")&&next.trim()!=="-")?next:"";
+      setEditIscis(p=>p.map((r,i)=>i===idx?{...r,flight:useFlight}:r));
     };
+    // A row is "custom-flighted" when it has its own flight string that
+    // differs from the record default. We tint the date pickers gold for
+    // those rows so they're easy to spot at a glance.
+    const isRowCustom=(r)=>!!(r&&r.flight&&r.flight!==(editMeta.flight||""));
     return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={onClose} xl>
       <div style={{display:"flex",gap:8,marginBottom:8}}>
         <Sel label="Month" options={CALENDAR.map(c=>c.month)} value={editMeta.month} onChange={v=>{const cm=CALENDAR.find(c=>c.month===v);setEditMeta(p=>({...p,month:v,flight:cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):p.flight}))}}/>
@@ -4217,6 +4226,7 @@ const App=()=>{
       </div>
       <Inp label="Comments" value={editMeta.comments} onChange={e=>setEditMeta(p=>({...p,comments:e.target.value}))}/>
       <div style={{marginTop:8}}>
+        <div style={{fontSize:10,color:"#9B8EAD",marginBottom:4,fontStyle:"italic"}}>Rotation % is independent of flight dates — to end-date a row mid-month, just shorten its Flight End. Keep the % unchanged so the slot still totals 100%.</div>
         {/* Per-(sched, dur) validation pills — each slot rotates to 100% */}
         {Object.keys(slotGroups).length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
           {Object.entries(slotGroups).map(([k,g])=>{const ok=Math.abs(g.total-100)<=1.5;return<div key={k} style={{padding:"3px 8px",borderRadius:5,border:`1px solid ${ok?"#5BC4A0":"#E85A7A"}`,background:ok?"#1f3530":"#3a1f35",fontSize:11,fontWeight:700,color:ok?"#5BC4A0":"#E85A7A"}}>{g.sched} :{g.dur} — {g.items.length} spot{g.items.length===1?"":"s"} — {g.total.toFixed(1)}% {ok?"✓":"≠ 100%"}</div>})}
@@ -4244,9 +4254,9 @@ const App=()=>{
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.pct} onChange={e=>updI(idx,"pct",e.target.value.replace(/[^0-9.]/g,""))} data-pct-input="true" onKeyDown={e=>{if(e.key==="Tab"||e.key==="Enter"){e.preventDefault();const all=[...document.querySelectorAll('[data-pct-input]')];const ci=all.indexOf(e.target);if(ci>-1&&ci<all.length-1)all[ci+1].focus()}}} style={{width:40,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><select value={r.sched} onChange={e=>updI(idx,"sched",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}>{SCHED_OPTS.map(s=><option key={s}>{s}</option>)}</select></td>
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><select value={r.bookend||""} onChange={e=>updI(idx,"bookend",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}><option value="">None</option>{BOOKENDS.filter(Boolean).map(b=><option key={b}>{b}</option>)}</select></td>
-              {(()=>{const[rs,re]=rowFlightHalves(r.flight);return<React.Fragment>
-                <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input type="date" value={rs} min={bcStart||undefined} max={bcEnd||undefined} onChange={e=>updRowFlight(idx,e.target.value,re)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/></td>
-                <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input type="date" value={re} min={bcStart||undefined} max={bcEnd||undefined} onChange={e=>updRowFlight(idx,rs,e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/></td>
+              {(()=>{const[rs,re]=rowFlightHalves(r.flight);const custom=isRowCustom(r);const cellBg=custom?"#3a2f15":"#1e1233";const cellBorder=custom?"1px solid #D4A040":"1px solid #4a3565";return<React.Fragment>
+                <td title={custom?"Custom flight (overrides record default)":""} style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input type="date" value={rs} min={bcStart||undefined} max={bcEnd||undefined} onChange={e=>updRowFlight(idx,e.target.value,re)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:cellBorder,fontSize:11,background:cellBg,color:"#E8DFF0"}}/></td>
+                <td title={custom?"Custom flight (overrides record default)":""} style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input type="date" value={re} min={bcStart||undefined} max={bcEnd||undefined} onChange={e=>updRowFlight(idx,rs,e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:cellBorder,fontSize:11,background:cellBg,color:"#E8DFF0"}}/></td>
               </React.Fragment>})()}
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42",textAlign:"center"}}>
                 <div style={{display:"flex",gap:3,justifyContent:"center",alignItems:"center"}}>
