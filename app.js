@@ -4186,14 +4186,12 @@ const App=()=>{
     // Title dropdown: same options, sorted by dur desc then title asc so
     // titles are alphabetical within each :30/:15/:10 group.
     const titleOpts=[...dropOpts].sort((a,b)=>{const dd=(parseInt(b.dur)||0)-(parseInt(a.dur)||0);if(dd)return dd;return(a.title||"").localeCompare(b.title||"")||a.code.localeCompare(b.code)});
-    // Broadcast-month bounds for the Flight date pickers. bcStart and bcEnd
-    // are ISO date strings (YYYY-MM-DD). Some months straddle a year boundary,
-    // so the start uses bcStart's year and the end uses bcEnd's year.
+    // Broadcast-month bounds. bcStart/bcEnd are ISO date strings; some months
+    // straddle a year boundary (Dec/Jan), so the start uses bcStart's year and
+    // the end uses bcEnd's year when parsing per-row "M/D - M/D" strings.
     const _cm=CALENDAR.find(c=>c.month===editMeta.month);
     const bcStart=_cm?_cm.bcStart:"";
     const bcEnd=_cm?_cm.bcEnd:"";
-    // Parse the existing flight string ("M/D - M/D") into ISO YYYY-MM-DD using
-    // the bc bounds for the year. Falls back to the bc bounds if unparseable.
     const _parseHalf=(half,fallbackIso)=>{
       if(!half||!fallbackIso)return fallbackIso||"";
       const m=String(half).trim().match(/^(\d{1,2})\/(\d{1,2})$/);
@@ -4201,24 +4199,20 @@ const App=()=>{
       const yr=fallbackIso.slice(0,4);
       return yr+"-"+String(m[1]).padStart(2,"0")+"-"+String(m[2]).padStart(2,"0");
     };
-    const _flightHalves=(editMeta.flight||"").split(/\s*-\s*/);
-    const flightStartIso=_parseHalf(_flightHalves[0],bcStart);
-    const flightEndIso=_parseHalf(_flightHalves[1],bcEnd);
-    const _setFlightFromPickers=(startIso,endIso)=>{
-      setEditMeta(p=>({...p,flight:fDs(startIso)+" - "+fDs(endIso)}));
+    // Each row may carry its own flight string ("M/D - M/D"). If absent, fall
+    // back to the record-level flight in editMeta.flight.
+    const rowFlightHalves=(rowFlight)=>{
+      const src=rowFlight||editMeta.flight||"";
+      const halves=src.split(/\s*-\s*/);
+      return [_parseHalf(halves[0],bcStart),_parseHalf(halves[1],bcEnd)];
+    };
+    const updRowFlight=(idx,startIso,endIso)=>{
+      setEditIscis(p=>p.map((r,i)=>i===idx?{...r,flight:fDs(startIso)+" - "+fDs(endIso)}:r));
     };
     return<Mod title={"Edit Traffic — "+eh.brand+" · "+eh.market+" · "+eh.media} onClose={onClose} xl>
-      <div style={{display:"flex",gap:8,marginBottom:8,alignItems:"flex-end"}}>
+      <div style={{display:"flex",gap:8,marginBottom:8}}>
         <Sel label="Month" options={CALENDAR.map(c=>c.month)} value={editMeta.month} onChange={v=>{const cm=CALENDAR.find(c=>c.month===v);setEditMeta(p=>({...p,month:v,flight:cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):p.flight}))}}/>
-        <div style={{display:"flex",flexDirection:"column",gap:2,flex:1}}>
-          <label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>Flight Start</label>
-          <input type="date" value={flightStartIso} min={bcStart||undefined} max={bcEnd||undefined} onChange={e=>_setFlightFromPickers(e.target.value,flightEndIso)} style={{padding:"6px 9px",borderRadius:5,border:"1px solid #d1d5db",fontSize:13,outline:"none",width:"100%"}}/>
-        </div>
-        <div style={{display:"flex",flexDirection:"column",gap:2,flex:1}}>
-          <label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>Flight End</label>
-          <input type="date" value={flightEndIso} min={bcStart||undefined} max={bcEnd||undefined} onChange={e=>_setFlightFromPickers(flightStartIso,e.target.value)} style={{padding:"6px 9px",borderRadius:5,border:"1px solid #d1d5db",fontSize:13,outline:"none",width:"100%"}}/>
-        </div>
-        <Inp label="Flight (text)" value={editMeta.flight} onChange={e=>setEditMeta(p=>({...p,flight:e.target.value}))}/>
+        <Inp label="Default Flight (per row can override)" value={editMeta.flight} onChange={e=>setEditMeta(p=>({...p,flight:e.target.value}))}/>
         <Inp label="Version" value={editMeta.version} onChange={e=>setEditMeta(p=>({...p,version:e.target.value}))} style={{width:50}}/>
       </div>
       <Inp label="Comments" value={editMeta.comments} onChange={e=>setEditMeta(p=>({...p,comments:e.target.value}))}/>
@@ -4229,7 +4223,7 @@ const App=()=>{
         </div>}
           <div style={{overflowX:"auto",maxHeight:540,border:"1px solid #4a3565",borderRadius:7}}>
             <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
-              <TH w="180">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="45">%</TH><TH w="135">Schedule</TH><TH w="135">Bookend</TH><TH w="60">Action</TH>
+              <TH w="180">ISCI Code</TH><TH>Title</TH><TH w="40">Dur</TH><TH w="45">%</TH><TH w="135">Schedule</TH><TH w="135">Bookend</TH><TH w="120">Flight Start</TH><TH w="120">Flight End</TH><TH w="60">Action</TH>
             </tr></thead><tbody>
             {editIscis.map((r,idx)=>{const inOpts=dropOpts.some(o=>o.code===r.code);return<tr key={idx}>
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}>
@@ -4250,6 +4244,10 @@ const App=()=>{
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input value={r.pct} onChange={e=>updI(idx,"pct",e.target.value.replace(/[^0-9.]/g,""))} data-pct-input="true" onKeyDown={e=>{if(e.key==="Tab"||e.key==="Enter"){e.preventDefault();const all=[...document.querySelectorAll('[data-pct-input]')];const ci=all.indexOf(e.target);if(ci>-1&&ci<all.length-1)all[ci+1].focus()}}} style={{width:40,padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:12,textAlign:"center",background:"#1e1233",color:"#E8DFF0"}}/></td>
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><select value={r.sched} onChange={e=>updI(idx,"sched",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}>{SCHED_OPTS.map(s=><option key={s}>{s}</option>)}</select></td>
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><select value={r.bookend||""} onChange={e=>updI(idx,"bookend",e.target.value)} style={{width:"100%",padding:"2px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}><option value="">None</option>{BOOKENDS.filter(Boolean).map(b=><option key={b}>{b}</option>)}</select></td>
+              {(()=>{const[rs,re]=rowFlightHalves(r.flight);return<React.Fragment>
+                <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input type="date" value={rs} min={bcStart||undefined} max={bcEnd||undefined} onChange={e=>updRowFlight(idx,e.target.value,re)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/></td>
+                <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42"}}><input type="date" value={re} min={bcStart||undefined} max={bcEnd||undefined} onChange={e=>updRowFlight(idx,rs,e.target.value)} style={{width:"100%",padding:"2px 4px",borderRadius:3,border:"1px solid #4a3565",fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/></td>
+              </React.Fragment>})()}
               <td style={{padding:"2px 4px",borderBottom:"1px solid #2d1f42",textAlign:"center"}}>
                 <div style={{display:"flex",gap:3,justifyContent:"center",alignItems:"center"}}>
                   <button onClick={()=>cloneSlot(idx)} title="Add this ISCI to another schedule slot" style={{padding:"1px 4px",borderRadius:3,border:"1px solid #4AC8E8",background:"rgba(74,200,232,.12)",color:"#4AC8E8",cursor:"pointer",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>+ slot</button>
