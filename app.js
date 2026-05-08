@@ -1461,7 +1461,7 @@ const App=()=>{
         if(ri%2===0){pdf.setFillColor(rowBg[0],rowBg[1],rowBg[2]);pdf.rect(mx,y-LH+0.5,cw,rowH,"F")}
         pdf.setTextColor(30,30,30);
         pdf.setFont("helvetica","normal");
-        pdf.text(S(trafficRec.flight),colX[0]+1,y);
+        pdf.text(S(r.flight||trafficRec.flight),colX[0]+1,y);
         pdf.setFont("helvetica","bold");pdf.text(titleLines,colX[1]+1,y);
         pdf.setFont("helvetica","normal");
         pdf.text(":"+S(r.dur),colX[2]+1,y);
@@ -5559,7 +5559,7 @@ ${fullText.substring(0,3000)}`}]
           x+='<tr style="background:#1f2540"><td colspan="6" style="font-weight:700;font-size:11px;padding:6px 8px;border-bottom:2px solid #4AC8E8;color:#1e40af">'+dmaName+' ('+d+')</td></tr>';
           x+='<tr style="background:#1f2540"><td colspan="6" style="padding:2px 8px;font-size:8px;font-family:monospace;color:#4AC8E8;word-break:break-all">Click-Through URL: '+sectionUrl+'</td></tr>';
           videoIscis.filter(function(r){return r.code&&r.code.startsWith(d)}).forEach(function(r){
-            x+='<tr><td style="font-family:monospace;font-weight:700;font-size:10px">'+r.code+'</td><td>'+r.title+'</td><td>:'+(r.dur||"")+'</td><td style="text-align:center;font-weight:700">'+(r.pct||"")+'</td><td>'+(r.sched||"")+'</td><td>'+(h.flight||"")+'</td></tr>';
+            x+='<tr><td style="font-family:monospace;font-weight:700;font-size:10px">'+r.code+'</td><td>'+r.title+'</td><td>:'+(r.dur||"")+'</td><td style="text-align:center;font-weight:700">'+(r.pct||"")+'</td><td>'+(r.sched||"")+'</td><td>'+(r.flight||h.flight||"")+'</td></tr>';
           });
         });
         x+='</tbody></table>';
@@ -5572,7 +5572,7 @@ ${fullText.substring(0,3000)}`}]
           x+='<tr style="background:#F0E8F8"><td colspan="6" style="font-weight:700;font-size:11px;padding:6px 8px;border-bottom:2px solid #9b7bb0;color:#5b21b6">'+dmaName+' ('+d+')</td></tr>';
           x+='<tr style="background:#F0E8F8"><td colspan="6" style="padding:2px 8px;font-size:8px;font-family:monospace;color:#9b7bb0;word-break:break-all">Click-Through URL: '+sectionUrl+'</td></tr>';
           videoIscis.filter(function(r){return r.code&&r.code.startsWith(d)}).forEach(function(r){
-            x+='<tr><td style="font-family:monospace;font-weight:700;font-size:10px">'+r.code+'</td><td>'+r.title+'</td><td>:'+(r.dur||"")+'</td><td style="text-align:center;font-weight:700">'+(r.pct||"")+'</td><td>'+(r.sched||"")+'</td><td>'+(h.flight||"")+'</td></tr>';
+            x+='<tr><td style="font-family:monospace;font-weight:700;font-size:10px">'+r.code+'</td><td>'+r.title+'</td><td>:'+(r.dur||"")+'</td><td style="text-align:center;font-weight:700">'+(r.pct||"")+'</td><td>'+(r.sched||"")+'</td><td>'+(r.flight||h.flight||"")+'</td></tr>';
           });
         });
         x+='</tbody></table>';
@@ -5604,19 +5604,19 @@ ${fullText.substring(0,3000)}`}]
         SCHED_ORDER_LIB.forEach(s=>{if(!grouped[s])return;const bg=SCHED_COLORS_LIB[s]||"#2d1f42";const items=grouped[s].sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0));
           x+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
           items.forEach(r=>{const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk2(r.bookend)?r.bookend:s;
-            x+='<tr style="background:'+bg+'44"><td>'+(h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>:'+r.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
+            x+='<tr style="background:'+bg+'44"><td>'+(r.flight||h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>:'+r.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
           });
         });
         Object.keys(grouped).filter(s=>!SCHED_ORDER_LIB.includes(s)).forEach(s=>{const bg="#F0E8F8";const items=grouped[s];
           x+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
           items.forEach(r=>{const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk2(r.bookend)?r.bookend:s;
-            x+='<tr style="background:'+bg+'44"><td>'+(h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>:'+r.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
+            x+='<tr style="background:'+bg+'44"><td>'+(r.flight||h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>:'+r.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
           });
         });
       } else {
         // Simple flat list (PL style or imported without schedules)
         (h.iscis||[]).forEach(r=>{const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk2(r.bookend)?r.bookend:"";
-          x+='<tr><td>'+(h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>:'+r.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
+          x+='<tr><td>'+(r.flight||h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>:'+r.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
         });
       }
       x+='</tbody></table>';
@@ -7751,7 +7751,7 @@ Rules:
                   const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";
                   const note=validBk(r.bookend)?r.bookend:s;
                   const length=validBk(r.bookend)?r.bookend:(r.dur?":"+r.dur:"");
-                  x+='<tr style="background:'+bg+'44"><td style="'+tdCell+'">'+(h.flight||"")+'</td><td style="'+tdCell+';font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td style="'+tdCell+'">'+length+'</td><td style="'+tdCell+';font-weight:600">'+pct+'</td><td style="'+tdCell+';font-size:10px;color:#555">'+note+'</td></tr>';
+                  x+='<tr style="background:'+bg+'44"><td style="'+tdCell+'">'+(r.flight||h.flight||"")+'</td><td style="'+tdCell+';font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td style="'+tdCell+'">'+length+'</td><td style="'+tdCell+';font-weight:600">'+pct+'</td><td style="'+tdCell+';font-size:10px;color:#555">'+note+'</td></tr>';
                 });
               };
               SCHED_ORDER_SHEET.forEach(s=>{if(grouped[s])renderGroup(s,SCHED_COLORS_SHEET[s])});
