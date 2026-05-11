@@ -3255,6 +3255,10 @@ const App=()=>{
     if(typeof POP_PHOTOS!=='undefined'&&POP_PHOTOS[id]){
       hardcoded.push({url:POP_PHOTOS[id],label:"PoP Photo",hardcoded:true});
     }
+    // Include alt creatives (digital bulletins rotating multiple ads)
+    if(typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[id]){
+      POP_PHOTOS_ALT[id].forEach((u,i)=>hardcoded.push({url:u,label:"PoP Photo (alt "+(i+1)+")",hardcoded:true}));
+    }
     const all=[...hardcoded,...photos];
     if(!all.length&&compact)return null;
     if(!all.length)return<OohPhotoUpload id={id}/>;
@@ -3677,7 +3681,7 @@ const App=()=>{
 
     const CardGrid=()=><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
       {fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const flightClean=p.flight.split('(')[0].trim();const pop=PL_POPS[p.unit];
-        const allCardPhotos=POP_PHOTOS[p.unit]?[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])]:[...(oohPhotos[p.unit]||[])];
+        const allCardPhotos=POP_PHOTOS[p.unit]?[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...((typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[p.unit])||[]).map((u,i)=>({url:u,label:"PoP Photo (alt "+(i+1)+")",hardcoded:true})),...(oohPhotos[p.unit]||[])]:[...(oohPhotos[p.unit]||[])];
         const openCardPop=(e)=>{
           // Skip if the click came from an interactive child (ISCI edit input,
           // upload button, individual photo with its own handler, etc).
@@ -3711,12 +3715,12 @@ const App=()=>{
             </div>
             {POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                <div style={{fontSize:12,fontWeight:600,color:"#4AC8E8",textTransform:"uppercase"}}>📸 {1+(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length?"s":""}</div>
+                <div style={{fontSize:12,fontWeight:600,color:"#4AC8E8",textTransform:"uppercase"}}>📸 {allCardPhotos.length} Photo{allCardPhotos.length!==1?"s":""}</div>
                 <OohPhotoUpload id={p.unit}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length?"1fr 1fr":"1fr",gap:4}}>
-                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:0})}}/>
-                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:pi+1})}}/>)}
+                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0})}}/>
+                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=>{const altCount=((typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[p.unit])||[]).length;return<img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:1+altCount+pi})}}/>})}
               </div>
             </div>}
             {!POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
@@ -7621,7 +7625,7 @@ Rules:
     // Gather photos
     const allPhotos=[];
     if(isWK){POSTINGS.forEach(p=>{const imgs=POP_IMGS||{};if(p.closeImg&&imgs[p.closeImg])allPhotos.push({id:p.boardId,url:imgs[p.closeImg],market:p.dma});const up=oohPhotos[p.boardId]||[];up.forEach(ph=>allPhotos.push({id:p.boardId,url:ph.url,market:p.dma}))})}
-    else{PL_PANELS.forEach(p=>{if(POP_PHOTOS&&POP_PHOTOS[p.unit])allPhotos.push({id:p.unit,url:POP_PHOTOS[p.unit],market:p.market});const up=oohPhotos[p.unit]||[];up.forEach(ph=>allPhotos.push({id:p.unit,url:ph.url,market:p.market}))})}
+    else{PL_PANELS.forEach(p=>{if(POP_PHOTOS&&POP_PHOTOS[p.unit])allPhotos.push({id:p.unit,url:POP_PHOTOS[p.unit],market:p.market});if(typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[p.unit])POP_PHOTOS_ALT[p.unit].forEach(u=>allPhotos.push({id:p.unit,url:u,market:p.market}));const up=oohPhotos[p.unit]||[];up.forEach(ph=>allPhotos.push({id:p.unit,url:ph.url,market:p.market}))})}
     return<div style={{minHeight:"100vh",background:"#1e1233",color:"#E8DFF0",fontFamily:"DM Sans,sans-serif"}}>
       {/* Header */}
       <div style={{background:`linear-gradient(135deg,${brandColor},${brandColor}cc)`,padding:"32px 40px",position:"relative",overflow:"hidden"}}>
