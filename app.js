@@ -1404,26 +1404,67 @@ const App=()=>{
     </div>;}}
   }
   const notify=useCallback(m=>{setToast(m);setTimeout(()=>setToast(null),3e3)},[]);
+  // Render the supplied HTML to a PDF via html2canvas. Used both for non-
+  // traffic flows and the OOH path below — the OOH sheets have a totally
+  // different layout (panels/units, vendor, market) than TV/Radio, so the
+  // jsPDF text-mode generator further down can't render them faithfully.
+  const renderHtmlToPdf=async(html)=>{
+    const iframe=document.createElement("iframe");
+    iframe.style.cssText="position:fixed;left:-9999px;width:850px;height:1200px;border:none";
+    iframe.sandbox="allow-same-origin";
+    document.body.appendChild(iframe);
+    try{
+      iframe.contentDocument.open();iframe.contentDocument.write(html);iframe.contentDocument.close();
+      await new Promise(r=>setTimeout(r,500));
+      const canvas=await html2canvas(iframe.contentDocument.body,{scale:2,useCORS:true,width:850});
+      document.body.removeChild(iframe);
+      const{jsPDF}=window.jspdf;const pdf=new jsPDF("p","mm","a4");
+      const imgW=210;const imgH=(canvas.height*imgW)/canvas.width;
+      const pageH=297;let yy=0;
+      while(yy<imgH){if(yy>0)pdf.addPage();pdf.addImage(canvas.toDataURL("image/jpeg",0.95),"JPEG",0,-yy,imgW,imgH);yy+=pageH;}
+      return pdf;
+    }catch(pdfErr){if(iframe.parentNode)document.body.removeChild(iframe);throw pdfErr;}
+  };
+  // Append a "Creative Files" page with clickable jsPDF text links onto the
+  // end of the given pdf. Only emits a page if at least one row has a fileUrl
+  // in the registry.
+  const appendCreativeFilesPage=(pdf,trafficRec)=>{
+    const filesWithLinks=(trafficRec.iscis||[]).map(r=>{const full=iscis.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:full.title||r.title||"",url:full.fileUrl}:null}).filter(Boolean);
+    if(!filesWithLinks.length)return;
+    pdf.addPage();
+    const pw=210;const mx=14;let y=20;
+    const bc=trafficRec.brand==="Postman Law"?[124,58,237]:[217,119,6];
+    pdf.setFont("helvetica","bold");pdf.setFontSize(14);pdf.setTextColor(bc[0],bc[1],bc[2]);
+    pdf.text("CREATIVE FILES",pw/2,y,{align:"center"});y+=4;
+    pdf.setFontSize(8);pdf.setTextColor(120,120,120);
+    pdf.text("Click any row below to download the creative.",pw/2,y,{align:"center"});y+=8;
+    pdf.setDrawColor(bc[0],bc[1],bc[2]);pdf.setLineWidth(0.4);pdf.line(mx,y,pw-mx,y);y+=6;
+    pdf.setFont("helvetica","normal");pdf.setFontSize(10);
+    filesWithLinks.forEach(f=>{
+      if(y>280){pdf.addPage();y=20}
+      pdf.setTextColor(37,99,235);
+      pdf.textWithLink(f.code+(f.title?" — "+f.title:""),mx,y,{url:f.url});
+      y+=6;
+    });
+    pdf.setTextColor(0,0,0);
+  };
   // Generate PDF with clickable links using jsPDF text rendering (not html2canvas)
   const generatePdfBase64=async(html,trafficRec)=>{
-    // If no traffic record passed, fall back to canvas method for non-traffic uses
+    // No traffic record → just rasterize the HTML (no clickable links possible).
     if(!trafficRec){
-      const iframe=document.createElement("iframe");
-      iframe.style.cssText="position:fixed;left:-9999px;width:850px;height:1200px;border:none";
-      iframe.sandbox="allow-same-origin";
-      document.body.appendChild(iframe);
-      try{
-        iframe.contentDocument.open();iframe.contentDocument.write(html);iframe.contentDocument.close();
-        await new Promise(r=>setTimeout(r,500));
-        const canvas=await html2canvas(iframe.contentDocument.body,{scale:2,useCORS:true,width:850});
-        document.body.removeChild(iframe);
-        const{jsPDF}=window.jspdf;const pdf=new jsPDF("p","mm","a4");
-        const imgW=210;const imgH=(canvas.height*imgW)/canvas.width;
-        const pageH=297;let yy=0;
-        while(yy<imgH){if(yy>0)pdf.addPage();pdf.addImage(canvas.toDataURL("image/jpeg",0.95),"JPEG",0,-yy,imgW,imgH);yy+=pageH;}
-        return pdf.output("datauristring");
-      }catch(pdfErr){if(iframe.parentNode)document.body.removeChild(iframe);throw pdfErr;}
+      const pdf=await renderHtmlToPdf(html);
+      return pdf.output("datauristring");
     }
+    // OOH sends: render the OOH HTML faithfully (its layout doesn't fit the
+    // TV/Radio text-mode template below), then tack on a Creative Files page
+    // with clickable links to the creative storage URLs.
+    if(trafficRec.isOoh||trafficRec.media==="OOH"){
+      const pdf=await renderHtmlToPdf(html);
+      appendCreativeFilesPage(pdf,trafficRec);
+      return pdf.output("datauristring");
+    }
+    // TV/Radio path: build the PDF from trafficRec in text mode (selectable,
+    // searchable, with inline creative links) — the original behavior.
     // ═══ Native jsPDF — real text (searchable, selectable, copy-pasteable),
     // clickable creative-file links, and row heights measured via
     // splitTextToSize so long titles don't overlap the next row.
