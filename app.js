@@ -3167,6 +3167,54 @@ const App=()=>{
     notify("Photo removed");
   };
 
+  // ── OOH Photo Modal Component ──────────────────────────
+  // Proper React component (not an IIFE) so the useState hook is called
+  // unconditionally per the Rules of Hooks. Clicks into PoP photos were
+  // silently failing in some re-render orders because the hook lived
+  // inside a JSX-embedded IIFE that came and went with modal state.
+  const OohPhotoModal=({modal})=>{
+    const{id,photos:allPhotos,startIdx}=modal;
+    const safePhotos=Array.isArray(allPhotos)?allPhotos.filter(p=>p&&p.url):[];
+    const[idx,setIdx]=useState(Math.min(startIdx||0,Math.max(0,safePhotos.length-1)));
+    if(!safePhotos.length){
+      return<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setModal(null)}>
+        <div onClick={e=>e.stopPropagation()} style={{background:"#2d1f42",borderRadius:12,padding:24,maxWidth:480,width:"100%",textAlign:"center",color:"#E8DFF0"}}>
+          <div style={{fontSize:16,fontWeight:700,marginBottom:6}}>{id} — No photos</div>
+          <div style={{fontSize:13,color:"#9B8EAD",marginBottom:14}}>Upload a PoP photo to see it here.</div>
+          <OohPhotoUpload id={id}/>
+          <div style={{marginTop:12}}><button onClick={()=>setModal(null)} style={{padding:"6px 14px",borderRadius:6,border:"1px solid #4a3565",background:"transparent",color:"#9B8EAD",cursor:"pointer"}}>Close</button></div>
+        </div>
+      </div>;
+    }
+    const ph=safePhotos[idx]||safePhotos[0];
+    const uploaded=oohPhotos[id]||[];
+    return<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setModal(null)}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"#2d1f42",borderRadius:12,padding:16,maxWidth:900,width:"100%",maxHeight:"90vh",overflow:"auto"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{fontSize:16,fontWeight:700,color:"#F0E8F8"}}>{id} — Photos ({idx+1}/{safePhotos.length})</div>
+          <div style={{display:"flex",gap:6,alignItems:"center"}}>
+            <OohPhotoUpload id={id}/>
+            <button onClick={()=>setModal(null)} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#94a3b8"}}>✕</button>
+          </div>
+        </div>
+        <div style={{position:"relative"}}>
+          <img src={ph.url} style={{width:"100%",maxHeight:"60vh",objectFit:"contain",borderRadius:8,background:"#1e1233"}}/>
+          {safePhotos.length>1&&<React.Fragment>
+            <button onClick={()=>setIdx(i=>(i-1+safePhotos.length)%safePhotos.length)} style={{position:"absolute",left:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.7)",color:"#fff",border:"none",borderRadius:"50%",width:36,height:36,fontSize:18,cursor:"pointer"}}>◀</button>
+            <button onClick={()=>setIdx(i=>(i+1)%safePhotos.length)} style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.7)",color:"#fff",border:"none",borderRadius:"50%",width:36,height:36,fontSize:18,cursor:"pointer"}}>▶</button>
+          </React.Fragment>}
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
+          <div style={{fontSize:13,color:"#94a3b8"}}>{ph.label||"Photo"}{ph.name?" — "+ph.name:""}{ph.ts?" · "+new Date(ph.ts).toLocaleDateString():""}</div>
+          {!ph.hardcoded&&<button onClick={()=>{const uploadIdx=idx-(safePhotos.length-uploaded.length);if(uploadIdx>=0){deleteOohPhoto(id,uploadIdx);if(safePhotos.length<=1)setModal(null);else setIdx(i=>Math.min(i,safePhotos.length-2))}}} style={{padding:"3px 8px",borderRadius:4,border:"1px solid #E85A7A",background:"transparent",color:"#E85A7A",fontSize:12,cursor:"pointer"}}>🗑 Delete</button>}
+        </div>
+        {safePhotos.length>1&&<div style={{display:"flex",gap:4,marginTop:8,overflowX:"auto"}}>
+          {safePhotos.map((p,i)=><img key={i} src={p.url} onClick={()=>setIdx(i)} style={{width:60,height:45,objectFit:"cover",borderRadius:4,border:i===idx?"2px solid #4AC8E8":"1px solid #4a3565",cursor:"pointer",opacity:i===idx?1:0.6}}/>)}
+        </div>}
+      </div>
+    </div>;
+  };
+
   // ── OOH Photo Upload Button Component ──────────────────
   const OohPhotoUpload=({id,label})=>{
     const inputRef=React.useRef(null);
@@ -8366,37 +8414,7 @@ Rules:
           <Btn onClick={()=>setModal(null)}>Done</Btn>
         </div>
       </Mod>})()}
-    {modal?.type==="oohPhoto"&&(()=>{
-      const{id,photos:allPhotos,startIdx}=modal;
-      const[idx,setIdx]=React.useState(startIdx||0);
-      const ph=allPhotos[idx];
-      const uploaded=oohPhotos[id]||[];
-      return<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setModal(null)}>
-        <div onClick={e=>e.stopPropagation()} style={{background:"#2d1f42",borderRadius:12,padding:16,maxWidth:900,width:"100%",maxHeight:"90vh",overflow:"auto"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-            <div style={{fontSize:16,fontWeight:700,color:"#F0E8F8"}}>{id} — Photos ({idx+1}/{allPhotos.length})</div>
-            <div style={{display:"flex",gap:6,alignItems:"center"}}>
-              <OohPhotoUpload id={id}/>
-              <button onClick={()=>setModal(null)} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#94a3b8"}}>✕</button>
-            </div>
-          </div>
-          <div style={{position:"relative"}}>
-            <img src={ph.url} style={{width:"100%",maxHeight:"60vh",objectFit:"contain",borderRadius:8,background:"#1e1233"}}/>
-            {allPhotos.length>1&&<>
-              <button onClick={()=>setIdx(i=>(i-1+allPhotos.length)%allPhotos.length)} style={{position:"absolute",left:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.7)",color:"#fff",border:"none",borderRadius:"50%",width:36,height:36,fontSize:18,cursor:"pointer"}}>◀</button>
-              <button onClick={()=>setIdx(i=>(i+1)%allPhotos.length)} style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.7)",color:"#fff",border:"none",borderRadius:"50%",width:36,height:36,fontSize:18,cursor:"pointer"}}>▶</button>
-            </>}
-          </div>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
-            <div style={{fontSize:13,color:"#94a3b8"}}>{ph.label||"Photo"}{ph.name?" — "+ph.name:""}{ph.ts?" · "+new Date(ph.ts).toLocaleDateString():""}</div>
-            {!ph.hardcoded&&<button onClick={()=>{const uploadIdx=idx-(allPhotos.length-uploaded.length);if(uploadIdx>=0){deleteOohPhoto(id,uploadIdx);if(allPhotos.length<=1)setModal(null);else setIdx(i=>Math.min(i,allPhotos.length-2))}}} style={{padding:"3px 8px",borderRadius:4,border:"1px solid #E85A7A",background:"transparent",color:"#E85A7A",fontSize:12,cursor:"pointer"}}>🗑 Delete</button>}
-          </div>
-          {allPhotos.length>1&&<div style={{display:"flex",gap:4,marginTop:8,overflowX:"auto"}}>
-            {allPhotos.map((p,i)=><img key={i} src={p.url} onClick={()=>setIdx(i)} style={{width:60,height:45,objectFit:"cover",borderRadius:4,border:i===idx?"2px solid #4AC8E8":"1px solid #4a3565",cursor:"pointer",opacity:i===idx?1:0.6}}/>)}
-          </div>}
-        </div>
-      </div>;
-    })()}
+    {modal?.type==="oohPhoto"&&<OohPhotoModal modal={modal}/>}
     {uploadTracker&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:2001,background:"#2d1f42",borderBottom:"2px solid #4AC8E8",padding:"8px 16px",display:"flex",alignItems:"center",gap:12}}>
       <div style={{fontSize:13,fontWeight:700,color:"#4AC8E8"}}>{uploadTracker.label}</div>
       <div style={{flex:1,height:6,background:"#4a3565",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",background:"linear-gradient(90deg,#4AC8E8,#9b7bb0)",borderRadius:3,width:(uploadTracker.pct||0)+"%",transition:"width 0.3s"}}/></div>
