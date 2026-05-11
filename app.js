@@ -3677,7 +3677,17 @@ const App=()=>{
 
     const CardGrid=()=><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
       {fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const flightClean=p.flight.split('(')[0].trim();const pop=PL_POPS[p.unit];
-        return<div key={i} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:"#F0E8F8",borderLeft:`4px solid ${c}`}}>
+        const allCardPhotos=POP_PHOTOS[p.unit]?[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])]:[...(oohPhotos[p.unit]||[])];
+        const openCardPop=(e)=>{
+          // Skip if the click came from an interactive child (ISCI edit input,
+          // upload button, individual photo with its own handler, etc).
+          if(e.defaultPrevented)return;
+          const t=e.target;
+          if(t.closest('input,button,select,textarea,img,a,label'))return;
+          if(!allCardPhotos.length)return;
+          setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0});
+        };
+        return<div key={i} onClick={openCardPop} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:"#F0E8F8",borderLeft:`4px solid ${c}`,cursor:allCardPhotos.length?"pointer":"default"}}>
           <div style={{padding:10}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
               <div>
