@@ -3679,14 +3679,12 @@ const App=()=>{
       {fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const flightClean=p.flight.split('(')[0].trim();const pop=PL_POPS[p.unit];
         const allCardPhotos=POP_PHOTOS[p.unit]?[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])]:[...(oohPhotos[p.unit]||[])];
         const openCardPop=(e)=>{
-          console.log('[PoP] card click',p.unit,'target:',e.target.tagName,'photos:',allCardPhotos.length);
           // Skip if the click came from an interactive child (ISCI edit input,
           // upload button, individual photo with its own handler, etc).
-          if(e.defaultPrevented){console.log('[PoP] default prevented, skipping');return}
+          if(e.defaultPrevented)return;
           const t=e.target;
-          if(t.closest('input,button,select,textarea,img,a,label')){console.log('[PoP] interactive child, skipping');return}
-          if(!allCardPhotos.length){console.log('[PoP] no photos to show');return}
-          console.log('[PoP] opening modal',p.unit);
+          if(t.closest('input,button,select,textarea,img,a,label'))return;
+          if(!allCardPhotos.length)return;
           setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0});
         };
         return<div key={i} onClick={openCardPop} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:"#F0E8F8",borderLeft:`4px solid ${c}`,cursor:allCardPhotos.length?"pointer":"default"}}>
@@ -3717,8 +3715,8 @@ const App=()=>{
                 <OohPhotoUpload id={p.unit}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length?"1fr 1fr":"1fr",gap:4}}>
-                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{console.log('[PoP] hardcoded photo click',p.unit);e.stopPropagation();const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:0})}}/>
-                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{console.log('[PoP] uploaded photo click',p.unit,pi);e.stopPropagation();const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:pi+1})}}/>)}
+                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:0})}}/>
+                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:pi+1})}}/>)}
               </div>
             </div>}
             {!POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
@@ -3728,7 +3726,7 @@ const App=()=>{
                   <OohPhotoUpload id={p.unit}/>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length>1?"1fr 1fr":"1fr",gap:4}}>
-                  {(oohPhotos[p.unit]||[]).slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{console.log('[PoP] uploaded-only click',p.unit,pi);e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:oohPhotos[p.unit],startIdx:pi})}}/>)}
+                  {(oohPhotos[p.unit]||[]).slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:oohPhotos[p.unit],startIdx:pi})}}/>)}
                 </div>
               </div>:<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <span style={{fontSize:12,color:"#64748b"}}>No PoP photos</span>
@@ -7708,6 +7706,7 @@ Rules:
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
     <OohHub/>
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
+    {modal?.type==="oohPhoto"&&<OohPhotoModal modal={modal}/>}
     {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#2d1f42",color:"#E8DFF0",padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.3)",zIndex:9999,border:"1px solid #4a3565"}}>{toast}</div>}
   </React.Fragment>;
   return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",overflow:"hidden"}}>
