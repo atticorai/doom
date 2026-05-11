@@ -3547,7 +3547,7 @@ const App=()=>{
           h+='<div class="sig"><div>Accepted by:</div><div>Date:</div></div>';
           h+='<div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div>';
           h+="</body></html>";
-          const isciLines=oLines.filter(l=>l.isci||l.panel).map(l=>({code:l.panel||l.isci,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}));
+          const isciLines=oLines.filter(l=>l.isci||l.panel).map(l=>{const rawCode=(l.isci||"").split(" - ")[0].trim();return{code:rawCode||l.panel,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}});
           const trafficRec={ts:new Date().toISOString(),est:"OOH-"+dmaLabel+"-"+(trafficVendor||"ALL"),brand:"Wettermark Keith",market:dmaLabel,media:"OOH",buyer:"Amy Coffey",month:workMonth,flight:oPostDates,version:oVersion||"1",comments:oComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor};
           return{html:h,trafficRec,isciLines,hasPanel,vLabel};
         };
@@ -3572,7 +3572,7 @@ const App=()=>{
           setOohSending(true);
           try{
             let pdfB64="";
-            try{const pdfUri=await generatePdfBase64(html);pdfB64=(pdfUri||"").split(",")[1]||""}catch(pe){console.warn("OOH PDF generation failed, sending without attachment:",pe)}
+            try{const pdfUri=await generatePdfBase64(html,trafficRec);pdfB64=(pdfUri||"").split(",")[1]||""}catch(pe){console.warn("OOH PDF generation failed, sending without attachment:",pe)}
             // Reserve a per-vendor confirmation token so the recipient can click
             // through to the same vendor portal that TV/Radio sends use. The
             // portal accepts OOH-prefixed est strings (see confirmKey lookup).
@@ -3580,11 +3580,14 @@ const App=()=>{
             const tokOoh=reserveToken(trafficRec.est,"OOH_VENDOR");
             const confirmUrl=confirmBase+"?confirm="+encodeURIComponent(trafficRec.est)+"&sta=OOH_VENDOR&tok="+encodeURIComponent(tokOoh);
             const subj="WK Advertising Solutions | Wettermark Keith "+dmaLabel+" OOH Traffic Instructions | "+workMonth+(oVersion?" | V"+oVersion:"");
+            const creativesForEmail=(trafficRec.iscis||[]).map(r=>{const full=iscis.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:full.title||"",fileUrl:full.fileUrl}:null}).filter(Boolean);
+            const creativeLinks=creativesForEmail.length?"<br><br><b>Creative Files:</b><br>"+creativesForEmail.map(c=>'<a href="'+c.fileUrl+'">'+c.code+(c.title?" — "+c.title:"")+'</a>').join("<br>"):"";
             const msg="Hello,<br><br>Please find the attached OOH traffic instructions for Wettermark Keith — "+dmaLabel+" — "+workMonth+(oVersion?" V"+oVersion:"")+".<br><br>"+
               "<b>Client:</b> Wettermark Keith<br><b>Market:</b> "+dmaLabel+"<br><b>Vendor:</b> "+vLabel+"<br><b>Buyer:</b> Amy Coffey<br>"+
               "<b>Broadcast Month:</b> "+workMonth+"<br><b>Post Dates:</b> "+(oPostDates||"TBD")+(oVersion?"<br><b>Version:</b> "+oVersion:"")+
               "<br><b>"+(hasPanel?"Total Panels":"Total Units")+":</b> "+(hasPanel?totalPanels:totalUnits)+
               (oComments?"<br><b>Comments:</b> "+oComments:"")+
+              creativeLinks+
               "<br><br>Please confirm receipt within 24 hours by clicking the button below:<br><br>"+
               '<a href="'+confirmUrl+'" style="display:inline-block;padding:12px 28px;background:#D4A040;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;font-size:14px">Confirm Receipt</a>'+
               "<br><br>Proof of Performance (PoP) photos are required upon completion of each install.<br><br>Thank you,<br><br>Emm Caban<br>WK Advertising Solutions";
@@ -3983,7 +3986,7 @@ const App=()=>{
           h+='<div class="sig"><div>Accepted by:</div><div>Date:</div></div>';
           h+='<div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div>';
           h+="</body></html>";
-          const isciLines=plOLines.filter(l=>l.isci||l.panel).map(l=>({code:l.panel||l.isci,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}));
+          const isciLines=plOLines.filter(l=>l.isci||l.panel).map(l=>{const rawCode=(l.isci||"").split(" - ")[0].trim();return{code:rawCode||l.panel,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}});
           const trafficRec={ts:new Date().toISOString(),est:"OOH-PL-"+mktLabel+"-"+(trafficVendor||"ALL"),brand:"Postman Law",market:mktLabel,media:"OOH",buyer:"Ken Lazar",month:workMonth,flight:plOPostDates,version:plOVersion||"1",comments:plOComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor};
           return{html:h,trafficRec,isciLines,hasPanel,vLabel};
         };
@@ -4002,17 +4005,20 @@ const App=()=>{
           setPlOohSending(true);
           try{
             let pdfB64="";
-            try{const pdfUri=await generatePdfBase64(html);pdfB64=(pdfUri||"").split(",")[1]||""}catch(pe){console.warn("PL OOH PDF generation failed, sending without attachment:",pe)}
+            try{const pdfUri=await generatePdfBase64(html,trafficRec);pdfB64=(pdfUri||"").split(",")[1]||""}catch(pe){console.warn("PL OOH PDF generation failed, sending without attachment:",pe)}
             // Per-vendor confirm token + portal URL — same flow as TV/Radio.
             const confirmBase=window.location.href.split("?")[0].split("#")[0];
             const tokOoh=reserveToken(trafficRec.est,"OOH_VENDOR");
             const confirmUrl=confirmBase+"?confirm="+encodeURIComponent(trafficRec.est)+"&sta=OOH_VENDOR&tok="+encodeURIComponent(tokOoh);
             const subj="Atticor Media | Postman Law "+mktLabel+" OOH Traffic Instructions | "+workMonth+(plOVersion?" | V"+plOVersion:"");
+            const creativesForEmail=(trafficRec.iscis||[]).map(r=>{const full=iscis.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:full.title||"",fileUrl:full.fileUrl}:null}).filter(Boolean);
+            const creativeLinks=creativesForEmail.length?"<br><br><b>Creative Files:</b><br>"+creativesForEmail.map(c=>'<a href="'+c.fileUrl+'">'+c.code+(c.title?" — "+c.title:"")+'</a>').join("<br>"):"";
             const msg="Hello,<br><br>Please find the attached OOH traffic instructions for Postman Law — "+mktLabel+" — "+workMonth+(plOVersion?" V"+plOVersion:"")+".<br><br>"+
               "<b>Client:</b> Postman Law<br><b>Market:</b> "+mktLabel+"<br><b>Vendor:</b> "+vLabel+"<br><b>Buyer:</b> Ken Lazar<br>"+
               "<b>Broadcast Month:</b> "+workMonth+"<br><b>Post Dates:</b> "+(plOPostDates||"TBD")+(plOVersion?"<br><b>Version:</b> "+plOVersion:"")+
               "<br><b>"+(hasPanel?"Total Panels":"Total Units")+":</b> "+(hasPanel?totalPanels:totalUnits)+
               (plOComments?"<br><b>Comments:</b> "+plOComments:"")+
+              creativeLinks+
               "<br><br>Please confirm receipt within 24 hours by clicking the button below:<br><br>"+
               '<a href="'+confirmUrl+'" style="display:inline-block;padding:12px 28px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;font-size:14px">Confirm Receipt</a>'+
               "<br><br>Proof of Performance (PoP) photos are required upon completion of each install.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Media";
