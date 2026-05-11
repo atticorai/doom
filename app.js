@@ -3679,12 +3679,14 @@ const App=()=>{
       {fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const flightClean=p.flight.split('(')[0].trim();const pop=PL_POPS[p.unit];
         const allCardPhotos=POP_PHOTOS[p.unit]?[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])]:[...(oohPhotos[p.unit]||[])];
         const openCardPop=(e)=>{
+          console.log('[PoP] card click',p.unit,'target:',e.target.tagName,'photos:',allCardPhotos.length);
           // Skip if the click came from an interactive child (ISCI edit input,
           // upload button, individual photo with its own handler, etc).
-          if(e.defaultPrevented)return;
+          if(e.defaultPrevented){console.log('[PoP] default prevented, skipping');return}
           const t=e.target;
-          if(t.closest('input,button,select,textarea,img,a,label'))return;
-          if(!allCardPhotos.length)return;
+          if(t.closest('input,button,select,textarea,img,a,label')){console.log('[PoP] interactive child, skipping');return}
+          if(!allCardPhotos.length){console.log('[PoP] no photos to show');return}
+          console.log('[PoP] opening modal',p.unit);
           setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0});
         };
         return<div key={i} onClick={openCardPop} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:"#F0E8F8",borderLeft:`4px solid ${c}`,cursor:allCardPhotos.length?"pointer":"default"}}>
@@ -3715,8 +3717,8 @@ const App=()=>{
                 <OohPhotoUpload id={p.unit}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length?"1fr 1fr":"1fr",gap:4}}>
-                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={()=>{const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:0})}}/>
-                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={()=>{const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:pi+1})}}/>)}
+                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{console.log('[PoP] hardcoded photo click',p.unit);e.stopPropagation();const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:0})}}/>
+                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{console.log('[PoP] uploaded photo click',p.unit,pi);e.stopPropagation();const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:pi+1})}}/>)}
               </div>
             </div>}
             {!POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
@@ -3726,7 +3728,7 @@ const App=()=>{
                   <OohPhotoUpload id={p.unit}/>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length>1?"1fr 1fr":"1fr",gap:4}}>
-                  {(oohPhotos[p.unit]||[]).slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={()=>setModal({type:"oohPhoto",id:p.unit,photos:oohPhotos[p.unit],startIdx:pi})}/>)}
+                  {(oohPhotos[p.unit]||[]).slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{console.log('[PoP] uploaded-only click',p.unit,pi);e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:oohPhotos[p.unit],startIdx:pi})}}/>)}
                 </div>
               </div>:<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <span style={{fontSize:12,color:"#64748b"}}>No PoP photos</span>
