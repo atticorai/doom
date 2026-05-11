@@ -349,6 +349,18 @@ const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display"];c
 const DISPLAY_TYPES=[{code:"MR",name:"Medium Rectangle (300x250)"},{code:"LB",name:"Leaderboard (728x90)"},{code:"SQ",name:"Square (640x640)"},{code:"SK",name:"Skyscraper (300x600)"},{code:"MB",name:"Mobile Banner (320x50)"},{code:"WB",name:"Wide Banner (1280x100)"},{code:"SL",name:"Slim Banner (970x66)"},{code:"BN",name:"Banner (Generic)"}];
 const SUFFIXES={TV:"T",Radio:"R",Digital:"D","Streaming Audio":"S",OOH:"O",Cable:"T",Display:"B"};const OOH_SUFFIXES={SB:"O",DB:"O",SP:"O",DP:"O",BS:"O",WS:"O",TR:"O",SF:"O",JP:"O"};
 const OOH_TYPE_MAP=Object.fromEntries(OOH_TYPES.map(t=>[t.code,t.name]));
+// Map raw physical media type strings to canonical category for filtering/badges
+const mediaCategory=(t)=>{const s=(t||"").toLowerCase();if(s.includes("digital"))return"Digital";if(s.includes("poster"))return"Poster";if(s.includes("bulletin"))return"Bulletin";if(s.includes("wall")||s.includes("hotspot")||s.includes("overpass"))return"Other";return"Other"};
+const MEDIA_CAT_COLORS={Poster:{fg:"#F4C242",bg:"rgba(244,194,66,.15)",border:"#F4C242"},Bulletin:{fg:"#4AC8E8",bg:"rgba(74,200,232,.15)",border:"#4AC8E8"},Digital:{fg:"#C084FC",bg:"rgba(192,132,252,.15)",border:"#C084FC"},Other:{fg:"#94a3b8",bg:"rgba(148,163,184,.15)",border:"#94a3b8"}};
+const MediaBadge=({type,size="sm"})=>{const cat=mediaCategory(type);const c=MEDIA_CAT_COLORS[cat];const pad=size==="sm"?"1px 6px":"2px 8px";const fs=size==="sm"?10:11;return React.createElement("span",{style:{display:"inline-block",padding:pad,borderRadius:3,fontSize:fs,fontWeight:700,color:c.fg,background:c.bg,border:"1px solid "+c.border,letterSpacing:.3,textTransform:"uppercase"}},cat)};
+// Stable, deterministic color for any creative title. Same input → same color, always.
+// Used to color boards by what creative is running on them (independent of market prefix in ISCI code).
+const CREATIVE_PALETTE=["#4AC8E8","#F4C242","#9B7BB0","#5BC4A0","#E85A7A","#F08C3B","#6B8AFD","#EF6C9C","#A0D468","#C084FC","#FFA552","#4DD0E1","#FF7F50","#26A69A","#AB47BC","#FFCA28","#42A5F5","#66BB6A","#EC407A","#7E57C2"];
+const creativeColor=(title)=>{if(!title||!title.trim())return"#475569";let h=0;const s=title.trim().toLowerCase();for(let i=0;i<s.length;i++)h=((h<<5)-h+s.charCodeAt(i))|0;return CREATIVE_PALETTE[Math.abs(h)%CREATIVE_PALETTE.length]};
+// Haversine miles between two lat/lng pairs
+const milesBetween=(la1,ln1,la2,ln2)=>{const R=3959;const r=Math.PI/180;const dLa=(la2-la1)*r;const dLn=(ln2-ln1)*r;const a=Math.sin(dLa/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLn/2)**2;return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))};
+// For each pin with a creative title, count how many other pins within `radius` miles run the SAME title
+const findClusters=(pins,radius)=>{const out={};for(const p of pins){if(!p.creative||!p.lat||!p.lng)continue;let n=0;for(const q of pins){if(p===q||q.creative!==p.creative||!q.lat||!q.lng)continue;if(milesBetween(p.lat,p.lng,q.lat,q.lng)<=radius)n++}if(n>0)out[p.id]=n}return out};
 const DISPLAY_TYPE_MAP=Object.fromEntries(DISPLAY_TYPES.map(t=>[t.code,t.name]));
 const EG=[...new Set(ESTIMATES.map(e=>e.group))].sort();
 const SCHED=["M-F Schedule","Weekend Schedule","M-F Bookend","Weekend Bookend","All Week","Holiday Only"];
@@ -1113,7 +1125,7 @@ const App=()=>{
   const[estBrand,setEstBrand]=useState("Postman Law");
   const[staBrand,setStaBrand]=useState("Postman Law");
   // OOH WK page state (lifted to prevent remount on photo upload)
-  const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");
+  const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");const[oohMapMode,setOohMapMode]=useState("market");const[oohClusterRadius,setOohClusterRadius]=useState(3);
   const[oohEditId,setOohEditId]=useState(null);const[oohEditVal,setOohEditVal]=useState("");
   const[oohPhotoPanel,setOohPhotoPanel]=useState(null);
   const[oohLines,setOohLines]=useState([{flight:"",isci:"",units:"",notes:""}]);
@@ -3255,10 +3267,6 @@ const App=()=>{
     if(typeof POP_PHOTOS!=='undefined'&&POP_PHOTOS[id]){
       hardcoded.push({url:POP_PHOTOS[id],label:"PoP Photo",hardcoded:true});
     }
-    // Include alt creatives (digital bulletins rotating multiple ads)
-    if(typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[id]){
-      POP_PHOTOS_ALT[id].forEach((u,i)=>hardcoded.push({url:u,label:"PoP Photo (alt "+(i+1)+")",hardcoded:true}));
-    }
     const all=[...hardcoded,...photos];
     if(!all.length&&compact)return null;
     if(!all.length)return<OohPhotoUpload id={id}/>;
@@ -3348,7 +3356,7 @@ const App=()=>{
                   <B l={DM[p.dma]||p.dma} c={c}/>
                   <B l={p.facing} c="#6366f1"/>
                 </div>
-                <div style={{fontSize:14,color:"#9B8EAD",marginTop:2}}>{p.type} · {p.size} · {p.submarket}</div>
+                <div style={{fontSize:14,color:"#9B8EAD",marginTop:2,display:"flex",alignItems:"center",gap:6}}><MediaBadge type={p.type}/>{p.type} · {p.size} · {p.submarket}</div>
               </div>
               <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.bg})(),color:(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.color})()}}>{(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.label})()}</span>{p.isci&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#dbeafe",color:"#4AC8E8",fontWeight:600,marginLeft:3}}>ISCI ✓</span>}
             </div>
@@ -3422,10 +3430,40 @@ const App=()=>{
       </div>
 
       {viewMode==="cards"?<CardGrid/>:
-       viewMode==="map"?<Cd><div style={{padding:10}}><div style={{fontSize:14,fontWeight:700,marginBottom:6}}>📍 WK OOH Board Locations</div>
-        <OohMap pins={fl.map(p=>{const co=WK_COORDS[p.boardId];return{id:p.boardId,lat:co?co[0]:0,lng:co?co[1]:0,location:p.location,vendor:p.vendor,size:p.size,status:p.isci?"ISCI: "+p.isci:"Active",impressions:p.impressions,market:p.dma,closeImg:p.closeImg}})} colorFn={p=>dmaColors[p.market]||"#D4A040"} height={420}/>
-        <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center"}}>{Object.entries(dmaColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{k}</div>)}</div>
-        <div style={{fontSize:14,color:"#9B8EAD",marginTop:4,textAlign:"center"}}>{fl.filter(p=>WK_COORDS[p.boardId]).length} of {fl.length} boards have coordinates</div>
+       viewMode==="map"?<Cd><div style={{padding:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:6}}>
+          <div style={{fontSize:14,fontWeight:700}}>📍 WK OOH Board Locations</div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            {oohMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={oohClusterRadius} onChange={e=>setOohClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#4AC8E8",minWidth:30}}>{oohClusterRadius} mi</span></div>}
+            <div style={{display:"flex",gap:0,border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}>
+              <button onClick={()=>setOohMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:oohMapMode==="market"?"rgba(212,160,64,.2)":"transparent",color:oohMapMode==="market"?"#D4A040":"#94a3b8"}}>📍 By Market</button>
+              <button onClick={()=>setOohMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:oohMapMode==="creative"?"rgba(74,200,232,.2)":"transparent",color:oohMapMode==="creative"?"#4AC8E8":"#94a3b8"}}>🎨 By Creative</button>
+            </div>
+          </div>
+        </div>
+        {(()=>{
+          const pins=fl.map(p=>{const co=WK_COORDS[p.boardId];const t=isciTitle(p.isci);return{id:p.boardId,lat:co?co[0]:0,lng:co?co[1]:0,location:p.location,vendor:p.vendor,size:p.size,impressions:p.impressions,market:p.dma,isci:p.isci||"",creative:t,closeImg:p.closeImg}});
+          const clusters=oohMapMode==="creative"?findClusters(pins,oohClusterRadius):{};
+          const pinsWithStatus=pins.map(p=>{let st=p.isci?"ISCI: "+p.isci:"Untagged";if(p.creative)st+=" · "+p.creative;if(clusters[p.id])st+=" · ⚠ "+clusters[p.id]+" neighbor"+(clusters[p.id]>1?"s":"")+" w/ same creative";return{...p,status:st}});
+          return<><OohMap pins={pinsWithStatus} colorFn={p=>oohMapMode==="creative"?creativeColor(p.creative):(dmaColors[p.market]||"#D4A040")} height={420}/>
+          {oohMapMode==="market"?
+            <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>{Object.entries(dmaColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{k}</div>)}</div>
+            :
+            (()=>{const titles=[...new Set(pins.map(p=>p.creative).filter(Boolean))].sort();const untaggedCnt=pins.filter(p=>!p.creative).length;const clusterCnt=Object.keys(clusters).length;return<div style={{marginTop:6}}>
+              {clusterCnt>0&&<div style={{textAlign:"center",fontSize:13,color:"#F4C242",fontWeight:600,marginBottom:6,padding:"4px 8px",background:"rgba(244,194,66,.1)",border:"1px solid rgba(244,194,66,.3)",borderRadius:4}}>⚠ {clusterCnt} board{clusterCnt!==1?"s":""} within {oohClusterRadius} mi of another running the same creative</div>}
+              {titles.length===0?
+                <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No ISCIs tagged yet — all boards untagged. Tag boards via the traffic flow to see them colored by creative.</div>
+                :
+                <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+                  {titles.map(t=>{const cnt=pins.filter(p=>p.creative===t).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #4a3565"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
+                  {untaggedCnt>0&&<div style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:"#475569",border:"1px solid #4a3565"}}/><span style={{color:"#94a3b8"}}>untagged ({untaggedCnt})</span></div>}
+                </div>
+              }
+            </div>})()
+          }
+          <div style={{fontSize:14,color:"#9B8EAD",marginTop:4,textAlign:"center"}}>{pins.filter(p=>p.lat&&p.lng).length} of {fl.length} boards have coordinates</div>
+          </>;
+        })()}
        </div></Cd>:
        viewMode==="ref"?<Cd><div style={{padding:10}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
           <div style={{fontSize:14,fontWeight:700}}>📋 WK OOH Reference — Board × Vendor × Contract × Status</div>
@@ -3438,7 +3476,7 @@ const App=()=>{
         <div style={{overflowX:"auto",maxHeight:500}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Board ID</TH><TH>Panel</TH><TH>DMA</TH><TH>Vendor</TH><TH>Type</TH><TH>Size</TH><TH>Location</TH><TH>Impr/Wk</TH><TH>Installed</TH><TH>ISCI</TH><TH>Contract</TH><TH>TAB#</TH><TH>Coords</TH></tr></thead>
           <tbody>{fl.map((p,i)=>{const co=WK_COORDS[p.boardId];return<tr key={p.boardId}>
             <TD b>{i+1}</TD><TD m b style={{fontSize:14}}>{p.boardId}</TD><TD m>{p.panel}</TD><TD><B l={DM[p.dma]||p.dma} c={dmaColors[p.dma]||"#D4A040"}/></TD>
-            <TD><span style={{fontSize:14,fontWeight:600}}>{p.vendor}</span></TD><TD><span style={{fontSize:13}}>{p.type}</span></TD><TD>{p.size}</TD>
+            <TD><span style={{fontSize:14,fontWeight:600}}>{p.vendor}</span></TD><TD><span style={{fontSize:13,display:"flex",alignItems:"center",gap:6}}><MediaBadge type={p.type}/>{p.type}</span></TD><TD>{p.size}</TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:180,display:"inline-block"}}>{p.location}</span></TD>
             <TD b>{p.impressions.toLocaleString()}</TD><TD>{p.installDate}</TD>
             <TD><span style={{fontFamily:"monospace",fontSize:14,color:p.isci?"#5BC4A0":"#9ca3af",fontWeight:p.isci?700:400}}>{p.isci||"—"}</span></TD>
@@ -3455,7 +3493,7 @@ const App=()=>{
         const dmaLabel=om||dmas.join("/");
         const trafficVendor=oVend||"";
         const vendorBoards=pops.filter(p=>(om?p.dma===om:true)&&(trafficVendor?p.vendor===trafficVendor:true));
-        const vendorPanels=vendorBoards.filter(p=>oohTypeF?p.type===oohTypeF:true).map(p=>({id:p.boardId,panel:p.panel,dma:p.dma,sub:p.submarket,loc:p.location,type:p.type,size:p.size,impr:p.impressions,tab:p.tab})).sort((a,b)=>a.dma.localeCompare(b.dma)||a.panel.localeCompare(b.panel));
+        const vendorPanels=vendorBoards.filter(p=>oohTypeF?mediaCategory(p.type)===oohTypeF:true).map(p=>({id:p.boardId,panel:p.panel,dma:p.dma,sub:p.submarket,loc:p.location,type:p.type,size:p.size,impr:p.impressions,tab:p.tab})).sort((a,b)=>a.dma.localeCompare(b.dma)||a.panel.localeCompare(b.panel));
         const totalUnits=oLines.reduce((a,l)=>a+(parseInt(l.units)||0),0);
         const totalPanels=oLines.filter(l=>l.panel).length;
         const usePanelMode=trafficMode==="panels";
@@ -3504,7 +3542,7 @@ const App=()=>{
             <button onClick={()=>setTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:trafficMode==="panels"?"2px solid #4AC8E8":"1px solid #4a3565",background:trafficMode==="panels"?"rgba(37,99,235,.15)":"transparent",color:trafficMode==="panels"?"#60a5fa":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
             <div style={{marginLeft:"auto",display:"flex",gap:3,alignItems:"center"}}>
               <span style={{fontSize:11,color:"#94a3b8"}}>Type:</span>
-              {(()=>{const types=[...new Set(vendorBoards.map(p=>p.type).filter(Boolean))].sort();return types.map(t=><button key={t} onClick={()=>setOohTypeF&&setOohTypeF(oohTypeF===t?"":t)} style={{padding:"2px 6px",borderRadius:4,border:oohTypeF===t?"2px solid #4AC8E8":"1px solid #4a3565",background:oohTypeF===t?"rgba(8,145,178,.15)":"transparent",color:oohTypeF===t?"#4AC8E8":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{OOH_TYPE_MAP[t]||t}</button>)})()}
+              {(()=>{const cats=[...new Set(vendorBoards.map(p=>mediaCategory(p.type)))].sort();return cats.map(c=>{const col=MEDIA_CAT_COLORS[c];const matches=vendorBoards.filter(p=>mediaCategory(p.type)===c).length;return<button key={c} onClick={()=>setOohTypeF&&setOohTypeF(oohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:oohTypeF===c?"2px solid "+col.border:"1px solid #4a3565",background:oohTypeF===c?col.bg:"transparent",color:oohTypeF===c?col.fg:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
@@ -3681,7 +3719,7 @@ const App=()=>{
 
     const CardGrid=()=><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
       {fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const flightClean=p.flight.split('(')[0].trim();const pop=PL_POPS[p.unit];
-        const allCardPhotos=POP_PHOTOS[p.unit]?[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...((typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[p.unit])||[]).map((u,i)=>({url:u,label:"PoP Photo (alt "+(i+1)+")",hardcoded:true})),...(oohPhotos[p.unit]||[])]:[...(oohPhotos[p.unit]||[])];
+        const allCardPhotos=POP_PHOTOS[p.unit]?[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])]:[...(oohPhotos[p.unit]||[])];
         const openCardPop=(e)=>{
           // Skip if the click came from an interactive child (ISCI edit input,
           // upload button, individual photo with its own handler, etc).
@@ -3715,12 +3753,12 @@ const App=()=>{
             </div>
             {POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                <div style={{fontSize:12,fontWeight:600,color:"#4AC8E8",textTransform:"uppercase"}}>📸 {allCardPhotos.length} Photo{allCardPhotos.length!==1?"s":""}</div>
+                <div style={{fontSize:12,fontWeight:600,color:"#4AC8E8",textTransform:"uppercase"}}>📸 {1+(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length?"s":""}</div>
                 <OohPhotoUpload id={p.unit}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length?"1fr 1fr":"1fr",gap:4}}>
-                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0})}}/>
-                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=>{const altCount=((typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[p.unit])||[]).length;return<img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:1+altCount+pi})}}/>})}
+                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:0})}}/>
+                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:pi+1})}}/>)}
               </div>
             </div>}
             {!POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
@@ -3836,7 +3874,7 @@ const App=()=>{
         const mktLabel=mktF||"All Markets";
         const trafficVendor=vendF||"";
         const vendorUnits=fl.filter(p=>trafficVendor?p.vendor===trafficVendor:true);
-        const vendorPanels=vendorUnits.filter(p=>plOohTypeF?(p.media||p.type)===plOohTypeF:true).map(p=>({id:p.unit,panel:p.unit,mkt:p.market,sub:p.submarket||"",loc:p.location,type:p.media,size:p.size,impr:p.impressions,vendor:p.vendor,numUnits:p.numUnits})).sort((a,b)=>a.mkt.localeCompare(b.mkt)||a.panel.localeCompare(b.panel));
+        const vendorPanels=vendorUnits.filter(p=>plOohTypeF?mediaCategory(p.media||p.type)===plOohTypeF:true).map(p=>({id:p.unit,panel:p.unit,mkt:p.market,sub:p.submarket||"",loc:p.location,type:p.media,size:p.size,impr:p.impressions,vendor:p.vendor,numUnits:p.numUnits})).sort((a,b)=>a.mkt.localeCompare(b.mkt)||a.panel.localeCompare(b.panel));
         const totalUnits=plOLines.reduce((a,l)=>a+(parseInt(l.units)||0),0);
         const totalPanels=plOLines.filter(l=>l.panel).length;
         const usePanelMode=plOohTrafficMode==="panels";
@@ -3885,7 +3923,7 @@ const App=()=>{
             <button onClick={()=>setPlOohTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:plOohTrafficMode==="panels"?"2px solid #9b7bb0":"1px solid #4a3565",background:plOohTrafficMode==="panels"?"rgba(124,59,237,.15)":"transparent",color:plOohTrafficMode==="panels"?"#C4A0C8":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
             <div style={{marginLeft:"auto",display:"flex",gap:3,alignItems:"center"}}>
               <span style={{fontSize:11,color:"#94a3b8"}}>Type:</span>
-              {(()=>{const types=[...new Set(vendorUnits.map(p=>p.media||p.type).filter(Boolean))].sort();return types.map(t=><button key={t} onClick={()=>setPlOohTypeF(plOohTypeF===t?"":t)} style={{padding:"2px 6px",borderRadius:4,border:plOohTypeF===t?"2px solid #9b7bb0":"1px solid #4a3565",background:plOohTypeF===t?"rgba(124,59,237,.15)":"transparent",color:plOohTypeF===t?"#C4A0C8":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t}</button>)})()}
+              {(()=>{const cats=[...new Set(vendorUnits.map(p=>mediaCategory(p.media||p.type)))].sort();return cats.map(c=>{const col=MEDIA_CAT_COLORS[c];const matches=vendorUnits.filter(p=>mediaCategory(p.media||p.type)===c).length;return<button key={c} onClick={()=>setPlOohTypeF(plOohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:plOohTypeF===c?"2px solid "+col.border:"1px solid #4a3565",background:plOohTypeF===c?col.bg:"transparent",color:plOohTypeF===c?col.fg:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
@@ -7625,7 +7663,7 @@ Rules:
     // Gather photos
     const allPhotos=[];
     if(isWK){POSTINGS.forEach(p=>{const imgs=POP_IMGS||{};if(p.closeImg&&imgs[p.closeImg])allPhotos.push({id:p.boardId,url:imgs[p.closeImg],market:p.dma});const up=oohPhotos[p.boardId]||[];up.forEach(ph=>allPhotos.push({id:p.boardId,url:ph.url,market:p.dma}))})}
-    else{PL_PANELS.forEach(p=>{if(POP_PHOTOS&&POP_PHOTOS[p.unit])allPhotos.push({id:p.unit,url:POP_PHOTOS[p.unit],market:p.market});if(typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[p.unit])POP_PHOTOS_ALT[p.unit].forEach(u=>allPhotos.push({id:p.unit,url:u,market:p.market}));const up=oohPhotos[p.unit]||[];up.forEach(ph=>allPhotos.push({id:p.unit,url:ph.url,market:p.market}))})}
+    else{PL_PANELS.forEach(p=>{if(POP_PHOTOS&&POP_PHOTOS[p.unit])allPhotos.push({id:p.unit,url:POP_PHOTOS[p.unit],market:p.market});const up=oohPhotos[p.unit]||[];up.forEach(ph=>allPhotos.push({id:p.unit,url:ph.url,market:p.market}))})}
     return<div style={{minHeight:"100vh",background:"#1e1233",color:"#E8DFF0",fontFamily:"DM Sans,sans-serif"}}>
       {/* Header */}
       <div style={{background:`linear-gradient(135deg,${brandColor},${brandColor}cc)`,padding:"32px 40px",position:"relative",overflow:"hidden"}}>
