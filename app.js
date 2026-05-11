@@ -437,6 +437,16 @@ const PageHead=({title,sub,pgKey,children})=><div style={{marginBottom:8}}>
 const B=({l,c})=><span style={{display:"inline-flex",padding:"2px 7px",borderRadius:99,fontSize:12,fontWeight:700,background:c+"18",color:c,border:`1px solid ${c}35`,whiteSpace:"nowrap",letterSpacing:.3}}>{l}</span>;
 const Btn=({children,onClick,primary,small,disabled,color,danger})=><button disabled={disabled} onClick={onClick} style={{display:"inline-flex",alignItems:"center",gap:4,padding:small?"4px 10px":"8px 16px",borderRadius:8,border:primary||danger?"none":"1px solid rgba(155,123,176,.25)",background:disabled?"rgba(155,123,176,.1)":danger?"linear-gradient(135deg,#E85A7A,#d44868)":primary?color?`linear-gradient(135deg,${color},${color}cc)`:"linear-gradient(135deg,#9b7bb0,#C4A0C8)":"rgba(45,31,66,.6)",color:disabled?"#6B5E80":primary||danger?"#fff":"#C4A0C8",fontSize:small?11:13,fontWeight:700,cursor:disabled?"not-allowed":"pointer",boxShadow:primary&&!disabled?"0 2px 12px rgba(155,123,176,.2)":"none",transition:"all .15s",letterSpacing:.3}}>{children}</button>;
 const Inp=({label,...p})=><div style={{display:"flex",flexDirection:"column",gap:2,flex:1}}>{label&&<label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>{label}</label>}<input {...p} style={{padding:"6px 9px",borderRadius:5,border:"1px solid #d1d5db",fontSize:13,outline:"none",width:"100%",...(p.style||{})}}/></div>;
+// Uncontrolled input variant. The DOM owns the value, so focus survives
+// parent re-renders / remounts that would otherwise blow away a controlled
+// <input value={...}> mid-keystroke (the OOH Hub typing-letter-at-a-time bug).
+// onCommit fires per keystroke so callers see the latest value in state.
+// Resetting the field externally requires bumping `resetKey`.
+const StableInp=React.memo(({label,initialValue,onCommit,placeholder,style,resetKey,type})=>{
+  const ref=React.useRef(null);
+  React.useEffect(()=>{if(ref.current&&ref.current.value!==(initialValue||""))ref.current.value=initialValue||""},[resetKey]);
+  return<div style={{display:"flex",flexDirection:"column",gap:2,flex:1}}>{label&&<label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>{label}</label>}<input ref={ref} type={type||"text"} defaultValue={initialValue||""} placeholder={placeholder} onInput={e=>onCommit(e.target.value)} style={{padding:"6px 9px",borderRadius:5,border:"1px solid #d1d5db",fontSize:13,outline:"none",width:"100%",...(style||{})}}/></div>;
+});
 const Sel=({label,options,value,onChange,placeholder})=><div style={{display:"flex",flexDirection:"column",gap:2,flex:1}}>{label&&<label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>{label}</label>}<select value={value} onChange={e=>onChange(e.target.value)} style={{padding:"6px 9px",borderRadius:5,border:"1px solid #d1d5db",fontSize:13,background:"#1e1233",color:"#E8DFF0"}}>{placeholder&&<option value="">{placeholder}</option>}{options.map(o=><option key={typeof o==="string"?o:o.v} value={typeof o==="string"?o:o.v}>{typeof o==="string"?o:o.l}</option>)}</select></div>;
 const TH=({children,a,w})=><th style={{padding:"5px 7px",fontSize:10,fontWeight:700,color:"#D4A040",textTransform:"uppercase",letterSpacing:.8,borderBottom:"2px solid rgba(212,160,64,.2)",textAlign:a||"left",whiteSpace:"nowrap",position:"sticky",top:0,background:"linear-gradient(180deg,#2d1f42,#261840)",zIndex:1,width:w||"auto"}}>{children}</th>;
 const TD=({children,m,b,c,a})=><td style={{padding:"5px 7px",fontSize:13,color:c||"#4a3565",fontFamily:m?"monospace":"inherit",borderBottom:"1px solid #F0E8F8",whiteSpace:"nowrap",fontWeight:b?600:400,textAlign:a||"left"}}>{children}</td>;
@@ -3611,12 +3621,12 @@ const App=()=>{
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
-            <Inp label="Post Dates" value={oPostDates} onChange={e=>setOPostDates(e.target.value)} placeholder="e.g., 2/9 - 4/5"/>
-            <Inp label="Version / Links" value={oVersion} onChange={e=>setOVersion(e.target.value)} placeholder="e.g., Knoxville Static Posters"/>
-            <Inp label="Comments" value={oComments} onChange={e=>setOComments(e.target.value)} placeholder="Optional"/>
+            <StableInp label="Post Dates" initialValue={oPostDates} onCommit={setOPostDates} placeholder="e.g., 2/9 - 4/5"/>
+            <StableInp label="Version / Links" initialValue={oVersion} onCommit={setOVersion} placeholder="e.g., Knoxville Static Posters"/>
+            <StableInp label="Comments" initialValue={oComments} onCommit={setOComments} placeholder="Optional"/>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr",gap:6,marginBottom:8}}>
-            <Inp label="Send To (vendor email — comma/semicolon separated)" value={oohSendTo} onChange={e=>setOohSendTo(e.target.value)} placeholder="e.g., birmingham@lamar.com; orders@lamar.com"/>
+            <StableInp label="Send To (vendor email — comma/semicolon separated)" initialValue={oohSendTo} onCommit={setOohSendTo} placeholder="e.g., birmingham@lamar.com; orders@lamar.com"/>
           </div>
           <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {dmaLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} panels | Broadcast: {workMonth} | CC: {BUYER_EMAILS["Amy Coffey"]||"buyer"} + emm.caban@atticor.ai</div>
           {usePanelMode&&oLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(37,99,235,.08)",borderRadius:5,border:"1px solid rgba(37,99,235,.2)"}}>
@@ -4038,12 +4048,12 @@ const App=()=>{
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
-            <Inp label="Post Dates" value={plOPostDates} onChange={e=>setPlOPostDates(e.target.value)} placeholder="e.g., 2/9 - 4/5"/>
-            <Inp label="Version / Links" value={plOVersion} onChange={e=>setPlOVersion(e.target.value)} placeholder="e.g., Chicago Posters"/>
-            <Inp label="Comments" value={plOComments} onChange={e=>setPlOComments(e.target.value)} placeholder="Optional"/>
+            <StableInp label="Post Dates" initialValue={plOPostDates} onCommit={setPlOPostDates} placeholder="e.g., 2/9 - 4/5"/>
+            <StableInp label="Version / Links" initialValue={plOVersion} onCommit={setPlOVersion} placeholder="e.g., Chicago Posters"/>
+            <StableInp label="Comments" initialValue={plOComments} onCommit={setPlOComments} placeholder="Optional"/>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr",gap:6,marginBottom:8}}>
-            <Inp label="Send To (vendor email — comma/semicolon separated)" value={plOohSendTo} onChange={e=>setPlOohSendTo(e.target.value)} placeholder="e.g., Robert@wilkinsmedia.com; orders@wilkinsmedia.com"/>
+            <StableInp label="Send To (vendor email — comma/semicolon separated)" initialValue={plOohSendTo} onCommit={setPlOohSendTo} placeholder="e.g., Robert@wilkinsmedia.com; orders@wilkinsmedia.com"/>
           </div>
           <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {mktLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} units | Buyer: Ken Lazar | Broadcast: {workMonth} | CC: {BUYER_EMAILS["Ken Lazar"]||"buyer"} + emm.caban@atticor.ai</div>
           {usePanelMode&&plOLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(124,59,237,.08)",borderRadius:5,border:"1px solid rgba(124,59,237,.2)"}}>
