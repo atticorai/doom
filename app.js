@@ -6934,6 +6934,109 @@ Rules:
   };
 
   // ── OOH HUB (sub-app) ──────────────────────────────────
+  // OOH ISCI Registry — hoisted to App scope so its identity is stable across
+  // OohHub re-renders. When this was nested inside OohHub, every parent render
+  // created a fresh function reference; React then unmounted & remounted the
+  // page, blowing away its useState (filters, bulk-creative toggle) on every
+  // click in the OOH Hub.
+  const OohIsciPg=()=>{
+    const[showOohInactive,setShowOohInactive]=useState(false);
+    const[showOohBulkCreative,setShowOohBulkCreative]=useState(false);
+    const allOoh=iscis.filter(i=>i.suffix==="O");
+    const oohIscis=showOohInactive?allOoh:allOoh.filter(i=>i.active);
+    const inactiveOoh=allOoh.filter(i=>!i.active);
+    const[oohIsciFilter,setOohIsciFilter]=useState("");
+    const[oohBrandFilter,setOohBrandFilter]=useState("");
+    const[oohDmaFilter,setOohDmaFilter]=useState("");
+    const filtered=oohIscis.filter(i=>{
+      if(oohBrandFilter&&i.brand!==oohBrandFilter)return false;
+      if(oohDmaFilter&&i.dma!==oohDmaFilter)return false;
+      if(oohIsciFilter){const q=oohIsciFilter.toLowerCase();return(i.code||"").toLowerCase().includes(q)||(i.title||"").toLowerCase().includes(q)||(i.dma||"").toLowerCase().includes(q)}
+      return true;
+    });
+    const oohDmas=[...new Set(allOoh.map(i=>i.dma))].sort();
+    const toggleOohActive=(idx)=>{setIscis(p=>p.map((x,j)=>j===idx?{...x,active:!x.active}:x));const ic=iscis[idx];notify((ic.active?"Deactivated":"Activated")+" "+ic.code);log("ISCI "+(ic.active?"Deactivated":"Activated"),ic.code)};
+    return<div style={{display:"flex",flexDirection:"column",gap:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+        <div><PageHead title="OOH ISCI Registry" pgKey="ooh" sub={allOoh.filter(i=>i.active).length+" active · "+inactiveOoh.length+" inactive · "+allOoh.filter(i=>i.fileUrl).length+" with creative"}/></div>
+        <div style={{display:"flex",gap:4}}>
+          <Btn primary onClick={()=>setModal({t:"newIsci",defaultMedia:"OOH"})}>+ Register OOH ISCI</Btn>
+          <Btn onClick={()=>setShowOohBulkCreative(!showOohBulkCreative)} color={showOohBulkCreative?"#E85A7A":"#9b7bb0"}>{showOohBulkCreative?"Close Upload":"📁 Bulk Creative"}</Btn>
+          <Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=allOoh.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active OOH ISCIs have files");return}notify("Scanning "+missing.length+" OOH ISCIs...");let found=0;const updates={};const exts=["jpg","png","pdf","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);return updated});notify(found+" files recovered!");log("OOH Creative Recovery",found+" files")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn>
+        </div>
+      </div>
+      {showOohBulkCreative&&<Cd style={{padding:12}}>
+        <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>📁 Bulk Creative Upload — OOH</div>
+        <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>Drop multiple files. Name each file with the ISCI code (e.g. <b style={{color:"#E8DFF0"}}>BRMWK26SP001O.jpg</b>). Matches exact codes, prefix codes, and partial substrings.</div>
+        <DropZone multiple accept="image/*,application/pdf,.psd,.ai,.eps" style={{marginBottom:8}} onFiles={(fileList)=>{
+          const files=Array.from(fileList);if(!files.length){notify("No files selected");return}
+          if(!storage){notify("ERROR: Firebase Storage not loaded.");return}
+          let matched=0;let notFound=0;let failed=0;const updates={};
+          const total=files.length;
+          const uploadNext=(fi)=>{
+            if(fi>=total){
+              setUploadTracker(null);
+              if(Object.keys(updates).length>0){setIscis(prev=>prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x))}
+              log("OOH Bulk Creative",matched+" uploaded, "+notFound+" no match, "+failed+" failed");
+              notify(matched+" files uploaded"+(notFound?" | "+notFound+" not matched":"")+(failed?" | "+failed+" failed":""));
+              return;
+            }
+            const file=files[fi];
+            const baseName=file.name.replace(/\.[^.]+$/,"").trim();
+            const baseUpper=baseName.toUpperCase();
+            let isciIdx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper===i.code.toUpperCase());
+            if(isciIdx===-1)isciIdx=iscis.findIndex(i=>i.suffix==="O"&&(baseUpper.startsWith(i.code.toUpperCase()+" ")||baseUpper.startsWith(i.code.toUpperCase()+"-")||baseUpper.startsWith(i.code.toUpperCase()+"_")));
+            if(isciIdx===-1)isciIdx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper.includes(i.code.toUpperCase()));
+            if(isciIdx===-1)isciIdx=iscis.findIndex(i=>i.suffix==="O"&&i.code.toUpperCase().includes(baseUpper));
+            if(isciIdx===-1){notFound++;setUploadTracker({label:file.name+" — no OOH ISCI match",current:fi+1,total,pct:Math.round(((fi+1)/total)*100)});uploadNext(fi+1);return}
+            const ext=file.name.split(".").pop();
+            const ref=storage.ref("creative/"+iscis[isciIdx].code+"."+ext);
+            const meta={customMetadata:{originalName:file.name,isciCode:iscis[isciIdx].code,title:iscis[isciIdx].title||"",brand:iscis[isciIdx].brand||"",media:"OOH"}};
+            const task=ref.put(file,meta);
+            task.on("state_changed",
+              snap=>{const p=Math.round((snap.bytesTransferred/snap.totalBytes)*100);setUploadTracker({label:"Uploading "+file.name+" ("+iscis[isciIdx].code+")",current:fi+1,total,pct:Math.round(((fi+p/100)/total)*100)})},
+              err=>{failed++;console.warn("OOH bulk upload failed:",file.name,err);setUploadTracker({label:file.name+" — FAILED",current:fi+1,total,pct:Math.round(((fi+1)/total)*100)});uploadNext(fi+1)},
+              async()=>{const url=await ref.getDownloadURL();updates[isciIdx]=url;matched++;uploadNext(fi+1)}
+            );
+          };
+          setUploadTracker({label:"Starting OOH bulk upload...",current:0,total,pct:0});
+          uploadNext(0);
+        }}>
+          <div style={{fontSize:24}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Drag & drop or click to select OOH creative files</div><div style={{fontSize:12,color:"#64748b"}}>.jpg, .png, .pdf, .psd, .ai, .eps — multiple allowed</div>
+        </DropZone>
+        <div style={{fontSize:12,color:"#94a3b8"}}>OOH ISCIs with creative: <b style={{color:"#5BC4A0"}}>{allOoh.filter(i=>i.fileUrl).length}</b> / {allOoh.length} ({allOoh.filter(i=>!i.fileUrl&&i.active).length} active still missing)</div>
+      </Cd>}
+      <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+        <input placeholder="Search OOH ISCIs..." value={oohIsciFilter} onChange={e=>setOohIsciFilter(e.target.value)} style={{width:200,padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
+        <Sel label="" options={[{v:"",l:"All Brands"},{v:"Wettermark Keith",l:"Wettermark Keith"},{v:"Postman Law",l:"Postman Law"}]} value={oohBrandFilter} onChange={setOohBrandFilter}/>
+        <Sel label="" options={[{v:"",l:"All DMAs"},...oohDmas.map(d=>({v:d,l:(DM[d]||d)+" ("+d+")"}))] } value={oohDmaFilter} onChange={setOohDmaFilter}/>
+        <label style={{fontSize:12,display:"flex",alignItems:"center",gap:3,cursor:"pointer",color:"#9B8EAD"}}><input type="checkbox" checked={showOohInactive} onChange={e=>setShowOohInactive(e.target.checked)}/> Show inactive</label>
+        {(oohIsciFilter||oohBrandFilter||oohDmaFilter)&&<Btn small onClick={()=>{setOohIsciFilter("");setOohBrandFilter("");setOohDmaFilter("")}}>Clear</Btn>}
+        <span style={{fontSize:12,color:"#6B5E80",marginLeft:"auto"}}>{filtered.length} shown</span>
+      </div>
+      <Cd style={{padding:0,overflow:"hidden"}}>
+        <div style={{maxHeight:"calc(100vh - 260px)",overflowY:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>Code</TH><TH>Title</TH><TH>Brand</TH><TH>DMA</TH><TH>Type</TH><TH>File</TH><TH>Status</TH><TH w="60">Actions</TH></tr></thead>
+            <tbody>{filtered.map((ic,i)=>{const gi=iscis.findIndex(x=>x.code===ic.code&&x.dma===ic.dma);return<tr key={ic.code+ic.dma} style={{opacity:ic.active?1:.45}}>
+              <TD m b><span style={{cursor:"pointer",color:"#4AC8E8",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})}>{ic.code}</span></TD>
+              <TD>{ic.title}</TD>
+              <TD><B l={ic.brand} c={ic.brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK")}/></TD>
+              <TD>{DM[ic.dma]||ic.dma}</TD>
+              <TD>{ic.dur}</TD>
+              <TD>{ic.fileUrl?<a href={ic.fileUrl} target="_blank" rel="noopener noreferrer" style={{color:"#4AC8E8",fontSize:12,fontWeight:600}}>📁 View</a>:<span style={{color:"#E85A7A",fontSize:12}}>No file</span>}</TD>
+              <TD>{ic.active?<B l="Active" c="#5BC4A0"/>:<B l="Inactive" c="#E85A7A"/>}</TD>
+              <TD><div style={{display:"flex",gap:3}}>
+                <button onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#4AC8E8"}}>✎</button>
+                <button onClick={()=>toggleOohActive(gi)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:ic.active?"#D4A040":"#5BC4A0"}}>{ic.active?"⏸":"▶"}</button>
+              </div></TD>
+            </tr>})}</tbody>
+          </table>
+          {filtered.length===0&&<div style={{padding:30,textAlign:"center",color:"#9B8EAD",fontSize:14,fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div>}
+        </div>
+      </Cd>
+    </div>;
+  };
+
   const OohHub=()=>{
     const subRoute=routeHash.replace(/^ooh\/?/,'') || 'wk';
     const oohNav=[
@@ -6942,105 +7045,6 @@ Rules:
       {id:"isci",l:"OOH ISCI Registry",e:"◈"},
       {id:"import",l:"Import / Upload",e:"📤"}
     ];
-    const oohIsciPg=()=>{
-      const[showOohInactive,setShowOohInactive]=useState(false);
-      const[showOohBulkCreative,setShowOohBulkCreative]=useState(false);
-      const allOoh=iscis.filter(i=>i.suffix==="O");
-      const oohIscis=showOohInactive?allOoh:allOoh.filter(i=>i.active);
-      const inactiveOoh=allOoh.filter(i=>!i.active);
-      const[oohIsciFilter,setOohIsciFilter]=useState("");
-      const[oohBrandFilter,setOohBrandFilter]=useState("");
-      const[oohDmaFilter,setOohDmaFilter]=useState("");
-      const filtered=oohIscis.filter(i=>{
-        if(oohBrandFilter&&i.brand!==oohBrandFilter)return false;
-        if(oohDmaFilter&&i.dma!==oohDmaFilter)return false;
-        if(oohIsciFilter){const q=oohIsciFilter.toLowerCase();return(i.code||"").toLowerCase().includes(q)||(i.title||"").toLowerCase().includes(q)||(i.dma||"").toLowerCase().includes(q)}
-        return true;
-      });
-      const oohDmas=[...new Set(allOoh.map(i=>i.dma))].sort();
-      const toggleOohActive=(idx)=>{setIscis(p=>p.map((x,j)=>j===idx?{...x,active:!x.active}:x));const ic=iscis[idx];notify((ic.active?"Deactivated":"Activated")+" "+ic.code);log("ISCI "+(ic.active?"Deactivated":"Activated"),ic.code)};
-      return<div style={{display:"flex",flexDirection:"column",gap:12}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
-          <div><PageHead title="OOH ISCI Registry" pgKey="ooh" sub={allOoh.filter(i=>i.active).length+" active · "+inactiveOoh.length+" inactive · "+allOoh.filter(i=>i.fileUrl).length+" with creative"}/></div>
-          <div style={{display:"flex",gap:4}}>
-            <Btn primary onClick={()=>setModal({t:"newIsci",defaultMedia:"OOH"})}>+ Register OOH ISCI</Btn>
-            <Btn onClick={()=>setShowOohBulkCreative(!showOohBulkCreative)} color={showOohBulkCreative?"#E85A7A":"#9b7bb0"}>{showOohBulkCreative?"Close Upload":"📁 Bulk Creative"}</Btn>
-            <Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=allOoh.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active OOH ISCIs have files");return}notify("Scanning "+missing.length+" OOH ISCIs...");let found=0;const updates={};const exts=["jpg","png","pdf","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);return updated});notify(found+" files recovered!");log("OOH Creative Recovery",found+" files")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn>
-          </div>
-        </div>
-        {showOohBulkCreative&&<Cd style={{padding:12}}>
-          <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>📁 Bulk Creative Upload — OOH</div>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>Drop multiple files. Name each file with the ISCI code (e.g. <b style={{color:"#E8DFF0"}}>BRMWK26SP001O.jpg</b>). Matches exact codes, prefix codes, and partial substrings.</div>
-          <DropZone multiple accept="image/*,application/pdf,.psd,.ai,.eps" style={{marginBottom:8}} onFiles={(fileList)=>{
-            const files=Array.from(fileList);if(!files.length){notify("No files selected");return}
-            if(!storage){notify("ERROR: Firebase Storage not loaded.");return}
-            let matched=0;let notFound=0;let failed=0;const updates={};
-            const total=files.length;
-            const oohOnly=allOoh;
-            const uploadNext=(fi)=>{
-              if(fi>=total){
-                setUploadTracker(null);
-                if(Object.keys(updates).length>0){setIscis(prev=>prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x))}
-                log("OOH Bulk Creative",matched+" uploaded, "+notFound+" no match, "+failed+" failed");
-                notify(matched+" files uploaded"+(notFound?" | "+notFound+" not matched":"")+(failed?" | "+failed+" failed":""));
-                return;
-              }
-              const file=files[fi];
-              const baseName=file.name.replace(/\.[^.]+$/,"").trim();
-              const baseUpper=baseName.toUpperCase();
-              // Match against the OOH pool first to avoid false hits on TV/Radio codes
-              let isciIdx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper===i.code.toUpperCase());
-              if(isciIdx===-1)isciIdx=iscis.findIndex(i=>i.suffix==="O"&&(baseUpper.startsWith(i.code.toUpperCase()+" ")||baseUpper.startsWith(i.code.toUpperCase()+"-")||baseUpper.startsWith(i.code.toUpperCase()+"_")));
-              if(isciIdx===-1)isciIdx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper.includes(i.code.toUpperCase()));
-              if(isciIdx===-1)isciIdx=iscis.findIndex(i=>i.suffix==="O"&&i.code.toUpperCase().includes(baseUpper));
-              if(isciIdx===-1){notFound++;setUploadTracker({label:file.name+" — no OOH ISCI match",current:fi+1,total,pct:Math.round(((fi+1)/total)*100)});uploadNext(fi+1);return}
-              const ext=file.name.split(".").pop();
-              const ref=storage.ref("creative/"+iscis[isciIdx].code+"."+ext);
-              const meta={customMetadata:{originalName:file.name,isciCode:iscis[isciIdx].code,title:iscis[isciIdx].title||"",brand:iscis[isciIdx].brand||"",media:"OOH"}};
-              const task=ref.put(file,meta);
-              task.on("state_changed",
-                snap=>{const p=Math.round((snap.bytesTransferred/snap.totalBytes)*100);setUploadTracker({label:"Uploading "+file.name+" ("+iscis[isciIdx].code+")",current:fi+1,total,pct:Math.round(((fi+p/100)/total)*100)})},
-                err=>{failed++;console.warn("OOH bulk upload failed:",file.name,err);setUploadTracker({label:file.name+" — FAILED",current:fi+1,total,pct:Math.round(((fi+1)/total)*100)});uploadNext(fi+1)},
-                async()=>{const url=await ref.getDownloadURL();updates[isciIdx]=url;matched++;uploadNext(fi+1)}
-              );
-            };
-            setUploadTracker({label:"Starting OOH bulk upload...",current:0,total,pct:0});
-            uploadNext(0);
-          }}>
-            <div style={{fontSize:24}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Drag & drop or click to select OOH creative files</div><div style={{fontSize:12,color:"#64748b"}}>.jpg, .png, .pdf, .psd, .ai, .eps — multiple allowed</div>
-          </DropZone>
-          <div style={{fontSize:12,color:"#94a3b8"}}>OOH ISCIs with creative: <b style={{color:"#5BC4A0"}}>{allOoh.filter(i=>i.fileUrl).length}</b> / {allOoh.length} ({allOoh.filter(i=>!i.fileUrl&&i.active).length} active still missing)</div>
-        </Cd>}
-        <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-          <input placeholder="Search OOH ISCIs..." value={oohIsciFilter} onChange={e=>setOohIsciFilter(e.target.value)} style={{width:200,padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
-          <Sel label="" options={[{v:"",l:"All Brands"},{v:"Wettermark Keith",l:"Wettermark Keith"},{v:"Postman Law",l:"Postman Law"}]} value={oohBrandFilter} onChange={setOohBrandFilter}/>
-          <Sel label="" options={[{v:"",l:"All DMAs"},...oohDmas.map(d=>({v:d,l:(DM[d]||d)+" ("+d+")"}))] } value={oohDmaFilter} onChange={setOohDmaFilter}/>
-          <label style={{fontSize:12,display:"flex",alignItems:"center",gap:3,cursor:"pointer",color:"#9B8EAD"}}><input type="checkbox" checked={showOohInactive} onChange={e=>setShowOohInactive(e.target.checked)}/> Show inactive</label>
-          {(oohIsciFilter||oohBrandFilter||oohDmaFilter)&&<Btn small onClick={()=>{setOohIsciFilter("");setOohBrandFilter("");setOohDmaFilter("")}}>Clear</Btn>}
-          <span style={{fontSize:12,color:"#6B5E80",marginLeft:"auto"}}>{filtered.length} shown</span>
-        </div>
-        <Cd style={{padding:0,overflow:"hidden"}}>
-          <div style={{maxHeight:"calc(100vh - 260px)",overflowY:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>Code</TH><TH>Title</TH><TH>Brand</TH><TH>DMA</TH><TH>Type</TH><TH>File</TH><TH>Status</TH><TH w="60">Actions</TH></tr></thead>
-              <tbody>{filtered.map((ic,i)=>{const gi=iscis.findIndex(x=>x.code===ic.code&&x.dma===ic.dma);return<tr key={ic.code+ic.dma} style={{opacity:ic.active?1:.45}}>
-                <TD m b><span style={{cursor:"pointer",color:"#4AC8E8",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})}>{ic.code}</span></TD>
-                <TD>{ic.title}</TD>
-                <TD><B l={ic.brand} c={ic.brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK")}/></TD>
-                <TD>{DM[ic.dma]||ic.dma}</TD>
-                <TD>{ic.dur}</TD>
-                <TD>{ic.fileUrl?<a href={ic.fileUrl} target="_blank" rel="noopener noreferrer" style={{color:"#4AC8E8",fontSize:12,fontWeight:600}}>📁 View</a>:<span style={{color:"#E85A7A",fontSize:12}}>No file</span>}</TD>
-                <TD>{ic.active?<B l="Active" c="#5BC4A0"/>:<B l="Inactive" c="#E85A7A"/>}</TD>
-                <TD><div style={{display:"flex",gap:3}}>
-                  <button onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#4AC8E8"}}>✎</button>
-                  <button onClick={()=>toggleOohActive(gi)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:ic.active?"#D4A040":"#5BC4A0"}}>{ic.active?"⏸":"▶"}</button>
-                </div></TD>
-              </tr>})}</tbody>
-            </table>
-            {filtered.length===0&&<div style={{padding:30,textAlign:"center",color:"#9B8EAD",fontSize:14,fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div>}
-          </div>
-        </Cd>
-      </div>;
-    };
     const calAlerts=(()=>{const now=new Date();const wk=new Date(now.getTime()+7*864e5);return OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length})();
     return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",color:"#E8DFF0"}}>
       <div style={{width:200,background:"linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
@@ -7054,11 +7058,14 @@ Rules:
         </div>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:16}}>
-        {subRoute==="wk"&&OohPg()}
-        {subRoute==="pl"&&PlOohPg()}
-        {subRoute==="isci"&&oohIsciPg()}
+        {/* Render as components — calling these as functions ({Foo()}) leaks
+            their useState into OohHub's hook list; subRoute switches change
+            the hook count and silently corrupt state. */}
+        {subRoute==="wk"&&<OohPg/>}
+        {subRoute==="pl"&&<PlOohPg/>}
+        {subRoute==="isci"&&<OohIsciPg/>}
         {subRoute==="import"&&<UploadPg/>}
-        {!["wk","pl","isci","import"].includes(subRoute)&&OohPg()}
+        {!["wk","pl","isci","import"].includes(subRoute)&&<OohPg/>}
       </div>
     </div>;
   };
