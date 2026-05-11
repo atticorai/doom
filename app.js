@@ -4188,7 +4188,11 @@ const App=()=>{
               notify("Starting upload: "+file.name);
               u2("uploading",true);u2("uploadPct",0);
               var ext=file.name.split(".").pop();
-              var tempCode=f2.dmas[0]?f2.dmas[0]+f2.brand+yr+"_temp":"temp_"+Date.now();
+              // Unique per-upload path: avoids overwriting prior uploads with the same brand+year+DMA
+              // before the ISCI sequence number is finalized. Firebase URL is what's stored on the
+              // ISCI, so the path can be anything unique — no rename needed on register.
+              var slug=(f2.title||"untitled").replace(/[^a-z0-9]+/gi,"-").replace(/^-+|-+$/g,"").slice(0,40).toLowerCase();
+              var tempCode=(f2.dmas[0]?f2.dmas[0]:"X")+f2.brand+yr+durField.padStart(2,"0")+"_"+slug+"_"+Date.now();
               var path="creative/"+tempCode+"."+ext;
               var ref=storage.ref(path);
               var metadata={customMetadata:{originalName:file.name,title:f2.title||"",brand:f2.brand||"",media:f2.media||""}};
@@ -4882,13 +4886,37 @@ ${fullText.substring(0,3000)}`}]
         {results.some(r=>r.status==="success"&&r.panels?.length>0)&&<div style={{display:"flex",gap:6,justifyContent:"flex-end"}}>
           <Btn small onClick={()=>{setResults([]);setFiles([])}}>Clear All</Btn>
           <Btn small primary onClick={()=>{
-            let added=0;
-            results.filter(r=>r.status==="success"&&r.panels?.length>0).forEach(r=>{
-              added+=r.panels.length;
-              log("Import",`${r.file}: ${r.panels.length} panels → ${r.client||"system"}`);
+            let savedContracts=0;let totalPanels=0;
+            const parseMmDdYy=(s)=>{if(!s)return"";const m=String(s).match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);if(!m)return"";const yr=m[3].length===2?"20"+m[3]:m[3];return yr+"-"+m[1].padStart(2,"0")+"-"+m[2].padStart(2,"0")};
+            const contractUpdates={};
+            results.filter(r=>r.status==="success"&&r.type==="contract"&&r.contractNum).forEach(r=>{
+              contractUpdates[r.contractNum]={
+                num:r.contractNum,
+                vendor:r.vendor||"",
+                brand:r.client||"",
+                market:r.market||"",
+                startDate:parseMmDdYy(r.startDate),
+                endDate:parseMmDdYy(r.endDate),
+                totalCost:r.totalCost||0,
+                boardCount:r.boardCount||r.totalPanels||0,
+                campaign:r.campaign||"",
+                notes:"Imported "+new Date().toLocaleDateString()+" from "+r.file,
+                importedAt:new Date().toISOString()
+              };
+              savedContracts++;
+              totalPanels+=r.panels.length;
+              log("OOH Contract Import",`${r.contractNum} · ${r.vendor||"?"} · ${r.client||"?"} · ${r.panels.length} panels`);
             });
-            notify(`${added} panels imported from ${results.filter(r=>r.status==="success").length} files`);
-          }}>Import {totalParsed} Panels</Btn>
+            if(savedContracts>0){
+              setOohContracts(prev=>{const merged={...prev};Object.entries(contractUpdates).forEach(([k,v])=>{merged[k]={...(prev[k]||{}),...v}});return merged});
+              notify(`${savedContracts} contract${savedContracts!==1?"s":""} saved · ${totalPanels} panels logged`);
+            }else{
+              results.filter(r=>r.status==="success"&&r.panels?.length>0).forEach(r=>{
+                log("Import",`${r.file}: ${r.panels.length} panels → ${r.client||"system"} (no contract # — skipped)`);
+              });
+              notify(`No contract numbers found — ${totalParsed} panels logged but not saved. Edit contracts manually in OOH WK/PL pages.`);
+            }
+          }}>{results.some(r=>r.contractNum)?"Save Contracts ("+results.filter(r=>r.contractNum).length+")":"Log "+totalParsed+" Panels"}</Btn>
         </div>}
       </div>}
 
@@ -7747,8 +7775,15 @@ Rules:
   if(isOohHub)return<React.Fragment>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
     <OohHub/>
+    {(modal==="newIsci"||modal?.t==="newIsci")&&<NewIsciMod defaultMedia={modal?.defaultMedia||null}/>}
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
     {modal?.type==="oohPhoto"&&<OohPhotoModal modal={modal}/>}
+    {uploadTracker&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:2001,background:"#2d1f42",borderBottom:"2px solid #4AC8E8",padding:"8px 16px",display:"flex",alignItems:"center",gap:12}}>
+      <div style={{fontSize:13,fontWeight:700,color:"#4AC8E8"}}>{uploadTracker.label}</div>
+      <div style={{flex:1,height:6,background:"#4a3565",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",background:"linear-gradient(90deg,#4AC8E8,#9b7bb0)",borderRadius:3,width:(uploadTracker.pct||0)+"%",transition:"width 0.3s"}}/></div>
+      <div style={{fontSize:12,fontWeight:700,color:"#E8DFF0",minWidth:50,textAlign:"right"}}>{uploadTracker.pct||0}%</div>
+      {uploadTracker.current&&uploadTracker.total&&<div style={{fontSize:11,color:"#94a3b8"}}>{uploadTracker.current}/{uploadTracker.total}</div>}
+    </div>}
     {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#2d1f42",color:"#E8DFF0",padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.3)",zIndex:9999,border:"1px solid #4a3565"}}>{toast}</div>}
   </React.Fragment>;
   return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",overflow:"hidden"}}>
