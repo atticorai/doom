@@ -555,6 +555,32 @@ if(!document.getElementById('dd-transitions')){
 
 const BUYER_EMAILS={"Ken Lazar":"ken.lazar@atticor.ai","Lynn Cortelezzi":"lynn.cortelezzi@atticor.ai","Amy Coffey":"acoffey@wkfirm.com","Jessica Flynn":"jessica.flynn@atticor.ai"};
 
+// Stable module-scope wrappers for the OOH components.
+//
+// The actual component bodies (_OohHubImpl, _OohPgImpl, etc.) live INSIDE App
+// so they keep their closure access to App state (iscis, modal, notify, etc.).
+// But because they're defined inside App, every App re-render produced a new
+// function reference — React then read them as a new component "type" and
+// unmounted/remounted the entire OOH tree on every cross-cutting App state
+// change (iscis updates, toast auto-clear, Firestore sync), wiping the user's
+// in-progress traffic builder.
+//
+// These module-scope wrappers fix that: they're declared once, so React sees
+// the same component type across every render. Each wrapper delegates to the
+// impl via a ref that App keeps current. The impls' useState/useEffect calls
+// land in the wrapper's fiber, so React preserves their state across App
+// re-renders.
+const _OohHubImplRef={current:null};
+const _OohPgImplRef={current:null};
+const _PlOohPgImplRef={current:null};
+const _OohIsciPgImplRef={current:null};
+const _UploadPgImplRef={current:null};
+const OohHub=()=>_OohHubImplRef.current?_OohHubImplRef.current():null;
+const OohPg=()=>_OohPgImplRef.current?_OohPgImplRef.current():null;
+const PlOohPg=()=>_PlOohPgImplRef.current?_PlOohPgImplRef.current():null;
+const OohIsciPg=()=>_OohIsciPgImplRef.current?_OohIsciPgImplRef.current():null;
+const UploadPg=()=>_UploadPgImplRef.current?_UploadPgImplRef.current():null;
+
 // ── HASH ROUTER ───────────────────────────────────────
 const useHash=()=>{
   const[hash,setHash]=useState(()=>window.location.hash.replace('#','') || '');
@@ -3302,7 +3328,7 @@ const App=()=>{
   };
 
   // ── OOH POSTINGS PAGE ────────────────────────────────
-  const OohPg=()=>{
+  const _OohPgImpl=()=>{
     const[om,setOm]=useState("");
     const[ov,setOv]=useState("");
     const[oVend,setOVend]=useState("");
@@ -3773,7 +3799,7 @@ const App=()=>{
   };
 
   // ── POSTMAN LAW OOH MEDIA PLAN PAGE ────────────────────
-  const PlOohPg=()=>{
+  const _PlOohPgImpl=()=>{
     const[mktF,setMktF]=useState("");
     const[planF,setPlanF]=useState("");
     const[vendF,setVendF]=useState("");
@@ -4682,7 +4708,7 @@ const App=()=>{
   };
 
   // ── UPLOAD / IMPORT PAGE ─────────────────────────────
-  const UploadPg=()=>{
+  const _UploadPgImpl=()=>{
     const[files,setFiles]=useState([]);
     const[parsing,setParsing]=useState(false);
     const[results,setResults]=useState([]);
@@ -6968,7 +6994,7 @@ Rules:
   // created a fresh function reference; React then unmounted & remounted the
   // page, blowing away its useState (filters, bulk-creative toggle) on every
   // click in the OOH Hub.
-  const OohIsciPg=()=>{
+  const _OohIsciPgImpl=()=>{
     const[showOohInactive,setShowOohInactive]=useState(false);
     const[showOohBulkCreative,setShowOohBulkCreative]=useState(false);
     const allOoh=iscis.filter(i=>i.suffix==="O");
@@ -7066,7 +7092,7 @@ Rules:
     </div>;
   };
 
-  const OohHub=()=>{
+  const _OohHubImpl=()=>{
     const subRoute=routeHash.replace(/^ooh\/?/,'') || 'wk';
     const oohNav=[
       {id:"wk",l:"WK OOH",e:"🛣"},
@@ -7983,6 +8009,14 @@ Rules:
     <button onClick={async()=>{const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(155,123,176,.3)"}}>Let Me In</button>
   </div></div>;
   if(!dbLoaded)return null; // HTML loader stays visible until data is ready
+  // Wire each OOH impl into its stable module-scope wrapper. Assigning here
+  // (during render, before any <OohHub/> render) guarantees the wrapper
+  // dispatches to the latest impl whose closure has the freshest App state.
+  _OohHubImplRef.current=_OohHubImpl;
+  _OohPgImplRef.current=_OohPgImpl;
+  _PlOohPgImplRef.current=_PlOohPgImpl;
+  _OohIsciPgImplRef.current=_OohIsciPgImpl;
+  _UploadPgImplRef.current=_UploadPgImpl;
   if(isOohHub)return<React.Fragment>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
     <OohHub/>
