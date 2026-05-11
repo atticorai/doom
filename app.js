@@ -4258,7 +4258,22 @@ const App=()=>{
     const brandName=f2.brand==="PL"?"Postman Law":"Wettermark Keith";
     const normTitle=function(t){var s=(t||"").toLowerCase().trim();Object.values(DM).forEach(function(n){s=s.split(n.toLowerCase()).join("")});Object.keys(DM).forEach(function(c){s=s.split(c.toLowerCase()).join("")});return s.replace(/[-–—,_\s]+/g," ").trim()};
     const normInput=normTitle(f2.title);
-    const brandIscis=iscis.filter(i=>i.brand===brandName&&i.dur===durField&&i.suffix===suf);
+    // Pool the candidate pre-existing ISCIs from BOTH the metadata filter
+    // (brand+dur+suffix) AND a regex on the code shape itself
+    // ([DMA][BR][YY][type][seq][suf]). The code-shape match catches legacy
+    // records where dur/brand/suffix were stored slightly off — without it,
+    // those records get excluded from max-seq calc, which suggests a number
+    // that's already taken (the dupe warning then fires on register).
+    const codeShapeRe=new RegExp("^[A-Z]{3}"+f2.brand+"[0-9]{2}"+durField.padStart(2,"0")+"([0-9]{3})"+suf+"$","i");
+    const seenCodes=new Set();
+    const brandIscis=iscis.filter(i=>{
+      const meta=i.brand===brandName&&i.dur===durField&&i.suffix===suf;
+      const shape=codeShapeRe.test(i.code||"");
+      if(!(meta||shape))return false;
+      if(seenCodes.has(i.code))return false;
+      seenCodes.add(i.code);
+      return true;
+    });
     const existingWithTitle=normInput?brandIscis.filter(i=>normTitle(i.title)===normInput):[];
     const existingSeq=existingWithTitle.length>0?(()=>{const m=existingWithTitle[0].code.match(/([0-9]{3})[TRDSOB]?$/);return m?m[1]:null})():null;
     const allSeqs=brandIscis.map(i=>{const m=i.code.match(/([0-9]{3})[TRDSOB]?$/);return m?parseInt(m[1]):0});
