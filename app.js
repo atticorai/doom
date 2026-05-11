@@ -6942,7 +6942,7 @@ Rules:
       {id:"isci",l:"OOH ISCI Registry",e:"◈"},
       {id:"import",l:"Import / Upload",e:"📤"}
     ];
-    const oohIsciPg=()=>{
+    const OohIsciPg=()=>{
       const[showOohInactive,setShowOohInactive]=useState(false);
       const[showOohBulkCreative,setShowOohBulkCreative]=useState(false);
       const allOoh=iscis.filter(i=>i.suffix==="O");
@@ -7054,11 +7054,14 @@ Rules:
         </div>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:16}}>
-        {subRoute==="wk"&&OohPg()}
-        {subRoute==="pl"&&PlOohPg()}
-        {subRoute==="isci"&&oohIsciPg()}
+        {/* Render as components — calling these as functions ({Foo()}) leaks
+            their useState into OohHub's hook list; subRoute switches change
+            the hook count and silently corrupt state. */}
+        {subRoute==="wk"&&<OohPg/>}
+        {subRoute==="pl"&&<PlOohPg/>}
+        {subRoute==="isci"&&<OohIsciPg/>}
         {subRoute==="import"&&<UploadPg/>}
-        {!["wk","pl","isci","import"].includes(subRoute)&&OohPg()}
+        {!["wk","pl","isci","import"].includes(subRoute)&&<OohPg/>}
       </div>
     </div>;
   };
