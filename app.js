@@ -1176,16 +1176,25 @@ const App=()=>{
     }
     const params=new URLSearchParams(qs);
     const rawEstNum=params.get('confirm');const rawSta=params.get('sta');const tok=params.get('tok');
-    // Sanitize: estNum must be 3-4 digits (PL 4-digit or WK 3-digit). sta must be alnum/dash/underscore only.
-    const estNum=rawEstNum&&/^[0-9]{3,4}$/.test(rawEstNum)?rawEstNum:null;
+    // Sanitize: estNum is either 3-4 digits (PL 4-digit / WK 3-digit) or an
+    // OOH pseudo-est like "OOH-Birmingham-Lamar" (built by the OOH send flow).
+    // sta must be alnum/dash/underscore only.
+    const estNum=rawEstNum&&(/^[0-9]{3,4}$/.test(rawEstNum)||/^OOH-[A-Za-z0-9_\-]{1,80}$/.test(rawEstNum))?rawEstNum:null;
     const sta=rawSta&&/^[A-Za-z0-9_-]{1,32}$/.test(rawSta)?rawSta:null;
     if(estNum&&sta){
-      const est=estimates.find(e=>e.num===estNum);
+      const isOohConfirm=estNum.startsWith("OOH-");
+      // OOH records aren't in the estimates list — pull the brand/market/media
+      // from the trafficHistory record that was saved when traffic was sent.
+      const oohRec=isOohConfirm?trafficHistory.find(h=>h.est===estNum):null;
+      const est=isOohConfirm?(oohRec?{num:estNum,brand:oohRec.brand,market:oohRec.market,media:oohRec.media,buyer:oohRec.buyer,group:oohRec.vendor||""}:null):estimates.find(e=>e.num===estNum);
       const brand=BRANDS.find(b=>b.name===est?.brand);
       // For WK 3-digit estimates, find the market from the station
       const staObj=stations.find(s=>s.call===sta);
-      const confirmKey=est&&est.brand==="Wettermark Keith"&&estNum.length<=3?estNum+"|"+(staObj?.market||est?.market||""):estNum;
-      const airing=nowAiring[confirmKey];
+      // OOH confirmKey IS the est (already includes market in the OOH-MKT-VND
+      // shape). For WK 3-digit non-OOH, append market. Otherwise use estNum.
+      const confirmKey=isOohConfirm?estNum:(est&&est.brand==="Wettermark Keith"&&estNum.length<=3?estNum+"|"+(staObj?.market||est?.market||""):estNum);
+      // OOH portal pulls "airing" data from trafficHistory; non-OOH from nowAiring.
+      const airing=isOohConfirm?(oohRec?{month:oohRec.month,flight:oohRec.flight,version:oohRec.version,iscis:oohRec.iscis||[],comments:oohRec.comments,postDates:oohRec.flight,totalUnits:oohRec.totalUnits,vendor:oohRec.vendor}:null):nowAiring[confirmKey];
       // Validate confirmation token before granting access.
       // Real tokens are 32-char hex generated server-issued via genToken(). The legacy
       // 'auto' skeleton-key is no longer accepted when a stored token exists; it remains
@@ -3554,13 +3563,21 @@ const App=()=>{
           try{
             let pdfB64="";
             try{const pdfUri=await generatePdfBase64(html);pdfB64=(pdfUri||"").split(",")[1]||""}catch(pe){console.warn("OOH PDF generation failed, sending without attachment:",pe)}
+            // Reserve a per-vendor confirmation token so the recipient can click
+            // through to the same vendor portal that TV/Radio sends use. The
+            // portal accepts OOH-prefixed est strings (see confirmKey lookup).
+            const confirmBase=window.location.href.split("?")[0].split("#")[0];
+            const tokOoh=reserveToken(trafficRec.est,"OOH_VENDOR");
+            const confirmUrl=confirmBase+"?confirm="+encodeURIComponent(trafficRec.est)+"&sta=OOH_VENDOR&tok="+encodeURIComponent(tokOoh);
             const subj="WK Advertising Solutions | Wettermark Keith "+dmaLabel+" OOH Traffic Instructions | "+workMonth+(oVersion?" | V"+oVersion:"");
             const msg="Hello,<br><br>Please find the attached OOH traffic instructions for Wettermark Keith — "+dmaLabel+" — "+workMonth+(oVersion?" V"+oVersion:"")+".<br><br>"+
               "<b>Client:</b> Wettermark Keith<br><b>Market:</b> "+dmaLabel+"<br><b>Vendor:</b> "+vLabel+"<br><b>Buyer:</b> Amy Coffey<br>"+
               "<b>Broadcast Month:</b> "+workMonth+"<br><b>Post Dates:</b> "+(oPostDates||"TBD")+(oVersion?"<br><b>Version:</b> "+oVersion:"")+
               "<br><b>"+(hasPanel?"Total Panels":"Total Units")+":</b> "+(hasPanel?totalPanels:totalUnits)+
               (oComments?"<br><b>Comments:</b> "+oComments:"")+
-              "<br><br>Please confirm receipt within 24 hours.<br><br>Thank you,<br><br>Emm Caban<br>WK Advertising Solutions";
+              "<br><br>Please confirm receipt within 24 hours by clicking the button below:<br><br>"+
+              '<a href="'+confirmUrl+'" style="display:inline-block;padding:12px 28px;background:#D4A040;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;font-size:14px">Confirm Receipt</a>'+
+              "<br><br>Proof of Performance (PoP) photos are required upon completion of each install.<br><br>Thank you,<br><br>Emm Caban<br>WK Advertising Solutions";
             const pdfName="OOH_Traffic_WK_"+(dmaLabel||"").replace(/\s/g,"")+"_"+(workMonth||"").replace(/\s/g,"")+(oVersion?"_V"+oVersion:"")+".pdf";
             const cc=[BUYER_EMAILS["Amy Coffey"]||"","emm.caban@atticor.ai"].filter(Boolean).join(",");
             const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients.join(","),cc,subject:subj,message:msg,pdfBase64:pdfB64,pdfName})});
@@ -3976,13 +3993,19 @@ const App=()=>{
           try{
             let pdfB64="";
             try{const pdfUri=await generatePdfBase64(html);pdfB64=(pdfUri||"").split(",")[1]||""}catch(pe){console.warn("PL OOH PDF generation failed, sending without attachment:",pe)}
+            // Per-vendor confirm token + portal URL — same flow as TV/Radio.
+            const confirmBase=window.location.href.split("?")[0].split("#")[0];
+            const tokOoh=reserveToken(trafficRec.est,"OOH_VENDOR");
+            const confirmUrl=confirmBase+"?confirm="+encodeURIComponent(trafficRec.est)+"&sta=OOH_VENDOR&tok="+encodeURIComponent(tokOoh);
             const subj="Atticor Media | Postman Law "+mktLabel+" OOH Traffic Instructions | "+workMonth+(plOVersion?" | V"+plOVersion:"");
             const msg="Hello,<br><br>Please find the attached OOH traffic instructions for Postman Law — "+mktLabel+" — "+workMonth+(plOVersion?" V"+plOVersion:"")+".<br><br>"+
               "<b>Client:</b> Postman Law<br><b>Market:</b> "+mktLabel+"<br><b>Vendor:</b> "+vLabel+"<br><b>Buyer:</b> Ken Lazar<br>"+
               "<b>Broadcast Month:</b> "+workMonth+"<br><b>Post Dates:</b> "+(plOPostDates||"TBD")+(plOVersion?"<br><b>Version:</b> "+plOVersion:"")+
               "<br><b>"+(hasPanel?"Total Panels":"Total Units")+":</b> "+(hasPanel?totalPanels:totalUnits)+
               (plOComments?"<br><b>Comments:</b> "+plOComments:"")+
-              "<br><br>Please confirm receipt within 24 hours.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Media";
+              "<br><br>Please confirm receipt within 24 hours by clicking the button below:<br><br>"+
+              '<a href="'+confirmUrl+'" style="display:inline-block;padding:12px 28px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;font-size:14px">Confirm Receipt</a>'+
+              "<br><br>Proof of Performance (PoP) photos are required upon completion of each install.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Media";
             const pdfName="OOH_Traffic_PL_"+(mktLabel||"").replace(/\s/g,"")+"_"+(workMonth||"").replace(/\s/g,"")+(plOVersion?"_V"+plOVersion:"")+".pdf";
             const cc=[BUYER_EMAILS["Ken Lazar"]||"","emm.caban@atticor.ai"].filter(Boolean).join(",");
             const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients.join(","),cc,subject:subj,message:msg,pdfBase64:pdfB64,pdfName})});
