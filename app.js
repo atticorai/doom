@@ -1135,25 +1135,14 @@ const App=()=>{
   const[estBrand,setEstBrand]=useState("Postman Law");
   const[staBrand,setStaBrand]=useState("Postman Law");
   // OOH WK page state (lifted to prevent remount on photo upload)
-  const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");const[oohMapMode,setOohMapMode]=useState("market");const[oohClusterRadius,setOohClusterRadius]=useState(3);
-  const[oohEditId,setOohEditId]=useState(null);const[oohEditVal,setOohEditVal]=useState("");
-  const[oohPhotoPanel,setOohPhotoPanel]=useState(null);
-  const[oohLines,setOohLines]=useState([{flight:"",isci:"",units:"",notes:""}]);
-  // OOH input state lives LOCAL to OohPg/PlOohPg (see useState calls there).
-  // Lifting it to App caused every keystroke to re-render App, which recreated
-  // OohHub/OohPg's function references (they're defined inside App), which
-  // triggered React to unmount/remount the input element — focus lost per
-  // keystroke. With local state, typing only re-renders OohPg itself.
-  const[oohEditContract,setOohEditContract]=useState(null);const[oohEditDates,setOohEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
-  // OOH PL page state (lifted to prevent remount on photo upload)
-  const[plMktF,setPlMktF]=useState("");const[plPlanF,setPlPlanF]=useState("");const[plVendF,setPlVendF]=useState("");
-  const[plOohEditId,setPlOohEditId]=useState(null);const[plOohEditVal,setPlOohEditVal]=useState("");
-  const[plOohLines,setPlOohLines]=useState([{flight:"",isci:"",units:"",faces:[],notes:""}]);
-  // plOohPostDates / plOohVersion / plOohComments / plOohSendTo / plOohSending
-  // are LOCAL to PlOohPg (see useState there) — see OOH note above.
-  const[plOohTrafficMode,setPlOohTrafficMode]=useState("units");const[plOohTypeF,setPlOohTypeF]=useState("");
-  const[plCalMktF,setPlCalMktF]=useState("");const[plCalTypeF,setPlCalTypeF]=useState("");const[plShowPast,setPlShowPast]=useState(false);
-  const[plOohEditContract,setPlOohEditContract]=useState(null);const[plOohEditDates,setPlOohEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
+  // All OOH page state is LOCAL to OohPg / PlOohPg below — see useState
+  // calls there. Lifting it to App caused every OOH UI click (vendor,
+  // mode toggle, view tab, type filter, add-line) to re-render App,
+  // which recreated OohHub/OohPg's inline function references, which
+  // made React unmount/remount the OOH tree — wiping local state +
+  // input focus on every interaction. Keeping it local means OOH clicks
+  // only re-render OohPg, which holds a stable identity through its
+  // siblings.
   const[isciBulkText,setIsciBulkText]=useState("");
   const[isciSearch,setIsciSearch]=useState("");
   const[customFields,setCustomFields]=useState({
@@ -3314,19 +3303,25 @@ const App=()=>{
 
   // ── OOH POSTINGS PAGE ────────────────────────────────
   const OohPg=()=>{
-    const om=oohOm,setOm=setOohOm,ov=oohOv,setOv=setOohOv,oVend=oohOVend,setOVend=setOohOVend,viewMode=oohViewMode,setViewMode=setOohViewMode,trafficMode=oohTrafficMode,setTrafficMode=setOohTrafficMode;
-    const editId=oohEditId,setEditId=setOohEditId,editVal=oohEditVal,setEditVal=setOohEditVal;
-    const photoPanel=oohPhotoPanel,setPhotoPanel=setOohPhotoPanel;
-    const oLines=oohLines,setOLines=setOohLines;
-    // Local state — see CLAUDE-style note at the removed App-level decl above.
-    // Typing here only re-renders OohPg, so the input doesn't remount per key.
+    const[om,setOm]=useState("");
+    const[ov,setOv]=useState("");
+    const[oVend,setOVend]=useState("");
+    const[viewMode,setViewMode]=useState("cards");
+    const[trafficMode,setTrafficMode]=useState("units");
+    const[oohTypeF,setOohTypeF]=useState("");
+    const[oohMapMode,setOohMapMode]=useState("market");
+    const[oohClusterRadius,setOohClusterRadius]=useState(3);
+    const[editId,setEditId]=useState(null);
+    const[editVal,setEditVal]=useState("");
+    const[photoPanel,setPhotoPanel]=useState(null);
+    const[oLines,setOLines]=useState([{flight:"",isci:"",units:"",notes:""}]);
     const[oPostDates,setOPostDates]=useState("");
     const[oVersion,setOVersion]=useState("");
     const[oComments,setOComments]=useState("");
     const[oohSendTo,setOohSendTo]=useState("");
     const[oohSending,setOohSending]=useState(false);
-    const editContract=oohEditContract,setEditContract=setOohEditContract;
-    const editDates=oohEditDates,setEditDates=setOohEditDates;
+    const[editContract,setEditContract]=useState(null);
+    const[editDates,setEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
     const dmas=[...new Set(pops.map(p=>p.dma))].sort();
     const subs=[...new Set(pops.map(p=>p.submarket))].sort();
     const vendors=[...new Set(pops.map(p=>p.vendor))].sort();
@@ -3779,17 +3774,25 @@ const App=()=>{
 
   // ── POSTMAN LAW OOH MEDIA PLAN PAGE ────────────────────
   const PlOohPg=()=>{
-    const mktF=plMktF,setMktF=setPlMktF,planF=plPlanF,setPlanF=setPlPlanF,vendF=plVendF,setVendF=setPlVendF;const viewMode=oohViewMode;const setViewMode=setOohViewMode;
-    const plEditId=plOohEditId,setPlEditId=setPlOohEditId,plEditVal=plOohEditVal,setPlEditVal=setPlOohEditVal;
-    const plOLines=plOohLines,setPlOLines=setPlOohLines;
+    const[mktF,setMktF]=useState("");
+    const[planF,setPlanF]=useState("");
+    const[vendF,setVendF]=useState("");
+    const[viewMode,setViewMode]=useState("cards");
+    const[plOohTrafficMode,setPlOohTrafficMode]=useState("units");
+    const[plOohTypeF,setPlOohTypeF]=useState("");
+    const[plEditId,setPlEditId]=useState(null);
+    const[plEditVal,setPlEditVal]=useState("");
+    const[plOLines,setPlOLines]=useState([{flight:"",isci:"",units:"",faces:[],notes:""}]);
     const[plOPostDates,setPlOPostDates]=useState("");
     const[plOVersion,setPlOVersion]=useState("");
     const[plOComments,setPlOComments]=useState("");
     const[plOohSendTo,setPlOohSendTo]=useState("");
     const[plOohSending,setPlOohSending]=useState(false);
-    const calMktF=plCalMktF,setCalMktF=setPlCalMktF,calTypeF=plCalTypeF,setCalTypeF=setPlCalTypeF,showPast=plShowPast,setShowPast=setPlShowPast;
-    const plEditContract=plOohEditContract,setPlEditContract=setPlOohEditContract;
-    const plEditDates=plOohEditDates,setPlEditDates=setPlOohEditDates;
+    const[calMktF,setCalMktF]=useState("");
+    const[calTypeF,setCalTypeF]=useState("");
+    const[showPast,setShowPast]=useState(false);
+    const[plEditContract,setPlEditContract]=useState(null);
+    const[plEditDates,setPlEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
     const viewChiFaces=plPanels.filter(p=>p.vendor==="View Chicago"&&(mktF?p.market==="CHI":true)).map(p=>p.unit).sort();
     // Faces are computed inline when building traffic lines instead of useEffect
     const startPlEdit=(unit,cur)=>{setPlEditId(unit);setPlEditVal(cur||"")};
