@@ -1139,15 +1139,19 @@ const App=()=>{
   const[oohEditId,setOohEditId]=useState(null);const[oohEditVal,setOohEditVal]=useState("");
   const[oohPhotoPanel,setOohPhotoPanel]=useState(null);
   const[oohLines,setOohLines]=useState([{flight:"",isci:"",units:"",notes:""}]);
-  const[oohPostDates,setOohPostDates]=useState("");const[oohVersion,setOohVersion]=useState("");const[oohComments,setOohComments]=useState("");
-  const[oohSendTo,setOohSendTo]=useState("");const[oohSending,setOohSending]=useState(false);
+  // OOH input state lives LOCAL to OohPg/PlOohPg (see useState calls there).
+  // Lifting it to App caused every keystroke to re-render App, which recreated
+  // OohHub/OohPg's function references (they're defined inside App), which
+  // triggered React to unmount/remount the input element — focus lost per
+  // keystroke. With local state, typing only re-renders OohPg itself.
   const[oohEditContract,setOohEditContract]=useState(null);const[oohEditDates,setOohEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
   // OOH PL page state (lifted to prevent remount on photo upload)
   const[plMktF,setPlMktF]=useState("");const[plPlanF,setPlPlanF]=useState("");const[plVendF,setPlVendF]=useState("");
   const[plOohEditId,setPlOohEditId]=useState(null);const[plOohEditVal,setPlOohEditVal]=useState("");
   const[plOohLines,setPlOohLines]=useState([{flight:"",isci:"",units:"",faces:[],notes:""}]);
-  const[plOohPostDates,setPlOohPostDates]=useState("");const[plOohVersion,setPlOohVersion]=useState("");const[plOohComments,setPlOohComments]=useState("");const[plOohTrafficMode,setPlOohTrafficMode]=useState("units");const[plOohTypeF,setPlOohTypeF]=useState("");
-  const[plOohSendTo,setPlOohSendTo]=useState("");const[plOohSending,setPlOohSending]=useState(false);
+  // plOohPostDates / plOohVersion / plOohComments / plOohSendTo / plOohSending
+  // are LOCAL to PlOohPg (see useState there) — see OOH note above.
+  const[plOohTrafficMode,setPlOohTrafficMode]=useState("units");const[plOohTypeF,setPlOohTypeF]=useState("");
   const[plCalMktF,setPlCalMktF]=useState("");const[plCalTypeF,setPlCalTypeF]=useState("");const[plShowPast,setPlShowPast]=useState(false);
   const[plOohEditContract,setPlOohEditContract]=useState(null);const[plOohEditDates,setPlOohEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
   const[isciBulkText,setIsciBulkText]=useState("");
@@ -3314,9 +3318,13 @@ const App=()=>{
     const editId=oohEditId,setEditId=setOohEditId,editVal=oohEditVal,setEditVal=setOohEditVal;
     const photoPanel=oohPhotoPanel,setPhotoPanel=setOohPhotoPanel;
     const oLines=oohLines,setOLines=setOohLines;
-    const oPostDates=oohPostDates,setOPostDates=setOohPostDates;
-    const oVersion=oohVersion,setOVersion=setOohVersion;
-    const oComments=oohComments,setOComments=setOohComments;
+    // Local state — see CLAUDE-style note at the removed App-level decl above.
+    // Typing here only re-renders OohPg, so the input doesn't remount per key.
+    const[oPostDates,setOPostDates]=useState("");
+    const[oVersion,setOVersion]=useState("");
+    const[oComments,setOComments]=useState("");
+    const[oohSendTo,setOohSendTo]=useState("");
+    const[oohSending,setOohSending]=useState(false);
     const editContract=oohEditContract,setEditContract=setOohEditContract;
     const editDates=oohEditDates,setEditDates=setOohEditDates;
     const dmas=[...new Set(pops.map(p=>p.dma))].sort();
@@ -3774,9 +3782,11 @@ const App=()=>{
     const mktF=plMktF,setMktF=setPlMktF,planF=plPlanF,setPlanF=setPlPlanF,vendF=plVendF,setVendF=setPlVendF;const viewMode=oohViewMode;const setViewMode=setOohViewMode;
     const plEditId=plOohEditId,setPlEditId=setPlOohEditId,plEditVal=plOohEditVal,setPlEditVal=setPlOohEditVal;
     const plOLines=plOohLines,setPlOLines=setPlOohLines;
-    const plOPostDates=plOohPostDates,setPlOPostDates=setPlOohPostDates;
-    const plOVersion=plOohVersion,setPlOVersion=setPlOohVersion;
-    const plOComments=plOohComments,setPlOComments=setPlOohComments;
+    const[plOPostDates,setPlOPostDates]=useState("");
+    const[plOVersion,setPlOVersion]=useState("");
+    const[plOComments,setPlOComments]=useState("");
+    const[plOohSendTo,setPlOohSendTo]=useState("");
+    const[plOohSending,setPlOohSending]=useState(false);
     const calMktF=plCalMktF,setCalMktF=setPlCalMktF,calTypeF=plCalTypeF,setCalTypeF=setPlCalTypeF,showPast=plShowPast,setShowPast=setPlShowPast;
     const plEditContract=plOohEditContract,setPlEditContract=setPlOohEditContract;
     const plEditDates=plOohEditDates,setPlEditDates=setPlOohEditDates;
