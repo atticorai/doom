@@ -1130,12 +1130,14 @@ const App=()=>{
   const[oohPhotoPanel,setOohPhotoPanel]=useState(null);
   const[oohLines,setOohLines]=useState([{flight:"",isci:"",units:"",notes:""}]);
   const[oohPostDates,setOohPostDates]=useState("");const[oohVersion,setOohVersion]=useState("");const[oohComments,setOohComments]=useState("");
+  const[oohSendTo,setOohSendTo]=useState("");const[oohSending,setOohSending]=useState(false);
   const[oohEditContract,setOohEditContract]=useState(null);const[oohEditDates,setOohEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
   // OOH PL page state (lifted to prevent remount on photo upload)
   const[plMktF,setPlMktF]=useState("");const[plPlanF,setPlPlanF]=useState("");const[plVendF,setPlVendF]=useState("");
   const[plOohEditId,setPlOohEditId]=useState(null);const[plOohEditVal,setPlOohEditVal]=useState("");
   const[plOohLines,setPlOohLines]=useState([{flight:"",isci:"",units:"",faces:[],notes:""}]);
   const[plOohPostDates,setPlOohPostDates]=useState("");const[plOohVersion,setPlOohVersion]=useState("");const[plOohComments,setPlOohComments]=useState("");const[plOohTrafficMode,setPlOohTrafficMode]=useState("units");const[plOohTypeF,setPlOohTypeF]=useState("");
+  const[plOohSendTo,setPlOohSendTo]=useState("");const[plOohSending,setPlOohSending]=useState(false);
   const[plCalMktF,setPlCalMktF]=useState("");const[plCalTypeF,setPlCalTypeF]=useState("");const[plShowPast,setPlShowPast]=useState(false);
   const[plOohEditContract,setPlOohEditContract]=useState(null);const[plOohEditDates,setPlOohEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
   const[isciBulkText,setIsciBulkText]=useState("");
@@ -3497,36 +3499,82 @@ const App=()=>{
         const totalUnits=oLines.reduce((a,l)=>a+(parseInt(l.units)||0),0);
         const totalPanels=oLines.filter(l=>l.panel).length;
         const usePanelMode=trafficMode==="panels";
-        const printOoh=()=>{
+        // Build the OOH traffic-sheet HTML once — used for both the print
+        // window and (when sending) the email body + PDF attachment. Returns
+        // {html, trafficRec, isciLines, hasPanel, vLabel} so callers don't
+        // have to recompute totals.
+        const buildOohSheet=()=>{
           const vLabel=trafficVendor||"All Vendors";
           const hasPanel=oLines.some(l=>l.panel);
-          const w=window.open("","","width=900,height=700");
-          w.document.write("<html><head><title>OOH Traffic - "+dmaLabel+" - "+vLabel+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
-          w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">WETTERMARK KEITH</h2><div style="font-weight:bold;color:#555">PERSONAL INJURY LAWYERS</div></div>');
+          let h="<html><head><title>OOH Traffic - "+dmaLabel+" - "+vLabel+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>";
+          h+='<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">WETTERMARK KEITH</h2><div style="font-weight:bold;color:#555">PERSONAL INJURY LAWYERS</div></div>';
           const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+v+'</span></div>';
-          w.document.write(hd("Agency","WK Advertising Solutions"));w.document.write(hd("Client","Wettermark Keith"));
-          w.document.write(hd("Market",dmaLabel));w.document.write(hd("Vendor",vLabel,"amb"));
-          w.document.write(hd("Buyer","Amy Coffey","red"));w.document.write(hd("Media","OOH","red"));
-          w.document.write(hd("Broadcast Month",workMonth,"grn"));
-          w.document.write(hd("Post Dates",oPostDates||"TBD","grn"));w.document.write(hd("Version/ Links",oVersion||""));
-          if(oComments)w.document.write(hd("Comments",oComments));
+          h+=hd("Agency","WK Advertising Solutions")+hd("Client","Wettermark Keith");
+          h+=hd("Market",dmaLabel)+hd("Vendor",vLabel,"amb");
+          h+=hd("Buyer","Amy Coffey","red")+hd("Media","OOH","red");
+          h+=hd("Broadcast Month",workMonth,"grn");
+          h+=hd("Post Dates",oPostDates||"TBD","grn")+hd("Version/ Links",oVersion||"");
+          if(oComments)h+=hd("Comments",oComments);
           if(hasPanel){
-            w.document.write("<table><thead><tr><th>Flight Dates</th><th>Unit #</th><th>DMA</th><th>Location</th><th>ISCI / Creative</th><th>Notes</th></tr></thead><tbody>");
-            oLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel);w.document.write("<tr><td><b>"+(l.flight||oPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+(l.panel||"")+"</td><td>"+(bd?bd.dma:"")+"</td><td style='font-size:10px'>"+(bd?bd.loc:"")+"</td><td>"+l.isci+"</td><td>"+(l.notes||"")+"</td></tr>")});
+            h+="<table><thead><tr><th>Flight Dates</th><th>Unit #</th><th>DMA</th><th>Location</th><th>ISCI / Creative</th><th>Notes</th></tr></thead><tbody>";
+            oLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel);h+="<tr><td><b>"+(l.flight||oPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+(l.panel||"")+"</td><td>"+(bd?bd.dma:"")+"</td><td style='font-size:10px'>"+(bd?bd.loc:"")+"</td><td>"+l.isci+"</td><td>"+(l.notes||"")+"</td></tr>"});
           }else{
-            w.document.write("<table><thead><tr><th>Flight Dates</th><th>ISCI Codes &amp; Title</th><th>Market</th><th>Rot %</th><th>Unit Amounts</th><th>Notes</th></tr></thead><tbody>");
-            oLines.filter(l=>l.isci).forEach(l=>{w.document.write("<tr><td><b>"+(l.flight||oPostDates||"")+"</b></td><td>"+l.isci+"</td><td>"+(l.market||dmaLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?l.pct+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+(l.units||"")+"</td><td>"+(l.notes||"")+"</td></tr>")});
+            h+="<table><thead><tr><th>Flight Dates</th><th>ISCI Codes &amp; Title</th><th>Market</th><th>Rot %</th><th>Unit Amounts</th><th>Notes</th></tr></thead><tbody>";
+            oLines.filter(l=>l.isci).forEach(l=>{h+="<tr><td><b>"+(l.flight||oPostDates||"")+"</b></td><td>"+l.isci+"</td><td>"+(l.market||dmaLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?l.pct+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+(l.units||"")+"</td><td>"+(l.notes||"")+"</td></tr>"});
           }
-          w.document.write("</tbody></table>");
-          if(hasPanel)w.document.write('<div style="margin-top:6px;font-size:11px"><b>Total Panels:</b> '+totalPanels+"</div>");
-          else if(totalUnits)w.document.write('<div style="margin-top:6px;font-size:11px"><b>Total Units:</b> '+totalUnits+"</div>");
-          w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
-          w.document.write('<div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div>');
-          w.document.write("</body></html>");w.document.close();w.print();
+          h+="</tbody></table>";
+          if(hasPanel)h+='<div style="margin-top:6px;font-size:11px"><b>Total Panels:</b> '+totalPanels+"</div>";
+          else if(totalUnits)h+='<div style="margin-top:6px;font-size:11px"><b>Total Units:</b> '+totalUnits+"</div>";
+          h+='<div class="sig"><div>Accepted by:</div><div>Date:</div></div>';
+          h+='<div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div>';
+          h+="</body></html>";
+          const isciLines=oLines.filter(l=>l.isci||l.panel).map(l=>({code:l.panel||l.isci,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}));
+          const trafficRec={ts:new Date().toISOString(),est:"OOH-"+dmaLabel+"-"+(trafficVendor||"ALL"),brand:"Wettermark Keith",market:dmaLabel,media:"OOH",buyer:"Amy Coffey",month:workMonth,flight:oPostDates,version:oVersion||"1",comments:oComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor};
+          return{html:h,trafficRec,isciLines,hasPanel,vLabel};
+        };
+        // Generate-only: open print window + save to library WITHOUT sending.
+        // Status stays "print_only" so the record still shows up in Traffic
+        // Library and Traffic Tracker as built-but-not-sent.
+        const printOoh=()=>{
+          const{html,trafficRec,hasPanel,vLabel}=buildOohSheet();
+          const w=window.open("","","width=900,height=700");
+          w.document.write(html);w.document.close();w.print();
           log("OOH Traffic Generated",dmaLabel+" - "+vLabel+" - "+(hasPanel?totalPanels+" panels":totalUnits+" units"));
           notify("OOH traffic sheet generated - "+vLabel);
-          const isciLines=oLines.filter(l=>l.isci||l.panel).map(l=>({code:l.panel||l.isci,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}));
-          setTrafficHistory(p=>[{ts:new Date().toISOString(),est:"OOH-"+dmaLabel+"-"+(trafficVendor||"ALL"),brand:"Wettermark Keith",market:dmaLabel,media:"OOH",buyer:"Amy Coffey",month:workMonth,flight:oPostDates,version:oVersion,comments:oComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor},...p]);
+          setTrafficHistory(p=>[{...trafficRec,status:"print_only"},...p]);
+        };
+        // Send: build PDF, POST to /api/send-traffic with the operator-supplied
+        // recipient + buyer CC, save to library with status "sent" so it shows
+        // green in the Library and Traffic Tracker grid.
+        const sendOoh=async()=>{
+          const{html,trafficRec,hasPanel,vLabel}=buildOohSheet();
+          const recipients=oohSendTo.split(/[;,]/).map(s=>s.trim()).filter(Boolean);
+          if(!recipients.length){notify("Add a recipient email first");return}
+          setOohSending(true);
+          try{
+            let pdfB64="";
+            try{const pdfUri=await generatePdfBase64(html);pdfB64=(pdfUri||"").split(",")[1]||""}catch(pe){console.warn("OOH PDF generation failed, sending without attachment:",pe)}
+            const subj="WK Advertising Solutions | Wettermark Keith "+dmaLabel+" OOH Traffic Instructions | "+workMonth+(oVersion?" | V"+oVersion:"");
+            const msg="Hello,<br><br>Please find the attached OOH traffic instructions for Wettermark Keith — "+dmaLabel+" — "+workMonth+(oVersion?" V"+oVersion:"")+".<br><br>"+
+              "<b>Client:</b> Wettermark Keith<br><b>Market:</b> "+dmaLabel+"<br><b>Vendor:</b> "+vLabel+"<br><b>Buyer:</b> Amy Coffey<br>"+
+              "<b>Broadcast Month:</b> "+workMonth+"<br><b>Post Dates:</b> "+(oPostDates||"TBD")+(oVersion?"<br><b>Version:</b> "+oVersion:"")+
+              "<br><b>"+(hasPanel?"Total Panels":"Total Units")+":</b> "+(hasPanel?totalPanels:totalUnits)+
+              (oComments?"<br><b>Comments:</b> "+oComments:"")+
+              "<br><br>Please confirm receipt within 24 hours.<br><br>Thank you,<br><br>Emm Caban<br>WK Advertising Solutions";
+            const pdfName="OOH_Traffic_WK_"+(dmaLabel||"").replace(/\s/g,"")+"_"+(workMonth||"").replace(/\s/g,"")+(oVersion?"_V"+oVersion:"")+".pdf";
+            const cc=[BUYER_EMAILS["Amy Coffey"]||"","emm.caban@atticor.ai"].filter(Boolean).join(",");
+            const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients.join(","),cc,subject:subj,message:msg,pdfBase64:pdfB64,pdfName})});
+            if(!resp.ok)throw new Error("n8n webhook returned "+resp.status);
+            log("OOH Traffic Sent","WK "+dmaLabel+" - "+vLabel+" → "+recipients.join(", "));
+            notify(doomPick(DOOM.send)+" Sent to "+recipients.length+" recipient"+(recipients.length>1?"s":""));
+            setTrafficHistory(p=>[{...trafficRec,status:"sent",sentTo:recipients.join(", ")},...p]);
+          }catch(e){
+            console.warn("OOH send failed:",e);
+            notify("Send failed: "+(e.message||e)+" — record saved to library");
+            // Still save to library so the operator's work isn't lost.
+            setTrafficHistory(p=>[{...trafficRec,status:"saved",sendError:String(e.message||e)},...p]);
+            log("OOH Send Failed","WK "+dmaLabel+" - "+(e.message||e));
+          }finally{setOohSending(false)}
         };
         const assignAll=(isciVal)=>{setOLines(p=>p.map(l=>l.panel&&!l.isci?{...l,isci:isciVal}:l))};
         return<Cd style={{padding:12}}>
@@ -3550,7 +3598,10 @@ const App=()=>{
             <Inp label="Version / Links" value={oVersion} onChange={e=>setOVersion(e.target.value)} placeholder="e.g., Knoxville Static Posters"/>
             <Inp label="Comments" value={oComments} onChange={e=>setOComments(e.target.value)} placeholder="Optional"/>
           </div>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {dmaLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} panels | Broadcast: {workMonth}</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr",gap:6,marginBottom:8}}>
+            <Inp label="Send To (vendor email — comma/semicolon separated)" value={oohSendTo} onChange={e=>setOohSendTo(e.target.value)} placeholder="e.g., birmingham@lamar.com; orders@lamar.com"/>
+          </div>
+          <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {dmaLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} panels | Broadcast: {workMonth} | CC: {BUYER_EMAILS["Amy Coffey"]||"buyer"} + emm.caban@atticor.ai</div>
           {usePanelMode&&oLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(37,99,235,.08)",borderRadius:5,border:"1px solid rgba(37,99,235,.2)"}}>
             <span style={{fontSize:11,color:"#4AC8E8"}}>Quick assign creative to all {oLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
             {oohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0",width:200}}/>}
@@ -3578,7 +3629,8 @@ const App=()=>{
           <div style={{display:"flex",gap:6,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
             <Btn small onClick={addLine}>+ Add Line</Btn>
             {usePanelMode&&<Btn small onClick={()=>{const used=oLines.map(l=>l.panel).filter(Boolean);const unassigned=vendorPanels.filter(p=>!used.includes(p.panel));if(!unassigned.length){notify("All panels already added");return}const nl=unassigned.map(p=>({flight:oPostDates||"",panel:p.panel,isci:"",units:"",notes:""}));setOLines(p=>[...p,...nl]);notify(unassigned.length+" panels added")}} color="#4AC8E8">+ Add All {trafficVendor||""} Panels</Btn>}
-            <Btn small primary color="#D4A040" onClick={printOoh} disabled={!oLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
+            <Btn small color="#D4A040" onClick={printOoh} disabled={!oLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
+            <Btn small primary color="#5BC4A0" onClick={sendOoh} disabled={oohSending||!oLines.some(l=>l.isci||l.panel)||!oohSendTo.trim()}>{oohSending?"⏳ Sending...":"✉ Send Traffic"}</Btn>
             <span style={{marginLeft:"auto",fontSize:12,color:"#94a3b8"}}>{usePanelMode?totalPanels+" panels":""+oLines.filter(l=>l.isci).length+" creatives | "+totalUnits+" units"}{trafficVendor?" | "+trafficVendor:""}</span>
           </div>
         </Cd>;
@@ -3878,36 +3930,72 @@ const App=()=>{
         const totalUnits=plOLines.reduce((a,l)=>a+(parseInt(l.units)||0),0);
         const totalPanels=plOLines.filter(l=>l.panel).length;
         const usePanelMode=plOohTrafficMode==="panels";
-        const printOoh=()=>{
+        // Build the PL OOH traffic-sheet HTML. Shared between print and send.
+        const buildPlOohSheet=()=>{
           const vLabel=trafficVendor||"All Vendors";
           const hasPanel=plOLines.some(l=>l.panel);
-          const w=window.open("","","width=900,height=700");
-          w.document.write("<html><head><title>OOH Traffic - PL "+mktLabel+" - "+vLabel+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
-          w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">POSTMAN LAW</h2></div>');
+          let h="<html><head><title>OOH Traffic - PL "+mktLabel+" - "+vLabel+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>";
+          h+='<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">POSTMAN LAW</h2></div>';
           const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+v+'</span></div>';
-          w.document.write(hd("Agency","Atticor Media"));w.document.write(hd("Client","Postman Law"));
-          w.document.write(hd("Market",mktLabel));w.document.write(hd("Vendor",vLabel,"amb"));
-          w.document.write(hd("Buyer","Ken Lazar","red"));w.document.write(hd("Media","OOH","red"));
-          w.document.write(hd("Broadcast Month",workMonth,"grn"));
-          w.document.write(hd("Post Dates",plOPostDates||"TBD","grn"));w.document.write(hd("Version/ Links",plOVersion||""));
-          if(plOComments)w.document.write(hd("Comments",plOComments));
+          h+=hd("Agency","Atticor Media")+hd("Client","Postman Law");
+          h+=hd("Market",mktLabel)+hd("Vendor",vLabel,"amb");
+          h+=hd("Buyer","Ken Lazar","red")+hd("Media","OOH","red");
+          h+=hd("Broadcast Month",workMonth,"grn");
+          h+=hd("Post Dates",plOPostDates||"TBD","grn")+hd("Version/ Links",plOVersion||"");
+          if(plOComments)h+=hd("Comments",plOComments);
           if(hasPanel){
-            w.document.write("<table><thead><tr><th>Flight Dates</th><th>Unit #</th><th>Market</th><th>Location</th><th>ISCI / Creative</th><th>Face #s</th><th>Notes</th></tr></thead><tbody>");
-            plOLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel);w.document.write("<tr><td><b>"+(l.flight||plOPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+(l.panel||"")+"</td><td>"+(bd?bd.mkt:"")+"</td><td style='font-size:10px'>"+(bd?bd.loc:"")+"</td><td>"+l.isci+"</td><td style='font-family:monospace;font-size:10px'>"+(l.faces&&l.faces.length?l.faces.join(", "):"")+"</td><td>"+(l.notes||"")+"</td></tr>")});
+            h+="<table><thead><tr><th>Flight Dates</th><th>Unit #</th><th>Market</th><th>Location</th><th>ISCI / Creative</th><th>Face #s</th><th>Notes</th></tr></thead><tbody>";
+            plOLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel);h+="<tr><td><b>"+(l.flight||plOPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+(l.panel||"")+"</td><td>"+(bd?bd.mkt:"")+"</td><td style='font-size:10px'>"+(bd?bd.loc:"")+"</td><td>"+l.isci+"</td><td style='font-family:monospace;font-size:10px'>"+(l.faces&&l.faces.length?l.faces.join(", "):"")+"</td><td>"+(l.notes||"")+"</td></tr>"});
           }else{
-            w.document.write("<table><thead><tr><th>Flight Dates</th><th>ISCI Codes &amp; Title</th><th>Market</th><th>Rot %</th><th>Unit Amounts</th><th>Face Numbers</th><th>Notes</th></tr></thead><tbody>");
-            plOLines.filter(l=>l.isci).forEach(l=>{w.document.write("<tr><td><b>"+(l.flight||plOPostDates||"")+"</b></td><td>"+l.isci+"</td><td>"+(l.market||mktLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?l.pct+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+(l.units||"")+"</td><td style='font-family:monospace;font-size:10px'>"+(l.faces&&l.faces.length?l.faces.join(", "):"")+"</td><td>"+(l.notes||"")+"</td></tr>")});
+            h+="<table><thead><tr><th>Flight Dates</th><th>ISCI Codes &amp; Title</th><th>Market</th><th>Rot %</th><th>Unit Amounts</th><th>Face Numbers</th><th>Notes</th></tr></thead><tbody>";
+            plOLines.filter(l=>l.isci).forEach(l=>{h+="<tr><td><b>"+(l.flight||plOPostDates||"")+"</b></td><td>"+l.isci+"</td><td>"+(l.market||mktLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?l.pct+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+(l.units||"")+"</td><td style='font-family:monospace;font-size:10px'>"+(l.faces&&l.faces.length?l.faces.join(", "):"")+"</td><td>"+(l.notes||"")+"</td></tr>"});
           }
-          w.document.write("</tbody></table>");
-          if(hasPanel)w.document.write('<div style="margin-top:6px;font-size:11px"><b>Total Panels:</b> '+totalPanels+"</div>");
-          else if(totalUnits)w.document.write('<div style="margin-top:6px;font-size:11px"><b>Total Units:</b> '+totalUnits+"</div>");
-          w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
-          w.document.write('<div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div>');
-          w.document.write("</body></html>");w.document.close();w.print();
+          h+="</tbody></table>";
+          if(hasPanel)h+='<div style="margin-top:6px;font-size:11px"><b>Total Panels:</b> '+totalPanels+"</div>";
+          else if(totalUnits)h+='<div style="margin-top:6px;font-size:11px"><b>Total Units:</b> '+totalUnits+"</div>";
+          h+='<div class="sig"><div>Accepted by:</div><div>Date:</div></div>';
+          h+='<div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div>';
+          h+="</body></html>";
+          const isciLines=plOLines.filter(l=>l.isci||l.panel).map(l=>({code:l.panel||l.isci,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}));
+          const trafficRec={ts:new Date().toISOString(),est:"OOH-PL-"+mktLabel+"-"+(trafficVendor||"ALL"),brand:"Postman Law",market:mktLabel,media:"OOH",buyer:"Ken Lazar",month:workMonth,flight:plOPostDates,version:plOVersion||"1",comments:plOComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor};
+          return{html:h,trafficRec,isciLines,hasPanel,vLabel};
+        };
+        const printOoh=()=>{
+          const{html,trafficRec,hasPanel,vLabel}=buildPlOohSheet();
+          const w=window.open("","","width=900,height=700");
+          w.document.write(html);w.document.close();w.print();
           log("OOH Traffic Generated","PL "+mktLabel+" - "+vLabel+" - "+(hasPanel?totalPanels+" panels":totalUnits+" units"));
           notify("PL OOH traffic sheet generated - "+vLabel);
-          const isciLines=plOLines.filter(l=>l.isci||l.panel).map(l=>({code:l.panel||l.isci,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}));
-          setTrafficHistory(p=>[{ts:new Date().toISOString(),est:"OOH-PL-"+mktLabel+"-"+(trafficVendor||"ALL"),brand:"Postman Law",market:mktLabel,media:"OOH",buyer:"Ken Lazar",month:workMonth,flight:plOPostDates,version:plOVersion,comments:plOComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor},...p]);
+          setTrafficHistory(p=>[{...trafficRec,status:"print_only"},...p]);
+        };
+        const sendOoh=async()=>{
+          const{html,trafficRec,hasPanel,vLabel}=buildPlOohSheet();
+          const recipients=plOohSendTo.split(/[;,]/).map(s=>s.trim()).filter(Boolean);
+          if(!recipients.length){notify("Add a recipient email first");return}
+          setPlOohSending(true);
+          try{
+            let pdfB64="";
+            try{const pdfUri=await generatePdfBase64(html);pdfB64=(pdfUri||"").split(",")[1]||""}catch(pe){console.warn("PL OOH PDF generation failed, sending without attachment:",pe)}
+            const subj="Atticor Media | Postman Law "+mktLabel+" OOH Traffic Instructions | "+workMonth+(plOVersion?" | V"+plOVersion:"");
+            const msg="Hello,<br><br>Please find the attached OOH traffic instructions for Postman Law — "+mktLabel+" — "+workMonth+(plOVersion?" V"+plOVersion:"")+".<br><br>"+
+              "<b>Client:</b> Postman Law<br><b>Market:</b> "+mktLabel+"<br><b>Vendor:</b> "+vLabel+"<br><b>Buyer:</b> Ken Lazar<br>"+
+              "<b>Broadcast Month:</b> "+workMonth+"<br><b>Post Dates:</b> "+(plOPostDates||"TBD")+(plOVersion?"<br><b>Version:</b> "+plOVersion:"")+
+              "<br><b>"+(hasPanel?"Total Panels":"Total Units")+":</b> "+(hasPanel?totalPanels:totalUnits)+
+              (plOComments?"<br><b>Comments:</b> "+plOComments:"")+
+              "<br><br>Please confirm receipt within 24 hours.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Media";
+            const pdfName="OOH_Traffic_PL_"+(mktLabel||"").replace(/\s/g,"")+"_"+(workMonth||"").replace(/\s/g,"")+(plOVersion?"_V"+plOVersion:"")+".pdf";
+            const cc=[BUYER_EMAILS["Ken Lazar"]||"","emm.caban@atticor.ai"].filter(Boolean).join(",");
+            const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients.join(","),cc,subject:subj,message:msg,pdfBase64:pdfB64,pdfName})});
+            if(!resp.ok)throw new Error("n8n webhook returned "+resp.status);
+            log("OOH Traffic Sent","PL "+mktLabel+" - "+vLabel+" → "+recipients.join(", "));
+            notify(doomPick(DOOM.send)+" Sent to "+recipients.length+" recipient"+(recipients.length>1?"s":""));
+            setTrafficHistory(p=>[{...trafficRec,status:"sent",sentTo:recipients.join(", ")},...p]);
+          }catch(e){
+            console.warn("PL OOH send failed:",e);
+            notify("Send failed: "+(e.message||e)+" — record saved to library");
+            setTrafficHistory(p=>[{...trafficRec,status:"saved",sendError:String(e.message||e)},...p]);
+            log("OOH Send Failed","PL "+mktLabel+" - "+(e.message||e));
+          }finally{setPlOohSending(false)}
         };
         const assignAll=(isciVal)=>{setPlOLines(p=>p.map(l=>l.panel&&!l.isci?{...l,isci:isciVal}:l))};
         return<Cd style={{padding:12}}>
@@ -3931,7 +4019,10 @@ const App=()=>{
             <Inp label="Version / Links" value={plOVersion} onChange={e=>setPlOVersion(e.target.value)} placeholder="e.g., Chicago Posters"/>
             <Inp label="Comments" value={plOComments} onChange={e=>setPlOComments(e.target.value)} placeholder="Optional"/>
           </div>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {mktLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} units | Buyer: Ken Lazar | Broadcast: {workMonth}</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr",gap:6,marginBottom:8}}>
+            <Inp label="Send To (vendor email — comma/semicolon separated)" value={plOohSendTo} onChange={e=>setPlOohSendTo(e.target.value)} placeholder="e.g., Robert@wilkinsmedia.com; orders@wilkinsmedia.com"/>
+          </div>
+          <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {mktLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} units | Buyer: Ken Lazar | Broadcast: {workMonth} | CC: {BUYER_EMAILS["Ken Lazar"]||"buyer"} + emm.caban@atticor.ai</div>
           {usePanelMode&&plOLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(124,59,237,.08)",borderRadius:5,border:"1px solid rgba(124,59,237,.2)"}}>
             <span style={{fontSize:11,color:"#C4A0C8"}}>Quick assign creative to all {plOLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
             {plOohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0",width:200}}/>}
@@ -3961,7 +4052,8 @@ const App=()=>{
           <div style={{display:"flex",gap:6,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
             <Btn small onClick={addLine}>+ Add Line</Btn>
             {usePanelMode&&<Btn small onClick={()=>{const used=plOLines.map(l=>l.panel).filter(Boolean);const unassigned=vendorPanels.filter(p=>!used.includes(p.panel));if(!unassigned.length){notify("All units already added");return}const nl=unassigned.map(p=>({flight:plOPostDates||"",panel:p.panel,isci:"",units:"",faces:[],notes:""}));setPlOLines(p=>[...p,...nl]);notify(unassigned.length+" units added")}} color="#9b7bb0">+ Add All {trafficVendor||""} Units</Btn>}
-            <Btn small primary color="#9b7bb0" onClick={printOoh} disabled={!plOLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
+            <Btn small color="#9b7bb0" onClick={printOoh} disabled={!plOLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
+            <Btn small primary color="#5BC4A0" onClick={sendOoh} disabled={plOohSending||!plOLines.some(l=>l.isci||l.panel)||!plOohSendTo.trim()}>{plOohSending?"⏳ Sending...":"✉ Send Traffic"}</Btn>
             <span style={{marginLeft:"auto",fontSize:12,color:"#94a3b8"}}>{usePanelMode?totalPanels+" units":""+plOLines.filter(l=>l.isci).length+" creatives | "+totalUnits+" units"}{trafficVendor?" | "+trafficVendor:""}</span>
           </div>
         </Cd>;
