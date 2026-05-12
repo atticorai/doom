@@ -3845,6 +3845,8 @@ const App=()=>{
     const[planF,setPlanF]=useState("");
     const[vendF,setVendF]=useState("");
     const[viewMode,setViewMode]=useState("cards");
+    const[plMapMode,setPlMapMode]=useState("market");
+    const[plClusterRadius,setPlClusterRadius]=useState(3);
     const[plOohTrafficMode,setPlOohTrafficMode]=useState("units");
     const[plOohTypeF,setPlOohTypeF]=useState("");
     const[plEditId,setPlEditId]=useState(null);
@@ -3877,7 +3879,7 @@ const App=()=>{
     const mktNames={CHI:"Chicago",MSP:"Minneapolis",CIN:"Cincinnati",DEN:"Denver"};
 
     // Map pins from PL_PANELS with coords
-    const mapPins=fl.map(p=>({id:p.unit,lat:p.lat,lng:p.lng,location:p.location,vendor:p.vendor,size:p.size,status:p.status,impressions:p.impressions*p.numUnits,market:p.market}));
+    const mapPins=fl.map(p=>({id:p.unit,lat:p.lat,lng:p.lng,location:p.location,vendor:p.vendor,size:p.size,status:p.status,impressions:p.impressions*p.numUnits,market:p.market,isci:p.isci||"",creative:plIsciTitle(p.isci)}));
 
     const CardGrid=()=><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
       {fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const flightClean=p.flight.split('(')[0].trim();const pop=PL_POPS[p.unit];
@@ -4003,9 +4005,36 @@ const App=()=>{
       </div>
 
       {viewMode==="cards"?<CardGrid/>:
-       viewMode==="map"?<Cd><div style={{padding:10}}><div style={{fontSize:14,fontWeight:700,marginBottom:6}}>📍 PL OOH Board Locations</div>
-        <OohMap pins={mapPins} colorFn={p=>mktColors[p.market]||"#64748b"} height={420}/>
-        <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center"}}>{Object.entries(mktColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{mktNames[k]}</div>)}</div>
+       viewMode==="map"?<Cd><div style={{padding:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:6}}>
+          <div style={{fontSize:14,fontWeight:700}}>📍 PL OOH Board Locations</div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            {plMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={plClusterRadius} onChange={e=>setPlClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#4AC8E8",minWidth:30}}>{plClusterRadius} mi</span></div>}
+            <div style={{display:"flex",gap:0,border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}>
+              <button onClick={()=>setPlMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:plMapMode==="market"?"rgba(155,123,176,.2)":"transparent",color:plMapMode==="market"?"#C4A0C8":"#94a3b8"}}>📍 By Market</button>
+              <button onClick={()=>setPlMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:plMapMode==="creative"?"rgba(74,200,232,.2)":"transparent",color:plMapMode==="creative"?"#4AC8E8":"#94a3b8"}}>🎨 By Creative</button>
+            </div>
+          </div>
+        </div>
+        {(()=>{
+          const clusters=plMapMode==="creative"?findClusters(mapPins,plClusterRadius):{};
+          const pinsWithStatus=mapPins.map(p=>{let st=p.isci?"ISCI: "+p.isci:"Untagged";if(p.creative)st+=" · "+p.creative;if(clusters[p.id])st+=" · ⚠ "+clusters[p.id]+" neighbor"+(clusters[p.id]>1?"s":"")+" w/ same creative";return{...p,status:st}});
+          return<><OohMap pins={pinsWithStatus} colorFn={p=>plMapMode==="creative"?creativeColor(p.creative):(mktColors[p.market]||"#64748b")} height={420}/>
+          {plMapMode==="market"?
+            <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>{Object.entries(mktColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{mktNames[k]}</div>)}</div>
+            :
+            (()=>{const titles=[...new Set(mapPins.map(p=>p.creative).filter(Boolean))].sort();const clusterCnt=Object.keys(clusters).length;return<div style={{marginTop:6}}>
+              {clusterCnt>0&&<div style={{textAlign:"center",fontSize:13,color:"#F4C242",fontWeight:600,marginBottom:6,padding:"4px 8px",background:"rgba(244,194,66,.1)",border:"1px solid rgba(244,194,66,.3)",borderRadius:4}}>⚠ {clusterCnt} unit{clusterCnt!==1?"s":""} within {plClusterRadius} mi of another running the same creative</div>}
+              {titles.length===0?
+                <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No ISCIs tagged yet — all units untagged. Tag units via the traffic flow to see them colored by creative.</div>
+                :
+                <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+                  {titles.map(t=>{const cnt=mapPins.filter(p=>p.creative===t).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #4a3565"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
+                </div>
+              }
+            </div>})()
+          }</>;
+        })()}
        </div></Cd>:
        viewMode==="ref"?<Cd><div style={{padding:10}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
           <div style={{fontSize:14,fontWeight:700}}>📋 PL OOH Reference — Unit × Vendor × Contract × PoP</div>
