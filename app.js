@@ -437,16 +437,6 @@ const PageHead=({title,sub,pgKey,children})=><div style={{marginBottom:8}}>
 const B=({l,c})=><span style={{display:"inline-flex",padding:"2px 7px",borderRadius:99,fontSize:12,fontWeight:700,background:c+"18",color:c,border:`1px solid ${c}35`,whiteSpace:"nowrap",letterSpacing:.3}}>{l}</span>;
 const Btn=({children,onClick,primary,small,disabled,color,danger})=><button disabled={disabled} onClick={onClick} style={{display:"inline-flex",alignItems:"center",gap:4,padding:small?"4px 10px":"8px 16px",borderRadius:8,border:primary||danger?"none":"1px solid rgba(155,123,176,.25)",background:disabled?"rgba(155,123,176,.1)":danger?"linear-gradient(135deg,#E85A7A,#d44868)":primary?color?`linear-gradient(135deg,${color},${color}cc)`:"linear-gradient(135deg,#9b7bb0,#C4A0C8)":"rgba(45,31,66,.6)",color:disabled?"#6B5E80":primary||danger?"#fff":"#C4A0C8",fontSize:small?11:13,fontWeight:700,cursor:disabled?"not-allowed":"pointer",boxShadow:primary&&!disabled?"0 2px 12px rgba(155,123,176,.2)":"none",transition:"all .15s",letterSpacing:.3}}>{children}</button>;
 const Inp=({label,...p})=><div style={{display:"flex",flexDirection:"column",gap:2,flex:1}}>{label&&<label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>{label}</label>}<input {...p} style={{padding:"6px 9px",borderRadius:5,border:"1px solid #d1d5db",fontSize:13,outline:"none",width:"100%",...(p.style||{})}}/></div>;
-// Uncontrolled input variant. The DOM owns the value, so focus survives
-// parent re-renders / remounts that would otherwise blow away a controlled
-// <input value={...}> mid-keystroke (the OOH Hub typing-letter-at-a-time bug).
-// onCommit fires per keystroke so callers see the latest value in state.
-// Resetting the field externally requires bumping `resetKey`.
-const StableInp=React.memo(({label,initialValue,onCommit,placeholder,style,resetKey,type})=>{
-  const ref=React.useRef(null);
-  React.useEffect(()=>{if(ref.current&&ref.current.value!==(initialValue||""))ref.current.value=initialValue||""},[resetKey]);
-  return<div style={{display:"flex",flexDirection:"column",gap:2,flex:1}}>{label&&<label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>{label}</label>}<input ref={ref} type={type||"text"} defaultValue={initialValue||""} placeholder={placeholder} onInput={e=>onCommit(e.target.value)} style={{padding:"6px 9px",borderRadius:5,border:"1px solid #d1d5db",fontSize:13,outline:"none",width:"100%",...(style||{})}}/></div>;
-});
 const Sel=({label,options,value,onChange,placeholder})=><div style={{display:"flex",flexDirection:"column",gap:2,flex:1}}>{label&&<label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>{label}</label>}<select value={value} onChange={e=>onChange(e.target.value)} style={{padding:"6px 9px",borderRadius:5,border:"1px solid #d1d5db",fontSize:13,background:"#1e1233",color:"#E8DFF0"}}>{placeholder&&<option value="">{placeholder}</option>}{options.map(o=><option key={typeof o==="string"?o:o.v} value={typeof o==="string"?o:o.v}>{typeof o==="string"?o:o.l}</option>)}</select></div>;
 const TH=({children,a,w})=><th style={{padding:"5px 7px",fontSize:10,fontWeight:700,color:"#D4A040",textTransform:"uppercase",letterSpacing:.8,borderBottom:"2px solid rgba(212,160,64,.2)",textAlign:a||"left",whiteSpace:"nowrap",position:"sticky",top:0,background:"linear-gradient(180deg,#2d1f42,#261840)",zIndex:1,width:w||"auto"}}>{children}</th>;
 const TD=({children,m,b,c,a})=><td style={{padding:"5px 7px",fontSize:13,color:c||"#4a3565",fontFamily:m?"monospace":"inherit",borderBottom:"1px solid #F0E8F8",whiteSpace:"nowrap",fontWeight:b?600:400,textAlign:a||"left"}}>{children}</td>;
@@ -554,32 +544,6 @@ if(!document.getElementById('dd-transitions')){
 }
 
 const BUYER_EMAILS={"Ken Lazar":"ken.lazar@atticor.ai","Lynn Cortelezzi":"lynn.cortelezzi@atticor.ai","Amy Coffey":"acoffey@wkfirm.com","Jessica Flynn":"jessica.flynn@atticor.ai"};
-
-// Stable module-scope wrappers for the OOH components.
-//
-// The actual component bodies (_OohHubImpl, _OohPgImpl, etc.) live INSIDE App
-// so they keep their closure access to App state (iscis, modal, notify, etc.).
-// But because they're defined inside App, every App re-render produced a new
-// function reference — React then read them as a new component "type" and
-// unmounted/remounted the entire OOH tree on every cross-cutting App state
-// change (iscis updates, toast auto-clear, Firestore sync), wiping the user's
-// in-progress traffic builder.
-//
-// These module-scope wrappers fix that: they're declared once, so React sees
-// the same component type across every render. Each wrapper delegates to the
-// impl via a ref that App keeps current. The impls' useState/useEffect calls
-// land in the wrapper's fiber, so React preserves their state across App
-// re-renders.
-const _OohHubImplRef={current:null};
-const _OohPgImplRef={current:null};
-const _PlOohPgImplRef={current:null};
-const _OohIsciPgImplRef={current:null};
-const _UploadPgImplRef={current:null};
-const OohHub=()=>_OohHubImplRef.current?_OohHubImplRef.current():null;
-const OohPg=()=>_OohPgImplRef.current?_OohPgImplRef.current():null;
-const PlOohPg=()=>_PlOohPgImplRef.current?_PlOohPgImplRef.current():null;
-const OohIsciPg=()=>_OohIsciPgImplRef.current?_OohIsciPgImplRef.current():null;
-const UploadPg=()=>_UploadPgImplRef.current?_UploadPgImplRef.current():null;
 
 // ── HASH ROUTER ───────────────────────────────────────
 const useHash=()=>{
@@ -1005,11 +969,8 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(confirmRemindersSent).length>0)saveToDb("confirmRemindersSent",confirmRemindersSent)},[confirmRemindersSent,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohContracts).length>0)saveToDb("oohContracts",oohContracts)},[oohContracts,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("customTags",customFields)},[customFields,dbLoaded]);
-  // No empty-map guard: a `{}` save is exactly what should happen when the
-  // user clears the last ISCI, otherwise the doc keeps stale assignments
-  // forever and they reappear on next load.
-  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(pops.filter(p=>p.isci).map(p=>[p.boardId,p.isci]));saveToDb("wkOohIscis",isciMap).catch(e=>{console.warn("wkOohIscis save failed:",e);try{notify("⚠ WK OOH save failed — your assignments may not persist")}catch(_){}})},[pops,dbLoaded]);
-  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(plPanels.filter(p=>p.isci).map(p=>[p.unit,p.isci]));saveToDb("plOohIscis",isciMap).catch(e=>{console.warn("plOohIscis save failed:",e);try{notify("⚠ PL OOH save failed — your assignments may not persist")}catch(_){}})},[plPanels,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(pops.filter(p=>p.isci).map(p=>[p.boardId,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("wkOohIscis",isciMap)},[pops,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(plPanels.filter(p=>p.isci).map(p=>[p.unit,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("plOohIscis",isciMap)},[plPanels,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohPhotos).length>0)saveToDb("oohPhotos",oohPhotos)},[oohPhotos,dbLoaded]);
 
   // ── CONFIRMATION REMINDERS (manual trigger) ──────────────────
@@ -1164,14 +1125,19 @@ const App=()=>{
   const[estBrand,setEstBrand]=useState("Postman Law");
   const[staBrand,setStaBrand]=useState("Postman Law");
   // OOH WK page state (lifted to prevent remount on photo upload)
-  // All OOH page state is LOCAL to OohPg / PlOohPg below — see useState
-  // calls there. Lifting it to App caused every OOH UI click (vendor,
-  // mode toggle, view tab, type filter, add-line) to re-render App,
-  // which recreated OohHub/OohPg's inline function references, which
-  // made React unmount/remount the OOH tree — wiping local state +
-  // input focus on every interaction. Keeping it local means OOH clicks
-  // only re-render OohPg, which holds a stable identity through its
-  // siblings.
+  const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");const[oohMapMode,setOohMapMode]=useState("market");const[oohClusterRadius,setOohClusterRadius]=useState(3);
+  const[oohEditId,setOohEditId]=useState(null);const[oohEditVal,setOohEditVal]=useState("");
+  const[oohPhotoPanel,setOohPhotoPanel]=useState(null);
+  const[oohLines,setOohLines]=useState([{flight:"",isci:"",units:"",notes:""}]);
+  const[oohPostDates,setOohPostDates]=useState("");const[oohVersion,setOohVersion]=useState("");const[oohComments,setOohComments]=useState("");
+  const[oohEditContract,setOohEditContract]=useState(null);const[oohEditDates,setOohEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
+  // OOH PL page state (lifted to prevent remount on photo upload)
+  const[plMktF,setPlMktF]=useState("");const[plPlanF,setPlPlanF]=useState("");const[plVendF,setPlVendF]=useState("");
+  const[plOohEditId,setPlOohEditId]=useState(null);const[plOohEditVal,setPlOohEditVal]=useState("");
+  const[plOohLines,setPlOohLines]=useState([{flight:"",isci:"",units:"",faces:[],notes:""}]);
+  const[plOohPostDates,setPlOohPostDates]=useState("");const[plOohVersion,setPlOohVersion]=useState("");const[plOohComments,setPlOohComments]=useState("");const[plOohTrafficMode,setPlOohTrafficMode]=useState("units");const[plOohTypeF,setPlOohTypeF]=useState("");
+  const[plCalMktF,setPlCalMktF]=useState("");const[plCalTypeF,setPlCalTypeF]=useState("");const[plShowPast,setPlShowPast]=useState(false);
+  const[plOohEditContract,setPlOohEditContract]=useState(null);const[plOohEditDates,setPlOohEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
   const[isciBulkText,setIsciBulkText]=useState("");
   const[isciSearch,setIsciSearch]=useState("");
   const[customFields,setCustomFields]=useState({
@@ -1208,25 +1174,16 @@ const App=()=>{
     }
     const params=new URLSearchParams(qs);
     const rawEstNum=params.get('confirm');const rawSta=params.get('sta');const tok=params.get('tok');
-    // Sanitize: estNum is either 3-4 digits (PL 4-digit / WK 3-digit) or an
-    // OOH pseudo-est like "OOH-Birmingham-Lamar" (built by the OOH send flow).
-    // sta must be alnum/dash/underscore only.
-    const estNum=rawEstNum&&(/^[0-9]{3,4}$/.test(rawEstNum)||/^OOH-[A-Za-z0-9_\-]{1,80}$/.test(rawEstNum))?rawEstNum:null;
+    // Sanitize: estNum must be 3-4 digits (PL 4-digit or WK 3-digit). sta must be alnum/dash/underscore only.
+    const estNum=rawEstNum&&/^[0-9]{3,4}$/.test(rawEstNum)?rawEstNum:null;
     const sta=rawSta&&/^[A-Za-z0-9_-]{1,32}$/.test(rawSta)?rawSta:null;
     if(estNum&&sta){
-      const isOohConfirm=estNum.startsWith("OOH-");
-      // OOH records aren't in the estimates list — pull the brand/market/media
-      // from the trafficHistory record that was saved when traffic was sent.
-      const oohRec=isOohConfirm?trafficHistory.find(h=>h.est===estNum):null;
-      const est=isOohConfirm?(oohRec?{num:estNum,brand:oohRec.brand,market:oohRec.market,media:oohRec.media,buyer:oohRec.buyer,group:oohRec.vendor||""}:null):estimates.find(e=>e.num===estNum);
+      const est=estimates.find(e=>e.num===estNum);
       const brand=BRANDS.find(b=>b.name===est?.brand);
       // For WK 3-digit estimates, find the market from the station
       const staObj=stations.find(s=>s.call===sta);
-      // OOH confirmKey IS the est (already includes market in the OOH-MKT-VND
-      // shape). For WK 3-digit non-OOH, append market. Otherwise use estNum.
-      const confirmKey=isOohConfirm?estNum:(est&&est.brand==="Wettermark Keith"&&estNum.length<=3?estNum+"|"+(staObj?.market||est?.market||""):estNum);
-      // OOH portal pulls "airing" data from trafficHistory; non-OOH from nowAiring.
-      const airing=isOohConfirm?(oohRec?{month:oohRec.month,flight:oohRec.flight,version:oohRec.version,iscis:oohRec.iscis||[],comments:oohRec.comments,postDates:oohRec.flight,totalUnits:oohRec.totalUnits,vendor:oohRec.vendor}:null):nowAiring[confirmKey];
+      const confirmKey=est&&est.brand==="Wettermark Keith"&&estNum.length<=3?estNum+"|"+(staObj?.market||est?.market||""):estNum;
+      const airing=nowAiring[confirmKey];
       // Validate confirmation token before granting access.
       // Real tokens are 32-char hex generated server-issued via genToken(). The legacy
       // 'auto' skeleton-key is no longer accepted when a stored token exists; it remains
@@ -1407,67 +1364,26 @@ const App=()=>{
     </div>;}}
   }
   const notify=useCallback(m=>{setToast(m);setTimeout(()=>setToast(null),3e3)},[]);
-  // Render the supplied HTML to a PDF via html2canvas. Used both for non-
-  // traffic flows and the OOH path below — the OOH sheets have a totally
-  // different layout (panels/units, vendor, market) than TV/Radio, so the
-  // jsPDF text-mode generator further down can't render them faithfully.
-  const renderHtmlToPdf=async(html)=>{
-    const iframe=document.createElement("iframe");
-    iframe.style.cssText="position:fixed;left:-9999px;width:850px;height:1200px;border:none";
-    iframe.sandbox="allow-same-origin";
-    document.body.appendChild(iframe);
-    try{
-      iframe.contentDocument.open();iframe.contentDocument.write(html);iframe.contentDocument.close();
-      await new Promise(r=>setTimeout(r,500));
-      const canvas=await html2canvas(iframe.contentDocument.body,{scale:2,useCORS:true,width:850});
-      document.body.removeChild(iframe);
-      const{jsPDF}=window.jspdf;const pdf=new jsPDF("p","mm","a4");
-      const imgW=210;const imgH=(canvas.height*imgW)/canvas.width;
-      const pageH=297;let yy=0;
-      while(yy<imgH){if(yy>0)pdf.addPage();pdf.addImage(canvas.toDataURL("image/jpeg",0.95),"JPEG",0,-yy,imgW,imgH);yy+=pageH;}
-      return pdf;
-    }catch(pdfErr){if(iframe.parentNode)document.body.removeChild(iframe);throw pdfErr;}
-  };
-  // Append a "Creative Files" page with clickable jsPDF text links onto the
-  // end of the given pdf. Only emits a page if at least one row has a fileUrl
-  // in the registry.
-  const appendCreativeFilesPage=(pdf,trafficRec)=>{
-    const filesWithLinks=(trafficRec.iscis||[]).map(r=>{const full=iscis.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:full.title||r.title||"",url:full.fileUrl}:null}).filter(Boolean);
-    if(!filesWithLinks.length)return;
-    pdf.addPage();
-    const pw=210;const mx=14;let y=20;
-    const bc=trafficRec.brand==="Postman Law"?[124,58,237]:[217,119,6];
-    pdf.setFont("helvetica","bold");pdf.setFontSize(14);pdf.setTextColor(bc[0],bc[1],bc[2]);
-    pdf.text("CREATIVE FILES",pw/2,y,{align:"center"});y+=4;
-    pdf.setFontSize(8);pdf.setTextColor(120,120,120);
-    pdf.text("Click any row below to download the creative.",pw/2,y,{align:"center"});y+=8;
-    pdf.setDrawColor(bc[0],bc[1],bc[2]);pdf.setLineWidth(0.4);pdf.line(mx,y,pw-mx,y);y+=6;
-    pdf.setFont("helvetica","normal");pdf.setFontSize(10);
-    filesWithLinks.forEach(f=>{
-      if(y>280){pdf.addPage();y=20}
-      pdf.setTextColor(37,99,235);
-      pdf.textWithLink(f.code+(f.title?" — "+f.title:""),mx,y,{url:f.url});
-      y+=6;
-    });
-    pdf.setTextColor(0,0,0);
-  };
   // Generate PDF with clickable links using jsPDF text rendering (not html2canvas)
   const generatePdfBase64=async(html,trafficRec)=>{
-    // No traffic record → just rasterize the HTML (no clickable links possible).
+    // If no traffic record passed, fall back to canvas method for non-traffic uses
     if(!trafficRec){
-      const pdf=await renderHtmlToPdf(html);
-      return pdf.output("datauristring");
+      const iframe=document.createElement("iframe");
+      iframe.style.cssText="position:fixed;left:-9999px;width:850px;height:1200px;border:none";
+      iframe.sandbox="allow-same-origin";
+      document.body.appendChild(iframe);
+      try{
+        iframe.contentDocument.open();iframe.contentDocument.write(html);iframe.contentDocument.close();
+        await new Promise(r=>setTimeout(r,500));
+        const canvas=await html2canvas(iframe.contentDocument.body,{scale:2,useCORS:true,width:850});
+        document.body.removeChild(iframe);
+        const{jsPDF}=window.jspdf;const pdf=new jsPDF("p","mm","a4");
+        const imgW=210;const imgH=(canvas.height*imgW)/canvas.width;
+        const pageH=297;let yy=0;
+        while(yy<imgH){if(yy>0)pdf.addPage();pdf.addImage(canvas.toDataURL("image/jpeg",0.95),"JPEG",0,-yy,imgW,imgH);yy+=pageH;}
+        return pdf.output("datauristring");
+      }catch(pdfErr){if(iframe.parentNode)document.body.removeChild(iframe);throw pdfErr;}
     }
-    // OOH sends: render the OOH HTML faithfully (its layout doesn't fit the
-    // TV/Radio text-mode template below), then tack on a Creative Files page
-    // with clickable links to the creative storage URLs.
-    if(trafficRec.isOoh||trafficRec.media==="OOH"){
-      const pdf=await renderHtmlToPdf(html);
-      appendCreativeFilesPage(pdf,trafficRec);
-      return pdf.output("datauristring");
-    }
-    // TV/Radio path: build the PDF from trafficRec in text mode (selectable,
-    // searchable, with inline creative links) — the original behavior.
     // ═══ Native jsPDF — real text (searchable, selectable, copy-pasteable),
     // clickable creative-file links, and row heights measured via
     // splitTextToSize so long titles don't overlap the next row.
@@ -3349,7 +3265,13 @@ const App=()=>{
     }
     // Include hardcoded POP_PHOTOS for PL
     if(typeof POP_PHOTOS!=='undefined'&&POP_PHOTOS[id]){
-      hardcoded.push({url:POP_PHOTOS[id],label:"PoP Photo",hardcoded:true});
+      const t=(typeof POP_TITLES!=='undefined'&&POP_TITLES[id])||"PoP Photo";
+      hardcoded.push({url:POP_PHOTOS[id],label:t,hardcoded:true});
+    }
+    // Include alt creatives (digital bulletins, rotating creatives, etc.)
+    if(typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[id]){
+      const altTitles=(typeof POP_TITLES_ALT!=='undefined'&&POP_TITLES_ALT[id])||[];
+      POP_PHOTOS_ALT[id].forEach((u,i)=>hardcoded.push({url:u,label:altTitles[i]||"PoP Photo (alt "+(i+1)+")",hardcoded:true}));
     }
     const all=[...hardcoded,...photos];
     if(!all.length&&compact)return null;
@@ -3372,26 +3294,16 @@ const App=()=>{
   };
 
   // ── OOH POSTINGS PAGE ────────────────────────────────
-  const _OohPgImpl=()=>{
-    const[om,setOm]=useState("");
-    const[ov,setOv]=useState("");
-    const[oVend,setOVend]=useState("");
-    const[viewMode,setViewMode]=useState("cards");
-    const[trafficMode,setTrafficMode]=useState("units");
-    const[oohTypeF,setOohTypeF]=useState("");
-    const[oohMapMode,setOohMapMode]=useState("market");
-    const[oohClusterRadius,setOohClusterRadius]=useState(3);
-    const[editId,setEditId]=useState(null);
-    const[editVal,setEditVal]=useState("");
-    const[photoPanel,setPhotoPanel]=useState(null);
-    const[oLines,setOLines]=useState([{flight:"",isci:"",units:"",notes:""}]);
-    const[oPostDates,setOPostDates]=useState("");
-    const[oVersion,setOVersion]=useState("");
-    const[oComments,setOComments]=useState("");
-    const[oohSendTo,setOohSendTo]=useState("");
-    const[oohSending,setOohSending]=useState(false);
-    const[editContract,setEditContract]=useState(null);
-    const[editDates,setEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
+  const OohPg=()=>{
+    const om=oohOm,setOm=setOohOm,ov=oohOv,setOv=setOohOv,oVend=oohOVend,setOVend=setOohOVend,viewMode=oohViewMode,setViewMode=setOohViewMode,trafficMode=oohTrafficMode,setTrafficMode=setOohTrafficMode;
+    const editId=oohEditId,setEditId=setOohEditId,editVal=oohEditVal,setEditVal=setOohEditVal;
+    const photoPanel=oohPhotoPanel,setPhotoPanel=setOohPhotoPanel;
+    const oLines=oohLines,setOLines=setOohLines;
+    const oPostDates=oohPostDates,setOPostDates=setOohPostDates;
+    const oVersion=oohVersion,setOVersion=setOohVersion;
+    const oComments=oohComments,setOComments=setOohComments;
+    const editContract=oohEditContract,setEditContract=setOohEditContract;
+    const editDates=oohEditDates,setEditDates=setOohEditDates;
     const dmas=[...new Set(pops.map(p=>p.dma))].sort();
     const subs=[...new Set(pops.map(p=>p.submarket))].sort();
     const vendors=[...new Set(pops.map(p=>p.vendor))].sort();
@@ -3591,93 +3503,36 @@ const App=()=>{
         const totalUnits=oLines.reduce((a,l)=>a+(parseInt(l.units)||0),0);
         const totalPanels=oLines.filter(l=>l.panel).length;
         const usePanelMode=trafficMode==="panels";
-        // Build the OOH traffic-sheet HTML once — used for both the print
-        // window and (when sending) the email body + PDF attachment. Returns
-        // {html, trafficRec, isciLines, hasPanel, vLabel} so callers don't
-        // have to recompute totals.
-        const buildOohSheet=()=>{
+        const printOoh=()=>{
           const vLabel=trafficVendor||"All Vendors";
           const hasPanel=oLines.some(l=>l.panel);
-          let h="<html><head><title>OOH Traffic - "+dmaLabel+" - "+vLabel+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>";
-          h+='<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">WETTERMARK KEITH</h2><div style="font-weight:bold;color:#555">PERSONAL INJURY LAWYERS</div></div>';
-          const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+v+'</span></div>';
-          h+=hd("Agency","WK Advertising Solutions")+hd("Client","Wettermark Keith");
-          h+=hd("Market",dmaLabel)+hd("Vendor",vLabel,"amb");
-          h+=hd("Buyer","Amy Coffey","red")+hd("Media","OOH","red");
-          h+=hd("Broadcast Month",workMonth,"grn");
-          h+=hd("Post Dates",oPostDates||"TBD","grn")+hd("Version/ Links",oVersion||"");
-          if(oComments)h+=hd("Comments",oComments);
-          if(hasPanel){
-            h+="<table><thead><tr><th>Flight Dates</th><th>Unit #</th><th>DMA</th><th>Location</th><th>ISCI / Creative</th><th>Notes</th></tr></thead><tbody>";
-            oLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel);h+="<tr><td><b>"+(l.flight||oPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+(l.panel||"")+"</td><td>"+(bd?bd.dma:"")+"</td><td style='font-size:10px'>"+(bd?bd.loc:"")+"</td><td>"+l.isci+"</td><td>"+(l.notes||"")+"</td></tr>"});
-          }else{
-            h+="<table><thead><tr><th>Flight Dates</th><th>ISCI Codes &amp; Title</th><th>Market</th><th>Rot %</th><th>Unit Amounts</th><th>Notes</th></tr></thead><tbody>";
-            oLines.filter(l=>l.isci).forEach(l=>{h+="<tr><td><b>"+(l.flight||oPostDates||"")+"</b></td><td>"+l.isci+"</td><td>"+(l.market||dmaLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?l.pct+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+(l.units||"")+"</td><td>"+(l.notes||"")+"</td></tr>"});
-          }
-          h+="</tbody></table>";
-          if(hasPanel)h+='<div style="margin-top:6px;font-size:11px"><b>Total Panels:</b> '+totalPanels+"</div>";
-          else if(totalUnits)h+='<div style="margin-top:6px;font-size:11px"><b>Total Units:</b> '+totalUnits+"</div>";
-          h+='<div class="sig"><div>Accepted by:</div><div>Date:</div></div>';
-          h+='<div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div>';
-          h+="</body></html>";
-          const isciLines=oLines.filter(l=>l.isci||l.panel).map(l=>{const rawCode=(l.isci||"").split(" - ")[0].trim();return{code:rawCode||l.panel,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}});
-          const trafficRec={ts:new Date().toISOString(),est:"OOH-"+dmaLabel+"-"+(trafficVendor||"ALL"),brand:"Wettermark Keith",market:dmaLabel,media:"OOH",buyer:"Amy Coffey",month:workMonth,flight:oPostDates,version:oVersion||"1",comments:oComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor};
-          return{html:h,trafficRec,isciLines,hasPanel,vLabel};
-        };
-        // Generate-only: open print window + save to library WITHOUT sending.
-        // Status stays "print_only" so the record still shows up in Traffic
-        // Library and Traffic Tracker as built-but-not-sent.
-        const printOoh=()=>{
-          const{html,trafficRec,hasPanel,vLabel}=buildOohSheet();
           const w=window.open("","","width=900,height=700");
-          w.document.write(html);w.document.close();w.print();
+          w.document.write("<html><head><title>OOH Traffic - "+dmaLabel+" - "+vLabel+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
+          w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">WETTERMARK KEITH</h2><div style="font-weight:bold;color:#555">PERSONAL INJURY LAWYERS</div></div>');
+          const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+v+'</span></div>';
+          w.document.write(hd("Agency","WK Advertising Solutions"));w.document.write(hd("Client","Wettermark Keith"));
+          w.document.write(hd("Market",dmaLabel));w.document.write(hd("Vendor",vLabel,"amb"));
+          w.document.write(hd("Buyer","Amy Coffey","red"));w.document.write(hd("Media","OOH","red"));
+          w.document.write(hd("Broadcast Month",workMonth,"grn"));
+          w.document.write(hd("Post Dates",oPostDates||"TBD","grn"));w.document.write(hd("Version/ Links",oVersion||""));
+          if(oComments)w.document.write(hd("Comments",oComments));
+          if(hasPanel){
+            w.document.write("<table><thead><tr><th>Flight Dates</th><th>Unit #</th><th>DMA</th><th>Location</th><th>ISCI / Creative</th><th>Notes</th></tr></thead><tbody>");
+            oLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel);w.document.write("<tr><td><b>"+(l.flight||oPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+(l.panel||"")+"</td><td>"+(bd?bd.dma:"")+"</td><td style='font-size:10px'>"+(bd?bd.loc:"")+"</td><td>"+l.isci+"</td><td>"+(l.notes||"")+"</td></tr>")});
+          }else{
+            w.document.write("<table><thead><tr><th>Flight Dates</th><th>ISCI Codes &amp; Title</th><th>Market</th><th>Rot %</th><th>Unit Amounts</th><th>Notes</th></tr></thead><tbody>");
+            oLines.filter(l=>l.isci).forEach(l=>{w.document.write("<tr><td><b>"+(l.flight||oPostDates||"")+"</b></td><td>"+l.isci+"</td><td>"+(l.market||dmaLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?l.pct+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+(l.units||"")+"</td><td>"+(l.notes||"")+"</td></tr>")});
+          }
+          w.document.write("</tbody></table>");
+          if(hasPanel)w.document.write('<div style="margin-top:6px;font-size:11px"><b>Total Panels:</b> '+totalPanels+"</div>");
+          else if(totalUnits)w.document.write('<div style="margin-top:6px;font-size:11px"><b>Total Units:</b> '+totalUnits+"</div>");
+          w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
+          w.document.write('<div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div>');
+          w.document.write("</body></html>");w.document.close();w.print();
           log("OOH Traffic Generated",dmaLabel+" - "+vLabel+" - "+(hasPanel?totalPanels+" panels":totalUnits+" units"));
           notify("OOH traffic sheet generated - "+vLabel);
-          setTrafficHistory(p=>[{...trafficRec,status:"print_only"},...p]);
-        };
-        // Send: build PDF, POST to /api/send-traffic with the operator-supplied
-        // recipient + buyer CC, save to library with status "sent" so it shows
-        // green in the Library and Traffic Tracker grid.
-        const sendOoh=async()=>{
-          const{html,trafficRec,hasPanel,vLabel}=buildOohSheet();
-          const recipients=oohSendTo.split(/[;,]/).map(s=>s.trim()).filter(Boolean);
-          if(!recipients.length){notify("Add a recipient email first");return}
-          setOohSending(true);
-          try{
-            let pdfB64="";
-            try{const pdfUri=await generatePdfBase64(html,trafficRec);pdfB64=(pdfUri||"").split(",")[1]||""}catch(pe){console.warn("OOH PDF generation failed, sending without attachment:",pe)}
-            // Reserve a per-vendor confirmation token so the recipient can click
-            // through to the same vendor portal that TV/Radio sends use. The
-            // portal accepts OOH-prefixed est strings (see confirmKey lookup).
-            const confirmBase=window.location.href.split("?")[0].split("#")[0];
-            const tokOoh=reserveToken(trafficRec.est,"OOH_VENDOR");
-            const confirmUrl=confirmBase+"?confirm="+encodeURIComponent(trafficRec.est)+"&sta=OOH_VENDOR&tok="+encodeURIComponent(tokOoh);
-            const subj="WK Advertising Solutions | Wettermark Keith "+dmaLabel+" OOH Traffic Instructions | "+workMonth+(oVersion?" | V"+oVersion:"");
-            const creativesForEmail=(trafficRec.iscis||[]).map(r=>{const full=iscis.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:full.title||"",fileUrl:full.fileUrl}:null}).filter(Boolean);
-            const creativeLinks=creativesForEmail.length?"<br><br><b>Creative Files:</b><br>"+creativesForEmail.map(c=>'<a href="'+c.fileUrl+'">'+c.code+(c.title?" — "+c.title:"")+'</a>').join("<br>"):"";
-            const msg="Hello,<br><br>Please find the attached OOH traffic instructions for Wettermark Keith — "+dmaLabel+" — "+workMonth+(oVersion?" V"+oVersion:"")+".<br><br>"+
-              "<b>Client:</b> Wettermark Keith<br><b>Market:</b> "+dmaLabel+"<br><b>Vendor:</b> "+vLabel+"<br><b>Buyer:</b> Amy Coffey<br>"+
-              "<b>Broadcast Month:</b> "+workMonth+"<br><b>Post Dates:</b> "+(oPostDates||"TBD")+(oVersion?"<br><b>Version:</b> "+oVersion:"")+
-              "<br><b>"+(hasPanel?"Total Panels":"Total Units")+":</b> "+(hasPanel?totalPanels:totalUnits)+
-              (oComments?"<br><b>Comments:</b> "+oComments:"")+
-              creativeLinks+
-              "<br><br>Please confirm receipt within 24 hours by clicking the button below:<br><br>"+
-              '<a href="'+confirmUrl+'" style="display:inline-block;padding:12px 28px;background:#D4A040;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;font-size:14px">Confirm Receipt</a>'+
-              "<br><br>Proof of Performance (PoP) photos are required upon completion of each install.<br><br>Thank you,<br><br>Emm Caban<br>WK Advertising Solutions";
-            const pdfName="OOH_Traffic_WK_"+(dmaLabel||"").replace(/\s/g,"")+"_"+(workMonth||"").replace(/\s/g,"")+(oVersion?"_V"+oVersion:"")+".pdf";
-            const cc=[BUYER_EMAILS["Amy Coffey"]||"","emm.caban@atticor.ai"].filter(Boolean).join(",");
-            const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients.join(","),cc,subject:subj,message:msg,pdfBase64:pdfB64,pdfName})});
-            if(!resp.ok)throw new Error("n8n webhook returned "+resp.status);
-            log("OOH Traffic Sent","WK "+dmaLabel+" - "+vLabel+" → "+recipients.join(", "));
-            notify(doomPick(DOOM.send)+" Sent to "+recipients.length+" recipient"+(recipients.length>1?"s":""));
-            setTrafficHistory(p=>[{...trafficRec,status:"sent",sentTo:recipients.join(", ")},...p]);
-          }catch(e){
-            console.warn("OOH send failed:",e);
-            notify("Send failed: "+(e.message||e)+" — record saved to library");
-            // Still save to library so the operator's work isn't lost.
-            setTrafficHistory(p=>[{...trafficRec,status:"saved",sendError:String(e.message||e)},...p]);
-            log("OOH Send Failed","WK "+dmaLabel+" - "+(e.message||e));
-          }finally{setOohSending(false)}
+          const isciLines=oLines.filter(l=>l.isci||l.panel).map(l=>({code:l.panel||l.isci,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}));
+          setTrafficHistory(p=>[{ts:new Date().toISOString(),est:"OOH-"+dmaLabel+"-"+(trafficVendor||"ALL"),brand:"Wettermark Keith",market:dmaLabel,media:"OOH",buyer:"Amy Coffey",month:workMonth,flight:oPostDates,version:oVersion,comments:oComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor},...p]);
         };
         const assignAll=(isciVal)=>{setOLines(p=>p.map(l=>l.panel&&!l.isci?{...l,isci:isciVal}:l))};
         return<Cd style={{padding:12}}>
@@ -3697,14 +3552,11 @@ const App=()=>{
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
-            <StableInp label="Post Dates" initialValue={oPostDates} onCommit={setOPostDates} placeholder="e.g., 2/9 - 4/5"/>
-            <StableInp label="Version / Links" initialValue={oVersion} onCommit={setOVersion} placeholder="e.g., Knoxville Static Posters"/>
-            <StableInp label="Comments" initialValue={oComments} onCommit={setOComments} placeholder="Optional"/>
+            <Inp label="Post Dates" value={oPostDates} onChange={e=>setOPostDates(e.target.value)} placeholder="e.g., 2/9 - 4/5"/>
+            <Inp label="Version / Links" value={oVersion} onChange={e=>setOVersion(e.target.value)} placeholder="e.g., Knoxville Static Posters"/>
+            <Inp label="Comments" value={oComments} onChange={e=>setOComments(e.target.value)} placeholder="Optional"/>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr",gap:6,marginBottom:8}}>
-            <StableInp label="Send To (vendor email — comma/semicolon separated)" initialValue={oohSendTo} onCommit={setOohSendTo} placeholder="e.g., birmingham@lamar.com; orders@lamar.com"/>
-          </div>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {dmaLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} panels | Broadcast: {workMonth} | CC: {BUYER_EMAILS["Amy Coffey"]||"buyer"} + emm.caban@atticor.ai</div>
+          <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {dmaLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} panels | Broadcast: {workMonth}</div>
           {usePanelMode&&oLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(37,99,235,.08)",borderRadius:5,border:"1px solid rgba(37,99,235,.2)"}}>
             <span style={{fontSize:11,color:"#4AC8E8"}}>Quick assign creative to all {oLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
             {oohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0",width:200}}/>}
@@ -3732,8 +3584,7 @@ const App=()=>{
           <div style={{display:"flex",gap:6,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
             <Btn small onClick={addLine}>+ Add Line</Btn>
             {usePanelMode&&<Btn small onClick={()=>{const used=oLines.map(l=>l.panel).filter(Boolean);const unassigned=vendorPanels.filter(p=>!used.includes(p.panel));if(!unassigned.length){notify("All panels already added");return}const nl=unassigned.map(p=>({flight:oPostDates||"",panel:p.panel,isci:"",units:"",notes:""}));setOLines(p=>[...p,...nl]);notify(unassigned.length+" panels added")}} color="#4AC8E8">+ Add All {trafficVendor||""} Panels</Btn>}
-            <Btn small color="#D4A040" onClick={printOoh} disabled={!oLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
-            <Btn small primary color="#5BC4A0" onClick={sendOoh} disabled={oohSending||!oLines.some(l=>l.isci||l.panel)||!oohSendTo.trim()}>{oohSending?"⏳ Sending...":"✉ Send Traffic"}</Btn>
+            <Btn small primary color="#D4A040" onClick={printOoh} disabled={!oLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
             <span style={{marginLeft:"auto",fontSize:12,color:"#94a3b8"}}>{usePanelMode?totalPanels+" panels":""+oLines.filter(l=>l.isci).length+" creatives | "+totalUnits+" units"}{trafficVendor?" | "+trafficVendor:""}</span>
           </div>
         </Cd>;
@@ -3843,28 +3694,16 @@ const App=()=>{
   };
 
   // ── POSTMAN LAW OOH MEDIA PLAN PAGE ────────────────────
-  const _PlOohPgImpl=()=>{
-    const[mktF,setMktF]=useState("");
-    const[planF,setPlanF]=useState("");
-    const[vendF,setVendF]=useState("");
-    const[viewMode,setViewMode]=useState("cards");
-    const[plMapMode,setPlMapMode]=useState("market");
-    const[plClusterRadius,setPlClusterRadius]=useState(3);
-    const[plOohTrafficMode,setPlOohTrafficMode]=useState("units");
-    const[plOohTypeF,setPlOohTypeF]=useState("");
-    const[plEditId,setPlEditId]=useState(null);
-    const[plEditVal,setPlEditVal]=useState("");
-    const[plOLines,setPlOLines]=useState([{flight:"",isci:"",units:"",faces:[],notes:""}]);
-    const[plOPostDates,setPlOPostDates]=useState("");
-    const[plOVersion,setPlOVersion]=useState("");
-    const[plOComments,setPlOComments]=useState("");
-    const[plOohSendTo,setPlOohSendTo]=useState("");
-    const[plOohSending,setPlOohSending]=useState(false);
-    const[calMktF,setCalMktF]=useState("");
-    const[calTypeF,setCalTypeF]=useState("");
-    const[showPast,setShowPast]=useState(false);
-    const[plEditContract,setPlEditContract]=useState(null);
-    const[plEditDates,setPlEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
+  const PlOohPg=()=>{
+    const mktF=plMktF,setMktF=setPlMktF,planF=plPlanF,setPlanF=setPlPlanF,vendF=plVendF,setVendF=setPlVendF;const viewMode=oohViewMode;const setViewMode=setOohViewMode;
+    const plEditId=plOohEditId,setPlEditId=setPlOohEditId,plEditVal=plOohEditVal,setPlEditVal=setPlOohEditVal;
+    const plOLines=plOohLines,setPlOLines=setPlOohLines;
+    const plOPostDates=plOohPostDates,setPlOPostDates=setPlOohPostDates;
+    const plOVersion=plOohVersion,setPlOVersion=setPlOohVersion;
+    const plOComments=plOohComments,setPlOComments=setPlOohComments;
+    const calMktF=plCalMktF,setCalMktF=setPlCalMktF,calTypeF=plCalTypeF,setCalTypeF=setPlCalTypeF,showPast=plShowPast,setShowPast=setPlShowPast;
+    const plEditContract=plOohEditContract,setPlEditContract=setPlOohEditContract;
+    const plEditDates=plOohEditDates,setPlEditDates=setPlOohEditDates;
     const viewChiFaces=plPanels.filter(p=>p.vendor==="View Chicago"&&(mktF?p.market==="CHI":true)).map(p=>p.unit).sort();
     // Faces are computed inline when building traffic lines instead of useEffect
     const startPlEdit=(unit,cur)=>{setPlEditId(unit);setPlEditVal(cur||"")};
@@ -3882,11 +3721,13 @@ const App=()=>{
     const mktNames={CHI:"Chicago",MSP:"Minneapolis",CIN:"Cincinnati",DEN:"Denver"};
 
     // Map pins from PL_PANELS with coords
-    const mapPins=fl.map(p=>({id:p.unit,lat:p.lat,lng:p.lng,location:p.location,vendor:p.vendor,size:p.size,status:p.status,impressions:p.impressions*p.numUnits,market:p.market,isci:p.isci||"",creative:plIsciTitle(p.isci)}));
+    const mapPins=fl.map(p=>({id:p.unit,lat:p.lat,lng:p.lng,location:p.location,vendor:p.vendor,size:p.size,status:p.status,impressions:p.impressions*p.numUnits,market:p.market}));
 
     const CardGrid=()=><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
       {fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const flightClean=p.flight.split('(')[0].trim();const pop=PL_POPS[p.unit];
-        const allCardPhotos=POP_PHOTOS[p.unit]?[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])]:[...(oohPhotos[p.unit]||[])];
+        const _popTitle=(typeof POP_TITLES!=='undefined'&&POP_TITLES[p.unit])||"PoP Photo";
+        const _popAlts=((typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[p.unit])||[]).map((u,i)=>({url:u,label:((typeof POP_TITLES_ALT!=='undefined'&&POP_TITLES_ALT[p.unit])||[])[i]||"PoP Photo (alt "+(i+1)+")",hardcoded:true}));
+        const allCardPhotos=POP_PHOTOS[p.unit]?[{url:POP_PHOTOS[p.unit],label:_popTitle,hardcoded:true},..._popAlts,...(oohPhotos[p.unit]||[])]:[..._popAlts,...(oohPhotos[p.unit]||[])];
         const openCardPop=(e)=>{
           // Skip if the click came from an interactive child (ISCI edit input,
           // upload button, individual photo with its own handler, etc).
@@ -3924,8 +3765,8 @@ const App=()=>{
                 <OohPhotoUpload id={p.unit}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length?"1fr 1fr":"1fr",gap:4}}>
-                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:0})}}/>
-                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();const all=[{url:POP_PHOTOS[p.unit],label:"PoP Photo",hardcoded:true},...(oohPhotos[p.unit]||[])];setModal({type:"oohPhoto",id:p.unit,photos:all,startIdx:pi+1})}}/>)}
+                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0})}}/>
+                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=>{const altCount=_popAlts.length;return<img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:1+altCount+pi})}}/>})}
               </div>
             </div>}
             {!POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
@@ -4008,36 +3849,9 @@ const App=()=>{
       </div>
 
       {viewMode==="cards"?<CardGrid/>:
-       viewMode==="map"?<Cd><div style={{padding:10}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:6}}>
-          <div style={{fontSize:14,fontWeight:700}}>📍 PL OOH Board Locations</div>
-          <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            {plMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={plClusterRadius} onChange={e=>setPlClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#4AC8E8",minWidth:30}}>{plClusterRadius} mi</span></div>}
-            <div style={{display:"flex",gap:0,border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}>
-              <button onClick={()=>setPlMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:plMapMode==="market"?"rgba(155,123,176,.2)":"transparent",color:plMapMode==="market"?"#C4A0C8":"#94a3b8"}}>📍 By Market</button>
-              <button onClick={()=>setPlMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:plMapMode==="creative"?"rgba(74,200,232,.2)":"transparent",color:plMapMode==="creative"?"#4AC8E8":"#94a3b8"}}>🎨 By Creative</button>
-            </div>
-          </div>
-        </div>
-        {(()=>{
-          const clusters=plMapMode==="creative"?findClusters(mapPins,plClusterRadius):{};
-          const pinsWithStatus=mapPins.map(p=>{let st=p.isci?"ISCI: "+p.isci:"Untagged";if(p.creative)st+=" · "+p.creative;if(clusters[p.id])st+=" · ⚠ "+clusters[p.id]+" neighbor"+(clusters[p.id]>1?"s":"")+" w/ same creative";return{...p,status:st}});
-          return<><OohMap pins={pinsWithStatus} colorFn={p=>plMapMode==="creative"?creativeColor(p.creative):(mktColors[p.market]||"#64748b")} height={420}/>
-          {plMapMode==="market"?
-            <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>{Object.entries(mktColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{mktNames[k]}</div>)}</div>
-            :
-            (()=>{const titles=[...new Set(mapPins.map(p=>p.creative).filter(Boolean))].sort();const clusterCnt=Object.keys(clusters).length;return<div style={{marginTop:6}}>
-              {clusterCnt>0&&<div style={{textAlign:"center",fontSize:13,color:"#F4C242",fontWeight:600,marginBottom:6,padding:"4px 8px",background:"rgba(244,194,66,.1)",border:"1px solid rgba(244,194,66,.3)",borderRadius:4}}>⚠ {clusterCnt} unit{clusterCnt!==1?"s":""} within {plClusterRadius} mi of another running the same creative</div>}
-              {titles.length===0?
-                <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No ISCIs tagged yet — all units untagged. Tag units via the traffic flow to see them colored by creative.</div>
-                :
-                <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-                  {titles.map(t=>{const cnt=mapPins.filter(p=>p.creative===t).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #4a3565"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
-                </div>
-              }
-            </div>})()
-          }</>;
-        })()}
+       viewMode==="map"?<Cd><div style={{padding:10}}><div style={{fontSize:14,fontWeight:700,marginBottom:6}}>📍 PL OOH Board Locations</div>
+        <OohMap pins={mapPins} colorFn={p=>mktColors[p.market]||"#64748b"} height={420}/>
+        <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center"}}>{Object.entries(mktColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{mktNames[k]}</div>)}</div>
        </div></Cd>:
        viewMode==="ref"?<Cd><div style={{padding:10}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
           <div style={{fontSize:14,fontWeight:700}}>📋 PL OOH Reference — Unit × Vendor × Contract × PoP</div>
@@ -4072,81 +3886,36 @@ const App=()=>{
         const totalUnits=plOLines.reduce((a,l)=>a+(parseInt(l.units)||0),0);
         const totalPanels=plOLines.filter(l=>l.panel).length;
         const usePanelMode=plOohTrafficMode==="panels";
-        // Build the PL OOH traffic-sheet HTML. Shared between print and send.
-        const buildPlOohSheet=()=>{
+        const printOoh=()=>{
           const vLabel=trafficVendor||"All Vendors";
           const hasPanel=plOLines.some(l=>l.panel);
-          let h="<html><head><title>OOH Traffic - PL "+mktLabel+" - "+vLabel+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>";
-          h+='<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">POSTMAN LAW</h2></div>';
-          const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+v+'</span></div>';
-          h+=hd("Agency","Atticor Media")+hd("Client","Postman Law");
-          h+=hd("Market",mktLabel)+hd("Vendor",vLabel,"amb");
-          h+=hd("Buyer","Ken Lazar","red")+hd("Media","OOH","red");
-          h+=hd("Broadcast Month",workMonth,"grn");
-          h+=hd("Post Dates",plOPostDates||"TBD","grn")+hd("Version/ Links",plOVersion||"");
-          if(plOComments)h+=hd("Comments",plOComments);
-          if(hasPanel){
-            h+="<table><thead><tr><th>Flight Dates</th><th>Unit #</th><th>Market</th><th>Location</th><th>ISCI / Creative</th><th>Face #s</th><th>Notes</th></tr></thead><tbody>";
-            plOLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel);h+="<tr><td><b>"+(l.flight||plOPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+(l.panel||"")+"</td><td>"+(bd?bd.mkt:"")+"</td><td style='font-size:10px'>"+(bd?bd.loc:"")+"</td><td>"+l.isci+"</td><td style='font-family:monospace;font-size:10px'>"+(l.faces&&l.faces.length?l.faces.join(", "):"")+"</td><td>"+(l.notes||"")+"</td></tr>"});
-          }else{
-            h+="<table><thead><tr><th>Flight Dates</th><th>ISCI Codes &amp; Title</th><th>Market</th><th>Rot %</th><th>Unit Amounts</th><th>Face Numbers</th><th>Notes</th></tr></thead><tbody>";
-            plOLines.filter(l=>l.isci).forEach(l=>{h+="<tr><td><b>"+(l.flight||plOPostDates||"")+"</b></td><td>"+l.isci+"</td><td>"+(l.market||mktLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?l.pct+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+(l.units||"")+"</td><td style='font-family:monospace;font-size:10px'>"+(l.faces&&l.faces.length?l.faces.join(", "):"")+"</td><td>"+(l.notes||"")+"</td></tr>"});
-          }
-          h+="</tbody></table>";
-          if(hasPanel)h+='<div style="margin-top:6px;font-size:11px"><b>Total Panels:</b> '+totalPanels+"</div>";
-          else if(totalUnits)h+='<div style="margin-top:6px;font-size:11px"><b>Total Units:</b> '+totalUnits+"</div>";
-          h+='<div class="sig"><div>Accepted by:</div><div>Date:</div></div>';
-          h+='<div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div>';
-          h+="</body></html>";
-          const isciLines=plOLines.filter(l=>l.isci||l.panel).map(l=>{const rawCode=(l.isci||"").split(" - ")[0].trim();return{code:rawCode||l.panel,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}});
-          const trafficRec={ts:new Date().toISOString(),est:"OOH-PL-"+mktLabel+"-"+(trafficVendor||"ALL"),brand:"Postman Law",market:mktLabel,media:"OOH",buyer:"Ken Lazar",month:workMonth,flight:plOPostDates,version:plOVersion||"1",comments:plOComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor};
-          return{html:h,trafficRec,isciLines,hasPanel,vLabel};
-        };
-        const printOoh=()=>{
-          const{html,trafficRec,hasPanel,vLabel}=buildPlOohSheet();
           const w=window.open("","","width=900,height=700");
-          w.document.write(html);w.document.close();w.print();
+          w.document.write("<html><head><title>OOH Traffic - PL "+mktLabel+" - "+vLabel+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
+          w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">POSTMAN LAW</h2></div>');
+          const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+v+'</span></div>';
+          w.document.write(hd("Agency","Atticor Media"));w.document.write(hd("Client","Postman Law"));
+          w.document.write(hd("Market",mktLabel));w.document.write(hd("Vendor",vLabel,"amb"));
+          w.document.write(hd("Buyer","Ken Lazar","red"));w.document.write(hd("Media","OOH","red"));
+          w.document.write(hd("Broadcast Month",workMonth,"grn"));
+          w.document.write(hd("Post Dates",plOPostDates||"TBD","grn"));w.document.write(hd("Version/ Links",plOVersion||""));
+          if(plOComments)w.document.write(hd("Comments",plOComments));
+          if(hasPanel){
+            w.document.write("<table><thead><tr><th>Flight Dates</th><th>Unit #</th><th>Market</th><th>Location</th><th>ISCI / Creative</th><th>Face #s</th><th>Notes</th></tr></thead><tbody>");
+            plOLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel);w.document.write("<tr><td><b>"+(l.flight||plOPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+(l.panel||"")+"</td><td>"+(bd?bd.mkt:"")+"</td><td style='font-size:10px'>"+(bd?bd.loc:"")+"</td><td>"+l.isci+"</td><td style='font-family:monospace;font-size:10px'>"+(l.faces&&l.faces.length?l.faces.join(", "):"")+"</td><td>"+(l.notes||"")+"</td></tr>")});
+          }else{
+            w.document.write("<table><thead><tr><th>Flight Dates</th><th>ISCI Codes &amp; Title</th><th>Market</th><th>Rot %</th><th>Unit Amounts</th><th>Face Numbers</th><th>Notes</th></tr></thead><tbody>");
+            plOLines.filter(l=>l.isci).forEach(l=>{w.document.write("<tr><td><b>"+(l.flight||plOPostDates||"")+"</b></td><td>"+l.isci+"</td><td>"+(l.market||mktLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?l.pct+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+(l.units||"")+"</td><td style='font-family:monospace;font-size:10px'>"+(l.faces&&l.faces.length?l.faces.join(", "):"")+"</td><td>"+(l.notes||"")+"</td></tr>")});
+          }
+          w.document.write("</tbody></table>");
+          if(hasPanel)w.document.write('<div style="margin-top:6px;font-size:11px"><b>Total Panels:</b> '+totalPanels+"</div>");
+          else if(totalUnits)w.document.write('<div style="margin-top:6px;font-size:11px"><b>Total Units:</b> '+totalUnits+"</div>");
+          w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
+          w.document.write('<div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div>');
+          w.document.write("</body></html>");w.document.close();w.print();
           log("OOH Traffic Generated","PL "+mktLabel+" - "+vLabel+" - "+(hasPanel?totalPanels+" panels":totalUnits+" units"));
           notify("PL OOH traffic sheet generated - "+vLabel);
-          setTrafficHistory(p=>[{...trafficRec,status:"print_only"},...p]);
-        };
-        const sendOoh=async()=>{
-          const{html,trafficRec,hasPanel,vLabel}=buildPlOohSheet();
-          const recipients=plOohSendTo.split(/[;,]/).map(s=>s.trim()).filter(Boolean);
-          if(!recipients.length){notify("Add a recipient email first");return}
-          setPlOohSending(true);
-          try{
-            let pdfB64="";
-            try{const pdfUri=await generatePdfBase64(html,trafficRec);pdfB64=(pdfUri||"").split(",")[1]||""}catch(pe){console.warn("PL OOH PDF generation failed, sending without attachment:",pe)}
-            // Per-vendor confirm token + portal URL — same flow as TV/Radio.
-            const confirmBase=window.location.href.split("?")[0].split("#")[0];
-            const tokOoh=reserveToken(trafficRec.est,"OOH_VENDOR");
-            const confirmUrl=confirmBase+"?confirm="+encodeURIComponent(trafficRec.est)+"&sta=OOH_VENDOR&tok="+encodeURIComponent(tokOoh);
-            const subj="Atticor Media | Postman Law "+mktLabel+" OOH Traffic Instructions | "+workMonth+(plOVersion?" | V"+plOVersion:"");
-            const creativesForEmail=(trafficRec.iscis||[]).map(r=>{const full=iscis.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:full.title||"",fileUrl:full.fileUrl}:null}).filter(Boolean);
-            const creativeLinks=creativesForEmail.length?"<br><br><b>Creative Files:</b><br>"+creativesForEmail.map(c=>'<a href="'+c.fileUrl+'">'+c.code+(c.title?" — "+c.title:"")+'</a>').join("<br>"):"";
-            const msg="Hello,<br><br>Please find the attached OOH traffic instructions for Postman Law — "+mktLabel+" — "+workMonth+(plOVersion?" V"+plOVersion:"")+".<br><br>"+
-              "<b>Client:</b> Postman Law<br><b>Market:</b> "+mktLabel+"<br><b>Vendor:</b> "+vLabel+"<br><b>Buyer:</b> Ken Lazar<br>"+
-              "<b>Broadcast Month:</b> "+workMonth+"<br><b>Post Dates:</b> "+(plOPostDates||"TBD")+(plOVersion?"<br><b>Version:</b> "+plOVersion:"")+
-              "<br><b>"+(hasPanel?"Total Panels":"Total Units")+":</b> "+(hasPanel?totalPanels:totalUnits)+
-              (plOComments?"<br><b>Comments:</b> "+plOComments:"")+
-              creativeLinks+
-              "<br><br>Please confirm receipt within 24 hours by clicking the button below:<br><br>"+
-              '<a href="'+confirmUrl+'" style="display:inline-block;padding:12px 28px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;font-size:14px">Confirm Receipt</a>'+
-              "<br><br>Proof of Performance (PoP) photos are required upon completion of each install.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Media";
-            const pdfName="OOH_Traffic_PL_"+(mktLabel||"").replace(/\s/g,"")+"_"+(workMonth||"").replace(/\s/g,"")+(plOVersion?"_V"+plOVersion:"")+".pdf";
-            const cc=[BUYER_EMAILS["Ken Lazar"]||"","emm.caban@atticor.ai"].filter(Boolean).join(",");
-            const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients.join(","),cc,subject:subj,message:msg,pdfBase64:pdfB64,pdfName})});
-            if(!resp.ok)throw new Error("n8n webhook returned "+resp.status);
-            log("OOH Traffic Sent","PL "+mktLabel+" - "+vLabel+" → "+recipients.join(", "));
-            notify(doomPick(DOOM.send)+" Sent to "+recipients.length+" recipient"+(recipients.length>1?"s":""));
-            setTrafficHistory(p=>[{...trafficRec,status:"sent",sentTo:recipients.join(", ")},...p]);
-          }catch(e){
-            console.warn("PL OOH send failed:",e);
-            notify("Send failed: "+(e.message||e)+" — record saved to library");
-            setTrafficHistory(p=>[{...trafficRec,status:"saved",sendError:String(e.message||e)},...p]);
-            log("OOH Send Failed","PL "+mktLabel+" - "+(e.message||e));
-          }finally{setPlOohSending(false)}
+          const isciLines=plOLines.filter(l=>l.isci||l.panel).map(l=>({code:l.panel||l.isci,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}));
+          setTrafficHistory(p=>[{ts:new Date().toISOString(),est:"OOH-PL-"+mktLabel+"-"+(trafficVendor||"ALL"),brand:"Postman Law",market:mktLabel,media:"OOH",buyer:"Ken Lazar",month:workMonth,flight:plOPostDates,version:plOVersion,comments:plOComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor},...p]);
         };
         const assignAll=(isciVal)=>{setPlOLines(p=>p.map(l=>l.panel&&!l.isci?{...l,isci:isciVal}:l))};
         return<Cd style={{padding:12}}>
@@ -4166,14 +3935,11 @@ const App=()=>{
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
-            <StableInp label="Post Dates" initialValue={plOPostDates} onCommit={setPlOPostDates} placeholder="e.g., 2/9 - 4/5"/>
-            <StableInp label="Version / Links" initialValue={plOVersion} onCommit={setPlOVersion} placeholder="e.g., Chicago Posters"/>
-            <StableInp label="Comments" initialValue={plOComments} onCommit={setPlOComments} placeholder="Optional"/>
+            <Inp label="Post Dates" value={plOPostDates} onChange={e=>setPlOPostDates(e.target.value)} placeholder="e.g., 2/9 - 4/5"/>
+            <Inp label="Version / Links" value={plOVersion} onChange={e=>setPlOVersion(e.target.value)} placeholder="e.g., Chicago Posters"/>
+            <Inp label="Comments" value={plOComments} onChange={e=>setPlOComments(e.target.value)} placeholder="Optional"/>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr",gap:6,marginBottom:8}}>
-            <StableInp label="Send To (vendor email — comma/semicolon separated)" initialValue={plOohSendTo} onCommit={setPlOohSendTo} placeholder="e.g., Robert@wilkinsmedia.com; orders@wilkinsmedia.com"/>
-          </div>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {mktLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} units | Buyer: Ken Lazar | Broadcast: {workMonth} | CC: {BUYER_EMAILS["Ken Lazar"]||"buyer"} + emm.caban@atticor.ai</div>
+          <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {mktLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} units | Buyer: Ken Lazar | Broadcast: {workMonth}</div>
           {usePanelMode&&plOLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(124,59,237,.08)",borderRadius:5,border:"1px solid rgba(124,59,237,.2)"}}>
             <span style={{fontSize:11,color:"#C4A0C8"}}>Quick assign creative to all {plOLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
             {plOohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0",width:200}}/>}
@@ -4203,8 +3969,7 @@ const App=()=>{
           <div style={{display:"flex",gap:6,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
             <Btn small onClick={addLine}>+ Add Line</Btn>
             {usePanelMode&&<Btn small onClick={()=>{const used=plOLines.map(l=>l.panel).filter(Boolean);const unassigned=vendorPanels.filter(p=>!used.includes(p.panel));if(!unassigned.length){notify("All units already added");return}const nl=unassigned.map(p=>({flight:plOPostDates||"",panel:p.panel,isci:"",units:"",faces:[],notes:""}));setPlOLines(p=>[...p,...nl]);notify(unassigned.length+" units added")}} color="#9b7bb0">+ Add All {trafficVendor||""} Units</Btn>}
-            <Btn small color="#9b7bb0" onClick={printOoh} disabled={!plOLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
-            <Btn small primary color="#5BC4A0" onClick={sendOoh} disabled={plOohSending||!plOLines.some(l=>l.isci||l.panel)||!plOohSendTo.trim()}>{plOohSending?"⏳ Sending...":"✉ Send Traffic"}</Btn>
+            <Btn small primary color="#9b7bb0" onClick={printOoh} disabled={!plOLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
             <span style={{marginLeft:"auto",fontSize:12,color:"#94a3b8"}}>{usePanelMode?totalPanels+" units":""+plOLines.filter(l=>l.isci).length+" creatives | "+totalUnits+" units"}{trafficVendor?" | "+trafficVendor:""}</span>
           </div>
         </Cd>;
@@ -4386,22 +4151,7 @@ const App=()=>{
     const brandName=f2.brand==="PL"?"Postman Law":"Wettermark Keith";
     const normTitle=function(t){var s=(t||"").toLowerCase().trim();Object.values(DM).forEach(function(n){s=s.split(n.toLowerCase()).join("")});Object.keys(DM).forEach(function(c){s=s.split(c.toLowerCase()).join("")});return s.replace(/[-–—,_\s]+/g," ").trim()};
     const normInput=normTitle(f2.title);
-    // Pool the candidate pre-existing ISCIs from BOTH the metadata filter
-    // (brand+dur+suffix) AND a regex on the code shape itself
-    // ([DMA][BR][YY][type][seq][suf]). The code-shape match catches legacy
-    // records where dur/brand/suffix were stored slightly off — without it,
-    // those records get excluded from max-seq calc, which suggests a number
-    // that's already taken (the dupe warning then fires on register).
-    const codeShapeRe=new RegExp("^[A-Z]{3}"+f2.brand+"[0-9]{2}"+durField.padStart(2,"0")+"([0-9]{3})"+suf+"$","i");
-    const seenCodes=new Set();
-    const brandIscis=iscis.filter(i=>{
-      const meta=i.brand===brandName&&i.dur===durField&&i.suffix===suf;
-      const shape=codeShapeRe.test(i.code||"");
-      if(!(meta||shape))return false;
-      if(seenCodes.has(i.code))return false;
-      seenCodes.add(i.code);
-      return true;
-    });
+    const brandIscis=iscis.filter(i=>i.brand===brandName&&i.dur===durField&&i.suffix===suf);
     const existingWithTitle=normInput?brandIscis.filter(i=>normTitle(i.title)===normInput):[];
     const existingSeq=existingWithTitle.length>0?(()=>{const m=existingWithTitle[0].code.match(/([0-9]{3})[TRDSOB]?$/);return m?m[1]:null})():null;
     const allSeqs=brandIscis.map(i=>{const m=i.code.match(/([0-9]{3})[TRDSOB]?$/);return m?parseInt(m[1]):0});
@@ -4446,11 +4196,7 @@ const App=()=>{
               notify("Starting upload: "+file.name);
               u2("uploading",true);u2("uploadPct",0);
               var ext=file.name.split(".").pop();
-              // Unique per-upload path: avoids overwriting prior uploads with the same brand+year+DMA
-              // before the ISCI sequence number is finalized. Firebase URL is what's stored on the
-              // ISCI, so the path can be anything unique — no rename needed on register.
-              var slug=(f2.title||"untitled").replace(/[^a-z0-9]+/gi,"-").replace(/^-+|-+$/g,"").slice(0,40).toLowerCase();
-              var tempCode=(f2.dmas[0]?f2.dmas[0]:"X")+f2.brand+yr+durField.padStart(2,"0")+"_"+slug+"_"+Date.now();
+              var tempCode=f2.dmas[0]?f2.dmas[0]+f2.brand+yr+"_temp":"temp_"+Date.now();
               var path="creative/"+tempCode+"."+ext;
               var ref=storage.ref(path);
               var metadata={customMetadata:{originalName:file.name,title:f2.title||"",brand:f2.brand||"",media:f2.media||""}};
@@ -4781,7 +4527,7 @@ const App=()=>{
   };
 
   // ── UPLOAD / IMPORT PAGE ─────────────────────────────
-  const _UploadPgImpl=()=>{
+  const UploadPg=()=>{
     const[files,setFiles]=useState([]);
     const[parsing,setParsing]=useState(false);
     const[results,setResults]=useState([]);
@@ -5144,37 +4890,13 @@ ${fullText.substring(0,3000)}`}]
         {results.some(r=>r.status==="success"&&r.panels?.length>0)&&<div style={{display:"flex",gap:6,justifyContent:"flex-end"}}>
           <Btn small onClick={()=>{setResults([]);setFiles([])}}>Clear All</Btn>
           <Btn small primary onClick={()=>{
-            let savedContracts=0;let totalPanels=0;
-            const parseMmDdYy=(s)=>{if(!s)return"";const m=String(s).match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);if(!m)return"";const yr=m[3].length===2?"20"+m[3]:m[3];return yr+"-"+m[1].padStart(2,"0")+"-"+m[2].padStart(2,"0")};
-            const contractUpdates={};
-            results.filter(r=>r.status==="success"&&r.type==="contract"&&r.contractNum).forEach(r=>{
-              contractUpdates[r.contractNum]={
-                num:r.contractNum,
-                vendor:r.vendor||"",
-                brand:r.client||"",
-                market:r.market||"",
-                startDate:parseMmDdYy(r.startDate),
-                endDate:parseMmDdYy(r.endDate),
-                totalCost:r.totalCost||0,
-                boardCount:r.boardCount||r.totalPanels||0,
-                campaign:r.campaign||"",
-                notes:"Imported "+new Date().toLocaleDateString()+" from "+r.file,
-                importedAt:new Date().toISOString()
-              };
-              savedContracts++;
-              totalPanels+=r.panels.length;
-              log("OOH Contract Import",`${r.contractNum} · ${r.vendor||"?"} · ${r.client||"?"} · ${r.panels.length} panels`);
+            let added=0;
+            results.filter(r=>r.status==="success"&&r.panels?.length>0).forEach(r=>{
+              added+=r.panels.length;
+              log("Import",`${r.file}: ${r.panels.length} panels → ${r.client||"system"}`);
             });
-            if(savedContracts>0){
-              setOohContracts(prev=>{const merged={...prev};Object.entries(contractUpdates).forEach(([k,v])=>{merged[k]={...(prev[k]||{}),...v}});return merged});
-              notify(`${savedContracts} contract${savedContracts!==1?"s":""} saved · ${totalPanels} panels logged`);
-            }else{
-              results.filter(r=>r.status==="success"&&r.panels?.length>0).forEach(r=>{
-                log("Import",`${r.file}: ${r.panels.length} panels → ${r.client||"system"} (no contract # — skipped)`);
-              });
-              notify(`No contract numbers found — ${totalParsed} panels logged but not saved. Edit contracts manually in OOH WK/PL pages.`);
-            }
-          }}>{results.some(r=>r.contractNum)?"Save Contracts ("+results.filter(r=>r.contractNum).length+")":"Log "+totalParsed+" Panels"}</Btn>
+            notify(`${added} panels imported from ${results.filter(r=>r.status==="success").length} files`);
+          }}>Import {totalParsed} Panels</Btn>
         </div>}
       </div>}
 
@@ -7062,110 +6784,7 @@ Rules:
   };
 
   // ── OOH HUB (sub-app) ──────────────────────────────────
-  // OOH ISCI Registry — hoisted to App scope so its identity is stable across
-  // OohHub re-renders. When this was nested inside OohHub, every parent render
-  // created a fresh function reference; React then unmounted & remounted the
-  // page, blowing away its useState (filters, bulk-creative toggle) on every
-  // click in the OOH Hub.
-  const _OohIsciPgImpl=()=>{
-    const[showOohInactive,setShowOohInactive]=useState(false);
-    const[showOohBulkCreative,setShowOohBulkCreative]=useState(false);
-    const allOoh=iscis.filter(i=>i.suffix==="O");
-    const oohIscis=showOohInactive?allOoh:allOoh.filter(i=>i.active);
-    const inactiveOoh=allOoh.filter(i=>!i.active);
-    const[oohIsciFilter,setOohIsciFilter]=useState("");
-    const[oohBrandFilter,setOohBrandFilter]=useState("");
-    const[oohDmaFilter,setOohDmaFilter]=useState("");
-    const filtered=oohIscis.filter(i=>{
-      if(oohBrandFilter&&i.brand!==oohBrandFilter)return false;
-      if(oohDmaFilter&&i.dma!==oohDmaFilter)return false;
-      if(oohIsciFilter){const q=oohIsciFilter.toLowerCase();return(i.code||"").toLowerCase().includes(q)||(i.title||"").toLowerCase().includes(q)||(i.dma||"").toLowerCase().includes(q)}
-      return true;
-    });
-    const oohDmas=[...new Set(allOoh.map(i=>i.dma))].sort();
-    const toggleOohActive=(idx)=>{setIscis(p=>p.map((x,j)=>j===idx?{...x,active:!x.active}:x));const ic=iscis[idx];notify((ic.active?"Deactivated":"Activated")+" "+ic.code);log("ISCI "+(ic.active?"Deactivated":"Activated"),ic.code)};
-    return<div style={{display:"flex",flexDirection:"column",gap:12}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
-        <div><PageHead title="OOH ISCI Registry" pgKey="ooh" sub={allOoh.filter(i=>i.active).length+" active · "+inactiveOoh.length+" inactive · "+allOoh.filter(i=>i.fileUrl).length+" with creative"}/></div>
-        <div style={{display:"flex",gap:4}}>
-          <Btn primary onClick={()=>setModal({t:"newIsci",defaultMedia:"OOH"})}>+ Register OOH ISCI</Btn>
-          <Btn onClick={()=>setShowOohBulkCreative(!showOohBulkCreative)} color={showOohBulkCreative?"#E85A7A":"#9b7bb0"}>{showOohBulkCreative?"Close Upload":"📁 Bulk Creative"}</Btn>
-          <Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=allOoh.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active OOH ISCIs have files");return}notify("Scanning "+missing.length+" OOH ISCIs...");let found=0;const updates={};const exts=["jpg","png","pdf","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);return updated});notify(found+" files recovered!");log("OOH Creative Recovery",found+" files")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn>
-        </div>
-      </div>
-      {showOohBulkCreative&&<Cd style={{padding:12}}>
-        <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>📁 Bulk Creative Upload — OOH</div>
-        <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>Drop multiple files. Name each file with the ISCI code (e.g. <b style={{color:"#E8DFF0"}}>BRMWK26SP001O.jpg</b>). Matches exact codes, prefix codes, and partial substrings.</div>
-        <DropZone multiple accept="image/*,application/pdf,.psd,.ai,.eps" style={{marginBottom:8}} onFiles={(fileList)=>{
-          const files=Array.from(fileList);if(!files.length){notify("No files selected");return}
-          if(!storage){notify("ERROR: Firebase Storage not loaded.");return}
-          let matched=0;let notFound=0;let failed=0;const updates={};
-          const total=files.length;
-          const uploadNext=(fi)=>{
-            if(fi>=total){
-              setUploadTracker(null);
-              if(Object.keys(updates).length>0){setIscis(prev=>prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x))}
-              log("OOH Bulk Creative",matched+" uploaded, "+notFound+" no match, "+failed+" failed");
-              notify(matched+" files uploaded"+(notFound?" | "+notFound+" not matched":"")+(failed?" | "+failed+" failed":""));
-              return;
-            }
-            const file=files[fi];
-            const baseName=file.name.replace(/\.[^.]+$/,"").trim();
-            const baseUpper=baseName.toUpperCase();
-            let isciIdx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper===i.code.toUpperCase());
-            if(isciIdx===-1)isciIdx=iscis.findIndex(i=>i.suffix==="O"&&(baseUpper.startsWith(i.code.toUpperCase()+" ")||baseUpper.startsWith(i.code.toUpperCase()+"-")||baseUpper.startsWith(i.code.toUpperCase()+"_")));
-            if(isciIdx===-1)isciIdx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper.includes(i.code.toUpperCase()));
-            if(isciIdx===-1)isciIdx=iscis.findIndex(i=>i.suffix==="O"&&i.code.toUpperCase().includes(baseUpper));
-            if(isciIdx===-1){notFound++;setUploadTracker({label:file.name+" — no OOH ISCI match",current:fi+1,total,pct:Math.round(((fi+1)/total)*100)});uploadNext(fi+1);return}
-            const ext=file.name.split(".").pop();
-            const ref=storage.ref("creative/"+iscis[isciIdx].code+"."+ext);
-            const meta={customMetadata:{originalName:file.name,isciCode:iscis[isciIdx].code,title:iscis[isciIdx].title||"",brand:iscis[isciIdx].brand||"",media:"OOH"}};
-            const task=ref.put(file,meta);
-            task.on("state_changed",
-              snap=>{const p=Math.round((snap.bytesTransferred/snap.totalBytes)*100);setUploadTracker({label:"Uploading "+file.name+" ("+iscis[isciIdx].code+")",current:fi+1,total,pct:Math.round(((fi+p/100)/total)*100)})},
-              err=>{failed++;console.warn("OOH bulk upload failed:",file.name,err);setUploadTracker({label:file.name+" — FAILED",current:fi+1,total,pct:Math.round(((fi+1)/total)*100)});uploadNext(fi+1)},
-              async()=>{const url=await ref.getDownloadURL();updates[isciIdx]=url;matched++;uploadNext(fi+1)}
-            );
-          };
-          setUploadTracker({label:"Starting OOH bulk upload...",current:0,total,pct:0});
-          uploadNext(0);
-        }}>
-          <div style={{fontSize:24}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Drag & drop or click to select OOH creative files</div><div style={{fontSize:12,color:"#64748b"}}>.jpg, .png, .pdf, .psd, .ai, .eps — multiple allowed</div>
-        </DropZone>
-        <div style={{fontSize:12,color:"#94a3b8"}}>OOH ISCIs with creative: <b style={{color:"#5BC4A0"}}>{allOoh.filter(i=>i.fileUrl).length}</b> / {allOoh.length} ({allOoh.filter(i=>!i.fileUrl&&i.active).length} active still missing)</div>
-      </Cd>}
-      <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-        <input placeholder="Search OOH ISCIs..." value={oohIsciFilter} onChange={e=>setOohIsciFilter(e.target.value)} style={{width:200,padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
-        <Sel label="" options={[{v:"",l:"All Brands"},{v:"Wettermark Keith",l:"Wettermark Keith"},{v:"Postman Law",l:"Postman Law"}]} value={oohBrandFilter} onChange={setOohBrandFilter}/>
-        <Sel label="" options={[{v:"",l:"All DMAs"},...oohDmas.map(d=>({v:d,l:(DM[d]||d)+" ("+d+")"}))] } value={oohDmaFilter} onChange={setOohDmaFilter}/>
-        <label style={{fontSize:12,display:"flex",alignItems:"center",gap:3,cursor:"pointer",color:"#9B8EAD"}}><input type="checkbox" checked={showOohInactive} onChange={e=>setShowOohInactive(e.target.checked)}/> Show inactive</label>
-        {(oohIsciFilter||oohBrandFilter||oohDmaFilter)&&<Btn small onClick={()=>{setOohIsciFilter("");setOohBrandFilter("");setOohDmaFilter("")}}>Clear</Btn>}
-        <span style={{fontSize:12,color:"#6B5E80",marginLeft:"auto"}}>{filtered.length} shown</span>
-      </div>
-      <Cd style={{padding:0,overflow:"hidden"}}>
-        <div style={{maxHeight:"calc(100vh - 260px)",overflowY:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>Code</TH><TH>Title</TH><TH>Brand</TH><TH>DMA</TH><TH>Type</TH><TH>File</TH><TH>Status</TH><TH w="60">Actions</TH></tr></thead>
-            <tbody>{filtered.map((ic,i)=>{const gi=iscis.findIndex(x=>x.code===ic.code&&x.dma===ic.dma);return<tr key={ic.code+ic.dma} style={{opacity:ic.active?1:.45}}>
-              <TD m b><span style={{cursor:"pointer",color:"#4AC8E8",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})}>{ic.code}</span></TD>
-              <TD>{ic.title}</TD>
-              <TD><B l={ic.brand} c={ic.brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK")}/></TD>
-              <TD>{DM[ic.dma]||ic.dma}</TD>
-              <TD>{ic.dur}</TD>
-              <TD>{ic.fileUrl?<a href={ic.fileUrl} target="_blank" rel="noopener noreferrer" style={{color:"#4AC8E8",fontSize:12,fontWeight:600}}>📁 View</a>:<span style={{color:"#E85A7A",fontSize:12}}>No file</span>}</TD>
-              <TD>{ic.active?<B l="Active" c="#5BC4A0"/>:<B l="Inactive" c="#E85A7A"/>}</TD>
-              <TD><div style={{display:"flex",gap:3}}>
-                <button onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#4AC8E8"}}>✎</button>
-                <button onClick={()=>toggleOohActive(gi)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:ic.active?"#D4A040":"#5BC4A0"}}>{ic.active?"⏸":"▶"}</button>
-              </div></TD>
-            </tr>})}</tbody>
-          </table>
-          {filtered.length===0&&<div style={{padding:30,textAlign:"center",color:"#9B8EAD",fontSize:14,fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div>}
-        </div>
-      </Cd>
-    </div>;
-  };
-
-  const _OohHubImpl=()=>{
+  const OohHub=()=>{
     const subRoute=routeHash.replace(/^ooh\/?/,'') || 'wk';
     const oohNav=[
       {id:"wk",l:"WK OOH",e:"🛣"},
@@ -7173,6 +6792,60 @@ Rules:
       {id:"isci",l:"OOH ISCI Registry",e:"◈"},
       {id:"import",l:"Import / Upload",e:"📤"}
     ];
+    const oohIsciPg=()=>{
+      const[showOohInactive,setShowOohInactive]=useState(false);
+      const allOoh=iscis.filter(i=>i.suffix==="O");
+      const oohIscis=showOohInactive?allOoh:allOoh.filter(i=>i.active);
+      const inactiveOoh=allOoh.filter(i=>!i.active);
+      const[oohIsciFilter,setOohIsciFilter]=useState("");
+      const[oohBrandFilter,setOohBrandFilter]=useState("");
+      const[oohDmaFilter,setOohDmaFilter]=useState("");
+      const filtered=oohIscis.filter(i=>{
+        if(oohBrandFilter&&i.brand!==oohBrandFilter)return false;
+        if(oohDmaFilter&&i.dma!==oohDmaFilter)return false;
+        if(oohIsciFilter){const q=oohIsciFilter.toLowerCase();return(i.code||"").toLowerCase().includes(q)||(i.title||"").toLowerCase().includes(q)||(i.dma||"").toLowerCase().includes(q)}
+        return true;
+      });
+      const oohDmas=[...new Set(allOoh.map(i=>i.dma))].sort();
+      const toggleOohActive=(idx)=>{setIscis(p=>p.map((x,j)=>j===idx?{...x,active:!x.active}:x));const ic=iscis[idx];notify((ic.active?"Deactivated":"Activated")+" "+ic.code);log("ISCI "+(ic.active?"Deactivated":"Activated"),ic.code)};
+      return<div style={{display:"flex",flexDirection:"column",gap:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+          <div><PageHead title="OOH ISCI Registry" pgKey="ooh" sub={allOoh.filter(i=>i.active).length+" active · "+inactiveOoh.length+" inactive · "+allOoh.filter(i=>i.fileUrl).length+" with creative"}/></div>
+          <div style={{display:"flex",gap:4}}>
+            <Btn primary onClick={()=>setModal({t:"newIsci",defaultMedia:"OOH"})}>+ Register OOH ISCI</Btn>
+            <Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=allOoh.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active OOH ISCIs have files");return}notify("Scanning "+missing.length+" OOH ISCIs...");let found=0;const updates={};const exts=["jpg","png","pdf","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);return updated});notify(found+" files recovered!");log("OOH Creative Recovery",found+" files")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+          <input placeholder="Search OOH ISCIs..." value={oohIsciFilter} onChange={e=>setOohIsciFilter(e.target.value)} style={{width:200,padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
+          <Sel label="" options={[{v:"",l:"All Brands"},{v:"Wettermark Keith",l:"Wettermark Keith"},{v:"Postman Law",l:"Postman Law"}]} value={oohBrandFilter} onChange={setOohBrandFilter}/>
+          <Sel label="" options={[{v:"",l:"All DMAs"},...oohDmas.map(d=>({v:d,l:(DM[d]||d)+" ("+d+")"}))] } value={oohDmaFilter} onChange={setOohDmaFilter}/>
+          <label style={{fontSize:12,display:"flex",alignItems:"center",gap:3,cursor:"pointer",color:"#9B8EAD"}}><input type="checkbox" checked={showOohInactive} onChange={e=>setShowOohInactive(e.target.checked)}/> Show inactive</label>
+          {(oohIsciFilter||oohBrandFilter||oohDmaFilter)&&<Btn small onClick={()=>{setOohIsciFilter("");setOohBrandFilter("");setOohDmaFilter("")}}>Clear</Btn>}
+          <span style={{fontSize:12,color:"#6B5E80",marginLeft:"auto"}}>{filtered.length} shown</span>
+        </div>
+        <Cd style={{padding:0,overflow:"hidden"}}>
+          <div style={{maxHeight:"calc(100vh - 260px)",overflowY:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>Code</TH><TH>Title</TH><TH>Brand</TH><TH>DMA</TH><TH>Type</TH><TH>File</TH><TH>Status</TH><TH w="60">Actions</TH></tr></thead>
+              <tbody>{filtered.map((ic,i)=>{const gi=iscis.findIndex(x=>x.code===ic.code&&x.dma===ic.dma);return<tr key={ic.code+ic.dma} style={{opacity:ic.active?1:.45}}>
+                <TD m b><span style={{cursor:"pointer",color:"#4AC8E8",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})}>{ic.code}</span></TD>
+                <TD>{ic.title}</TD>
+                <TD><B l={ic.brand} c={ic.brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK")}/></TD>
+                <TD>{DM[ic.dma]||ic.dma}</TD>
+                <TD>{ic.dur}</TD>
+                <TD>{ic.fileUrl?<a href={ic.fileUrl} target="_blank" rel="noopener noreferrer" style={{color:"#4AC8E8",fontSize:12,fontWeight:600}}>📁 View</a>:<span style={{color:"#E85A7A",fontSize:12}}>No file</span>}</TD>
+                <TD>{ic.active?<B l="Active" c="#5BC4A0"/>:<B l="Inactive" c="#E85A7A"/>}</TD>
+                <TD><div style={{display:"flex",gap:3}}>
+                  <button onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#4AC8E8"}}>✎</button>
+                  <button onClick={()=>toggleOohActive(gi)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:ic.active?"#D4A040":"#5BC4A0"}}>{ic.active?"⏸":"▶"}</button>
+                </div></TD>
+              </tr>})}</tbody>
+            </table>
+            {filtered.length===0&&<div style={{padding:30,textAlign:"center",color:"#9B8EAD",fontSize:14,fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div>}
+          </div>
+        </Cd>
+      </div>;
+    };
     const calAlerts=(()=>{const now=new Date();const wk=new Date(now.getTime()+7*864e5);return OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length})();
     return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",color:"#E8DFF0"}}>
       <div style={{width:200,background:"linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
@@ -7186,14 +6859,11 @@ Rules:
         </div>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:16}}>
-        {/* Render as components — calling these as functions ({Foo()}) leaks
-            their useState into OohHub's hook list; subRoute switches change
-            the hook count and silently corrupt state. */}
-        {subRoute==="wk"&&<OohPg/>}
-        {subRoute==="pl"&&<PlOohPg/>}
-        {subRoute==="isci"&&<OohIsciPg/>}
+        {subRoute==="wk"&&OohPg()}
+        {subRoute==="pl"&&PlOohPg()}
+        {subRoute==="isci"&&oohIsciPg()}
         {subRoute==="import"&&<UploadPg/>}
-        {!["wk","pl","isci","import"].includes(subRoute)&&<OohPg/>}
+        {!["wk","pl","isci","import"].includes(subRoute)&&OohPg()}
       </div>
     </div>;
   };
@@ -8082,26 +7752,11 @@ Rules:
     <button onClick={async()=>{const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(155,123,176,.3)"}}>Let Me In</button>
   </div></div>;
   if(!dbLoaded)return null; // HTML loader stays visible until data is ready
-  // Wire each OOH impl into its stable module-scope wrapper. Assigning here
-  // (during render, before any <OohHub/> render) guarantees the wrapper
-  // dispatches to the latest impl whose closure has the freshest App state.
-  _OohHubImplRef.current=_OohHubImpl;
-  _OohPgImplRef.current=_OohPgImpl;
-  _PlOohPgImplRef.current=_PlOohPgImpl;
-  _OohIsciPgImplRef.current=_OohIsciPgImpl;
-  _UploadPgImplRef.current=_UploadPgImpl;
   if(isOohHub)return<React.Fragment>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
     <OohHub/>
-    {(modal==="newIsci"||modal?.t==="newIsci")&&<NewIsciMod defaultMedia={modal?.defaultMedia||null}/>}
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
     {modal?.type==="oohPhoto"&&<OohPhotoModal modal={modal}/>}
-    {uploadTracker&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:2001,background:"#2d1f42",borderBottom:"2px solid #4AC8E8",padding:"8px 16px",display:"flex",alignItems:"center",gap:12}}>
-      <div style={{fontSize:13,fontWeight:700,color:"#4AC8E8"}}>{uploadTracker.label}</div>
-      <div style={{flex:1,height:6,background:"#4a3565",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",background:"linear-gradient(90deg,#4AC8E8,#9b7bb0)",borderRadius:3,width:(uploadTracker.pct||0)+"%",transition:"width 0.3s"}}/></div>
-      <div style={{fontSize:12,fontWeight:700,color:"#E8DFF0",minWidth:50,textAlign:"right"}}>{uploadTracker.pct||0}%</div>
-      {uploadTracker.current&&uploadTracker.total&&<div style={{fontSize:11,color:"#94a3b8"}}>{uploadTracker.current}/{uploadTracker.total}</div>}
-    </div>}
     {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#2d1f42",color:"#E8DFF0",padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.3)",zIndex:9999,border:"1px solid #4a3565"}}>{toast}</div>}
   </React.Fragment>;
   return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",overflow:"hidden"}}>
