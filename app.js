@@ -1005,8 +1005,11 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(confirmRemindersSent).length>0)saveToDb("confirmRemindersSent",confirmRemindersSent)},[confirmRemindersSent,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohContracts).length>0)saveToDb("oohContracts",oohContracts)},[oohContracts,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("customTags",customFields)},[customFields,dbLoaded]);
-  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(pops.filter(p=>p.isci).map(p=>[p.boardId,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("wkOohIscis",isciMap)},[pops,dbLoaded]);
-  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(plPanels.filter(p=>p.isci).map(p=>[p.unit,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("plOohIscis",isciMap)},[plPanels,dbLoaded]);
+  // No empty-map guard: a `{}` save is exactly what should happen when the
+  // user clears the last ISCI, otherwise the doc keeps stale assignments
+  // forever and they reappear on next load.
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(pops.filter(p=>p.isci).map(p=>[p.boardId,p.isci]));saveToDb("wkOohIscis",isciMap).catch(e=>{console.warn("wkOohIscis save failed:",e);try{notify("⚠ WK OOH save failed — your assignments may not persist")}catch(_){}})},[pops,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(plPanels.filter(p=>p.isci).map(p=>[p.unit,p.isci]));saveToDb("plOohIscis",isciMap).catch(e=>{console.warn("plOohIscis save failed:",e);try{notify("⚠ PL OOH save failed — your assignments may not persist")}catch(_){}})},[plPanels,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohPhotos).length>0)saveToDb("oohPhotos",oohPhotos)},[oohPhotos,dbLoaded]);
 
   // ── CONFIRMATION REMINDERS (manual trigger) ──────────────────
