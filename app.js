@@ -3721,7 +3721,7 @@ const App=()=>{
     const mktNames={CHI:"Chicago",MSP:"Minneapolis",CIN:"Cincinnati",DEN:"Denver"};
 
     // Map pins from PL_PANELS with coords
-    const mapPins=fl.map(p=>({id:p.unit,lat:p.lat,lng:p.lng,location:p.location,vendor:p.vendor,size:p.size,status:p.status,impressions:p.impressions*p.numUnits,market:p.market}));
+    const mapPins=fl.map(p=>({id:p.unit,lat:p.lat,lng:p.lng,location:p.location,vendor:p.vendor,size:p.size,status:p.status,impressions:p.impressions*p.numUnits,market:p.market,creative:(typeof POP_TITLES!=='undefined'&&POP_TITLES[p.unit])||""}));
 
     const CardGrid=()=><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
       {fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const flightClean=p.flight.split('(')[0].trim();const pop=PL_POPS[p.unit];
