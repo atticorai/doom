@@ -7082,6 +7082,40 @@ Rules:
         <input value={auditSearch} onChange={e=>setAuditSearch(e.target.value)} placeholder="Search actions, details..." style={{width:300,padding:"5px 10px",borderRadius:6,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:13,outline:"none"}}/>
         {auditSearch&&<span style={{fontSize:12,color:"#6B5E80",marginLeft:8}}>{filteredLog.length} results</span>}
       </div>
+      {/* Migration tools — safety net before Supabase cutover */}
+      <div style={{marginBottom:10,padding:"10px 14px",borderRadius:6,border:"1px dashed #D4A04055",background:"rgba(212,160,64,.07)",fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+        <span style={{fontWeight:700,color:"#D4A040"}}>⚙ Migration</span>
+        <span style={{flex:1,minWidth:200}}>Snapshots every Firestore collection (appData + trafficSheets) into a single JSON file. Run this before the Supabase migration — it's the safety net.</span>
+        <button onClick={async()=>{
+          const pw=prompt("Admin password — export full Firestore snapshot:");
+          if(!pw)return;
+          const ok=await verifyAuth(pw,"admin");
+          if(!ok)return alert("Wrong password");
+          if(!db){alert("Firestore not available");return}
+          notify("Exporting all Firestore data...");
+          const snapshot={meta:{exportedAt:new Date().toISOString(),app:"doom",purpose:"pre-supabase-migration"},appData:{},trafficSheets:{}};
+          try{
+            const snap=await db.collection("appData").get();
+            snap.forEach(doc=>{const d=doc.data();let parsed=d.data;try{parsed=d.data?JSON.parse(d.data):null}catch(e){}snapshot.appData[doc.id]={ts:d.ts||null,data:parsed}});
+            const tsSnap=await db.collection("trafficSheets").get();
+            tsSnap.forEach(doc=>{snapshot.trafficSheets[doc.id]=doc.data()});
+            const json=JSON.stringify(snapshot,null,2);
+            const blob=new Blob([json],{type:"application/json"});
+            const url=URL.createObjectURL(blob);
+            const a=document.createElement("a");
+            a.href=url;
+            a.download="doom-firestore-snapshot-"+new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")+".json";
+            document.body.appendChild(a);a.click();a.remove();
+            URL.revokeObjectURL(url);
+            const summary=Object.entries(snapshot.appData).map(([k,v])=>{const d=v.data;const n=Array.isArray(d)?d.length:(d&&typeof d==="object")?Object.keys(d).length:1;return k+":"+n}).join(", ");
+            log("Firestore Export","appData("+Object.keys(snapshot.appData).length+" docs), trafficSheets("+Object.keys(snapshot.trafficSheets).length+" docs) — "+summary);
+            notify("Snapshot downloaded — "+Object.keys(snapshot.appData).length+" appData docs + "+Object.keys(snapshot.trafficSheets).length+" traffic sheets");
+          }catch(e){
+            console.error("Export failed",e);
+            alert("Export failed: "+e.message);
+          }
+        }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #D4A040",background:"#D4A04015",color:"#D4A040",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📦 Download Snapshot</button>
+      </div>
       <Cd style={{padding:0,overflow:"hidden"}}>
         <div style={{maxHeight:"calc(100vh - 280px)",overflowY:"auto"}}>
           {filteredLog.length?filteredLog.slice(0,300).map((l,i)=>{
