@@ -70,15 +70,15 @@ const orphans = {
 };
 
 // ── Canonical lookups ───────────────────────────────────────────────
-// The schema stores markets as DMA codes (CHI, BRM, etc.), so this
-// function returns a DMA — not a name. Accepts: DMA code, full name,
-// "City, ST" form, and a handful of known typos.
-const NAME_TO_DMA = {
-  'Chicago':'CHI','Cincinnati':'CIN','Denver':'DEN','Minneapolis':'MSP',
-  'Birmingham':'BRM','Huntsville':'HSV','Knoxville':'KNX','Chattanooga':'CHA',
-  'Montgomery':'MTG','Dothan':'DHN','Gadsden':'GAD',
+// Per CLAUDE.md rule #7: "full brand names and market names everywhere
+// except ISCI codes". So this function resolves to a full market NAME
+// (Chicago, Knoxville, etc.). DMA codes are reverse-mapped to names.
+const DMA_TO_NAME = {
+  'CHI':'Chicago','CIN':'Cincinnati','DEN':'Denver','MSP':'Minneapolis',
+  'BRM':'Birmingham','HSV':'Huntsville','KNX':'Knoxville','CHA':'Chattanooga',
+  'MTG':'Montgomery','DHN':'Dothan','GAD':'Gadsden',
 };
-const DMA_SET = new Set(Object.values(NAME_TO_DMA));
+const NAME_SET = new Set(Object.values(DMA_TO_NAME));
 const TYPO_FIXES = {
   'Cincinatti': 'Cincinnati',
   'Cinncinati': 'Cincinnati',
@@ -86,29 +86,31 @@ const TYPO_FIXES = {
   'Mineapolis': 'Minneapolis',
   'Minnapolis': 'Minneapolis',
 };
-// Multi-market strings — flagged specially, not silently dropped.
 const MULTI_MARKET_RE = /[\/&]|,\s*[A-Z][a-z]+\s+[A-Z][a-z]+|\s+and\s+|\s+&\s+/;
 
 function normalizeMarket(raw) {
-  if (!raw) return { dma: null, multi: false };
+  if (!raw) return { name: null, multi: false };
   const s0 = String(raw).trim();
-  // DMA code passthrough
-  if (DMA_SET.has(s0)) return { dma: s0, multi: false };
-  // Strip ", ST" suffix
+  // Already a full canonical name
+  if (NAME_SET.has(s0)) return { name: s0, multi: false };
+  // DMA code → name
+  if (DMA_TO_NAME[s0]) return { name: DMA_TO_NAME[s0], multi: false };
+  // "City, ST" → strip suffix
   const noState = s0.replace(/,\s*[A-Z]{2}\s*$/, '').trim();
-  // Typo fix
   const fixed = TYPO_FIXES[noState] || noState;
-  if (NAME_TO_DMA[fixed]) return { dma: NAME_TO_DMA[fixed], multi: false };
-  // Multi-market?
+  if (NAME_SET.has(fixed)) return { name: fixed, multi: false };
+  // Multi-market
   if (MULTI_MARKET_RE.test(s0)) {
     const parts = s0.split(/\s*[\/&,]\s*|\s+and\s+/).map(p => p.trim()).filter(Boolean);
-    const dmas = parts.map(p => {
+    const names = parts.map(p => {
+      if (NAME_SET.has(p)) return p;
+      if (DMA_TO_NAME[p])  return DMA_TO_NAME[p];
       const np = (TYPO_FIXES[p] || p).replace(/,\s*[A-Z]{2}\s*$/, '').trim();
-      return DMA_SET.has(p) ? p : NAME_TO_DMA[np] || null;
+      return NAME_SET.has(np) ? np : null;
     }).filter(Boolean);
-    if (dmas.length > 1) return { dma: null, multi: true, splitInto: dmas, original: s0 };
+    if (names.length > 1) return { name: null, multi: true, splitInto: names, original: s0 };
   }
-  return { dma: null, multi: false };
+  return { name: null, multi: false };
 }
 
 function isClaudePlaceholder(h) {
@@ -141,7 +143,7 @@ if (Array.isArray(ad.trafficHistory?.data)) {
   ad.trafficHistory.data = ad.trafficHistory.data.filter(h => {
     const reason = isClaudePlaceholder(h);
     if (reason) {
-      report.placeholders.push({ reason, _id: h._id, brand: h.brand, est: h.est, market: h.market, month: h.month, comments: h.comments });
+      report.placeholders.push({ reason, brand: h.brand, est: h.est, market: h.market, month: h.month, comments: h.comments, ts: h.ts });
       return false;
     }
     return true;
@@ -169,7 +171,7 @@ if (Array.isArray(ad.iscis?.data)) {
 if (Array.isArray(ad.trafficHistory?.data)) {
   ad.trafficHistory.data = ad.trafficHistory.data.filter(h => {
     if (h?.brand === 'Wettermark Keith' && WK_DEAD_ESTS.has(String(h.est))) {
-      report.wk_legacy_estimates.traffic.push({ _id: h._id, est: h.est, market: h.market, month: h.month });
+      report.wk_legacy_estimates.traffic.push({ est: h.est, market: h.market, month: h.month, ts: h.ts });
       return false;
     }
     return true;
@@ -197,26 +199,26 @@ if (ad.staEstLinks?.data && typeof ad.staEstLinks.data === 'object') {
 }
 
 // ── Pass 3: Market normalization ────────────────────────────────────
-// Resolves to a DMA code. Multi-market rows get split into one record
-// per DMA (preserves all the data, just with the real market).
+// Resolves to a full market NAME (Chicago, Knoxville, etc.) per
+// CLAUDE.md rule #7. Multi-market rows split into per-market rows.
 if (Array.isArray(ad.trafficHistory?.data)) {
   const out2 = [];
   for (const h of ad.trafficHistory.data) {
     const norm = normalizeMarket(h.market);
-    if (norm.dma) {
-      if (norm.dma !== h.market) {
-        report.market_normalized.push({ _id: h._id, from: h.market, to: norm.dma });
-        h.market = norm.dma;
+    if (norm.name) {
+      if (norm.name !== h.market) {
+        report.market_normalized.push({ from: h.market, to: norm.name, brand: h.brand, est: h.est, month: h.month, ts: h.ts });
+        h.market = norm.name;
       }
       out2.push(h);
     } else if (norm.multi) {
       report.market_split = report.market_split || [];
-      report.market_split.push({ _id: h._id, original: norm.original, into: norm.splitInto });
-      for (const dma of norm.splitInto) {
-        out2.push({ ...h, market: dma, _splitFrom: norm.original });
+      report.market_split.push({ original: norm.original, into: norm.splitInto, brand: h.brand, est: h.est, month: h.month, ts: h.ts });
+      for (const name of norm.splitInto) {
+        out2.push({ ...h, market: name, _splitFrom: norm.original });
       }
     } else {
-      report.market_dropped.push({ _id: h._id, market: h.market, brand: h.brand, est: h.est });
+      report.market_dropped.push({ market: h.market, brand: h.brand, est: h.est, month: h.month, ts: h.ts });
     }
   }
   ad.trafficHistory.data = out2;
@@ -234,7 +236,7 @@ if (Array.isArray(ad.trafficHistory?.data)) {
     if (ts > prev.ts) { losers.push(prev.h); byKey.set(k, { h, ts }); }
     else              { losers.push(h); }
   }
-  for (const l of losers) report.duplicates.push({ _id: l._id, key: [l.brand, l.est, l.market, l.month, l.media, l.version||'1'].join('|') });
+  for (const l of losers) report.duplicates.push({ key: [l.brand, l.est, l.market, l.month, l.media, l.version||'1'].join('|'), ts: l.ts });
   ad.trafficHistory.data = Array.from(byKey.values()).map(v => v.h);
 }
 
@@ -242,11 +244,13 @@ if (Array.isArray(ad.trafficHistory?.data)) {
 // killlist.json shape:
 //   { "traffic": [legacy_id, ...], "iscis": [{"code":"X","dma":"BRM"}, ...],
 //     "estimates": [{"brand":"WK","num":"218"}], "stations": [{"brand":"WK","callSign":"X","market":"BRM"}] }
+// Killlist matches on a composite key: brand|est|market|month|ts
 if (Array.isArray(ad.trafficHistory?.data) && killlist.traffic?.length) {
-  const kill = new Set(killlist.traffic.map(String));
+  const kill = new Set(killlist.traffic);
   ad.trafficHistory.data = ad.trafficHistory.data.filter(h => {
-    if (kill.has(String(h._id))) {
-      report.killed.traffic.push({ _id: h._id, est: h.est, market: h.market, month: h.month });
+    const k = [h.brand, h.est, h.market, h.month, h.ts].join('|');
+    if (kill.has(k)) {
+      report.killed.traffic.push({ key: k });
       return false;
     }
     return true;

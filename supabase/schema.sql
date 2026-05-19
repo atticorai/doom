@@ -33,27 +33,30 @@ insert into brands (id, name, color) values
 on conflict (id) do update set name = excluded.name, color = excluded.color;
 
 -- Markets — canonical list. Anything outside this set is an error.
+-- Per CLAUDE.md rule #7: "full brand names and market names everywhere
+-- except ISCI codes". So the NAME is the primary key. DMA is just an
+-- attribute, used only for constructing ISCI codes.
 create table if not exists markets (
-  dma         text primary key,            -- 'CHI', 'BRM', etc.
-  name        text not null,               -- 'Chicago', 'Birmingham'
+  name        text primary key,            -- 'Chicago', 'Birmingham'
+  dma         text not null unique,        -- 'CHI', 'BRM' — for ISCI codes only
   brand_id    text not null references brands(id),
   active      boolean not null default true,
   sort_order  int not null default 0
 );
 
-insert into markets (dma, name, brand_id, sort_order) values
-  ('CHI', 'Chicago',     'PL', 10),
-  ('CIN', 'Cincinnati',  'PL', 20),
-  ('DEN', 'Denver',      'PL', 30),
-  ('MSP', 'Minneapolis', 'PL', 40),
-  ('BRM', 'Birmingham',  'WK', 10),
-  ('HSV', 'Huntsville',  'WK', 20),
-  ('KNX', 'Knoxville',   'WK', 30),
-  ('CHA', 'Chattanooga', 'WK', 40),
-  ('MTG', 'Montgomery',  'WK', 50),
-  ('DHN', 'Dothan',      'WK', 60),
-  ('GAD', 'Gadsden',     'WK', 70)
-on conflict (dma) do update set name = excluded.name, brand_id = excluded.brand_id;
+insert into markets (name, dma, brand_id, sort_order) values
+  ('Chicago',     'CHI', 'PL', 10),
+  ('Cincinnati',  'CIN', 'PL', 20),
+  ('Denver',      'DEN', 'PL', 30),
+  ('Minneapolis', 'MSP', 'PL', 40),
+  ('Birmingham',  'BRM', 'WK', 10),
+  ('Huntsville',  'HSV', 'WK', 20),
+  ('Knoxville',   'KNX', 'WK', 30),
+  ('Chattanooga', 'CHA', 'WK', 40),
+  ('Montgomery',  'MTG', 'WK', 50),
+  ('Dothan',      'DHN', 'WK', 60),
+  ('Gadsden',     'GAD', 'WK', 70)
+on conflict (name) do update set dma = excluded.dma, brand_id = excluded.brand_id;
 
 -- Buyers (contact info for traffic emails)
 create table if not exists buyers (
@@ -61,7 +64,7 @@ create table if not exists buyers (
   name        text not null,
   email       text not null,
   brand_id    text not null references brands(id),
-  markets     text[] not null default '{}', -- subset of markets.dma
+  markets     text[] not null default '{}', -- full market names, e.g. {'Chicago','Denver'}
   active      boolean not null default true,
   unique (name, brand_id)
 );
@@ -93,7 +96,7 @@ create index if not exists estimates_brand_media_idx  on estimates (brand_id, me
 create table if not exists stations (
   call_sign        text not null,           -- 'WBBM-TV'
   brand_id         text not null references brands(id),
-  market           text not null references markets(dma),
+  market           text not null references markets(name),
   media            text not null,           -- TV, Cable, Radio
   ownership_group  text,                    -- 'Nexstar', 'iHeart', 'Sinclair'
   contact_name     text,
@@ -174,7 +177,7 @@ create table if not exists custom_tags (
 create table if not exists traffic_history (
   id            uuid primary key default uuid_generate_v4(),
   brand_id      text not null references brands(id),
-  market        text not null references markets(dma),
+  market        text not null references markets(name),
   media         text not null,
   month         text not null,              -- 'January 2026' or similar — match existing format
   flight        text,
@@ -237,7 +240,7 @@ create table if not exists ooh_contracts (
   id          uuid primary key default uuid_generate_v4(),
   brand_id    text not null references brands(id),
   vendor      text not null,
-  market      text not null references markets(dma),
+  market      text not null references markets(name),
   start_date  date,
   end_date    date,
   contract_value numeric(12,2),
@@ -249,7 +252,7 @@ create table if not exists ooh_contracts (
 create table if not exists ooh_panels (
   id           uuid primary key default uuid_generate_v4(),
   brand_id     text not null references brands(id),
-  market       text not null references markets(dma),
+  market       text not null references markets(name),
   vendor       text,
   board_id     text,                         -- WK
   unit         text,                         -- PL
@@ -279,7 +282,7 @@ create table if not exists ooh_photos (
 
 create table if not exists ooh_reminders_sent (
   brand_id    text not null references brands(id),
-  market      text not null references markets(dma),
+  market      text not null references markets(name),
   month       text not null,
   sent_at     timestamptz not null default now(),
   primary key (brand_id, market, month)
@@ -288,7 +291,7 @@ create table if not exists ooh_reminders_sent (
 -- ── Now Airing (which rotation each market is currently on) ────────
 create table if not exists now_airing (
   brand_id    text not null references brands(id),
-  market      text not null references markets(dma),
+  market      text not null references markets(name),
   media       text not null,
   isci_code   text not null,
   isci_dma    text not null default '',
