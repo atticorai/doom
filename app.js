@@ -2241,12 +2241,7 @@ const App=()=>{
           const tokens={};staList.forEach(c=>{tokens[c]={confirmed:false,token:genToken()}});
           const rec={ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:curMonth?.month,flight,version,comments,combined:!!est._combined,
             iscis:isciRec,stations:staList,isRevision:!!_revise,prevVersion:_revise?.version||null,status:"print_only"};
-          // Replace any prior print_only row for the same (brand,est,market,media,month,version)
-          // instead of stacking duplicates when the user clicks Print twice.
-          setTrafficHistory(p=>{
-            const isDupe=h=>h.status==="print_only"&&h.brand===rec.brand&&h.est===rec.est&&h.market===rec.market&&h.media===rec.media&&h.month===rec.month&&String(h.version)===String(rec.version);
-            return [rec,...p.filter(h=>!isDupe(h))];
-          });
+          setTrafficHistory(p=>[rec,...p]);
           const airingRec={iscis:isciRec,month:curMonth?.month,flight,version,ts:new Date().toISOString(),stations:staList};
           if(est._combined){est._combined.forEach(ce=>{const k=ak(ce);setNowAiring(p=>({...p,[k]:airingRec}));setConfirmations(p=>({...p,[k]:tokens}))})}
           else{const k=ak(est);setNowAiring(p=>({...p,[k]:airingRec}));setConfirmations(p=>({...p,[k]:tokens}))}
@@ -2270,14 +2265,7 @@ const App=()=>{
           const recId=Date.now();
           const rec={ts:new Date().toISOString(),_id:recId,est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:curMonth?.month,flight,version,comments,combined:!!est._combined,
             iscis:isciRec,stations:sendable.map(s=>s.call),isRevision:!!_revise,prevVersion:_revise?.version||null,status:"pending"};
-          // If a print_only row for this same (brand,est,market,media,month,version) already
-          // exists from the user clicking Print first, upgrade it in place rather than
-          // creating a second row. Otherwise insert at top.
-          setTrafficHistory(p=>{
-            const idx=p.findIndex(h=>h.status==="print_only"&&h.brand===rec.brand&&h.est===rec.est&&h.market===rec.market&&h.media===rec.media&&h.month===rec.month&&String(h.version)===String(rec.version));
-            if(idx<0)return [rec,...p];
-            const next=p.slice();next.splice(idx,1);return [rec,...next];
-          });
+          setTrafficHistory(p=>[rec,...p]);
           const airingRec={iscis:isciRec,month:curMonth?.month,flight,version,ts:new Date().toISOString(),stations:sendable.map(s=>s.call)};
           if(est._combined){est._combined.forEach(ce=>{const k=ak(ce);setNowAiring(p=>({...p,[k]:airingRec}));setConfirmations(p=>({...p,[k]:tokens}))})}
           else{const k=ak(est);setNowAiring(p=>({...p,[k]:airingRec}));setConfirmations(p=>({...p,[k]:tokens}))}
@@ -5856,27 +5844,7 @@ ${fullText.substring(0,3000)}`}]
         return<div key={mo} style={{marginBottom:20}}>
           <div style={{fontSize:18,fontWeight:800,color:"#F0E8F8",marginBottom:6,paddingBottom:4,borderBottom:"2px solid "+bc2+"44"}}>{mo} <span style={{fontSize:12,color:"#9B8EAD",fontWeight:600}}>({moData.length} instruction{moData.length!==1?"s":""})</span></div>
           {moMedias.map(med=>{
-            const medDataRaw=moData.filter(h=>h.media===med).sort((a,b)=>a.market.localeCompare(b.market));
-            // Collapse rows sharing the same (brand, est, market, media, month, version):
-            // those are the same traffic instruction split historically by ownership group
-            // (e.g., legacy 2609 CHI Dec emailed twice — once to ABC/CW/NBC, once to CBS/FOX/LCL).
-            // Newest ts wins; stations + comments from siblings get merged into the visible row.
-            const medData=(()=>{
-              const byKey=new Map();
-              for(const h of medDataRaw){
-                const k=[h.brand,h.est,h.market,h.media,h.month,h.version||"1"].join("|");
-                const prev=byKey.get(k);
-                if(!prev){byKey.set(k,{...h});continue}
-                // Merge stations (unique) and comments (deduped, joined)
-                const stations=Array.from(new Set([...(prev.stations||[]),...(h.stations||[])]));
-                const cmtA=(prev.comments||"").trim();const cmtB=(h.comments||"").trim();
-                const comments=cmtA&&cmtB&&cmtA!==cmtB?cmtA+" | "+cmtB:cmtA||cmtB;
-                // Newest ts wins for the row identity (so edit/preview targets the freshest row)
-                const newer=Date.parse(h.ts||"")>Date.parse(prev.ts||"")?h:prev;
-                byKey.set(k,{...newer,stations,comments,_mergedCount:(prev._mergedCount||1)+1});
-              }
-              return Array.from(byKey.values()).sort((a,b)=>a.market.localeCompare(b.market));
-            })();
+            const medData=moData.filter(h=>h.media===med).sort((a,b)=>a.market.localeCompare(b.market));
             return<div key={med} style={{marginBottom:12,marginLeft:4}}>
               <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:4,display:"flex",alignItems:"center",gap:6}}>
                 <span style={{padding:"2px 8px",borderRadius:4,background:bc2+"15",color:bc2,fontSize:12,fontWeight:800}}>{med}</span>
@@ -6937,15 +6905,9 @@ Rules:
         return false;
       });
       if(!rec)return{status:"empty",est:null,rec:null};
-      // Sent: explicit "sent"/"partial", or "saved" (StreamBuilder's post-send status),
-      // or "imported" (re-imported from a real sent PDF), or legacy seed records that
-      // have stations populated but no status field (those were emailed historically).
-      const s=rec.status;
-      if(s==="sent")return{status:"sent",est:rec.est,rec};
-      if(s==="partial")return{status:"partial",est:rec.est,rec};
-      if(s==="saved"||s==="imported")return{status:"sent",est:rec.est,rec};
-      if(!s&&Array.isArray(rec.stations)&&rec.stations.length>0)return{status:"sent",est:rec.est,rec};
-      if(s==="copied")return{status:"copied",est:rec.est,rec};
+      if(rec.status==="sent")return{status:"sent",est:rec.est,rec};
+      if(rec.status==="copied")return{status:"copied",est:rec.est,rec};
+      if(rec.status==="partial")return{status:"partial",est:rec.est,rec};
       return{status:"built",est:rec.est,rec};
     };
     // Find estimate number for a market + buy type
