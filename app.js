@@ -788,40 +788,10 @@ const App=()=>{
           const inv={};d.forEach(h=>{const k=(h.brand||"?")+" | "+(h.market||"?")+" | "+(h.media||"?")+" | "+(h.month||"?");if(!inv[k])inv[k]=0;inv[k]++});
           Object.entries(inv).sort().forEach(([k,v])=>console.log("  "+k+(v>1?" (×"+v+")":"")));
           console.log("═══════════════════════════════════════════════");
-          // ═══ DO NOT MODIFY FIRESTORE DATA ON LOAD ═══
-          // Load it. Display it. That's it.
-          // Rendering handles bad values (boolean bookends, bare sched letters) gracefully.
-          // One-time: seed PL April TV + Radio traffic if missing
-          const PL_APRIL_SEED=[];
-          const mktMatch=(a,b)=>a===b||(normMkt(a)||a)===(normMkt(b)||b);
-          const hasPLAprilTV=(mkt)=>d.some(h=>h.brand==="Postman Law"&&mktMatch(h.market,mkt)&&h.media==="TV"&&h.month==="April"&&h.status!=="copied");
-          const hasPLAprilRadio=(mkt)=>d.some(h=>h.brand==="Postman Law"&&mktMatch(h.market,mkt)&&h.media==="Radio"&&h.month==="April"&&h.status!=="copied");
-          const tvIscis={
-            CHI:[{code:"CHIPL2660004T",title:"Why Postman_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CHIPL2660002T",title:"Supreme Court_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CHIPL2630013T",title:"Warren's Story_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2630012T",title:"Local Lawyers_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2630011T",title:"Legal Firepower_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2630010T",title:"Justice & Representation_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CHIPL2615014T",title:"Warren's Story_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CHIPL2615013T",title:"Local Lawyers_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CHIPL2615012T",title:"Legal Firepower_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"},{code:"CHIPL2615011T",title:"Justice & Representation_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"}],
-            CIN:[{code:"CINPL2660004T",title:"Why Postman_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CINPL2660002T",title:"Supreme Court_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"CINPL2630013T",title:"Warren's Story_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2630012T",title:"Local Lawyers_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2630011T",title:"Legal Firepower_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2630010T",title:"Justice & Representation_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"CINPL2615014T",title:"Warren's Story_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CINPL2615013T",title:"Local Lawyers_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"CINPL2615012T",title:"Legal Firepower_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"},{code:"CINPL2615011T",title:"Justice & Representation_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"}],
-            DEN:[{code:"DENPL2660004T",title:"Why Postman_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"DENPL2660002T",title:"Supreme Court_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"DENPL2630013T",title:"Warren's Story_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"DENPL2630012T",title:"Local Lawyers_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"DENPL2630011T",title:"Legal Firepower_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"DENPL2630010T",title:"Justice & Representation_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"DENPL2615014T",title:"Warren's Story_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"DENPL2615013T",title:"Local Lawyers_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"DENPL2615012T",title:"Legal Firepower_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"},{code:"DENPL2615011T",title:"Justice & Representation_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"}],
-            MSP:[{code:"MSPPL2660005T",title:"Supreme Court_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"MSPPL2660004T",title:"Why Postman_60",dur:"60",pct:"50",sched:"All Week",bookend:""},{code:"MSPPL2630013T",title:"Warren's Story_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"MSPPL2630012T",title:"Local Lawyers_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"MSPPL2630011T",title:"Legal Firepower_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"MSPPL2630010T",title:"Justice & Representation_30",dur:"30",pct:"25",sched:"All Week",bookend:""},{code:"MSPPL2615014T",title:"Warren's Story_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"MSPPL2615013T",title:"Local Lawyers_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 A"},{code:"MSPPL2615012T",title:"Legal Firepower_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"},{code:"MSPPL2615011T",title:"Justice & Representation_15",dur:"15",pct:"25",sched:"All Week",bookend:"Bookend :15 B"}]
-          };
-          const tvEsts={CHI:"2609 + 2610 + 2611 + 2612 + 2614",CIN:"2617 + 2618 + 2619 + 2620 + 2622",DEN:"2625 + 2626 + 2627 + 2628 + 2630",MSP:"2601 + 2602 + 2603 + 2604 + 2606"};
-          const tvBuyer={CHI:"Lynn Cortelezzi",CIN:"Lynn Cortelezzi",DEN:"Lynn Cortelezzi",MSP:"Ken Lazar"};
-          const radioIscis={
-            CHI:[{code:"CHIPL2630001R",title:"To Do List",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"CHIPL2630002R",title:"We Fight",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"CHIPL2630010R",title:"Peace of Mind – One Stop Shop_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"CHIPL2630008R",title:"Peace of Mind – One Call for Everything_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"CHIPL2615001R",title:"To Do List",dur:"15",pct:"15",sched:"All Week",bookend:"Bookend :15 A"},{code:"CHIPL2615002R",title:"We Fight",dur:"15",pct:"15",sched:"All Week",bookend:"Bookend :15 A"},{code:"CHIPL2615006R",title:"Peace of Mind – We Handle it All_15",dur:"15",pct:"35",sched:"All Week",bookend:""},{code:"CHIPL2615005R",title:"Peace of Mind – No More Chasing Insurance_15",dur:"15",pct:"35",sched:"All Week",bookend:""}],
-            CIN:[{code:"CINPL2630002R",title:"We Fight",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"CINPL2630001R",title:"To Do List",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"CINPL2630010R",title:"Peace of Mind – One Stop Shop_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"CINPL2630008R",title:"Peace of Mind – One Call for Everything_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"CINPL2615002R",title:"We Fight",dur:"15",pct:"15",sched:"All Week",bookend:"Bookend :15 A"},{code:"CINPL2615001R",title:"To Do List",dur:"15",pct:"15",sched:"All Week",bookend:"Bookend :15 A"},{code:"CINPL2615006R",title:"Peace of Mind – We Handle it All_15",dur:"15",pct:"35",sched:"All Week",bookend:""},{code:"CINPL2615005R",title:"Peace of Mind – No More Chasing Insurance_15",dur:"15",pct:"35",sched:"All Week",bookend:""}],
-            DEN:[{code:"DENPL2630002R",title:"We Fight",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"DENPL2630001R",title:"To Do List",dur:"30",pct:"15",sched:"All Week",bookend:""},{code:"DENPL2630010R",title:"Peace of Mind – One Stop Shop_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"DENPL2630008R",title:"Peace of Mind – One Call for Everything_30",dur:"30",pct:"35",sched:"All Week",bookend:""},{code:"DENPL2615002R",title:"We Fight",dur:"15",pct:"15",sched:"All Week",bookend:""},{code:"DENPL2615001R",title:"To Do List",dur:"15",pct:"15",sched:"All Week",bookend:""},{code:"DENPL2615006R",title:"Peace of Mind – We Handle it All_15",dur:"15",pct:"35",sched:"All Week",bookend:""},{code:"DENPL2615005R",title:"Peace of Mind – No More Chasing Insurance_15",dur:"15",pct:"35",sched:"All Week",bookend:""}]
-          };
-          const radioEsts={CHI:"2615",CIN:"2623",DEN:"2631"};
-          Object.entries(tvIscis).forEach(([dma,isciList])=>{const mkt=DM[dma];if(!hasPLAprilTV(mkt)){PL_APRIL_SEED.push({ts:"2026-03-30T12:00:00.000Z",est:tvEsts[dma],brand:"Postman Law",market:mkt,media:"TV",buyer:tvBuyer[dma],month:"April",flight:"3/30 - 4/26",version:"1",comments:"If you buy has no bookends, run as standalones, if you have stand alones run Legal Firepower :15",combined:true,iscis:isciList,stations:[],status:"sent",isRevision:false,prevVersion:null})}});
-          Object.entries(radioIscis).forEach(([dma,isciList])=>{const mkt=DM[dma];if(!hasPLAprilRadio(mkt)){PL_APRIL_SEED.push({ts:"2026-03-30T12:00:00.000Z",est:radioEsts[dma],brand:"Postman Law",market:mkt,media:"Radio",buyer:tvBuyer[dma],month:"April",flight:"3/30 - 4/26",version:"1",comments:"",combined:false,iscis:isciList,stations:[],status:"sent",isRevision:false,prevVersion:null})}});
-          // OOH: Wilkins Media MSP Digital Bulletins
-          const hasPLAprilOohMsp=d.some(h=>h.brand==="Postman Law"&&(h.market==="MSP"||h.market==="Minneapolis")&&h.media==="OOH"&&h.month==="April"&&h.isOoh);
-          if(!hasPLAprilOohMsp){PL_APRIL_SEED.push({ts:"2026-03-25T12:00:00.000Z",est:"OOH-MSP-PL",brand:"Postman Law",market:"MSP",media:"OOH",buyer:"Ken Lazar",month:"April",flight:"3/30",version:"1",comments:"V1 MSP Digital Bulletins | Vendor: Wilkins Media",combined:false,iscis:[{code:"MSPPL26DB001O",title:"PL Digital Bulletin - 208x720 - MSP - Cityscape - MinneapolisIA",dur:"",pct:"33",sched:"All Week",bookend:"",units:"1"},{code:"MSPPL26DB002O",title:"PL Digital Bulletin - 208x720 - MSP - MascotTriangle - MinneapolisIA",dur:"",pct:"33",sched:"All Week",bookend:"",units:"1"},{code:"MSPPL26DB003O",title:"PL Digital Bulletin - 208x720 - MSP - MascotTriangle - MinneapolisIALogo",dur:"",pct:"34",sched:"All Week",bookend:"",units:"1"}],stations:[],status:"sent",isOoh:true,totalUnits:3,vendor:"Wilkins Media",isRevision:false,prevVersion:null})}
-          if(PL_APRIL_SEED.length>0)console.warn("PL April seed: restored "+PL_APRIL_SEED.length+" traffic records");
-          // Restore missing seed records (additive only — never removes or modifies existing)
-          const seedTraffic=typeof TRAFFIC_HISTORY_INIT!=="undefined"?TRAFFIC_HISTORY_INIT:[];
-          const missingFromSeed=seedTraffic.filter(seed=>!d.some(h=>h.brand===seed.brand&&h.est===seed.est&&(h.market===seed.market||(normMkt(h.market)||h.market)===(normMkt(seed.market)||seed.market))&&h.month===seed.month&&h.media===seed.media));
-          if(missingFromSeed.length>0)console.warn("Seed restore: "+missingFromSeed.length+" records missing — adding back");
-          const final=[...PL_APRIL_SEED,...missingFromSeed,...d];
-          setTrafficHistory(final);trafficFbCountRef.current=final.length
+          // ═══ LOAD-ONLY. NO AUTO-RESTORE. NO SEED MERGE. ═══
+          // Whatever is in Firestore is what the app shows. If a record
+          // is missing, that's because the user deleted it on purpose.
+          setTrafficHistory(d);trafficFbCountRef.current=d.length
         }trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
         if(docs.workMonth?.data)setWorkMonth(JSON.parse(docs.workMonth.data));
         if(docs.confirmations?.data){const d=JSON.parse(docs.confirmations.data);setConfirmations(d)}
@@ -7115,6 +7085,41 @@ Rules:
             alert("Export failed: "+e.message);
           }
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #D4A040",background:"#D4A04015",color:"#D4A040",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📦 Download Snapshot</button>
+        <button onClick={async()=>{
+          const pw=prompt("Admin password — upload snapshot to Supabase:");
+          if(!pw)return;
+          const input=document.createElement("input");
+          input.type="file";input.accept="application/json,.json";
+          input.onchange=async()=>{
+            const f=input.files&&input.files[0];if(!f)return;
+            notify("Reading "+f.name+"...");
+            const text=await f.text();
+            let snapshot;
+            try{snapshot=JSON.parse(text)}catch(e){alert("Not valid JSON: "+e.message);return}
+            if(!snapshot.appData){alert("Snapshot missing appData — wrong file?");return}
+            notify("Cleaning + migrating to Supabase...");
+            try{
+              const r=await fetch("/api/migrate-snapshot",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw,snapshot})});
+              const j=await r.json();
+              if(!r.ok){alert("Migration failed: "+(j.error||r.status)+(j.detail?"\n\n"+j.detail:""));return}
+              const c=j.cleanup||{};
+              const msg="Migrated "+j.written+" docs to Supabase.\n\n"+
+                "  appData docs:       "+j.appData_docs+"\n"+
+                "  trafficSheets docs: "+j.trafficSheets_docs+"\n\n"+
+                "Cleanup applied:\n"+
+                "  placeholders dropped:   "+c.placeholders+"\n"+
+                "  WK 4-digit links:       "+c.wk_legacy_links+"\n"+
+                "  markets normalized:     "+c.market_normalized+"\n"+
+                "  multi-market split:     "+c.market_split+"\n"+
+                "  bad markets dropped:    "+c.market_dropped+"\n"+
+                "  duplicates collapsed:   "+c.duplicates+"\n\n"+
+                "Traffic: "+(c.totals_before?.trafficHistory||0)+" → "+(c.totals_after?.trafficHistory||0);
+              alert(msg);
+              log("Supabase Migration","Migrated "+j.written+" docs ("+c.placeholders+" placeholders dropped, "+c.market_normalized+" markets normalized, "+c.duplicates+" dupes collapsed)");
+            }catch(e){alert("Migration request failed: "+e.message)}
+          };
+          input.click();
+        }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #4AC8E8",background:"#4AC8E815",color:"#4AC8E8",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📤 Migrate to Supabase</button>
       </div>
       <Cd style={{padding:0,overflow:"hidden"}}>
         <div style={{maxHeight:"calc(100vh - 280px)",overflowY:"auto"}}>

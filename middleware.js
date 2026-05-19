@@ -62,7 +62,9 @@ export default async function middleware(request) {
     (pathname.endsWith('.js') && !pathname.startsWith('/api/')) ||
     pathname === '/api/config' ||
     pathname === '/api/planner' ||
-    pathname === '/api/send-traffic';
+    pathname === '/api/send-traffic' ||
+    pathname === '/api/db' ||
+    pathname === '/api/migrate-snapshot';
 
   if (isProtected) {
     const cookie = request.headers.get('cookie') || '';

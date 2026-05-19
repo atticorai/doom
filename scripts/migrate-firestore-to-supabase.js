@@ -55,26 +55,25 @@ const stats = {};
 const bump = (k, n=1) => { stats[k] = (stats[k]||0) + n; };
 
 // ── Canonical lookups ───────────────────────────────────────────────
+// Markets are stored by FULL NAME everywhere per CLAUDE.md rule #7.
+// DMA codes are only used in ISCI code construction.
 const PL_MARKETS = ['Chicago','Cincinnati','Denver','Minneapolis'];
 const WK_MARKETS = ['Birmingham','Huntsville','Knoxville','Chattanooga','Montgomery','Dothan','Gadsden'];
-const MARKET_TO_DMA = {
-  'Chicago':'CHI','Cincinnati':'CIN','Denver':'DEN','Minneapolis':'MSP',
-  'Birmingham':'BRM','Huntsville':'HSV','Knoxville':'KNX','Chattanooga':'CHA',
-  'Montgomery':'MTG','Dothan':'DHN','Gadsden':'GAD',
+const DMA_TO_NAME = {
+  'CHI':'Chicago','CIN':'Cincinnati','DEN':'Denver','MSP':'Minneapolis',
+  'BRM':'Birmingham','HSV':'Huntsville','KNX':'Knoxville','CHA':'Chattanooga',
+  'MTG':'Montgomery','DHN':'Dothan','GAD':'Gadsden',
 };
-const CANONICAL_NAMES = new Set(Object.keys(MARKET_TO_DMA));
+const CANONICAL_NAMES = new Set([...PL_MARKETS, ...WK_MARKETS]);
 
 function normalizeMarket(raw) {
   if (!raw) return null;
   const s = String(raw).trim();
-  // 'Denver, CO' → 'Denver'
+  if (CANONICAL_NAMES.has(s)) return s;
+  if (DMA_TO_NAME[s]) return DMA_TO_NAME[s];
   const stripped = s.replace(/,\s*[A-Z]{2}\s*$/,'').trim();
   if (CANONICAL_NAMES.has(stripped)) return stripped;
-  // Try DMA → name
-  for (const [name, dma] of Object.entries(MARKET_TO_DMA)) {
-    if (s === dma || stripped === dma) return name;
-  }
-  return null; // non-canonical
+  return null;
 }
 
 function brandFromMarket(market) {
@@ -134,7 +133,7 @@ async function migrateIscis() {
     const key  = code + '|' + dma;
     if (seen.has(key)) { bump('isci_dup'); continue; }
     seen.add(key);
-    const brandId = brandIdFromName(i.brand) || (PL_MARKETS.find(m => MARKET_TO_DMA[m] === dma) ? 'PL' : WK_MARKETS.find(m => MARKET_TO_DMA[m] === dma) ? 'WK' : null);
+    const brandId = brandIdFromName(i.brand) || (DMA_TO_NAME[dma] && PL_MARKETS.includes(DMA_TO_NAME[dma]) ? 'PL' : DMA_TO_NAME[dma] && WK_MARKETS.includes(DMA_TO_NAME[dma]) ? 'WK' : null);
     if (!brandId) { bump('isci_unknown_brand'); continue; }
     rows.push({
       code, dma,
@@ -185,13 +184,12 @@ async function migrateStationEstimates() {
     else { bump('staEstLinks_unparsable'); continue; }
     const normMkt = normalizeMarket(market);
     if (!normMkt) { bump('staEstLinks_bad_market'); continue; }
-    const dma = MARKET_TO_DMA[normMkt];
     const brandId = brandFromMarket(normMkt);
     for (const est of ests) {
       rows.push({
         brand_id: brandId,
         call_sign: callSign,
-        market: dma,
+        market: normMkt,
         est_num: String(est),
       });
     }
@@ -241,7 +239,7 @@ async function migrateTrafficHistory() {
     trafficRows.push({
       id,
       brand_id: h._brandId,
-      market: MARKET_TO_DMA[h._mkt],
+      market: h._mkt,
       media: h.media || 'TV',
       month: h.month || null,
       flight: h.flight || null,
