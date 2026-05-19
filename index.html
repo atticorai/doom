@@ -297,10 +297,26 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
     cdnLibs.forEach(function(src){chain=chain.then(function(){return loadScript(src)})});
 
     chain.then(function(){
-      // Init pdf.js worker + Firebase
+      // Init pdf.js worker + database (Firestore or Supabase shim)
       pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
       window.db=null;window.storage=null;window.fbAuth=null;
       window._firebaseReady=fetch("/api/config").then(function(r){return r.json()}).then(function(cfg){
+        if(cfg.useSupabase){
+          // Supabase mode: load the shim, which exposes window.__supabaseDb
+          // with the same .collection().doc().get()/.set() shape Firestore had.
+          return loadScript("/supabase-shim.js").then(function(){
+            window.db=window.__supabaseDb;
+            // Storage stays on Firebase for now — creative file URLs in
+            // existing ISCIs already point at firebasestorage.googleapis.com
+            // and keep working as long as the Firebase project is alive.
+            try{
+              firebase.initializeApp(cfg);
+              window.storage=firebase.storage();
+              try{window.fbAuth=firebase.auth()}catch(e){}
+            }catch(e){console.warn("Firebase storage init skipped:",e)}
+            console.log("Supabase mode active — db is /api/db");
+          });
+        }
         firebase.initializeApp(cfg);
         window.db=firebase.firestore();
         window.storage=firebase.storage();
@@ -308,7 +324,7 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
         // Loading the SDK here costs nothing if it never gets used.
         try{window.fbAuth=firebase.auth()}catch(e){console.warn("firebase.auth unavailable:",e)}
         console.log("Firebase initialized");
-      }).catch(function(e){console.error("Firebase init failed:",e)});
+      }).catch(function(e){console.error("DB init failed:",e)});
 
       // Load all data files in parallel
       return Promise.all(dataFiles.map(function(f){return loadScript(f)}));

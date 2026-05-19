@@ -7085,6 +7085,41 @@ Rules:
             alert("Export failed: "+e.message);
           }
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #D4A040",background:"#D4A04015",color:"#D4A040",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📦 Download Snapshot</button>
+        <button onClick={async()=>{
+          const pw=prompt("Admin password — upload snapshot to Supabase:");
+          if(!pw)return;
+          const input=document.createElement("input");
+          input.type="file";input.accept="application/json,.json";
+          input.onchange=async()=>{
+            const f=input.files&&input.files[0];if(!f)return;
+            notify("Reading "+f.name+"...");
+            const text=await f.text();
+            let snapshot;
+            try{snapshot=JSON.parse(text)}catch(e){alert("Not valid JSON: "+e.message);return}
+            if(!snapshot.appData){alert("Snapshot missing appData — wrong file?");return}
+            notify("Cleaning + migrating to Supabase...");
+            try{
+              const r=await fetch("/api/migrate-snapshot",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw,snapshot})});
+              const j=await r.json();
+              if(!r.ok){alert("Migration failed: "+(j.error||r.status)+(j.detail?"\n\n"+j.detail:""));return}
+              const c=j.cleanup||{};
+              const msg="Migrated "+j.written+" docs to Supabase.\n\n"+
+                "  appData docs:       "+j.appData_docs+"\n"+
+                "  trafficSheets docs: "+j.trafficSheets_docs+"\n\n"+
+                "Cleanup applied:\n"+
+                "  placeholders dropped:   "+c.placeholders+"\n"+
+                "  WK 4-digit links:       "+c.wk_legacy_links+"\n"+
+                "  markets normalized:     "+c.market_normalized+"\n"+
+                "  multi-market split:     "+c.market_split+"\n"+
+                "  bad markets dropped:    "+c.market_dropped+"\n"+
+                "  duplicates collapsed:   "+c.duplicates+"\n\n"+
+                "Traffic: "+(c.totals_before?.trafficHistory||0)+" → "+(c.totals_after?.trafficHistory||0);
+              alert(msg);
+              log("Supabase Migration","Migrated "+j.written+" docs ("+c.placeholders+" placeholders dropped, "+c.market_normalized+" markets normalized, "+c.duplicates+" dupes collapsed)");
+            }catch(e){alert("Migration request failed: "+e.message)}
+          };
+          input.click();
+        }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #4AC8E8",background:"#4AC8E815",color:"#4AC8E8",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📤 Migrate to Supabase</button>
       </div>
       <Cd style={{padding:0,overflow:"hidden"}}>
         <div style={{maxHeight:"calc(100vh - 280px)",overflowY:"auto"}}>

@@ -26,11 +26,16 @@ module.exports = async function handler(req, res) {
     appId: process.env.FIREBASE_APP_ID
   };
 
+  // The feature flag: when USE_SUPABASE=1 in Vercel env, the client
+  // skips Firebase entirely and uses the /api/db Supabase adapter.
+  // Flip it back to '0' or unset it to roll back to Firestore.
+  const useSupabase = process.env.USE_SUPABASE === '1';
+
   const missing = Object.entries(config).filter(([, v]) => !v).map(([k]) => k);
-  if (missing.length > 0) {
+  if (missing.length > 0 && !useSupabase) {
     console.error('Missing Firebase config:', missing.join(', '));
     return res.status(500).json({ error: 'Firebase not configured' });
   }
 
-  return res.status(200).json(config);
+  return res.status(200).json({ ...config, useSupabase });
 };
