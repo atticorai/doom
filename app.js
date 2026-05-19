@@ -335,7 +335,14 @@ const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Bir
 // Reverse map: full name → code (case-insensitive lookup for market normalization)
 const DM_REV=Object.fromEntries(Object.entries(DM).flatMap(([c,n])=>[[n,c],[n.toLowerCase(),c],[c,c],[c.toLowerCase(),c]]));
 // Normalize any market value (code or full name) to its 3-letter code
-const normMkt=(m)=>{if(!m)return"";const v=m.trim();if(DM[v])return v;const found=DM_REV[v]||DM_REV[v.toLowerCase()];if(found)return found;const entry=Object.entries(DM).find(([_,n])=>n.toLowerCase()===v.toLowerCase());return entry?entry[0]:v};
+// Normalize any market input ("CHI", "Chicago", "Chicago, IL", "Cincinatti")
+// to a canonical DMA code. Many callers do `DM[normMkt(x)]` to get back
+// the full name, so the return type stays a DMA code — the only change is
+// that "City, ST" forms and known typos now collapse instead of slipping
+// through unchanged. This is what keeps the Library/Tracker from showing
+// "Chicago" and "Chicago, IL" as two different markets.
+const _MKT_TYPOS={Cincinatti:"Cincinnati",Cinncinati:"Cincinnati",Cincinnatti:"Cincinnati",Mineapolis:"Minneapolis",Minnapolis:"Minneapolis"};
+const normMkt=(m)=>{if(!m)return"";const v=m.trim();if(DM[v])return v;const noState=v.replace(/,\s*[A-Z]{2}\s*$/,"").trim();const fixed=_MKT_TYPOS[noState]||noState;const found=DM_REV[fixed]||DM_REV[fixed.toLowerCase()];if(found)return found;const entry=Object.entries(DM).find(([_,n])=>n.toLowerCase()===fixed.toLowerCase());return entry?entry[0]:v};
 const mediaLabel=(m)=>{if(!m)return"";if(m==="Cable")return"TV/Cable";return m};
 const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
 const BRANDS=[
