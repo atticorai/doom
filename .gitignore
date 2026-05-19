@@ -3,3 +3,12 @@ node_modules/
 .DS_Store
 *.log
 build-library/
+
+# Migration / data dumps — these contain full Firestore exports
+# (emails, audit logs, possibly tokens). Never commit.
+snapshots/
+*-snapshot.json
+*.firestore-snapshot.json
+confirmations-legacy.json
+.env
+.env.local
