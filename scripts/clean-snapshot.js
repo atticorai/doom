@@ -70,15 +70,45 @@ const orphans = {
 };
 
 // ── Canonical lookups ───────────────────────────────────────────────
-const PL_MARKETS = ['Chicago','Cincinnati','Denver','Minneapolis'];
-const WK_MARKETS = ['Birmingham','Huntsville','Knoxville','Chattanooga','Montgomery','Dothan','Gadsden'];
-const CANONICAL = new Set([...PL_MARKETS, ...WK_MARKETS]);
+// The schema stores markets as DMA codes (CHI, BRM, etc.), so this
+// function returns a DMA — not a name. Accepts: DMA code, full name,
+// "City, ST" form, and a handful of known typos.
+const NAME_TO_DMA = {
+  'Chicago':'CHI','Cincinnati':'CIN','Denver':'DEN','Minneapolis':'MSP',
+  'Birmingham':'BRM','Huntsville':'HSV','Knoxville':'KNX','Chattanooga':'CHA',
+  'Montgomery':'MTG','Dothan':'DHN','Gadsden':'GAD',
+};
+const DMA_SET = new Set(Object.values(NAME_TO_DMA));
+const TYPO_FIXES = {
+  'Cincinatti': 'Cincinnati',
+  'Cinncinati': 'Cincinnati',
+  'Cincinnatti': 'Cincinnati',
+  'Mineapolis': 'Minneapolis',
+  'Minnapolis': 'Minneapolis',
+};
+// Multi-market strings — flagged specially, not silently dropped.
+const MULTI_MARKET_RE = /[\/&]|,\s*[A-Z][a-z]+\s+[A-Z][a-z]+|\s+and\s+|\s+&\s+/;
 
 function normalizeMarket(raw) {
-  if (!raw) return null;
-  const s = String(raw).trim();
-  const stripped = s.replace(/,\s*[A-Z]{2}\s*$/, '').trim();
-  return CANONICAL.has(stripped) ? stripped : null;
+  if (!raw) return { dma: null, multi: false };
+  const s0 = String(raw).trim();
+  // DMA code passthrough
+  if (DMA_SET.has(s0)) return { dma: s0, multi: false };
+  // Strip ", ST" suffix
+  const noState = s0.replace(/,\s*[A-Z]{2}\s*$/, '').trim();
+  // Typo fix
+  const fixed = TYPO_FIXES[noState] || noState;
+  if (NAME_TO_DMA[fixed]) return { dma: NAME_TO_DMA[fixed], multi: false };
+  // Multi-market?
+  if (MULTI_MARKET_RE.test(s0)) {
+    const parts = s0.split(/\s*[\/&,]\s*|\s+and\s+/).map(p => p.trim()).filter(Boolean);
+    const dmas = parts.map(p => {
+      const np = (TYPO_FIXES[p] || p).replace(/,\s*[A-Z]{2}\s*$/, '').trim();
+      return DMA_SET.has(p) ? p : NAME_TO_DMA[np] || null;
+    }).filter(Boolean);
+    if (dmas.length > 1) return { dma: null, multi: true, splitInto: dmas, original: s0 };
+  }
+  return { dma: null, multi: false };
 }
 
 function isClaudePlaceholder(h) {
@@ -161,19 +191,29 @@ if (ad.staEstLinks?.data && typeof ad.staEstLinks.data === 'object') {
 }
 
 // ── Pass 3: Market normalization ────────────────────────────────────
+// Resolves to a DMA code. Multi-market rows get split into one record
+// per DMA (preserves all the data, just with the real market).
 if (Array.isArray(ad.trafficHistory?.data)) {
-  ad.trafficHistory.data = ad.trafficHistory.data.filter(h => {
+  const out2 = [];
+  for (const h of ad.trafficHistory.data) {
     const norm = normalizeMarket(h.market);
-    if (!norm) {
+    if (norm.dma) {
+      if (norm.dma !== h.market) {
+        report.market_normalized.push({ _id: h._id, from: h.market, to: norm.dma });
+        h.market = norm.dma;
+      }
+      out2.push(h);
+    } else if (norm.multi) {
+      report.market_split = report.market_split || [];
+      report.market_split.push({ _id: h._id, original: norm.original, into: norm.splitInto });
+      for (const dma of norm.splitInto) {
+        out2.push({ ...h, market: dma, _splitFrom: norm.original });
+      }
+    } else {
       report.market_dropped.push({ _id: h._id, market: h.market, brand: h.brand, est: h.est });
-      return false;
     }
-    if (norm !== h.market) {
-      report.market_normalized.push({ _id: h._id, from: h.market, to: norm });
-      h.market = norm;
-    }
-    return true;
-  });
+  }
+  ad.trafficHistory.data = out2;
 }
 
 // ── Pass 4: Dedupe (newest ts wins) ─────────────────────────────────
@@ -218,13 +258,21 @@ if (Array.isArray(ad.iscis?.data) && killlist.iscis?.length) {
 }
 
 // ── Orphan analysis (report only, no deletion) ──────────────────────
+// Traffic stores ISCI refs as "{code} - {title}" (e.g.
+// "KNXWK26SP012O - WK Static Poster"), so we split on " - " and take
+// the first segment to compare against the ISCI master. Also: only
+// flag ACTIVE ISCIs — archived ones were already deliberately retired.
 const usedIscis = new Set();
 for (const h of ad.trafficHistory?.data || []) {
-  for (const r of h.iscis || []) if (r?.code) usedIscis.add(r.code + '|' + (r.dma || ''));
+  for (const r of h.iscis || []) {
+    if (!r?.code) continue;
+    const code = String(r.code).split(' - ')[0].trim();
+    usedIscis.add(code);
+  }
 }
 for (const i of ad.iscis?.data || []) {
-  const k = i.code + '|' + (i.dma || '');
-  if (!usedIscis.has(k) && i.active !== false) {
+  if (i.active === false) continue;
+  if (!usedIscis.has(i.code)) {
     orphans.iscis_no_traffic.push({ code: i.code, dma: i.dma, brand: i.brand, title: i.title });
   }
 }
@@ -271,6 +319,7 @@ console.log('');
 console.log('  placeholders dropped:     ' + report.placeholders.length);
 console.log('  WK 4-digit est purged:    ' + (report.wk_legacy_estimates.iscis.length + report.wk_legacy_estimates.traffic.length + report.wk_legacy_estimates.links.length));
 console.log('  markets normalized:       ' + report.market_normalized.length);
+console.log('  market split (multi):     ' + ((report.market_split||[]).length) + '  (one row per market)');
 console.log('  markets dropped (bad):    ' + report.market_dropped.length);
 console.log('  duplicates collapsed:     ' + report.duplicates.length);
 console.log('  killed by killlist:       ' + (report.killed.traffic.length + report.killed.iscis.length));
