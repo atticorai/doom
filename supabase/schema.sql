@@ -330,6 +330,23 @@ create table if not exists app_state (
   updated_at timestamptz not null default now()
 );
 
+-- ── Legacy doc store (Firestore-shape compatibility for day-1) ─────
+-- The app currently stores collections as one giant JSON blob per
+-- doc ("save the whole iscis array under appData/iscis"). This table
+-- preserves that shape so the cutover requires zero changes to the
+-- save/load patterns in app.js. We migrate to proper column queries
+-- incrementally after the cutover is stable.
+create table if not exists legacy_docs (
+  collection  text not null,                -- 'appData' | 'trafficSheets'
+  doc_id      text not null,                -- 'iscis', 'trafficHistory', etc.
+  data        jsonb,                        -- the stringified JSON the app used to put in Firestore.data
+  ts          bigint,                       -- Date.now() the app sets
+  updated_at  timestamptz not null default now(),
+  primary key (collection, doc_id)
+);
+
+create index if not exists legacy_docs_collection_idx on legacy_docs (collection);
+
 -- ── Rendered Traffic Sheets ────────────────────────────────────────
 -- The HTML traffic sheets that get linked from confirmation emails.
 -- These are bulky strings — kept separate from traffic_history so
@@ -371,6 +388,7 @@ alter table confirm_reminders_sent enable row level security;
 alter table audit_log              enable row level security;
 alter table app_state              enable row level security;
 alter table traffic_sheets         enable row level security;
+alter table legacy_docs            enable row level security;
 
 -- Default deny. Service role bypasses RLS automatically, so all app
 -- writes go through the server with the service role key.
