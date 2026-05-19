@@ -176,9 +176,15 @@ if (Array.isArray(ad.trafficHistory?.data)) {
   });
 }
 
-// Drop station-estimate links pointing at dead WK estimates
+// Drop station-estimate links pointing at dead WK estimates.
+// SCOPED TO WK ONLY: estimate 2633 is also a valid PL MSP TTWN
+// estimate per data-est-sta-cal.js, so we must not strip it from
+// PL link entries. Link keys look like "callSign|market|brand".
 if (ad.staEstLinks?.data && typeof ad.staEstLinks.data === 'object') {
   for (const [k, v] of Object.entries(ad.staEstLinks.data)) {
+    const parts = k.split('|');
+    const linkBrand = parts[2] || parts[parts.length - 1];
+    if (linkBrand !== 'Wettermark Keith') continue; // PL keeps 2633
     const ests = Array.isArray(v) ? v : (v && v.ests) || [];
     const cleaned = ests.filter(e => !WK_DEAD_ESTS.has(String(e)));
     if (cleaned.length !== ests.length) {
