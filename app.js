@@ -6820,6 +6820,66 @@ Rules:
     };
     const legacyIsciCount=iscis.filter(i=>i.legacy).length;
     const legacyTrafCount=trafficHistory.filter(h=>h.legacy).length;
+    // Group legacy traffic by source XLSX filename. One file → many records.
+    // Upload once, link all records sharing that legacySource.
+    const sourceGroups=React.useMemo(()=>{
+      const groups={};
+      trafficHistory.forEach((h,idx)=>{
+        if(!h.legacy)return;
+        const src=h.legacySource||"(unknown source)";
+        if(!groups[src])groups[src]={src,records:[],idxs:[],hasUrl:!!h.sourceFileUrl,url:h.sourceFileUrl||""};
+        groups[src].records.push(h);
+        groups[src].idxs.push(idx);
+        if(h.sourceFileUrl&&!groups[src].url){groups[src].url=h.sourceFileUrl;groups[src].hasUrl=true}
+      });
+      return Object.values(groups).sort((a,b)=>a.src.localeCompare(b.src));
+    },[trafficHistory]);
+    // Legacy ISCIs without a creative URL — surface them for upload.
+    const isciMissing=React.useMemo(()=>iscis.map((i,idx)=>({i,idx})).filter(({i})=>i.legacy&&!i.fileUrl),[iscis]);
+    const sanitizeFn=(s)=>String(s||"file").replace(/[^A-Za-z0-9._-]+/g,"_").slice(0,80);
+    const extOf=(name)=>{const m=String(name||"").match(/\.([A-Za-z0-9]+)$/);return m?m[1].toLowerCase():"bin"};
+    const uploadSourceFile=(file,group)=>{
+      if(!storage){notify("Storage not available — can't upload");return}
+      const path="legacy/sources/"+sanitizeFn(group.src.replace(/\.[A-Za-z0-9]+$/,""))+"."+extOf(file.name);
+      const ref=storage.ref(path);
+      setUploadTracker({label:"Uploading "+file.name,pct:0});
+      const task=ref.put(file);
+      task.on("state_changed",
+        snap=>setUploadTracker({label:"Uploading "+file.name+" ("+group.records.length+" records)",pct:Math.round((snap.bytesTransferred/snap.totalBytes)*100)}),
+        err=>{setUploadTracker(null);notify("Upload failed: "+(err.message||err));console.error(err)},
+        async()=>{
+          try{
+            const url=await ref.getDownloadURL();
+            setTrafficHistory(prev=>prev.map((h,j)=>group.idxs.includes(j)?{...h,sourceFileUrl:url,sourceFileName:file.name}:h));
+            setUploadTracker(null);
+            log("Legacy Source File Uploaded",group.src+" → "+group.records.length+" records");
+            notify("✓ "+file.name+" linked to "+group.records.length+" record"+(group.records.length===1?"":"s"));
+          }catch(e){setUploadTracker(null);notify("URL fetch failed: "+(e.message||e))}
+        }
+      );
+    };
+    const uploadIsciCreative=(file,isciIdx)=>{
+      if(!storage){notify("Storage not available");return}
+      const isci=iscis[isciIdx];if(!isci)return;
+      const baseCode=String(isci.code||"file").replace(/\.[A-Za-z0-9]+$/,"");
+      const path="creative/"+sanitizeFn(baseCode)+"."+extOf(file.name);
+      const ref=storage.ref(path);
+      setUploadTracker({label:"Uploading "+file.name,pct:0});
+      const task=ref.put(file);
+      task.on("state_changed",
+        snap=>setUploadTracker({label:"Uploading "+file.name+" → "+isci.code,pct:Math.round((snap.bytesTransferred/snap.totalBytes)*100)}),
+        err=>{setUploadTracker(null);notify("Upload failed: "+(err.message||err));console.error(err)},
+        async()=>{
+          try{
+            const url=await ref.getDownloadURL();
+            setIscis(prev=>prev.map((x,j)=>j===isciIdx?{...x,fileUrl:url}:x));
+            setUploadTracker(null);
+            log("Legacy Creative Uploaded",isci.code);
+            notify("✓ "+file.name+" linked to "+isci.code);
+          }catch(e){setUploadTracker(null);notify("URL fetch failed: "+(e.message||e))}
+        }
+      );
+    };
     const tabBtn=(id,label)=><button onClick={()=>setLegacyTab(id)} style={{padding:"6px 14px",borderRadius:6,border:"1px solid "+(legacyTab===id?"#D4A040":"#4a3565"),background:legacyTab===id?"rgba(212,160,64,.15)":"transparent",color:legacyTab===id?"#D4A040":"#9B8EAD",fontSize:13,fontWeight:700,cursor:"pointer"}}>{label}</button>;
     return<div>
       <PageHead title="Legacy Archive" pgKey="legacy" sub={legacyTrafCount+" archived traffic records · "+legacyIsciCount+" legacy ISCIs · history before this app existed"}/>
@@ -6827,6 +6887,8 @@ Rules:
         <div style={{display:"flex",gap:6,marginBottom:12,paddingBottom:10,borderBottom:"1px solid #3a2955"}}>
           {tabBtn("iscis","📜 Legacy ISCIs")}
           {tabBtn("traffic","📚 Legacy Traffic Instructions")}
+          {legacyTrafCount>0&&tabBtn("sources","📎 Source Files ("+sourceGroups.filter(g=>g.hasUrl).length+"/"+sourceGroups.length+")")}
+          {legacyIsciCount>0&&tabBtn("creative","📁 Creative ("+(legacyIsciCount-isciMissing.length)+"/"+legacyIsciCount+")")}
         </div>
         {legacyTab==="iscis"&&<div>
           <div style={{padding:10,background:"rgba(212,160,64,.05)",border:"1px solid #4a3565",borderRadius:6,marginBottom:10,fontSize:12,color:"#9B8EAD",lineHeight:1.5}}>
@@ -6889,6 +6951,41 @@ Rules:
             </div>
           </div>}
           {legacyTrafPreview.length===0&&legacyTrafText.trim()&&<div style={{fontSize:12,color:"#E85A7A",marginTop:6,padding:8,background:"rgba(232,90,122,.08)",borderRadius:5,border:"1px solid rgba(232,90,122,.3)"}}>No valid rows detected. Make sure the first row has headers and at least <code style={{fontFamily:"monospace",fontSize:11}}>month</code> is present.</div>}
+        </div>}
+        {legacyTab==="sources"&&<div>
+          <div style={{padding:10,background:"rgba(212,160,64,.05)",border:"1px solid #4a3565",borderRadius:6,marginBottom:10,fontSize:12,color:"#9B8EAD",lineHeight:1.5}}>
+            <b style={{color:"#D4A040"}}>📎 Source Files.</b> Upload the original XLSX / PDF traffic instructions doc each legacy record came from. One file links to all records sharing that source filename, so e.g. "August-October 2022 Traffic Instructions.xlsx" gets uploaded once and attaches to every record imported from it.
+            <div style={{marginTop:6,fontSize:11}}>Stored in Storage at <code style={{fontFamily:"monospace",fontSize:10,color:"#C4A0C8"}}>legacy/sources/&lt;filename&gt;</code>. URL is saved on each traffic record's <code style={{fontFamily:"monospace",fontSize:10,color:"#C4A0C8"}}>sourceFileUrl</code>.</div>
+          </div>
+          {sourceGroups.length===0&&<div style={{padding:20,textAlign:"center",color:"#9B8EAD",fontSize:13}}>No legacy traffic records yet — import some first.</div>}
+          <div style={{display:"grid",gap:6}}>
+            {sourceGroups.map(g=><div key={g.src} style={{padding:"8px 10px",background:g.hasUrl?"rgba(91,196,160,.06)":"#1e1233",border:"1px solid "+(g.hasUrl?"rgba(91,196,160,.4)":"#4a3565"),borderRadius:6,display:"flex",alignItems:"center",gap:10}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#E8DFF0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.src}</div>
+                <div style={{fontSize:10,color:"#9B8EAD",marginTop:2}}>{g.records.length} record{g.records.length===1?"":"s"} · {[...new Set(g.records.map(r=>r.brand))].join(", ")} · {[...new Set(g.records.map(r=>r.market))].join(", ")}</div>
+              </div>
+              {g.hasUrl?<>
+                <a href={g.url} target="_blank" rel="noopener noreferrer" style={{padding:"4px 10px",borderRadius:5,border:"1px solid #5BC4A0",background:"rgba(91,196,160,.1)",color:"#5BC4A0",fontSize:11,fontWeight:700,textDecoration:"none"}}>📎 Open file</a>
+                <label style={{padding:"4px 10px",borderRadius:5,border:"1px solid #4a3565",background:"transparent",color:"#9B8EAD",fontSize:11,fontWeight:600,cursor:"pointer"}}>Replace<input type="file" accept=".xlsx,.xls,.pdf,.csv,.doc,.docx" onChange={e=>{const f=e.target.files?.[0];if(f)uploadSourceFile(f,g);e.target.value=""}} style={{display:"none"}}/></label>
+              </>:<label style={{padding:"4px 10px",borderRadius:5,border:"1px solid #D4A040",background:"rgba(212,160,64,.12)",color:"#D4A040",fontSize:11,fontWeight:700,cursor:"pointer"}}>📁 Upload<input type="file" accept=".xlsx,.xls,.pdf,.csv,.doc,.docx" onChange={e=>{const f=e.target.files?.[0];if(f)uploadSourceFile(f,g);e.target.value=""}} style={{display:"none"}}/></label>}
+            </div>)}
+          </div>
+        </div>}
+        {legacyTab==="creative"&&<div>
+          <div style={{padding:10,background:"rgba(212,160,64,.05)",border:"1px solid #4a3565",borderRadius:6,marginBottom:10,fontSize:12,color:"#9B8EAD",lineHeight:1.5}}>
+            <b style={{color:"#D4A040"}}>📁 Legacy Creative.</b> Upload the actual creative file (MP4, MOV, WAV, MP3, PDF) for legacy ISCIs that don't have one yet. Files go to Storage at <code style={{fontFamily:"monospace",fontSize:10,color:"#C4A0C8"}}>creative/&lt;code&gt;</code>, same place current ISCIs live.
+            <div style={{marginTop:6,fontSize:11}}>Showing <b style={{color:"#E8DFF0"}}>{isciMissing.length}</b> of {legacyIsciCount} legacy ISCI{legacyIsciCount===1?"":"s"} missing creative. The {legacyIsciCount-isciMissing.length} with files already linked (Google Drive from the CSV) are hidden here.</div>
+          </div>
+          {isciMissing.length===0&&<div style={{padding:20,textAlign:"center",color:"#5BC4A0",fontSize:13}}>✓ All legacy ISCIs have a fileUrl linked.</div>}
+          <div style={{maxHeight:500,overflowY:"auto",border:isciMissing.length?"1px solid #4a3565":"none",borderRadius:6}}>
+            {isciMissing.map(({i,idx})=><div key={idx} style={{padding:"6px 10px",borderBottom:"1px solid #3a2955",display:"flex",alignItems:"center",gap:10,background:"#1e1233"}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:11,fontFamily:"monospace",color:"#E8DFF0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{i.code}</div>
+                <div style={{fontSize:10,color:"#9B8EAD",marginTop:1}}>{i.title} · {i.media} · {i.dma} · {i.dur}s{i.isBookend?" BE":""}{i.legacyYear?(" · "+i.legacyYear):""}</div>
+              </div>
+              <label style={{padding:"3px 8px",borderRadius:4,border:"1px solid #D4A040",background:"rgba(212,160,64,.12)",color:"#D4A040",fontSize:11,fontWeight:700,cursor:"pointer"}}>📁<input type="file" accept=".mp4,.mov,.wav,.mp3,.pdf,.jpg,.png" onChange={e=>{const f=e.target.files?.[0];if(f)uploadIsciCreative(f,idx);e.target.value=""}} style={{display:"none"}}/></label>
+            </div>)}
+          </div>
         </div>}
       </Cd>
       {(legacyIsciCount>0||legacyTrafCount>0)&&<Cd style={{padding:14,marginTop:10}}>
@@ -8334,7 +8431,11 @@ Rules:
               // legible text even when the Library's dark theme is in effect on the
               // host page. Explicit inline `style="color:#..."` spans win via CSS
               // specificity, so brand accents (Client red, Buyer gold) still show.
-              let x='<html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}html,body{background:#fff;color:#1e1233;font-family:Arial,sans-serif}body{padding:28px}table{width:100%;border-collapse:collapse}b{font-weight:700}td,th{color:#1e1233}</style></head><body>';
+              let x='<html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}html,body{background:#fff;color:#1e1233;font-family:Arial,sans-serif}body{padding:28px}table{width:100%;border-collapse:collapse}b{font-weight:700}td,th{color:#1e1233}a{color:#5b21b6;text-decoration:underline}</style></head><body>';
+              if(h.legacy){
+                const linkBit=h.sourceFileUrl?' &nbsp;·&nbsp; <a href="'+h.sourceFileUrl+'" target="_blank" rel="noopener">📎 Open source file</a>':"";
+                x+='<div style="background:#fef3c7;border:1px solid #d4a040;padding:8px 12px;margin-bottom:14px;font-size:11px;color:#92400e;border-radius:4px"><b>📜 LEGACY ARCHIVE</b> — pre-app record'+(h.legacySource?(' &nbsp;·&nbsp; Source: '+h.legacySource):"")+linkBit+'</div>';
+              }
               x+='<div style="text-align:center;margin-bottom:14px"><img src="'+logo+'" style="height:48px"/></div>';
               x+=hdr("Agency",getBrandAgency(code));
               x+=hdr("Client",h.brand,bc);
