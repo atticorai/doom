@@ -7996,8 +7996,7 @@ Rules:
               const parts=String(h.month||"").trim().split(/\s+/);
               const monIdx=MO_LIB.indexOf(parts[0]);
               const parsedYear=parseInt(parts[1]);
-              const tsYear=h.ts?new Date(h.ts).getFullYear():null;
-              const year=!isNaN(parsedYear)?parsedYear:(tsYear&&tsYear<curYear?tsYear:(monIdx>curIdx+2?curYear-1:curYear));
+              const year=!isNaN(parsedYear)?parsedYear:(monIdx>curIdx+2?curYear-1:curYear);
               const effDate=monIdx>=0?new Date(year,monIdx,1):(h.ts?new Date(h.ts):null);
               const archived=effDate?effDate<archCutoff:true;
               // Combined records save market/media as 'Chicago / Cincinnati'
@@ -8487,7 +8486,8 @@ Rules:
             // block — no ancestor transform, overflow, or will-change can
             // intercept it and cause the modal to anchor at the wrong position.
             return ReactDOM.createPortal(
-              <div style={{position:"fixed",left:200,top:0,right:0,bottom:0,zIndex:5}}>
+              <div className="dd-lib-host" style={{position:"fixed",left:200,top:0,right:0,bottom:0,zIndex:5,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+                <style dangerouslySetInnerHTML={{__html:".dd-lib-host > div.min-h-screen{min-height:0!important;height:100%!important;flex:1 1 auto!important;max-height:100%!important;}"}}/>
                 {React.createElement(ML,{key:"library",dataVersion:libKey})}
               </div>,
               document.body
