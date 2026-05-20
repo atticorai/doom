@@ -7997,7 +7997,7 @@ Rules:
               const monIdx=MO_LIB.indexOf(parts[0]);
               const parsedYear=parseInt(parts[1]);
               const tsYear=h.ts?new Date(h.ts).getFullYear():null;
-              const year=!isNaN(parsedYear)?parsedYear:(tsYear&&tsYear<=curYear?tsYear:(monIdx>curIdx+2?curYear-1:curYear));
+              const year=!isNaN(parsedYear)?parsedYear:(tsYear&&tsYear<curYear?tsYear:(monIdx>curIdx+2?curYear-1:curYear));
               const effDate=monIdx>=0?new Date(year,monIdx,1):(h.ts?new Date(h.ts):null);
               const archived=effDate?effDate<archCutoff:true;
               // Combined records save market/media as 'Chicago / Cincinnati'
