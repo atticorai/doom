@@ -1840,7 +1840,7 @@ const App=()=>{
       </div>
       <Cd><div style={{overflowX:"auto",maxHeight:"calc(100vh - 320px)"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><STH tbl="isci" col="code">ISCI</STH><STH tbl="isci" col="title">Title</STH><STH tbl="isci" col="media">Media</STH><STH tbl="isci" col="dma">DMA</STH><STH tbl="isci" col="dur">Dur</STH><STH tbl="isci" col="category">Category</STH>{showValueProp&&<STH tbl="isci" col="valueProp">Value Prop</STH>}<STH tbl="isci" col="vo">VO</STH><STH tbl="isci" col="status">Status</STH><TH w="60">Actions</TH></tr></thead>
         <tbody>{fl.slice(0,250).map((i,idx)=>{const gi=iscis.findIndex(x=>x.code===i.code&&x.dma===i.dma&&x.media===i.media);return<tr key={i.code+i.dma+i.media} style={{opacity:i.active?1:.45}}>
-          <TD m b><span style={{cursor:"pointer",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"editIsci",isci:i,idx:gi})}>{i.code}</span>{isIsciSent(i.code)&&<span title="Locked — sent in traffic" style={{marginLeft:3,fontSize:13,color:"#E85A7A"}}>🔒</span>}{i.fileUrl&&<a href={i.fileUrl} target="_blank" rel="noopener" download title="Download creative" style={{marginLeft:3,fontSize:13,color:"#5BC4A0",textDecoration:"none"}}>📁</a>}</TD><TD>{i.title}</TD><TD><B l={i.media} c={mc(i.media)}/></TD><TD>{i.dma}</TD><TD>{i.media==="OOH"?(OOH_TYPE_MAP[i.dur]||i.dur):i.media==="Display"?(DISPLAY_TYPE_MAP[i.dur]||i.dur):i.dur?`:${i.dur}`:""}</TD>
+          <TD m b><span title="Preview / download creative" style={{cursor:"pointer",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"creativeView",isci:i})}>{i.code}</span>{isIsciSent(i.code)&&<span title="Locked — sent in traffic" style={{marginLeft:3,fontSize:13,color:"#E85A7A"}}>🔒</span>}{i.fileUrl&&<a href={i.fileUrl} target="_blank" rel="noopener" download title="Download creative" style={{marginLeft:3,fontSize:13,color:"#5BC4A0",textDecoration:"none"}}>📁</a>}</TD><TD>{i.title}</TD><TD><B l={i.media} c={mc(i.media)}/></TD><TD>{i.dma}</TD><TD>{i.media==="OOH"?(OOH_TYPE_MAP[i.dur]||i.dur):i.media==="Display"?(DISPLAY_TYPE_MAP[i.dur]||i.dur):i.dur?`:${i.dur}`:""}</TD>
           <TD><select value={i.category||i.caseType||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New category:");if(!n||!n.trim())return;const t=n.trim();const nextCF=(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),categories:[...(p[i.brand]?.categories||[]).filter(x=>x!==t),t]}}))(customFields);setCustomFields(nextCF);saveToDb("customTags",nextCF);setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,category:t,caseType:t}:x);return nx})}else setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,category:v,caseType:v}:x);return nx})}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #4a3565",background:i.category||i.caseType?"#dbeafe":"#2d1f42",color:"#4a3565",fontWeight:600,maxWidth:100}}>
             <option value="">—</option>{(customFields[i.brand]?.categories||[]).map(t=><option key={t} value={t}>{t}</option>)}<option value="__add__">＋</option>
           </select></TD>
@@ -7634,6 +7634,13 @@ Rules:
       <BookMarginNote author="meg">This is MY registry. You're just visiting.</BookMarginNote>
     </div>,damageEffects:<>{<BookHoofMark style={{top:24,left:24,opacity:.2,transform:"rotate(30deg) scale(.65)"}}/>}{<BookLipstickMark style={{bottom:40,left:"40%",opacity:.45,transform:"rotate(-10deg)"}}/>}</>},
 
+    {title:"Previewing & Downloading Creative",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <p>Click any ISCI code in the registry to open a preview. Video plays inline, audio gets an audio player, images and PDFs display directly. Use the Download button to save the file locally.</p>
+      <p>The little 📁 icon next to a code is a quick-download shortcut — it skips the preview and downloads the file immediately. The ✎ button in the Actions column is for editing metadata (title, category, value prop, etc.).</p>
+      <p>If an ISCI has no file attached, the preview shows an Upload prompt that jumps straight to the edit modal. Bulk Creative upload still works for uploading many files at once by ISCI code.</p>
+      <BookMarginNote author="meg">Click the code, see the spot. Easy. You're welcome.</BookMarginNote>
+    </div>,damageEffects:<>{<BookInkSplatter style={{top:24,right:16,opacity:.4}}/>}{<BookLipstickMark style={{bottom:24,left:32,opacity:.5,transform:"rotate(8deg) scale(.95)"}}/>}</>},
+
     {title:"Managing ISCIs & Tags",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
       <p>Use the Tag Manager to assign categories, value props, and VO labels per brand. Auto-tagging suggests categories from ISCI titles — review and accept or override.</p>
       <p>Activate/deactivate ISCIs to control which appear in the rotation builder. OOH ISCIs (suffix O) only show in the OOH Hub's separate registry.</p>
@@ -7679,7 +7686,8 @@ Rules:
 
     {title:"Using the Traffic Library",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
       <p>The Library archives every rotation ever built. Use brand tabs to switch between PL and WK. Coverage tracking (green checks / red X's per market × month) lives on the Traffic Tracker page.</p>
-      <p>Click any rotation to re-send it — a confirmation dialog shows all details first. Stations are looked up fresh, grouped by ownership, same rules as the Traffic Center.</p>
+      <p>By default the Library shows only the current broadcast month and the prior month — everything older is archived. Toggle the "📦 Archived" pill in the search bar to reveal them. The cutoff updates automatically as the calendar rolls forward.</p>
+      <p>Click any rotation to open it in the book viewer. From there you can re-send, copy to another month/market, edit metadata, or delete (admin password required for destructive actions). Stations are looked up fresh on every send, grouped by ownership, same rules as the Traffic Center.</p>
       <BookMarginNote author="meg">I remember every version. Every mistake.</BookMarginNote>
     </div>,damageEffects:<>{<BookHoofMark style={{bottom:16,left:16,opacity:.3,transform:"rotate(15deg) scale(.7)"}}/>}</>},
 
@@ -8477,6 +8485,55 @@ Rules:
     {modal?.t==="buildRot"&&<RotBuilder est={modal.est} pool={modal.pool} workMonth={workMonth} _revise={modal._revise}/>}
     {modal?.t==="buildStream"&&<StreamBuilder est={modal.est} pool={modal.pool} workMonth={workMonth}/>}
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
+    {modal?.t==="creativeView"&&(()=>{
+      const i=modal.isci;
+      const url=i.fileUrl||"";
+      const ext=(url.toLowerCase().match(/\.([a-z0-9]+)(?:\?|$)/)||[])[1]||"";
+      const isVideo=["mp4","mov","webm","ogv","avi","m4v"].includes(ext);
+      const isAudio=["mp3","wav","ogg","m4a","aac"].includes(ext);
+      const isImage=["jpg","jpeg","png","gif","webp","svg","bmp"].includes(ext);
+      const isPdf=ext==="pdf";
+      const gi=iscis.findIndex(x=>x.code===i.code&&x.dma===i.dma&&x.media===i.media);
+      return <Mod title={i.code+" — "+(i.title||"Untitled")} onClose={()=>setModal(null)} wide>
+        <div style={{fontSize:12,color:"#9B8EAD",marginBottom:10,display:"flex",gap:10,flexWrap:"wrap"}}>
+          <span>{i.brand}</span><span>·</span>
+          <span>{DM[i.dma]||i.dma}</span><span>·</span>
+          <span style={{color:mc(i.media),fontWeight:700}}>{i.media}</span>
+          {i.dur&&<><span>·</span><span>:{i.dur}</span></>}
+          {(i.category||i.caseType)&&<><span>·</span><span>{i.category||i.caseType}</span></>}
+        </div>
+        {!url ? (
+          <div style={{padding:32,textAlign:"center",background:"#1e1233",borderRadius:8,color:"#9B8EAD",border:"1px dashed #4a3565"}}>
+            <div style={{fontSize:42,marginBottom:8,opacity:.6}}>📁</div>
+            <div style={{fontWeight:700,marginBottom:4,color:"#E8DFF0"}}>No creative file linked yet</div>
+            <div style={{fontSize:12,marginBottom:14}}>Use the ✎ edit button to attach one, or drop files via Bulk Creative.</div>
+            <Btn onClick={()=>setModal({t:"editIsci",isci:i,idx:gi})}>✎ Edit / Upload</Btn>
+          </div>
+        ) : isVideo ? (
+          <video controls src={url} style={{width:"100%",maxHeight:"60vh",borderRadius:6,background:"#000"}}/>
+        ) : isAudio ? (
+          <div style={{padding:24,background:"linear-gradient(145deg,#2d1f42,#1e1233)",borderRadius:8,textAlign:"center"}}>
+            <div style={{fontSize:42,marginBottom:12,opacity:.7}}>🎵</div>
+            <audio controls src={url} style={{width:"100%"}}/>
+          </div>
+        ) : isImage ? (
+          <img src={url} alt={i.title||i.code} style={{width:"100%",maxHeight:"60vh",objectFit:"contain",borderRadius:6,background:"#1e1233"}}/>
+        ) : isPdf ? (
+          <iframe src={url} title={i.code} style={{width:"100%",height:"60vh",border:"none",borderRadius:6,background:"#fff"}}/>
+        ) : (
+          <div style={{padding:32,textAlign:"center",background:"#1e1233",borderRadius:8,color:"#9B8EAD"}}>
+            <div style={{fontSize:36,marginBottom:8}}>📄</div>
+            <div style={{fontWeight:700,marginBottom:4,color:"#E8DFF0"}}>Inline preview not supported for .{ext||"this file"}</div>
+            <div style={{fontSize:12}}>Use Download to open it locally.</div>
+          </div>
+        )}
+        <div style={{display:"flex",gap:6,marginTop:14,justifyContent:"flex-end",alignItems:"center"}}>
+          {url&&<a href={url} download target="_blank" rel="noopener" style={{padding:"6px 14px",borderRadius:6,background:"#4AC8E8",color:"#fff",textDecoration:"none",fontSize:13,fontWeight:700}}>📥 Download</a>}
+          <Btn onClick={()=>setModal({t:"editIsci",isci:i,idx:gi})}>✎ Edit Metadata</Btn>
+          <Btn onClick={()=>setModal(null)}>Close</Btn>
+        </div>
+      </Mod>;
+    })()}
     {editTrafficIdx!==null&&trafficHistory[editTrafficIdx]&&<EditTrafficModal editIdx={editTrafficIdx} onClose={()=>setEditTrafficIdx(null)}/>}
     {modal?.t==="linkEst"&&(()=>{const s=modal.station;const linked=getStaEsts(s);
       const matching=estimates.filter(e=>e.market===s.market&&e.brand===s.brand);
