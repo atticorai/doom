@@ -642,6 +642,7 @@ const App=()=>{
   const[oohContracts,setOohContracts]=useState(OOH_CONTRACTS_INIT);
   const[oohPhotos,setOohPhotos]=useState({});
   const[dbLoaded,setDbLoaded]=useState(false);
+  const[deletedIsciKeys,setDeletedIsciKeys]=useState(new Set());
   const[authed,setAuthed]=useState(()=>sessionStorage.getItem("dd_auth")==="1");
   const[authInput,setAuthInput]=useState("");
 
@@ -694,6 +695,8 @@ const App=()=>{
           const missing=ESTIMATES.filter(e=>!fbNums.has(e.num+"|"+e.market));
           const allEst=[...migrated,...missing];setEstimates(allEst);estimatesFbCountRef.current=allEst.length;estimatesLoadedRef.current=true
         }}else{estimatesLoadedRef.current=true}
+        const loadedDeleted=new Set(docs.deletedIscis?.data?JSON.parse(docs.deletedIscis.data):[]);
+        setDeletedIsciKeys(loadedDeleted);
         if(docs.iscis?.data){const d=JSON.parse(docs.iscis.data);console.log("Firestore ISCIs: "+d.length+" records, ISCIS_INIT has "+ISCIS_INIT.length);
           // Clean codes (fix malformed ISCI codes with titles stuck in them)
           const REMOVE_ISCIS=new Set(["CINPL2660003T","MSPPL2660001T","CHIPL2660005T","CINPL2660005T","DENPL2660005T","MSPPL2660005T","BRMWK2630009R","BRMWK2630010R","CHAWK2630009R","CHAWK2630010R","DHNWK2630009R","DHNWK2630010R","HSVWK2630009R","HSVWK2630010R","KNXWK2630009R","KNXWK2630010R","MTGWK2630009R","MTGWK2630010R"]);
@@ -713,10 +716,10 @@ const App=()=>{
             const seed=seedMap.get(fb.code+"|"+(fb.dma||""));
             if(!seed)return fb; // User-added ISCI, keep as-is
             const seedCat=seed.category||seed.caseType||"";const fbCat=fb.category||fb.caseType||"";const useSeedCat=seedCat&&(seedCat!=="Personal Injury (General)")&&(!fbCat||fbCat==="Personal Injury (General)"||fbCat==="—");
-            return{...fb,title:fb.title||seed.title,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:seed.fileUrl||fb.fileUrl,category:useSeedCat?seedCat:(fbCat||seedCat),caseType:useSeedCat?seedCat:(fbCat||seedCat),vo:fb.vo||seed.vo||""};
+            return{...fb,title:fb.title||seed.title,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:fb.fileUrl||seed.fileUrl,category:useSeedCat?seedCat:(fbCat||seedCat),caseType:useSeedCat?seedCat:(fbCat||seedCat),vo:fb.vo||seed.vo||""};
           });
           // Always add back missing seed ISCIs — better to recover than lose
-          const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||"")));
+          const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||""))&&!loadedDeleted.has(init.code+"|"+(init.dma||"")));
           const all=[...enhanced,...missing];
           // Assign WK categories and VO — only if empty or generic. User edits stick.
           const GENERIC=new Set(["","Personal Injury (General)","—"]);
@@ -902,6 +905,7 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;const newLinks={};stations.forEach(s=>{const k=staKey(s);const existing=staEstLinks[k]||[];const matched=estimates.filter(e=>e.market===s.market&&e.brand===s.brand&&s.media===e.media).map(e=>e.num);if(existing.length===0&&matched.length){newLinks[k]=matched}});if(Object.keys(newLinks).length){setStaEstLinks(p=>({...p,...newLinks}))}linksReady.current=true},[stations,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(nowAiring).length>0)saveToDb("nowAiring",nowAiring)},[nowAiring,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(auditLog.length>0)saveToDb("auditLog",auditLog)},[auditLog,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("deletedIscis",[...deletedIsciKeys])},[deletedIsciKeys,dbLoaded]);
   const trafficFbCountRef=React.useRef(0);
   const trafficDirtyRef=React.useRef(false);
   const trafficSaveTimerRef=React.useRef(null);
@@ -1851,7 +1855,7 @@ const App=()=>{
             <option value="">—</option>{(customFields[i.brand]?.vos||[]).map(t=><option key={t} value={t}>{t}</option>)}<option value="__add__">＋</option>
           </select></TD>
           <TD>{i.active?<B l="Active" c="#5BC4A0"/>:<B l="Off" c="#9ca3af"/>}</TD>
-          <TD><div style={{display:"flex",gap:2}}><button onClick={()=>setModal({t:"editIsci",isci:i,idx:gi})} style={{padding:"2px 6px",borderRadius:4,border:"none",background:isIsciSent(i.code)?"#3a1f35":"#f0f9ff",color:isIsciSent(i.code)?"#E85A7A":"#4AC8E8",fontSize:14,fontWeight:600,cursor:"pointer"}}>{isIsciSent(i.code)?"🔒":"✎"}</button>{!isIsciSent(i.code)&&<button onClick={()=>{setIscis(p=>p.map((x,j)=>j===gi?{...x,active:!x.active}:x));log(i.active?"Deactivated":"Activated",i.code);notify(`${i.code} ${i.active?"off":"on"}`)}} style={{padding:"2px 6px",borderRadius:4,border:"none",background:i.active?"#3a1f35":"#1f3530",color:i.active?"#E85A7A":"#5BC4A0",fontSize:14,fontWeight:600,cursor:"pointer"}}>{i.active?"⏸":"▶"}</button>}{!isIsciSent(i.code)&&<button onClick={async()=>{const pw=prompt("Admin password:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Wrong password");if(!confirm("Delete "+i.code+"?"))return;setIscis(p=>p.filter((_,j)=>j!==gi));log("ISCI Deleted",i.code+" — "+i.title);notify(i.code+" deleted")}} style={{padding:"2px 6px",borderRadius:4,border:"none",background:"transparent",color:"#E85A7A",fontSize:14,fontWeight:600,cursor:"pointer"}}>🗑</button>}</div></TD>
+          <TD><div style={{display:"flex",gap:2}}><button onClick={()=>setModal({t:"editIsci",isci:i,idx:gi})} style={{padding:"2px 6px",borderRadius:4,border:"none",background:isIsciSent(i.code)?"#3a1f35":"#f0f9ff",color:isIsciSent(i.code)?"#E85A7A":"#4AC8E8",fontSize:14,fontWeight:600,cursor:"pointer"}}>{isIsciSent(i.code)?"🔒":"✎"}</button>{!isIsciSent(i.code)&&<button onClick={()=>{setIscis(p=>p.map((x,j)=>j===gi?{...x,active:!x.active}:x));log(i.active?"Deactivated":"Activated",i.code);notify(`${i.code} ${i.active?"off":"on"}`)}} style={{padding:"2px 6px",borderRadius:4,border:"none",background:i.active?"#3a1f35":"#1f3530",color:i.active?"#E85A7A":"#5BC4A0",fontSize:14,fontWeight:600,cursor:"pointer"}}>{i.active?"⏸":"▶"}</button>}{!isIsciSent(i.code)&&<button onClick={async()=>{const pw=prompt("Admin password:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Wrong password");if(!confirm("Delete "+i.code+"?"))return;setIscis(p=>p.filter((_,j)=>j!==gi));setDeletedIsciKeys(p=>{const n=new Set(p);n.add(i.code+"|"+(i.dma||""));return n});log("ISCI Deleted",i.code+" — "+i.title);notify(i.code+" deleted")}} style={{padding:"2px 6px",borderRadius:4,border:"none",background:"transparent",color:"#E85A7A",fontSize:14,fontWeight:600,cursor:"pointer"}}>🗑</button>}</div></TD>
         </tr>})}</tbody></table></div></Cd>
     </div>;
   };
@@ -4435,7 +4439,7 @@ const App=()=>{
           </div>
           {pwError&&<div style={{fontSize:13,color:"#E85A7A",fontWeight:600,marginTop:6}}>Incorrect password</div>}
         </div>
-        <div style={{display:"flex",gap:6}}><Btn onClick={()=>setModal(null)}>Cancel</Btn><div style={{marginLeft:"auto"}}><Btn danger onClick={async()=>{if(locked){alert("Cannot delete \u2014 this ISCI has been sent in traffic.");return}const pw=prompt("Admin password:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Wrong password");if(!confirm("Permanently delete "+isci.code+"?"))return;setIscis(p=>p.filter((_,j)=>j!==idx));log("ISCI Deleted",isci.code);notify(isci.code+" deleted");setModal(null)}}>\ud83d\uddd1 Delete</Btn></div></div>
+        <div style={{display:"flex",gap:6}}><Btn onClick={()=>setModal(null)}>Cancel</Btn><div style={{marginLeft:"auto"}}><Btn danger onClick={async()=>{if(locked){alert("Cannot delete \u2014 this ISCI has been sent in traffic.");return}const pw=prompt("Admin password:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Wrong password");if(!confirm("Permanently delete "+isci.code+"?"))return;setIscis(p=>p.filter((_,j)=>j!==idx));setDeletedIsciKeys(p=>{const n=new Set(p);n.add(isci.code+"|"+(isci.dma||""));return n});log("ISCI Deleted",isci.code);notify(isci.code+" deleted");setModal(null)}}>\ud83d\uddd1 Delete</Btn></div></div>
       </div>:<div>
       {locked&&unlocked&&<div style={{background:"#fffbeb",border:"2px solid #D4A040",borderRadius:6,padding:8,marginBottom:10,fontSize:13,color:"#92400e",fontWeight:700}}>⚠ ADMIN EDIT — This ISCI is live in traffic. All changes are logged as revisions and flagged in the audit trail.</div>}
       {!locked&&<div style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:6,padding:8,marginBottom:10,fontSize:13,color:"#92400e"}}>Editing ISCI codes directly. Changes are logged to audit trail.</div>}
@@ -4470,7 +4474,7 @@ const App=()=>{
       <div style={{display:"flex",gap:6}}>
         <Btn primary color={locked?"#E85A7A":"#4AC8E8"} onClick={()=>{const changes=[];if(ef.code!==isci.code)changes.push(`code: ${isci.code}→${ef.code}`);if(ef.title!==isci.title)changes.push(`title: ${isci.title}→${ef.title}`);if(ef.dur!==isci.dur)changes.push(`dur: ${isci.dur}→${ef.dur}`);if(ef.media!==isci.media)changes.push(`media: ${isci.media}→${ef.media}`);if(ef.dma!==isci.dma)changes.push(`dma: ${isci.dma}→${ef.dma}`);if(ef.fileUrl!==(isci.fileUrl||""))changes.push(`fileUrl: ${ef.fileUrl?"uploaded":"removed"}`);setIscis(prev=>{const updated=prev.map((x,j)=>j===idx?{...x,...ef}:x);return updated});log(locked?"⚠ ADMIN ISCI REVISION":"ISCI Edited",`${isci.code}: ${changes.join(", ")||"no changes"}`);notify(`${ef.code} updated${locked?" (admin revision)":""}`);setModal(null)}}>{locked?"⚠ Save Revision":"Save Changes"}</Btn>
         <Btn onClick={()=>setModal(null)}>Cancel</Btn>
-        <div style={{marginLeft:"auto"}}><Btn danger onClick={async()=>{if(locked){alert("Cannot delete — this ISCI has been sent in traffic.");return}const pw=prompt("Admin password:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Wrong password");if(!confirm("Permanently delete "+isci.code+"?"))return;setIscis(p=>p.filter((_,j)=>j!==idx));log("ISCI Deleted",isci.code+" — "+isci.title);notify(isci.code+" deleted");setModal(null)}}>🗑 Delete</Btn></div>
+        <div style={{marginLeft:"auto"}}><Btn danger onClick={async()=>{if(locked){alert("Cannot delete — this ISCI has been sent in traffic.");return}const pw=prompt("Admin password:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok)return alert("Wrong password");if(!confirm("Permanently delete "+isci.code+"?"))return;setIscis(p=>p.filter((_,j)=>j!==idx));setDeletedIsciKeys(p=>{const n=new Set(p);n.add(isci.code+"|"+(isci.dma||""));return n});log("ISCI Deleted",isci.code+" — "+isci.title);notify(isci.code+" deleted");setModal(null)}}>🗑 Delete</Btn></div>
       </div>
       </div>}
 
@@ -7983,7 +7987,8 @@ Rules:
               const parts=String(h.month||"").trim().split(/\s+/);
               const monIdx=MO_LIB.indexOf(parts[0]);
               const parsedYear=parseInt(parts[1]);
-              const year=!isNaN(parsedYear)?parsedYear:(monIdx>curIdx+2?curYear-1:curYear);
+              const tsYear=h.ts?new Date(h.ts).getFullYear():null;
+              const year=!isNaN(parsedYear)?parsedYear:(tsYear&&tsYear<=curYear?tsYear:(monIdx>curIdx+2?curYear-1:curYear));
               const effDate=monIdx>=0?new Date(year,monIdx,1):(h.ts?new Date(h.ts):null);
               const archived=effDate?effDate<archCutoff:true;
               // Combined records save market/media as 'Chicago / Cincinnati'
@@ -8471,7 +8476,7 @@ Rules:
             // negative margin to cancel the page padding so the Library
             // paints edge-to-edge. No overflow:hidden — the Library has
             // its own internal scroll inside <main overflow-y-auto>.
-            return<div style={{position:"relative",height:"100vh",margin:-16}}>
+            return<div style={{position:"fixed",left:200,top:0,right:0,bottom:0,zIndex:5,overflow:"hidden"}}>
               {React.createElement(ML,{key:libKey})}
             </div>;
           })()}
