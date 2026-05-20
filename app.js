@@ -7857,11 +7857,21 @@ Rules:
       <AnimatePresence mode="wait" initial={false}>
         <MDiv
           key={pg}
-          initial={{opacity:0,y:28,scale:0.97,filter:"blur(6px)"}}
-          animate={{opacity:1,y:0,scale:1,filter:"blur(0px)"}}
-          exit={{opacity:0,y:-14,scale:0.99,filter:"blur(3px)",transition:{duration:0.18,ease:[0.4,0,1,1]}}}
-          transition={{duration:0.42,ease:[0.22,0.61,0.36,1]}}
-          style={{willChange:"transform,filter,opacity"}}
+          {...(pg==="library"
+            // On the library page, skip the y/scale/filter animation. Any
+            // non-`none` transform value (even translateY(0)) on this wrapper
+            // creates a containing block for fixed-positioned descendants,
+            // which makes BookOpen's `fixed inset-0` modal anchor to this
+            // wrapper instead of the viewport — the modal appears stuck at
+            // the top of the page-content area. Opacity-only is safe.
+            ? {initial:{opacity:0},animate:{opacity:1},exit:{opacity:0},transition:{duration:0.2}}
+            : {
+                initial:{opacity:0,y:28,scale:0.97,filter:"blur(6px)"},
+                animate:{opacity:1,y:0,scale:1,filter:"blur(0px)"},
+                exit:{opacity:0,y:-14,scale:0.99,filter:"blur(3px)",transition:{duration:0.18,ease:[0.4,0,1,1]}},
+                transition:{duration:0.42,ease:[0.22,0.61,0.36,1]},
+                style:{willChange:"transform,filter,opacity"}
+              })}
         >
           {pg==="dash"&&<Dash/>}
           {pg==="traf"&&<TrafPg/>}
