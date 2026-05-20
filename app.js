@@ -643,7 +643,7 @@ const App=()=>{
   const[oohPhotos,setOohPhotos]=useState({});
   const[dbLoaded,setDbLoaded]=useState(false);
   const[deletedIsciKeys,setDeletedIsciKeys]=useState(new Set());
-  const legacyBootstrappedRef=React.useRef(false);
+  const legacyPurgedRef=React.useRef(false);
   const[authed,setAuthed]=useState(()=>sessionStorage.getItem("dd_auth")==="1");
   const[authInput,setAuthInput]=useState("");
 
@@ -1137,12 +1137,6 @@ const App=()=>{
     }
   });
   const[isciBulkPreview,setIsciBulkPreview]=useState([]);
-  const[legacyIsciText,setLegacyIsciText]=useState("");
-  const[legacyIsciPreview,setLegacyIsciPreview]=useState([]);
-  const[legacyTrafText,setLegacyTrafText]=useState("");
-  const[legacyTrafPreview,setLegacyTrafPreview]=useState([]);
-  const[legacyTab,setLegacyTab]=useState("iscis");
-  const[isciShowLegacy,setIsciShowLegacy]=useState(false);
   const[historyPreviewIdx,setHistoryPreviewIdx]=useState(null);
   const[editTrafficIdx,setEditTrafficIdx]=useState(null);
   const[globalSearch,setGlobalSearch]=useState("");
@@ -1750,9 +1744,9 @@ const App=()=>{
 
     const showValueProp=isciBrand!=="Wettermark Keith";
     const isciBrandCounts={"Postman Law":iscis.filter(i=>i.brand==="Postman Law"&&i.suffix!=="O"&&i.active).length,"Wettermark Keith":iscis.filter(i=>i.brand==="Wettermark Keith"&&i.suffix!=="O"&&i.active).length};
-    const fl=(()=>{const filtered=iscis.filter(i=>i.suffix!=="O"&&i.brand===isciBrand&&(sf.media?i.media===sf.media:true)&&(sf.dma?i.dma===sf.dma:true)&&(isciSearch?`${i.code} ${i.title} ${i.category||""} ${i.valueProp||""} ${i.vo||""}`.toLowerCase().includes(isciSearch.toLowerCase()):true)&&(showOff?true:i.active||i.legacy)&&(isciShowLegacy?true:!i.legacy));return sortRows("isci",filtered,{code:r=>r.code,title:r=>r.title,media:r=>r.media,brand:r=>r.brand,dma:r=>r.dma,dur:r=>parseInt(r.dur)||0,category:r=>r.category||r.caseType||"",valueProp:r=>r.valueProp||"",vo:r=>r.vo||"",status:r=>r.active?"1":"0"})})();
+    const fl=(()=>{const filtered=iscis.filter(i=>i.suffix!=="O"&&i.brand===isciBrand&&(sf.media?i.media===sf.media:true)&&(sf.dma?i.dma===sf.dma:true)&&(isciSearch?`${i.code} ${i.title} ${i.category||""} ${i.valueProp||""} ${i.vo||""}`.toLowerCase().includes(isciSearch.toLowerCase()):true)&&(showOff?true:i.active));return sortRows("isci",filtered,{code:r=>r.code,title:r=>r.title,media:r=>r.media,brand:r=>r.brand,dma:r=>r.dma,dur:r=>parseInt(r.dur)||0,category:r=>r.category||r.caseType||"",valueProp:r=>r.valueProp||"",vo:r=>r.vo||"",status:r=>r.active?"1":"0"})})();
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn>{iscis.some(i=>i.legacy)&&<Btn onClick={()=>setIsciShowLegacy(!isciShowLegacy)} color={isciShowLegacy?"#D4A040":"#4a3565"}>{isciShowLegacy?"📜 Hide Legacy":"📜 Show Legacy ("+iscis.filter(i=>i.legacy).length+")"}</Btn>}</div></div>
+      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
       {showTagMgr&&<Cd style={{padding:14,marginTop:8}}>
         <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:8}}>🏷 Manage Categories, Value Props & VOs</div>
         {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
@@ -5827,7 +5821,7 @@ ${fullText.substring(0,3000)}`}]
     </div>;
     return<div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <PageHead title="Traffic Library" pgKey="library" sub={trafficHistory.filter(h=>!h.legacy).length+" instructions · "+[...new Set(trafficHistory.filter(h=>!h.legacy).map(h=>h.brand))].length+" brands · "+[...new Set(trafficHistory.filter(h=>!h.legacy).map(h=>normMkt(h.market)||h.market))].length+" markets"}/>
+        <PageHead title="Traffic Library" pgKey="library" sub={trafficHistory.length+" instructions · "+[...new Set(trafficHistory.map(h=>h.brand))].length+" brands · "+[...new Set(trafficHistory.map(h=>normMkt(h.market)||h.market))].length+" markets"}/>
         <div style={{display:"flex",gap:6}}>
           <button onClick={()=>{const rows=[["Brand","Market","Media","Month","Version","Buyer","ISCI","Title","Duration","Pct","Schedule","Bookend","Units"].join(","),...trafficHistory.flatMap(h=>(h.iscis||[]).map(r=>[h.brand,h.market,h.media,h.month,h.version,h.buyer,r.code,r.title,r.dur,r.pct,r.sched,r.bookend||"",r.units||""].join(",")))];const blob=new Blob([rows.join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="traffic_library_"+new Date().toISOString().slice(0,10)+".csv";a.click()}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #9b7bb0",background:"#1e1233",fontSize:13,fontWeight:700,cursor:"pointer",color:"#9B8EAD"}}>Export CSV</button>
           <button onClick={sendConfirmReminders} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #D4A040",background:"rgba(245,158,11,.12)",fontSize:13,fontWeight:700,cursor:"pointer",color:"#D4A040"}}>🔔 Send Reminders</button>
@@ -6504,517 +6498,42 @@ Rules:
     </ReportSection>
   </div>:null;
 
-  // Legacy CSV parsers — extracted to component scope so the auto-bootstrap
-  // effect (below) and LegacyPg (manual import UI) share the same logic.
-  // Robust CSV parser — handles Google-Sheets-style quoted cells with commas.
-  const parseLegacyCSV=React.useCallback((text)=>{
-    const lines=text.replace(/\r/g,"").split("\n").filter(l=>l.length);
-    if(!lines.length)return[];
-    const sep=lines[0].split("\t").length>lines[0].split(",").length?"\t":",";
-    return lines.map(line=>{
-      const cells=[];let cur="";let inQ=false;
-      for(let i=0;i<line.length;i++){
-        const c=line[i];
-        if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++}else inQ=!inQ}
-        else if(c===sep&&!inQ){cells.push(cur.trim());cur=""}
-        else cur+=c;
-      }
-      cells.push(cur.trim());return cells;
-    });
-  },[]);
-  const buildLegacyIdx=React.useCallback((headerRow,fieldMap)=>{
-    const hdr=headerRow.map(h=>String(h||"").toLowerCase().trim().replace(/[_\s#]+/g,""));
-    const idx={};
-    Object.entries(fieldMap).forEach(([field,aliases])=>{
-      for(const a of aliases){
-        const aNorm=a.toLowerCase().replace(/[_\s#]+/g,"");
-        const i=hdr.indexOf(aNorm);
-        if(i>-1){idx[field]=i;break}
-      }
-    });
-    return idx;
-  },[]);
-  const LEGACY_ISCI_FIELDS={
-    code:["code","isci","iscicode","spotcode","iscinumber"],
-    title:["title","name","spotname","creative","description","desc"],
-    dur:["dur","duration","length","sec","seconds"],
-    market:["market","dma"],
-    media:["media","type","format"],
-    year:["year","yr"],
-    category:["category","cat","casetype","case"],
-    vo:["vo","voiceover","voice","talent"],
-    fileUrl:["fileurl","url","link","file","creativeurl","videourl"],
-    brand:["brand","client"],
-    timesUsed:["timesused","uses","count"],
-    firstSeenFile:["firstseenfile","source","sourcefile"],
-    inactiveMarket:["inactivemarket","inactive"]
-  };
-  const LEGACY_TRAF_FIELDS={
-    brand:["brand","client"],
-    market:["market","dma"],
-    media:["media","type","format"],
-    month:["month","mo","broadcastmonth"],
-    year:["year","yr"],
-    est:["est","estimate","estimatenumber"],
-    flight:["flight","flightdates","dates","flightdate","flighting"],
-    version:["version","v","ver"],
-    buyer:["buyer"],
-    iscis:["iscis","iscicodes","isci","spots","spotcodes","creatives"],
-    stations:["stations","calls","callletters","station","calllist"],
-    comments:["comments","notes","comment","note","memo"],
-    sourceFile:["sourcefile","source","sourcedoc","sheetname"],
-    assetCount:["assetcount","ct","count"],
-    isRevised:["isrevised","revised","rev"],
-    isSeasonal:["isseasonal","seasonal"],
-    inactiveMarket:["inactivemarket","inactive"],
-    conflict:["conflict","dupe","conflicting"]
-  };
-  const LEGACY_MO_LIST=["January","February","March","April","May","June","July","August","September","October","November","December"];
-  const legacyIsYes=(v)=>String(v||"").trim().toLowerCase().startsWith("y");
-  const legacyGuessBrand=(s)=>{const v=String(s||"").toLowerCase();if(v.includes("postman"))return"Postman Law";if(v.includes("wettermark")||v.includes("keith")||v==="wk")return"Wettermark Keith";return s||"Wettermark Keith"};
-  const parseLegacyIscis=React.useCallback((text)=>{
-    const rows=parseLegacyCSV(text);if(rows.length<2)return[];
-    const idx=buildLegacyIdx(rows[0],LEGACY_ISCI_FIELDS);
-    const get=(r,f)=>idx[f]!==undefined?(r[idx[f]]||""):"";
-    return rows.slice(1).map(r=>{
-      const code=get(r,"code").trim();if(!code)return null;
-      const market=get(r,"market").toUpperCase().trim();
-      const media=get(r,"media").trim()||"TV";
-      const brand=legacyGuessBrand(get(r,"brand"));
-      const yr=parseInt(get(r,"year"))||null;
-      const inactive=legacyIsYes(get(r,"inactiveMarket"));
-      const durRaw=get(r,"dur").trim();
-      const isBookend=/^be$/i.test(durRaw);
-      const titleRaw=get(r,"title")||"";
-      const title=titleRaw&&titleRaw!==code?titleRaw:code.replace(/^WK-[A-Z]+-/i,"").replace(/_\d+[abAB]?\.(mpg|mp4|mov)$/i,"").replace(/[-_]/g," ").trim()||"(untitled)";
-      return{
-        code:code,title:title,media:media,brand:brand,
-        dma:market,
-        dur:isBookend?"15":durRaw.replace(/[^0-9]/g,"")||"30",
-        suffix:SUFFIXES[media]||"T",active:false,
-        category:get(r,"category")||"Legacy",caseType:get(r,"category")||"Legacy",
-        valueProp:"",vo:get(r,"vo")||"",fileUrl:get(r,"fileUrl")||"",
-        sentAt:null,sentInEst:null,legacy:true,legacyYear:yr,
-        inactiveMarket:inactive,
-        isBookend:isBookend,
-        legacySource:get(r,"firstSeenFile"),
-        legacyTimesUsed:parseInt(get(r,"timesUsed"))||0
-      };
-    }).filter(Boolean);
-  },[parseLegacyCSV,buildLegacyIdx]);
-  const parseLegacyTraffic=React.useCallback((text,lookupIscis)=>{
-    const rows=parseLegacyCSV(text);if(rows.length<2)return[];
-    const idx=buildLegacyIdx(rows[0],LEGACY_TRAF_FIELDS);
-    const get=(r,f)=>idx[f]!==undefined?(r[idx[f]]||""):"";
-    const records=rows.slice(1).map(r=>{
-      const monthRaw=get(r,"month").trim();if(!monthRaw)return null;
-      const yr=parseInt(get(r,"year"))||2023;
-      const monthName=LEGACY_MO_LIST.find(m=>monthRaw.toLowerCase().startsWith(m.toLowerCase()))||monthRaw;
-      const monthFull=/\d{4}/.test(monthRaw)?monthRaw:monthName+" "+yr;
-      const brand=legacyGuessBrand(get(r,"brand"));
-      const market=get(r,"market").toUpperCase().trim();
-      const media=get(r,"media").trim()||"TV";
-      const isciCodes=get(r,"iscis").split(/[;|]/).map(c=>c.trim()).filter(Boolean);
-      const stationsList=get(r,"stations").split(/[;|]/).map(s=>s.trim()).filter(Boolean);
-      const monIdx=LEGACY_MO_LIST.indexOf(monthName);
-      const ts=monIdx>=0?new Date(yr,monIdx,1).toISOString():new Date().toISOString();
-      const iscisDetail=isciCodes.map(c=>{
-        const i=(lookupIscis||[]).find(x=>x.code===c);
-        return{code:c,title:i?.title||c.replace(/\.(mpg|mp4|mov)$/i,""),dur:i?.dur||"30",pct:"100",sched:"All Week",bookend:i?.isBookend?"BE":""};
-      });
-      const seasonal=legacyIsYes(get(r,"isSeasonal"));
-      const inactive=legacyIsYes(get(r,"inactiveMarket"));
-      const revised=legacyIsYes(get(r,"isRevised"));
-      const conflictFlag=legacyIsYes(get(r,"conflict"));
-      const srcFile=get(r,"sourceFile");
-      const userComments=get(r,"comments");
-      let seasonalLabel="";
-      if(seasonal){
-        const text=userComments+" "+srcFile;
-        const m=text.match(/(Christmas|Thanksgiving|Memorial Day|Easter|Halloween|Black Friday|July 4th|New Year|Holiday|Valentine|Mother'?s Day|Father'?s Day|Independence)/i);
-        seasonalLabel=m?m[1]:"";
-      }
-      return{
-        ts:ts,
-        est:get(r,"est"),
-        brand:brand,
-        market:market,
-        media:media,
-        buyer:get(r,"buyer")||(brand==="Wettermark Keith"?"Amy Coffey":""),
-        month:monthFull,
-        flight:get(r,"flight"),
-        version:get(r,"version")||"1",
-        comments:userComments,
-        combined:false,
-        stations:stationsList,
-        iscis:iscisDetail,
-        status:"sent",
-        isOoh:false,
-        legacy:true,
-        legacySource:srcFile,
-        legacyAssetCount:parseInt(get(r,"assetCount"))||iscisDetail.length,
-        isRevision:revised,
-        seasonal:seasonal,
-        seasonalLabel:seasonalLabel,
-        inactiveMarket:inactive,
-        legacyConflict:conflictFlag
-      };
-    }).filter(Boolean).filter(r=>!r.inactiveMarket); // Drop Panama City and any other inactive markets.
-    // Collapse to ONE book per brand|market|media|month. Revisions / seasonals
-    // get merged into a single record — their ISCIs unioned, source files
-    // listed, flight notes consolidated. Historical view: "January 2021 TV — done."
-    const grouped={};
-    records.forEach(r=>{
-      const k=[r.brand,r.market,r.media,r.month].join("|");
-      (grouped[k]=grouped[k]||[]).push(r);
-    });
-    const merged=Object.values(grouped).map(group=>{
-      if(group.length===1)return group[0];
-      const base={...group[0]};
-      const allIscis=[];const seenCodes=new Set();
-      const allStations=new Set();const allSources=new Set();
-      let revisions=0,seasonals=[],totalAssets=0,allEsts=new Set();
-      group.forEach(r=>{
-        (r.iscis||[]).forEach(ic=>{if(ic.code&&!seenCodes.has(ic.code)){seenCodes.add(ic.code);allIscis.push(ic)}});
-        (r.stations||[]).forEach(s=>allStations.add(s));
-        if(r.legacySource)allSources.add(r.legacySource);
-        if(r.isRevision)revisions++;
-        if(r.seasonal&&r.seasonalLabel)seasonals.push(r.seasonalLabel);
-        totalAssets+=r.legacyAssetCount||0;
-        if(r.est)allEsts.add(r.est);
-      });
-      base.iscis=allIscis;
-      base.stations=[...allStations];
-      base.legacySource=[...allSources].join(" + ");
-      base.legacyAssetCount=totalAssets;
-      base.legacyMergedCount=group.length;
-      base.legacyRevisionCount=revisions;
-      base.legacySeasonals=[...new Set(seasonals)];
-      base.est=[...allEsts].join(" + ");
-      base.version="1";
-      return base;
-    });
-    merged.forEach(r=>{
-      const parts=["📜 LEGACY ARCHIVE — pre-app traffic record"];
-      const tags=[];
-      if(r.legacyMergedCount>1)tags.push(r.legacyMergedCount+" instructions merged");
-      if(r.legacyRevisionCount)tags.push(r.legacyRevisionCount+" revision"+(r.legacyRevisionCount===1?"":"s"));
-      if(r.legacySeasonals&&r.legacySeasonals.length)tags.push("📌 "+r.legacySeasonals.join(", "));
-      if(tags.length)parts.push(tags.join(" · "));
-      if(r.legacySource)parts.push("Source: "+r.legacySource);
-      r.comments=parts.join(" • ");
-    });
-    return merged;
-  },[parseLegacyCSV,buildLegacyIdx]);
-
-  // Auto-bootstrap + self-heal: the bundle in data-legacy.js is the source of
-  // truth for legacy records. On first session load, if no legacy data exists
-  // OR if existing legacy data is stale (duplicate (brand,market,media,month)
-  // entries from an earlier buggy bootstrap, or Panama City inactive markets
-  // still present), replace it all with the freshly-merged bundle. User-
-  // uploaded sourceFileUrls / sourceFileNames are preserved by matching keys.
+  // One-time Supabase purge for legacy:true records left over from the
+  // earlier (removed) Legacy Archive feature. Direct saveToDb bypasses
+  // the drop guard since this is a deliberate schema cleanup, not a
+  // user deletion. Self-disables once both collections are clean.
   React.useEffect(()=>{
     if(!dbLoaded)return;
     if(!loadCompleteRef.current)return;
-    if(legacyBootstrappedRef.current)return;
+    if(legacyPurgedRef.current)return;
     if(!iscisLoadedRef.current||!trafficLoadedRef.current)return;
-    if(!window.LEGACY_ISCIS_CSV&&!window.LEGACY_TRAFFIC_CSV)return;
-    legacyBootstrappedRef.current=true;
-    // ── ISCIs: dedupe by code|dma, drop any with no real data ──────────
-    let combinedIscis=iscis;
-    if(window.LEGACY_ISCIS_CSV){
-      const parsed=parseLegacyIscis(window.LEGACY_ISCIS_CSV);
-      if(parsed.length){
-        const have=new Set(iscis.map(i=>i.code+"|"+(i.dma||"")));
-        const fresh=parsed.filter(r=>!have.has(r.code+"|"+r.dma));
-        if(fresh.length){combinedIscis=[...iscis,...fresh];setIscis(combinedIscis)}
-      }
+    const hasLegacyTraf=trafficHistory.some(h=>h.legacy);
+    const hasLegacyIscis=iscis.some(i=>i.legacy);
+    if(!hasLegacyTraf&&!hasLegacyIscis){legacyPurgedRef.current=true;return}
+    legacyPurgedRef.current=true;
+    let purgedTraf=0,purgedIscis=0;
+    if(hasLegacyTraf){
+      const cleaned=trafficHistory.filter(h=>!h.legacy);
+      purgedTraf=trafficHistory.length-cleaned.length;
+      setTrafficHistoryRaw(cleaned);
+      trafficFbCountRef.current=cleaned.length;
+      saveToDb("trafficHistory",cleaned).catch(e=>console.error("Legacy purge save failed:",e));
     }
-    // ── Traffic: replace all legacy records if state is empty or stale ─
-    if(window.LEGACY_TRAFFIC_CSV){
-      const current=trafficHistory.filter(h=>h.legacy);
-      const seenKeys=new Set();let hasDupes=false;
-      for(const h of current){
-        const k=[h.brand,h.market,h.media,h.month].join("|");
-        if(seenKeys.has(k)){hasDupes=true;break}
-        seenKeys.add(k);
-      }
-      const hasPanama=current.some(h=>h.inactiveMarket||h.market==="PAN");
-      const needsImport=current.length===0||hasDupes||hasPanama;
-      if(needsImport){
-        const parsed=parseLegacyTraffic(window.LEGACY_TRAFFIC_CSV,combinedIscis);
-        if(parsed.length){
-          // Preserve any user-uploaded source files from the old (stale) records.
-          const urlMap={};
-          current.forEach(h=>{
-            if(h.sourceFileUrl){
-              const k=[h.brand,h.market,h.media,h.month].join("|");
-              urlMap[k]={url:h.sourceFileUrl,name:h.sourceFileName||""};
-            }
-          });
-          parsed.forEach(p=>{
-            const k=[p.brand,p.market,p.media,p.month].join("|");
-            if(urlMap[k]){p.sourceFileUrl=urlMap[k].url;p.sourceFileName=urlMap[k].name}
-          });
-          // Bypass setTrafficHistoryAndSave's drop guard — this is a known
-          // reconciliation (224 stale records → 80 merged), not a user
-          // deletion. Use the raw setter + explicit saveToDb so the cleanup
-          // actually persists to Supabase.
-          const nextArr=[...parsed,...trafficHistory.filter(h=>!h.legacy)];
-          setTrafficHistoryRaw(nextArr);
-          trafficFbCountRef.current=nextArr.length;
-          saveToDb("trafficHistory",nextArr).catch(e=>console.error("Legacy bootstrap save failed:",e));
-          const note=current.length===0?"loaded "+parsed.length+" records":"rebuilt — was "+current.length+", now "+parsed.length+(hasDupes?" (deduped)":"")+(hasPanama?" (removed Panama City)":"");
-          log("Legacy Archive Bootstrap",note);
-          notify("📜 Legacy archive: "+note);
-        }
-      }
+    if(hasLegacyIscis){
+      const cleaned=iscis.filter(i=>!i.legacy);
+      purgedIscis=iscis.length-cleaned.length;
+      setIscis(cleaned);
+      isciFbCountRef.current=cleaned.length;
+      saveToDb("iscis",cleaned).catch(e=>console.error("Legacy purge save failed:",e));
     }
-  },[dbLoaded,parseLegacyIscis,parseLegacyTraffic]);
+    const parts=[];
+    if(purgedTraf)parts.push(purgedTraf+" traffic records");
+    if(purgedIscis)parts.push(purgedIscis+" ISCIs");
+    log("Legacy Purge",parts.join(" + ")+" removed");
+    notify("✓ Cleaned up legacy data: "+parts.join(" + ")+" removed");
+  },[dbLoaded]);
 
-  const LegacyPg=()=>{
-    // Parsers live at component scope so the auto-bootstrap effect and the
-    // manual import UI share the same logic. parseTrafCsv passes the current
-    // iscis list plus the in-progress preview as the lookup table.
-    const parseIsciCsv=parseLegacyIscis;
-    const parseTrafCsv=(text)=>parseLegacyTraffic(text,[...iscis,...legacyIsciPreview]);
-    const handlePaste=(text,kind)=>{
-      if(kind==="iscis"){setLegacyIsciText(text);setLegacyIsciPreview(parseIsciCsv(text))}
-      else{setLegacyTrafText(text);setLegacyTrafPreview(parseTrafCsv(text))}
-    };
-    const handleFile=(e,kind)=>{
-      const file=e.target.files&&e.target.files[0];if(!file)return;
-      const reader=new FileReader();
-      const isXl=/\.xlsx?$/i.test(file.name);
-      reader.onload=ev=>{
-        try{
-          let text=ev.target.result;
-          if(isXl&&window.XLSX){
-            const wb=XLSX.read(new Uint8Array(text),{type:"array"});
-            const ws=wb.Sheets[wb.SheetNames[0]];
-            text=XLSX.utils.sheet_to_csv(ws);
-          }
-          handlePaste(text,kind);
-        }catch(err){notify("File parse failed: "+(err.message||err))}
-      };
-      if(isXl)reader.readAsArrayBuffer(file);else reader.readAsText(file);
-      e.target.value="";
-    };
-    const importIscis=()=>{
-      if(!legacyIsciPreview.length){notify("Nothing to import");return}
-      setIscis(prev=>{
-        const have=new Set(prev.map(i=>i.code+"|"+(i.dma||"")));
-        const fresh=legacyIsciPreview.filter(r=>!have.has(r.code+"|"+r.dma));
-        log("Legacy ISCIs Imported",fresh.length+" records");
-        notify(fresh.length+" legacy ISCIs imported"+(legacyIsciPreview.length-fresh.length>0?" ("+(legacyIsciPreview.length-fresh.length)+" duplicates skipped)":""));
-        return[...prev,...fresh];
-      });
-      setLegacyIsciText("");setLegacyIsciPreview([]);
-    };
-    const importTraf=()=>{
-      if(!legacyTrafPreview.length){notify("Nothing to import");return}
-      const stats={revised:0,seasonal:0,inactive:0,superseded:0};
-      legacyTrafPreview.forEach(r=>{
-        if(r.isRevision)stats.revised++;
-        if(r.seasonal)stats.seasonal++;
-        if(r.inactiveMarket)stats.inactive++;
-        if(r.status==="superseded")stats.superseded++;
-      });
-      setTrafficHistory(prev=>{
-        const have=new Set(prev.filter(h=>h.legacy).map(h=>[h.brand,h.market,h.media,h.month,h.version].join("|")));
-        const fresh=legacyTrafPreview.filter(r=>!have.has([r.brand,r.market,r.media,r.month,r.version].join("|")));
-        const detail=[fresh.length+" imported"];
-        if(stats.revised)detail.push(stats.revised+" revised");
-        if(stats.superseded)detail.push(stats.superseded+" superseded");
-        if(stats.seasonal)detail.push(stats.seasonal+" seasonal");
-        if(stats.inactive)detail.push(stats.inactive+" inactive market");
-        const dupes=legacyTrafPreview.length-fresh.length;
-        if(dupes)detail.push(dupes+" duplicate"+(dupes===1?"":"s")+" skipped");
-        log("Legacy Traffic Imported",detail.join(", "));
-        notify(detail.join(" · "));
-        return[...fresh,...prev];
-      });
-      setLegacyTrafText("");setLegacyTrafPreview([]);
-    };
-    const legacyIsciCount=iscis.filter(i=>i.legacy).length;
-    const legacyTrafCount=trafficHistory.filter(h=>h.legacy).length;
-    // Group legacy traffic by source XLSX filename. One file → many records.
-    // Upload once, link all records sharing that legacySource.
-    const sourceGroups=React.useMemo(()=>{
-      const groups={};
-      trafficHistory.forEach((h,idx)=>{
-        if(!h.legacy)return;
-        const src=h.legacySource||"(unknown source)";
-        if(!groups[src])groups[src]={src,records:[],idxs:[],hasUrl:!!h.sourceFileUrl,url:h.sourceFileUrl||""};
-        groups[src].records.push(h);
-        groups[src].idxs.push(idx);
-        if(h.sourceFileUrl&&!groups[src].url){groups[src].url=h.sourceFileUrl;groups[src].hasUrl=true}
-      });
-      return Object.values(groups).sort((a,b)=>a.src.localeCompare(b.src));
-    },[trafficHistory]);
-    // Legacy ISCIs without a creative URL — surface them for upload.
-    const isciMissing=React.useMemo(()=>iscis.map((i,idx)=>({i,idx})).filter(({i})=>i.legacy&&!i.fileUrl),[iscis]);
-    const sanitizeFn=(s)=>String(s||"file").replace(/[^A-Za-z0-9._-]+/g,"_").slice(0,80);
-    const extOf=(name)=>{const m=String(name||"").match(/\.([A-Za-z0-9]+)$/);return m?m[1].toLowerCase():"bin"};
-    const uploadSourceFile=(file,group)=>{
-      if(!storage){notify("Storage not available — can't upload");return}
-      const path="legacy/sources/"+sanitizeFn(group.src.replace(/\.[A-Za-z0-9]+$/,""))+"."+extOf(file.name);
-      const ref=storage.ref(path);
-      setUploadTracker({label:"Uploading "+file.name,pct:0});
-      const task=ref.put(file);
-      task.on("state_changed",
-        snap=>setUploadTracker({label:"Uploading "+file.name+" ("+group.records.length+" records)",pct:Math.round((snap.bytesTransferred/snap.totalBytes)*100)}),
-        err=>{setUploadTracker(null);notify("Upload failed: "+(err.message||err));console.error(err)},
-        async()=>{
-          try{
-            const url=await ref.getDownloadURL();
-            setTrafficHistory(prev=>prev.map((h,j)=>group.idxs.includes(j)?{...h,sourceFileUrl:url,sourceFileName:file.name}:h));
-            setUploadTracker(null);
-            log("Legacy Source File Uploaded",group.src+" → "+group.records.length+" records");
-            notify("✓ "+file.name+" linked to "+group.records.length+" record"+(group.records.length===1?"":"s"));
-          }catch(e){setUploadTracker(null);notify("URL fetch failed: "+(e.message||e))}
-        }
-      );
-    };
-    const uploadIsciCreative=(file,isciIdx)=>{
-      if(!storage){notify("Storage not available");return}
-      const isci=iscis[isciIdx];if(!isci)return;
-      const baseCode=String(isci.code||"file").replace(/\.[A-Za-z0-9]+$/,"");
-      const path="creative/"+sanitizeFn(baseCode)+"."+extOf(file.name);
-      const ref=storage.ref(path);
-      setUploadTracker({label:"Uploading "+file.name,pct:0});
-      const task=ref.put(file);
-      task.on("state_changed",
-        snap=>setUploadTracker({label:"Uploading "+file.name+" → "+isci.code,pct:Math.round((snap.bytesTransferred/snap.totalBytes)*100)}),
-        err=>{setUploadTracker(null);notify("Upload failed: "+(err.message||err));console.error(err)},
-        async()=>{
-          try{
-            const url=await ref.getDownloadURL();
-            setIscis(prev=>prev.map((x,j)=>j===isciIdx?{...x,fileUrl:url}:x));
-            setUploadTracker(null);
-            log("Legacy Creative Uploaded",isci.code);
-            notify("✓ "+file.name+" linked to "+isci.code);
-          }catch(e){setUploadTracker(null);notify("URL fetch failed: "+(e.message||e))}
-        }
-      );
-    };
-    const tabBtn=(id,label)=><button onClick={()=>setLegacyTab(id)} style={{padding:"6px 14px",borderRadius:6,border:"1px solid "+(legacyTab===id?"#D4A040":"#4a3565"),background:legacyTab===id?"rgba(212,160,64,.15)":"transparent",color:legacyTab===id?"#D4A040":"#9B8EAD",fontSize:13,fontWeight:700,cursor:"pointer"}}>{label}</button>;
-    return<div>
-      <PageHead title="Legacy Archive" pgKey="legacy" sub={legacyTrafCount+" archived traffic records · "+legacyIsciCount+" legacy ISCIs · history before this app existed"}/>
-      <Cd style={{padding:14,marginTop:6}}>
-        <div style={{display:"flex",gap:6,marginBottom:12,paddingBottom:10,borderBottom:"1px solid #3a2955"}}>
-          {tabBtn("iscis","📜 Legacy ISCIs")}
-          {tabBtn("traffic","📚 Legacy Traffic Instructions")}
-          {legacyTrafCount>0&&tabBtn("sources","📎 Source Files ("+sourceGroups.filter(g=>g.hasUrl).length+"/"+sourceGroups.length+")")}
-          {legacyIsciCount>0&&tabBtn("creative","📁 Creative ("+(legacyIsciCount-isciMissing.length)+"/"+legacyIsciCount+")")}
-        </div>
-        {legacyTab==="iscis"&&<div>
-          <div style={{padding:10,background:"rgba(212,160,64,.05)",border:"1px solid #4a3565",borderRadius:6,marginBottom:10,fontSize:12,color:"#9B8EAD",lineHeight:1.5}}>
-            <b style={{color:"#D4A040"}}>Legacy ISCI Import.</b> Paste CSV from a Google Sheet (File → Download → CSV, then paste).
-            <div style={{marginTop:6,fontSize:11,color:"#E8DFF0"}}>First row must be column headers. Any of these names match (case-insensitive):</div>
-            <div style={{fontSize:11,fontFamily:"monospace",marginTop:3,color:"#C4A0C8"}}>code · title · dur (or duration / length) · market (or dma) · media · year · category · vo · fileUrl · brand</div>
-            <div style={{marginTop:6,fontSize:11}}>Imported as legacy creative — hidden from builders by default. Toggle "📜 Show Legacy" in the ISCI Registry to view them.</div>
-          </div>
-          <textarea value={legacyIsciText} onChange={e=>handlePaste(e.target.value,"iscis")} placeholder={"code,title,dur,market,media,year\nWK001,Brand Spot,30,BRM,TV,2023\nWK002,Trucking,30,HSV,TV,2023"} style={{width:"100%",minHeight:140,fontSize:12,fontFamily:"monospace",padding:8,borderRadius:6,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",resize:"vertical"}}/>
-          <div style={{display:"flex",gap:8,marginTop:8,alignItems:"center"}}>
-            <label style={{padding:"5px 10px",borderRadius:5,border:"1px solid #4a3565",background:"#2d1f42",color:"#C4A0C8",fontSize:12,fontWeight:600,cursor:"pointer"}}>📁 Upload CSV / XLSX<input type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" onChange={e=>handleFile(e,"iscis")} style={{display:"none"}}/></label>
-            <span style={{fontSize:11,color:"#9B8EAD"}}>or paste directly above</span>
-          </div>
-          {legacyIsciPreview.length>0&&<div style={{marginTop:12}}>
-            <div style={{fontSize:13,fontWeight:700,color:"#5BC4A0",marginBottom:6}}>✓ {legacyIsciPreview.length} ISCI{legacyIsciPreview.length===1?"":"s"} ready</div>
-            <div style={{maxHeight:280,overflowY:"auto",border:"1px solid #4a3565",borderRadius:5}}>
-              <table style={{width:"100%",fontSize:11,borderCollapse:"collapse"}}>
-                <thead><tr style={{background:"#2d1f42",position:"sticky",top:0}}>{["Code","Title","Media","Market","Dur","Year","Brand","Tags"].map(h=><th key={h} style={{padding:"6px 8px",textAlign:"left",color:"#D4A040",borderBottom:"1px solid #4a3565"}}>{h}</th>)}</tr></thead>
-                <tbody>{legacyIsciPreview.slice(0,100).map((r,i)=>{const tags=[];if(r.isBookend)tags.push("BE");if(r.inactiveMarket)tags.push("🚫 PAN");return<tr key={i} style={{borderBottom:"1px solid #3a2955",opacity:r.inactiveMarket?0.55:1}}><td style={{padding:"4px 8px",fontFamily:"monospace",fontSize:10,color:"#E8DFF0"}}>{r.code}</td><td style={{padding:"4px 8px",color:"#E8DFF0"}}>{r.title}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.media}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.dma}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.dur}{r.isBookend?"s":""}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.legacyYear||"—"}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.brand==="Wettermark Keith"?"WK":r.brand==="Postman Law"?"PL":r.brand}</td><td style={{padding:"4px 8px",color:"#D4A040",fontSize:10}}>{tags.join(" ")}</td></tr>})}</tbody>
-              </table>
-            </div>
-            {legacyIsciPreview.length>100&&<div style={{fontSize:11,color:"#9B8EAD",marginTop:4}}>+{legacyIsciPreview.length-100} more rows (showing first 100)</div>}
-            <div style={{display:"flex",gap:6,marginTop:10}}>
-              <Btn primary onClick={importIscis}>Import {legacyIsciPreview.length} Legacy ISCI{legacyIsciPreview.length===1?"":"s"}</Btn>
-              <Btn onClick={()=>{setLegacyIsciText("");setLegacyIsciPreview([])}}>Clear</Btn>
-            </div>
-          </div>}
-          {legacyIsciPreview.length===0&&legacyIsciText.trim()&&<div style={{fontSize:12,color:"#E85A7A",marginTop:6,padding:8,background:"rgba(232,90,122,.08)",borderRadius:5,border:"1px solid rgba(232,90,122,.3)"}}>No valid rows detected. Check the first row has column headers (e.g. <code style={{fontFamily:"monospace",fontSize:11}}>code,title,market</code>).</div>}
-        </div>}
-        {legacyTab==="traffic"&&<div>
-          <div style={{padding:10,background:"rgba(212,160,64,.05)",border:"1px solid #4a3565",borderRadius:6,marginBottom:10,fontSize:12,color:"#9B8EAD",lineHeight:1.5}}>
-            <b style={{color:"#D4A040"}}>Legacy Traffic Instructions Import.</b> Paste CSV from a Google Sheet.
-            <div style={{marginTop:6,fontSize:11,color:"#E8DFF0"}}>Headers (any of these names match):</div>
-            <div style={{fontSize:11,fontFamily:"monospace",marginTop:3,color:"#C4A0C8"}}>brand · market · media · month · year · est · flight · version · buyer · iscis · stations · comments · source_file · asset_count · is_revised · is_seasonal · inactive_market · conflict</div>
-            <div style={{marginTop:8,paddingTop:8,borderTop:"1px dashed #4a3565",fontSize:11}}>
-              <div><b style={{color:"#5BC4A0"}}>✏ is_revised=Y</b> — becomes v2, the matching original is auto-marked superseded (v1).</div>
-              <div><b style={{color:"#D4A040"}}>📌 is_seasonal=Y</b> — stacks as a higher version on the regular month buy. Holiday name auto-detected from comments / filename.</div>
-              <div><b style={{color:"#E85A7A"}}>🚫 inactive_market=Y</b> — Panama City. Imported with legacy flag, won't appear in market dropdowns or builders.</div>
-              <div><b style={{color:"#E85A7A"}}>⚠ conflict=Y</b> — pair of revised + original. Handled automatically when paired with is_revised.</div>
-              <div style={{marginTop:4,color:"#9B8EAD"}}>All legacy records: archived by default in the Library, can't be re-sent / edited / copied. Brand "WK" auto-maps to "Wettermark Keith".</div>
-            </div>
-          </div>
-          <textarea value={legacyTrafText} onChange={e=>handlePaste(e.target.value,"traffic")} placeholder={"brand,market,media,month,year,est,flight,buyer,iscis,stations\nWettermark Keith,BRM,TV,January,2023,210,12/26 - 01/29,Amy Coffey,WK001;WK002,WIAT-TV;WBRC-TV"} style={{width:"100%",minHeight:140,fontSize:12,fontFamily:"monospace",padding:8,borderRadius:6,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",resize:"vertical"}}/>
-          <div style={{display:"flex",gap:8,marginTop:8,alignItems:"center"}}>
-            <label style={{padding:"5px 10px",borderRadius:5,border:"1px solid #4a3565",background:"#2d1f42",color:"#C4A0C8",fontSize:12,fontWeight:600,cursor:"pointer"}}>📁 Upload CSV / XLSX<input type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" onChange={e=>handleFile(e,"traffic")} style={{display:"none"}}/></label>
-            <span style={{fontSize:11,color:"#9B8EAD"}}>or paste directly above</span>
-          </div>
-          {legacyTrafPreview.length>0&&<div style={{marginTop:12}}>
-            <div style={{fontSize:13,fontWeight:700,color:"#5BC4A0",marginBottom:6}}>✓ {legacyTrafPreview.length} traffic record{legacyTrafPreview.length===1?"":"s"} ready</div>
-            <div style={{maxHeight:280,overflowY:"auto",border:"1px solid #4a3565",borderRadius:5}}>
-              <table style={{width:"100%",fontSize:11,borderCollapse:"collapse"}}>
-                <thead><tr style={{background:"#2d1f42",position:"sticky",top:0}}>{["Brand","Market","Media","Month","Est","V","ISCIs","Flags"].map(h=><th key={h} style={{padding:"6px 8px",textAlign:"left",color:"#D4A040",borderBottom:"1px solid #4a3565"}}>{h}</th>)}</tr></thead>
-                <tbody>{legacyTrafPreview.slice(0,100).map((r,i)=>{const flags=[];if(r.status==="superseded")flags.push({l:"⊘ Superseded",c:"#9B8EAD"});if(r.isRevision)flags.push({l:"✏ Revised",c:"#5BC4A0"});if(r.seasonal)flags.push({l:"📌 "+(r.seasonalLabel||"Seasonal"),c:"#D4A040"});if(r.inactiveMarket)flags.push({l:"🚫 PAN",c:"#E85A7A"});if(r.legacyConflict&&!r.isRevision&&r.status!=="superseded")flags.push({l:"⚠ Conflict",c:"#E85A7A"});return<tr key={i} style={{borderBottom:"1px solid #3a2955",opacity:r.status==="superseded"||r.inactiveMarket?0.6:1}}><td style={{padding:"4px 8px",color:"#E8DFF0"}}>{r.brand==="Wettermark Keith"?"WK":r.brand==="Postman Law"?"PL":r.brand}</td><td style={{padding:"4px 8px",color:"#E8DFF0"}}>{r.market}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.media}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.month}</td><td style={{padding:"4px 8px",fontFamily:"monospace",color:"#9B8EAD"}}>{r.est||"—"}</td><td style={{padding:"4px 8px",color:"#9B8EAD",fontWeight:r.isRevision?700:400}}>v{r.version}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.iscis.length}</td><td style={{padding:"4px 8px",fontSize:10}}>{flags.map((f,j)=><span key={j} style={{color:f.c,marginRight:6,whiteSpace:"nowrap"}}>{f.l}</span>)}</td></tr>})}</tbody>
-              </table>
-            </div>
-            {legacyTrafPreview.length>100&&<div style={{fontSize:11,color:"#9B8EAD",marginTop:4}}>+{legacyTrafPreview.length-100} more rows (showing first 100)</div>}
-            <div style={{display:"flex",gap:6,marginTop:10}}>
-              <Btn primary onClick={importTraf}>Import {legacyTrafPreview.length} Legacy Record{legacyTrafPreview.length===1?"":"s"}</Btn>
-              <Btn onClick={()=>{setLegacyTrafText("");setLegacyTrafPreview([])}}>Clear</Btn>
-            </div>
-          </div>}
-          {legacyTrafPreview.length===0&&legacyTrafText.trim()&&<div style={{fontSize:12,color:"#E85A7A",marginTop:6,padding:8,background:"rgba(232,90,122,.08)",borderRadius:5,border:"1px solid rgba(232,90,122,.3)"}}>No valid rows detected. Make sure the first row has headers and at least <code style={{fontFamily:"monospace",fontSize:11}}>month</code> is present.</div>}
-        </div>}
-        {legacyTab==="sources"&&<div>
-          <div style={{padding:10,background:"rgba(212,160,64,.05)",border:"1px solid #4a3565",borderRadius:6,marginBottom:10,fontSize:12,color:"#9B8EAD",lineHeight:1.5}}>
-            <b style={{color:"#D4A040"}}>📎 Source Files.</b> Upload the original XLSX / PDF traffic instructions doc each legacy record came from. One file links to all records sharing that source filename, so e.g. "August-October 2022 Traffic Instructions.xlsx" gets uploaded once and attaches to every record imported from it.
-            <div style={{marginTop:6,fontSize:11}}>Stored in Storage at <code style={{fontFamily:"monospace",fontSize:10,color:"#C4A0C8"}}>legacy/sources/&lt;filename&gt;</code>. URL is saved on each traffic record's <code style={{fontFamily:"monospace",fontSize:10,color:"#C4A0C8"}}>sourceFileUrl</code>.</div>
-          </div>
-          {sourceGroups.length===0&&<div style={{padding:20,textAlign:"center",color:"#9B8EAD",fontSize:13}}>No legacy traffic records yet — import some first.</div>}
-          <div style={{display:"grid",gap:6}}>
-            {sourceGroups.map(g=><div key={g.src} style={{padding:"8px 10px",background:g.hasUrl?"rgba(91,196,160,.06)":"#1e1233",border:"1px solid "+(g.hasUrl?"rgba(91,196,160,.4)":"#4a3565"),borderRadius:6,display:"flex",alignItems:"center",gap:10}}>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:12,fontWeight:700,color:"#E8DFF0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.src}</div>
-                <div style={{fontSize:10,color:"#9B8EAD",marginTop:2}}>{g.records.length} record{g.records.length===1?"":"s"} · {[...new Set(g.records.map(r=>r.brand))].join(", ")} · {[...new Set(g.records.map(r=>r.market))].join(", ")}</div>
-              </div>
-              {g.hasUrl?<>
-                <a href={g.url} target="_blank" rel="noopener noreferrer" style={{padding:"4px 10px",borderRadius:5,border:"1px solid #5BC4A0",background:"rgba(91,196,160,.1)",color:"#5BC4A0",fontSize:11,fontWeight:700,textDecoration:"none"}}>📎 Open file</a>
-                <label style={{padding:"4px 10px",borderRadius:5,border:"1px solid #4a3565",background:"transparent",color:"#9B8EAD",fontSize:11,fontWeight:600,cursor:"pointer"}}>Replace<input type="file" accept=".xlsx,.xls,.pdf,.csv,.doc,.docx" onChange={e=>{const f=e.target.files?.[0];if(f)uploadSourceFile(f,g);e.target.value=""}} style={{display:"none"}}/></label>
-              </>:<label style={{padding:"4px 10px",borderRadius:5,border:"1px solid #D4A040",background:"rgba(212,160,64,.12)",color:"#D4A040",fontSize:11,fontWeight:700,cursor:"pointer"}}>📁 Upload<input type="file" accept=".xlsx,.xls,.pdf,.csv,.doc,.docx" onChange={e=>{const f=e.target.files?.[0];if(f)uploadSourceFile(f,g);e.target.value=""}} style={{display:"none"}}/></label>}
-            </div>)}
-          </div>
-        </div>}
-        {legacyTab==="creative"&&<div>
-          <div style={{padding:10,background:"rgba(212,160,64,.05)",border:"1px solid #4a3565",borderRadius:6,marginBottom:10,fontSize:12,color:"#9B8EAD",lineHeight:1.5}}>
-            <b style={{color:"#D4A040"}}>📁 Legacy Creative.</b> Upload the actual creative file (MP4, MOV, WAV, MP3, PDF) for legacy ISCIs that don't have one yet. Files go to Storage at <code style={{fontFamily:"monospace",fontSize:10,color:"#C4A0C8"}}>creative/&lt;code&gt;</code>, same place current ISCIs live.
-            <div style={{marginTop:6,fontSize:11}}>Showing <b style={{color:"#E8DFF0"}}>{isciMissing.length}</b> of {legacyIsciCount} legacy ISCI{legacyIsciCount===1?"":"s"} missing creative. The {legacyIsciCount-isciMissing.length} with files already linked (Google Drive from the CSV) are hidden here.</div>
-          </div>
-          {isciMissing.length===0&&<div style={{padding:20,textAlign:"center",color:"#5BC4A0",fontSize:13}}>✓ All legacy ISCIs have a fileUrl linked.</div>}
-          <div style={{maxHeight:500,overflowY:"auto",border:isciMissing.length?"1px solid #4a3565":"none",borderRadius:6}}>
-            {isciMissing.map(({i,idx})=><div key={idx} style={{padding:"6px 10px",borderBottom:"1px solid #3a2955",display:"flex",alignItems:"center",gap:10,background:"#1e1233"}}>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:11,fontFamily:"monospace",color:"#E8DFF0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{i.code}</div>
-                <div style={{fontSize:10,color:"#9B8EAD",marginTop:1}}>{i.title} · {i.media} · {i.dma} · {i.dur}s{i.isBookend?" BE":""}{i.legacyYear?(" · "+i.legacyYear):""}</div>
-              </div>
-              <label style={{padding:"3px 8px",borderRadius:4,border:"1px solid #D4A040",background:"rgba(212,160,64,.12)",color:"#D4A040",fontSize:11,fontWeight:700,cursor:"pointer"}}>📁<input type="file" accept=".mp4,.mov,.wav,.mp3,.pdf,.jpg,.png" onChange={e=>{const f=e.target.files?.[0];if(f)uploadIsciCreative(f,idx);e.target.value=""}} style={{display:"none"}}/></label>
-            </div>)}
-          </div>
-        </div>}
-      </Cd>
-      {(legacyIsciCount>0||legacyTrafCount>0)&&<Cd style={{padding:14,marginTop:10}}>
-        <div style={{fontSize:13,fontWeight:700,color:"#D4A040",marginBottom:6}}>Currently in the archive</div>
-        <div style={{fontSize:12,color:"#9B8EAD",lineHeight:1.6}}>
-          <div>📚 <b style={{color:"#E8DFF0"}}>{legacyTrafCount}</b> legacy traffic record{legacyTrafCount===1?"":"s"} — lives here on this page, NOT in the Traffic Library. Use the Source Files and Creative tabs above to manage attachments.</div>
-          <div>📜 <b style={{color:"#E8DFF0"}}>{legacyIsciCount}</b> legacy ISCI{legacyIsciCount===1?"":"s"} — view in the <button onClick={()=>{setIsciShowLegacy(true);setPg("isci")}} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",textDecoration:"underline",padding:0,fontSize:12}}>ISCI Registry</button> with "Show Legacy" enabled.</div>
-        </div>
-      </Cd>}
-    </div>;
-  };
+
 
   const PlannerPg=()=>{
     const baseReport=buildBrandReport(planBrand);
@@ -7541,7 +7060,7 @@ Rules:
   };
 
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"legacy",l:"Legacy Archive",e:"📜"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
@@ -8450,10 +7969,6 @@ Rules:
               // host page. Explicit inline `style="color:#..."` spans win via CSS
               // specificity, so brand accents (Client red, Buyer gold) still show.
               let x='<html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}html,body{background:#fff;color:#1e1233;font-family:Arial,sans-serif}body{padding:28px}table{width:100%;border-collapse:collapse}b{font-weight:700}td,th{color:#1e1233}a{color:#5b21b6;text-decoration:underline}</style></head><body>';
-              if(h.legacy){
-                const linkBit=h.sourceFileUrl?' &nbsp;·&nbsp; <a href="'+h.sourceFileUrl+'" target="_blank" rel="noopener">📎 Open source file</a>':"";
-                x+='<div style="background:#fef3c7;border:1px solid #d4a040;padding:8px 12px;margin-bottom:14px;font-size:11px;color:#92400e;border-radius:4px"><b>📜 LEGACY ARCHIVE</b> — pre-app record'+(h.legacySource?(' &nbsp;·&nbsp; Source: '+h.legacySource):"")+linkBit+'</div>';
-              }
               x+='<div style="text-align:center;margin-bottom:14px"><img src="'+logo+'" style="height:48px"/></div>';
               x+=hdr("Agency",getBrandAgency(code));
               x+=hdr("Client",h.brand,bc);
@@ -8514,16 +8029,14 @@ Rules:
             };
             // No dedup — show every trafficHistory record, including duplicates
             // and archived, so the correct stored version is always visible.
-            // Library shows CURRENT operating data only — legacy archive
-            // records (h.legacy === true) live on the /legacy page, not here.
-            const dedupedEntries=trafficHistory.map((h,i)=>({h,i})).filter(({h})=>!h.legacy);
+            const dedupedEntries=trafficHistory.map((h,i)=>({h,i}));
             const data=dedupedEntries.map(({h,i})=>{
               const parts=String(h.month||"").trim().split(/\s+/);
               const monIdx=MO_LIB.indexOf(parts[0]);
               const parsedYear=parseInt(parts[1]);
               const year=!isNaN(parsedYear)?parsedYear:(monIdx>curIdx+2?curYear-1:curYear);
               const effDate=monIdx>=0?new Date(year,monIdx,1):(h.ts?new Date(h.ts):null);
-              const archived=h.legacy?true:(effDate?effDate<archCutoff:true);
+              const archived=effDate?effDate<archCutoff:true;
               // Combined records save market/media as 'Chicago / Cincinnati'
               // and 'TV / Cable'. The Library shelves only know single
               // values, so split on the first ' / ' for display grouping.
@@ -8567,7 +8080,6 @@ Rules:
                 ts:h.ts,
                 year:year,
                 archived:archived,
-                legacy:!!h.legacy,
                 comments:h.comments||"",
                 sheetHtml:renderSheet(h),
               };
@@ -8602,7 +8114,7 @@ Rules:
             // by name through window.MegaraLibraryActions, receiving the
             // instruction.historyIdx set on each record below.
             window.MegaraLibraryActions={
-              edit:(idx)=>{const h=trafficHistory[idx];if(h?.legacy){notify("📜 Legacy archive records are read-only.");return}if(typeof idx==="number"){setEditTrafficIdx(idx);notify("Edit Traffic — changes save back to Firestore")}},
+              edit:(idx)=>{if(typeof idx==="number"){setEditTrafficIdx(idx);notify("Edit Traffic — changes save back to Supabase")}},
               view:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close()},
               print:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close();w.focus();setTimeout(()=>w.print(),300)},
               preview:async(idx)=>{
@@ -8630,7 +8142,6 @@ Rules:
               },
               send:async(idx)=>{
                 const h=trafficHistory[idx];if(!h)return;
-                if(h.legacy){notify("📜 Legacy archive records can't be re-sent — they predate this app.");return}
                 if(!confirm("Send traffic?\n\n"+h.brand+" · "+(DM[h.market]||h.market)+" · "+(h.media||"")+" · "+h.month+" · v"+(h.version||"1")+"\n"+(h.iscis||[]).length+" ISCIs\n\nThis will email all linked stations."))return;
                 const note=(prompt("Add a note to this email (optional):")||"").trim();
                 const sheetHtml=data[idx]?.sheetHtml||"";
@@ -8661,7 +8172,6 @@ Rules:
                 // 3-letter DMA code (copy to that market, same month). No more
                 // auto-advance to next month — that was hiding both options.
                 const h=trafficHistory[idx];if(!h)return;
-                if(h.legacy){notify("📜 Legacy archive records can't be copied — old conventions wouldn't match current estimates.");return}
                 const months=CALENDAR.map(c=>c.month);
                 const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
                 const srcMkt=normMkt(h.market)||h.market;
@@ -9021,7 +8531,6 @@ Rules:
               document.body
             );
           })()}
-          {pg==="legacy"&&<LegacyPg/>}
           {pg==="planner"&&PlannerPg()}
           {pg==="notif"&&pages["notif"]}
           {pg==="docs"&&<DocsPg/>}
