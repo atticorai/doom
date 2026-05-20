@@ -8481,13 +8481,17 @@ Rules:
             const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");
             const ML=window.MegaraLibrary;
             if(!ML)return null;
-            // Wrapper: full viewport height minus the host's top padding,
-            // negative margin to cancel the page padding so the Library
-            // paints edge-to-edge. No overflow:hidden — the Library has
-            // its own internal scroll inside <main overflow-y-auto>.
-            return<div style={{position:"fixed",left:200,top:0,right:0,bottom:0,zIndex:5,overflow:"hidden"}}>
-              {React.createElement(ML,{key:libKey})}
-            </div>;
+            // Portal to document.body so the library is outside every ancestor
+            // in the React app's DOM tree. This guarantees that the library's
+            // `fixed inset-0` modal always uses the viewport as its containing
+            // block — no ancestor transform, overflow, or will-change can
+            // intercept it and cause the modal to anchor at the wrong position.
+            return ReactDOM.createPortal(
+              <div style={{position:"fixed",left:200,top:0,right:0,bottom:0,zIndex:5}}>
+                {React.createElement(ML,{key:"library",dataVersion:libKey})}
+              </div>,
+              document.body
+            );
           })()}
           {pg==="planner"&&PlannerPg()}
           {pg==="notif"&&pages["notif"]}
