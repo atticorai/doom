@@ -813,8 +813,7 @@ const App=()=>{
         if(docs.wkOohIscis?.data){const d=JSON.parse(docs.wkOohIscis.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>d[p.boardId]!==undefined?{...p,isci:d[p.boardId]}:p))}
         if(docs.plOohIscis?.data){const d=JSON.parse(docs.plOohIscis.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isci:d[p.unit]}:p))}
         if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}
-        if(docs.legacyBootstrap?.data){try{const lb=JSON.parse(docs.legacyBootstrap.data);if(lb&&lb.done)legacyBootstrappedRef.current=true}catch(e){}}
-        console.log("Firestore: loaded",Object.keys(docs).length,"collections");
+        console.log("Supabase: loaded",Object.keys(docs).length,"collections");
         loadCompleteRef.current=true;
       }catch(e){console.warn("Firestore load failed, using defaults:",e);iscisLoadedRef.current=true;stationsLoadedRef.current=true;estimatesLoadedRef.current=true;trafficLoadedRef.current=true;
         console.error("⚠ SAVES BLOCKED — Firestore load failed. Default/seed data will NOT overwrite your database. Refresh to retry.")}
@@ -6660,57 +6659,60 @@ Rules:
         inactiveMarket:inactive,
         legacyConflict:conflictFlag
       };
-    }).filter(Boolean);
+    }).filter(Boolean).filter(r=>!r.inactiveMarket); // Drop Panama City and any other inactive markets.
+    // Collapse to ONE book per brand|market|media|month. Revisions / seasonals
+    // get merged into a single record — their ISCIs unioned, source files
+    // listed, flight notes consolidated. Historical view: "January 2021 TV — done."
     const grouped={};
     records.forEach(r=>{
       const k=[r.brand,r.market,r.media,r.month].join("|");
       (grouped[k]=grouped[k]||[]).push(r);
     });
-    Object.values(grouped).forEach(group=>{
-      if(group.length<=1)return;
-      const revised=group.find(r=>r.isRevision);
-      const seasonals=group.filter(r=>r.seasonal&&!r.isRevision);
-      const regulars=group.filter(r=>!r.seasonal&&!r.isRevision);
-      if(revised){
-        revised.version="2";
-        revised.statusNote="Revised version (replaces v1)";
-        group.forEach(r=>{
-          if(r!==revised){
-            r.version="1";
-            r.status="superseded";
-            r.statusNote="Superseded by revised v2";
-          }
-        });
-      }else if(seasonals.length&&regulars.length){
-        regulars.forEach((r,i)=>{r.version=String(i+1)});
-        seasonals.forEach((s,i)=>{
-          s.version=String(regulars.length+i+1);
-          s.statusNote="Seasonal insert"+(s.seasonalLabel?": "+s.seasonalLabel:"");
-        });
-      }else{
-        group.forEach((r,i)=>{r.version=String(i+1);if(group.length>1)r.statusNote="Unresolved conflict pair ("+(i+1)+" of "+group.length+")"});
-      }
+    const merged=Object.values(grouped).map(group=>{
+      if(group.length===1)return group[0];
+      const base={...group[0]};
+      const allIscis=[];const seenCodes=new Set();
+      const allStations=new Set();const allSources=new Set();
+      let revisions=0,seasonals=[],totalAssets=0,allEsts=new Set();
+      group.forEach(r=>{
+        (r.iscis||[]).forEach(ic=>{if(ic.code&&!seenCodes.has(ic.code)){seenCodes.add(ic.code);allIscis.push(ic)}});
+        (r.stations||[]).forEach(s=>allStations.add(s));
+        if(r.legacySource)allSources.add(r.legacySource);
+        if(r.isRevision)revisions++;
+        if(r.seasonal&&r.seasonalLabel)seasonals.push(r.seasonalLabel);
+        totalAssets+=r.legacyAssetCount||0;
+        if(r.est)allEsts.add(r.est);
+      });
+      base.iscis=allIscis;
+      base.stations=[...allStations];
+      base.legacySource=[...allSources].join(" + ");
+      base.legacyAssetCount=totalAssets;
+      base.legacyMergedCount=group.length;
+      base.legacyRevisionCount=revisions;
+      base.legacySeasonals=[...new Set(seasonals)];
+      base.est=[...allEsts].join(" + ");
+      base.version="1";
+      return base;
     });
-    records.forEach(r=>{
-      const tags=[];
-      if(r.seasonal)tags.push("📌 Seasonal"+(r.seasonalLabel?": "+r.seasonalLabel:""));
-      if(r.inactiveMarket)tags.push("🚫 Inactive market");
-      if(r.isRevision)tags.push("✏ Revised");
-      if(r.status==="superseded")tags.push("⊘ Superseded");
-      if(r.legacyConflict&&!r.isRevision&&r.status!=="superseded")tags.push("⚠ Conflict pair");
+    merged.forEach(r=>{
       const parts=["📜 LEGACY ARCHIVE — pre-app traffic record"];
+      const tags=[];
+      if(r.legacyMergedCount>1)tags.push(r.legacyMergedCount+" instructions merged");
+      if(r.legacyRevisionCount)tags.push(r.legacyRevisionCount+" revision"+(r.legacyRevisionCount===1?"":"s"));
+      if(r.legacySeasonals&&r.legacySeasonals.length)tags.push("📌 "+r.legacySeasonals.join(", "));
       if(tags.length)parts.push(tags.join(" · "));
       if(r.legacySource)parts.push("Source: "+r.legacySource);
-      if(r.comments&&!/Source:/i.test(r.comments))parts.push(r.comments);
       r.comments=parts.join(" • ");
     });
-    return records;
+    return merged;
   },[parseLegacyCSV,buildLegacyIdx]);
 
-  // Auto-bootstrap: on first load, import bundled CSVs from data-legacy.js
-  // into Supabase via setIscis/setTrafficHistory (which trigger the save
-  // effects). Idempotent via the legacyBootstrap doc — won't re-run after
-  // the user deletes records. Manual import UI still on /legacy page.
+  // Auto-bootstrap + self-heal: the bundle in data-legacy.js is the source of
+  // truth for legacy records. On first session load, if no legacy data exists
+  // OR if existing legacy data is stale (duplicate (brand,market,media,month)
+  // entries from an earlier buggy bootstrap, or Panama City inactive markets
+  // still present), replace it all with the freshly-merged bundle. User-
+  // uploaded sourceFileUrls / sourceFileNames are preserved by matching keys.
   React.useEffect(()=>{
     if(!dbLoaded)return;
     if(!loadCompleteRef.current)return;
@@ -6718,39 +6720,48 @@ Rules:
     if(!iscisLoadedRef.current||!trafficLoadedRef.current)return;
     if(!window.LEGACY_ISCIS_CSV&&!window.LEGACY_TRAFFIC_CSV)return;
     legacyBootstrappedRef.current=true;
-    // Persist the flag right away so a refresh mid-import doesn't double-run.
-    try{db&&db.collection("appData").doc("legacyBootstrap").set({data:JSON.stringify({done:true,ts:Date.now()}),ts:Date.now()}).catch(()=>{})}catch(e){}
-    let isciAdded=0,trafAdded=0;
+    // ── ISCIs: dedupe by code|dma, drop any with no real data ──────────
     let combinedIscis=iscis;
     if(window.LEGACY_ISCIS_CSV){
       const parsed=parseLegacyIscis(window.LEGACY_ISCIS_CSV);
       if(parsed.length){
         const have=new Set(iscis.map(i=>i.code+"|"+(i.dma||"")));
         const fresh=parsed.filter(r=>!have.has(r.code+"|"+r.dma));
-        if(fresh.length){
-          combinedIscis=[...iscis,...fresh];
-          setIscis(combinedIscis);
-          isciAdded=fresh.length;
-        }
+        if(fresh.length){combinedIscis=[...iscis,...fresh];setIscis(combinedIscis)}
       }
     }
+    // ── Traffic: replace all legacy records if state is empty or stale ─
     if(window.LEGACY_TRAFFIC_CSV){
-      const parsed=parseLegacyTraffic(window.LEGACY_TRAFFIC_CSV,combinedIscis);
-      if(parsed.length){
-        const have=new Set(trafficHistory.filter(h=>h.legacy).map(h=>[h.brand,h.market,h.media,h.month,h.version].join("|")));
-        const fresh=parsed.filter(r=>!have.has([r.brand,r.market,r.media,r.month,r.version].join("|")));
-        if(fresh.length){
-          setTrafficHistory(prev=>[...fresh,...prev]);
-          trafAdded=fresh.length;
+      const current=trafficHistory.filter(h=>h.legacy);
+      const seenKeys=new Set();let hasDupes=false;
+      for(const h of current){
+        const k=[h.brand,h.market,h.media,h.month].join("|");
+        if(seenKeys.has(k)){hasDupes=true;break}
+        seenKeys.add(k);
+      }
+      const hasPanama=current.some(h=>h.inactiveMarket||h.market==="PAN");
+      const needsImport=current.length===0||hasDupes||hasPanama;
+      if(needsImport){
+        const parsed=parseLegacyTraffic(window.LEGACY_TRAFFIC_CSV,combinedIscis);
+        if(parsed.length){
+          // Preserve any user-uploaded source files from the old (stale) records.
+          const urlMap={};
+          current.forEach(h=>{
+            if(h.sourceFileUrl){
+              const k=[h.brand,h.market,h.media,h.month].join("|");
+              urlMap[k]={url:h.sourceFileUrl,name:h.sourceFileName||""};
+            }
+          });
+          parsed.forEach(p=>{
+            const k=[p.brand,p.market,p.media,p.month].join("|");
+            if(urlMap[k]){p.sourceFileUrl=urlMap[k].url;p.sourceFileName=urlMap[k].name}
+          });
+          setTrafficHistory(prev=>[...parsed,...prev.filter(h=>!h.legacy)]);
+          const note=current.length===0?"loaded "+parsed.length+" records":"rebuilt — was "+current.length+", now "+parsed.length+(hasDupes?" (deduped)":"")+(hasPanama?" (removed Panama City)":"");
+          log("Legacy Archive Bootstrap",note);
+          notify("📜 Legacy archive: "+note);
         }
       }
-    }
-    if(isciAdded||trafAdded){
-      const parts=[];
-      if(isciAdded)parts.push(isciAdded+" ISCIs");
-      if(trafAdded)parts.push(trafAdded+" traffic records");
-      log("Legacy Archive Bootstrap",parts.join(" + ")+" auto-imported from bundled CSVs");
-      notify("📜 Legacy archive loaded: "+parts.join(" + "));
     }
   },[dbLoaded,parseLegacyIscis,parseLegacyTraffic]);
 
