@@ -5613,9 +5613,12 @@ ${fullText.substring(0,3000)}`}]
     const MO_NAMES=["January","February","March","April","May","June","July","August","September","October","November","December"];
     // Normalize all traffic history market fields for display
     const brandData=trafficHistory.filter(h=>h.brand===libBrand).map(h=>({...h,market:normMkt(h.market)||h.market}));
-    const brandMonths=(()=>{const raw=[...new Set(brandData.map(h=>h.month))].filter(Boolean);return raw.sort((a,b)=>{const ai=MO_NAMES.indexOf(a),bi=MO_NAMES.indexOf(b);return bi-ai})})();
+    // Sort newest first; months are stored as "January 2026" so split off the
+    // year before indexing into MO_NAMES (otherwise indexOf returns -1 for
+    // every entry and the order collapses to insertion order).
+    const brandMonths=(()=>{const raw=[...new Set(brandData.map(h=>h.month))].filter(Boolean);return raw.sort((a,b)=>{const pa=a.split(/\s+/),pb=b.split(/\s+/);const ya=parseInt(pa[1])||0,yb=parseInt(pb[1])||0;if(ya!==yb)return yb-ya;return MO_NAMES.indexOf(pb[0])-MO_NAMES.indexOf(pa[0])})})();
     const brandMedias=(()=>{const raw=[...new Set(brandData.map(h=>h.media))];return raw.sort((a,b)=>(MEDIA_ORDER.indexOf(a)===-1?99:MEDIA_ORDER.indexOf(a))-(MEDIA_ORDER.indexOf(b)===-1?99:MEDIA_ORDER.indexOf(b)))})();
-    const now2=new Date();const archCutoff=new Date(now2.getFullYear(),now2.getMonth()-2,1);
+    const now2=new Date();const archCutoff=new Date(now2.getFullYear(),now2.getMonth()-1,1);
     // Archive by the record's broadcast month, not its timestamp. Imports get
     // a fresh ts, so a Dec 2025 record imported today would never archive if
     // we trusted ts. Year is inferred from month name + today's date: a month
