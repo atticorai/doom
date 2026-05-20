@@ -6707,9 +6707,10 @@ Rules:
     return records;
   },[parseLegacyCSV,buildLegacyIdx]);
 
-  // Auto-bootstrap: on first load, import bundled CSVs from data-legacy.js.
-  // Idempotent via legacyBootstrap Firestore doc — won't re-run after the
-  // user deletes records. Manual import UI still available on /legacy page.
+  // Auto-bootstrap: on first load, import bundled CSVs from data-legacy.js
+  // into Supabase via setIscis/setTrafficHistory (which trigger the save
+  // effects). Idempotent via the legacyBootstrap doc — won't re-run after
+  // the user deletes records. Manual import UI still on /legacy page.
   React.useEffect(()=>{
     if(!dbLoaded)return;
     if(!loadCompleteRef.current)return;
