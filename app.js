@@ -1136,6 +1136,12 @@ const App=()=>{
     }
   });
   const[isciBulkPreview,setIsciBulkPreview]=useState([]);
+  const[legacyIsciText,setLegacyIsciText]=useState("");
+  const[legacyIsciPreview,setLegacyIsciPreview]=useState([]);
+  const[legacyTrafText,setLegacyTrafText]=useState("");
+  const[legacyTrafPreview,setLegacyTrafPreview]=useState([]);
+  const[legacyTab,setLegacyTab]=useState("iscis");
+  const[isciShowLegacy,setIsciShowLegacy]=useState(false);
   const[historyPreviewIdx,setHistoryPreviewIdx]=useState(null);
   const[editTrafficIdx,setEditTrafficIdx]=useState(null);
   const[globalSearch,setGlobalSearch]=useState("");
@@ -1743,9 +1749,9 @@ const App=()=>{
 
     const showValueProp=isciBrand!=="Wettermark Keith";
     const isciBrandCounts={"Postman Law":iscis.filter(i=>i.brand==="Postman Law"&&i.suffix!=="O"&&i.active).length,"Wettermark Keith":iscis.filter(i=>i.brand==="Wettermark Keith"&&i.suffix!=="O"&&i.active).length};
-    const fl=(()=>{const filtered=iscis.filter(i=>i.suffix!=="O"&&i.brand===isciBrand&&(sf.media?i.media===sf.media:true)&&(sf.dma?i.dma===sf.dma:true)&&(isciSearch?`${i.code} ${i.title} ${i.category||""} ${i.valueProp||""} ${i.vo||""}`.toLowerCase().includes(isciSearch.toLowerCase()):true)&&(showOff?true:i.active));return sortRows("isci",filtered,{code:r=>r.code,title:r=>r.title,media:r=>r.media,brand:r=>r.brand,dma:r=>r.dma,dur:r=>parseInt(r.dur)||0,category:r=>r.category||r.caseType||"",valueProp:r=>r.valueProp||"",vo:r=>r.vo||"",status:r=>r.active?"1":"0"})})();
+    const fl=(()=>{const filtered=iscis.filter(i=>i.suffix!=="O"&&i.brand===isciBrand&&(sf.media?i.media===sf.media:true)&&(sf.dma?i.dma===sf.dma:true)&&(isciSearch?`${i.code} ${i.title} ${i.category||""} ${i.valueProp||""} ${i.vo||""}`.toLowerCase().includes(isciSearch.toLowerCase()):true)&&(showOff?true:i.active||i.legacy)&&(isciShowLegacy?true:!i.legacy));return sortRows("isci",filtered,{code:r=>r.code,title:r=>r.title,media:r=>r.media,brand:r=>r.brand,dma:r=>r.dma,dur:r=>parseInt(r.dur)||0,category:r=>r.category||r.caseType||"",valueProp:r=>r.valueProp||"",vo:r=>r.vo||"",status:r=>r.active?"1":"0"})})();
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
+      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn>{iscis.some(i=>i.legacy)&&<Btn onClick={()=>setIsciShowLegacy(!isciShowLegacy)} color={isciShowLegacy?"#D4A040":"#4a3565"}>{isciShowLegacy?"📜 Hide Legacy":"📜 Show Legacy ("+iscis.filter(i=>i.legacy).length+")"}</Btn>}</div></div>
       {showTagMgr&&<Cd style={{padding:14,marginTop:8}}>
         <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:8}}>🏷 Manage Categories, Value Props & VOs</div>
         {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
@@ -6497,6 +6503,236 @@ Rules:
     </ReportSection>
   </div>:null;
 
+  const LegacyPg=()=>{
+    // Robust CSV parser — handles Google-Sheets-style quoted cells with commas.
+    const parseCSV=(text)=>{
+      const lines=text.replace(/\r/g,"").split("\n").filter(l=>l.length);
+      if(!lines.length)return[];
+      const sep=lines[0].split("\t").length>lines[0].split(",").length?"\t":",";
+      return lines.map(line=>{
+        const cells=[];let cur="";let inQ=false;
+        for(let i=0;i<line.length;i++){
+          const c=line[i];
+          if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++}else inQ=!inQ}
+          else if(c===sep&&!inQ){cells.push(cur.trim());cur=""}
+          else cur+=c;
+        }
+        cells.push(cur.trim());return cells;
+      });
+    };
+    // Map a single row to a structured object using flexible header aliases.
+    const buildIdx=(headerRow,fieldMap)=>{
+      const hdr=headerRow.map(h=>String(h||"").toLowerCase().trim().replace(/[_\s#]+/g,""));
+      const idx={};
+      Object.entries(fieldMap).forEach(([field,aliases])=>{
+        for(const a of aliases){
+          const aNorm=a.toLowerCase().replace(/[_\s#]+/g,"");
+          const i=hdr.indexOf(aNorm);
+          if(i>-1){idx[field]=i;break}
+        }
+      });
+      return idx;
+    };
+    const isciFields={
+      code:["code","isci","iscicode","spotcode","iscinumber"],
+      title:["title","name","spotname","creative","description","desc"],
+      dur:["dur","duration","length","sec","seconds"],
+      market:["market","dma"],
+      media:["media","type","format"],
+      year:["year","yr"],
+      category:["category","cat","casetype","case"],
+      vo:["vo","voiceover","voice","talent"],
+      fileUrl:["fileurl","url","link","file","creativeurl","videourl"],
+      brand:["brand","client"]
+    };
+    const trafFields={
+      brand:["brand","client"],
+      market:["market","dma"],
+      media:["media","type","format"],
+      month:["month","mo","broadcastmonth"],
+      year:["year","yr"],
+      est:["est","estimate","estimatenumber"],
+      flight:["flight","flightdates","dates","flightdate","flighting"],
+      version:["version","v","ver"],
+      buyer:["buyer"],
+      iscis:["iscis","iscicodes","isci","spots","spotcodes","creatives"],
+      stations:["stations","calls","callletters","station","calllist"],
+      comments:["comments","notes","comment","note","memo"]
+    };
+    const MO_LIST=["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const guessBrand=(s)=>{const v=String(s||"").toLowerCase();if(v.includes("postman"))return"Postman Law";if(v.includes("wettermark")||v.includes("keith")||v==="wk")return"Wettermark Keith";return s||"Wettermark Keith"};
+    const parseIsciCsv=(text)=>{
+      const rows=parseCSV(text);if(rows.length<2)return[];
+      const idx=buildIdx(rows[0],isciFields);
+      const get=(r,f)=>idx[f]!==undefined?(r[idx[f]]||""):"";
+      return rows.slice(1).map(r=>{
+        const code=get(r,"code").trim();if(!code)return null;
+        const market=get(r,"market").toUpperCase().trim();
+        const media=get(r,"media").trim()||"TV";
+        const brand=guessBrand(get(r,"brand"));
+        const yr=parseInt(get(r,"year"))||null;
+        return{
+          code:code,title:get(r,"title")||"(untitled)",media:media,brand:brand,
+          dma:market,dur:get(r,"dur").replace(/[^0-9]/g,"")||"30",
+          suffix:SUFFIXES[media]||"T",active:false,
+          category:get(r,"category")||"Legacy",caseType:get(r,"category")||"Legacy",
+          valueProp:"",vo:get(r,"vo")||"",fileUrl:get(r,"fileUrl")||"",
+          sentAt:null,sentInEst:null,legacy:true,legacyYear:yr
+        };
+      }).filter(Boolean);
+    };
+    const parseTrafCsv=(text)=>{
+      const rows=parseCSV(text);if(rows.length<2)return[];
+      const idx=buildIdx(rows[0],trafFields);
+      const get=(r,f)=>idx[f]!==undefined?(r[idx[f]]||""):"";
+      return rows.slice(1).map(r=>{
+        const monthRaw=get(r,"month").trim();if(!monthRaw)return null;
+        const yr=parseInt(get(r,"year"))||2023;
+        const monthName=MO_LIST.find(m=>monthRaw.toLowerCase().startsWith(m.toLowerCase()))||monthRaw;
+        const monthFull=/\d{4}/.test(monthRaw)?monthRaw:monthName+" "+yr;
+        const brand=guessBrand(get(r,"brand"));
+        const market=get(r,"market").toUpperCase().trim();
+        const media=get(r,"media").trim()||"TV";
+        const isciCodes=get(r,"iscis").split(/[;|]/).map(c=>c.trim()).filter(Boolean);
+        const stationsList=get(r,"stations").split(/[;|,]/).map(s=>s.trim()).filter(Boolean);
+        const monIdx=MO_LIST.indexOf(monthName);
+        const ts=monIdx>=0?new Date(yr,monIdx,1).toISOString():new Date().toISOString();
+        const iscisDetail=isciCodes.map(c=>{
+          const i=iscis.find(x=>x.code===c)||legacyIsciPreview.find(x=>x.code===c);
+          return{code:c,title:i?.title||"(legacy)",dur:i?.dur||"30",pct:"100",sched:"All Week",bookend:""};
+        });
+        const userComments=get(r,"comments");
+        return{
+          ts:ts,est:get(r,"est"),brand:brand,market:market,media:media,
+          buyer:get(r,"buyer")||(brand==="Wettermark Keith"?"Amy Coffey":""),
+          month:monthFull,flight:get(r,"flight"),version:get(r,"version")||"1",
+          comments:"📜 LEGACY ARCHIVE — pre-app traffic record"+(userComments?" • "+userComments:""),
+          combined:false,stations:stationsList,iscis:iscisDetail,
+          status:"sent",isOoh:false,legacy:true
+        };
+      }).filter(Boolean);
+    };
+    const handlePaste=(text,kind)=>{
+      if(kind==="iscis"){setLegacyIsciText(text);setLegacyIsciPreview(parseIsciCsv(text))}
+      else{setLegacyTrafText(text);setLegacyTrafPreview(parseTrafCsv(text))}
+    };
+    const handleFile=(e,kind)=>{
+      const file=e.target.files&&e.target.files[0];if(!file)return;
+      const reader=new FileReader();
+      const isXl=/\.xlsx?$/i.test(file.name);
+      reader.onload=ev=>{
+        try{
+          let text=ev.target.result;
+          if(isXl&&window.XLSX){
+            const wb=XLSX.read(new Uint8Array(text),{type:"array"});
+            const ws=wb.Sheets[wb.SheetNames[0]];
+            text=XLSX.utils.sheet_to_csv(ws);
+          }
+          handlePaste(text,kind);
+        }catch(err){notify("File parse failed: "+(err.message||err))}
+      };
+      if(isXl)reader.readAsArrayBuffer(file);else reader.readAsText(file);
+      e.target.value="";
+    };
+    const importIscis=()=>{
+      if(!legacyIsciPreview.length){notify("Nothing to import");return}
+      setIscis(prev=>{
+        const have=new Set(prev.map(i=>i.code+"|"+(i.dma||"")));
+        const fresh=legacyIsciPreview.filter(r=>!have.has(r.code+"|"+r.dma));
+        log("Legacy ISCIs Imported",fresh.length+" records");
+        notify(fresh.length+" legacy ISCIs imported"+(legacyIsciPreview.length-fresh.length>0?" ("+(legacyIsciPreview.length-fresh.length)+" duplicates skipped)":""));
+        return[...prev,...fresh];
+      });
+      setLegacyIsciText("");setLegacyIsciPreview([]);
+    };
+    const importTraf=()=>{
+      if(!legacyTrafPreview.length){notify("Nothing to import");return}
+      setTrafficHistory(prev=>{
+        const have=new Set(prev.filter(h=>h.legacy).map(h=>[h.brand,h.market,h.media,h.month,h.version].join("|")));
+        const fresh=legacyTrafPreview.filter(r=>!have.has([r.brand,r.market,r.media,r.month,r.version].join("|")));
+        log("Legacy Traffic Imported",fresh.length+" records");
+        notify(fresh.length+" legacy traffic records imported"+(legacyTrafPreview.length-fresh.length>0?" ("+(legacyTrafPreview.length-fresh.length)+" duplicates skipped)":""));
+        return[...fresh,...prev];
+      });
+      setLegacyTrafText("");setLegacyTrafPreview([]);
+    };
+    const legacyIsciCount=iscis.filter(i=>i.legacy).length;
+    const legacyTrafCount=trafficHistory.filter(h=>h.legacy).length;
+    const tabBtn=(id,label)=><button onClick={()=>setLegacyTab(id)} style={{padding:"6px 14px",borderRadius:6,border:"1px solid "+(legacyTab===id?"#D4A040":"#4a3565"),background:legacyTab===id?"rgba(212,160,64,.15)":"transparent",color:legacyTab===id?"#D4A040":"#9B8EAD",fontSize:13,fontWeight:700,cursor:"pointer"}}>{label}</button>;
+    return<div>
+      <PageHead title="Legacy Archive" pgKey="legacy" sub={legacyTrafCount+" archived traffic records · "+legacyIsciCount+" legacy ISCIs · history before this app existed"}/>
+      <Cd style={{padding:14,marginTop:6}}>
+        <div style={{display:"flex",gap:6,marginBottom:12,paddingBottom:10,borderBottom:"1px solid #3a2955"}}>
+          {tabBtn("iscis","📜 Legacy ISCIs")}
+          {tabBtn("traffic","📚 Legacy Traffic Instructions")}
+        </div>
+        {legacyTab==="iscis"&&<div>
+          <div style={{padding:10,background:"rgba(212,160,64,.05)",border:"1px solid #4a3565",borderRadius:6,marginBottom:10,fontSize:12,color:"#9B8EAD",lineHeight:1.5}}>
+            <b style={{color:"#D4A040"}}>Legacy ISCI Import.</b> Paste CSV from a Google Sheet (File → Download → CSV, then paste).
+            <div style={{marginTop:6,fontSize:11,color:"#E8DFF0"}}>First row must be column headers. Any of these names match (case-insensitive):</div>
+            <div style={{fontSize:11,fontFamily:"monospace",marginTop:3,color:"#C4A0C8"}}>code · title · dur (or duration / length) · market (or dma) · media · year · category · vo · fileUrl · brand</div>
+            <div style={{marginTop:6,fontSize:11}}>Imported as legacy creative — hidden from builders by default. Toggle "📜 Show Legacy" in the ISCI Registry to view them.</div>
+          </div>
+          <textarea value={legacyIsciText} onChange={e=>handlePaste(e.target.value,"iscis")} placeholder={"code,title,dur,market,media,year\nWK001,Brand Spot,30,BRM,TV,2023\nWK002,Trucking,30,HSV,TV,2023"} style={{width:"100%",minHeight:140,fontSize:12,fontFamily:"monospace",padding:8,borderRadius:6,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",resize:"vertical"}}/>
+          <div style={{display:"flex",gap:8,marginTop:8,alignItems:"center"}}>
+            <label style={{padding:"5px 10px",borderRadius:5,border:"1px solid #4a3565",background:"#2d1f42",color:"#C4A0C8",fontSize:12,fontWeight:600,cursor:"pointer"}}>📁 Upload CSV / XLSX<input type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" onChange={e=>handleFile(e,"iscis")} style={{display:"none"}}/></label>
+            <span style={{fontSize:11,color:"#9B8EAD"}}>or paste directly above</span>
+          </div>
+          {legacyIsciPreview.length>0&&<div style={{marginTop:12}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#5BC4A0",marginBottom:6}}>✓ {legacyIsciPreview.length} ISCI{legacyIsciPreview.length===1?"":"s"} ready</div>
+            <div style={{maxHeight:280,overflowY:"auto",border:"1px solid #4a3565",borderRadius:5}}>
+              <table style={{width:"100%",fontSize:11,borderCollapse:"collapse"}}>
+                <thead><tr style={{background:"#2d1f42",position:"sticky",top:0}}>{["Code","Title","Media","Market","Dur","Year","Brand"].map(h=><th key={h} style={{padding:"6px 8px",textAlign:"left",color:"#D4A040",borderBottom:"1px solid #4a3565"}}>{h}</th>)}</tr></thead>
+                <tbody>{legacyIsciPreview.slice(0,100).map((r,i)=><tr key={i} style={{borderBottom:"1px solid #3a2955"}}><td style={{padding:"4px 8px",fontFamily:"monospace",fontWeight:600,color:"#E8DFF0"}}>{r.code}</td><td style={{padding:"4px 8px",color:"#E8DFF0"}}>{r.title}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.media}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.dma}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.dur}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.legacyYear||"—"}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.brand==="Wettermark Keith"?"WK":r.brand==="Postman Law"?"PL":r.brand}</td></tr>)}</tbody>
+              </table>
+            </div>
+            {legacyIsciPreview.length>100&&<div style={{fontSize:11,color:"#9B8EAD",marginTop:4}}>+{legacyIsciPreview.length-100} more rows (showing first 100)</div>}
+            <div style={{display:"flex",gap:6,marginTop:10}}>
+              <Btn primary onClick={importIscis}>Import {legacyIsciPreview.length} Legacy ISCI{legacyIsciPreview.length===1?"":"s"}</Btn>
+              <Btn onClick={()=>{setLegacyIsciText("");setLegacyIsciPreview([])}}>Clear</Btn>
+            </div>
+          </div>}
+          {legacyIsciPreview.length===0&&legacyIsciText.trim()&&<div style={{fontSize:12,color:"#E85A7A",marginTop:6,padding:8,background:"rgba(232,90,122,.08)",borderRadius:5,border:"1px solid rgba(232,90,122,.3)"}}>No valid rows detected. Check the first row has column headers (e.g. <code style={{fontFamily:"monospace",fontSize:11}}>code,title,market</code>).</div>}
+        </div>}
+        {legacyTab==="traffic"&&<div>
+          <div style={{padding:10,background:"rgba(212,160,64,.05)",border:"1px solid #4a3565",borderRadius:6,marginBottom:10,fontSize:12,color:"#9B8EAD",lineHeight:1.5}}>
+            <b style={{color:"#D4A040"}}>Legacy Traffic Instructions Import.</b> Paste CSV from a Google Sheet.
+            <div style={{marginTop:6,fontSize:11,color:"#E8DFF0"}}>Headers (any of these names match):</div>
+            <div style={{fontSize:11,fontFamily:"monospace",marginTop:3,color:"#C4A0C8"}}>brand · market · media · month · year · est · flight · version · buyer · iscis · stations · comments</div>
+            <div style={{marginTop:6,fontSize:11}}>ISCIs &amp; stations: separate multiple values with <code style={{fontFamily:"monospace"}}>;</code> (semicolons). Records always show as archived in the Library and can't be re-sent, edited, or copied.</div>
+          </div>
+          <textarea value={legacyTrafText} onChange={e=>handlePaste(e.target.value,"traffic")} placeholder={"brand,market,media,month,year,est,flight,buyer,iscis,stations\nWettermark Keith,BRM,TV,January,2023,210,12/26 - 01/29,Amy Coffey,WK001;WK002,WIAT-TV;WBRC-TV"} style={{width:"100%",minHeight:140,fontSize:12,fontFamily:"monospace",padding:8,borderRadius:6,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",resize:"vertical"}}/>
+          <div style={{display:"flex",gap:8,marginTop:8,alignItems:"center"}}>
+            <label style={{padding:"5px 10px",borderRadius:5,border:"1px solid #4a3565",background:"#2d1f42",color:"#C4A0C8",fontSize:12,fontWeight:600,cursor:"pointer"}}>📁 Upload CSV / XLSX<input type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" onChange={e=>handleFile(e,"traffic")} style={{display:"none"}}/></label>
+            <span style={{fontSize:11,color:"#9B8EAD"}}>or paste directly above</span>
+          </div>
+          {legacyTrafPreview.length>0&&<div style={{marginTop:12}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#5BC4A0",marginBottom:6}}>✓ {legacyTrafPreview.length} traffic record{legacyTrafPreview.length===1?"":"s"} ready</div>
+            <div style={{maxHeight:280,overflowY:"auto",border:"1px solid #4a3565",borderRadius:5}}>
+              <table style={{width:"100%",fontSize:11,borderCollapse:"collapse"}}>
+                <thead><tr style={{background:"#2d1f42",position:"sticky",top:0}}>{["Brand","Market","Media","Month","Est","V","ISCIs","Stations","Flight"].map(h=><th key={h} style={{padding:"6px 8px",textAlign:"left",color:"#D4A040",borderBottom:"1px solid #4a3565"}}>{h}</th>)}</tr></thead>
+                <tbody>{legacyTrafPreview.slice(0,100).map((r,i)=><tr key={i} style={{borderBottom:"1px solid #3a2955"}}><td style={{padding:"4px 8px",color:"#E8DFF0"}}>{r.brand==="Wettermark Keith"?"WK":r.brand==="Postman Law"?"PL":r.brand}</td><td style={{padding:"4px 8px",color:"#E8DFF0"}}>{r.market}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.media}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.month}</td><td style={{padding:"4px 8px",fontFamily:"monospace",color:"#9B8EAD"}}>{r.est||"—"}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.version}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.iscis.length}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.stations.length}</td><td style={{padding:"4px 8px",color:"#9B8EAD",fontSize:10}}>{r.flight||"—"}</td></tr>)}</tbody>
+              </table>
+            </div>
+            {legacyTrafPreview.length>100&&<div style={{fontSize:11,color:"#9B8EAD",marginTop:4}}>+{legacyTrafPreview.length-100} more rows (showing first 100)</div>}
+            <div style={{display:"flex",gap:6,marginTop:10}}>
+              <Btn primary onClick={importTraf}>Import {legacyTrafPreview.length} Legacy Record{legacyTrafPreview.length===1?"":"s"}</Btn>
+              <Btn onClick={()=>{setLegacyTrafText("");setLegacyTrafPreview([])}}>Clear</Btn>
+            </div>
+          </div>}
+          {legacyTrafPreview.length===0&&legacyTrafText.trim()&&<div style={{fontSize:12,color:"#E85A7A",marginTop:6,padding:8,background:"rgba(232,90,122,.08)",borderRadius:5,border:"1px solid rgba(232,90,122,.3)"}}>No valid rows detected. Make sure the first row has headers and at least <code style={{fontFamily:"monospace",fontSize:11}}>month</code> is present.</div>}
+        </div>}
+      </Cd>
+      {(legacyIsciCount>0||legacyTrafCount>0)&&<Cd style={{padding:14,marginTop:10}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#D4A040",marginBottom:6}}>Currently in the archive</div>
+        <div style={{fontSize:12,color:"#9B8EAD",lineHeight:1.6}}>
+          <div>📚 <b style={{color:"#E8DFF0"}}>{legacyTrafCount}</b> legacy traffic record{legacyTrafCount===1?"":"s"} — view in the <button onClick={()=>setPg("library")} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",textDecoration:"underline",padding:0,fontSize:12}}>Traffic Library</button> with "Archived" toggle on.</div>
+          <div>📜 <b style={{color:"#E8DFF0"}}>{legacyIsciCount}</b> legacy ISCI{legacyIsciCount===1?"":"s"} — view in the <button onClick={()=>{setIsciShowLegacy(true);setPg("isci")}} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",textDecoration:"underline",padding:0,fontSize:12}}>ISCI Registry</button> with "Show Legacy" enabled.</div>
+        </div>
+      </Cd>}
+    </div>;
+  };
+
   const PlannerPg=()=>{
     const baseReport=buildBrandReport(planBrand);
     const monthsAvail=baseReport.monthsAvailable;
@@ -7022,7 +7258,7 @@ Rules:
   };
 
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"legacy",l:"Legacy Archive",e:"📜"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
@@ -7998,7 +8234,7 @@ Rules:
               const parsedYear=parseInt(parts[1]);
               const year=!isNaN(parsedYear)?parsedYear:(monIdx>curIdx+2?curYear-1:curYear);
               const effDate=monIdx>=0?new Date(year,monIdx,1):(h.ts?new Date(h.ts):null);
-              const archived=effDate?effDate<archCutoff:true;
+              const archived=h.legacy?true:(effDate?effDate<archCutoff:true);
               // Combined records save market/media as 'Chicago / Cincinnati'
               // and 'TV / Cable'. The Library shelves only know single
               // values, so split on the first ' / ' for display grouping.
@@ -8042,6 +8278,7 @@ Rules:
                 ts:h.ts,
                 year:year,
                 archived:archived,
+                legacy:!!h.legacy,
                 comments:h.comments||"",
                 sheetHtml:renderSheet(h),
               };
@@ -8076,7 +8313,7 @@ Rules:
             // by name through window.MegaraLibraryActions, receiving the
             // instruction.historyIdx set on each record below.
             window.MegaraLibraryActions={
-              edit:(idx)=>{if(typeof idx==="number"){setEditTrafficIdx(idx);notify("Edit Traffic — changes save back to Firestore")}},
+              edit:(idx)=>{const h=trafficHistory[idx];if(h?.legacy){notify("📜 Legacy archive records are read-only.");return}if(typeof idx==="number"){setEditTrafficIdx(idx);notify("Edit Traffic — changes save back to Firestore")}},
               view:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close()},
               print:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close();w.focus();setTimeout(()=>w.print(),300)},
               preview:async(idx)=>{
@@ -8104,6 +8341,7 @@ Rules:
               },
               send:async(idx)=>{
                 const h=trafficHistory[idx];if(!h)return;
+                if(h.legacy){notify("📜 Legacy archive records can't be re-sent — they predate this app.");return}
                 if(!confirm("Send traffic?\n\n"+h.brand+" · "+(DM[h.market]||h.market)+" · "+(h.media||"")+" · "+h.month+" · v"+(h.version||"1")+"\n"+(h.iscis||[]).length+" ISCIs\n\nThis will email all linked stations."))return;
                 const note=(prompt("Add a note to this email (optional):")||"").trim();
                 const sheetHtml=data[idx]?.sheetHtml||"";
@@ -8134,6 +8372,7 @@ Rules:
                 // 3-letter DMA code (copy to that market, same month). No more
                 // auto-advance to next month — that was hiding both options.
                 const h=trafficHistory[idx];if(!h)return;
+                if(h.legacy){notify("📜 Legacy archive records can't be copied — old conventions wouldn't match current estimates.");return}
                 const months=CALENDAR.map(c=>c.month);
                 const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
                 const srcMkt=normMkt(h.market)||h.market;
@@ -8493,6 +8732,7 @@ Rules:
               document.body
             );
           })()}
+          {pg==="legacy"&&<LegacyPg/>}
           {pg==="planner"&&PlannerPg()}
           {pg==="notif"&&pages["notif"]}
           {pg==="docs"&&<DocsPg/>}
