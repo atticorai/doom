@@ -5827,7 +5827,7 @@ ${fullText.substring(0,3000)}`}]
     </div>;
     return<div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <PageHead title="Traffic Library" pgKey="library" sub={trafficHistory.length+" instructions · "+[...new Set(trafficHistory.map(h=>h.brand))].length+" brands · "+[...new Set(trafficHistory.map(h=>normMkt(h.market)||h.market))].length+" markets"}/>
+        <PageHead title="Traffic Library" pgKey="library" sub={trafficHistory.filter(h=>!h.legacy).length+" instructions · "+[...new Set(trafficHistory.filter(h=>!h.legacy).map(h=>h.brand))].length+" brands · "+[...new Set(trafficHistory.filter(h=>!h.legacy).map(h=>normMkt(h.market)||h.market))].length+" markets"}/>
         <div style={{display:"flex",gap:6}}>
           <button onClick={()=>{const rows=[["Brand","Market","Media","Month","Version","Buyer","ISCI","Title","Duration","Pct","Schedule","Bookend","Units"].join(","),...trafficHistory.flatMap(h=>(h.iscis||[]).map(r=>[h.brand,h.market,h.media,h.month,h.version,h.buyer,r.code,r.title,r.dur,r.pct,r.sched,r.bookend||"",r.units||""].join(",")))];const blob=new Blob([rows.join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="traffic_library_"+new Date().toISOString().slice(0,10)+".csv";a.click()}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #9b7bb0",background:"#1e1233",fontSize:13,fontWeight:700,cursor:"pointer",color:"#9B8EAD"}}>Export CSV</button>
           <button onClick={sendConfirmReminders} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #D4A040",background:"rgba(245,158,11,.12)",fontSize:13,fontWeight:700,cursor:"pointer",color:"#D4A040"}}>🔔 Send Reminders</button>
@@ -7009,7 +7009,7 @@ Rules:
       {(legacyIsciCount>0||legacyTrafCount>0)&&<Cd style={{padding:14,marginTop:10}}>
         <div style={{fontSize:13,fontWeight:700,color:"#D4A040",marginBottom:6}}>Currently in the archive</div>
         <div style={{fontSize:12,color:"#9B8EAD",lineHeight:1.6}}>
-          <div>📚 <b style={{color:"#E8DFF0"}}>{legacyTrafCount}</b> legacy traffic record{legacyTrafCount===1?"":"s"} — view in the <button onClick={()=>setPg("library")} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",textDecoration:"underline",padding:0,fontSize:12}}>Traffic Library</button> with "Archived" toggle on.</div>
+          <div>📚 <b style={{color:"#E8DFF0"}}>{legacyTrafCount}</b> legacy traffic record{legacyTrafCount===1?"":"s"} — lives here on this page, NOT in the Traffic Library. Use the Source Files and Creative tabs above to manage attachments.</div>
           <div>📜 <b style={{color:"#E8DFF0"}}>{legacyIsciCount}</b> legacy ISCI{legacyIsciCount===1?"":"s"} — view in the <button onClick={()=>{setIsciShowLegacy(true);setPg("isci")}} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",textDecoration:"underline",padding:0,fontSize:12}}>ISCI Registry</button> with "Show Legacy" enabled.</div>
         </div>
       </Cd>}
@@ -8514,7 +8514,9 @@ Rules:
             };
             // No dedup — show every trafficHistory record, including duplicates
             // and archived, so the correct stored version is always visible.
-            const dedupedEntries=trafficHistory.map((h,i)=>({h,i}));
+            // Library shows CURRENT operating data only — legacy archive
+            // records (h.legacy === true) live on the /legacy page, not here.
+            const dedupedEntries=trafficHistory.map((h,i)=>({h,i})).filter(({h})=>!h.legacy);
             const data=dedupedEntries.map(({h,i})=>{
               const parts=String(h.month||"").trim().split(/\s+/);
               const monIdx=MO_LIB.indexOf(parts[0]);
