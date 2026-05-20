@@ -6756,7 +6756,14 @@ Rules:
             const k=[p.brand,p.market,p.media,p.month].join("|");
             if(urlMap[k]){p.sourceFileUrl=urlMap[k].url;p.sourceFileName=urlMap[k].name}
           });
-          setTrafficHistory(prev=>[...parsed,...prev.filter(h=>!h.legacy)]);
+          // Bypass setTrafficHistoryAndSave's drop guard — this is a known
+          // reconciliation (224 stale records → 80 merged), not a user
+          // deletion. Use the raw setter + explicit saveToDb so the cleanup
+          // actually persists to Supabase.
+          const nextArr=[...parsed,...trafficHistory.filter(h=>!h.legacy)];
+          setTrafficHistoryRaw(nextArr);
+          trafficFbCountRef.current=nextArr.length;
+          saveToDb("trafficHistory",nextArr).catch(e=>console.error("Legacy bootstrap save failed:",e));
           const note=current.length===0?"loaded "+parsed.length+" records":"rebuilt — was "+current.length+", now "+parsed.length+(hasDupes?" (deduped)":"")+(hasPanama?" (removed Panama City)":"");
           log("Legacy Archive Bootstrap",note);
           notify("📜 Legacy archive: "+note);
