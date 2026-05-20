@@ -6343,7 +6343,7 @@ Rules:
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-4-20250514",
-          max_tokens:4000,
+          max_tokens:8000,
           system:systemPrompt,
           messages:[{role:"user",content:"Here is the current rotation data for "+brand+":\n\n"+dataPayload+"\n\nPlease analyze and provide your recommendations."}]
         })
@@ -7878,12 +7878,12 @@ Rules:
             // clicking a book actually covers the screen.
             const MO_LIB=["January","February","March","April","May","June","July","August","September","October","November","December"];
             const now=new Date();const curIdx=now.getMonth();const curYear=now.getFullYear();
-            // Archive anything whose inferred broadcast year is before the
-            // current calendar year. Nov / Dec with no year stamp get inferred
-            // as last year (since they're "ahead" of the current month by more
-            // than 2), so they land in 2025 and archive. Jan-Apr 2026 stay
-            // visible as current.
-            const archCutoff=new Date(curYear,0,1);
+            // Show only the current month and the previous month (two months
+            // total). Archive everything before the first of the prior month.
+            // Using curIdx-1 is safe across year boundaries: if curIdx===0
+            // (January), new Date(year,-1,1) resolves to December 1 of the
+            // previous year, which is exactly correct.
+            const archCutoff=new Date(curYear,curIdx-1,1);
             // Render the exact same traffic sheet the main app emits (see
             // buildSheetHtml in RotBuilder). The library displays the result via
             // dangerouslySetInnerHTML in the left page so what you see matches
