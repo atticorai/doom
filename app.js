@@ -331,7 +331,7 @@ const WK_STA_PATCH={"WBRC-TV":"allwbrctraffic@wbrc.com; cburns@wbrc.com; wbrc-tr
 const PL_STA_PATCH={"WBBM-TV":"copychicago@cbs.com; bjteixeira@cbs.com","WGN-TV":"mrudman@wgntv.com; WGNTV-Traffic@nexstar.tv","WMEU":"ChicagoTVTraffic@wciu.com; ccasillas@wciu.com","WICU-TV":"ChicagoTVTraffic@wciu.com; ccasillas@wciu.com","WMAQ-TV":"wmaq.ti@nbcuni.com","WPWR-TV":"ftscopy@fox.com; nadia.harriott@fox.com","WFLD-TV":"ftscopy@fox.com; nadia.harriott@fox.com","CHSN":"CHSNTrafficTeam@chsn.com","WLS-TV":"otvs-cto.copy@abc.com","WLEY-FM":"mbarrera@sbschicago.com","WLS-FM":"elena.myers@cumulus.com","WKSC-FM":"melissaBerry@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; terrihill@iheartmedia.com","WBBM-FM":"theresa.lane@audacy.com","WBMX-FM":"theresa.lane@audacy.com","WDRV-FM":"chicagosalesassistants@hubbardradio.com","WTMX-FM":"chicagosalesassistants@hubbardradio.com","WTBC-FM":"chicagosalesassistants@hubbardradio.com","WMVP":"dlynch@goodkarmabrands.com","Ampersand-CHI":"effectv_ampersand_ad-copy@comcast.com","WLWT-TV":"wlwt_local_traffic@hearst.com","ELWT-TV":"wlwt_local_traffic@hearst.com","WCPO-TV":"WCPOtraffic@scripps.com; Diana.douglass@wcpo.com","WXIX-TV":"WXIX.Traffic@graymedia.com","WKRC-TV":"saso-wkrc-traffic@sbgtv.com","WSTR-TV":"saso-wkrc-traffic@sbgtv.com","EKRC-TV":"saso-wkrc-traffic@sbgtv.com","WKFS-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","WOFX-FM":"cincy.production@cumulus.com; dave.brokesh@cumulus.com","WOSL-FM":"cdeslandes@urban1.com","WIZF-FM":"cdeslandes@urban1.com","WUBE-FM":"bsublet@hbi.com","WYGY-FM":"bsublet@hbi.com","Ampersand-CIN":"NCC.OhioTraffic@charter.com","KDVR-TV":"DenverTraffic@nexstar.tv","KWGN-FM":"DenverTraffic@nexstar.tv","KUSA-TV":"traffic@9news.com; kiana.smith@9news.com","KTVD-TV":"traffic@9news.com; kiana.smith@9news.com","KMGH-TV":"traffic@denver7.com","KCDO-TV":"traffic@denver7.com","KCNC-TV":"copydenver@cbs.com","Altitude":"paul.santos@altitude.tv; suzanne.jaramillo@altitude.tv","KOSI-FM":"mromano@bonneville.com","KYGO-FM":"mromano@bonneville.com","KALC-FM":"Nick.Voelker@audacy.com","KQMT-FM":"Nick.Voelker@audacy.com","KQKS--FM":"Nick.Voelker@audacy.com","KIMN-FM":"Megan.Rose@KSERadio.com; radiotraffic@kseradio.com","KXKL-FM":"Megan.Rose@KSERadio.com; radiotraffic@kseradio.com","KBCO-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","KTCL-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","KWBL-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","KDHT-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","KRFX-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Ampersand-DEN":"effectv_ampersand_ad-copy@comcast.com","KMSP-TV":"John.Barry@fox.com","WFTC-TV":"John.Barry@fox.com","KARE-TV":"cott@kare11.com","WCCO-TV":"Tlbrown@cbs.com","KSTP-TV":"Elizabeth.korbisch@hbi.com","KSTC-TV":"","Ampersand-MSP":"effectv_ampersand_ad-copy@comcast.com","Wilkins-CHI":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","Wilkins-CIN":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","Wilkins-DEN":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","Wilkins-MSP":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","TTWN-PL":"adahu@iheartmedia.com; melissaberry@iheartmedia.com"};
 const CALENDAR=D_C.map(r=>({month:r[0],rotDue:r[1],bcStart:r[2],bcEnd:r[3]}));
 const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const base=D_P.map(r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17]}));const extra=(typeof D_P_NEW!=="undefined"?D_P_NEW:[]).map(r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17]}));return[...base,...extra]})();
-const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery"};
+const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",PAN:"Panama City"};
 // Reverse map: full name → code (case-insensitive lookup for market normalization)
 const DM_REV=Object.fromEntries(Object.entries(DM).flatMap(([c,n])=>[[n,c],[n.toLowerCase(),c],[c,c],[c.toLowerCase(),c]]));
 // Normalize any market value (code or full name) to its 3-letter code
@@ -6543,7 +6543,10 @@ Rules:
       category:["category","cat","casetype","case"],
       vo:["vo","voiceover","voice","talent"],
       fileUrl:["fileurl","url","link","file","creativeurl","videourl"],
-      brand:["brand","client"]
+      brand:["brand","client"],
+      timesUsed:["timesused","uses","count"],
+      firstSeenFile:["firstseenfile","source","sourcefile"],
+      inactiveMarket:["inactivemarket","inactive"]
     };
     const trafFields={
       brand:["brand","client"],
@@ -6557,8 +6560,15 @@ Rules:
       buyer:["buyer"],
       iscis:["iscis","iscicodes","isci","spots","spotcodes","creatives"],
       stations:["stations","calls","callletters","station","calllist"],
-      comments:["comments","notes","comment","note","memo"]
+      comments:["comments","notes","comment","note","memo"],
+      sourceFile:["sourcefile","source","sourcedoc","sheetname"],
+      assetCount:["assetcount","ct","count"],
+      isRevised:["isrevised","revised","rev"],
+      isSeasonal:["isseasonal","seasonal"],
+      inactiveMarket:["inactivemarket","inactive"],
+      conflict:["conflict","dupe","conflicting"]
     };
+    const isYes=(v)=>String(v||"").trim().toLowerCase().startsWith("y");
     const MO_LIST=["January","February","March","April","May","June","July","August","September","October","November","December"];
     const guessBrand=(s)=>{const v=String(s||"").toLowerCase();if(v.includes("postman"))return"Postman Law";if(v.includes("wettermark")||v.includes("keith")||v==="wk")return"Wettermark Keith";return s||"Wettermark Keith"};
     const parseIsciCsv=(text)=>{
@@ -6571,13 +6581,23 @@ Rules:
         const media=get(r,"media").trim()||"TV";
         const brand=guessBrand(get(r,"brand"));
         const yr=parseInt(get(r,"year"))||null;
+        const inactive=isYes(get(r,"inactiveMarket"));
+        const durRaw=get(r,"dur").trim();
+        const isBookend=/^be$/i.test(durRaw);
+        const titleRaw=get(r,"title")||"";
+        const title=titleRaw&&titleRaw!==code?titleRaw:code.replace(/^WK-[A-Z]+-/i,"").replace(/_\d+[abAB]?\.(mpg|mp4|mov)$/i,"").replace(/[-_]/g," ").trim()||"(untitled)";
         return{
-          code:code,title:get(r,"title")||"(untitled)",media:media,brand:brand,
-          dma:market,dur:get(r,"dur").replace(/[^0-9]/g,"")||"30",
+          code:code,title:title,media:media,brand:brand,
+          dma:market,
+          dur:isBookend?"15":durRaw.replace(/[^0-9]/g,"")||"30",
           suffix:SUFFIXES[media]||"T",active:false,
           category:get(r,"category")||"Legacy",caseType:get(r,"category")||"Legacy",
           valueProp:"",vo:get(r,"vo")||"",fileUrl:get(r,"fileUrl")||"",
-          sentAt:null,sentInEst:null,legacy:true,legacyYear:yr
+          sentAt:null,sentInEst:null,legacy:true,legacyYear:yr,
+          inactiveMarket:inactive,
+          isBookend:isBookend,
+          legacySource:get(r,"firstSeenFile"),
+          legacyTimesUsed:parseInt(get(r,"timesUsed"))||0
         };
       }).filter(Boolean);
     };
@@ -6585,7 +6605,7 @@ Rules:
       const rows=parseCSV(text);if(rows.length<2)return[];
       const idx=buildIdx(rows[0],trafFields);
       const get=(r,f)=>idx[f]!==undefined?(r[idx[f]]||""):"";
-      return rows.slice(1).map(r=>{
+      const records=rows.slice(1).map(r=>{
         const monthRaw=get(r,"month").trim();if(!monthRaw)return null;
         const yr=parseInt(get(r,"year"))||2023;
         const monthName=MO_LIST.find(m=>monthRaw.toLowerCase().startsWith(m.toLowerCase()))||monthRaw;
@@ -6593,24 +6613,104 @@ Rules:
         const brand=guessBrand(get(r,"brand"));
         const market=get(r,"market").toUpperCase().trim();
         const media=get(r,"media").trim()||"TV";
+        // Split ISCIs on semicolons (primary) and pipes (occasional). Strip whitespace.
         const isciCodes=get(r,"iscis").split(/[;|]/).map(c=>c.trim()).filter(Boolean);
-        const stationsList=get(r,"stations").split(/[;|,]/).map(s=>s.trim()).filter(Boolean);
+        const stationsList=get(r,"stations").split(/[;|]/).map(s=>s.trim()).filter(Boolean);
         const monIdx=MO_LIST.indexOf(monthName);
         const ts=monIdx>=0?new Date(yr,monIdx,1).toISOString():new Date().toISOString();
+        // Look up ISCI details: check existing registry, then this import's preview.
         const iscisDetail=isciCodes.map(c=>{
           const i=iscis.find(x=>x.code===c)||legacyIsciPreview.find(x=>x.code===c);
-          return{code:c,title:i?.title||"(legacy)",dur:i?.dur||"30",pct:"100",sched:"All Week",bookend:""};
+          return{code:c,title:i?.title||c.replace(/\.(mpg|mp4|mov)$/i,""),dur:i?.dur||"30",pct:"100",sched:"All Week",bookend:i?.isBookend?"BE":""};
         });
+        const seasonal=isYes(get(r,"isSeasonal"));
+        const inactive=isYes(get(r,"inactiveMarket"));
+        const revised=isYes(get(r,"isRevised"));
+        const conflictFlag=isYes(get(r,"conflict"));
+        const srcFile=get(r,"sourceFile");
         const userComments=get(r,"comments");
+        // Pull seasonal label from comments or source filename.
+        let seasonalLabel="";
+        if(seasonal){
+          const text=userComments+" "+srcFile;
+          const m=text.match(/(Christmas|Thanksgiving|Memorial Day|Easter|Halloween|Black Friday|July 4th|New Year|Holiday|Valentine|Mother'?s Day|Father'?s Day|Independence)/i);
+          seasonalLabel=m?m[1]:"";
+        }
         return{
-          ts:ts,est:get(r,"est"),brand:brand,market:market,media:media,
+          ts:ts,
+          est:get(r,"est"),
+          brand:brand,
+          market:market,
+          media:media,
           buyer:get(r,"buyer")||(brand==="Wettermark Keith"?"Amy Coffey":""),
-          month:monthFull,flight:get(r,"flight"),version:get(r,"version")||"1",
-          comments:"📜 LEGACY ARCHIVE — pre-app traffic record"+(userComments?" • "+userComments:""),
-          combined:false,stations:stationsList,iscis:iscisDetail,
-          status:"sent",isOoh:false,legacy:true
+          month:monthFull,
+          flight:get(r,"flight"),
+          version:get(r,"version")||"1",
+          comments:userComments,
+          combined:false,
+          stations:stationsList,
+          iscis:iscisDetail,
+          status:"sent",
+          isOoh:false,
+          legacy:true,
+          legacySource:srcFile,
+          legacyAssetCount:parseInt(get(r,"assetCount"))||iscisDetail.length,
+          isRevision:revised,
+          seasonal:seasonal,
+          seasonalLabel:seasonalLabel,
+          inactiveMarket:inactive,
+          legacyConflict:conflictFlag
         };
       }).filter(Boolean);
+      // Resolve conflict pairs + stack seasonals as version bumps so the Library
+      // groups them under one month book. Revised wins as canonical (v2);
+      // original is preserved as v1 with status:"superseded".
+      const grouped={};
+      records.forEach(r=>{
+        const k=[r.brand,r.market,r.media,r.month].join("|");
+        (grouped[k]=grouped[k]||[]).push(r);
+      });
+      Object.values(grouped).forEach(group=>{
+        if(group.length<=1)return;
+        const revised=group.find(r=>r.isRevision);
+        const seasonals=group.filter(r=>r.seasonal&&!r.isRevision);
+        const regulars=group.filter(r=>!r.seasonal&&!r.isRevision);
+        if(revised){
+          revised.version="2";
+          revised.statusNote="Revised version (replaces v1)";
+          group.forEach(r=>{
+            if(r!==revised){
+              r.version="1";
+              r.status="superseded";
+              r.statusNote="Superseded by revised v2";
+            }
+          });
+        }else if(seasonals.length&&regulars.length){
+          regulars.forEach((r,i)=>{r.version=String(i+1)});
+          seasonals.forEach((s,i)=>{
+            s.version=String(regulars.length+i+1);
+            s.statusNote="Seasonal insert"+(s.seasonalLabel?": "+s.seasonalLabel:"");
+          });
+        }else{
+          // Unresolved conflict — sequential versions so dedupe doesn't collapse them.
+          group.forEach((r,i)=>{r.version=String(i+1);if(group.length>1)r.statusNote="Unresolved conflict pair ("+(i+1)+" of "+group.length+")"});
+        }
+      });
+      // Build human-readable comments after grouping (uses computed statusNote).
+      records.forEach(r=>{
+        const tags=[];
+        if(r.seasonal)tags.push("📌 Seasonal"+(r.seasonalLabel?": "+r.seasonalLabel:""));
+        if(r.inactiveMarket)tags.push("🚫 Inactive market");
+        if(r.isRevision)tags.push("✏ Revised");
+        if(r.status==="superseded")tags.push("⊘ Superseded");
+        if(r.legacyConflict&&!r.isRevision&&r.status!=="superseded")tags.push("⚠ Conflict pair");
+        const parts=["📜 LEGACY ARCHIVE — pre-app traffic record"];
+        if(tags.length)parts.push(tags.join(" · "));
+        if(r.legacySource)parts.push("Source: "+r.legacySource);
+        if(r.comments&&!/Source:/i.test(r.comments))parts.push(r.comments);
+        r.comments=parts.join(" • ");
+      });
+      return records;
     };
     const handlePaste=(text,kind)=>{
       if(kind==="iscis"){setLegacyIsciText(text);setLegacyIsciPreview(parseIsciCsv(text))}
@@ -6647,11 +6747,25 @@ Rules:
     };
     const importTraf=()=>{
       if(!legacyTrafPreview.length){notify("Nothing to import");return}
+      const stats={revised:0,seasonal:0,inactive:0,superseded:0};
+      legacyTrafPreview.forEach(r=>{
+        if(r.isRevision)stats.revised++;
+        if(r.seasonal)stats.seasonal++;
+        if(r.inactiveMarket)stats.inactive++;
+        if(r.status==="superseded")stats.superseded++;
+      });
       setTrafficHistory(prev=>{
         const have=new Set(prev.filter(h=>h.legacy).map(h=>[h.brand,h.market,h.media,h.month,h.version].join("|")));
         const fresh=legacyTrafPreview.filter(r=>!have.has([r.brand,r.market,r.media,r.month,r.version].join("|")));
-        log("Legacy Traffic Imported",fresh.length+" records");
-        notify(fresh.length+" legacy traffic records imported"+(legacyTrafPreview.length-fresh.length>0?" ("+(legacyTrafPreview.length-fresh.length)+" duplicates skipped)":""));
+        const detail=[fresh.length+" imported"];
+        if(stats.revised)detail.push(stats.revised+" revised");
+        if(stats.superseded)detail.push(stats.superseded+" superseded");
+        if(stats.seasonal)detail.push(stats.seasonal+" seasonal");
+        if(stats.inactive)detail.push(stats.inactive+" inactive market");
+        const dupes=legacyTrafPreview.length-fresh.length;
+        if(dupes)detail.push(dupes+" duplicate"+(dupes===1?"":"s")+" skipped");
+        log("Legacy Traffic Imported",detail.join(", "));
+        notify(detail.join(" · "));
         return[...fresh,...prev];
       });
       setLegacyTrafText("");setLegacyTrafPreview([]);
@@ -6682,8 +6796,8 @@ Rules:
             <div style={{fontSize:13,fontWeight:700,color:"#5BC4A0",marginBottom:6}}>✓ {legacyIsciPreview.length} ISCI{legacyIsciPreview.length===1?"":"s"} ready</div>
             <div style={{maxHeight:280,overflowY:"auto",border:"1px solid #4a3565",borderRadius:5}}>
               <table style={{width:"100%",fontSize:11,borderCollapse:"collapse"}}>
-                <thead><tr style={{background:"#2d1f42",position:"sticky",top:0}}>{["Code","Title","Media","Market","Dur","Year","Brand"].map(h=><th key={h} style={{padding:"6px 8px",textAlign:"left",color:"#D4A040",borderBottom:"1px solid #4a3565"}}>{h}</th>)}</tr></thead>
-                <tbody>{legacyIsciPreview.slice(0,100).map((r,i)=><tr key={i} style={{borderBottom:"1px solid #3a2955"}}><td style={{padding:"4px 8px",fontFamily:"monospace",fontWeight:600,color:"#E8DFF0"}}>{r.code}</td><td style={{padding:"4px 8px",color:"#E8DFF0"}}>{r.title}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.media}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.dma}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.dur}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.legacyYear||"—"}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.brand==="Wettermark Keith"?"WK":r.brand==="Postman Law"?"PL":r.brand}</td></tr>)}</tbody>
+                <thead><tr style={{background:"#2d1f42",position:"sticky",top:0}}>{["Code","Title","Media","Market","Dur","Year","Brand","Tags"].map(h=><th key={h} style={{padding:"6px 8px",textAlign:"left",color:"#D4A040",borderBottom:"1px solid #4a3565"}}>{h}</th>)}</tr></thead>
+                <tbody>{legacyIsciPreview.slice(0,100).map((r,i)=>{const tags=[];if(r.isBookend)tags.push("BE");if(r.inactiveMarket)tags.push("🚫 PAN");return<tr key={i} style={{borderBottom:"1px solid #3a2955",opacity:r.inactiveMarket?0.55:1}}><td style={{padding:"4px 8px",fontFamily:"monospace",fontSize:10,color:"#E8DFF0"}}>{r.code}</td><td style={{padding:"4px 8px",color:"#E8DFF0"}}>{r.title}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.media}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.dma}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.dur}{r.isBookend?"s":""}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.legacyYear||"—"}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.brand==="Wettermark Keith"?"WK":r.brand==="Postman Law"?"PL":r.brand}</td><td style={{padding:"4px 8px",color:"#D4A040",fontSize:10}}>{tags.join(" ")}</td></tr>})}</tbody>
               </table>
             </div>
             {legacyIsciPreview.length>100&&<div style={{fontSize:11,color:"#9B8EAD",marginTop:4}}>+{legacyIsciPreview.length-100} more rows (showing first 100)</div>}
@@ -6698,8 +6812,14 @@ Rules:
           <div style={{padding:10,background:"rgba(212,160,64,.05)",border:"1px solid #4a3565",borderRadius:6,marginBottom:10,fontSize:12,color:"#9B8EAD",lineHeight:1.5}}>
             <b style={{color:"#D4A040"}}>Legacy Traffic Instructions Import.</b> Paste CSV from a Google Sheet.
             <div style={{marginTop:6,fontSize:11,color:"#E8DFF0"}}>Headers (any of these names match):</div>
-            <div style={{fontSize:11,fontFamily:"monospace",marginTop:3,color:"#C4A0C8"}}>brand · market · media · month · year · est · flight · version · buyer · iscis · stations · comments</div>
-            <div style={{marginTop:6,fontSize:11}}>ISCIs &amp; stations: separate multiple values with <code style={{fontFamily:"monospace"}}>;</code> (semicolons). Records always show as archived in the Library and can't be re-sent, edited, or copied.</div>
+            <div style={{fontSize:11,fontFamily:"monospace",marginTop:3,color:"#C4A0C8"}}>brand · market · media · month · year · est · flight · version · buyer · iscis · stations · comments · source_file · asset_count · is_revised · is_seasonal · inactive_market · conflict</div>
+            <div style={{marginTop:8,paddingTop:8,borderTop:"1px dashed #4a3565",fontSize:11}}>
+              <div><b style={{color:"#5BC4A0"}}>✏ is_revised=Y</b> — becomes v2, the matching original is auto-marked superseded (v1).</div>
+              <div><b style={{color:"#D4A040"}}>📌 is_seasonal=Y</b> — stacks as a higher version on the regular month buy. Holiday name auto-detected from comments / filename.</div>
+              <div><b style={{color:"#E85A7A"}}>🚫 inactive_market=Y</b> — Panama City. Imported with legacy flag, won't appear in market dropdowns or builders.</div>
+              <div><b style={{color:"#E85A7A"}}>⚠ conflict=Y</b> — pair of revised + original. Handled automatically when paired with is_revised.</div>
+              <div style={{marginTop:4,color:"#9B8EAD"}}>All legacy records: archived by default in the Library, can't be re-sent / edited / copied. Brand "WK" auto-maps to "Wettermark Keith".</div>
+            </div>
           </div>
           <textarea value={legacyTrafText} onChange={e=>handlePaste(e.target.value,"traffic")} placeholder={"brand,market,media,month,year,est,flight,buyer,iscis,stations\nWettermark Keith,BRM,TV,January,2023,210,12/26 - 01/29,Amy Coffey,WK001;WK002,WIAT-TV;WBRC-TV"} style={{width:"100%",minHeight:140,fontSize:12,fontFamily:"monospace",padding:8,borderRadius:6,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",resize:"vertical"}}/>
           <div style={{display:"flex",gap:8,marginTop:8,alignItems:"center"}}>
@@ -6710,8 +6830,8 @@ Rules:
             <div style={{fontSize:13,fontWeight:700,color:"#5BC4A0",marginBottom:6}}>✓ {legacyTrafPreview.length} traffic record{legacyTrafPreview.length===1?"":"s"} ready</div>
             <div style={{maxHeight:280,overflowY:"auto",border:"1px solid #4a3565",borderRadius:5}}>
               <table style={{width:"100%",fontSize:11,borderCollapse:"collapse"}}>
-                <thead><tr style={{background:"#2d1f42",position:"sticky",top:0}}>{["Brand","Market","Media","Month","Est","V","ISCIs","Stations","Flight"].map(h=><th key={h} style={{padding:"6px 8px",textAlign:"left",color:"#D4A040",borderBottom:"1px solid #4a3565"}}>{h}</th>)}</tr></thead>
-                <tbody>{legacyTrafPreview.slice(0,100).map((r,i)=><tr key={i} style={{borderBottom:"1px solid #3a2955"}}><td style={{padding:"4px 8px",color:"#E8DFF0"}}>{r.brand==="Wettermark Keith"?"WK":r.brand==="Postman Law"?"PL":r.brand}</td><td style={{padding:"4px 8px",color:"#E8DFF0"}}>{r.market}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.media}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.month}</td><td style={{padding:"4px 8px",fontFamily:"monospace",color:"#9B8EAD"}}>{r.est||"—"}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.version}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.iscis.length}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.stations.length}</td><td style={{padding:"4px 8px",color:"#9B8EAD",fontSize:10}}>{r.flight||"—"}</td></tr>)}</tbody>
+                <thead><tr style={{background:"#2d1f42",position:"sticky",top:0}}>{["Brand","Market","Media","Month","Est","V","ISCIs","Flags"].map(h=><th key={h} style={{padding:"6px 8px",textAlign:"left",color:"#D4A040",borderBottom:"1px solid #4a3565"}}>{h}</th>)}</tr></thead>
+                <tbody>{legacyTrafPreview.slice(0,100).map((r,i)=>{const flags=[];if(r.status==="superseded")flags.push({l:"⊘ Superseded",c:"#9B8EAD"});if(r.isRevision)flags.push({l:"✏ Revised",c:"#5BC4A0"});if(r.seasonal)flags.push({l:"📌 "+(r.seasonalLabel||"Seasonal"),c:"#D4A040"});if(r.inactiveMarket)flags.push({l:"🚫 PAN",c:"#E85A7A"});if(r.legacyConflict&&!r.isRevision&&r.status!=="superseded")flags.push({l:"⚠ Conflict",c:"#E85A7A"});return<tr key={i} style={{borderBottom:"1px solid #3a2955",opacity:r.status==="superseded"||r.inactiveMarket?0.6:1}}><td style={{padding:"4px 8px",color:"#E8DFF0"}}>{r.brand==="Wettermark Keith"?"WK":r.brand==="Postman Law"?"PL":r.brand}</td><td style={{padding:"4px 8px",color:"#E8DFF0"}}>{r.market}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.media}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.month}</td><td style={{padding:"4px 8px",fontFamily:"monospace",color:"#9B8EAD"}}>{r.est||"—"}</td><td style={{padding:"4px 8px",color:"#9B8EAD",fontWeight:r.isRevision?700:400}}>v{r.version}</td><td style={{padding:"4px 8px",color:"#9B8EAD"}}>{r.iscis.length}</td><td style={{padding:"4px 8px",fontSize:10}}>{flags.map((f,j)=><span key={j} style={{color:f.c,marginRight:6,whiteSpace:"nowrap"}}>{f.l}</span>)}</td></tr>})}</tbody>
               </table>
             </div>
             {legacyTrafPreview.length>100&&<div style={{fontSize:11,color:"#9B8EAD",marginTop:4}}>+{legacyTrafPreview.length-100} more rows (showing first 100)</div>}
