@@ -919,14 +919,15 @@ const App=()=>{
         // Compares against the LAST PERSISTED count (trafficFbCountRef), which is only
         // updated after a save acks — that way two rapid edits in <100ms can't hide a
         // regression by bumping the count before the first save lands.
-        if(trafficFbCountRef.current>5){
+        if(trafficFbCountRef.current>10){
+          const dropCount=trafficFbCountRef.current-next.length;
           const dropPct=1-(next.length/trafficFbCountRef.current);
-          if(dropPct>0.2){
-            const msg="⚠ SAVE BLOCKED — protected "+(trafficFbCountRef.current-next.length)+" traffic record(s) from being deleted ("+trafficFbCountRef.current+"→"+next.length+", "+Math.round(dropPct*100)+"% drop). Your data is safe.";
+          if(dropCount>5&&dropPct>0.4){
+            const msg="⚠ SAVE BLOCKED — protected "+dropCount+" traffic record(s) from bulk deletion ("+trafficFbCountRef.current+"→"+next.length+"). Delete one at a time to confirm.";
             console.error("SAVE BLOCKED [trafficHistory]: count dropped from "+trafficFbCountRef.current+" to "+next.length+" ("+Math.round(dropPct*100)+"% loss)");
             try{notify(msg)}catch(e){}
             try{log("Save Blocked","trafficHistory: "+trafficFbCountRef.current+"→"+next.length+" ("+Math.round(dropPct*100)+"% drop) — REVERTED")}catch(e){}
-            return prev; // Return previous state, don't save
+            return prev;
           }
         }
         backupBeforeSave("trafficHistory",next);
@@ -936,7 +937,7 @@ const App=()=>{
         trafficSaveTimerRef.current=setTimeout(async()=>{
           trafficSaveTimerRef.current=null;
           try{await saveToDb("trafficHistory",next);trafficFbCountRef.current=next.length}
-          catch(e){console.warn("trafficHistory save failed:",e)}
+          catch(e){console.error("trafficHistory save failed:",e);try{notify("⚠ Traffic save failed — reload to verify your changes persisted. Error: "+(e?.message||e))}catch(_){}}
         },100);
       }
       return next;
