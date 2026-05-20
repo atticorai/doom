@@ -813,6 +813,7 @@ const App=()=>{
         if(docs.wkOohIscis?.data){const d=JSON.parse(docs.wkOohIscis.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>d[p.boardId]!==undefined?{...p,isci:d[p.boardId]}:p))}
         if(docs.plOohIscis?.data){const d=JSON.parse(docs.plOohIscis.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isci:d[p.unit]}:p))}
         if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}
+        if(docs.legacyBootstrap?.data){try{const lb=JSON.parse(docs.legacyBootstrap.data);if(lb&&lb.done)legacyBootstrappedRef.current=true}catch(e){}}
         console.log("Firestore: loaded",Object.keys(docs).length,"collections");
         loadCompleteRef.current=true;
       }catch(e){console.warn("Firestore load failed, using defaults:",e);iscisLoadedRef.current=true;stationsLoadedRef.current=true;estimatesLoadedRef.current=true;trafficLoadedRef.current=true;
@@ -900,7 +901,7 @@ const App=()=>{
 
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current){saveRef.current=true;return;}if(stations.length>0&&stationsLoadedRef.current)safeSave("stations",stations,stationsFbCountRef)},[stations,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(estimates.length>0&&estimatesLoadedRef.current)safeSave("estimates",estimates,estimatesFbCountRef)},[estimates,dbLoaded]);
-  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const persistable=iscis.filter(i=>!i.legacy);if(persistable.length>0&&iscisLoadedRef.current)safeSave("iscis",persistable,isciFbCountRef)},[iscis,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(iscis.length>0&&iscisLoadedRef.current)safeSave("iscis",iscis,isciFbCountRef)},[iscis,dbLoaded]);
   const linksReady=React.useRef(false);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(!linksReady.current)return;if(Object.keys(staEstLinks).length>0)saveToDb("staEstLinks",staEstLinks)},[staEstLinks,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;const newLinks={};stations.forEach(s=>{const k=staKey(s);const existing=staEstLinks[k]||[];const matched=estimates.filter(e=>e.market===s.market&&e.brand===s.brand&&s.media===e.media).map(e=>e.num);if(existing.length===0&&matched.length){newLinks[k]=matched}});if(Object.keys(newLinks).length){setStaEstLinks(p=>({...p,...newLinks}))}linksReady.current=true},[stations,dbLoaded]);
@@ -915,27 +916,29 @@ const App=()=>{
     trafficDirtyRef.current=true;
     setTrafficHistoryRaw(prev=>{
       const next=typeof updater==='function'?updater(prev):updater;
-      // Strip legacy archive records — they're in-memory seed from data-legacy.js,
-      // never persisted. Drop guard math runs on persistable count only so the
-      // bundle's presence/absence can't trip the 40% protection threshold.
-      const persistable=next.filter(h=>!h.legacy);
-      if(dbLoaded&&trafficLoadedRef.current&&trafficDirtyRef.current&&persistable.length>0){
+      if(dbLoaded&&trafficLoadedRef.current&&trafficDirtyRef.current&&next.length>0){
+        // Drop guard: block save if traffic count drops >20% from loaded count.
+        // Compares against the LAST PERSISTED count (trafficFbCountRef), which is only
+        // updated after a save acks — that way two rapid edits in <100ms can't hide a
+        // regression by bumping the count before the first save lands.
         if(trafficFbCountRef.current>10){
-          const dropCount=trafficFbCountRef.current-persistable.length;
-          const dropPct=1-(persistable.length/trafficFbCountRef.current);
+          const dropCount=trafficFbCountRef.current-next.length;
+          const dropPct=1-(next.length/trafficFbCountRef.current);
           if(dropCount>5&&dropPct>0.4){
-            const msg="⚠ SAVE BLOCKED — protected "+dropCount+" traffic record(s) from bulk deletion ("+trafficFbCountRef.current+"→"+persistable.length+"). Delete one at a time to confirm.";
-            console.error("SAVE BLOCKED [trafficHistory]: count dropped from "+trafficFbCountRef.current+" to "+persistable.length+" ("+Math.round(dropPct*100)+"% loss)");
+            const msg="⚠ SAVE BLOCKED — protected "+dropCount+" traffic record(s) from bulk deletion ("+trafficFbCountRef.current+"→"+next.length+"). Delete one at a time to confirm.";
+            console.error("SAVE BLOCKED [trafficHistory]: count dropped from "+trafficFbCountRef.current+" to "+next.length+" ("+Math.round(dropPct*100)+"% loss)");
             try{notify(msg)}catch(e){}
-            try{log("Save Blocked","trafficHistory: "+trafficFbCountRef.current+"→"+persistable.length+" ("+Math.round(dropPct*100)+"% drop) — REVERTED")}catch(e){}
+            try{log("Save Blocked","trafficHistory: "+trafficFbCountRef.current+"→"+next.length+" ("+Math.round(dropPct*100)+"% drop) — REVERTED")}catch(e){}
             return prev;
           }
         }
-        backupBeforeSave("trafficHistory",persistable);
+        backupBeforeSave("trafficHistory",next);
+        // Debounce: cancel any pending save and schedule a fresh one. Multiple
+        // rapid edits collapse into a single Firestore write of the latest state.
         if(trafficSaveTimerRef.current)clearTimeout(trafficSaveTimerRef.current);
         trafficSaveTimerRef.current=setTimeout(async()=>{
           trafficSaveTimerRef.current=null;
-          try{await saveToDb("trafficHistory",persistable);trafficFbCountRef.current=persistable.length}
+          try{await saveToDb("trafficHistory",next);trafficFbCountRef.current=next.length}
           catch(e){console.error("trafficHistory save failed:",e);try{notify("⚠ Traffic save failed — reload to verify your changes persisted. Error: "+(e?.message||e))}catch(_){}}
         },100);
       }
@@ -6704,11 +6707,9 @@ Rules:
     return records;
   },[parseLegacyCSV,buildLegacyIdx]);
 
-  // Legacy archive is static seed data, like data-isci.js. Parse the bundled
-  // CSVs into memory on every load and merge with runtime state. The save
-  // effects above strip legacy:true before persisting — nothing legacy ever
-  // hits Supabase, so this stays free of DB-write cost no matter how big
-  // the archive grows.
+  // Auto-bootstrap: on first load, import bundled CSVs from data-legacy.js.
+  // Idempotent via legacyBootstrap Firestore doc — won't re-run after the
+  // user deletes records. Manual import UI still available on /legacy page.
   React.useEffect(()=>{
     if(!dbLoaded)return;
     if(!loadCompleteRef.current)return;
@@ -6716,6 +6717,9 @@ Rules:
     if(!iscisLoadedRef.current||!trafficLoadedRef.current)return;
     if(!window.LEGACY_ISCIS_CSV&&!window.LEGACY_TRAFFIC_CSV)return;
     legacyBootstrappedRef.current=true;
+    // Persist the flag right away so a refresh mid-import doesn't double-run.
+    try{db&&db.collection("appData").doc("legacyBootstrap").set({data:JSON.stringify({done:true,ts:Date.now()}),ts:Date.now()}).catch(()=>{})}catch(e){}
+    let isciAdded=0,trafAdded=0;
     let combinedIscis=iscis;
     if(window.LEGACY_ISCIS_CSV){
       const parsed=parseLegacyIscis(window.LEGACY_ISCIS_CSV);
@@ -6725,6 +6729,7 @@ Rules:
         if(fresh.length){
           combinedIscis=[...iscis,...fresh];
           setIscis(combinedIscis);
+          isciAdded=fresh.length;
         }
       }
     }
@@ -6735,8 +6740,16 @@ Rules:
         const fresh=parsed.filter(r=>!have.has([r.brand,r.market,r.media,r.month,r.version].join("|")));
         if(fresh.length){
           setTrafficHistory(prev=>[...fresh,...prev]);
+          trafAdded=fresh.length;
         }
       }
+    }
+    if(isciAdded||trafAdded){
+      const parts=[];
+      if(isciAdded)parts.push(isciAdded+" ISCIs");
+      if(trafAdded)parts.push(trafAdded+" traffic records");
+      log("Legacy Archive Bootstrap",parts.join(" + ")+" auto-imported from bundled CSVs");
+      notify("📜 Legacy archive loaded: "+parts.join(" + "));
     }
   },[dbLoaded,parseLegacyIscis,parseLegacyTraffic]);
 
