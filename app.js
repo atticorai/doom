@@ -7206,21 +7206,46 @@ Rules:
         :"Import "+availableImport+" legacy WK records?\n\nThese will be added to your traffic history, marked as legacy.\n\nProceed?";
       if(!confirm(msg))return;
       setImporting(true);
+      // Build a diagnostic log we show at the end no matter what
+      const diag=[];
+      const step=m=>{diag.push(m);console.log("[IMPORT] "+m)};
       try{
         const incoming=window.WK_LEGACY_RECORDS;
-        // Build the merged array from the CURRENT state value (not stale closure)
+        step("incoming bundle size: "+incoming.length+" records");
         const cleaned=trafficHistory.filter(h=>!(h.legacy===true&&h.brand==="Wettermark Keith"));
+        step("existing trafficHistory: "+trafficHistory.length+" total, "+(trafficHistory.length-cleaned.length)+" WK legacy removed, "+cleaned.length+" kept");
         const merged=[...cleaned,...incoming];
-        // PERSIST to Supabase FIRST so reloads keep the data
-        notify("Saving "+incoming.length+" records to DB…");
-        await db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(merged),ts:Date.now()});
-        // Then update local state so the UI reflects what's in the DB
+        step("merged count: "+merged.length);
+        const payload={data:JSON.stringify(merged),ts:Date.now()};
+        const sizeMB=(payload.data.length/1024/1024).toFixed(2);
+        step("payload size: "+sizeMB+" MB");
+        step("calling db.collection('appData').doc('trafficHistory').set(...)");
+        notify("Saving "+sizeMB+" MB to DB…");
+        await db.collection("appData").doc("trafficHistory").set(payload);
+        step("save call returned successfully (no exception)");
+        // Read it back to verify it actually persisted
+        step("reading back to verify…");
+        const snap=await db.collection("appData").doc("trafficHistory").get();
+        if(!snap.exists){step("⚠ READBACK: doc does NOT exist in DB after save!")}
+        else{
+          const d=snap.data();
+          const back=JSON.parse(d.data);
+          const legacyBack=back.filter(h=>h.legacy===true&&h.brand==="Wettermark Keith").length;
+          step("READBACK: DB has "+back.length+" total, "+legacyBack+" WK legacy");
+          if(legacyBack!==incoming.length){
+            step("⚠ MISMATCH: expected "+incoming.length+" legacy in DB but got "+legacyBack);
+          }else{
+            step("✓ Verified — DB has the correct count");
+          }
+        }
         setTrafficHistory(merged);
         log("WK Legacy Vault","Imported "+incoming.length+" legacy records (persisted)");
-        notify("✓ Imported & saved "+incoming.length+" legacy records");
+        alert("IMPORT DIAGNOSTIC:\n\n"+diag.join("\n"));
       }catch(e){
         console.error("Import failed:",e);
-        notify("Import failed: "+(e?.message||e)+" — records not persisted");
+        diag.push("✗ EXCEPTION: "+(e?.message||String(e)));
+        if(e?.stack)diag.push("stack: "+String(e.stack).split("\n").slice(0,3).join(" | "));
+        alert("IMPORT FAILED:\n\n"+diag.join("\n"));
       }finally{
         setImporting(false);
       }
@@ -7312,15 +7337,35 @@ Rules:
                 notify("Generating PDF…");
                 const html=buildLegacyHtml(viewing,iscis);
                 const uri=await generatePdfBase64(html,viewing);
+                if(!uri||typeof uri!=="string"){throw new Error("PDF generator returned empty result")}
+                // Convert data URI → Blob → object URL. Big PDFs can exceed
+                // the browser limit on <a href="data:..."> downloads (~2MB in
+                // Chrome), which silently fails. Blob URLs have no size limit.
+                let blobUrl;
+                try{
+                  const b64=uri.split(",")[1]||"";
+                  const bin=atob(b64);
+                  const bytes=new Uint8Array(bin.length);
+                  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+                  const blob=new Blob([bytes],{type:"application/pdf"});
+                  blobUrl=URL.createObjectURL(blob);
+                }catch(decodeErr){
+                  console.error("PDF blob conversion failed, falling back to data URI:",decodeErr);
+                  blobUrl=uri;
+                }
                 const safe=s=>String(s||"").replace(/[^A-Za-z0-9-]+/g,"_");
                 const fname="Legacy_"+safe(viewing.market)+"_"+safe(viewing.month)+"_v"+(viewing.version||"1")+".pdf";
                 const a=document.createElement("a");
-                a.href=uri;a.download=fname;
+                a.href=blobUrl;a.download=fname;a.target="_blank";a.rel="noopener";
                 document.body.appendChild(a);a.click();document.body.removeChild(a);
+                // Revoke after a delay so the browser has time to start the download
+                if(blobUrl.startsWith("blob:"))setTimeout(()=>URL.revokeObjectURL(blobUrl),60000);
                 notify("✓ Downloaded "+fname);
               }catch(e){
                 console.error("PDF download failed:",e);
-                notify("PDF generation failed: "+(e?.message||e));
+                const msg=e?.message||String(e)||"unknown error";
+                notify("PDF failed: "+msg);
+                alert("PDF download failed.\n\n"+msg+"\n\nCheck the browser console for details.");
               }
             }}>⬇ Download PDF</Btn>
           </div>
