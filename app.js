@@ -6499,11 +6499,13 @@ Rules:
     </ReportSection>
   </div>:null;
 
-  // One-time Supabase purge for legacy:true records left over from the
-  // earlier (removed) Legacy Archive feature. Direct saveToDb bypasses
-  // the drop guard since this is a deliberate schema cleanup, not a
-  // user deletion. Self-disables once both collections are clean.
+  // DISABLED — the old Legacy Archive purge wiped legacy:true records on every load.
+  // The WK Legacy Vault now uses legacy:true as its identifier; keeping the purge active
+  // would clobber the Vault's 483 imported records on every refresh.
   React.useEffect(()=>{
+    legacyPurgedRef.current=true;
+    return;
+    // eslint-disable-next-line no-unreachable
     if(!dbLoaded)return;
     if(!loadCompleteRef.current)return;
     if(legacyPurgedRef.current)return;
