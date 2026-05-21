@@ -7208,16 +7208,19 @@ Rules:
       setImporting(true);
       try{
         const incoming=window.WK_LEGACY_RECORDS;
-        setTrafficHistory(prev=>{
-          const cleaned=prev.filter(h=>!(h.legacy===true&&h.brand==="Wettermark Keith"));
-          const merged=[...cleaned,...incoming];
-          return merged;
-        });
-        log("WK Legacy Vault","Imported "+incoming.length+" legacy records");
-        notify("✓ Imported "+incoming.length+" legacy records");
+        // Build the merged array from the CURRENT state value (not stale closure)
+        const cleaned=trafficHistory.filter(h=>!(h.legacy===true&&h.brand==="Wettermark Keith"));
+        const merged=[...cleaned,...incoming];
+        // PERSIST to Supabase FIRST so reloads keep the data
+        notify("Saving "+incoming.length+" records to DB…");
+        await db.collection("appData").doc("trafficHistory").set({data:JSON.stringify(merged),ts:Date.now()});
+        // Then update local state so the UI reflects what's in the DB
+        setTrafficHistory(merged);
+        log("WK Legacy Vault","Imported "+incoming.length+" legacy records (persisted)");
+        notify("✓ Imported & saved "+incoming.length+" legacy records");
       }catch(e){
         console.error("Import failed:",e);
-        notify("Import failed: "+(e?.message||e));
+        notify("Import failed: "+(e?.message||e)+" — records not persisted");
       }finally{
         setImporting(false);
       }
