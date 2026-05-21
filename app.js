@@ -7222,30 +7222,51 @@ Rules:
             <div style={{padding:30,textAlign:"center",color:"#9B8EAD",fontSize:13}}>
               {legacyRecs.length===0?"The vault is empty. Send legacy instructions in chat and they'll appear here.":"No entries match these filters."}
             </div>
-          ):(
-            <div style={{overflow:"auto",maxHeight:700}}>
-              <table style={{width:"100%",borderCollapse:"collapse"}}>
-                <thead><tr>
-                  <TH>Month</TH><TH>Market</TH><TH>Media</TH><TH>Est</TH><TH>V</TH><TH>Flight</TH><TH>ISCIs</TH><TH>Stations</TH><TH a="right"></TH>
-                </tr></thead>
-                <tbody>
-                  {filteredLegacy.map((h,idx)=><tr key={(h.ts||"")+"_"+idx} style={{borderBottom:"1px solid #2d1f42",cursor:"pointer"}} onClick={()=>setViewing(h)} title="Click to view full instruction">
-                    <TD c="#E8DFF0" b>{h.month||"—"}</TD>
-                    <TD c="#C4A0C8">{h.market||"—"}</TD>
-                    <TD c="#C4A0C8">{h.media||"—"}</TD>
-                    <TD c="#D4A040" m>{h.est||"—"}</TD>
-                    <TD c="#9B8EAD">{h.version||"1"}</TD>
-                    <TD c="#9B8EAD">{h.flight||"—"}</TD>
-                    <TD c="#9B8EAD">{(h.iscis||[]).length}</TD>
-                    <TD c="#9B8EAD">{(h.stations||[]).length}</TD>
-                    <td style={{padding:"5px 7px",textAlign:"right",borderBottom:"1px solid #F0E8F8",whiteSpace:"nowrap"}}>
-                      <button onClick={e=>{e.stopPropagation();setViewing(h)}} style={{background:"none",border:"1px solid #D4A040",color:"#D4A040",padding:"2px 8px",borderRadius:4,fontSize:11,cursor:"pointer"}}>View</button>
-                    </td>
-                  </tr>)}
-                </tbody>
-              </table>
-            </div>
-          )}
+          ):(()=>{
+            // Group: Month + Year → Media → Markets (matches Traffic Library)
+            const MEDIA_ORDER_V=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display"];
+            const MONTH_NAMES_V=["January","February","March","April","May","June","July","August","September","October","November","December"];
+            const months=[...new Set(filteredLegacy.map(h=>h.month))].filter(Boolean).sort((a,b)=>{
+              const pa=a.split(/\s+/),pb=b.split(/\s+/);
+              const ya=parseInt(pa[1])||0,yb=parseInt(pb[1])||0;
+              if(ya!==yb)return yb-ya;
+              return MONTH_NAMES_V.indexOf(pb[0])-MONTH_NAMES_V.indexOf(pa[0]);
+            });
+            return <div style={{maxHeight:760,overflowY:"auto"}}>
+              {months.map(mo=>{
+                const moData=filteredLegacy.filter(h=>h.month===mo);
+                const moMedias=[...new Set(moData.map(h=>h.media))].sort((a,b)=>(MEDIA_ORDER_V.indexOf(a)===-1?99:MEDIA_ORDER_V.indexOf(a))-(MEDIA_ORDER_V.indexOf(b)===-1?99:MEDIA_ORDER_V.indexOf(b)));
+                return <div key={mo} style={{marginBottom:20}}>
+                  <div style={{fontSize:18,fontWeight:800,color:"#F0E8F8",marginBottom:6,paddingBottom:4,borderBottom:"2px solid #D4A04044",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.5}}>
+                    {mo} <span style={{fontSize:12,color:"#9B8EAD",fontWeight:600,fontFamily:"Arial,sans-serif",letterSpacing:0}}>({moData.length} instruction{moData.length!==1?"s":""})</span>
+                  </div>
+                  {moMedias.map(med=>{
+                    const medData=moData.filter(h=>h.media===med).sort((a,b)=>(a.market||"").localeCompare(b.market||""));
+                    return <div key={med} style={{marginBottom:12,marginLeft:4}}>
+                      <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:4,display:"flex",alignItems:"center",gap:6}}>
+                        <span style={{padding:"2px 8px",borderRadius:4,background:"#D4A04015",color:"#D4A040",fontSize:12,fontWeight:800}}>{med}</span>
+                        <span style={{fontSize:11,color:"#64748b"}}>{medData.length} market{medData.length!==1?"s":""}</span>
+                      </div>
+                      {medData.map((h,hi)=><div key={(h.ts||"")+"_"+hi} style={{padding:"6px 0 6px 12px",borderBottom:"1px solid #2d1f42",cursor:"pointer"}} onClick={()=>setViewing(h)} title="Click to view full instruction">
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                          <div style={{display:"flex",gap:8,alignItems:"center",flex:1,flexWrap:"wrap"}}>
+                            <span style={{fontSize:13,fontWeight:800,color:"#E8DFF0"}}>{h.market||"—"}</span>
+                            {h.est&&<span style={{fontSize:12,fontFamily:"monospace",fontWeight:700,padding:"1px 5px",borderRadius:3,background:"rgba(155,123,176,.15)",color:"#C4A0C8"}}>Est {h.est}</span>}
+                            <span style={{fontSize:12,color:"#64748b"}}>v{h.version||"1"}</span>
+                            <span style={{fontSize:12,color:"#D0C4DD"}}>{(h.iscis||[]).length} ISCIs</span>
+                            {(h.stations||[]).length>0&&<span style={{fontSize:11,color:"#5BC4A0",fontWeight:600}}>{(h.stations||[]).length} stations</span>}
+                            {h.flight&&<span style={{fontSize:11,color:"#94a3b8"}}>{h.flight}</span>}
+                            {h.buyer&&<span style={{fontSize:11,color:"#94a3b8"}}>{h.buyer}</span>}
+                          </div>
+                          <button onClick={e=>{e.stopPropagation();setViewing(h)}} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #D4A040",background:"rgba(217,119,6,.1)",color:"#D4A040",fontSize:12,fontWeight:600,cursor:"pointer"}}>View</button>
+                        </div>
+                      </div>)}
+                    </div>;
+                  })}
+                </div>;
+              })}
+            </div>;
+          })()}
         </Cd>
 
         {viewing&&<Mod xl title={"Legacy Instruction — "+(viewing.month||"")+" — "+(viewing.market||"")+" "+(viewing.media||"")} onClose={()=>setViewing(null)}>
