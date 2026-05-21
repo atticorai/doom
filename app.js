@@ -7061,42 +7061,17 @@ Rules:
   };
 
   // ── WK LEGACY VAULT ──────────────────────────────────────────────
-  // Two-tab page: Instructions (form + archive + detail view) | Creative.
-  // All storage goes through /api/storage (Supabase) — no Firebase.
+  // Read-only view. Records are populated by Claude on the backend.
+  // Two tabs: Instructions (archive + click-to-view) | Creative (by month).
   const VaultPg=()=>{
     const WK_MKTS_FULL=["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan","Gadsden"];
     const MEDIA_OPTS=["TV","Cable","Radio","Streaming Audio","Digital","OOH"];
     const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
-    const WK_MONTH_EST={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};
-    const SUF={TV:"T",Cable:"T",Radio:"R","Streaming Audio":"S",Digital:"D",OOH:"O"};
-    const SCHED_OPTS=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
     const SCHED_COLORS_V={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#dcfce7","Holiday Only":"#fee2e2"};
     const thisYear=new Date().getFullYear();
     const YEARS=[];for(let y=thisYear;y>=2018;y--)YEARS.push(String(y));
-    const BUCKET="legacy-wk";
 
-    const fileToB64=(file)=>new Promise((resolve,reject)=>{
-      const r=new FileReader();
-      r.onload=()=>{const s=String(r.result||"");const i=s.indexOf(",");resolve(i>=0?s.slice(i+1):s)};
-      r.onerror=()=>reject(r.error||new Error("read failed"));
-      r.readAsDataURL(file);
-    });
-    const apiStorage=async(payload)=>{
-      const res=await fetch("/api/storage",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});
-      if(!res.ok){const t=await res.text().catch(()=>"");throw new Error("storage "+payload.action+" failed ("+res.status+"): "+t.slice(0,200))}
-      return res.json();
-    };
-    const uploadFile=async(file,path,onProgress)=>{
-      if(onProgress)onProgress({pct:5,label:"Reading "+file.name});
-      const dataB64=await fileToB64(file);
-      if(onProgress)onProgress({pct:50,label:"Uploading "+file.name});
-      const r=await apiStorage({action:"upload",bucket:BUCKET,path,contentType:file.type||"application/octet-stream",dataB64});
-      if(onProgress)onProgress({pct:100,label:"Done"});
-      return r;
-    };
-
-    // Build the rendered HTML for a legacy instruction in the same format
-    // as current WK instructions (header block + grouped rotation table).
+    // ── Render a legacy instruction in the standard WK format ──────
     const buildLegacyHtml=(h,registryIscis)=>{
       const bc="#D4A040";
       const bcBg="#fffbeb";
@@ -7156,30 +7131,12 @@ Rules:
         filesWithUrls.forEach(r=>{x+='<div style="font-size:11px;margin:2px 0"><a href="'+r.url+'" target="_blank" style="color:#0369a1;text-decoration:underline;font-family:monospace;font-weight:600">'+r.code+'</a> — '+(r.title||"")+'</div>'});
         x+='</div>';
       }
-      if(h.sourceFileUrl){
-        x+='<div style="margin-top:10px;padding:8px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:6px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#92400e;letter-spacing:.5px;margin-bottom:5px">Original Source Document</div>';
-        x+='<a href="'+h.sourceFileUrl+'" target="_blank" style="font-size:11px;color:#92400e;text-decoration:underline">📎 '+(h.sourceFileName||"View attached file")+'</a></div>';
-      }
       x+='<div class="sig"><div style="display:flex;justify-content:space-between"><div><b>Originally accepted:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div class="note">Note: This is an archived legacy instruction. It is no longer actionable.</div></div>';
       x+='</body></html>';
       return x;
     };
 
     const[tab,setTab]=useState("instructions");
-
-    const blank=()=>({
-      year:String(thisYear-1),month:"January",flight:"",
-      market:"Birmingham",media:"TV",est:"",version:"1",
-      buyer:"",comments:"",
-      stationsText:"",
-      iscis:[{code:"",title:"",dur:"30",pct:"",sched:"All Week",bookend:""}],
-      sourceUrl:"",sourceName:"",sourcePath:"",
-      promoteIscis:true
-    });
-    const[form,setForm]=useState(blank());
-    const[saving,setSaving]=useState(false);
-    const[uploading,setUploading]=useState(false);
-    const[editingTs,setEditingTs]=useState(null);
     const[filterYear,setFilterYear]=useState("all");
     const[filterMarket,setFilterMarket]=useState("all");
     const[filterMedia,setFilterMedia]=useState("all");
@@ -7203,125 +7160,6 @@ Rules:
       return true;
     });
 
-    const suggestEst=(m)=>WK_MONTH_EST[m]||"";
-    const setF=(k,v)=>setForm(p=>({...p,[k]:v}));
-    const setIsci=(i,k,v)=>setForm(p=>({...p,iscis:p.iscis.map((x,idx)=>idx===i?{...x,[k]:v}:x)}));
-    const addIsci=()=>setForm(p=>({...p,iscis:[...p.iscis,{code:"",title:"",dur:"30",pct:"",sched:"All Week",bookend:""}]}));
-    const rmIsci=(i)=>setForm(p=>({...p,iscis:p.iscis.filter((_,idx)=>idx!==i)}));
-
-    const handleSourceFile=async(file)=>{
-      if(!file)return;
-      setUploading(true);
-      try{
-        const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-        const path="instructions/"+form.year+"/"+Date.now()+"_"+safe;
-        const r=await uploadFile(file,path);
-        setForm(p=>({...p,sourceUrl:r.url,sourceName:file.name,sourcePath:r.path}));
-        notify("Source file uploaded to Supabase");
-      }catch(e){console.error("Source upload failed:",e);notify("Upload failed: "+(e?.message||e))}
-      finally{setUploading(false)}
-    };
-
-    const buildTs=()=>{
-      const mi=MONTHS.indexOf(form.month);
-      const y=parseInt(form.year,10)||thisYear-1;
-      return new Date(Date.UTC(y,mi>=0?mi:0,1)).toISOString();
-    };
-
-    const validate=()=>{
-      if(!form.year)return"Year is required";
-      if(!form.month)return"Month is required";
-      if(!form.market)return"Market is required";
-      if(!form.media)return"Media is required";
-      return null;
-    };
-
-    const save=async()=>{
-      const err=validate();
-      if(err){notify(err);return}
-      setSaving(true);
-      try{
-        const ts=buildTs();
-        const dmaCode=Object.entries(DM).find(([_,n])=>n===form.market)?.[0]||"";
-        const stations=(form.stationsText||"").split(/[,\n;]+/).map(s=>s.trim()).filter(Boolean);
-        const iscisOut=form.iscis.filter(i=>i.code||i.title).map(i=>({
-          code:(i.code||"").trim().toUpperCase(),
-          title:(i.title||"").trim(),
-          dur:i.dur||"",pct:i.pct||"",sched:i.sched||"",bookend:i.bookend||""
-        }));
-
-        if(form.promoteIscis&&iscisOut.length){
-          setIscis(prev=>{
-            const codes=new Set(prev.map(p=>p.code));
-            const stubs=iscisOut
-              .filter(i=>i.code&&!codes.has(i.code))
-              .map(i=>({
-                code:i.code,title:i.title||"(legacy)",media:form.media,
-                brand:"Wettermark Keith",dma:dmaCode,
-                dur:i.dur||"30",suffix:SUF[form.media]||"T",
-                active:false,caseType:"",category:"",valueProp:"",vo:"",
-                fileUrl:"",sentAt:ts,sentInEst:form.est||"",legacy:true
-              }));
-            return stubs.length?[...prev,...stubs]:prev;
-          });
-        }
-
-        const rec={
-          ts,est:form.est||"",brand:"Wettermark Keith",
-          market:form.market,media:form.media,
-          buyer:form.buyer||"",
-          month:form.month+" "+form.year,
-          flight:form.flight||"",version:form.version||"1",
-          comments:form.comments||"",combined:false,
-          stations,iscis:iscisOut,isRevision:false,prevVersion:null,
-          legacy:true,
-          sourceFileUrl:form.sourceUrl||"",
-          sourceFileName:form.sourceName||"",
-          sourceFilePath:form.sourcePath||"",
-          createdBy:"wk-legacy-vault",
-          createdAt:new Date().toISOString()
-        };
-
-        if(editingTs){
-          setTrafficHistory(prev=>prev.map(h=>(h.ts===editingTs&&h.legacy&&h.brand==="Wettermark Keith")?{...h,...rec}:h));
-          log("WK Legacy Vault","Updated "+form.month+" "+form.year+" — "+form.market+" "+form.media);
-          notify("Legacy entry updated");
-        }else{
-          setTrafficHistory(prev=>[rec,...prev]);
-          log("WK Legacy Vault","Added "+form.month+" "+form.year+" — "+form.market+" "+form.media+(form.est?" (Est "+form.est+")":""));
-          notify("Legacy entry saved");
-        }
-        setForm(blank());setEditingTs(null);
-      }catch(e){console.error("Legacy save failed:",e);notify("Save failed: "+(e?.message||e))}
-      finally{setSaving(false)}
-    };
-
-    const editEntry=(h)=>{
-      const monthPart=(h.month||"").split(" ");
-      setForm({
-        year:monthPart[1]||String(thisYear-1),
-        month:monthPart[0]||"January",
-        flight:h.flight||"",market:h.market||"Birmingham",
-        media:h.media||"TV",est:h.est||"",version:h.version||"1",
-        buyer:h.buyer||"",comments:h.comments||"",
-        stationsText:(h.stations||[]).join(", "),
-        iscis:(h.iscis&&h.iscis.length)?h.iscis.map(i=>({code:i.code||"",title:i.title||"",dur:i.dur||"30",pct:i.pct||"",sched:i.sched||"All Week",bookend:i.bookend||""})):[{code:"",title:"",dur:"30",pct:"",sched:"All Week",bookend:""}],
-        sourceUrl:h.sourceFileUrl||"",sourceName:h.sourceFileName||"",sourcePath:h.sourceFilePath||"",
-        promoteIscis:false
-      });
-      setEditingTs(h.ts);
-      window.scrollTo({top:0,behavior:"smooth"});
-    };
-
-    const deleteEntry=(h)=>{
-      if(!confirm("Delete this legacy entry? This removes it from Traffic History."))return;
-      setTrafficHistory(prev=>prev.filter(r=>!(r.ts===h.ts&&r.legacy&&r.brand==="Wettermark Keith"&&r.market===h.market&&r.media===h.media&&r.est===h.est)));
-      log("WK Legacy Vault","Deleted "+(h.month||"")+" — "+h.market+" "+h.media+(h.est?" (Est "+h.est+")":""));
-      notify("Legacy entry deleted");
-    };
-
-    const cancelEdit=()=>{setForm(blank());setEditingTs(null)};
-
     const openInNewWindow=(h)=>{
       const html=buildLegacyHtml(h,iscis);
       const w=window.open("","_blank");
@@ -7330,15 +7168,7 @@ Rules:
       w.document.close();
     };
 
-    // ════════════════ CREATIVE TAB ════════════════
-    const[orphans,setOrphans]=useState([]);
-    const[orphansLoading,setOrphansLoading]=useState(false);
-    const[creativeUploadProg,setCreativeUploadProg]=useState(null);
-    const[creativeYear,setCreativeYear]=useState(String(thisYear-1));
-    const[creativeMonth,setCreativeMonth]=useState("January");
-    const[linkPickerFor,setLinkPickerFor]=useState(null);
-    const[linkPickerSearch,setLinkPickerSearch]=useState("");
-
+    // ── Creative tab ─────────────────────────────────────────────────
     const legacyIscis=useMemo(()=>iscis.filter(i=>i.legacy&&i.brand==="Wettermark Keith"),[iscis]);
 
     const isciToMonth=useMemo(()=>{
@@ -7346,100 +7176,6 @@ Rules:
       legacyRecs.forEach(h=>{(h.iscis||[]).forEach(ic=>{if(ic.code&&!m[ic.code])m[ic.code]=h.month||""})});
       return m;
     },[legacyRecs]);
-
-    const loadOrphans=async()=>{
-      setOrphansLoading(true);
-      try{
-        const list=[];
-        const yrRes=await apiStorage({action:"list",bucket:BUCKET,prefix:"creative/orphans/"});
-        const yrs=(yrRes.files||[]).filter(f=>!f.name.includes("."));
-        for(const yr of yrs){
-          const moRes=await apiStorage({action:"list",bucket:BUCKET,prefix:"creative/orphans/"+yr.name+"/"});
-          const mos=(moRes.files||[]).filter(f=>!f.name.includes("."));
-          for(const mo of mos){
-            const fileRes=await apiStorage({action:"list",bucket:BUCKET,prefix:"creative/orphans/"+yr.name+"/"+mo.name+"/"});
-            (fileRes.files||[]).forEach(f=>{if(f.name.includes("."))list.push({name:f.name,path:f.path,url:f.url,year:yr.name,month:mo.name})});
-          }
-        }
-        setOrphans(list);
-      }catch(e){console.error("Orphan list failed:",e);notify("Couldn't load orphan creative: "+(e?.message||e))}
-      finally{setOrphansLoading(false)}
-    };
-
-    React.useEffect(()=>{if(tab==="creative")loadOrphans()},[tab]);
-
-    const matchIsciFromFilename=(filename)=>{
-      const stem=filename.replace(/\.[^.]+$/,"");
-      const upper=stem.toUpperCase();
-      const norm=s=>String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
-      const codes=legacyIscis.map(i=>i.code).filter(Boolean).sort((a,b)=>b.length-a.length);
-      for(const c of codes){if(upper.includes(c.toUpperCase()))return c}
-      const stemNorm=norm(stem);
-      for(const i of legacyIscis){if(!i.title)continue;const tn=norm(i.title);if(tn.length>=4&&stemNorm.includes(tn))return i.code}
-      return null;
-    };
-
-    const handleCreativeDrop=async(files)=>{
-      if(!files||!files.length)return;
-      const arr=Array.from(files);
-      let linked=0,orphaned=0,errored=0;
-      for(let i=0;i<arr.length;i++){
-        const file=arr[i];
-        setCreativeUploadProg({label:"Uploading "+file.name,current:i+1,total:arr.length,pct:Math.round((i/arr.length)*100)});
-        try{
-          const ext=(file.name.split(".").pop()||"").toLowerCase();
-          const matchCode=matchIsciFromFilename(file.name);
-          let path;
-          if(matchCode){
-            path="creative/"+matchCode+"."+ext;
-            const r=await uploadFile(file,path);
-            setIscis(prev=>prev.map(ic=>ic.code===matchCode?{...ic,fileUrl:r.url,active:true}:ic));
-            log("WK Legacy Creative","Linked "+file.name+" → "+matchCode);
-            linked++;
-          }else{
-            const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-            path="creative/orphans/"+creativeYear+"/"+creativeMonth+"/"+Date.now()+"_"+safe;
-            await uploadFile(file,path);
-            log("WK Legacy Creative","Orphaned "+file.name+" → "+creativeMonth+" "+creativeYear);
-            orphaned++;
-          }
-        }catch(e){console.error("Creative upload failed for "+file.name+":",e);errored++}
-      }
-      setCreativeUploadProg(null);
-      notify(linked+" linked · "+orphaned+" filed by month"+(errored?" · "+errored+" failed":""));
-      loadOrphans();
-    };
-
-    const linkOrphanToIsci=async(orphan,isciCode)=>{
-      try{
-        const ext=(orphan.name.split(".").pop()||"").toLowerCase();
-        const newPath="creative/"+isciCode+"."+ext;
-        const r=await apiStorage({action:"move",bucket:BUCKET,fromPath:orphan.path,toPath:newPath});
-        setIscis(prev=>prev.map(ic=>ic.code===isciCode?{...ic,fileUrl:r.url,active:true}:ic));
-        log("WK Legacy Creative","Linked orphan "+orphan.name+" → "+isciCode);
-        notify("Linked to "+isciCode);
-        setLinkPickerFor(null);
-        loadOrphans();
-      }catch(e){console.error("Link failed:",e);notify("Link failed: "+(e?.message||e))}
-    };
-
-    const deleteOrphan=async(orphan)=>{
-      if(!confirm("Delete "+orphan.name+"?"))return;
-      try{
-        await apiStorage({action:"delete",bucket:BUCKET,path:orphan.path});
-        log("WK Legacy Creative","Deleted orphan "+orphan.name);
-        notify("Deleted");
-        loadOrphans();
-      }catch(e){notify("Delete failed: "+(e?.message||e))}
-    };
-
-    const unlinkIsciCreative=(isci)=>{
-      if(!isci.fileUrl)return;
-      if(!confirm("Unlink creative from "+isci.code+"? The file stays in storage."))return;
-      setIscis(prev=>prev.map(ic=>ic.code===isci.code?{...ic,fileUrl:""}:ic));
-      log("WK Legacy Creative","Unlinked "+isci.code);
-      notify("Unlinked");
-    };
 
     const creativeByMonth=useMemo(()=>{
       const g={};
@@ -7459,12 +7195,6 @@ Rules:
       return MONTHS.indexOf(pb[0])-MONTHS.indexOf(pa[0]);
     });
 
-    const orphansByMonth=useMemo(()=>{
-      const g={};
-      orphans.forEach(o=>{const k=(o.month||"Unfiled")+" "+(o.year||"");(g[k.trim()]=g[k.trim()]||[]).push(o)});
-      return g;
-    },[orphans]);
-
     return <div>
       <PageHead title="WK Legacy Vault" pgKey="vault" sub={legacyRecs.length+" instruction"+(legacyRecs.length===1?"":"s")+" · "+legacyIscis.length+" legacy ISCI"+(legacyIscis.length===1?"":"s")+" · "+legacyIscis.filter(i=>i.fileUrl).length+" with creative"}/>
 
@@ -7477,89 +7207,7 @@ Rules:
       </div>
 
       {tab==="instructions"&&<>
-        <Cd style={{padding:16,marginTop:0,borderTopLeftRadius:0,borderColor:editingTs?"#D4A040":"rgba(196,160,200,.15)",borderWidth:editingTs?2:1,borderStyle:"solid"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-            <div style={{fontSize:15,fontWeight:800,color:"#D4A040",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.5}}>
-              {editingTs?"✎ Editing Legacy Entry":"+ New Legacy WK Instruction"}
-            </div>
-            {editingTs&&<Btn small onClick={cancelEdit}>Cancel Edit</Btn>}
-          </div>
-
-          <div style={{display:"flex",gap:8,marginBottom:8}}>
-            <Sel label="Year" value={form.year} onChange={v=>setF("year",v)} options={YEARS}/>
-            <Sel label="Month" value={form.month} onChange={v=>{setF("month",v);if(!form.est)setF("est",suggestEst(v))}} options={MONTHS}/>
-            <Inp label="Flight Dates" value={form.flight} onChange={e=>setF("flight",e.target.value)} placeholder="e.g. 3/30 - 4/26"/>
-          </div>
-
-          <div style={{display:"flex",gap:8,marginBottom:8}}>
-            <Sel label="Market" value={form.market} onChange={v=>setF("market",v)} options={WK_MKTS_FULL}/>
-            <Sel label="Media" value={form.media} onChange={v=>setF("media",v)} options={MEDIA_OPTS}/>
-            <Inp label="Estimate #" value={form.est} onChange={e=>setF("est",e.target.value)} placeholder={"(blank ok) suggest: "+suggestEst(form.month)}/>
-            <Inp label="Version" value={form.version} onChange={e=>setF("version",e.target.value)} placeholder="1"/>
-          </div>
-
-          <div style={{display:"flex",gap:8,marginBottom:8}}>
-            <Inp label="Buyer" value={form.buyer} onChange={e=>setF("buyer",e.target.value)} placeholder="(blank ok) e.g. Amy Coffey"/>
-            <Inp label="Comments" value={form.comments} onChange={e=>setF("comments",e.target.value)} placeholder="(blank ok)"/>
-          </div>
-
-          <div style={{marginBottom:8}}>
-            <label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>Stations (comma or newline separated, blank ok)</label>
-            <textarea value={form.stationsText} onChange={e=>setF("stationsText",e.target.value)} rows={2} placeholder="e.g. WSFA-TV, WAKA-TV, WNCF-TV" style={{width:"100%",padding:"6px 9px",borderRadius:5,border:"1px solid #d1d5db",fontSize:13,background:"#1e1233",color:"#E8DFF0",fontFamily:"monospace",outline:"none",resize:"vertical"}}/>
-          </div>
-
-          <div style={{marginBottom:8}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-              <label style={{fontSize:10,fontWeight:600,color:"#64748b",textTransform:"uppercase",letterSpacing:.3}}>ISCIs (rotation) — blank fields ok</label>
-              <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                <label style={{fontSize:11,color:"#9B8EAD",display:"flex",alignItems:"center",gap:4,cursor:"pointer"}}>
-                  <input type="checkbox" checked={form.promoteIscis} onChange={e=>setF("promoteIscis",e.target.checked)}/>
-                  Auto-add unknown codes to Registry as legacy stubs
-                </label>
-                <Btn small onClick={addIsci}>+ Row</Btn>
-              </div>
-            </div>
-            <div style={{border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}>
-              <table style={{width:"100%",borderCollapse:"collapse",background:"#1e1233"}}>
-                <thead><tr style={{background:"#2d1f42"}}>
-                  <TH>ISCI Code</TH><TH>Title</TH><TH w="60px">Dur</TH><TH w="60px">%</TH><TH>Schedule</TH><TH>Bookend</TH><TH w="32px"></TH>
-                </tr></thead>
-                <tbody>
-                  {form.iscis.map((r,i)=><tr key={i} style={{borderBottom:"1px solid #2d1f42"}}>
-                    <td style={{padding:3}}><input value={r.code} onChange={e=>setIsci(i,"code",e.target.value.toUpperCase())} placeholder="(blank ok)" style={{width:"100%",padding:"4px 7px",border:"1px solid #4a3565",borderRadius:4,fontSize:12,fontFamily:"monospace",background:"#261840",color:"#E8DFF0",outline:"none"}}/></td>
-                    <td style={{padding:3}}><input value={r.title} onChange={e=>setIsci(i,"title",e.target.value)} placeholder="(blank ok)" style={{width:"100%",padding:"4px 7px",border:"1px solid #4a3565",borderRadius:4,fontSize:12,background:"#261840",color:"#E8DFF0",outline:"none"}}/></td>
-                    <td style={{padding:3}}><input value={r.dur} onChange={e=>setIsci(i,"dur",e.target.value)} placeholder="30" style={{width:"100%",padding:"4px 7px",border:"1px solid #4a3565",borderRadius:4,fontSize:12,background:"#261840",color:"#E8DFF0",outline:"none"}}/></td>
-                    <td style={{padding:3}}><input value={r.pct} onChange={e=>setIsci(i,"pct",e.target.value)} placeholder="" style={{width:"100%",padding:"4px 7px",border:"1px solid #4a3565",borderRadius:4,fontSize:12,background:"#261840",color:"#E8DFF0",outline:"none"}}/></td>
-                    <td style={{padding:3}}>
-                      <select value={r.sched} onChange={e=>setIsci(i,"sched",e.target.value)} style={{width:"100%",padding:"4px 7px",border:"1px solid #4a3565",borderRadius:4,fontSize:12,background:"#261840",color:"#E8DFF0",outline:"none"}}>
-                        {SCHED_OPTS.map(s=><option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </td>
-                    <td style={{padding:3}}><input value={r.bookend} onChange={e=>setIsci(i,"bookend",e.target.value)} placeholder="e.g. Bookend :15 A" style={{width:"100%",padding:"4px 7px",border:"1px solid #4a3565",borderRadius:4,fontSize:12,background:"#261840",color:"#E8DFF0",outline:"none"}}/></td>
-                    <td style={{padding:3,textAlign:"center"}}><button onClick={()=>rmIsci(i)} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:14}} title="Remove row">✕</button></td>
-                  </tr>)}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div style={{marginBottom:12,padding:10,background:"rgba(212,160,64,.06)",borderRadius:6,border:"1px dashed rgba(212,160,64,.3)"}}>
-            <label style={{fontSize:10,fontWeight:600,color:"#D4A040",textTransform:"uppercase",letterSpacing:.3,display:"block",marginBottom:4}}>Original Source File — Supabase Storage (optional)</label>
-            <div style={{display:"flex",gap:8,alignItems:"center"}}>
-              <input type="file" accept=".pdf,.xlsx,.xls,.docx,.doc,.eml,.msg,.txt,.csv,image/*" onChange={e=>handleSourceFile(e.target.files&&e.target.files[0])} disabled={uploading} style={{flex:1,fontSize:12,color:"#C4A0C8"}}/>
-              {uploading&&<span style={{fontSize:11,color:"#D4A040"}}>Uploading…</span>}
-              {form.sourceUrl&&<a href={form.sourceUrl} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4AC8E8",textDecoration:"underline"}}>View attached</a>}
-            </div>
-            {form.sourceName&&!uploading&&<div style={{fontSize:11,color:"#9B8EAD",marginTop:4}}>📎 {form.sourceName}</div>}
-          </div>
-
-          <div style={{display:"flex",justifyContent:"flex-end",gap:8}}>
-            <Btn onClick={()=>{setForm(blank());setEditingTs(null)}}>Clear</Btn>
-            <Btn primary color="#D4A040" disabled={saving||uploading} onClick={save}>{saving?"Saving…":(editingTs?"Update Legacy Entry":"Save Legacy Entry")}</Btn>
-          </div>
-        </Cd>
-
-        <Cd style={{padding:14,marginTop:14}}>
+        <Cd style={{padding:14,marginTop:0,borderTopLeftRadius:0}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}>
             <div style={{fontSize:14,fontWeight:800,color:"#D4A040",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.5}}>🗄 Archive ({filteredLegacy.length})</div>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
@@ -7572,13 +7220,13 @@ Rules:
 
           {filteredLegacy.length===0?(
             <div style={{padding:30,textAlign:"center",color:"#9B8EAD",fontSize:13}}>
-              {legacyRecs.length===0?"No legacy entries yet. Add your first WK historical instruction above.":"No entries match these filters."}
+              {legacyRecs.length===0?"The vault is empty. Send legacy instructions in chat and they'll appear here.":"No entries match these filters."}
             </div>
           ):(
-            <div style={{overflow:"auto",maxHeight:600}}>
+            <div style={{overflow:"auto",maxHeight:700}}>
               <table style={{width:"100%",borderCollapse:"collapse"}}>
                 <thead><tr>
-                  <TH>Month</TH><TH>Market</TH><TH>Media</TH><TH>Est</TH><TH>V</TH><TH>Flight</TH><TH>ISCIs</TH><TH>Stations</TH><TH>Source</TH><TH a="right">Actions</TH>
+                  <TH>Month</TH><TH>Market</TH><TH>Media</TH><TH>Est</TH><TH>V</TH><TH>Flight</TH><TH>ISCIs</TH><TH>Stations</TH><TH a="right"></TH>
                 </tr></thead>
                 <tbody>
                   {filteredLegacy.map((h,idx)=><tr key={(h.ts||"")+"_"+idx} style={{borderBottom:"1px solid #2d1f42",cursor:"pointer"}} onClick={()=>setViewing(h)} title="Click to view full instruction">
@@ -7590,11 +7238,8 @@ Rules:
                     <TD c="#9B8EAD">{h.flight||"—"}</TD>
                     <TD c="#9B8EAD">{(h.iscis||[]).length}</TD>
                     <TD c="#9B8EAD">{(h.stations||[]).length}</TD>
-                    <TD>{h.sourceFileUrl?<a href={h.sourceFileUrl} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={{color:"#4AC8E8",fontSize:12}}>📎 view</a>:<span style={{color:"#6B5E80",fontSize:12}}>—</span>}</TD>
                     <td style={{padding:"5px 7px",textAlign:"right",borderBottom:"1px solid #F0E8F8",whiteSpace:"nowrap"}}>
-                      <button onClick={e=>{e.stopPropagation();setViewing(h)}} style={{background:"none",border:"1px solid #D4A040",color:"#D4A040",padding:"2px 8px",borderRadius:4,fontSize:11,cursor:"pointer",marginRight:4}}>View</button>
-                      <button onClick={e=>{e.stopPropagation();editEntry(h)}} style={{background:"none",border:"1px solid #4AC8E8",color:"#4AC8E8",padding:"2px 8px",borderRadius:4,fontSize:11,cursor:"pointer",marginRight:4}}>Edit</button>
-                      <button onClick={e=>{e.stopPropagation();deleteEntry(h)}} style={{background:"none",border:"1px solid #E85A7A",color:"#E85A7A",padding:"2px 8px",borderRadius:4,fontSize:11,cursor:"pointer"}}>Delete</button>
+                      <button onClick={e=>{e.stopPropagation();setViewing(h)}} style={{background:"none",border:"1px solid #D4A040",color:"#D4A040",padding:"2px 8px",borderRadius:4,fontSize:11,cursor:"pointer"}}>View</button>
                     </td>
                   </tr>)}
                 </tbody>
@@ -7607,9 +7252,6 @@ Rules:
           <div style={{display:"flex",gap:10,marginBottom:10,flexWrap:"wrap"}}>
             <Btn small onClick={()=>openInNewWindow(viewing)}>↗ Open in New Window</Btn>
             <Btn small onClick={()=>{const w=window.open("","_blank");if(!w){notify("Pop-up blocked");return}w.document.write(buildLegacyHtml(viewing,iscis));w.document.close();setTimeout(()=>{try{w.print()}catch(e){}},400)}}>🖨 Print</Btn>
-            {viewing.sourceFileUrl&&<Btn small onClick={()=>window.open(viewing.sourceFileUrl,"_blank")}>📎 View Original Source File</Btn>}
-            <div style={{flex:1}}/>
-            <Btn small onClick={()=>{editEntry(viewing);setViewing(null)}}>✎ Edit</Btn>
           </div>
           <iframe
             title="Legacy Instruction"
@@ -7620,38 +7262,13 @@ Rules:
       </>}
 
       {tab==="creative"&&<>
-        <Cd style={{padding:16,marginTop:0,borderTopLeftRadius:0}}>
-          <div style={{fontSize:14,fontWeight:800,color:"#D4A040",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.5,marginBottom:8}}>🎬 Upload Legacy Creative</div>
-          <div style={{fontSize:12,color:"#9B8EAD",marginBottom:10,lineHeight:1.5}}>
-            Drop video/audio/image files. Filenames matching legacy WK ISCI codes auto-link.
-            Unmatched files are filed by the month/year picked below; you can link them to an ISCI later.
+        <Cd style={{padding:14,marginTop:0,borderTopLeftRadius:0}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10}}>
+            <div style={{fontSize:14,fontWeight:800,color:"#D4A040",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.5}}>🎬 Legacy Creative · by Month</div>
+            <div style={{fontSize:11,color:"#9B8EAD"}}>Click any ISCI to preview · download from the preview modal</div>
           </div>
-          <div style={{display:"flex",gap:8,marginBottom:10,alignItems:"flex-end"}}>
-            <Sel label="Default year for unmatched" value={creativeYear} onChange={setCreativeYear} options={YEARS}/>
-            <Sel label="Default month for unmatched" value={creativeMonth} onChange={setCreativeMonth} options={MONTHS}/>
-            <div style={{flex:1}}/>
-            <Btn small onClick={loadOrphans} disabled={orphansLoading}>{orphansLoading?"Refreshing…":"↻ Refresh"}</Btn>
-          </div>
-
-          <DropZone multiple accept="*/*" onFiles={handleCreativeDrop} style={{padding:"30px 16px",border:"2px dashed rgba(212,160,64,.4)",borderRadius:8,background:"rgba(212,160,64,.04)",textAlign:"center"}}>
-            <div style={{fontSize:32,marginBottom:6}}>🎬</div>
-            <div style={{fontSize:14,fontWeight:700,color:"#D4A040",marginBottom:4}}>Drop creative files here, or click to pick</div>
-            <div style={{fontSize:11,color:"#9B8EAD"}}>Multiple files OK · max 50 MB each · video/audio/image/PDF</div>
-          </DropZone>
-
-          {creativeUploadProg&&<div style={{marginTop:10,padding:8,background:"#2d1f42",borderRadius:6,border:"1px solid #D4A040"}}>
-            <div style={{fontSize:12,color:"#D4A040",fontWeight:700,marginBottom:4}}>{creativeUploadProg.label}</div>
-            <div style={{fontSize:11,color:"#9B8EAD",marginBottom:4}}>{creativeUploadProg.current} / {creativeUploadProg.total}</div>
-            <div style={{height:4,background:"#1e1233",borderRadius:2,overflow:"hidden"}}>
-              <div style={{height:"100%",width:creativeUploadProg.pct+"%",background:"#D4A040",transition:"width .2s"}}/>
-            </div>
-          </div>}
-        </Cd>
-
-        <Cd style={{padding:14,marginTop:14}}>
-          <div style={{fontSize:14,fontWeight:800,color:"#D4A040",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.5,marginBottom:10}}>📚 Linked Creative · by Month</div>
           {legacyIscis.length===0?(
-            <div style={{padding:20,textAlign:"center",color:"#9B8EAD",fontSize:13}}>No legacy WK ISCIs yet. Add an instruction first, then ISCIs will appear here.</div>
+            <div style={{padding:30,textAlign:"center",color:"#9B8EAD",fontSize:13}}>No legacy WK creative yet. Once legacy instructions are in the vault, their ISCIs appear here grouped by month.</div>
           ):sortedMonthKeys.map(mo=>{
             const list=creativeByMonth[mo];
             const linkedCt=list.filter(i=>i.fileUrl).length;
@@ -7662,19 +7279,16 @@ Rules:
               </div>
               <table style={{width:"100%",borderCollapse:"collapse"}}>
                 <thead><tr style={{background:"#1e1233"}}>
-                  <TH>Code</TH><TH>Title</TH><TH w="60px">Dur</TH><TH w="100px">Status</TH><TH a="right">Actions</TH>
+                  <TH>Code</TH><TH>Title</TH><TH w="60px">Dur</TH><TH w="100px">Status</TH><TH a="right">File</TH>
                 </tr></thead>
                 <tbody>
                   {list.map(i=><tr key={i.code+"_"+i.dma} style={{borderBottom:"1px solid #2d1f42"}}>
-                    <TD c="#D4A040" m b>{i.code}</TD>
+                    <TD m b><span title="Preview / download creative" style={{cursor:"pointer",textDecoration:"underline",textDecorationStyle:"dotted",color:"#D4A040"}} onClick={()=>setModal({t:"creativeView",isci:i})}>{i.code}</span>{i.fileUrl&&<a href={i.fileUrl} target="_blank" rel="noopener" download title="Download creative" style={{marginLeft:5,fontSize:13,color:"#5BC4A0",textDecoration:"none"}}>📁</a>}</TD>
                     <TD c="#E8DFF0">{i.title||"—"}</TD>
                     <TD c="#9B8EAD">{i.dur||"—"}</TD>
                     <TD>{i.fileUrl?<B l="LINKED" c="#5BC4A0"/>:<B l="NO FILE" c="#9B8EAD"/>}</TD>
                     <td style={{padding:"5px 7px",textAlign:"right",borderBottom:"1px solid #F0E8F8",whiteSpace:"nowrap"}}>
-                      {i.fileUrl?<>
-                        <a href={i.fileUrl} target="_blank" rel="noreferrer" style={{color:"#4AC8E8",fontSize:11,marginRight:6}}>📎 view</a>
-                        <button onClick={()=>unlinkIsciCreative(i)} style={{background:"none",border:"1px solid #E85A7A",color:"#E85A7A",padding:"2px 8px",borderRadius:4,fontSize:11,cursor:"pointer"}}>Unlink</button>
-                      </>:<span style={{color:"#6B5E80",fontSize:11}}>Drop a file with this code in its name, or link from below</span>}
+                      {i.fileUrl?<button onClick={()=>setModal({t:"creativeView",isci:i})} style={{background:"none",border:"1px solid #4AC8E8",color:"#4AC8E8",padding:"2px 8px",borderRadius:4,fontSize:11,cursor:"pointer"}}>▶ Preview</button>:<span style={{color:"#6B5E80",fontSize:11}}>—</span>}
                     </td>
                   </tr>)}
                 </tbody>
@@ -7682,57 +7296,6 @@ Rules:
             </div>;
           })}
         </Cd>
-
-        <Cd style={{padding:14,marginTop:14}}>
-          <div style={{fontSize:14,fontWeight:800,color:"#D4A040",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.5,marginBottom:10}}>📂 Unlinked Files ({orphans.length})</div>
-          {orphans.length===0?(
-            <div style={{padding:20,textAlign:"center",color:"#9B8EAD",fontSize:13}}>{orphansLoading?"Loading…":"No unlinked creative. Either everything's matched, or you haven't uploaded anything yet."}</div>
-          ):Object.keys(orphansByMonth).sort().map(mo=>{
-            const list=orphansByMonth[mo];
-            return <div key={mo} style={{marginBottom:14,border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}>
-              <div style={{padding:"6px 10px",background:"#2d1f42",fontSize:12,fontWeight:700,color:"#D4A040"}}>{mo} <span style={{color:"#9B8EAD",fontWeight:500,marginLeft:6}}>({list.length} file{list.length===1?"":"s"})</span></div>
-              <table style={{width:"100%",borderCollapse:"collapse"}}>
-                <thead><tr style={{background:"#1e1233"}}>
-                  <TH>Filename</TH><TH a="right">Actions</TH>
-                </tr></thead>
-                <tbody>
-                  {list.map(o=><tr key={o.path} style={{borderBottom:"1px solid #2d1f42"}}>
-                    <TD c="#E8DFF0"><a href={o.url} target="_blank" rel="noreferrer" style={{color:"#4AC8E8",textDecoration:"none",fontFamily:"monospace"}}>📄 {o.name}</a></TD>
-                    <td style={{padding:"5px 7px",textAlign:"right",borderBottom:"1px solid #F0E8F8",whiteSpace:"nowrap"}}>
-                      <button onClick={()=>{setLinkPickerFor(o);setLinkPickerSearch("")}} style={{background:"none",border:"1px solid #4AC8E8",color:"#4AC8E8",padding:"2px 8px",borderRadius:4,fontSize:11,cursor:"pointer",marginRight:4}}>🔗 Link to ISCI</button>
-                      <button onClick={()=>deleteOrphan(o)} style={{background:"none",border:"1px solid #E85A7A",color:"#E85A7A",padding:"2px 8px",borderRadius:4,fontSize:11,cursor:"pointer"}}>Delete</button>
-                    </td>
-                  </tr>)}
-                </tbody>
-              </table>
-            </div>;
-          })}
-        </Cd>
-
-        {linkPickerFor&&<Mod title={"Link to legacy ISCI"} onClose={()=>setLinkPickerFor(null)}>
-          <div style={{fontSize:12,color:"#9B8EAD",marginBottom:8}}>
-            File: <span style={{color:"#D4A040",fontFamily:"monospace"}}>{linkPickerFor.name}</span>
-          </div>
-          <input autoFocus value={linkPickerSearch} onChange={e=>setLinkPickerSearch(e.target.value)} placeholder="Search code or title…" style={{width:"100%",padding:"8px 10px",borderRadius:6,border:"1px solid #4a3565",fontSize:13,background:"#1e1233",color:"#E8DFF0",outline:"none",marginBottom:10}}/>
-          <div style={{maxHeight:400,overflowY:"auto",border:"1px solid #4a3565",borderRadius:6}}>
-            {legacyIscis
-              .filter(i=>{
-                if(!linkPickerSearch)return true;
-                const q=linkPickerSearch.toLowerCase();
-                return (i.code||"").toLowerCase().includes(q)||(i.title||"").toLowerCase().includes(q);
-              })
-              .slice(0,200)
-              .map(i=><div key={i.code+"_"+i.dma} onClick={()=>linkOrphanToIsci(linkPickerFor,i.code)} style={{padding:"8px 10px",borderBottom:"1px solid #2d1f42",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}} onMouseEnter={e=>e.currentTarget.style.background="#1e1233"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                <div>
-                  <div style={{fontSize:12,fontFamily:"monospace",fontWeight:700,color:"#D4A040"}}>{i.code}</div>
-                  <div style={{fontSize:11,color:"#9B8EAD"}}>{i.title||"(no title)"} · {i.dur||"?"}s · {isciToMonth[i.code]||"unfiled"}</div>
-                </div>
-                {i.fileUrl?<B l="HAS FILE — will replace" c="#E85A7A"/>:<B l="EMPTY" c="#5BC4A0"/>}
-              </div>)
-            }
-            {legacyIscis.filter(i=>{if(!linkPickerSearch)return true;const q=linkPickerSearch.toLowerCase();return (i.code||"").toLowerCase().includes(q)||(i.title||"").toLowerCase().includes(q);}).length===0&&<div style={{padding:20,textAlign:"center",color:"#9B8EAD",fontSize:12}}>No matching ISCIs.</div>}
-          </div>
-        </Mod>}
       </>}
     </div>;
   };

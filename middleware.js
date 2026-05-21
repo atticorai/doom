@@ -64,7 +64,8 @@ export default async function middleware(request) {
     pathname === '/api/planner' ||
     pathname === '/api/send-traffic' ||
     pathname === '/api/db' ||
-    pathname === '/api/migrate-snapshot';
+    pathname === '/api/migrate-snapshot' ||
+    pathname === '/api/storage';
 
   if (isProtected) {
     const cookie = request.headers.get('cookie') || '';
