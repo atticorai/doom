@@ -22,7 +22,7 @@ const { getSupabase } = require('./_supabase');
 
 const ALLOWED_COLLECTIONS = new Set(['appData', 'trafficSheets']);
 
-module.exports = async function handler(req, res) {
+const handler = async function(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -90,4 +90,14 @@ module.exports = async function handler(req, res) {
     console.error('db endpoint error:', e);
     return res.status(500).json({ error: 'Supabase error', detail: e.message });
   }
+};
+
+module.exports = handler;
+// Bump body size limit — trafficHistory JSON blob can exceed 1MB default once
+// enough records accumulate. Vercel allows up to 4.5MB.
+module.exports.config = {
+  api: {
+    bodyParser: { sizeLimit: '4.5mb' },
+    responseLimit: '8mb',
+  },
 };
