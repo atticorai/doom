@@ -7195,8 +7195,39 @@ Rules:
       return MONTHS.indexOf(pb[0])-MONTHS.indexOf(pa[0]);
     });
 
+    const[importing,setImporting]=useState(false);
+    const availableImport=(typeof window!=="undefined"&&Array.isArray(window.WK_LEGACY_RECORDS))?window.WK_LEGACY_RECORDS.length:0;
+
+    const runImport=async()=>{
+      if(!availableImport){notify("No legacy records bundle found. Make sure data-legacy-vault.js is loaded.");return}
+      const existingCt=legacyRecs.length;
+      const msg=existingCt>0
+        ?"Re-import "+availableImport+" legacy records?\n\n"+existingCt+" existing WK legacy records will be REPLACED.\n\nNon-legacy records are untouched. Proceed?"
+        :"Import "+availableImport+" legacy WK records?\n\nThese will be added to your traffic history, marked as legacy.\n\nProceed?";
+      if(!confirm(msg))return;
+      setImporting(true);
+      try{
+        const incoming=window.WK_LEGACY_RECORDS;
+        setTrafficHistory(prev=>{
+          const cleaned=prev.filter(h=>!(h.legacy===true&&h.brand==="Wettermark Keith"));
+          const merged=[...cleaned,...incoming];
+          return merged;
+        });
+        log("WK Legacy Vault","Imported "+incoming.length+" legacy records");
+        notify("✓ Imported "+incoming.length+" legacy records");
+      }catch(e){
+        console.error("Import failed:",e);
+        notify("Import failed: "+(e?.message||e));
+      }finally{
+        setImporting(false);
+      }
+    };
+
     return <div>
-      <PageHead title="WK Legacy Vault" pgKey="vault" sub={legacyRecs.length+" instruction"+(legacyRecs.length===1?"":"s")+" · "+legacyIscis.length+" legacy ISCI"+(legacyIscis.length===1?"":"s")+" · "+legacyIscis.filter(i=>i.fileUrl).length+" with creative"}/>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <PageHead title="WK Legacy Vault" pgKey="vault" sub={legacyRecs.length+" instruction"+(legacyRecs.length===1?"":"s")+" · "+legacyIscis.length+" legacy ISCI"+(legacyIscis.length===1?"":"s")+" · "+legacyIscis.filter(i=>i.fileUrl).length+" with creative"}/>
+        {availableImport>0&&<Btn color="#D4A040" disabled={importing} onClick={runImport}>{importing?"Importing…":(legacyRecs.length>0?"↻ Re-import ("+availableImport+")":"⬇ Import "+availableImport+" Legacy Records")}</Btn>}
+      </div>
 
       <div style={{display:"flex",gap:0,marginTop:8}}>
         {[{k:"instructions",l:"📜 Instructions",ct:legacyRecs.length},{k:"creative",l:"🎬 Creative",ct:legacyIscis.filter(i=>i.fileUrl).length+"/"+legacyIscis.length}].map(t=>{
