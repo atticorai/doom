@@ -7304,6 +7304,22 @@ Rules:
           <div style={{display:"flex",gap:10,marginBottom:10,flexWrap:"wrap"}}>
             <Btn small onClick={()=>openInNewWindow(viewing)}>↗ Open in New Window</Btn>
             <Btn small onClick={()=>{const w=window.open("","_blank");if(!w){notify("Pop-up blocked");return}w.document.write(buildLegacyHtml(viewing,iscis));w.document.close();setTimeout(()=>{try{w.print()}catch(e){}},400)}}>🖨 Print</Btn>
+            <Btn small color="#D4A040" onClick={async()=>{
+              try{
+                notify("Generating PDF…");
+                const html=buildLegacyHtml(viewing,iscis);
+                const uri=await generatePdfBase64(html,viewing);
+                const safe=s=>String(s||"").replace(/[^A-Za-z0-9-]+/g,"_");
+                const fname="Legacy_"+safe(viewing.market)+"_"+safe(viewing.month)+"_v"+(viewing.version||"1")+".pdf";
+                const a=document.createElement("a");
+                a.href=uri;a.download=fname;
+                document.body.appendChild(a);a.click();document.body.removeChild(a);
+                notify("✓ Downloaded "+fname);
+              }catch(e){
+                console.error("PDF download failed:",e);
+                notify("PDF generation failed: "+(e?.message||e));
+              }
+            }}>⬇ Download PDF</Btn>
           </div>
           <iframe
             title="Legacy Instruction"
