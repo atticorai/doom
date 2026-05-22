@@ -7558,6 +7558,15 @@ Rules:
             log("Firestore Pull","Server-side pulled "+j.firestore_read.appData_docs+"+"+j.firestore_read.trafficSheets_docs+" docs, wrote "+j.written+" rows");
           }catch(e){alert("Pull request failed: "+e.message)}
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #5BC4A0",background:"#5BC4A015",color:"#5BC4A0",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🔄 Pull Firestore → Supabase</button>
+        <button onClick={async()=>{
+          try{
+            const r=await fetch("/api/db-inspect",{credentials:"include"});
+            const j=await r.json();
+            if(!r.ok){alert("Inspect failed: "+(j.error||r.status));return}
+            const lines=j.rows.map(x=>x.collection+" / "+x.doc_id+" — "+(x.bytes>1024?Math.round(x.bytes/1024)+" KB":x.bytes+" B")).join("\n");
+            alert("Supabase legacy_docs: "+j.total+" rows\n\n"+(lines||"(empty)"));
+          }catch(e){alert("Inspect failed: "+e.message)}
+        }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #C4A0C8",background:"#C4A0C815",color:"#C4A0C8",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🔍 What's in Supabase?</button>
       </div>
       <Cd style={{padding:0,overflow:"hidden"}}>
         <div style={{maxHeight:"calc(100vh - 280px)",overflowY:"auto"}}>
