@@ -7,6 +7,42 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <link rel="stylesheet" href="/tailwind.css"/>
 <link rel="stylesheet" href="/library-ui.css"/>
+<!-- Tailwind Play CDN — used by the WK Legacy Vault. Preflight is OFF
+     so it doesn't blow away the rest of the app's styles. Project
+     palette (megara + parchment) and fonts (cinzel/cormorant/eb) are
+     extended so the source-bundle class strings work verbatim. -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    corePlugins: { preflight: false },
+    theme: {
+      extend: {
+        colors: {
+          megara: {
+            dark: '#1a0a1f',
+            plum: '#2a0f2e',
+            wine: '#7a1f3d',
+            magenta: '#a02850',
+            lavender: '#c9a8d4',
+            gold: '#d4a857',
+            'gold-dark': '#b8924a'
+          },
+          parchment: {
+            light: '#f4ebd8',
+            DEFAULT: '#e8dcc0',
+            dark: '#d4c4a0',
+            shadow: '#b5a37a'
+          }
+        },
+        fontFamily: {
+          cinzel: ['Cinzel', 'serif'],
+          cormorant: ['Cormorant Garamond', 'serif'],
+          eb: ['EB Garamond', 'serif']
+        }
+      }
+    }
+  };
+</script>
 <script type="importmap">
 {
   "imports": {

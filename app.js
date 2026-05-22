@@ -7253,63 +7253,104 @@ Rules:
       }
     };
 
-    // ═══ NEW WK LEGACY VAULT UI — Megara underworld design ═══════════
-    // Ported from the React/TS source bundle in WK-Legacy-Vault-main.zip.
-    // Uses Framer Motion via window.FramerMotion (loaded ESM in index.html).
-    // Visual: arched stone header, atmospheric backdrop, scrolls that
-    // unfurl on click, apothecary bottles on wooden shelves.
-    const FM_=window.FramerMotion;
-    const VM=FM_.motion.div;
-    const VMBtn=FM_.motion.button;
-    const VMSec=FM_.motion.section;
-    const VMH1=FM_.motion.h1;
-    const VMSpan=FM_.motion.span;
-    const VAP=FM_.AnimatePresence;
+    // ═══ WK LEGACY VAULT — verbatim port of the v2 source bundle ═══
+    // All component code mirrors WK-Legacy-Vault-main v2 (with BottleModal).
+    // Framer Motion comes from window.FramerMotion (loaded ESM in index.html).
+    // Tailwind classes use the project palette (megara/parchment) extended
+    // in index.html's tailwind.config script.
+    // Lucide icons are inlined as small SVG components below.
+    const FM_v=window.FramerMotion;
+    const VMotion=FM_v.motion;
+    const VAP=FM_v.AnimatePresence;
+    const Mdiv=VMotion.div;
+    const Mbtn=VMotion.button;
+    const Msec=VMotion.section;
+    const Mh1=VMotion.h1;
+    const Mspan=VMotion.span;
 
-    // Megara palette
-    const VC={dark:"#1a0a1f",plum:"#2a0f2e",wine:"#7a1f3d",magenta:"#a02850",lavender:"#c9a8d4",gold:"#d4a857",goldDark:"#b8924a",parchmentLight:"#f4ebd8",parchment:"#e8dcc0",parchmentDark:"#d4c4a0",parchmentShadow:"#b5a37a"};
+    // ── Lucide icons (inlined SVG so no lucide-react dependency) ─────
+    const IconBase=({size,className,style,children,strokeWidth=2,fill="none"})=>(
+      <svg xmlns="http://www.w3.org/2000/svg" width={size||16} height={size||16} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>{children}</svg>
+    );
+    const IcFileText=p=><IconBase {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></IconBase>;
+    const IcClapper=p=><IconBase {...p}><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/><path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></IconBase>;
+    const IcScroll=p=><IconBase {...p}><path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/></IconBase>;
+    const IcSearch=p=><IconBase {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></IconBase>;
+    const IcChevronDown=p=><IconBase {...p}><polyline points="6 9 12 15 18 9"/></IconBase>;
+    const IcEye=p=><IconBase {...p}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></IconBase>;
+    const IcDownload=p=><IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></IconBase>;
+    const IcLink=p=><IconBase {...p}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></IconBase>;
+    const IcX=p=><IconBase {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></IconBase>;
+    const IcPlay=p=><IconBase {...p} fill="currentColor" strokeWidth={1.6}><polygon points="6 3 20 12 6 21 6 3"/></IconBase>;
+    const IcTv=p=><IconBase {...p}><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></IconBase>;
+    const IcRadio=p=><IconBase {...p}><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.4 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/></IconBase>;
+    const IcVolume2=p=><IconBase {...p}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></IconBase>;
 
-    // ── Group filteredLegacy by Month → Media → recs[] ─────────────
-    const groupedV=(()=>{
-      const m={};
-      filteredLegacy.forEach(h=>{
-        const mo=h.month||"Unfiled";
-        if(!m[mo])m[mo]={};
-        const med=h.media||"Unknown";
-        if(!m[mo][med])m[mo][med]=[];
-        m[mo][med].push(h);
+    // ── Real-data adapters: legacy records → Instruction shape ───────
+    const TONE_MAP_V={"M-F Schedule":"lavender","M-F Bookend":"rose","Weekend Schedule":"sand","Weekend Bookend":"blush","All Week":"sage","Holiday Only":"rose"};
+    const toneStylesV={
+      lavender:{bg:"bg-[#d4c5e0]",border:"border-[#a586b8]",text:"text-[#3a1f4a]"},
+      rose:{bg:"bg-[#e0c5cd]",border:"border-[#b8869a]",text:"text-[#4a1f2e]"},
+      sage:{bg:"bg-[#c5dac7]",border:"border-[#86b896]",text:"text-[#1f4a2e]"},
+      sand:{bg:"bg-[#e8d9b8]",border:"border-[#b8a486]",text:"text-[#4a3a1f]"},
+      blush:{bg:"bg-[#e8c5b8]",border:"border-[#b88a6f]",text:"text-[#4a2a1f]"},
+    };
+    const recordToInstructionV=(h,allIscis)=>{
+      const groupMap={};
+      (h.iscis||[]).forEach(r=>{
+        const k=r.sched||"All Week";
+        if(!groupMap[k])groupMap[k]=[];
+        groupMap[k].push(r);
       });
-      return m;
-    })();
-    const MEDIA_ORDER_V2=["TV","Cable","Radio","Streaming Audio","Digital","OOH","Display"];
-    const visibleMonthsV=Object.keys(groupedV).sort((a,b)=>{
-      const pa=a.split(/\s+/),pb=b.split(/\s+/);
-      const ya=parseInt(pa[1])||0,yb=parseInt(pb[1])||0;
-      if(ya!==yb)return yb-ya;
-      return MONTHS.indexOf(pb[0])-MONTHS.indexOf(pa[0]);
-    });
+      const groups=Object.entries(groupMap).map(([label,rows])=>({
+        label,
+        tone:TONE_MAP_V[label]||"lavender",
+        rows:rows.map(r=>({
+          flight:h.flight||"",
+          isci:r.code||"",
+          title:r.title||"",
+          dur:r.dur?":"+r.dur:"",
+          rot:r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"",
+          schedule:r.bookend||label,
+        })),
+      }));
+      const creativeFiles=(h.iscis||[]).map(r=>{
+        const reg=(allIscis||[]).find(i=>i.code===r.code);
+        return reg&&reg.fileUrl?{isci:r.code,title:r.title||reg.title||"",url:reg.fileUrl}:null;
+      }).filter(Boolean);
+      return {
+        id:(h.ts||"")+"_"+(h.market||""),
+        client:h.brand||"Wettermark Keith",
+        agency:"Atticor Media",
+        market:h.market||"",
+        buyer:h.buyer||"",
+        estimate:h.est||"",
+        media:h.media||"",
+        month:h.month||"",
+        flight:h.flight||"",
+        version:"V"+(h.version||"1"),
+        comments:h.comments||"",
+        driveLink:"#",
+        groups,
+        creativeFiles,
+        rotation:0,
+        _raw:h,
+      };
+    };
 
-    // Group legacyIscis by year for the Apothecary shelves
-    const yearByIsciV=(()=>{
-      const map={};
-      legacyRecs.forEach(h=>{
-        const yr=parseInt((h.month||"").split(/\s+/)[1])||0;
-        (h.iscis||[]).forEach(ic=>{if(ic.code&&!map[ic.code])map[ic.code]=yr});
-      });
-      return map;
-    })();
-    const apothecaryByYearV=(()=>{
-      const m={};
-      legacyIscis.forEach(i=>{const y=yearByIsciV[i.code]||0;(m[y]=m[y]||[]).push(i)});
-      return Object.entries(m).map(([y,items])=>({year:Number(y),items})).sort((a,b)=>b.year-a.year);
-    })();
-
-    const accentPaletteV=["#5a2a78","#7a1f48","#1f4a78","#7a5a1f","#3a6a2a","#7a3a1f","#1f6a5a","#4a2a8a","#8a3a5a","#2a3a78"];
-    const darkenV=(hex,f)=>{const m=hex.match(/^#?([a-f0-9]{6})$/i);if(!m)return hex;const n=parseInt(m[1],16);const r=Math.max(0,Math.floor(((n>>16)&0xff)*f));const g=Math.max(0,Math.floor(((n>>8)&0xff)*f));const b=Math.max(0,Math.floor((n&0xff)*f));return"#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("")};
-
-    // ── Sub-components ───────────────────────────────────────────────
+    // ── VaultAtmosphere (verbatim from source) ───────────────────────
+    const MeanderBandV=()=>(
+      <svg width="100%" height="12" viewBox="0 0 80 12" preserveAspectRatio="repeat" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="wkv-meander" x="0" y="0" width="40" height="12" patternUnits="userSpaceOnUse">
+            <path d="M0 11 V3 H30 V8 H10 V5 H25 V11 Z" fill="none" stroke="#d4a857" strokeWidth="0.6" opacity="0.85"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="12" fill="url(#wkv-meander)"/>
+      </svg>
+    );
     const IonicColumnV=()=>(
-      <svg width="100%" height="100%" viewBox="0 0 60 800" preserveAspectRatio="none" style={{display:"block"}}>
+      <svg width="100%" height="100%" viewBox="0 0 60 800" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" className="block">
         <defs>
           <linearGradient id="wkv-stone" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#2a1830"/><stop offset="20%" stopColor="#5a3a60"/><stop offset="50%" stopColor="#8a6da0"/><stop offset="80%" stopColor="#5a3a60"/><stop offset="100%" stopColor="#2a1830"/>
@@ -7322,86 +7363,71 @@ Rules:
         <rect x="0" y="6" width="60" height="4" fill="url(#wkv-stone)"/>
         <g transform="translate(0,10)">
           <rect x="2" y="0" width="56" height="14" fill="url(#wkv-stone)"/>
-          <circle cx="10" cy="7" r="5" fill="none" stroke="#d4a857" strokeWidth=".8" opacity=".7"/>
-          <circle cx="10" cy="7" r="2.5" fill="none" stroke="#d4a857" strokeWidth=".6" opacity=".7"/>
-          <circle cx="50" cy="7" r="5" fill="none" stroke="#d4a857" strokeWidth=".8" opacity=".7"/>
-          <circle cx="50" cy="7" r="2.5" fill="none" stroke="#d4a857" strokeWidth=".6" opacity=".7"/>
+          <circle cx="10" cy="7" r="5" fill="none" stroke="#d4a857" strokeWidth="0.8" opacity="0.7"/>
+          <circle cx="10" cy="7" r="2.5" fill="none" stroke="#d4a857" strokeWidth="0.6" opacity="0.7"/>
+          <circle cx="50" cy="7" r="5" fill="none" stroke="#d4a857" strokeWidth="0.8" opacity="0.7"/>
+          <circle cx="50" cy="7" r="2.5" fill="none" stroke="#d4a857" strokeWidth="0.6" opacity="0.7"/>
         </g>
         <rect x="6" y="24" width="48" height="3" fill="url(#wkv-stoneDark)"/>
         <rect x="10" y="27" width="40" height="746" fill="url(#wkv-stone)"/>
-        <g opacity=".6">
-          <line x1="16" y1="27" x2="16" y2="773" stroke="#2a1830" strokeWidth=".8"/>
-          <line x1="22" y1="27" x2="22" y2="773" stroke="#2a1830" strokeWidth=".8"/>
-          <line x1="30" y1="27" x2="30" y2="773" stroke="#2a1830" strokeWidth=".8"/>
-          <line x1="38" y1="27" x2="38" y2="773" stroke="#2a1830" strokeWidth=".8"/>
-          <line x1="44" y1="27" x2="44" y2="773" stroke="#2a1830" strokeWidth=".8"/>
+        <g opacity="0.6">
+          <line x1="16" y1="27" x2="16" y2="773" stroke="#2a1830" strokeWidth="0.8"/>
+          <line x1="22" y1="27" x2="22" y2="773" stroke="#2a1830" strokeWidth="0.8"/>
+          <line x1="30" y1="27" x2="30" y2="773" stroke="#2a1830" strokeWidth="0.8"/>
+          <line x1="38" y1="27" x2="38" y2="773" stroke="#2a1830" strokeWidth="0.8"/>
+          <line x1="44" y1="27" x2="44" y2="773" stroke="#2a1830" strokeWidth="0.8"/>
         </g>
-        <line x1="26" y1="27" x2="26" y2="773" stroke="#c9a8d4" strokeWidth=".6" opacity=".35"/>
+        <line x1="26" y1="27" x2="26" y2="773" stroke="#c9a8d4" strokeWidth="0.6" opacity="0.35"/>
         <rect x="6" y="773" width="48" height="4" fill="url(#wkv-stoneDark)"/>
         <rect x="2" y="777" width="56" height="6" fill="url(#wkv-stone)"/>
         <rect x="0" y="783" width="60" height="6" fill="url(#wkv-stoneDark)"/>
         <rect x="0" y="789" width="60" height="11" fill="url(#wkv-stone)"/>
       </svg>
     );
-
     const SconceV=()=>(
-      <div style={{position:"relative",width:40,height:64}}>
-        <div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:12,height:32,background:"linear-gradient(to bottom,#7a5828,#3a2510 50%,#1a0c08)",borderRadius:2,boxShadow:"0 2px 4px rgba(0,0,0,.5)"}}/>
-        <div style={{position:"absolute",top:24,left:0,right:0,margin:"0 auto",width:32,height:12,borderBottomLeftRadius:9999,borderBottomRightRadius:9999,background:"linear-gradient(to bottom,#8a6a32 0%,#4a2f10 80%,#1a0c08 100%)",boxShadow:"inset 0 1px 0 rgba(255,220,160,.4),0 2px 4px rgba(0,0,0,.6)"}}/>
-        <div style={{position:"absolute",top:24,left:0,right:0,margin:"0 auto",width:32,height:2,background:"rgba(212,168,87,.7)"}}/>
-        <VM style={{position:"absolute",left:"50%",transform:"translateX(-50%)",top:0}} animate={{scale:[1,1.12,.95,1.08,1],rotate:[0,2,-2,1,0]}} transition={{duration:1.4,repeat:Infinity,ease:"easeInOut"}}>
-          <div style={{width:12,height:20,borderRadius:9999,background:"radial-gradient(ellipse at 50% 70%, rgba(255,210,140,1) 0%, rgba(220,90,140,.95) 40%, rgba(140,30,90,.6) 75%, transparent 100%)",filter:"blur(.5px)",boxShadow:"0 0 14px rgba(220,90,140,.7),0 0 28px rgba(160,40,100,.45)"}}/>
-        </VM>
+      <div className="relative w-10 h-16">
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-8 rounded-sm shadow-md" style={{background:"linear-gradient(to bottom,#7a5828,#3a2510,#1a0c08)"}}/>
+        <div className="absolute top-6 left-0 right-0 mx-auto w-8 h-3 rounded-b-full" style={{background:"linear-gradient(to bottom, #8a6a32 0%, #4a2f10 80%, #1a0c08 100%)",boxShadow:"inset 0 1px 0 rgba(255,220,160,0.4), 0 2px 4px rgba(0,0,0,0.6)"}}/>
+        <div className="absolute top-6 left-0 right-0 mx-auto w-8 h-0.5 bg-megara-gold/70"/>
+        <Mdiv className="absolute left-1/2 -translate-x-1/2 top-0" animate={{scale:[1,1.12,0.95,1.08,1],rotate:[0,2,-2,1,0]}} transition={{duration:1.4,repeat:Infinity,ease:"easeInOut"}}>
+          <div className="w-3 h-5 rounded-full" style={{background:"radial-gradient(ellipse at 50% 70%, rgba(255,210,140,1) 0%, rgba(220,90,140,0.95) 40%, rgba(140,30,90,0.6) 75%, transparent 100%)",filter:"blur(0.5px)",boxShadow:"0 0 14px rgba(220,90,140,0.7), 0 0 28px rgba(160,40,100,0.45)"}}/>
+        </Mdiv>
       </div>
     );
-
+    const LaurelMedallionV=()=>(
+      <svg width="540" height="540" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="100" cy="100" r="80" fill="none" stroke="#d4a857" strokeWidth="0.6"/>
+        <circle cx="100" cy="100" r="72" fill="none" stroke="#d4a857" strokeWidth="0.4"/>
+        {Array.from({length:24}).map((_,i)=>{
+          const a=i/24*Math.PI*2;
+          const x=100+Math.cos(a)*76;
+          const y=100+Math.sin(a)*76;
+          return <ellipse key={i} cx={x} cy={y} rx="5" ry="2" fill="none" stroke="#d4a857" strokeWidth="0.5" transform={"rotate("+(a*180/Math.PI+90)+" "+x+" "+y+")"}/>;
+        })}
+        <text x="100" y="108" textAnchor="middle" fontFamily="Cinzel, serif" fontSize="22" fontWeight="700" fill="#d4a857" letterSpacing="6">WK</text>
+      </svg>
+    );
     const VaultAtmosphereV=()=>{
-      const embers=React.useMemo(()=>Array.from({length:22}).map((_,i)=>({
-        id:i,
-        left:Math.random()*100,
-        delay:Math.random()*12,
-        duration:14+Math.random()*10,
-        size:2+Math.random()*3,
-        hue:Math.random()>0.4?"magenta":"gold",
-        drift:(Math.random()-.5)*60,
-      })),[]);
-      return <div style={{position:"absolute",inset:0,pointerEvents:"none",overflow:"hidden"}}>
-        <VM style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 80% 60% at 50% 10%, rgba(160,40,80,0.35) 0%, rgba(122,31,61,0.18) 30%, transparent 60%)"}} animate={{opacity:[0.7,1,0.7]}} transition={{duration:9,repeat:Infinity,ease:"easeInOut"}}/>
-        <VM style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 70% 50% at 30% 80%, rgba(90,40,140,0.22) 0%, transparent 55%), radial-gradient(ellipse 70% 50% at 70% 70%, rgba(160,40,120,0.18) 0%, transparent 55%)"}} animate={{opacity:[.85,1,.85]}} transition={{duration:11,repeat:Infinity,ease:"easeInOut",delay:2}}/>
-        <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 220px rgba(0,0,0,.85)"}}/>
-        <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",opacity:.05}}>
-          <svg width="540" height="540" viewBox="0 0 200 200">
-            <circle cx="100" cy="100" r="80" fill="none" stroke="#d4a857" strokeWidth=".6"/>
-            <circle cx="100" cy="100" r="72" fill="none" stroke="#d4a857" strokeWidth=".4"/>
-            {Array.from({length:24}).map((_,i)=>{
-              const a=i/24*Math.PI*2;
-              const x=100+Math.cos(a)*76;
-              const y=100+Math.sin(a)*76;
-              return <ellipse key={i} cx={x} cy={y} rx="5" ry="2" fill="none" stroke="#d4a857" strokeWidth=".5" transform={"rotate("+(a*180/Math.PI+90)+" "+x+" "+y+")"}/>;
-            })}
-            <text x="100" y="108" textAnchor="middle" fontFamily="Cinzel,serif" fontSize="22" fontWeight="700" fill="#d4a857" letterSpacing="6">WK</text>
-          </svg>
-        </div>
-        <svg style={{position:"absolute",top:0,left:0,right:0,height:12,width:"100%",opacity:.5}} viewBox="0 0 80 12" preserveAspectRatio="none">
-          <defs>
-            <pattern id="wkv-meander" x="0" y="0" width="40" height="12" patternUnits="userSpaceOnUse">
-              <path d="M0 11 V3 H30 V8 H10 V5 H25 V11 Z" fill="none" stroke="#d4a857" strokeWidth=".6" opacity=".85"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="12" fill="url(#wkv-meander)"/>
-        </svg>
-        <div style={{position:"absolute",top:12,left:0,right:0,height:1,background:"linear-gradient(to right, transparent, rgba(212,168,87,.4), transparent)"}}/>
-        <div style={{position:"absolute",left:0,top:12,bottom:0,width:80,opacity:.8}}><IonicColumnV/></div>
-        <div style={{position:"absolute",right:0,top:12,bottom:0,width:80,opacity:.8,transform:"scaleX(-1)"}}><IonicColumnV/></div>
-        <div style={{position:"absolute",top:40,left:24}}><SconceV/></div>
-        <div style={{position:"absolute",top:40,right:24,transform:"scaleX(-1)"}}><SconceV/></div>
-        {embers.map(e=><VM key={e.id} style={{position:"absolute",left:e.left+"%",bottom:-10,width:e.size,height:e.size,borderRadius:9999,background:e.hue==="magenta"?"radial-gradient(circle, rgba(220,120,180,.95) 0%, rgba(160,40,100,.6) 50%, transparent 80%)":"radial-gradient(circle, rgba(255,220,140,.95) 0%, rgba(212,168,87,.55) 50%, transparent 80%)",boxShadow:e.hue==="magenta"?"0 0 8px rgba(220,120,180,.7)":"0 0 8px rgba(255,220,140,.7)"}} animate={{y:["0vh","-110vh"],x:[0,e.drift,-e.drift/2,e.drift/3,0],opacity:[0,.9,.7,.4,0],scale:[.6,1.1,1,.9,.4]}} transition={{duration:e.duration,delay:e.delay,repeat:Infinity,ease:"easeOut"}}/>)}
+      const embers=React.useMemo(()=>Array.from({length:22}).map((_,i)=>({id:i,left:Math.random()*100,delay:Math.random()*12,duration:14+Math.random()*10,size:2+Math.random()*3,hue:Math.random()>0.4?"magenta":"gold",drift:(Math.random()-0.5)*60})),[]);
+      return <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <Mdiv className="absolute inset-0" style={{background:"radial-gradient(ellipse 80% 60% at 50% 10%, rgba(160,40,80,0.35) 0%, rgba(122,31,61,0.18) 30%, transparent 60%)"}} animate={{opacity:[0.7,1,0.7]}} transition={{duration:9,repeat:Infinity,ease:"easeInOut"}}/>
+        <Mdiv className="absolute inset-0" style={{background:"radial-gradient(ellipse 70% 50% at 30% 80%, rgba(90,40,140,0.22) 0%, transparent 55%), radial-gradient(ellipse 70% 50% at 70% 70%, rgba(160,40,120,0.18) 0%, transparent 55%)"}} animate={{opacity:[0.85,1,0.85]}} transition={{duration:11,repeat:Infinity,ease:"easeInOut",delay:2}}/>
+        <div className="absolute inset-0 shadow-[inset_0_0_220px_rgba(0,0,0,0.85)]"/>
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.05]"><LaurelMedallionV/></div>
+        <div className="absolute top-0 left-0 right-0 h-3 opacity-50"><MeanderBandV/></div>
+        <div className="absolute top-3 left-0 right-0 h-px bg-gradient-to-r from-transparent via-megara-gold/40 to-transparent"/>
+        <div className="absolute left-0 top-3 bottom-0 w-16 sm:w-24 lg:w-32 opacity-80"><IonicColumnV/></div>
+        <div className="absolute right-0 top-3 bottom-0 w-16 sm:w-24 lg:w-32 opacity-80 scale-x-[-1]"><IonicColumnV/></div>
+        <div className="absolute top-10 left-4 sm:left-8 lg:left-16"><SconceV/></div>
+        <div className="absolute top-10 right-4 sm:right-8 lg:right-16 scale-x-[-1]"><SconceV/></div>
+        {embers.map(e=><Mdiv key={e.id} className="absolute rounded-full" style={{left:e.left+"%",bottom:-10,width:e.size,height:e.size,background:e.hue==="magenta"?"radial-gradient(circle, rgba(220,120,180,0.95) 0%, rgba(160,40,100,0.6) 50%, transparent 80%)":"radial-gradient(circle, rgba(255,220,140,0.95) 0%, rgba(212,168,87,0.55) 50%, transparent 80%)",boxShadow:e.hue==="magenta"?"0 0 8px rgba(220,120,180,0.7)":"0 0 8px rgba(255,220,140,0.7)"}} animate={{y:["0vh","-110vh"],x:[0,e.drift,-e.drift/2,e.drift/3,0],opacity:[0,0.9,0.7,0.4,0],scale:[0.6,1.1,1,0.9,0.4]}} transition={{duration:e.duration,delay:e.delay,repeat:Infinity,ease:"easeOut"}}/>)}
       </div>;
     };
 
+    // ── VaultArchway ─────────────────────────────────────────────────
     const VaultArchwayV=({children})=>(
-      <div style={{position:"relative",width:"100%",maxWidth:1200,margin:"0 auto",paddingTop:24}}>
-        <svg viewBox="0 0 800 220" preserveAspectRatio="none" style={{position:"absolute",left:0,right:0,top:0,width:"100%",height:"auto",pointerEvents:"none"}}>
+      <div className="relative w-full max-w-5xl mx-auto pt-6">
+        <svg viewBox="0 0 800 220" className="absolute inset-x-0 top-0 w-full h-auto pointer-events-none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
           <defs>
             <linearGradient id="wkv-archStone" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#3a1f4a"/><stop offset="50%" stopColor="#5a3a70"/><stop offset="100%" stopColor="#2a1230"/>
@@ -7409,138 +7435,114 @@ Rules:
             <linearGradient id="wkv-archStoneDark" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#1a0c20"/><stop offset="100%" stopColor="#3a1f4a"/>
             </linearGradient>
-            <radialGradient id="wkv-archGlow" cx=".5" cy="1" r=".7">
-              <stop offset="0%" stopColor="rgba(160,40,100,.65)"/><stop offset="60%" stopColor="rgba(122,31,61,.2)"/><stop offset="100%" stopColor="transparent"/>
+            <radialGradient id="wkv-archGlow" cx="0.5" cy="1" r="0.7">
+              <stop offset="0%" stopColor="rgba(160,40,100,0.65)"/><stop offset="60%" stopColor="rgba(122,31,61,0.2)"/><stop offset="100%" stopColor="transparent"/>
             </radialGradient>
           </defs>
           <ellipse cx="400" cy="220" rx="320" ry="160" fill="url(#wkv-archGlow)"/>
           <path d="M 80 220 L 80 100 Q 80 30 400 30 Q 720 30 720 100 L 720 220" fill="none" stroke="url(#wkv-archStone)" strokeWidth="10"/>
-          <path d="M 90 220 L 90 105 Q 90 40 400 40 Q 710 40 710 105 L 710 220" fill="none" stroke="#d4a857" strokeWidth=".8" opacity=".7"/>
+          <path d="M 90 220 L 90 105 Q 90 40 400 40 Q 710 40 710 105 L 710 220" fill="none" stroke="#d4a857" strokeWidth="0.8" opacity="0.7"/>
           <g>
-            <path d="M 380 35 L 420 35 L 425 70 L 375 70 Z" fill="url(#wkv-archStone)" stroke="#d4a857" strokeWidth=".8"/>
-            <circle cx="400" cy="52" r="6" fill="none" stroke="#d4a857" strokeWidth=".6"/>
-            <text x="400" y="56" textAnchor="middle" fontFamily="Cinzel,serif" fontSize="8" fontWeight="700" fill="#d4a857">WK</text>
+            <path d="M 380 35 L 420 35 L 425 70 L 375 70 Z" fill="url(#wkv-archStone)" stroke="#d4a857" strokeWidth="0.8"/>
+            <circle cx="400" cy="52" r="6" fill="none" stroke="#d4a857" strokeWidth="0.6"/>
+            <text x="400" y="56" textAnchor="middle" fontFamily="Cinzel, serif" fontSize="8" fontWeight="700" fill="#d4a857">WK</text>
           </g>
-          <rect x="55" y="195" width="50" height="10" fill="url(#wkv-archStoneDark)" stroke="#d4a857" strokeWidth=".5"/>
-          <rect x="695" y="195" width="50" height="10" fill="url(#wkv-archStoneDark)" stroke="#d4a857" strokeWidth=".5"/>
+          <rect x="55" y="195" width="50" height="10" fill="url(#wkv-archStoneDark)" stroke="#d4a857" strokeWidth="0.5"/>
+          <rect x="695" y="195" width="50" height="10" fill="url(#wkv-archStoneDark)" stroke="#d4a857" strokeWidth="0.5"/>
         </svg>
-        <VM initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:.8}} style={{position:"relative",paddingTop:100,paddingBottom:16,padding:"100px 24px 16px",textAlign:"center"}}>
+        <Mdiv initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:0.8}} className="relative pt-24 sm:pt-28 pb-4 px-6 text-center">
           {children}
-        </VM>
+        </Mdiv>
       </div>
     );
 
-    const VaultHeaderV=({tab,setTab,instructionsCount,creativeCount})=>{
-      const counts=instructionsCount.toLocaleString()+" instruction"+(instructionsCount===1?"":"s")+" · "+legacyIscis.length.toLocaleString()+" legacy ISCIs · "+creativeCount.toLocaleString()+" with creative";
-      return <div style={{width:"100%",maxWidth:1200,margin:"0 auto"}}>
+    // ── VaultHeader (with TabButton) ────────────────────────────────
+    const VaultTabButtonV=({label,count,icon,active,onClick})=>(
+      <button onClick={onClick} className="relative group">
+        <div className={"relative px-5 py-2.5 font-cinzel font-semibold text-sm tracking-[0.18em] uppercase rounded-sm transition-all border "+(active?"text-megara-gold bg-gradient-to-b from-megara-plum/80 to-megara-dark/80 border-megara-gold/60 shadow-[0_0_18px_rgba(212,168,87,0.25),inset_0_1px_0_rgba(212,168,87,0.25)]":"text-megara-lavender/60 bg-gradient-to-b from-megara-dark/40 to-transparent border-megara-lavender/15 hover:text-megara-lavender hover:border-megara-lavender/30")}>
+          <div className="flex items-center gap-2">
+            {icon}
+            <span>{label}</span>
+            <span className={"font-eb text-[10px] tracking-normal normal-case "+(active?"text-megara-gold/80":"text-megara-lavender/40")}>· {count}</span>
+          </div>
+          {active&&<Mdiv layoutId="wkvActiveTab" className="absolute -bottom-px left-2 right-2 h-px bg-megara-gold shadow-[0_0_10px_rgba(212,168,87,0.7)]"/>}
+        </div>
+      </button>
+    );
+    const VaultHeaderV=({activeTab,onTabChange,instructionsCount,creativeCount,iscisCount})=>(
+      <div className="w-full max-w-6xl mx-auto">
         <VaultArchwayV>
-          <VM initial={{opacity:0,letterSpacing:".05em"}} animate={{opacity:1,letterSpacing:".15em"}} transition={{duration:1.2,ease:"easeOut"}} className="wkv-cinzel" style={{fontSize:11,textTransform:"uppercase",color:"rgba(212,168,87,.8)",marginBottom:4,letterSpacing:".35em"}}>
+          <Mdiv initial={{opacity:0,letterSpacing:"0.05em"}} animate={{opacity:1,letterSpacing:"0.15em"}} transition={{duration:1.2,ease:"easeOut"}} className="font-cinzel text-[10px] sm:text-xs tracking-[0.35em] uppercase text-megara-gold/80 mb-1">
             ✦ Atticor · Doom &amp; Deliverables ✦
-          </VM>
-          <VMH1 initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} transition={{duration:1,ease:"easeOut"}} className="wkv-cinzel" style={{fontSize:"clamp(36px,5vw,60px)",fontWeight:700,letterSpacing:".08em",margin:0,backgroundImage:"linear-gradient(180deg,#f7e6b8 0%,#d4a857 50%,#8a6a30 100%)",WebkitBackgroundClip:"text",backgroundClip:"text",color:"transparent",textShadow:"0 2px 0 rgba(0,0,0,.6)",filter:"drop-shadow(0 0 12px rgba(212,168,87,.25))"}}>
+          </Mdiv>
+          <Mh1 initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} transition={{duration:1,ease:"easeOut"}} className="font-cinzel text-4xl md:text-6xl font-bold tracking-[0.08em] text-transparent bg-clip-text relative" style={{backgroundImage:"linear-gradient(180deg, #f7e6b8 0%, #d4a857 50%, #8a6a30 100%)",textShadow:"0 2px 0 rgba(0,0,0,0.6)",filter:"drop-shadow(0 0 12px rgba(212,168,87,0.25))"}}>
             WK Legacy Vault
-          </VMH1>
-          <VM initial={{opacity:0}} animate={{opacity:1}} transition={{duration:1,delay:.4}} className="wkv-cormorant" style={{fontStyle:"italic",fontSize:"clamp(15px,1.4vw,20px)",color:"#c9a8d4",marginTop:8}}>
+          </Mh1>
+          <Mdiv initial={{opacity:0}} animate={{opacity:1}} transition={{duration:1,delay:0.4}} className="font-cormorant italic text-lg md:text-xl text-megara-lavender mt-2">
             "Welcome to my little corner of the underworld, sweetheart."
-          </VM>
-          <VM initial={{opacity:0}} animate={{opacity:1}} transition={{duration:1,delay:.6}} className="wkv-eb" style={{color:"rgba(201,168,212,.6)",fontSize:11,letterSpacing:".18em",textTransform:"uppercase",marginTop:12}}>
-            {counts}
-          </VM>
+          </Mdiv>
+          <Mdiv initial={{opacity:0}} animate={{opacity:1}} transition={{duration:1,delay:0.6}} className="font-eb text-megara-lavender/60 text-xs tracking-[0.18em] uppercase mt-3">
+            {instructionsCount.toLocaleString()} instructions · {iscisCount.toLocaleString()} legacy ISCIs · {creativeCount.toLocaleString()} with creative
+          </Mdiv>
         </VaultArchwayV>
-        <VM initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:.8,delay:.8}} style={{margin:"16px auto 32px",maxWidth:540,textAlign:"center"}}>
-          <div style={{display:"inline-block",padding:"8px 24px",borderTop:"1px solid rgba(212,168,87,.4)",borderBottom:"1px solid rgba(212,168,87,.4)",background:"linear-gradient(to right, transparent, rgba(122,31,61,.1), transparent)"}}>
-            <span className="wkv-cormorant" style={{fontStyle:"italic",color:"rgba(201,168,212,.9)",fontSize:"clamp(14px,1.2vw,18px)"}}>Every ghost of WK past, filed away by yours truly.</span>
+        <Mdiv initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:0.8,delay:0.8}} className="mx-auto max-w-2xl mt-4 mb-8 text-center">
+          <div className="inline-block px-6 py-2 border-y border-megara-gold/40 bg-gradient-to-r from-transparent via-megara-wine/10 to-transparent">
+            <span className="font-cormorant italic text-megara-lavender/90 text-base md:text-lg">Every ghost of WK past, filed away by yours truly.</span>
           </div>
-        </VM>
-        {/* Stone-tablet tabs */}
-        <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:8,paddingLeft:16,paddingRight:16}}>
-          {[{k:"instructions",l:"Instructions",ct:instructionsCount,i:"📜"},{k:"creative",l:"Creative",ct:creativeCount,i:"🎬"}].map(t=>{
-            const active=tab===t.k;
-            return <button key={t.k} onClick={()=>setTab(t.k)} style={{position:"relative",cursor:"pointer",background:"none",border:"none",padding:0}}>
-              <div className="wkv-cinzel" style={{position:"relative",padding:"10px 20px",fontWeight:600,fontSize:13,letterSpacing:".18em",textTransform:"uppercase",borderRadius:2,transition:"all .2s",border:"1px solid "+(active?"rgba(212,168,87,.6)":"rgba(201,168,212,.15)"),background:active?"linear-gradient(to bottom, rgba(42,15,46,.8), rgba(26,10,31,.8))":"linear-gradient(to bottom, rgba(26,10,31,.4), transparent)",color:active?"#d4a857":"rgba(201,168,212,.6)",boxShadow:active?"0 0 18px rgba(212,168,87,.25), inset 0 1px 0 rgba(212,168,87,.25)":"none"}}>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <span>{t.i}</span>
-                  <span>{t.l}</span>
-                  <span className="wkv-eb" style={{fontSize:10,letterSpacing:0,textTransform:"none",color:active?"rgba(212,168,87,.8)":"rgba(201,168,212,.4)"}}>· {t.ct.toLocaleString()}</span>
-                </div>
-                {active&&<VM layoutId="wkvActiveTab" style={{position:"absolute",bottom:-1,left:8,right:8,height:1,background:"#d4a857",boxShadow:"0 0 10px rgba(212,168,87,.7)"}}/>}
+        </Mdiv>
+        <div className="flex gap-3 sm:gap-4 relative justify-center mb-2 px-4">
+          <VaultTabButtonV label="Instructions" count={instructionsCount.toLocaleString()} icon={<IcFileText className="w-4 h-4"/>} active={activeTab==="instructions"} onClick={()=>onTabChange("instructions")}/>
+          <VaultTabButtonV label="Creative" count={creativeCount.toLocaleString()} icon={<IcClapper className="w-4 h-4"/>} active={activeTab==="creative"} onClick={()=>onTabChange("creative")}/>
+        </div>
+        <div className="h-px bg-gradient-to-r from-transparent via-megara-gold/40 to-transparent"/>
+      </div>
+    );
+
+    // ── FilterBar (wired to real filter state) ───────────────────────
+    const FilterBarV=({filterYear,setFilterYear,filterMarket,setFilterMarket,filterMedia,setFilterMedia,search,setSearch,YEARS,WK_MKTS_FULL,MEDIA_OPTS,archiveCount})=>(
+      <div className="w-full max-w-6xl mx-auto mt-8 mb-12">
+        <div className="bg-megara-plum/40 backdrop-blur-md border border-megara-gold/20 rounded-lg p-4 flex flex-col lg:flex-row items-center justify-between gap-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+          <div className="flex items-center gap-3 text-megara-gold w-full lg:w-auto">
+            <IcScroll className="w-5 h-5"/>
+            <span className="font-cinzel font-semibold tracking-wide">Archive ({archiveCount.toLocaleString()})</span>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="relative group w-full sm:w-32">
+                <select value={filterYear} onChange={e=>setFilterYear(e.target.value)} className="w-full appearance-none bg-megara-dark/60 border border-megara-lavender/20 text-megara-lavender font-eb py-2 pl-3 pr-8 rounded focus:outline-none focus:border-megara-gold/50 transition-colors cursor-pointer">
+                  <option value="all">All Years</option>
+                  {YEARS.map(y=><option key={y} value={y}>{y}</option>)}
+                </select>
+                <IcChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-megara-lavender/50 pointer-events-none group-hover:text-megara-gold transition-colors"/>
               </div>
-            </button>;
-          })}
-        </div>
-        <div style={{height:1,background:"linear-gradient(to right, transparent, rgba(212,168,87,.4), transparent)"}}/>
-      </div>;
-    };
-
-    const VaultFilterBarV=({filterYear,setFilterYear,filterMarket,setFilterMarket,filterMedia,setFilterMedia,search,setSearch,YEARS,WK_MKTS_FULL,MEDIA_OPTS,archiveCount})=>(
-      <div style={{width:"100%",maxWidth:1200,margin:"32px auto 48px",padding:"0 16px"}}>
-        <div style={{background:"rgba(42,15,46,.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",border:"1px solid rgba(212,168,87,.2)",borderRadius:8,padding:14,display:"flex",flexWrap:"wrap",alignItems:"center",justifyContent:"space-between",gap:14,boxShadow:"0 8px 32px rgba(0,0,0,.3)"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10,color:"#d4a857"}} className="wkv-cinzel">
-            <span style={{fontSize:18}}>🗄</span>
-            <span style={{fontWeight:600,letterSpacing:".05em"}}>Archive ({archiveCount.toLocaleString()})</span>
-          </div>
-          <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:10}}>
-            <select value={filterYear} onChange={e=>setFilterYear(e.target.value)} className="wkv-eb" style={{appearance:"none",background:"rgba(26,10,31,.6)",border:"1px solid rgba(201,168,212,.2)",color:"#c9a8d4",padding:"8px 26px 8px 12px",borderRadius:4,cursor:"pointer",minWidth:120}}>
-              <option value="all">All Years</option>
-              {YEARS.map(y=><option key={y} value={y}>{y}</option>)}
-            </select>
-            <select value={filterMarket} onChange={e=>setFilterMarket(e.target.value)} className="wkv-eb" style={{appearance:"none",background:"rgba(26,10,31,.6)",border:"1px solid rgba(201,168,212,.2)",color:"#c9a8d4",padding:"8px 26px 8px 12px",borderRadius:4,cursor:"pointer",minWidth:140}}>
-              <option value="all">All Markets</option>
-              {WK_MKTS_FULL.map(m=><option key={m} value={m}>{m}</option>)}
-            </select>
-            <select value={filterMedia} onChange={e=>setFilterMedia(e.target.value)} className="wkv-eb" style={{appearance:"none",background:"rgba(26,10,31,.6)",border:"1px solid rgba(201,168,212,.2)",color:"#c9a8d4",padding:"8px 26px 8px 12px",borderRadius:4,cursor:"pointer",minWidth:140}}>
-              <option value="all">All Media</option>
-              {MEDIA_OPTS.map(m=><option key={m} value={m}>{m}</option>)}
-            </select>
-            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search ISCI, station, comment…" className="wkv-eb" style={{background:"rgba(26,10,31,.6)",border:"1px solid rgba(201,168,212,.2)",color:"#c9a8d4",padding:"8px 12px",borderRadius:4,minWidth:240,outline:"none"}}/>
+              <div className="relative group w-full sm:w-36">
+                <select value={filterMarket} onChange={e=>setFilterMarket(e.target.value)} className="w-full appearance-none bg-megara-dark/60 border border-megara-lavender/20 text-megara-lavender font-eb py-2 pl-3 pr-8 rounded focus:outline-none focus:border-megara-gold/50 transition-colors cursor-pointer">
+                  <option value="all">All Markets</option>
+                  {WK_MKTS_FULL.map(m=><option key={m} value={m}>{m}</option>)}
+                </select>
+                <IcChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-megara-lavender/50 pointer-events-none group-hover:text-megara-gold transition-colors"/>
+              </div>
+              <div className="relative group w-full sm:w-36">
+                <select value={filterMedia} onChange={e=>setFilterMedia(e.target.value)} className="w-full appearance-none bg-megara-dark/60 border border-megara-lavender/20 text-megara-lavender font-eb py-2 pl-3 pr-8 rounded focus:outline-none focus:border-megara-gold/50 transition-colors cursor-pointer">
+                  <option value="all">All Media</option>
+                  {MEDIA_OPTS.map(m=><option key={m} value={m}>{m}</option>)}
+                </select>
+                <IcChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-megara-lavender/50 pointer-events-none group-hover:text-megara-gold transition-colors"/>
+              </div>
+            </div>
+            <div className="relative w-full sm:w-64">
+              <IcSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-megara-lavender/50"/>
+              <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search ISCI, name, etc..." className="w-full bg-megara-dark/60 border border-megara-lavender/20 text-megara-lavender font-eb py-2 pl-9 pr-4 rounded focus:outline-none focus:border-megara-gold/50 placeholder:text-megara-lavender/30 transition-colors"/>
+            </div>
           </div>
         </div>
       </div>
     );
 
-    const SectionBannerV=({title,subtitle})=>(
-      <div style={{position:"relative",width:"100%",maxWidth:760,margin:"0 auto",textAlign:"center"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:16,marginBottom:8}}>
-          <div style={{height:1,width:80,background:"linear-gradient(to right, transparent, rgba(212,168,87,.6))"}}/>
-          <div style={{width:8,height:8,transform:"rotate(45deg)",background:"rgba(212,168,87,.7)",boxShadow:"0 0 10px rgba(212,168,87,.6)"}}/>
-          <div style={{height:1,width:80,background:"linear-gradient(to left, transparent, rgba(212,168,87,.6))"}}/>
-        </div>
-        <h2 className="wkv-cinzel" style={{fontSize:"clamp(22px,2.4vw,30px)",fontWeight:700,letterSpacing:".22em",textTransform:"uppercase",margin:0,color:"#e9c97a",textShadow:"0 0 14px rgba(212,168,87,.35), 0 2px 0 rgba(0,0,0,.6)"}}>{title}</h2>
-        <p className="wkv-cormorant" style={{fontStyle:"italic",color:"rgba(201,168,212,.7)",fontSize:"clamp(13px,1.1vw,16px)",marginTop:8}}>{subtitle}</p>
-      </div>
-    );
-
-    const MonthBannerV=({label,count})=>(
-      <div style={{display:"flex",justifyContent:"center"}}>
-        <div style={{position:"relative",display:"inline-flex",alignItems:"center",gap:12,padding:"10px 32px",background:"linear-gradient(180deg,#4a2a55 0%,#2a1530 50%,#14081c 100%)",boxShadow:"inset 0 1px 0 rgba(212,168,87,.4), inset 0 -1px 0 rgba(0,0,0,.8), 0 6px 14px rgba(0,0,0,.6), 0 0 24px rgba(170,40,100,.25)",borderTop:"1px solid rgba(212,168,87,.4)",borderBottom:"1px solid rgba(0,0,0,.7)",clipPath:"polygon(0 0, 100% 0, calc(100% - 16px) 100%, 16px 100%)"}}>
-          <span style={{display:"block",width:6,height:6,transform:"rotate(45deg)",background:"#d4a857",boxShadow:"0 0 8px rgba(212,168,87,.7)"}}/>
-          <span className="wkv-cinzel" style={{fontWeight:700,fontSize:"clamp(16px,1.4vw,20px)",letterSpacing:".32em",textTransform:"uppercase",color:"#e9c97a",textShadow:"0 2px 0 rgba(0,0,0,.9), 0 0 12px rgba(212,168,87,.45)"}}>{label}</span>
-          <span className="wkv-cormorant" style={{fontStyle:"italic",color:"rgba(201,168,212,.7)",fontSize:12}}>· {count} instruction{count===1?"":"s"}</span>
-          <span style={{display:"block",width:6,height:6,transform:"rotate(45deg)",background:"#d4a857",boxShadow:"0 0 8px rgba(212,168,87,.7)"}}/>
-        </div>
-      </div>
-    );
-
-    const MediaBannerV=({media,count})=>(
-      <div style={{display:"flex",alignItems:"center",gap:12,maxWidth:1100,margin:"0 auto"}}>
-        <div style={{flex:1,height:1,background:"linear-gradient(to right, transparent, rgba(212,168,87,.3))"}}/>
-        <div style={{position:"relative",display:"inline-flex",alignItems:"center",gap:8,padding:"4px 16px",background:"linear-gradient(180deg,#e9c97a 0%,#c79a3e 45%,#8a5e1f 100%)",boxShadow:"inset 0 1px 0 rgba(255,240,200,.6), inset 0 -1px 2px rgba(60,30,0,.5), 0 2px 5px rgba(0,0,0,.55), 0 0 14px rgba(212,168,87,.25)",borderRadius:2,clipPath:"polygon(0 0, 100% 0, calc(100% - 10px) 100%, 10px 100%)"}}>
-          <span style={{width:4,height:4,borderRadius:9999,background:"#2a0f2e"}}/>
-          <span className="wkv-cinzel" style={{fontWeight:700,fontSize:11,letterSpacing:".3em",textTransform:"uppercase",color:"#2a0f08"}}>{media}</span>
-          <span className="wkv-cormorant" style={{fontStyle:"italic",fontSize:11,color:"rgba(58,24,8,.85)"}}>· {count} market{count===1?"":"s"}</span>
-        </div>
-        <div style={{flex:1,height:1,background:"linear-gradient(to left, transparent, rgba(212,168,87,.3))"}}/>
-      </div>
-    );
-
-    // ── Closed Scroll: a rolled-up scroll button ─────────────────────
-    // The actual scroll artwork — antique gold scroll with wax seal.
-    // White pixels are color-keyed to transparent via SVG filter so the
-    // scroll floats on top of the underworld backdrop.
-    const SCROLL_IMG_V="/assets/wk-vault-scroll.jpg";
-    const ClosedScrollV=({market,month,version,isOpen,onClick,rotation})=>{
-      return <VMBtn type="button" onClick={onClick} whileHover={{y:-3,scale:1.04}} whileTap={{scale:.98}} transition={{type:"spring",stiffness:320,damping:22}} style={{rotate:rotation+"deg",display:"block",textAlign:"left",position:"relative",background:"none",border:"none",cursor:"pointer",padding:0}} title={market+" · "+month+" · "+version} aria-expanded={isOpen}>
-        {/* Color-key filter — turns white pixels in the JPG transparent. */}
+    // ── ClosedScroll (uses the real JPG with SVG color-key filter) ───
+    const SCROLL_IMAGE_V="/assets/wk-vault-scroll.jpg";
+    const ClosedScrollV=({client,month,flight,market,version,isOpen,onClick,seedRotation=0})=>(
+      <Mbtn type="button" onClick={onClick} whileHover={{y:-3,scale:1.04}} whileTap={{scale:0.98}} transition={{type:"spring",stiffness:320,damping:22}} style={{rotate:seedRotation+"deg"}} className="block text-left relative group focus:outline-none" aria-expanded={isOpen} title={market+" · "+month+" · "+flight+" · "+version}>
         <svg width="0" height="0" style={{position:"absolute",width:0,height:0}} aria-hidden="true">
           <defs>
             <filter id="wkv-scroll-key-out" colorInterpolationFilters="sRGB">
@@ -7548,170 +7550,191 @@ Rules:
             </filter>
           </defs>
         </svg>
-        {/* Always-on subtle mystical glow + brighter on hover */}
-        <div style={{position:"absolute",inset:-10,borderRadius:18,opacity:.55,pointerEvents:"none",filter:"blur(22px)",background:"radial-gradient(ellipse 70% 60% at 50% 50%, rgba(212,168,87,.55) 0%, rgba(160,40,100,.3) 50%, transparent 80%)",transition:"opacity .3s"}} className="wkv-scroll-glow"/>
-        {/* Scroll artwork — background removed via SVG color-key filter */}
-        <div style={{position:"relative",width:240,aspectRatio:"1000 / 220"}}>
-          <div style={{position:"absolute",inset:0,backgroundImage:"url("+SCROLL_IMG_V+")",backgroundRepeat:"no-repeat",backgroundPosition:"center",backgroundSize:"contain",filter:"url(#wkv-scroll-key-out) drop-shadow(0 4px 8px rgba(0,0,0,.55))"}}/>
-          {/* MARKET — left flat panel of the scroll */}
-          <div style={{position:"absolute",left:"9%",right:"63%",top:"24%",bottom:"24%",display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center",pointerEvents:"none"}}>
-            <span className="wkv-cinzel" style={{fontWeight:700,textTransform:"uppercase",lineHeight:1.15,fontSize:(market||"").length>10?8:10,letterSpacing:".12em",color:"#3a2510",textShadow:"0 1px 0 rgba(255,235,180,.4)"}}>{market||"—"}</span>
+        <div className="absolute -inset-2 rounded-2xl opacity-0 group-hover:opacity-90 transition-opacity duration-300 pointer-events-none blur-xl" style={{background:"radial-gradient(ellipse 70% 60% at 50% 50%, rgba(212,168,87,0.55) 0%, rgba(160,40,80,0.25) 50%, transparent 80%)"}}/>
+        <div className="relative w-[240px]" style={{aspectRatio:"1000 / 220"}}>
+          <div className="absolute inset-0 bg-no-repeat bg-center bg-contain" style={{backgroundImage:"url("+SCROLL_IMAGE_V+")",filter:"url(#wkv-scroll-key-out) drop-shadow(0 4px 8px rgba(0,0,0,0.55))"}}/>
+          <div className="absolute flex items-center justify-center text-center pointer-events-none" style={{left:"9%",right:"63%",top:"24%",bottom:"24%"}}>
+            <span className="font-cinzel font-bold uppercase leading-tight" style={{fontSize:(market||"").length>10?8:10,letterSpacing:"0.12em",color:"#3a2510",textShadow:"0 1px 0 rgba(255,235,180,0.4)"}}>{market}</span>
           </div>
-          {/* MONTH / VERSION — right flat panel of the scroll */}
-          <div style={{position:"absolute",left:"63%",right:"9%",top:"22%",bottom:"22%",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",pointerEvents:"none"}}>
-            <span className="wkv-cinzel" style={{fontWeight:700,textTransform:"uppercase",lineHeight:1.1,fontSize:10,letterSpacing:".12em",color:"#3a2510",textShadow:"0 1px 0 rgba(255,235,180,.4)"}}>{month||""}</span>
-            <span className="wkv-cinzel" style={{fontWeight:600,textTransform:"uppercase",fontSize:7,letterSpacing:".2em",color:"#5a3a18",opacity:.85,marginTop:2}}>{version||""}</span>
+          <div className="absolute flex flex-col items-center justify-center text-center pointer-events-none" style={{left:"63%",right:"9%",top:"22%",bottom:"22%"}}>
+            <span className="font-cinzel font-bold uppercase leading-tight" style={{fontSize:10,letterSpacing:"0.12em",color:"#3a2510",textShadow:"0 1px 0 rgba(255,235,180,0.4)"}}>{month}</span>
+            <span className="font-cinzel font-semibold uppercase mt-0.5" style={{fontSize:7,letterSpacing:"0.2em",color:"#5a3a18",opacity:0.85}}>{version}</span>
           </div>
         </div>
-      </VMBtn>;
-    };
+      </Mbtn>
+    );
 
-    // ── Open Scroll: the unfurled instruction document ──────────────
-    const TONE_STYLES_V={
-      "M-F Schedule":{bg:"#d4c5e0",border:"#a586b8",text:"#3a1f4a"},
-      "M-F Bookend":{bg:"#e0c5cd",border:"#b8869a",text:"#4a1f2e"},
-      "Weekend Schedule":{bg:"#e8d9b8",border:"#b8a486",text:"#4a3a1f"},
-      "Weekend Bookend":{bg:"#e8c5b8",border:"#b88a6f",text:"#4a2a1f"},
-      "All Week":{bg:"#c5dac7",border:"#86b896",text:"#1f4a2e"},
-      "Holiday Only":{bg:"#e0c5cd",border:"#b8869a",text:"#4a1f2e"},
-    };
-    const toneForV=(label)=>TONE_STYLES_V[label]||{bg:"#d4c5e0",border:"#a586b8",text:"#3a1f4a"};
+    // ── OpenScroll (+ rod, meta row) ─────────────────────────────────
     const HorizontalRodV=({position})=>(
-      <div style={{position:"relative",height:24,zIndex:30,marginTop:position==="bottom"?-4:0,marginBottom:position==="top"?-4:0}}>
-        <div style={{position:"absolute",left:-12,right:-12,top:0,bottom:0,background:"linear-gradient(to bottom, #6a4828 0%, #b89770 25%, #f1dcb0 50%, #b89770 75%, #5a3a20 100%)",boxShadow:"inset 0 1px 0 rgba(255,220,170,.4), inset 0 -1px 0 rgba(0,0,0,.4), 0 4px 10px rgba(0,0,0,.4)"}}/>
-        <div style={{position:"absolute",left:-12,right:-12,[position==="top"?"bottom":"top"]:0,height:4,background:"linear-gradient(to bottom, #a02850, #7a1f3d, #4a0f25)",boxShadow:"inset 0 1px 0 rgba(212,168,87,.6)"}}/>
-        <div style={{position:"absolute",left:-12,top:"50%",transform:"translateY(-50%)",width:24,height:24,borderRadius:"50%",background:"radial-gradient(ellipse at 30% 30%, #f3dcae 0%, #c9a675 35%, #8a5e30 75%, #4a2f10 100%)",boxShadow:"0 2px 4px rgba(0,0,0,.5)"}}>
-          <div style={{position:"absolute",inset:3,borderRadius:"50%",border:"1px solid rgba(212,168,87,.7)"}}/>
+      <div className={"relative h-6 z-30 "+(position==="top"?"-mb-1":"-mt-1")}>
+        <div className="absolute inset-x-0 inset-y-0 mx-[-12px]" style={{background:"linear-gradient(to bottom, #6a4828 0%, #b89770 25%, #f1dcb0 50%, #b89770 75%, #5a3a20 100%)",boxShadow:"inset 0 1px 0 rgba(255,220,170,0.4), inset 0 -1px 0 rgba(0,0,0,0.4), 0 4px 10px rgba(0,0,0,0.4)"}}/>
+        <div className={"absolute inset-x-0 mx-[-12px] h-1 "+(position==="top"?"bottom-0":"top-0")+" bg-gradient-to-b from-megara-magenta via-megara-wine to-[#4a0f25] shadow-[inset_0_1px_0_rgba(212,168,87,0.6)]"}/>
+        <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full" style={{background:"radial-gradient(ellipse at 30% 30%, #f3dcae 0%, #c9a675 35%, #8a5e30 75%, #4a2f10 100%)",boxShadow:"0 2px 4px rgba(0,0,0,0.5)"}}>
+          <div className="absolute inset-[3px] rounded-full border border-megara-gold/70"/>
         </div>
-        <div style={{position:"absolute",right:-12,top:"50%",transform:"translateY(-50%)",width:24,height:24,borderRadius:"50%",background:"radial-gradient(ellipse at 30% 30%, #f3dcae 0%, #c9a675 35%, #8a5e30 75%, #4a2f10 100%)",boxShadow:"0 2px 4px rgba(0,0,0,.5)"}}>
-          <div style={{position:"absolute",inset:3,borderRadius:"50%",border:"1px solid rgba(212,168,87,.7)"}}/>
+        <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full" style={{background:"radial-gradient(ellipse at 30% 30%, #f3dcae 0%, #c9a675 35%, #8a5e30 75%, #4a2f10 100%)",boxShadow:"0 2px 4px rgba(0,0,0,0.5)"}}>
+          <div className="absolute inset-[3px] rounded-full border border-megara-gold/70"/>
         </div>
       </div>
     );
-    const MetaRowV=({label,value,accent})=>(
-      <div style={{display:"flex",gap:12}}>
-        <span className="wkv-cinzel" style={{fontSize:10,letterSpacing:".15em",textTransform:"uppercase",color:"rgba(58,24,8,.7)",fontWeight:600,minWidth:64,paddingTop:2}}>{label}:</span>
-        <span className="wkv-eb" style={{color:accent?"#7a1f3d":"#3a2510",fontWeight:accent?600:400}}>{value||"—"}</span>
+    const MetaRowV=({label,value,accent=false})=>(
+      <div className="flex gap-3">
+        <span className="font-cinzel text-[10px] tracking-[0.15em] uppercase text-megara-dark/70 font-semibold w-16 shrink-0 pt-0.5">{label}:</span>
+        <span className={"font-eb "+(accent?"text-megara-wine font-semibold":"text-megara-dark")}>{value||"—"}</span>
       </div>
     );
-    const OpenScrollV=({record,onView,buildLegacyHtml,iscis})=>{
-      // Group ISCIs by sched for the table
-      const groups={};
-      (record.iscis||[]).forEach(r=>{const k=r.sched||"All Week";if(!groups[k])groups[k]=[];groups[k].push(r)});
-      const order=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
-      const groupKeys=order.filter(k=>groups[k]).concat(Object.keys(groups).filter(k=>order.indexOf(k)===-1));
-      // Build creative files list
-      const reg=iscis||[];
-      const creativeFiles=(record.iscis||[]).map(r=>{const full=reg.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:r.title||full.title||"",url:full.fileUrl}:null}).filter(Boolean);
-      return <VM className="wkv-open-scroll" initial={{opacity:0,scaleY:.6}} animate={{opacity:1,scaleY:1}} exit={{opacity:0,scaleY:.6}} transition={{duration:.45,ease:[.22,1,.36,1]}} style={{transformOrigin:"top center",width:"100%",maxWidth:780,marginTop:16,marginLeft:"auto",marginRight:"auto"}}>
+    const OpenScrollV=({instruction,onDownload})=>(
+      <Mdiv initial={{opacity:0,scaleY:0.6}} animate={{opacity:1,scaleY:1}} exit={{opacity:0,scaleY:0.6}} transition={{duration:0.45,ease:[0.22,1,0.36,1]}} style={{transformOrigin:"top center"}} className="w-full max-w-3xl mx-auto mt-4 wkv-open-scroll">
         <HorizontalRodV position="top"/>
-        <div className="wkv-parchment" style={{position:"relative",background:"linear-gradient(to bottom, #f4ebd8, #e8dcc0, #d4c4a0)",boxShadow:"inset 0 0 60px rgba(120,100,60,.25), 0 8px 20px rgba(0,0,0,.4)"}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:20,background:"linear-gradient(to bottom, rgba(122,88,40,.3), transparent)",pointerEvents:"none",zIndex:10}}/>
-          <div style={{position:"absolute",bottom:0,left:0,right:0,height:20,background:"linear-gradient(to top, rgba(122,88,40,.3), transparent)",pointerEvents:"none",zIndex:10}}/>
-          <div style={{position:"absolute",inset:0,opacity:.04,pointerEvents:"none",backgroundImage:"radial-gradient(#3a2510 1px, transparent 1px)",backgroundSize:"5px 5px"}}/>
-          <div style={{position:"relative",zIndex:20,padding:"28px 32px"}}>
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",marginBottom:20,paddingBottom:12,borderBottom:"1px solid rgba(122,31,61,.2)"}}>
-              <span className="wkv-cinzel" style={{fontWeight:700,fontSize:10,letterSpacing:".3em",color:"rgba(26,10,31,.7)",textTransform:"uppercase"}}>{record.brand||"Wettermark Keith"}</span>
-              <h2 className="wkv-cinzel" style={{fontSize:24,fontWeight:700,color:"#7a1f3d",letterSpacing:".05em",marginTop:4,marginBottom:0,textTransform:"uppercase"}}>{(record.brand||"Wettermark Keith").toUpperCase()}</h2>
-              <div className="wkv-cinzel" style={{fontSize:10,letterSpacing:".25em",color:"rgba(26,10,31,.7)",marginTop:4,textTransform:"uppercase"}}>{record.media||""} Traffic Instructions</div>
-              <div style={{marginTop:8,width:96,height:1,background:"linear-gradient(to right, transparent, #d4a857, transparent)"}}/>
+        <div className="relative wkv-parchment bg-gradient-to-b from-parchment-light via-parchment to-parchment-dark shadow-[inset_0_0_60px_rgba(120,100,60,0.25),0_8px_20px_rgba(0,0,0,0.4)]">
+          <div className="absolute top-0 left-0 right-0 h-5 bg-gradient-to-b from-[#7a5828]/30 to-transparent pointer-events-none z-10"/>
+          <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-[#7a5828]/30 to-transparent pointer-events-none z-10"/>
+          <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-r from-black/20 to-transparent pointer-events-none"/>
+          <div className="absolute inset-y-0 right-0 w-1 bg-gradient-to-l from-black/20 to-transparent pointer-events-none"/>
+          <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{backgroundImage:"radial-gradient(#3a2510 1px, transparent 1px)",backgroundSize:"5px 5px"}}/>
+          <div className="relative z-20 p-6 sm:p-10">
+            <div className="flex flex-col items-center text-center mb-5 pb-3 border-b border-megara-wine/20">
+              <span className="font-cinzel font-bold text-[10px] tracking-[0.3em] text-megara-dark/70 uppercase">{instruction.client}</span>
+              <h2 className="font-cinzel text-xl sm:text-2xl font-bold text-megara-wine tracking-wide mt-1">{(instruction.client||"").toUpperCase()}</h2>
+              <div className="font-cinzel text-[10px] tracking-[0.25em] text-megara-dark/70 uppercase mt-1">{instruction.media} Traffic Instructions</div>
+              <div className="mt-2 w-24 h-px bg-gradient-to-r from-transparent via-megara-gold to-transparent"/>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",columnGap:40,rowGap:2,marginBottom:12}}>
-              <MetaRowV label="Agency" value="Atticor Media"/>
-              <MetaRowV label="Buyer" value={record.buyer} accent/>
-              <MetaRowV label="Client" value={record.brand||"Wettermark Keith"} accent/>
-              <MetaRowV label="Estimate" value={record.est}/>
-              <MetaRowV label="Market" value={record.market}/>
-              <MetaRowV label="Media" value={record.media} accent/>
-              <MetaRowV label="Month" value={record.month} accent/>
-              <MetaRowV label="Flight" value={record.flight} accent/>
-              <MetaRowV label="Version" value={"V"+(record.version||"1")}/>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-0.5 font-eb text-xs sm:text-sm text-megara-dark mb-3">
+              <MetaRowV label="Agency" value={instruction.agency}/>
+              <MetaRowV label="Buyer" value={instruction.buyer} accent/>
+              <MetaRowV label="Client" value={instruction.client} accent/>
+              <MetaRowV label="Estimate" value={instruction.estimate}/>
+              <MetaRowV label="Market" value={instruction.market}/>
+              <MetaRowV label="Media" value={instruction.media} accent/>
+              <MetaRowV label="Month" value={instruction.month} accent/>
+              <MetaRowV label="Flight" value={instruction.flight} accent/>
+              <MetaRowV label="Version" value={instruction.version}/>
             </div>
-            {record.comments&&<div className="wkv-eb" style={{fontSize:13,color:"rgba(26,10,31,.8)",marginBottom:20,lineHeight:1.55,borderLeft:"2px solid rgba(212,168,87,.6)",paddingLeft:12,fontStyle:"italic"}}>
-              <span style={{fontWeight:600,fontStyle:"normal",color:"#1a0a1f"}}>Comments: </span>
-              {record.comments}
+            {instruction.comments&&<div className="font-eb text-xs sm:text-sm text-megara-dark/80 mb-5 leading-relaxed border-l-2 border-megara-gold/60 pl-3 italic">
+              <span className="font-semibold not-italic text-megara-dark">Comments: </span>
+              {instruction.comments}{" "}
+              {instruction.driveLink&&instruction.driveLink!=="#"&&<a href={instruction.driveLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-megara-wine hover:text-megara-magenta underline decoration-dotted underline-offset-2 not-italic">
+                <IcLink className="w-3 h-3"/> drive link
+              </a>}
             </div>}
-            <div style={{height:1,background:"linear-gradient(to right, transparent, #d4a857, transparent)",marginBottom:12}}/>
-            <div style={{overflowX:"auto"}}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,color:"#1a0a1f"}} className="wkv-eb">
+            <div className="h-px bg-gradient-to-r from-transparent via-megara-gold to-transparent mb-3"/>
+            <div className="overflow-x-auto">
+              <table className="w-full font-eb text-xs sm:text-sm text-megara-dark border-collapse">
                 <thead>
-                  <tr style={{textAlign:"left",fontSize:10,letterSpacing:".18em",textTransform:"uppercase",color:"rgba(26,10,31,.6)"}}>
-                    <th className="wkv-cinzel" style={{padding:"6px 12px 6px 8px",fontWeight:600,width:96}}>Flight</th>
-                    <th className="wkv-cinzel" style={{padding:"6px 12px 6px 0",fontWeight:600}}>ISCI &amp; Title</th>
-                    <th className="wkv-cinzel" style={{padding:"6px 12px 6px 0",fontWeight:600,width:48}}>Dur</th>
-                    <th className="wkv-cinzel" style={{padding:"6px 12px 6px 0",fontWeight:600,width:56}}>Rot%</th>
-                    <th className="wkv-cinzel" style={{padding:"6px 12px 6px 0",fontWeight:600,width:120}}>Schedule</th>
+                  <tr className="text-left text-[9px] sm:text-[10px] tracking-[0.18em] uppercase text-megara-dark/60 font-cinzel font-semibold">
+                    <th className="py-1.5 pr-3 w-24">Flight</th>
+                    <th className="py-1.5 pr-3">ISCI Code &amp; Title</th>
+                    <th className="py-1.5 pr-3 w-12">Dur</th>
+                    <th className="py-1.5 pr-3 w-14">Rot%</th>
+                    <th className="py-1.5 pr-3 w-28">Schedule</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {groupKeys.map(label=>{
-                    const tone=toneForV(label);
-                    return <React.Fragment key={label}>
-                      <tr className="wkv-group-row" style={{"--wkv-row-bg":tone.bg,"--wkv-row-text":tone.text,background:tone.bg,color:tone.text,borderTop:"1px solid "+tone.border,borderBottom:"1px solid "+tone.border}}>
-                        <td colSpan={5} className="wkv-cinzel" style={{padding:"5px 10px",fontWeight:600,fontSize:10,letterSpacing:".18em",textTransform:"uppercase"}}>{label}</td>
+                  {instruction.groups.map(group=>{
+                    const tone=toneStylesV[group.tone]||toneStylesV.lavender;
+                    return <React.Fragment key={group.label}>
+                      <tr className={tone.bg+" "+tone.text+" border-y "+tone.border+" wkv-group-row"}>
+                        <td colSpan={5} className="py-1 px-2 font-cinzel font-semibold text-[10px] tracking-[0.18em] uppercase">{group.label}</td>
                       </tr>
-                      {(groups[label]||[]).map((r,ri)=><tr key={label+"_"+ri} style={{borderBottom:"1px solid rgba(181,163,122,.3)"}}>
-                        <td style={{padding:"5px 12px 5px 8px",whiteSpace:"nowrap",color:"rgba(26,10,31,.8)"}}>{record.flight||""}</td>
-                        <td style={{padding:"5px 12px 5px 0",fontWeight:600,color:"#7a1f3d"}}><span style={{marginRight:4,fontFamily:"monospace"}}>{r.code}</span><span style={{color:"rgba(26,10,31,.8)",fontWeight:400}}>— {r.title||""}</span></td>
-                        <td style={{padding:"5px 12px 5px 0",whiteSpace:"nowrap"}}>{r.dur?":"+r.dur:""}</td>
-                        <td style={{padding:"5px 12px 5px 0",whiteSpace:"nowrap"}}>{r.pct?r.pct+"%":""}</td>
-                        <td style={{padding:"5px 12px 5px 0",whiteSpace:"nowrap",color:"rgba(26,10,31,.8)"}}>{r.bookend||label}</td>
+                      {group.rows.map((row,ri)=><tr key={group.label+"-"+ri} className="border-b border-parchment-shadow/30 hover:bg-megara-gold/15 transition-colors">
+                        <td className="py-1 pr-3 px-2 whitespace-nowrap text-megara-dark/80">{row.flight}</td>
+                        <td className="py-1 pr-3 font-semibold text-megara-wine"><span className="mr-1">{row.isci}</span><span className="text-megara-dark/80 font-normal">— {row.title}</span></td>
+                        <td className="py-1 pr-3 whitespace-nowrap">{row.dur}</td>
+                        <td className="py-1 pr-3 whitespace-nowrap">{row.rot}</td>
+                        <td className="py-1 pr-3 whitespace-nowrap text-megara-dark/80">{row.schedule}</td>
                       </tr>)}
                     </React.Fragment>;
                   })}
                 </tbody>
               </table>
             </div>
-            {creativeFiles.length>0&&<div style={{marginTop:24,paddingTop:12,borderTop:"1px solid rgba(122,31,61,.2)"}}>
-              <div className="wkv-cinzel" style={{fontSize:10,letterSpacing:".22em",textTransform:"uppercase",color:"rgba(26,10,31,.7)",marginBottom:8}}>Creative Files — click to download</div>
-              <ul style={{display:"grid",gridTemplateColumns:"1fr 1fr",columnGap:32,listStyle:"none",margin:0,padding:0}} className="wkv-eb">
-                {creativeFiles.map((cf,i)=><li key={cf.code+"_"+i} style={{fontSize:13}}>
-                  <a href={cf.url} target="_blank" rel="noopener" download style={{color:"#7a1f3d",textDecoration:"underline",textDecorationStyle:"dotted",textUnderlineOffset:2}}>{cf.code} — {cf.title}</a>
+            {instruction.creativeFiles.length>0&&<div className="mt-6 pt-3 border-t border-megara-wine/20">
+              <div className="font-cinzel text-[10px] tracking-[0.22em] uppercase text-megara-dark/70 mb-2">Creative Files — click to download</div>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 font-eb text-xs sm:text-sm">
+                {instruction.creativeFiles.map((cf,i)=><li key={cf.isci+"-"+i}>
+                  <a href={cf.url||"#"} target="_blank" rel="noopener noreferrer" download className="text-megara-wine hover:text-megara-magenta underline decoration-dotted underline-offset-2 transition-colors">{cf.isci} — {cf.title}</a>
                 </li>)}
               </ul>
             </div>}
-            <div style={{marginTop:24,paddingTop:12,borderTop:"1px solid rgba(122,31,61,.2)",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
-              <div className="wkv-cormorant" style={{fontStyle:"italic",fontSize:13,color:"rgba(26,10,31,.6)"}}>
-                Filed under {record.month||""} · Estimate {record.est||"—"} · V{record.version||"1"}
+            <div className="mt-6 pt-3 border-t border-megara-wine/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="font-cormorant italic text-megara-dark/60 text-xs sm:text-sm">
+                Filed under {instruction.month} · Estimate {instruction.estimate} · {instruction.version}
               </div>
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={onView} className="wkv-cinzel" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"6px 14px",background:"transparent",border:"1px solid rgba(122,31,61,.4)",color:"#7a1f3d",fontSize:12,fontWeight:600,borderRadius:4,cursor:"pointer"}}>👁 View</button>
+              <div className="flex gap-2">
+                <button onClick={()=>openInNewWindow(instruction._raw)} className="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border border-megara-wine/40 text-megara-wine font-cinzel text-xs font-semibold rounded hover:bg-megara-wine hover:text-parchment transition-all duration-200 group/btn">
+                  <IcEye className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform"/>
+                  <span>View</span>
+                </button>
+                <button onClick={()=>onDownload(instruction._raw)} className="flex items-center gap-1.5 px-3 py-1.5 bg-megara-wine border border-megara-gold/50 text-parchment font-cinzel text-xs font-semibold rounded hover:bg-megara-magenta transition-all duration-200 group/btn">
+                  <IcDownload className="w-3.5 h-3.5 group-hover/btn:-translate-y-0.5 transition-transform"/>
+                  <span>Download</span>
+                </button>
               </div>
             </div>
           </div>
         </div>
         <HorizontalRodV position="bottom"/>
-      </VM>;
-    };
+      </Mdiv>
+    );
 
-    // ── Instruction Scroll wrapper (closed by default, unfurls inline)
-    const InstructionScrollV=({record,index,onView,buildLegacyHtml,iscis})=>{
+    // ── InstructionScroll (closed → modal open on click) ─────────────
+    const InstructionScrollV=({instruction,index,onDownload})=>{
       const [isOpen,setIsOpen]=React.useState(false);
-      const seedRot=((index*7)%5-2)*0.2;
-      return <VM initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{duration:.5,delay:Math.min(index*.06,.4),type:"spring",stiffness:120,damping:18}} style={{display:isOpen?"block":"inline-block",width:isOpen?"100%":"auto"}}>
-        <ClosedScrollV market={record.market} month={record.month} version={"V"+(record.version||"1")} isOpen={isOpen} onClick={()=>setIsOpen(v=>!v)} rotation={seedRot}/>
-        <VAP initial={false}>
-          {isOpen&&<OpenScrollV record={record} onView={onView} buildLegacyHtml={buildLegacyHtml} iscis={iscis}/>}
+      React.useEffect(()=>{
+        if(!isOpen)return;
+        const original=document.body.style.overflow;
+        document.body.style.overflow="hidden";
+        const onKey=e=>{if(e.key==="Escape")setIsOpen(false)};
+        window.addEventListener("keydown",onKey);
+        return ()=>{document.body.style.overflow=original;window.removeEventListener("keydown",onKey)};
+      },[isOpen]);
+      return <>
+        <Mdiv initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{duration:0.5,delay:Math.min(index*0.04,0.3),type:"spring",stiffness:120,damping:18}} className="inline-block">
+          <ClosedScrollV client={instruction.client} month={instruction.month} flight={instruction.flight} market={instruction.market} version={instruction.version} isOpen={isOpen} onClick={()=>setIsOpen(true)} seedRotation={instruction.rotation}/>
+        </Mdiv>
+        <VAP>
+          {isOpen&&<Mdiv key="scroll-modal" className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 sm:p-8 overflow-y-auto" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.25}} onClick={()=>setIsOpen(false)}>
+            <div className="absolute inset-0" style={{background:"radial-gradient(ellipse at center, rgba(40,15,55,0.85) 0%, rgba(10,5,15,0.96) 80%)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)"}}/>
+            <Mdiv className="relative z-10 w-full max-w-3xl my-auto" initial={{opacity:0,scale:0.96,y:20}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:0.96,y:20}} transition={{duration:0.3,ease:[0.22,1,0.36,1]}} onClick={e=>e.stopPropagation()}>
+              <button onClick={()=>setIsOpen(false)} className="absolute -top-3 -right-3 sm:top-2 sm:right-2 z-20 w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{background:"radial-gradient(circle at 30% 28%, #d83c68 0%, #8a1f3d 45%, #5a0f25 90%)",boxShadow:"inset 0 1px 0 rgba(255,200,200,0.45), 0 4px 10px rgba(0,0,0,0.7), 0 0 16px rgba(160,40,80,0.4)",border:"1px solid rgba(30,10,10,0.5)"}} aria-label="Close">
+                <IcX className="w-4 h-4 text-parchment-light"/>
+              </button>
+              <OpenScrollV instruction={instruction} onDownload={onDownload}/>
+            </Mdiv>
+          </Mdiv>}
         </VAP>
-      </VM>;
+      </>;
     };
 
-    // ── Apothecary Bottle ─────────────────────────────────────────────
-    const ApothecaryBottleV=({title,year,category,accent,rotation,onClick})=>{
-      const uid="bot"+Math.abs(((title||"")+year).split("").reduce((a,c)=>a+c.charCodeAt(0),0));
+    // ── ApothecaryBottle (full SVG from source) ─────────────────────
+    const darkenV=(hex,factor)=>{
+      const m=String(hex||"").match(/^#?([a-f0-9]{6})$/i);
+      if(!m)return hex;
+      const num=parseInt(m[1],16);
+      const r=Math.max(0,Math.floor(((num>>16)&0xff)*factor));
+      const g=Math.max(0,Math.floor(((num>>8)&0xff)*factor));
+      const b=Math.max(0,Math.floor((num&0xff)*factor));
+      return "#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
+    };
+    const useIdV=()=>{const r=React.useRef(null);if(!r.current)r.current="bot"+Math.random().toString(36).slice(2,10);return r.current};
+    const ApothecaryBottleV=({title,year,category,accent="#5a2a78",rotation=0,onClick})=>{
+      const uid=useIdV();
       const bottlePath="M 38 26 L 38 44 Q 38 49 35 52 Q 22 60 22 76 L 22 152 Q 22 162 32 162 L 68 162 Q 78 162 78 152 L 78 76 Q 78 60 65 52 Q 62 49 62 44 L 62 26 Z";
       const liquidPath="M 25 90 Q 25 65 36 58 L 64 58 Q 75 65 75 90 L 75 150 Q 75 158 68 158 L 32 158 Q 25 158 25 150 Z";
-      const deep=darkenV(accent,.45);
-      const dim=darkenV(accent,.75);
-      return <VMBtn type="button" onClick={onClick} whileHover={{y:-4,scale:1.04}} whileTap={{scale:.97}} transition={{type:"spring",stiffness:320,damping:22}} style={{width:100,rotate:rotation+"deg",position:"relative",background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",flexDirection:"column",alignItems:"center"}} title={title+" · "+year}>
-        <div style={{position:"absolute",inset:-12,borderRadius:9999,opacity:.5,transition:"opacity .3s",pointerEvents:"none",filter:"blur(28px)",background:"radial-gradient(ellipse 55% 65% at 50% 60%, "+accent+"aa 0%, "+accent+"44 50%, transparent 85%)"}} className="wkv-bottle-glow"/>
-        <svg viewBox="0 0 100 180" width="100" height="180" style={{position:"relative",filter:"drop-shadow(0 10px 14px rgba(0,0,0,.75))"}}>
+      const deep=darkenV(accent,0.45);
+      const dim=darkenV(accent,0.75);
+      return <Mbtn type="button" onClick={onClick} whileHover={{y:-4,scale:1.04}} whileTap={{scale:0.97}} transition={{type:"spring",stiffness:320,damping:22}} style={{width:100,rotate:rotation+"deg"}} className="relative group focus:outline-none flex flex-col items-center" title={title+" · "+year}>
+        <div className="absolute -inset-3 rounded-full opacity-0 group-hover:opacity-80 transition-opacity duration-300 pointer-events-none blur-2xl" style={{background:"radial-gradient(ellipse 55% 65% at 50% 60%, "+accent+"88 0%, "+accent+"22 60%, transparent 85%)"}}/>
+        <svg viewBox="0 0 100 180" width="100" height="180" className="relative" style={{filter:"drop-shadow(0 10px 14px rgba(0,0,0,0.75))"}}>
           <defs>
             <linearGradient id={"body-"+uid} x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="rgba(0,0,0,.85)"/><stop offset="22%" stopColor={dim} stopOpacity=".7"/><stop offset="50%" stopColor={accent} stopOpacity=".45"/><stop offset="78%" stopColor={dim} stopOpacity=".78"/><stop offset="100%" stopColor="rgba(0,0,0,.95)"/>
+              <stop offset="0%" stopColor="rgba(0,0,0,0.85)"/><stop offset="22%" stopColor={dim} stopOpacity="0.7"/><stop offset="50%" stopColor={accent} stopOpacity="0.45"/><stop offset="78%" stopColor={dim} stopOpacity="0.78"/><stop offset="100%" stopColor="rgba(0,0,0,0.95)"/>
             </linearGradient>
             <linearGradient id={"liquid-"+uid} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={accent} stopOpacity=".85"/><stop offset="55%" stopColor={deep} stopOpacity=".95"/><stop offset="100%" stopColor="#04020a" stopOpacity="1"/>
+              <stop offset="0%" stopColor={accent} stopOpacity="0.85"/><stop offset="55%" stopColor={deep} stopOpacity="0.95"/><stop offset="100%" stopColor="#04020a" stopOpacity="1"/>
+            </linearGradient>
+            <linearGradient id={"liquid-h-"+uid} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="rgba(0,0,0,0.55)"/><stop offset="20%" stopColor="rgba(0,0,0,0)"/><stop offset="80%" stopColor="rgba(0,0,0,0)"/><stop offset="100%" stopColor="rgba(0,0,0,0.55)"/>
             </linearGradient>
             <linearGradient id={"cork-"+uid} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#d2a45c"/><stop offset="35%" stopColor="#a87434"/><stop offset="100%" stopColor="#5a3a14"/>
@@ -7719,201 +7742,459 @@ Rules:
             <linearGradient id={"wax-"+uid} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#a82a40"/><stop offset="55%" stopColor="#6a1224"/><stop offset="100%" stopColor="#380612"/>
             </linearGradient>
+            <radialGradient id={"punt-"+uid} cx="0.5" cy="1" r="0.6">
+              <stop offset="0%" stopColor="rgba(0,0,0,0.8)"/><stop offset="100%" stopColor="rgba(0,0,0,0)"/>
+            </radialGradient>
             <linearGradient id={"label-"+uid} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#efe1b8"/><stop offset="50%" stopColor="#e3d09a"/><stop offset="100%" stopColor="#c9b272"/>
             </linearGradient>
+            <linearGradient id={"label-curve-"+uid} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="rgba(40,25,0,0.45)"/><stop offset="20%" stopColor="rgba(40,25,0,0)"/><stop offset="80%" stopColor="rgba(40,25,0,0)"/><stop offset="100%" stopColor="rgba(40,25,0,0.45)"/>
+            </linearGradient>
           </defs>
-          <ellipse cx="50" cy="168" rx="32" ry="4" fill="rgba(0,0,0,.6)"/>
+          <ellipse cx="50" cy="168" rx="32" ry="4" fill="rgba(0,0,0,0.6)"/>
           <path d={bottlePath} fill={"url(#body-"+uid+")"}/>
           <path d={liquidPath} fill={"url(#liquid-"+uid+")"}/>
-          <ellipse cx="50" cy="60" rx="22" ry="1.6" fill="rgba(255,255,255,.08)"/>
-          <path d="M 30 70 Q 28 110 30 150" stroke="rgba(255,255,255,.7)" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-          <path d={bottlePath} fill="none" stroke="rgba(0,0,0,.85)" strokeWidth=".7"/>
-          <rect x="36" y="14" width="28" height="16" rx="1.5" fill={"url(#cork-"+uid+")"} stroke="#2a1808" strokeWidth=".5"/>
-          <path d="M 32 24 Q 33 32 35 30 Q 37 38 40 32 Q 42 42 45 33 Q 48 46 51 34 Q 54 40 57 32 Q 60 38 62 30 Q 65 35 67 26 L 68 18 Q 60 14 50 14 Q 38 14 32 18 Z" fill={"url(#wax-"+uid+")"} stroke="rgba(0,0,0,.6)" strokeWidth=".4"/>
+          <path d={liquidPath} fill={"url(#liquid-h-"+uid+")"}/>
+          <ellipse cx="50" cy="158" rx="22" ry="6" fill={"url(#punt-"+uid+")"}/>
+          <path d="M 26 60 Q 50 56 74 60" stroke="rgba(255,255,255,0.22)" strokeWidth="0.8" fill="none"/>
+          <ellipse cx="50" cy="60" rx="22" ry="1.6" fill="rgba(255,255,255,0.08)"/>
+          <path d="M 30 70 Q 28 110 30 150" stroke="rgba(255,255,255,0.7)" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
+          <path d="M 31 70 Q 29 110 31 150" stroke="rgba(255,255,255,0.35)" strokeWidth="4" fill="none" strokeLinecap="round" opacity="0.6"/>
+          <path d="M 34 80 Q 33 110 34 138" stroke="rgba(255,255,255,0.18)" strokeWidth="1" fill="none" strokeLinecap="round"/>
+          <path d="M 70 76 Q 71 110 70 144" stroke="rgba(255,255,255,0.28)" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+          <path d={bottlePath} fill="none" stroke="rgba(0,0,0,0.85)" strokeWidth="0.7"/>
+          <rect x="38" y="42" width="24" height="2" fill="rgba(0,0,0,0.5)"/>
+          <rect x="38" y="44" width="24" height="1" fill="rgba(255,255,255,0.18)"/>
+          <g>
+            <rect x="36" y="14" width="28" height="16" rx="1.5" fill={"url(#cork-"+uid+")"} stroke="#2a1808" strokeWidth="0.5"/>
+            <path d="M 39 17 Q 45 22 40 28" stroke="rgba(0,0,0,0.35)" strokeWidth="0.4" fill="none"/>
+            <path d="M 47 16 Q 52 24 48 29" stroke="rgba(0,0,0,0.3)" strokeWidth="0.4" fill="none"/>
+            <path d="M 56 18 Q 60 23 57 28" stroke="rgba(0,0,0,0.3)" strokeWidth="0.4" fill="none"/>
+            <circle cx="42" cy="20" r="0.5" fill="rgba(0,0,0,0.4)"/>
+            <circle cx="50" cy="22" r="0.4" fill="rgba(0,0,0,0.4)"/>
+            <circle cx="58" cy="20" r="0.5" fill="rgba(0,0,0,0.4)"/>
+            <circle cx="46" cy="25" r="0.3" fill="rgba(0,0,0,0.4)"/>
+            <circle cx="55" cy="26" r="0.4" fill="rgba(0,0,0,0.4)"/>
+            <rect x="36" y="14" width="28" height="1.2" fill="rgba(255,235,180,0.55)"/>
+            <rect x="36" y="28" width="28" height="1.6" fill="rgba(0,0,0,0.55)"/>
+          </g>
+          <g>
+            <path d="M 32 24 Q 33 32 35 30 Q 37 38 40 32 Q 42 42 45 33 Q 48 46 51 34 Q 54 40 57 32 Q 60 38 62 30 Q 65 35 67 26 L 68 18 Q 60 14 50 14 Q 38 14 32 18 Z" fill={"url(#wax-"+uid+")"} stroke="rgba(0,0,0,0.6)" strokeWidth="0.4"/>
+            <path d="M 36 18 Q 48 14 60 18" stroke="rgba(255,180,180,0.55)" strokeWidth="0.8" fill="none" strokeLinecap="round"/>
+            <ellipse cx="44" cy="19" rx="3" ry="0.8" fill="rgba(255,200,200,0.3)"/>
+          </g>
           <g transform="translate(20 92)">
-            <path d="M 0 0 Q 30 -1.5 60 0 L 60 42 Q 30 43.5 0 42 Z" fill={"url(#label-"+uid+")"} stroke="#8a6e3a" strokeWidth=".5"/>
+            <path d="M 0 0 Q 30 -1.5 60 0 L 60 42 Q 30 43.5 0 42 Z" fill={"url(#label-"+uid+")"} stroke="#8a6e3a" strokeWidth="0.5"/>
+            <path d="M 0 0 Q 30 -1.5 60 0 L 60 42 Q 30 43.5 0 42 Z" fill={"url(#label-curve-"+uid+")"}/>
+            <ellipse cx="12" cy="14" rx="6" ry="3" fill="rgba(120,85,30,0.15)"/>
+            <ellipse cx="48" cy="32" rx="7" ry="3" fill="rgba(120,85,30,0.12)"/>
+            <line x1="5" y1="4" x2="55" y2="4" stroke="#5a3a14" strokeWidth="0.4"/>
+            <line x1="5" y1="5.6" x2="55" y2="5.6" stroke="#5a3a14" strokeWidth="0.25"/>
+            <line x1="5" y1="38" x2="55" y2="38" stroke="#5a3a14" strokeWidth="0.4"/>
+            <line x1="5" y1="36.4" x2="55" y2="36.4" stroke="#5a3a14" strokeWidth="0.25"/>
             <text x="30" y="11" textAnchor="middle" fontFamily="Cinzel, serif" fontSize="3.5" fontWeight="700" fill="#4a2f10" letterSpacing="1" style={{textTransform:"uppercase"}}>Atticor · Creative</text>
-            <text x="30" y="20" textAnchor="middle" fontFamily="Cinzel, serif" fontSize={(title||"").length>14?5.5:7} fontWeight="700" fill="#2a1808" letterSpacing=".6" style={{textTransform:"uppercase"}}>{((title||"").length>18?(title||"").slice(0,17)+"…":(title||"—"))}</text>
+            <text x="30" y="20" textAnchor="middle" fontFamily="Cinzel, serif" fontSize={String(title||"").length>14?5.5:7} fontWeight="700" fill="#2a1808" letterSpacing="0.6" style={{textTransform:"uppercase"}}>{String(title||"").length>18?String(title).slice(0,17)+"…":(title||"—")}</text>
+            <line x1="20" y1="23" x2="40" y2="23" stroke="#5a3a14" strokeWidth="0.35"/>
             <text x="30" y="29" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontSize="5" fill="#5a3a18">{category||""}</text>
             <text x="30" y="35" textAnchor="middle" fontFamily="Cinzel, serif" fontSize="5" fontWeight="600" fill="#3a2510" letterSpacing="1">{year||""}</text>
           </g>
+          <ellipse cx="50" cy="50" rx="13" ry="1.6" fill="#3a2010"/>
+          <path d="M 37 50 Q 50 47 63 50" stroke="rgba(180,140,80,0.4)" strokeWidth="0.4" fill="none"/>
         </svg>
-      </VMBtn>;
+      </Mbtn>;
     };
 
-    // ── Creative Vault — apothecary shelves by year ───────────────────
-    const CreativeVaultV=({shelves,setModal})=>{
-      const [cquery,setCquery]=React.useState("");
-      const [ccat,setCcat]=React.useState("All");
-      const filteredShelves=shelves.map(s=>({...s,items:s.items.filter(i=>{
-        if(ccat!=="All"){
-          const itDur=parseInt(i.dur)||0;
-          const isRadio=(i.media||"").toLowerCase().indexOf("radio")>=0;
-          if(ccat==="TV"&&isRadio)return false;
-          if(ccat==="Radio"&&!isRadio)return false;
-        }
-        if(!cquery)return true;
-        const q=cquery.toLowerCase();
-        return (i.code||"").toLowerCase().includes(q)||(i.title||"").toLowerCase().includes(q)||String(s.year).includes(q);
-      })})).filter(s=>s.items.length>0);
-      const totalShown=filteredShelves.reduce((a,s)=>a+s.items.length,0);
-      const totalAll=shelves.reduce((a,s)=>a+s.items.length,0);
+    // ── BottleModal sub-pieces ───────────────────────────────────────
+    const BottleMetaV=({label,value,accent})=>(
+      <div className="flex gap-3 items-baseline">
+        <span className="font-cinzel text-[10px] tracking-[0.18em] uppercase text-megara-dark/65 font-semibold w-16 shrink-0">{label}</span>
+        <span className={"font-eb "+(accent?"text-megara-wine font-semibold":"text-megara-dark")+" truncate"}>{value||"—"}</span>
+      </div>
+    );
+    const CategoryPillV=({category,accent})=>{
+      const isRadio=(category||"").toLowerCase().includes("radio");
+      return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm font-cinzel font-bold text-[10px] tracking-[0.2em] uppercase" style={{background:accent+"22",border:"1px solid "+accent+"88",color:accent}}>
+        {isRadio?<IcRadio className="w-3 h-3"/>:<IcTv className="w-3 h-3"/>}
+        {category}
+      </span>;
+    };
+    const BottlePreviewV=({accent})=>(
+      <div className="shrink-0" style={{width:70,height:110}}>
+        <svg viewBox="0 0 70 110" width="70" height="110">
+          <defs>
+            <linearGradient id="wkv-bp-body" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="rgba(0,0,0,0.7)"/><stop offset="50%" stopColor={accent} stopOpacity="0.5"/><stop offset="100%" stopColor="rgba(0,0,0,0.85)"/>
+            </linearGradient>
+            <linearGradient id="wkv-bp-liquid" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={accent}/><stop offset="100%" stopColor="#04020a"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="35" cy="104" rx="22" ry="3" fill="rgba(0,0,0,0.45)"/>
+          <path d="M 26 14 L 26 30 Q 26 35 23 38 Q 12 44 12 58 L 12 94 Q 12 102 19 102 L 51 102 Q 58 102 58 94 L 58 58 Q 58 44 47 38 Q 44 35 44 30 L 44 14 Z" fill="url(#wkv-bp-body)" stroke="rgba(0,0,0,0.7)" strokeWidth="0.6"/>
+          <path d="M 15 60 Q 15 46 24 42 L 46 42 Q 55 46 55 60 L 55 92 Q 55 99 49 99 L 21 99 Q 15 99 15 92 Z" fill="url(#wkv-bp-liquid)"/>
+          <path d="M 18 50 Q 17 80 18 95" stroke="rgba(255,255,255,0.6)" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+          <rect x="24" y="6" width="22" height="11" rx="1" fill="#a87434" stroke="#2a1808" strokeWidth="0.4"/>
+          <path d="M 22 12 Q 25 18 27 15 Q 30 20 33 14 Q 36 19 39 14 Q 42 19 45 13 Q 48 17 50 12 L 50 8 L 22 8 Z" fill="#7a1a30" stroke="rgba(0,0,0,0.5)" strokeWidth="0.3"/>
+        </svg>
+      </div>
+    );
+    const TVPreviewV=({accent,title})=>(
+      <div className="relative w-full rounded-md overflow-hidden" style={{aspectRatio:"16/9",background:"linear-gradient(180deg, #1a1f26 0%, #0a0d12 100%)",boxShadow:"inset 0 0 20px rgba(0,0,0,0.85), 0 4px 10px rgba(0,0,0,0.4)",border:"1px solid rgba(0,0,0,0.6)"}}>
+        <div className="absolute inset-2 rounded-sm overflow-hidden" style={{background:"radial-gradient(ellipse at 50% 40%, "+accent+"aa 0%, #1a0a25 70%, #050208 100%)"}}>
+          <div className="absolute inset-0 opacity-25 pointer-events-none" style={{backgroundImage:"repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.4) 3px)"}}/>
+          <div className="absolute" style={{left:"25%",right:"25%",top:"30%",bottom:"20%",background:"radial-gradient(ellipse 60% 70% at 50% 50%, rgba(0,0,0,0.5) 0%, transparent 70%)"}}/>
+          <div className="absolute inset-x-3 bottom-3 text-center">
+            <div className="font-cinzel font-bold uppercase tracking-[0.18em]" style={{fontSize:14,color:"#fff5d6",textShadow:"0 2px 6px rgba(0,0,0,0.9), 0 0 14px rgba(0,0,0,0.6)"}}>{title}</div>
+          </div>
+          <button className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{background:"rgba(255,255,255,0.92)",boxShadow:"0 4px 14px rgba(0,0,0,0.55), 0 0 20px rgba(255,255,255,0.35)"}}>
+            <IcPlay className="w-5 h-5 text-megara-dark" style={{marginLeft:2}}/>
+          </button>
+        </div>
+      </div>
+    );
+    const RadioPreviewV=({accent,title})=>{
+      const bars=56;
+      return <div className="relative w-full rounded-md overflow-hidden" style={{height:130,background:"linear-gradient(180deg, #1a1f26 0%, #0a0d12 100%)",boxShadow:"inset 0 0 20px rgba(0,0,0,0.85), 0 4px 10px rgba(0,0,0,0.4)",border:"1px solid rgba(0,0,0,0.6)"}}>
+        <button className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 z-10" style={{background:"rgba(255,255,255,0.92)",boxShadow:"0 4px 14px rgba(0,0,0,0.55), 0 0 20px rgba(255,255,255,0.35)"}}>
+          <IcPlay className="w-5 h-5 text-megara-dark" style={{marginLeft:2}}/>
+        </button>
+        <div className="absolute inset-y-3 left-20 right-4 flex items-center gap-[3px]">
+          {Array.from({length:bars}).map((_,i)=>{
+            const seed=Math.sin(i*1.337+(title||"").length)*0.5+0.5;
+            const h=18+seed*72;
+            return <span key={i} className="rounded-sm" style={{width:3,height:h,background:"linear-gradient(180deg, "+accent+" 0%, "+accent+"99 50%, "+accent+"33 100%)",boxShadow:"0 0 6px "+accent+"55"}}/>;
+          })}
+        </div>
+        <IcVolume2 className="absolute top-3 right-3 w-4 h-4 text-megara-gold/60"/>
+      </div>;
+    };
+    const PreviewV=({category,accent,title})=>{
+      const isRadio=(category||"").toLowerCase().includes("radio");
+      return isRadio?<RadioPreviewV accent={accent} title={title}/>:<TVPreviewV accent={accent} title={title}/>;
+    };
+    const BottleModalV=({asset,onClose,onDownloadAsset})=>{
+      React.useEffect(()=>{
+        if(!asset)return;
+        const original=document.body.style.overflow;
+        document.body.style.overflow="hidden";
+        const onKey=e=>{if(e.key==="Escape")onClose()};
+        window.addEventListener("keydown",onKey);
+        return ()=>{document.body.style.overflow=original;window.removeEventListener("keydown",onKey)};
+      },[asset,onClose]);
+      return <VAP>
+        {asset&&<Mdiv key="bottle-modal" className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 sm:p-8 overflow-y-auto" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.25}} onClick={onClose}>
+          <div className="absolute inset-0" style={{background:"radial-gradient(ellipse at center, rgba(40,15,55,0.88) 0%, rgba(10,5,15,0.97) 80%)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)"}}/>
+          <Mdiv className="relative z-10 w-full max-w-xl my-auto" initial={{opacity:0,scale:0.96,y:20}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:0.96,y:20}} transition={{duration:0.3,ease:[0.22,1,0.36,1]}} onClick={e=>e.stopPropagation()}>
+            <button onClick={onClose} className="absolute -top-3 -right-3 z-20 w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{background:"radial-gradient(circle at 30% 28%, #d83c68 0%, #8a1f3d 45%, #5a0f25 90%)",boxShadow:"inset 0 1px 0 rgba(255,200,200,0.45), 0 4px 10px rgba(0,0,0,0.7), 0 0 16px rgba(160,40,80,0.4)",border:"1px solid rgba(30,10,10,0.5)"}} aria-label="Close">
+              <IcX className="w-4 h-4 text-parchment-light"/>
+            </button>
+            <div className="relative overflow-hidden wkv-parchment" style={{background:"linear-gradient(180deg, #f7eccc 0%, #ead8a4 55%, #d8c084 100%)",boxShadow:"inset 0 0 60px rgba(120,100,60,0.35), 0 12px 32px rgba(0,0,0,0.65)",border:"1px solid rgba(120,80,30,0.55)"}}>
+              <div className="absolute inset-0 opacity-[0.06] pointer-events-none" style={{backgroundImage:"radial-gradient(#3a2510 1px, transparent 1px)",backgroundSize:"5px 5px"}}/>
+              <div className="h-1.5" style={{background:"linear-gradient(90deg, transparent 0%, "+asset.accent+" 20%, "+asset.accent+" 80%, transparent 100%)",boxShadow:"0 0 12px "+asset.accent+"aa"}}/>
+              <div className="relative z-10 p-6 sm:p-9">
+                <div className="flex items-start gap-5">
+                  <BottlePreviewV accent={asset.accent}/>
+                  <div className="flex-1 min-w-0 pt-1">
+                    <div className="font-cinzel font-bold text-[10px] tracking-[0.3em] uppercase text-megara-dark/70">{asset.client}</div>
+                    <h2 className="font-cinzel font-bold text-2xl sm:text-3xl tracking-wide text-megara-wine mt-1 leading-tight">{asset.title}</h2>
+                    <div className="mt-2 flex items-center gap-2 flex-wrap">
+                      <CategoryPillV category={asset.category} accent={asset.accent}/>
+                      <span className="font-cormorant italic text-megara-dark/70 text-sm">· {asset.year}</span>
+                      <span className="font-cormorant italic text-megara-dark/70 text-sm">· {asset.duration}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="my-6 flex items-center justify-center gap-3">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent to-megara-wine/30"/>
+                  <div className="w-1.5 h-1.5 rotate-45 bg-megara-gold/70"/>
+                  <div className="h-px flex-1 bg-gradient-to-l from-transparent to-megara-wine/30"/>
+                </div>
+                <PreviewV category={asset.category} accent={asset.accent} title={asset.title}/>
+                <div className="mt-6 grid grid-cols-2 gap-x-8 gap-y-1.5 font-eb text-xs sm:text-sm text-megara-dark">
+                  <BottleMetaV label="ISCI" value={asset.isci} accent/>
+                  <BottleMetaV label="Duration" value={asset.duration}/>
+                  <BottleMetaV label="Market" value={asset.market}/>
+                  <BottleMetaV label="Year" value={String(asset.year)}/>
+                  <BottleMetaV label="Client" value={asset.client} accent/>
+                  <BottleMetaV label="Media" value={asset.category} accent/>
+                </div>
+                <div className="font-eb text-xs sm:text-sm text-megara-dark/80 mt-5 mb-5 leading-relaxed border-l-2 border-megara-gold/60 pl-3 italic">
+                  <span className="font-semibold not-italic text-megara-dark">Filed by:</span> Atticor Creative · master retained for archival reference. Bottled the year it aired.
+                </div>
+                <div className="pt-4 border-t border-megara-wine/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="font-cormorant italic text-megara-dark/60 text-xs sm:text-sm">Bottle {asset.id} · shelf {asset.year}</div>
+                  <div className="flex gap-2">
+                    <button onClick={()=>{if(asset._raw&&asset._raw.fileUrl)setModal({t:"creativeView",isci:asset._raw});else notify("No creative file linked for "+asset.isci)}} className="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border border-megara-wine/40 text-megara-wine font-cinzel text-xs font-semibold rounded hover:bg-megara-wine hover:text-parchment transition-all duration-200 group/btn">
+                      <IcEye className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform"/>
+                      <span>View</span>
+                    </button>
+                    <button onClick={()=>onDownloadAsset(asset)} className="flex items-center gap-1.5 px-3 py-1.5 bg-megara-wine border border-megara-gold/50 text-parchment font-cinzel text-xs font-semibold rounded hover:bg-megara-magenta transition-all duration-200 group/btn">
+                      <IcDownload className="w-3.5 h-3.5 group-hover/btn:-translate-y-0.5 transition-transform"/>
+                      <span>Download</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Mdiv>
+        </Mdiv>}
+      </VAP>;
+    };
+
+    // ── Shelf wrapper for the Apothecary ─────────────────────────────
+    const ShelfV=({year,count,children})=>(
+      <Msec initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:0.05}} transition={{duration:0.5,ease:"easeOut"}} className="relative">
+        <div className="flex items-end gap-3 mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1" style={{background:"linear-gradient(180deg, #e9c97a 0%, #c79a3e 45%, #8a5e1f 100%)",boxShadow:"inset 0 1px 0 rgba(255,240,200,0.6), inset 0 -1px 2px rgba(60,30,0,0.5), 0 2px 5px rgba(0,0,0,0.55), 0 0 14px rgba(212,168,87,0.2)",clipPath:"polygon(0 0, 100% 0, calc(100% - 10px) 100%, 10px 100%)"}}>
+            <span className="w-1 h-1 rounded-full bg-megara-plum"/>
+            <span className="font-cinzel font-bold text-[11px] tracking-[0.3em] uppercase" style={{color:"#2a0f08"}}>{year}</span>
+            <span className="font-cormorant italic text-[11px] text-[#3a1808]/85">· {count} {count===1?"bottle":"bottles"}</span>
+          </div>
+          <div className="flex-1 h-px bg-gradient-to-r from-megara-gold/30 to-transparent"/>
+        </div>
+        <div className="relative">
+          <div className="flex flex-wrap gap-x-2 gap-y-2 items-end pb-2 pl-2">{children}</div>
+          <div className="relative h-3 -mt-1">
+            <div className="absolute inset-x-0 top-0 h-3 rounded-sm" style={{background:"linear-gradient(180deg, #4a2a14 0%, #2a1408 60%, #14080a 100%)",boxShadow:"inset 0 1px 0 rgba(255,210,150,0.25), inset 0 -1px 0 rgba(0,0,0,0.7), 0 6px 12px rgba(0,0,0,0.65)",border:"1px solid #0a0604"}}/>
+            <div className="absolute inset-x-0 top-0 h-3 opacity-30 mix-blend-overlay pointer-events-none" style={{backgroundImage:"repeating-linear-gradient(90deg, transparent 0px, transparent 12px, rgba(255,220,170,0.4) 13px, transparent 14px)"}}/>
+          </div>
+          <div className="h-2 mx-4 bg-black/60 blur-md rounded-full -mt-1"/>
+        </div>
+      </Msec>
+    );
+
+    // ── CreativeVault (wired to real legacy ISCIs) ──────────────────
+    const ACCENTS_V=["#5a2a78","#7a1f48","#1f4a78","#7a5a1f","#3a6a2a","#7a3a1f","#1f6a5a","#4a2a8a","#8a3a5a","#2a3a78"];
+    const CATEGORY_FILTERS_V=["All","TV","Radio"];
+    const CreativeVaultV=({assets,onDownloadAsset})=>{
+      const [query,setQuery]=React.useState("");
+      const [cat,setCat]=React.useState("All");
+      const [opened,setOpened]=React.useState(null);
+      const filtered=React.useMemo(()=>{
+        const q=query.trim().toLowerCase();
+        return assets.filter(a=>{
+          if(cat!=="All"&&a.category!==cat)return false;
+          if(!q)return true;
+          return (a.title||"").toLowerCase().includes(q)||(a.client||"").toLowerCase().includes(q)||(a.category||"").toLowerCase().includes(q)||(a.isci||"").toLowerCase().includes(q)||String(a.year).includes(q);
+        });
+      },[query,cat,assets]);
+      const shelves=React.useMemo(()=>{
+        const map={};
+        for(const a of filtered){if(!map[a.year])map[a.year]=[];map[a.year].push(a)}
+        return Object.entries(map).map(([y,items])=>({year:Number(y),items})).sort((a,b)=>b.year-a.year);
+      },[filtered]);
       return <div>
-        <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:12,marginBottom:40,maxWidth:1100,margin:"0 auto 40px"}}>
-          <input value={cquery} onChange={e=>setCquery(e.target.value)} placeholder="Search the apothecary — code, title, year…" className="wkv-eb" style={{flex:"1 1 240px",maxWidth:380,background:"rgba(0,0,0,.4)",border:"1px solid rgba(212,168,87,.25)",color:"#f4ebd8",padding:"8px 12px",borderRadius:4,outline:"none"}}/>
-          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-            {["All","TV","Radio"].map(c=>(
-              <button key={c} onClick={()=>setCcat(c)} className="wkv-cinzel" style={{fontSize:10,letterSpacing:".22em",textTransform:"uppercase",padding:"4px 10px",borderRadius:4,border:"1px solid "+(ccat===c?"#d4a857":"rgba(212,168,87,.25)"),background:ccat===c?"rgba(212,168,87,.85)":"transparent",color:ccat===c?"#1a0a1f":"rgba(212,168,87,.7)",cursor:"pointer",fontWeight:600}}>{c}</button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-10 max-w-5xl mx-auto">
+          <div className="relative flex-1 max-w-sm">
+            <IcSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-megara-gold/40"/>
+            <input type="text" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search the apothecary — title, client, year…" className="w-full bg-black/40 border border-megara-gold/25 text-parchment-light font-eb py-2 pl-9 pr-3 rounded focus:outline-none focus:border-megara-gold/60 placeholder:text-parchment-light/30 transition-colors"/>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {CATEGORY_FILTERS_V.map(c=>(
+              <button key={c} onClick={()=>setCat(c)} className={"font-cinzel text-[10px] tracking-[0.22em] uppercase px-2.5 py-1 rounded border transition-all "+(cat===c?"bg-megara-gold/85 text-megara-dark border-megara-gold":"bg-transparent text-megara-gold/70 border-megara-gold/25 hover:bg-megara-gold/10 hover:text-megara-gold")}>{c}</button>
             ))}
           </div>
-          <div className="wkv-cormorant" style={{fontStyle:"italic",color:"rgba(201,168,212,.65)",fontSize:14}}>
-            {totalShown.toLocaleString()} of {totalAll.toLocaleString()} bottles
-          </div>
+          <div className="font-cormorant italic text-megara-lavender/65 text-sm">{filtered.length.toLocaleString()} of {assets.length.toLocaleString()} bottles</div>
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:40}}>
-          {filteredShelves.length===0?
-            <div className="wkv-cormorant" style={{textAlign:"center",fontStyle:"italic",color:"rgba(201,168,212,.5)",padding:48}}>No bottles match that query.</div>
-            :filteredShelves.map(({year,items})=>
-              <VMSec key={year} initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:.05}} transition={{duration:.5,ease:"easeOut"}} style={{position:"relative"}}>
-                <div style={{display:"flex",alignItems:"flex-end",gap:12,marginBottom:8}}>
-                  <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"4px 12px",background:"linear-gradient(180deg,#e9c97a 0%,#c79a3e 45%,#8a5e1f 100%)",boxShadow:"inset 0 1px 0 rgba(255,240,200,.6), inset 0 -1px 2px rgba(60,30,0,.5), 0 2px 5px rgba(0,0,0,.55), 0 0 14px rgba(212,168,87,.2)",clipPath:"polygon(0 0, 100% 0, calc(100% - 10px) 100%, 10px 100%)"}}>
-                    <span style={{width:4,height:4,borderRadius:9999,background:"#2a0f2e"}}/>
-                    <span className="wkv-cinzel" style={{fontWeight:700,fontSize:11,letterSpacing:".3em",textTransform:"uppercase",color:"#2a0f08"}}>{year||"Unfiled"}</span>
-                    <span className="wkv-cormorant" style={{fontStyle:"italic",fontSize:11,color:"rgba(58,24,8,.85)"}}>· {items.length} {items.length===1?"bottle":"bottles"}</span>
-                  </div>
-                  <div style={{flex:1,height:1,background:"linear-gradient(to right, rgba(212,168,87,.3), transparent)"}}/>
-                </div>
-                <div style={{position:"relative"}}>
-                  <div style={{display:"flex",flexWrap:"wrap",columnGap:8,rowGap:8,alignItems:"flex-end",paddingBottom:8,paddingLeft:8}}>
-                    {items.map((i,idx)=>{
-                      const accent=accentPaletteV[(i.code||"").length*7%accentPaletteV.length];
-                      const rot=((idx*7)%5-2)*0.5;
-                      const cat=parseInt(i.dur)>=15?"TV":"Radio"; // rough
-                      return <ApothecaryBottleV
-                        key={i.code+"_"+i.dma}
-                        title={i.title||i.code}
-                        year={year||""}
-                        category={cat}
-                        accent={accent}
-                        rotation={rot}
-                        onClick={()=>{if(i.fileUrl)setModal({t:"creativeView",isci:i});else notify("No creative file linked for "+i.code)}}
-                      />;
-                    })}
-                  </div>
-                  <div style={{position:"relative",height:12,marginTop:-4}}>
-                    <div style={{position:"absolute",inset:0,top:0,height:12,borderRadius:2,background:"linear-gradient(180deg,#4a2a14 0%,#2a1408 60%,#14080a 100%)",boxShadow:"inset 0 1px 0 rgba(255,210,150,.25), inset 0 -1px 0 rgba(0,0,0,.7), 0 6px 12px rgba(0,0,0,.65)",border:"1px solid #0a0604"}}/>
-                    <div style={{position:"absolute",inset:0,top:0,height:12,opacity:.3,mixBlendMode:"overlay",pointerEvents:"none",backgroundImage:"repeating-linear-gradient(90deg, transparent 0px, transparent 12px, rgba(255,220,170,.4) 13px, transparent 14px)"}}/>
-                  </div>
-                  <div style={{height:8,margin:"-4px 16px 0",background:"rgba(0,0,0,.6)",filter:"blur(6px)",borderRadius:9999}}/>
-                </div>
-              </VMSec>
-            )
+        <div className="flex flex-col gap-10">
+          {shelves.length===0?
+            <div className="text-center font-cormorant italic text-megara-lavender/50 py-12">No bottles match that query.</div>
+            :shelves.map(({year,items})=>(
+              <ShelfV key={year} year={year} count={items.length}>
+                {items.map((a,i)=><ApothecaryBottleV key={a.id} title={a.title} year={a.year} category={a.category} accent={a.accent} rotation={(i*7%5-2)*0.5} onClick={()=>setOpened(a)}/>)}
+              </ShelfV>
+            ))
           }
         </div>
+        <BottleModalV asset={opened} onClose={()=>setOpened(null)} onDownloadAsset={onDownloadAsset}/>
       </div>;
     };
 
-    return <div className="wkv-page" style={{position:"relative",margin:"-20px",padding:"0 0 60px",minHeight:"calc(100vh - 60px)",background:"radial-gradient(ellipse at center top, #4a1858 0%, #2a0f2e 35%, #1a0a1f 75%, #0d0512 100%)",overflow:"hidden",color:"#c9a8d4"}}>
-      <VaultAtmosphereV/>
-      <div style={{position:"relative",zIndex:10,padding:"20px 24px 0"}}>
-        {availableImport>0&&<div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
-          <button onClick={runImport} disabled={importing} className="wkv-cinzel" style={{padding:"6px 14px",background:"linear-gradient(180deg,#d4a857,#b8924a)",color:"#1a0a1f",border:"1px solid #8a6e3a",borderRadius:4,fontSize:11,fontWeight:700,letterSpacing:".18em",textTransform:"uppercase",cursor:importing?"wait":"pointer",opacity:importing?.6:1,boxShadow:"0 2px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,240,200,.4)"}}>
-            {importing?"Importing…":(legacyRecs.length>0?"↻ Re-import ("+availableImport+")":"⬇ Import "+availableImport+" Legacy Records")}
-          </button>
-        </div>}
-        <VaultHeaderV tab={tab} setTab={setTab} instructionsCount={legacyRecs.length} creativeCount={legacyIscis.filter(i=>i.fileUrl).length}/>
-        <VaultFilterBarV filterYear={filterYear} setFilterYear={setFilterYear} filterMarket={filterMarket} setFilterMarket={setFilterMarket} filterMedia={filterMedia} setFilterMedia={setFilterMedia} search={search} setSearch={setSearch} YEARS={YEARS} WK_MKTS_FULL={WK_MKTS_FULL} MEDIA_OPTS={MEDIA_OPTS} archiveCount={filteredLegacy.length}/>
-        <VAP mode="wait">
-          {tab==="instructions"?
-            <VM key="instructions" initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-20}} transition={{duration:.4}} style={{paddingBottom:128,marginTop:32}}>
-              <SectionBannerV title="The Archive" subtitle="A vault of every traffic instruction we've ever sent — wax-sealed, filed, and waiting."/>
-              <div style={{display:"flex",flexDirection:"column",gap:72,marginTop:56}}>
-                {visibleMonthsV.length===0?
-                  <div className="wkv-cormorant" style={{textAlign:"center",padding:60,fontStyle:"italic",color:"rgba(201,168,212,.5)",fontSize:18}}>
-                    {legacyRecs.length===0?"The vault is empty. Send legacy instructions in chat and they'll appear here.":"No entries match these filters."}
-                  </div>
-                :visibleMonthsV.map(mo=>{
-                  const byMedia=groupedV[mo];
-                  const visibleMedia=MEDIA_ORDER_V2.filter(m=>byMedia[m]).concat(Object.keys(byMedia).filter(m=>MEDIA_ORDER_V2.indexOf(m)===-1));
-                  const moTotal=Object.values(byMedia).flat().length;
-                  return <section key={mo}>
-                    <MonthBannerV label={mo} count={moTotal}/>
-                    <div style={{display:"flex",flexDirection:"column",gap:52,marginTop:36}}>
-                      {visibleMedia.map(med=>{
-                        const recs=byMedia[med].sort((a,b)=>(a.market||"").localeCompare(b.market||""));
-                        return <div key={med}>
-                          <MediaBannerV media={med} count={recs.length}/>
-                          <div style={{display:"flex",flexWrap:"wrap",gap:12,marginTop:16,justifyContent:"flex-start",padding:"0 8px"}}>
-                            {recs.map((h,i)=><InstructionScrollV key={(h.ts||"")+"_"+i} record={h} index={i} onView={()=>setViewing(h)} buildLegacyHtml={buildLegacyHtml} iscis={iscis}/>)}
-                          </div>
-                        </div>;
-                      })}
-                    </div>
-                  </section>;
-                })}
-              </div>
-              {visibleMonthsV.length>0&&<div className="wkv-cormorant" style={{marginTop:80,textAlign:"center"}}>
-                <div style={{display:"inline-flex",alignItems:"center",gap:16,fontStyle:"italic",color:"rgba(201,168,212,.5)",fontSize:13}}>
-                  <span style={{height:1,width:64,background:"rgba(212,168,87,.3)"}}/>
-                  end of the underworld archive — for now
-                  <span style={{height:1,width:64,background:"rgba(212,168,87,.3)"}}/>
-                </div>
-              </div>}
-            </VM>
-          :
-            <VM key="creative" initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-20}} transition={{duration:.4}} style={{paddingBottom:128,marginTop:48}}>
-              <SectionBannerV title="The Apothecary" subtitle="Every TV spot and radio cut — bottled, labeled, shelved by the year it aired."/>
-              <div style={{marginTop:40,padding:"0 16px"}}>
-                {legacyIscis.length===0?
-                  <div className="wkv-cormorant" style={{textAlign:"center",padding:48,fontStyle:"italic",color:"rgba(201,168,212,.5)"}}>No legacy WK creative yet. Once legacy instructions are in the vault, their ISCIs appear here grouped by year.</div>
-                  :<CreativeVaultV shelves={apothecaryByYearV} setModal={setModal}/>
-                }
-              </div>
-            </VM>
-          }
-        </VAP>
-      </div>
-      {viewing&&<Mod xl title={"Legacy Instruction — "+(viewing.month||"")+" — "+(viewing.market||"")+" "+(viewing.media||"")} onClose={()=>setViewing(null)}>
-        <div style={{display:"flex",gap:10,marginBottom:10,flexWrap:"wrap"}}>
-          <Btn small onClick={()=>openInNewWindow(viewing)}>↗ Open in New Window</Btn>
-          <Btn small onClick={()=>{const w=window.open("","_blank");if(!w){notify("Pop-up blocked");return}w.document.write(buildLegacyHtml(viewing,iscis));w.document.close();setTimeout(()=>{try{w.print()}catch(e){}},400)}}>🖨 Print</Btn>
-          <Btn small color="#D4A040" onClick={async()=>{
-            try{
-              notify("Generating PDF…");
-              const html=buildLegacyHtml(viewing,iscis);
-              const uri=await generatePdfBase64(html,viewing);
-              if(!uri||typeof uri!=="string"){throw new Error("PDF generator returned empty result")}
-              let blobUrl;
-              try{
-                const b64=uri.split(",")[1]||"";
-                const bin=atob(b64);
-                const bytes=new Uint8Array(bin.length);
-                for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
-                const blob=new Blob([bytes],{type:"application/pdf"});
-                blobUrl=URL.createObjectURL(blob);
-              }catch(decodeErr){console.error("PDF blob conversion failed, falling back to data URI:",decodeErr);blobUrl=uri}
-              const safe=s=>String(s||"").replace(/[^A-Za-z0-9-]+/g,"_");
-              const fname="Legacy_"+safe(viewing.market)+"_"+safe(viewing.month)+"_v"+(viewing.version||"1")+".pdf";
-              const a=document.createElement("a");
-              a.href=blobUrl;a.download=fname;a.target="_blank";a.rel="noopener";
-              document.body.appendChild(a);a.click();document.body.removeChild(a);
-              if(blobUrl.startsWith("blob:"))setTimeout(()=>URL.revokeObjectURL(blobUrl),60000);
-              notify("✓ Downloaded "+fname);
-            }catch(e){
-              console.error("PDF download failed:",e);
-              const msg=e?.message||String(e)||"unknown error";
-              notify("PDF failed: "+msg);
-              alert("PDF download failed.\n\n"+msg+"\n\nCheck the browser console for details.");
-            }
-          }}>⬇ Download PDF</Btn>
+    // ── Section / Month / Media banners ──────────────────────────────
+    const SectionBannerV=({title,subtitle})=>(
+      <div className="relative w-full max-w-3xl mx-auto text-center">
+        <div className="flex items-center justify-center gap-4 mb-2">
+          <div className="h-px w-20 bg-gradient-to-r from-transparent to-megara-gold/60"/>
+          <div className="w-2 h-2 rotate-45 bg-megara-gold/70 shadow-[0_0_10px_rgba(212,168,87,0.6)]"/>
+          <div className="h-px w-20 bg-gradient-to-l from-transparent to-megara-gold/60"/>
         </div>
-        <iframe
-          title="Legacy Instruction"
-          srcDoc={buildLegacyHtml(viewing,iscis)}
-          style={{width:"100%",height:"calc(94vh - 180px)",minHeight:520,border:"1px solid #4a3565",borderRadius:8,background:"#fff"}}
-        />
-      </Mod>}
+        <h2 className="font-cinzel text-2xl sm:text-3xl font-bold tracking-[0.22em] uppercase" style={{color:"#e9c97a",textShadow:"0 0 14px rgba(212,168,87,0.35), 0 2px 0 rgba(0,0,0,0.6)"}}>{title}</h2>
+        <p className="font-cormorant italic text-megara-lavender/70 text-sm sm:text-base mt-2">{subtitle}</p>
+      </div>
+    );
+    const MonthBannerV=({label,count})=>(
+      <div className="flex justify-center">
+        <div className="relative inline-flex items-center gap-3 px-8 py-2.5" style={{background:"linear-gradient(180deg, #4a2a55 0%, #2a1530 50%, #14081c 100%)",boxShadow:"inset 0 1px 0 rgba(212,168,87,0.4), inset 0 -1px 0 rgba(0,0,0,0.8), 0 6px 14px rgba(0,0,0,0.6), 0 0 24px rgba(170,40,100,0.25)",borderTop:"1px solid rgba(212,168,87,0.4)",borderBottom:"1px solid rgba(0,0,0,0.7)",clipPath:"polygon(0 0, 100% 0, calc(100% - 16px) 100%, 16px 100%)"}}>
+          <span className="block w-1.5 h-1.5 rotate-45 bg-megara-gold shadow-[0_0_8px_rgba(212,168,87,0.7)]"/>
+          <span className="font-cinzel font-bold text-lg sm:text-xl tracking-[0.32em] uppercase" style={{color:"#e9c97a",textShadow:"0 2px 0 rgba(0,0,0,0.9), 0 0 12px rgba(212,168,87,0.45)"}}>{label}</span>
+          <span className="font-cormorant italic text-megara-lavender/70 text-xs">· {count} instructions</span>
+          <span className="block w-1.5 h-1.5 rotate-45 bg-megara-gold shadow-[0_0_8px_rgba(212,168,87,0.7)]"/>
+        </div>
+      </div>
+    );
+    const MediaBannerV=({media,count})=>(
+      <div className="flex items-center gap-3 max-w-5xl mx-auto">
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent to-megara-gold/30"/>
+        <div className="relative inline-flex items-center gap-2 px-4 py-1" style={{background:"linear-gradient(180deg, #e9c97a 0%, #c79a3e 45%, #8a5e1f 100%)",boxShadow:"inset 0 1px 0 rgba(255,240,200,0.6), inset 0 -1px 2px rgba(60,30,0,0.5), 0 2px 5px rgba(0,0,0,0.55), 0 0 14px rgba(212,168,87,0.25)",borderRadius:2,clipPath:"polygon(0 0, 100% 0, calc(100% - 10px) 100%, 10px 100%)"}}>
+          <span className="w-1 h-1 rounded-full bg-megara-plum"/>
+          <span className="font-cinzel font-bold text-[11px] tracking-[0.3em] uppercase" style={{color:"#2a0f08"}}>{media}</span>
+          <span className="font-cormorant italic text-[11px] text-[#3a1808]/85">· {count} {count===1?"market":"markets"}</span>
+        </div>
+        <div className="flex-1 h-px bg-gradient-to-l from-transparent to-megara-gold/30"/>
+      </div>
+    );
+
+    // ── Build the live Instruction list + grouped Month → Media ─────
+    const allInstructionsV=React.useMemo(()=>filteredLegacy.map((h,i)=>{
+      const inst=recordToInstructionV(h,iscis);
+      inst.rotation=((i%5)-2)*0.15;
+      return inst;
+    }),[filteredLegacy,iscis]);
+    const groupedV2=React.useMemo(()=>{
+      const map={};
+      for(const ins of allInstructionsV){
+        if(!map[ins.month])map[ins.month]={};
+        if(!map[ins.month][ins.media])map[ins.month][ins.media]=[];
+        map[ins.month][ins.media].push(ins);
+      }
+      return map;
+    },[allInstructionsV]);
+    const MEDIA_ORDER_V2=["TV","Cable","Radio","Streaming Audio","Digital","OOH","Display"];
+    const visibleMonthsV2=Object.keys(groupedV2).sort((a,b)=>{
+      const pa=a.split(/\s+/),pb=b.split(/\s+/);
+      const ya=parseInt(pa[1])||0,yb=parseInt(pb[1])||0;
+      if(ya!==yb)return yb-ya;
+      return MONTHS.indexOf(pb[0])-MONTHS.indexOf(pa[0]);
+    });
+
+    // ── Build the live CreativeAsset list (one per legacy ISCI) ─────
+    const yearByIsciV2=React.useMemo(()=>{
+      const m={};
+      legacyRecs.forEach(h=>{
+        const yr=parseInt((h.month||"").split(/\s+/)[1])||0;
+        (h.iscis||[]).forEach(ic=>{if(ic.code&&!m[ic.code])m[ic.code]=yr});
+      });
+      return m;
+    },[legacyRecs]);
+    const creativeAssetsV=React.useMemo(()=>legacyIscis.map((i,idx)=>{
+      const yr=yearByIsciV2[i.code]||0;
+      const isRadio=(i.media||"").toLowerCase().indexOf("radio")>=0;
+      return {
+        id:i.code,
+        title:i.title||i.code,
+        year:yr,
+        category:isRadio?"Radio":"TV",
+        accent:ACCENTS_V[Math.abs((i.code||"").split("").reduce((a,c)=>a+c.charCodeAt(0),0))%ACCENTS_V.length],
+        client:"Wettermark Keith",
+        market:i.dma||"",
+        isci:i.code,
+        duration:i.dur?":"+i.dur:"",
+        _raw:i,
+      };
+    }),[legacyIscis,yearByIsciV2]);
+
+    // ── Download wiring: PDF for instructions, file download for assets
+    const downloadInstructionPdfV=async(rawRecord)=>{
+      try{
+        notify("Generating PDF…");
+        const html=buildLegacyHtml(rawRecord,iscis);
+        const uri=await generatePdfBase64(html,rawRecord);
+        if(!uri||typeof uri!=="string")throw new Error("PDF generator returned empty result");
+        let blobUrl;
+        try{
+          const b64=uri.split(",")[1]||"";
+          const bin=atob(b64);
+          const bytes=new Uint8Array(bin.length);
+          for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+          const blob=new Blob([bytes],{type:"application/pdf"});
+          blobUrl=URL.createObjectURL(blob);
+        }catch(decodeErr){console.error("PDF blob conversion failed:",decodeErr);blobUrl=uri}
+        const safe=s=>String(s||"").replace(/[^A-Za-z0-9-]+/g,"_");
+        const fname="Legacy_"+safe(rawRecord.market)+"_"+safe(rawRecord.month)+"_v"+(rawRecord.version||"1")+".pdf";
+        const a=document.createElement("a");
+        a.href=blobUrl;a.download=fname;a.target="_blank";a.rel="noopener";
+        document.body.appendChild(a);a.click();document.body.removeChild(a);
+        if(blobUrl.startsWith("blob:"))setTimeout(()=>URL.revokeObjectURL(blobUrl),60000);
+        notify("✓ Downloaded "+fname);
+      }catch(e){
+        console.error("PDF download failed:",e);
+        const msg=(e&&e.message)||String(e)||"unknown error";
+        notify("PDF failed: "+msg);
+        alert("PDF download failed.\n\n"+msg);
+      }
+    };
+    const downloadCreativeAssetV=(asset)=>{
+      if(!asset||!asset._raw||!asset._raw.fileUrl){notify("No creative file linked for "+asset.isci);return}
+      const a=document.createElement("a");
+      a.href=asset._raw.fileUrl;a.download=asset.isci+(asset.duration||"");a.target="_blank";a.rel="noopener";
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      notify("Downloading "+asset.isci);
+    };
+
+    return <div className="wkv-page min-h-screen w-full relative overflow-hidden selection:bg-megara-wine selection:text-parchment" style={{margin:"-20px",background:"radial-gradient(ellipse at center top, #4a1858 0%, #2a0f2e 35%, #1a0a1f 75%, #0d0512 100%)"}}>
+      <VaultAtmosphereV/>
+      <div className="relative z-10 h-screen overflow-y-auto">
+        <div className="px-6 sm:px-16 lg:px-36 pb-24">
+          {availableImport>0&&<div className="flex justify-end pt-4">
+            <button onClick={runImport} disabled={importing} className="font-cinzel uppercase tracking-[0.18em] text-[11px] font-bold rounded px-3 py-1.5" style={{background:"linear-gradient(180deg,#d4a857,#b8924a)",color:"#1a0a1f",border:"1px solid #8a6e3a",cursor:importing?"wait":"pointer",opacity:importing?0.6:1,boxShadow:"0 2px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,240,200,.4)"}}>
+              {importing?"Importing…":(legacyRecs.length>0?"↻ Re-import ("+availableImport+")":"⬇ Import "+availableImport+" Legacy Records")}
+            </button>
+          </div>}
+          <VaultHeaderV activeTab={tab} onTabChange={setTab} instructionsCount={legacyRecs.length} creativeCount={legacyIscis.filter(i=>i.fileUrl).length} iscisCount={legacyIscis.length}/>
+          <FilterBarV filterYear={filterYear} setFilterYear={setFilterYear} filterMarket={filterMarket} setFilterMarket={setFilterMarket} filterMedia={filterMedia} setFilterMedia={setFilterMedia} search={search} setSearch={setSearch} YEARS={YEARS} WK_MKTS_FULL={WK_MKTS_FULL} MEDIA_OPTS={MEDIA_OPTS} archiveCount={filteredLegacy.length}/>
+          <VAP mode="wait">
+            {tab==="instructions"?
+              <Mdiv key="instructions" initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-20}} transition={{duration:0.4}} className="mt-8 pb-32">
+                <SectionBannerV title="The Archive" subtitle="A vault of every traffic instruction we've ever sent — wax-sealed, filed, and waiting."/>
+                <div className="flex flex-col gap-20 mt-14">
+                  {visibleMonthsV2.length===0?
+                    <div className="text-center font-cormorant italic text-megara-lavender/50 py-12">
+                      {legacyRecs.length===0?"The vault is empty. Send legacy instructions in chat and they'll appear here.":"No entries match these filters."}
+                    </div>
+                    :visibleMonthsV2.map(month=>{
+                      const byMedia=groupedV2[month];
+                      const visibleMedia=MEDIA_ORDER_V2.filter(m=>byMedia[m]).concat(Object.keys(byMedia).filter(m=>MEDIA_ORDER_V2.indexOf(m)===-1));
+                      const monthTotal=Object.values(byMedia).flat().length;
+                      return <section key={month}>
+                        <MonthBannerV label={month} count={monthTotal}/>
+                        <div className="flex flex-col gap-14 mt-10">
+                          {visibleMedia.map(media=>{
+                            const instructions=byMedia[media].slice().sort((a,b)=>(a.market||"").localeCompare(b.market||""));
+                            return <div key={media}>
+                              <MediaBannerV media={media} count={instructions.length}/>
+                              <div className="flex flex-wrap gap-x-3 gap-y-3 mt-4 justify-start">
+                                {instructions.map((instruction,index)=><InstructionScrollV key={instruction.id} instruction={instruction} index={index} onDownload={downloadInstructionPdfV}/>)}
+                              </div>
+                            </div>;
+                          })}
+                        </div>
+                      </section>;
+                    })
+                  }
+                </div>
+                {visibleMonthsV2.length>0&&<div className="mt-20 text-center">
+                  <div className="inline-flex items-center gap-4 font-cormorant italic text-megara-lavender/50 text-sm">
+                    <span className="h-px w-16 bg-megara-gold/30"/>
+                    end of the underworld archive — for now
+                    <span className="h-px w-16 bg-megara-gold/30"/>
+                  </div>
+                </div>}
+              </Mdiv>
+            :
+              <Mdiv key="creative" initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-20}} transition={{duration:0.4}} className="mt-12 pb-32">
+                <SectionBannerV title="The Apothecary" subtitle="Every TV spot and radio cut — bottled, labeled, shelved by the year it aired."/>
+                <div className="mt-10">
+                  {legacyIscis.length===0?
+                    <div className="text-center font-cormorant italic text-megara-lavender/50 py-12">No legacy WK creative yet. Once legacy instructions are in the vault, their ISCIs appear here grouped by year.</div>
+                    :<CreativeVaultV assets={creativeAssetsV} onDownloadAsset={downloadCreativeAssetV}/>
+                  }
+                </div>
+              </Mdiv>
+            }
+          </VAP>
+        </div>
+      </div>
     </div>;
   };
 
