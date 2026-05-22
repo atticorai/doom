@@ -407,5 +407,51 @@ create policy traffic_sheets_public_read
   using (true);  -- linked from confirmation emails via unguessable URLs
 
 -- ════════════════════════════════════════════════════════════════════
+-- Storage Buckets
+-- ════════════════════════════════════════════════════════════════════
+-- The /api/storage endpoint writes to these buckets via the service-role
+-- key. The supabase-storage-shim.js in the browser routes Firebase-shape
+-- storage.ref(path) calls to the right bucket based on path prefix:
+--   creative/*    -> bucket 'creative'  (path: rest after prefix)
+--   ooh-photos/*  -> bucket 'ooh'       (path: 'photos/' + rest)
+--   legacy/*      -> bucket 'legacy-wk' (path: rest after prefix)
+--
+-- 'creative' and 'ooh' are PUBLIC: the app stores the public URL in
+-- records and renders it directly in <video>/<img>/<a>. Anyone with
+-- the URL can read the file — same as Firebase Storage's legacy
+-- behavior.
+-- 'legacy-wk' is PRIVATE: archival source PDFs that never need to be
+-- linked publicly. Reads go through /api/storage createSignedUrl.
+--
+-- 500 MB per file (covers TV creative; large source files belong in
+-- legacy-wk where they're archived rather than served).
+
+insert into storage.buckets (id, name, public, file_size_limit)
+values
+  ('creative',  'creative',  true,  524288000),
+  ('ooh',       'ooh',       true,  524288000),
+  ('legacy-wk', 'legacy-wk', false, 524288000)
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit;
+
+-- Public read policies for the two public buckets. Service role
+-- bypasses all policies, so writes (uploads, deletes, moves) all
+-- go through /api/storage regardless of these.
+
+drop policy if exists "Public read on creative" on storage.objects;
+create policy "Public read on creative"
+  on storage.objects for select
+  using (bucket_id = 'creative');
+
+drop policy if exists "Public read on ooh" on storage.objects;
+create policy "Public read on ooh"
+  on storage.objects for select
+  using (bucket_id = 'ooh');
+
+-- legacy-wk has NO public policy: reads require a signed URL minted
+-- by /api/storage (which uses the service-role key).
+
+-- ════════════════════════════════════════════════════════════════════
 -- Done.
 -- ════════════════════════════════════════════════════════════════════

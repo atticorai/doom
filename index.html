@@ -303,19 +303,26 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
       window.db=null;window.storage=null;window.fbAuth=null;
       window._firebaseReady=fetch("/api/config").then(function(r){return r.json()}).then(function(cfg){
         if(cfg.useSupabase){
-          // Supabase mode: load the shim, which exposes window.__supabaseDb
-          // with the same .collection().doc().get()/.set() shape Firestore had.
-          return loadScript("/supabase-shim.js").then(function(){
+          // Supabase mode: load both shims so window.db (via /api/db) and
+          // window.storage (via /api/storage) have the same .collection()/
+          // .ref() shape the app was built against. Firebase SDKs are
+          // still loaded above for legacy auth custom-token fallback, but
+          // neither Firestore nor Firebase Storage is touched.
+          //
+          // Legacy file URLs already saved in ISCI records still point at
+          // firebasestorage.googleapis.com — they remain valid static
+          // URLs (rendered in <video>/<a href>) as long as the old
+          // Firebase project keeps the bucket alive. New uploads land in
+          // Supabase. To re-host the old files, run the bulk creative
+          // re-upload flow in the ISCI Registry.
+          return Promise.all([
+            loadScript("/supabase-shim.js"),
+            loadScript("/supabase-storage-shim.js"),
+          ]).then(function(){
             window.db=window.__supabaseDb;
-            // Storage stays on Firebase for now — creative file URLs in
-            // existing ISCIs already point at firebasestorage.googleapis.com
-            // and keep working as long as the Firebase project is alive.
-            try{
-              firebase.initializeApp(cfg);
-              window.storage=firebase.storage();
-              try{window.fbAuth=firebase.auth()}catch(e){}
-            }catch(e){console.warn("Firebase storage init skipped:",e)}
-            console.log("Supabase mode active — db is /api/db");
+            window.storage=window.__supabaseStorage;
+            try{firebase.initializeApp(cfg);try{window.fbAuth=firebase.auth()}catch(e){}}catch(e){console.warn("Firebase auth init skipped:",e)}
+            console.log("Supabase mode active — db is /api/db, storage is /api/storage");
           });
         }
         firebase.initializeApp(cfg);
