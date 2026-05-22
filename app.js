@@ -7253,168 +7253,671 @@ Rules:
       }
     };
 
-    return <div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-        <PageHead title="WK Legacy Vault" pgKey="vault" sub={legacyRecs.length+" instruction"+(legacyRecs.length===1?"":"s")+" · "+legacyIscis.length+" legacy ISCI"+(legacyIscis.length===1?"":"s")+" · "+legacyIscis.filter(i=>i.fileUrl).length+" with creative"}/>
-        {availableImport>0&&<Btn color="#D4A040" disabled={importing} onClick={runImport}>{importing?"Importing…":(legacyRecs.length>0?"↻ Re-import ("+availableImport+")":"⬇ Import "+availableImport+" Legacy Records")}</Btn>}
+    // ═══ NEW WK LEGACY VAULT UI — Megara underworld design ═══════════
+    // Ported from the React/TS source bundle in WK-Legacy-Vault-main.zip.
+    // Uses Framer Motion via window.FramerMotion (loaded ESM in index.html).
+    // Visual: arched stone header, atmospheric backdrop, scrolls that
+    // unfurl on click, apothecary bottles on wooden shelves.
+    const FM_=window.FramerMotion;
+    const VM=FM_.motion.div;
+    const VMBtn=FM_.motion.button;
+    const VMSec=FM_.motion.section;
+    const VMH1=FM_.motion.h1;
+    const VMSpan=FM_.motion.span;
+    const VAP=FM_.AnimatePresence;
+
+    // Megara palette
+    const VC={dark:"#1a0a1f",plum:"#2a0f2e",wine:"#7a1f3d",magenta:"#a02850",lavender:"#c9a8d4",gold:"#d4a857",goldDark:"#b8924a",parchmentLight:"#f4ebd8",parchment:"#e8dcc0",parchmentDark:"#d4c4a0",parchmentShadow:"#b5a37a"};
+
+    // ── Group filteredLegacy by Month → Media → recs[] ─────────────
+    const groupedV=(()=>{
+      const m={};
+      filteredLegacy.forEach(h=>{
+        const mo=h.month||"Unfiled";
+        if(!m[mo])m[mo]={};
+        const med=h.media||"Unknown";
+        if(!m[mo][med])m[mo][med]=[];
+        m[mo][med].push(h);
+      });
+      return m;
+    })();
+    const MEDIA_ORDER_V2=["TV","Cable","Radio","Streaming Audio","Digital","OOH","Display"];
+    const visibleMonthsV=Object.keys(groupedV).sort((a,b)=>{
+      const pa=a.split(/\s+/),pb=b.split(/\s+/);
+      const ya=parseInt(pa[1])||0,yb=parseInt(pb[1])||0;
+      if(ya!==yb)return yb-ya;
+      return MONTHS.indexOf(pb[0])-MONTHS.indexOf(pa[0]);
+    });
+
+    // Group legacyIscis by year for the Apothecary shelves
+    const yearByIsciV=(()=>{
+      const map={};
+      legacyRecs.forEach(h=>{
+        const yr=parseInt((h.month||"").split(/\s+/)[1])||0;
+        (h.iscis||[]).forEach(ic=>{if(ic.code&&!map[ic.code])map[ic.code]=yr});
+      });
+      return map;
+    })();
+    const apothecaryByYearV=(()=>{
+      const m={};
+      legacyIscis.forEach(i=>{const y=yearByIsciV[i.code]||0;(m[y]=m[y]||[]).push(i)});
+      return Object.entries(m).map(([y,items])=>({year:Number(y),items})).sort((a,b)=>b.year-a.year);
+    })();
+
+    const accentPaletteV=["#5a2a78","#7a1f48","#1f4a78","#7a5a1f","#3a6a2a","#7a3a1f","#1f6a5a","#4a2a8a","#8a3a5a","#2a3a78"];
+    const darkenV=(hex,f)=>{const m=hex.match(/^#?([a-f0-9]{6})$/i);if(!m)return hex;const n=parseInt(m[1],16);const r=Math.max(0,Math.floor(((n>>16)&0xff)*f));const g=Math.max(0,Math.floor(((n>>8)&0xff)*f));const b=Math.max(0,Math.floor((n&0xff)*f));return"#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("")};
+
+    // ── Sub-components ───────────────────────────────────────────────
+    const IonicColumnV=()=>(
+      <svg width="100%" height="100%" viewBox="0 0 60 800" preserveAspectRatio="none" style={{display:"block"}}>
+        <defs>
+          <linearGradient id="wkv-stone" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#2a1830"/><stop offset="20%" stopColor="#5a3a60"/><stop offset="50%" stopColor="#8a6da0"/><stop offset="80%" stopColor="#5a3a60"/><stop offset="100%" stopColor="#2a1830"/>
+          </linearGradient>
+          <linearGradient id="wkv-stoneDark" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#1a0c20"/><stop offset="50%" stopColor="#4a2a50"/><stop offset="100%" stopColor="#1a0c20"/>
+          </linearGradient>
+        </defs>
+        <rect x="2" y="0" width="56" height="6" fill="url(#wkv-stoneDark)"/>
+        <rect x="0" y="6" width="60" height="4" fill="url(#wkv-stone)"/>
+        <g transform="translate(0,10)">
+          <rect x="2" y="0" width="56" height="14" fill="url(#wkv-stone)"/>
+          <circle cx="10" cy="7" r="5" fill="none" stroke="#d4a857" strokeWidth=".8" opacity=".7"/>
+          <circle cx="10" cy="7" r="2.5" fill="none" stroke="#d4a857" strokeWidth=".6" opacity=".7"/>
+          <circle cx="50" cy="7" r="5" fill="none" stroke="#d4a857" strokeWidth=".8" opacity=".7"/>
+          <circle cx="50" cy="7" r="2.5" fill="none" stroke="#d4a857" strokeWidth=".6" opacity=".7"/>
+        </g>
+        <rect x="6" y="24" width="48" height="3" fill="url(#wkv-stoneDark)"/>
+        <rect x="10" y="27" width="40" height="746" fill="url(#wkv-stone)"/>
+        <g opacity=".6">
+          <line x1="16" y1="27" x2="16" y2="773" stroke="#2a1830" strokeWidth=".8"/>
+          <line x1="22" y1="27" x2="22" y2="773" stroke="#2a1830" strokeWidth=".8"/>
+          <line x1="30" y1="27" x2="30" y2="773" stroke="#2a1830" strokeWidth=".8"/>
+          <line x1="38" y1="27" x2="38" y2="773" stroke="#2a1830" strokeWidth=".8"/>
+          <line x1="44" y1="27" x2="44" y2="773" stroke="#2a1830" strokeWidth=".8"/>
+        </g>
+        <line x1="26" y1="27" x2="26" y2="773" stroke="#c9a8d4" strokeWidth=".6" opacity=".35"/>
+        <rect x="6" y="773" width="48" height="4" fill="url(#wkv-stoneDark)"/>
+        <rect x="2" y="777" width="56" height="6" fill="url(#wkv-stone)"/>
+        <rect x="0" y="783" width="60" height="6" fill="url(#wkv-stoneDark)"/>
+        <rect x="0" y="789" width="60" height="11" fill="url(#wkv-stone)"/>
+      </svg>
+    );
+
+    const SconceV=()=>(
+      <div style={{position:"relative",width:40,height:64}}>
+        <div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:12,height:32,background:"linear-gradient(to bottom,#7a5828,#3a2510 50%,#1a0c08)",borderRadius:2,boxShadow:"0 2px 4px rgba(0,0,0,.5)"}}/>
+        <div style={{position:"absolute",top:24,left:0,right:0,margin:"0 auto",width:32,height:12,borderBottomLeftRadius:9999,borderBottomRightRadius:9999,background:"linear-gradient(to bottom,#8a6a32 0%,#4a2f10 80%,#1a0c08 100%)",boxShadow:"inset 0 1px 0 rgba(255,220,160,.4),0 2px 4px rgba(0,0,0,.6)"}}/>
+        <div style={{position:"absolute",top:24,left:0,right:0,margin:"0 auto",width:32,height:2,background:"rgba(212,168,87,.7)"}}/>
+        <VM style={{position:"absolute",left:"50%",transform:"translateX(-50%)",top:0}} animate={{scale:[1,1.12,.95,1.08,1],rotate:[0,2,-2,1,0]}} transition={{duration:1.4,repeat:Infinity,ease:"easeInOut"}}>
+          <div style={{width:12,height:20,borderRadius:9999,background:"radial-gradient(ellipse at 50% 70%, rgba(255,210,140,1) 0%, rgba(220,90,140,.95) 40%, rgba(140,30,90,.6) 75%, transparent 100%)",filter:"blur(.5px)",boxShadow:"0 0 14px rgba(220,90,140,.7),0 0 28px rgba(160,40,100,.45)"}}/>
+        </VM>
       </div>
+    );
 
-      <div style={{display:"flex",gap:0,marginTop:8}}>
-        {[{k:"instructions",l:"📜 Instructions",ct:legacyRecs.length},{k:"creative",l:"🎬 Creative",ct:legacyIscis.filter(i=>i.fileUrl).length+"/"+legacyIscis.length}].map(t=>{
-          const active=tab===t.k;
-          return <button key={t.k} onClick={()=>setTab(t.k)} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?"#D4A040":"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?"#D4A040":"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{t.l} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({t.ct})</span></button>;
-        })}
-        <div style={{flex:1,borderBottom:"2px solid #4a3565"}}/>
+    const VaultAtmosphereV=()=>{
+      const embers=React.useMemo(()=>Array.from({length:22}).map((_,i)=>({
+        id:i,
+        left:Math.random()*100,
+        delay:Math.random()*12,
+        duration:14+Math.random()*10,
+        size:2+Math.random()*3,
+        hue:Math.random()>0.4?"magenta":"gold",
+        drift:(Math.random()-.5)*60,
+      })),[]);
+      return <div style={{position:"absolute",inset:0,pointerEvents:"none",overflow:"hidden"}}>
+        <VM style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 80% 60% at 50% 10%, rgba(160,40,80,0.35) 0%, rgba(122,31,61,0.18) 30%, transparent 60%)"}} animate={{opacity:[0.7,1,0.7]}} transition={{duration:9,repeat:Infinity,ease:"easeInOut"}}/>
+        <VM style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 70% 50% at 30% 80%, rgba(90,40,140,0.22) 0%, transparent 55%), radial-gradient(ellipse 70% 50% at 70% 70%, rgba(160,40,120,0.18) 0%, transparent 55%)"}} animate={{opacity:[.85,1,.85]}} transition={{duration:11,repeat:Infinity,ease:"easeInOut",delay:2}}/>
+        <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 220px rgba(0,0,0,.85)"}}/>
+        <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",opacity:.05}}>
+          <svg width="540" height="540" viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#d4a857" strokeWidth=".6"/>
+            <circle cx="100" cy="100" r="72" fill="none" stroke="#d4a857" strokeWidth=".4"/>
+            {Array.from({length:24}).map((_,i)=>{
+              const a=i/24*Math.PI*2;
+              const x=100+Math.cos(a)*76;
+              const y=100+Math.sin(a)*76;
+              return <ellipse key={i} cx={x} cy={y} rx="5" ry="2" fill="none" stroke="#d4a857" strokeWidth=".5" transform={"rotate("+(a*180/Math.PI+90)+" "+x+" "+y+")"}/>;
+            })}
+            <text x="100" y="108" textAnchor="middle" fontFamily="Cinzel,serif" fontSize="22" fontWeight="700" fill="#d4a857" letterSpacing="6">WK</text>
+          </svg>
+        </div>
+        <svg style={{position:"absolute",top:0,left:0,right:0,height:12,width:"100%",opacity:.5}} viewBox="0 0 80 12" preserveAspectRatio="none">
+          <defs>
+            <pattern id="wkv-meander" x="0" y="0" width="40" height="12" patternUnits="userSpaceOnUse">
+              <path d="M0 11 V3 H30 V8 H10 V5 H25 V11 Z" fill="none" stroke="#d4a857" strokeWidth=".6" opacity=".85"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="12" fill="url(#wkv-meander)"/>
+        </svg>
+        <div style={{position:"absolute",top:12,left:0,right:0,height:1,background:"linear-gradient(to right, transparent, rgba(212,168,87,.4), transparent)"}}/>
+        <div style={{position:"absolute",left:0,top:12,bottom:0,width:80,opacity:.8}}><IonicColumnV/></div>
+        <div style={{position:"absolute",right:0,top:12,bottom:0,width:80,opacity:.8,transform:"scaleX(-1)"}}><IonicColumnV/></div>
+        <div style={{position:"absolute",top:40,left:24}}><SconceV/></div>
+        <div style={{position:"absolute",top:40,right:24,transform:"scaleX(-1)"}}><SconceV/></div>
+        {embers.map(e=><VM key={e.id} style={{position:"absolute",left:e.left+"%",bottom:-10,width:e.size,height:e.size,borderRadius:9999,background:e.hue==="magenta"?"radial-gradient(circle, rgba(220,120,180,.95) 0%, rgba(160,40,100,.6) 50%, transparent 80%)":"radial-gradient(circle, rgba(255,220,140,.95) 0%, rgba(212,168,87,.55) 50%, transparent 80%)",boxShadow:e.hue==="magenta"?"0 0 8px rgba(220,120,180,.7)":"0 0 8px rgba(255,220,140,.7)"}} animate={{y:["0vh","-110vh"],x:[0,e.drift,-e.drift/2,e.drift/3,0],opacity:[0,.9,.7,.4,0],scale:[.6,1.1,1,.9,.4]}} transition={{duration:e.duration,delay:e.delay,repeat:Infinity,ease:"easeOut"}}/>)}
+      </div>;
+    };
+
+    const VaultArchwayV=({children})=>(
+      <div style={{position:"relative",width:"100%",maxWidth:1200,margin:"0 auto",paddingTop:24}}>
+        <svg viewBox="0 0 800 220" preserveAspectRatio="none" style={{position:"absolute",left:0,right:0,top:0,width:"100%",height:"auto",pointerEvents:"none"}}>
+          <defs>
+            <linearGradient id="wkv-archStone" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3a1f4a"/><stop offset="50%" stopColor="#5a3a70"/><stop offset="100%" stopColor="#2a1230"/>
+            </linearGradient>
+            <linearGradient id="wkv-archStoneDark" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#1a0c20"/><stop offset="100%" stopColor="#3a1f4a"/>
+            </linearGradient>
+            <radialGradient id="wkv-archGlow" cx=".5" cy="1" r=".7">
+              <stop offset="0%" stopColor="rgba(160,40,100,.65)"/><stop offset="60%" stopColor="rgba(122,31,61,.2)"/><stop offset="100%" stopColor="transparent"/>
+            </radialGradient>
+          </defs>
+          <ellipse cx="400" cy="220" rx="320" ry="160" fill="url(#wkv-archGlow)"/>
+          <path d="M 80 220 L 80 100 Q 80 30 400 30 Q 720 30 720 100 L 720 220" fill="none" stroke="url(#wkv-archStone)" strokeWidth="10"/>
+          <path d="M 90 220 L 90 105 Q 90 40 400 40 Q 710 40 710 105 L 710 220" fill="none" stroke="#d4a857" strokeWidth=".8" opacity=".7"/>
+          <g>
+            <path d="M 380 35 L 420 35 L 425 70 L 375 70 Z" fill="url(#wkv-archStone)" stroke="#d4a857" strokeWidth=".8"/>
+            <circle cx="400" cy="52" r="6" fill="none" stroke="#d4a857" strokeWidth=".6"/>
+            <text x="400" y="56" textAnchor="middle" fontFamily="Cinzel,serif" fontSize="8" fontWeight="700" fill="#d4a857">WK</text>
+          </g>
+          <rect x="55" y="195" width="50" height="10" fill="url(#wkv-archStoneDark)" stroke="#d4a857" strokeWidth=".5"/>
+          <rect x="695" y="195" width="50" height="10" fill="url(#wkv-archStoneDark)" stroke="#d4a857" strokeWidth=".5"/>
+        </svg>
+        <VM initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:.8}} style={{position:"relative",paddingTop:100,paddingBottom:16,padding:"100px 24px 16px",textAlign:"center"}}>
+          {children}
+        </VM>
       </div>
+    );
 
-      {tab==="instructions"&&<>
-        <Cd style={{padding:14,marginTop:0,borderTopLeftRadius:0}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}>
-            <div style={{fontSize:14,fontWeight:800,color:"#D4A040",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.5}}>🗄 Archive ({filteredLegacy.length})</div>
-            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-              <Sel value={filterYear} onChange={setFilterYear} options={[{v:"all",l:"All Years"},...YEARS.map(y=>({v:y,l:y}))]}/>
-              <Sel value={filterMarket} onChange={setFilterMarket} options={[{v:"all",l:"All Markets"},...WK_MKTS_FULL.map(m=>({v:m,l:m}))]}/>
-              <Sel value={filterMedia} onChange={setFilterMedia} options={[{v:"all",l:"All Media"},...MEDIA_OPTS.map(m=>({v:m,l:m}))]}/>
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search ISCI / station / comment…" style={{padding:"6px 9px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,background:"#1e1233",color:"#E8DFF0",outline:"none",minWidth:200}}/>
-            </div>
+    const VaultHeaderV=({tab,setTab,instructionsCount,creativeCount})=>{
+      const counts=instructionsCount.toLocaleString()+" instruction"+(instructionsCount===1?"":"s")+" · "+legacyIscis.length.toLocaleString()+" legacy ISCIs · "+creativeCount.toLocaleString()+" with creative";
+      return <div style={{width:"100%",maxWidth:1200,margin:"0 auto"}}>
+        <VaultArchwayV>
+          <VM initial={{opacity:0,letterSpacing:".05em"}} animate={{opacity:1,letterSpacing:".15em"}} transition={{duration:1.2,ease:"easeOut"}} className="wkv-cinzel" style={{fontSize:11,textTransform:"uppercase",color:"rgba(212,168,87,.8)",marginBottom:4,letterSpacing:".35em"}}>
+            ✦ Atticor · Doom &amp; Deliverables ✦
+          </VM>
+          <VMH1 initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} transition={{duration:1,ease:"easeOut"}} className="wkv-cinzel" style={{fontSize:"clamp(36px,5vw,60px)",fontWeight:700,letterSpacing:".08em",margin:0,backgroundImage:"linear-gradient(180deg,#f7e6b8 0%,#d4a857 50%,#8a6a30 100%)",WebkitBackgroundClip:"text",backgroundClip:"text",color:"transparent",textShadow:"0 2px 0 rgba(0,0,0,.6)",filter:"drop-shadow(0 0 12px rgba(212,168,87,.25))"}}>
+            WK Legacy Vault
+          </VMH1>
+          <VM initial={{opacity:0}} animate={{opacity:1}} transition={{duration:1,delay:.4}} className="wkv-cormorant" style={{fontStyle:"italic",fontSize:"clamp(15px,1.4vw,20px)",color:"#c9a8d4",marginTop:8}}>
+            "Welcome to my little corner of the underworld, sweetheart."
+          </VM>
+          <VM initial={{opacity:0}} animate={{opacity:1}} transition={{duration:1,delay:.6}} className="wkv-eb" style={{color:"rgba(201,168,212,.6)",fontSize:11,letterSpacing:".18em",textTransform:"uppercase",marginTop:12}}>
+            {counts}
+          </VM>
+        </VaultArchwayV>
+        <VM initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:.8,delay:.8}} style={{margin:"16px auto 32px",maxWidth:540,textAlign:"center"}}>
+          <div style={{display:"inline-block",padding:"8px 24px",borderTop:"1px solid rgba(212,168,87,.4)",borderBottom:"1px solid rgba(212,168,87,.4)",background:"linear-gradient(to right, transparent, rgba(122,31,61,.1), transparent)"}}>
+            <span className="wkv-cormorant" style={{fontStyle:"italic",color:"rgba(201,168,212,.9)",fontSize:"clamp(14px,1.2vw,18px)"}}>Every ghost of WK past, filed away by yours truly.</span>
           </div>
-
-          {filteredLegacy.length===0?(
-            <div style={{padding:30,textAlign:"center",color:"#9B8EAD",fontSize:13}}>
-              {legacyRecs.length===0?"The vault is empty. Send legacy instructions in chat and they'll appear here.":"No entries match these filters."}
-            </div>
-          ):(()=>{
-            // Group: Month + Year → Media → Markets (matches Traffic Library)
-            const MEDIA_ORDER_V=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display"];
-            const MONTH_NAMES_V=["January","February","March","April","May","June","July","August","September","October","November","December"];
-            const months=[...new Set(filteredLegacy.map(h=>h.month))].filter(Boolean).sort((a,b)=>{
-              const pa=a.split(/\s+/),pb=b.split(/\s+/);
-              const ya=parseInt(pa[1])||0,yb=parseInt(pb[1])||0;
-              if(ya!==yb)return yb-ya;
-              return MONTH_NAMES_V.indexOf(pb[0])-MONTH_NAMES_V.indexOf(pa[0]);
-            });
-            return <div style={{maxHeight:760,overflowY:"auto"}}>
-              {months.map(mo=>{
-                const moData=filteredLegacy.filter(h=>h.month===mo);
-                const moMedias=[...new Set(moData.map(h=>h.media))].sort((a,b)=>(MEDIA_ORDER_V.indexOf(a)===-1?99:MEDIA_ORDER_V.indexOf(a))-(MEDIA_ORDER_V.indexOf(b)===-1?99:MEDIA_ORDER_V.indexOf(b)));
-                return <div key={mo} style={{marginBottom:20}}>
-                  <div style={{fontSize:18,fontWeight:800,color:"#F0E8F8",marginBottom:6,paddingBottom:4,borderBottom:"2px solid #D4A04044",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.5}}>
-                    {mo} <span style={{fontSize:12,color:"#9B8EAD",fontWeight:600,fontFamily:"Arial,sans-serif",letterSpacing:0}}>({moData.length} instruction{moData.length!==1?"s":""})</span>
-                  </div>
-                  {moMedias.map(med=>{
-                    const medData=moData.filter(h=>h.media===med).sort((a,b)=>(a.market||"").localeCompare(b.market||""));
-                    return <div key={med} style={{marginBottom:12,marginLeft:4}}>
-                      <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:4,display:"flex",alignItems:"center",gap:6}}>
-                        <span style={{padding:"2px 8px",borderRadius:4,background:"#D4A04015",color:"#D4A040",fontSize:12,fontWeight:800}}>{med}</span>
-                        <span style={{fontSize:11,color:"#64748b"}}>{medData.length} market{medData.length!==1?"s":""}</span>
-                      </div>
-                      {medData.map((h,hi)=><div key={(h.ts||"")+"_"+hi} style={{padding:"6px 0 6px 12px",borderBottom:"1px solid #2d1f42",cursor:"pointer"}} onClick={()=>setViewing(h)} title="Click to view full instruction">
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                          <div style={{display:"flex",gap:8,alignItems:"center",flex:1,flexWrap:"wrap"}}>
-                            <span style={{fontSize:13,fontWeight:800,color:"#E8DFF0"}}>{h.market||"—"}</span>
-                            {h.est&&<span style={{fontSize:12,fontFamily:"monospace",fontWeight:700,padding:"1px 5px",borderRadius:3,background:"rgba(155,123,176,.15)",color:"#C4A0C8"}}>Est {h.est}</span>}
-                            <span style={{fontSize:12,color:"#64748b"}}>v{h.version||"1"}</span>
-                            <span style={{fontSize:12,color:"#D0C4DD"}}>{(h.iscis||[]).length} ISCIs</span>
-                            {(h.stations||[]).length>0&&<span style={{fontSize:11,color:"#5BC4A0",fontWeight:600}}>{(h.stations||[]).length} stations</span>}
-                            {h.flight&&<span style={{fontSize:11,color:"#94a3b8"}}>{h.flight}</span>}
-                            {h.buyer&&<span style={{fontSize:11,color:"#94a3b8"}}>{h.buyer}</span>}
-                          </div>
-                          <button onClick={e=>{e.stopPropagation();setViewing(h)}} style={{padding:"2px 8px",borderRadius:4,border:"1px solid #D4A040",background:"rgba(217,119,6,.1)",color:"#D4A040",fontSize:12,fontWeight:600,cursor:"pointer"}}>View</button>
-                        </div>
-                      </div>)}
-                    </div>;
-                  })}
-                </div>;
-              })}
-            </div>;
-          })()}
-        </Cd>
-
-        {viewing&&<Mod xl title={"Legacy Instruction — "+(viewing.month||"")+" — "+(viewing.market||"")+" "+(viewing.media||"")} onClose={()=>setViewing(null)}>
-          <div style={{display:"flex",gap:10,marginBottom:10,flexWrap:"wrap"}}>
-            <Btn small onClick={()=>openInNewWindow(viewing)}>↗ Open in New Window</Btn>
-            <Btn small onClick={()=>{const w=window.open("","_blank");if(!w){notify("Pop-up blocked");return}w.document.write(buildLegacyHtml(viewing,iscis));w.document.close();setTimeout(()=>{try{w.print()}catch(e){}},400)}}>🖨 Print</Btn>
-            <Btn small color="#D4A040" onClick={async()=>{
-              try{
-                notify("Generating PDF…");
-                const html=buildLegacyHtml(viewing,iscis);
-                const uri=await generatePdfBase64(html,viewing);
-                if(!uri||typeof uri!=="string"){throw new Error("PDF generator returned empty result")}
-                // Convert data URI → Blob → object URL. Big PDFs can exceed
-                // the browser limit on <a href="data:..."> downloads (~2MB in
-                // Chrome), which silently fails. Blob URLs have no size limit.
-                let blobUrl;
-                try{
-                  const b64=uri.split(",")[1]||"";
-                  const bin=atob(b64);
-                  const bytes=new Uint8Array(bin.length);
-                  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
-                  const blob=new Blob([bytes],{type:"application/pdf"});
-                  blobUrl=URL.createObjectURL(blob);
-                }catch(decodeErr){
-                  console.error("PDF blob conversion failed, falling back to data URI:",decodeErr);
-                  blobUrl=uri;
-                }
-                const safe=s=>String(s||"").replace(/[^A-Za-z0-9-]+/g,"_");
-                const fname="Legacy_"+safe(viewing.market)+"_"+safe(viewing.month)+"_v"+(viewing.version||"1")+".pdf";
-                const a=document.createElement("a");
-                a.href=blobUrl;a.download=fname;a.target="_blank";a.rel="noopener";
-                document.body.appendChild(a);a.click();document.body.removeChild(a);
-                // Revoke after a delay so the browser has time to start the download
-                if(blobUrl.startsWith("blob:"))setTimeout(()=>URL.revokeObjectURL(blobUrl),60000);
-                notify("✓ Downloaded "+fname);
-              }catch(e){
-                console.error("PDF download failed:",e);
-                const msg=e?.message||String(e)||"unknown error";
-                notify("PDF failed: "+msg);
-                alert("PDF download failed.\n\n"+msg+"\n\nCheck the browser console for details.");
-              }
-            }}>⬇ Download PDF</Btn>
-          </div>
-          <iframe
-            title="Legacy Instruction"
-            srcDoc={buildLegacyHtml(viewing,iscis)}
-            style={{width:"100%",height:"calc(94vh - 180px)",minHeight:520,border:"1px solid #4a3565",borderRadius:8,background:"#fff"}}
-          />
-        </Mod>}
-      </>}
-
-      {tab==="creative"&&<>
-        <Cd style={{padding:14,marginTop:0,borderTopLeftRadius:0}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10}}>
-            <div style={{fontSize:14,fontWeight:800,color:"#D4A040",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.5}}>🎬 Legacy Creative · by Month</div>
-            <div style={{fontSize:11,color:"#9B8EAD"}}>Click any ISCI to preview · download from the preview modal</div>
-          </div>
-          {legacyIscis.length===0?(
-            <div style={{padding:30,textAlign:"center",color:"#9B8EAD",fontSize:13}}>No legacy WK creative yet. Once legacy instructions are in the vault, their ISCIs appear here grouped by month.</div>
-          ):sortedMonthKeys.map(mo=>{
-            const list=creativeByMonth[mo];
-            const linkedCt=list.filter(i=>i.fileUrl).length;
-            return <div key={mo} style={{marginBottom:14,border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}>
-              <div style={{padding:"6px 10px",background:"#2d1f42",fontSize:12,fontWeight:700,color:"#D4A040",display:"flex",justifyContent:"space-between"}}>
-                <span>{mo}</span>
-                <span style={{color:"#9B8EAD",fontWeight:500}}>{linkedCt} / {list.length} with creative</span>
+        </VM>
+        {/* Stone-tablet tabs */}
+        <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:8,paddingLeft:16,paddingRight:16}}>
+          {[{k:"instructions",l:"Instructions",ct:instructionsCount,i:"📜"},{k:"creative",l:"Creative",ct:creativeCount,i:"🎬"}].map(t=>{
+            const active=tab===t.k;
+            return <button key={t.k} onClick={()=>setTab(t.k)} style={{position:"relative",cursor:"pointer",background:"none",border:"none",padding:0}}>
+              <div className="wkv-cinzel" style={{position:"relative",padding:"10px 20px",fontWeight:600,fontSize:13,letterSpacing:".18em",textTransform:"uppercase",borderRadius:2,transition:"all .2s",border:"1px solid "+(active?"rgba(212,168,87,.6)":"rgba(201,168,212,.15)"),background:active?"linear-gradient(to bottom, rgba(42,15,46,.8), rgba(26,10,31,.8))":"linear-gradient(to bottom, rgba(26,10,31,.4), transparent)",color:active?"#d4a857":"rgba(201,168,212,.6)",boxShadow:active?"0 0 18px rgba(212,168,87,.25), inset 0 1px 0 rgba(212,168,87,.25)":"none"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span>{t.i}</span>
+                  <span>{t.l}</span>
+                  <span className="wkv-eb" style={{fontSize:10,letterSpacing:0,textTransform:"none",color:active?"rgba(212,168,87,.8)":"rgba(201,168,212,.4)"}}>· {t.ct.toLocaleString()}</span>
+                </div>
+                {active&&<VM layoutId="wkvActiveTab" style={{position:"absolute",bottom:-1,left:8,right:8,height:1,background:"#d4a857",boxShadow:"0 0 10px rgba(212,168,87,.7)"}}/>}
               </div>
-              <table style={{width:"100%",borderCollapse:"collapse"}}>
-                <thead><tr style={{background:"#1e1233"}}>
-                  <TH>Code</TH><TH>Title</TH><TH w="60px">Dur</TH><TH w="100px">Status</TH><TH a="right">File</TH>
-                </tr></thead>
+            </button>;
+          })}
+        </div>
+        <div style={{height:1,background:"linear-gradient(to right, transparent, rgba(212,168,87,.4), transparent)"}}/>
+      </div>;
+    };
+
+    const VaultFilterBarV=({filterYear,setFilterYear,filterMarket,setFilterMarket,filterMedia,setFilterMedia,search,setSearch,YEARS,WK_MKTS_FULL,MEDIA_OPTS,archiveCount})=>(
+      <div style={{width:"100%",maxWidth:1200,margin:"32px auto 48px",padding:"0 16px"}}>
+        <div style={{background:"rgba(42,15,46,.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",border:"1px solid rgba(212,168,87,.2)",borderRadius:8,padding:14,display:"flex",flexWrap:"wrap",alignItems:"center",justifyContent:"space-between",gap:14,boxShadow:"0 8px 32px rgba(0,0,0,.3)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,color:"#d4a857"}} className="wkv-cinzel">
+            <span style={{fontSize:18}}>🗄</span>
+            <span style={{fontWeight:600,letterSpacing:".05em"}}>Archive ({archiveCount.toLocaleString()})</span>
+          </div>
+          <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:10}}>
+            <select value={filterYear} onChange={e=>setFilterYear(e.target.value)} className="wkv-eb" style={{appearance:"none",background:"rgba(26,10,31,.6)",border:"1px solid rgba(201,168,212,.2)",color:"#c9a8d4",padding:"8px 26px 8px 12px",borderRadius:4,cursor:"pointer",minWidth:120}}>
+              <option value="all">All Years</option>
+              {YEARS.map(y=><option key={y} value={y}>{y}</option>)}
+            </select>
+            <select value={filterMarket} onChange={e=>setFilterMarket(e.target.value)} className="wkv-eb" style={{appearance:"none",background:"rgba(26,10,31,.6)",border:"1px solid rgba(201,168,212,.2)",color:"#c9a8d4",padding:"8px 26px 8px 12px",borderRadius:4,cursor:"pointer",minWidth:140}}>
+              <option value="all">All Markets</option>
+              {WK_MKTS_FULL.map(m=><option key={m} value={m}>{m}</option>)}
+            </select>
+            <select value={filterMedia} onChange={e=>setFilterMedia(e.target.value)} className="wkv-eb" style={{appearance:"none",background:"rgba(26,10,31,.6)",border:"1px solid rgba(201,168,212,.2)",color:"#c9a8d4",padding:"8px 26px 8px 12px",borderRadius:4,cursor:"pointer",minWidth:140}}>
+              <option value="all">All Media</option>
+              {MEDIA_OPTS.map(m=><option key={m} value={m}>{m}</option>)}
+            </select>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search ISCI, station, comment…" className="wkv-eb" style={{background:"rgba(26,10,31,.6)",border:"1px solid rgba(201,168,212,.2)",color:"#c9a8d4",padding:"8px 12px",borderRadius:4,minWidth:240,outline:"none"}}/>
+          </div>
+        </div>
+      </div>
+    );
+
+    const SectionBannerV=({title,subtitle})=>(
+      <div style={{position:"relative",width:"100%",maxWidth:760,margin:"0 auto",textAlign:"center"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:16,marginBottom:8}}>
+          <div style={{height:1,width:80,background:"linear-gradient(to right, transparent, rgba(212,168,87,.6))"}}/>
+          <div style={{width:8,height:8,transform:"rotate(45deg)",background:"rgba(212,168,87,.7)",boxShadow:"0 0 10px rgba(212,168,87,.6)"}}/>
+          <div style={{height:1,width:80,background:"linear-gradient(to left, transparent, rgba(212,168,87,.6))"}}/>
+        </div>
+        <h2 className="wkv-cinzel" style={{fontSize:"clamp(22px,2.4vw,30px)",fontWeight:700,letterSpacing:".22em",textTransform:"uppercase",margin:0,color:"#e9c97a",textShadow:"0 0 14px rgba(212,168,87,.35), 0 2px 0 rgba(0,0,0,.6)"}}>{title}</h2>
+        <p className="wkv-cormorant" style={{fontStyle:"italic",color:"rgba(201,168,212,.7)",fontSize:"clamp(13px,1.1vw,16px)",marginTop:8}}>{subtitle}</p>
+      </div>
+    );
+
+    const MonthBannerV=({label,count})=>(
+      <div style={{display:"flex",justifyContent:"center"}}>
+        <div style={{position:"relative",display:"inline-flex",alignItems:"center",gap:12,padding:"10px 32px",background:"linear-gradient(180deg,#4a2a55 0%,#2a1530 50%,#14081c 100%)",boxShadow:"inset 0 1px 0 rgba(212,168,87,.4), inset 0 -1px 0 rgba(0,0,0,.8), 0 6px 14px rgba(0,0,0,.6), 0 0 24px rgba(170,40,100,.25)",borderTop:"1px solid rgba(212,168,87,.4)",borderBottom:"1px solid rgba(0,0,0,.7)",clipPath:"polygon(0 0, 100% 0, calc(100% - 16px) 100%, 16px 100%)"}}>
+          <span style={{display:"block",width:6,height:6,transform:"rotate(45deg)",background:"#d4a857",boxShadow:"0 0 8px rgba(212,168,87,.7)"}}/>
+          <span className="wkv-cinzel" style={{fontWeight:700,fontSize:"clamp(16px,1.4vw,20px)",letterSpacing:".32em",textTransform:"uppercase",color:"#e9c97a",textShadow:"0 2px 0 rgba(0,0,0,.9), 0 0 12px rgba(212,168,87,.45)"}}>{label}</span>
+          <span className="wkv-cormorant" style={{fontStyle:"italic",color:"rgba(201,168,212,.7)",fontSize:12}}>· {count} instruction{count===1?"":"s"}</span>
+          <span style={{display:"block",width:6,height:6,transform:"rotate(45deg)",background:"#d4a857",boxShadow:"0 0 8px rgba(212,168,87,.7)"}}/>
+        </div>
+      </div>
+    );
+
+    const MediaBannerV=({media,count})=>(
+      <div style={{display:"flex",alignItems:"center",gap:12,maxWidth:1100,margin:"0 auto"}}>
+        <div style={{flex:1,height:1,background:"linear-gradient(to right, transparent, rgba(212,168,87,.3))"}}/>
+        <div style={{position:"relative",display:"inline-flex",alignItems:"center",gap:8,padding:"4px 16px",background:"linear-gradient(180deg,#e9c97a 0%,#c79a3e 45%,#8a5e1f 100%)",boxShadow:"inset 0 1px 0 rgba(255,240,200,.6), inset 0 -1px 2px rgba(60,30,0,.5), 0 2px 5px rgba(0,0,0,.55), 0 0 14px rgba(212,168,87,.25)",borderRadius:2,clipPath:"polygon(0 0, 100% 0, calc(100% - 10px) 100%, 10px 100%)"}}>
+          <span style={{width:4,height:4,borderRadius:9999,background:"#2a0f2e"}}/>
+          <span className="wkv-cinzel" style={{fontWeight:700,fontSize:11,letterSpacing:".3em",textTransform:"uppercase",color:"#2a0f08"}}>{media}</span>
+          <span className="wkv-cormorant" style={{fontStyle:"italic",fontSize:11,color:"rgba(58,24,8,.85)"}}>· {count} market{count===1?"":"s"}</span>
+        </div>
+        <div style={{flex:1,height:1,background:"linear-gradient(to left, transparent, rgba(212,168,87,.3))"}}/>
+      </div>
+    );
+
+    // ── Closed Scroll: a rolled-up scroll button ─────────────────────
+    const ClosedScrollV=({market,month,version,isOpen,onClick,rotation})=>{
+      const scrollW=240,scrollH=53;
+      return <VMBtn type="button" onClick={onClick} whileHover={{y:-3,scale:1.04}} whileTap={{scale:.98}} transition={{type:"spring",stiffness:320,damping:22}} style={{rotate:rotation+"deg",display:"block",textAlign:"left",position:"relative",background:"none",border:"none",cursor:"pointer",padding:0}} title={market+" · "+month+" · "+version}>
+        <div style={{position:"relative",width:scrollW,height:scrollH}}>
+          {/* Warm torch glow on hover */}
+          <div style={{position:"absolute",inset:-8,borderRadius:16,opacity:0,transition:"opacity .3s",pointerEvents:"none",filter:"blur(20px)",background:"radial-gradient(ellipse 70% 60% at 50% 50%, rgba(212,168,87,.55) 0%, rgba(160,40,80,.25) 50%, transparent 80%)"}} className="wkv-scroll-glow"/>
+          {/* Left rod cap */}
+          <div style={{position:"absolute",left:0,top:"50%",transform:"translateY(-50%)",width:18,height:scrollH,background:"radial-gradient(ellipse at 30% 30%, #f3dcae 0%, #c9a675 35%, #8a5e30 75%, #4a2f10 100%)",borderRadius:9,boxShadow:"0 2px 4px rgba(0,0,0,.5)",zIndex:3}}>
+            <div style={{position:"absolute",inset:3,borderRadius:6,border:"1px solid rgba(212,168,87,.7)"}}/>
+          </div>
+          {/* Right rod cap */}
+          <div style={{position:"absolute",right:0,top:"50%",transform:"translateY(-50%)",width:18,height:scrollH,background:"radial-gradient(ellipse at 30% 30%, #f3dcae 0%, #c9a675 35%, #8a5e30 75%, #4a2f10 100%)",borderRadius:9,boxShadow:"0 2px 4px rgba(0,0,0,.5)",zIndex:3}}>
+            <div style={{position:"absolute",inset:3,borderRadius:6,border:"1px solid rgba(212,168,87,.7)"}}/>
+          </div>
+          {/* Parchment body */}
+          <div style={{position:"absolute",left:14,right:14,top:6,bottom:6,background:"linear-gradient(180deg,#f4ebd8 0%,#e8dcc0 50%,#d4c4a0 100%)",borderRadius:2,boxShadow:"inset 0 0 12px rgba(120,100,60,.35), 0 3px 8px rgba(0,0,0,.55)",zIndex:1}}>
+            {/* Vellum noise overlay */}
+            <div style={{position:"absolute",inset:0,opacity:.05,backgroundImage:"radial-gradient(#3a2510 1px, transparent 1px)",backgroundSize:"5px 5px",borderRadius:2}}/>
+            {/* Wax seal */}
+            <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:28,height:28,borderRadius:"50%",background:"radial-gradient(circle at 35% 30%, #d4596f 0%, #a82a40 40%, #6a1224 75%, #380612 100%)",boxShadow:"0 2px 4px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,180,180,.45)",zIndex:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <span className="wkv-cinzel" style={{color:"rgba(255,235,200,.85)",fontSize:8,fontWeight:700,letterSpacing:".15em"}}>WK</span>
+            </div>
+            {/* MARKET — left panel */}
+            <div style={{position:"absolute",left:"6%",right:"58%",top:"18%",bottom:"18%",display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center",pointerEvents:"none"}}>
+              <span className="wkv-cinzel" style={{fontWeight:700,textTransform:"uppercase",lineHeight:1.15,fontSize:(market||"").length>10?9:11,letterSpacing:".1em",color:"#3a2510",textShadow:"0 1px 0 rgba(255,235,180,.4)"}}>{market||"—"}</span>
+            </div>
+            {/* MONTH / VERSION — right panel */}
+            <div style={{position:"absolute",left:"58%",right:"6%",top:"15%",bottom:"15%",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",pointerEvents:"none"}}>
+              <span className="wkv-cinzel" style={{fontWeight:700,textTransform:"uppercase",lineHeight:1.1,fontSize:10,letterSpacing:".1em",color:"#3a2510",textShadow:"0 1px 0 rgba(255,235,180,.4)"}}>{month||""}</span>
+              <span className="wkv-cinzel" style={{fontWeight:600,textTransform:"uppercase",fontSize:7,letterSpacing:".2em",color:"#5a3a18",opacity:.85,marginTop:2}}>{version||""}</span>
+            </div>
+          </div>
+        </div>
+      </VMBtn>;
+    };
+
+    // ── Open Scroll: the unfurled instruction document ──────────────
+    const TONE_STYLES_V={
+      "M-F Schedule":{bg:"#d4c5e0",border:"#a586b8",text:"#3a1f4a"},
+      "M-F Bookend":{bg:"#e0c5cd",border:"#b8869a",text:"#4a1f2e"},
+      "Weekend Schedule":{bg:"#e8d9b8",border:"#b8a486",text:"#4a3a1f"},
+      "Weekend Bookend":{bg:"#e8c5b8",border:"#b88a6f",text:"#4a2a1f"},
+      "All Week":{bg:"#c5dac7",border:"#86b896",text:"#1f4a2e"},
+      "Holiday Only":{bg:"#e0c5cd",border:"#b8869a",text:"#4a1f2e"},
+    };
+    const toneForV=(label)=>TONE_STYLES_V[label]||{bg:"#d4c5e0",border:"#a586b8",text:"#3a1f4a"};
+    const HorizontalRodV=({position})=>(
+      <div style={{position:"relative",height:24,zIndex:30,marginTop:position==="bottom"?-4:0,marginBottom:position==="top"?-4:0}}>
+        <div style={{position:"absolute",left:-12,right:-12,top:0,bottom:0,background:"linear-gradient(to bottom, #6a4828 0%, #b89770 25%, #f1dcb0 50%, #b89770 75%, #5a3a20 100%)",boxShadow:"inset 0 1px 0 rgba(255,220,170,.4), inset 0 -1px 0 rgba(0,0,0,.4), 0 4px 10px rgba(0,0,0,.4)"}}/>
+        <div style={{position:"absolute",left:-12,right:-12,[position==="top"?"bottom":"top"]:0,height:4,background:"linear-gradient(to bottom, #a02850, #7a1f3d, #4a0f25)",boxShadow:"inset 0 1px 0 rgba(212,168,87,.6)"}}/>
+        <div style={{position:"absolute",left:-12,top:"50%",transform:"translateY(-50%)",width:24,height:24,borderRadius:"50%",background:"radial-gradient(ellipse at 30% 30%, #f3dcae 0%, #c9a675 35%, #8a5e30 75%, #4a2f10 100%)",boxShadow:"0 2px 4px rgba(0,0,0,.5)"}}>
+          <div style={{position:"absolute",inset:3,borderRadius:"50%",border:"1px solid rgba(212,168,87,.7)"}}/>
+        </div>
+        <div style={{position:"absolute",right:-12,top:"50%",transform:"translateY(-50%)",width:24,height:24,borderRadius:"50%",background:"radial-gradient(ellipse at 30% 30%, #f3dcae 0%, #c9a675 35%, #8a5e30 75%, #4a2f10 100%)",boxShadow:"0 2px 4px rgba(0,0,0,.5)"}}>
+          <div style={{position:"absolute",inset:3,borderRadius:"50%",border:"1px solid rgba(212,168,87,.7)"}}/>
+        </div>
+      </div>
+    );
+    const MetaRowV=({label,value,accent})=>(
+      <div style={{display:"flex",gap:12}}>
+        <span className="wkv-cinzel" style={{fontSize:10,letterSpacing:".15em",textTransform:"uppercase",color:"rgba(58,24,8,.7)",fontWeight:600,minWidth:64,paddingTop:2}}>{label}:</span>
+        <span className="wkv-eb" style={{color:accent?"#7a1f3d":"#3a2510",fontWeight:accent?600:400}}>{value||"—"}</span>
+      </div>
+    );
+    const OpenScrollV=({record,onView,buildLegacyHtml,iscis})=>{
+      // Group ISCIs by sched for the table
+      const groups={};
+      (record.iscis||[]).forEach(r=>{const k=r.sched||"All Week";if(!groups[k])groups[k]=[];groups[k].push(r)});
+      const order=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
+      const groupKeys=order.filter(k=>groups[k]).concat(Object.keys(groups).filter(k=>order.indexOf(k)===-1));
+      // Build creative files list
+      const reg=iscis||[];
+      const creativeFiles=(record.iscis||[]).map(r=>{const full=reg.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:r.title||full.title||"",url:full.fileUrl}:null}).filter(Boolean);
+      return <VM initial={{opacity:0,scaleY:.6}} animate={{opacity:1,scaleY:1}} exit={{opacity:0,scaleY:.6}} transition={{duration:.45,ease:[.22,1,.36,1]}} style={{transformOrigin:"top center",width:"100%",maxWidth:780,marginTop:16,marginLeft:"auto",marginRight:"auto"}}>
+        <HorizontalRodV position="top"/>
+        <div style={{position:"relative",background:"linear-gradient(to bottom, #f4ebd8, #e8dcc0, #d4c4a0)",boxShadow:"inset 0 0 60px rgba(120,100,60,.25), 0 8px 20px rgba(0,0,0,.4)"}}>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:20,background:"linear-gradient(to bottom, rgba(122,88,40,.3), transparent)",pointerEvents:"none",zIndex:10}}/>
+          <div style={{position:"absolute",bottom:0,left:0,right:0,height:20,background:"linear-gradient(to top, rgba(122,88,40,.3), transparent)",pointerEvents:"none",zIndex:10}}/>
+          <div style={{position:"absolute",inset:0,opacity:.04,pointerEvents:"none",backgroundImage:"radial-gradient(#3a2510 1px, transparent 1px)",backgroundSize:"5px 5px"}}/>
+          <div style={{position:"relative",zIndex:20,padding:"28px 32px"}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",marginBottom:20,paddingBottom:12,borderBottom:"1px solid rgba(122,31,61,.2)"}}>
+              <span className="wkv-cinzel" style={{fontWeight:700,fontSize:10,letterSpacing:".3em",color:"rgba(26,10,31,.7)",textTransform:"uppercase"}}>{record.brand||"Wettermark Keith"}</span>
+              <h2 className="wkv-cinzel" style={{fontSize:24,fontWeight:700,color:"#7a1f3d",letterSpacing:".05em",marginTop:4,marginBottom:0,textTransform:"uppercase"}}>{(record.brand||"Wettermark Keith").toUpperCase()}</h2>
+              <div className="wkv-cinzel" style={{fontSize:10,letterSpacing:".25em",color:"rgba(26,10,31,.7)",marginTop:4,textTransform:"uppercase"}}>{record.media||""} Traffic Instructions</div>
+              <div style={{marginTop:8,width:96,height:1,background:"linear-gradient(to right, transparent, #d4a857, transparent)"}}/>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",columnGap:40,rowGap:2,marginBottom:12}}>
+              <MetaRowV label="Agency" value="Atticor Media"/>
+              <MetaRowV label="Buyer" value={record.buyer} accent/>
+              <MetaRowV label="Client" value={record.brand||"Wettermark Keith"} accent/>
+              <MetaRowV label="Estimate" value={record.est}/>
+              <MetaRowV label="Market" value={record.market}/>
+              <MetaRowV label="Media" value={record.media} accent/>
+              <MetaRowV label="Month" value={record.month} accent/>
+              <MetaRowV label="Flight" value={record.flight} accent/>
+              <MetaRowV label="Version" value={"V"+(record.version||"1")}/>
+            </div>
+            {record.comments&&<div className="wkv-eb" style={{fontSize:13,color:"rgba(26,10,31,.8)",marginBottom:20,lineHeight:1.55,borderLeft:"2px solid rgba(212,168,87,.6)",paddingLeft:12,fontStyle:"italic"}}>
+              <span style={{fontWeight:600,fontStyle:"normal",color:"#1a0a1f"}}>Comments: </span>
+              {record.comments}
+            </div>}
+            <div style={{height:1,background:"linear-gradient(to right, transparent, #d4a857, transparent)",marginBottom:12}}/>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,color:"#1a0a1f"}} className="wkv-eb">
+                <thead>
+                  <tr style={{textAlign:"left",fontSize:10,letterSpacing:".18em",textTransform:"uppercase",color:"rgba(26,10,31,.6)"}}>
+                    <th className="wkv-cinzel" style={{padding:"6px 12px 6px 8px",fontWeight:600,width:96}}>Flight</th>
+                    <th className="wkv-cinzel" style={{padding:"6px 12px 6px 0",fontWeight:600}}>ISCI &amp; Title</th>
+                    <th className="wkv-cinzel" style={{padding:"6px 12px 6px 0",fontWeight:600,width:48}}>Dur</th>
+                    <th className="wkv-cinzel" style={{padding:"6px 12px 6px 0",fontWeight:600,width:56}}>Rot%</th>
+                    <th className="wkv-cinzel" style={{padding:"6px 12px 6px 0",fontWeight:600,width:120}}>Schedule</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {list.map(i=><tr key={i.code+"_"+i.dma} style={{borderBottom:"1px solid #2d1f42"}}>
-                    <TD m b><span title="Preview / download creative" style={{cursor:"pointer",textDecoration:"underline",textDecorationStyle:"dotted",color:"#D4A040"}} onClick={()=>setModal({t:"creativeView",isci:i})}>{i.code}</span>{i.fileUrl&&<a href={i.fileUrl} target="_blank" rel="noopener" download title="Download creative" style={{marginLeft:5,fontSize:13,color:"#5BC4A0",textDecoration:"none"}}>📁</a>}</TD>
-                    <TD c="#E8DFF0">{i.title||"—"}</TD>
-                    <TD c="#9B8EAD">{i.dur||"—"}</TD>
-                    <TD>{i.fileUrl?<B l="LINKED" c="#5BC4A0"/>:<B l="NO FILE" c="#9B8EAD"/>}</TD>
-                    <td style={{padding:"5px 7px",textAlign:"right",borderBottom:"1px solid #F0E8F8",whiteSpace:"nowrap"}}>
-                      {i.fileUrl?<button onClick={()=>setModal({t:"creativeView",isci:i})} style={{background:"none",border:"1px solid #4AC8E8",color:"#4AC8E8",padding:"2px 8px",borderRadius:4,fontSize:11,cursor:"pointer"}}>▶ Preview</button>:<span style={{color:"#6B5E80",fontSize:11}}>—</span>}
-                    </td>
-                  </tr>)}
+                  {groupKeys.map(label=>{
+                    const tone=toneForV(label);
+                    return <React.Fragment key={label}>
+                      <tr style={{background:tone.bg,color:tone.text,borderTop:"1px solid "+tone.border,borderBottom:"1px solid "+tone.border}}>
+                        <td colSpan={5} className="wkv-cinzel" style={{padding:"5px 10px",fontWeight:600,fontSize:10,letterSpacing:".18em",textTransform:"uppercase"}}>{label}</td>
+                      </tr>
+                      {(groups[label]||[]).map((r,ri)=><tr key={label+"_"+ri} style={{borderBottom:"1px solid rgba(181,163,122,.3)"}}>
+                        <td style={{padding:"5px 12px 5px 8px",whiteSpace:"nowrap",color:"rgba(26,10,31,.8)"}}>{record.flight||""}</td>
+                        <td style={{padding:"5px 12px 5px 0",fontWeight:600,color:"#7a1f3d"}}><span style={{marginRight:4,fontFamily:"monospace"}}>{r.code}</span><span style={{color:"rgba(26,10,31,.8)",fontWeight:400}}>— {r.title||""}</span></td>
+                        <td style={{padding:"5px 12px 5px 0",whiteSpace:"nowrap"}}>{r.dur?":"+r.dur:""}</td>
+                        <td style={{padding:"5px 12px 5px 0",whiteSpace:"nowrap"}}>{r.pct?r.pct+"%":""}</td>
+                        <td style={{padding:"5px 12px 5px 0",whiteSpace:"nowrap",color:"rgba(26,10,31,.8)"}}>{r.bookend||label}</td>
+                      </tr>)}
+                    </React.Fragment>;
+                  })}
                 </tbody>
               </table>
-            </div>;
-          })}
-        </Cd>
-      </>}
+            </div>
+            {creativeFiles.length>0&&<div style={{marginTop:24,paddingTop:12,borderTop:"1px solid rgba(122,31,61,.2)"}}>
+              <div className="wkv-cinzel" style={{fontSize:10,letterSpacing:".22em",textTransform:"uppercase",color:"rgba(26,10,31,.7)",marginBottom:8}}>Creative Files — click to download</div>
+              <ul style={{display:"grid",gridTemplateColumns:"1fr 1fr",columnGap:32,listStyle:"none",margin:0,padding:0}} className="wkv-eb">
+                {creativeFiles.map((cf,i)=><li key={cf.code+"_"+i} style={{fontSize:13}}>
+                  <a href={cf.url} target="_blank" rel="noopener" download style={{color:"#7a1f3d",textDecoration:"underline",textDecorationStyle:"dotted",textUnderlineOffset:2}}>{cf.code} — {cf.title}</a>
+                </li>)}
+              </ul>
+            </div>}
+            <div style={{marginTop:24,paddingTop:12,borderTop:"1px solid rgba(122,31,61,.2)",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+              <div className="wkv-cormorant" style={{fontStyle:"italic",fontSize:13,color:"rgba(26,10,31,.6)"}}>
+                Filed under {record.month||""} · Estimate {record.est||"—"} · V{record.version||"1"}
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={onView} className="wkv-cinzel" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"6px 14px",background:"transparent",border:"1px solid rgba(122,31,61,.4)",color:"#7a1f3d",fontSize:12,fontWeight:600,borderRadius:4,cursor:"pointer"}}>👁 View</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <HorizontalRodV position="bottom"/>
+      </VM>;
+    };
+
+    // ── Instruction Scroll wrapper (closed by default, unfurls inline)
+    const InstructionScrollV=({record,index,onView,buildLegacyHtml,iscis})=>{
+      const [isOpen,setIsOpen]=React.useState(false);
+      const seedRot=((index*7)%5-2)*0.2;
+      return <VM initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{duration:.5,delay:Math.min(index*.06,.4),type:"spring",stiffness:120,damping:18}} style={{display:isOpen?"block":"inline-block",width:isOpen?"100%":"auto"}}>
+        <ClosedScrollV market={record.market} month={record.month} version={"V"+(record.version||"1")} isOpen={isOpen} onClick={()=>setIsOpen(v=>!v)} rotation={seedRot}/>
+        <VAP initial={false}>
+          {isOpen&&<OpenScrollV record={record} onView={onView} buildLegacyHtml={buildLegacyHtml} iscis={iscis}/>}
+        </VAP>
+      </VM>;
+    };
+
+    // ── Apothecary Bottle ─────────────────────────────────────────────
+    const ApothecaryBottleV=({title,year,category,accent,rotation,onClick})=>{
+      const uid="bot"+Math.abs(((title||"")+year).split("").reduce((a,c)=>a+c.charCodeAt(0),0));
+      const bottlePath="M 38 26 L 38 44 Q 38 49 35 52 Q 22 60 22 76 L 22 152 Q 22 162 32 162 L 68 162 Q 78 162 78 152 L 78 76 Q 78 60 65 52 Q 62 49 62 44 L 62 26 Z";
+      const liquidPath="M 25 90 Q 25 65 36 58 L 64 58 Q 75 65 75 90 L 75 150 Q 75 158 68 158 L 32 158 Q 25 158 25 150 Z";
+      const deep=darkenV(accent,.45);
+      const dim=darkenV(accent,.75);
+      return <VMBtn type="button" onClick={onClick} whileHover={{y:-4,scale:1.04}} whileTap={{scale:.97}} transition={{type:"spring",stiffness:320,damping:22}} style={{width:100,rotate:rotation+"deg",position:"relative",background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",flexDirection:"column",alignItems:"center"}} title={title+" · "+year}>
+        <div style={{position:"absolute",inset:-12,borderRadius:9999,opacity:0,transition:"opacity .3s",pointerEvents:"none",filter:"blur(28px)",background:"radial-gradient(ellipse 55% 65% at 50% 60%, "+accent+"88 0%, "+accent+"22 60%, transparent 85%)"}} className="wkv-bottle-glow"/>
+        <svg viewBox="0 0 100 180" width="100" height="180" style={{position:"relative",filter:"drop-shadow(0 10px 14px rgba(0,0,0,.75))"}}>
+          <defs>
+            <linearGradient id={"body-"+uid} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="rgba(0,0,0,.85)"/><stop offset="22%" stopColor={dim} stopOpacity=".7"/><stop offset="50%" stopColor={accent} stopOpacity=".45"/><stop offset="78%" stopColor={dim} stopOpacity=".78"/><stop offset="100%" stopColor="rgba(0,0,0,.95)"/>
+            </linearGradient>
+            <linearGradient id={"liquid-"+uid} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={accent} stopOpacity=".85"/><stop offset="55%" stopColor={deep} stopOpacity=".95"/><stop offset="100%" stopColor="#04020a" stopOpacity="1"/>
+            </linearGradient>
+            <linearGradient id={"cork-"+uid} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#d2a45c"/><stop offset="35%" stopColor="#a87434"/><stop offset="100%" stopColor="#5a3a14"/>
+            </linearGradient>
+            <linearGradient id={"wax-"+uid} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#a82a40"/><stop offset="55%" stopColor="#6a1224"/><stop offset="100%" stopColor="#380612"/>
+            </linearGradient>
+            <linearGradient id={"label-"+uid} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#efe1b8"/><stop offset="50%" stopColor="#e3d09a"/><stop offset="100%" stopColor="#c9b272"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="50" cy="168" rx="32" ry="4" fill="rgba(0,0,0,.6)"/>
+          <path d={bottlePath} fill={"url(#body-"+uid+")"}/>
+          <path d={liquidPath} fill={"url(#liquid-"+uid+")"}/>
+          <ellipse cx="50" cy="60" rx="22" ry="1.6" fill="rgba(255,255,255,.08)"/>
+          <path d="M 30 70 Q 28 110 30 150" stroke="rgba(255,255,255,.7)" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
+          <path d={bottlePath} fill="none" stroke="rgba(0,0,0,.85)" strokeWidth=".7"/>
+          <rect x="36" y="14" width="28" height="16" rx="1.5" fill={"url(#cork-"+uid+")"} stroke="#2a1808" strokeWidth=".5"/>
+          <path d="M 32 24 Q 33 32 35 30 Q 37 38 40 32 Q 42 42 45 33 Q 48 46 51 34 Q 54 40 57 32 Q 60 38 62 30 Q 65 35 67 26 L 68 18 Q 60 14 50 14 Q 38 14 32 18 Z" fill={"url(#wax-"+uid+")"} stroke="rgba(0,0,0,.6)" strokeWidth=".4"/>
+          <g transform="translate(20 92)">
+            <path d="M 0 0 Q 30 -1.5 60 0 L 60 42 Q 30 43.5 0 42 Z" fill={"url(#label-"+uid+")"} stroke="#8a6e3a" strokeWidth=".5"/>
+            <text x="30" y="11" textAnchor="middle" fontFamily="Cinzel, serif" fontSize="3.5" fontWeight="700" fill="#4a2f10" letterSpacing="1" style={{textTransform:"uppercase"}}>Atticor · Creative</text>
+            <text x="30" y="20" textAnchor="middle" fontFamily="Cinzel, serif" fontSize={(title||"").length>14?5.5:7} fontWeight="700" fill="#2a1808" letterSpacing=".6" style={{textTransform:"uppercase"}}>{((title||"").length>18?(title||"").slice(0,17)+"…":(title||"—"))}</text>
+            <text x="30" y="29" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontSize="5" fill="#5a3a18">{category||""}</text>
+            <text x="30" y="35" textAnchor="middle" fontFamily="Cinzel, serif" fontSize="5" fontWeight="600" fill="#3a2510" letterSpacing="1">{year||""}</text>
+          </g>
+        </svg>
+      </VMBtn>;
+    };
+
+    // ── Creative Vault — apothecary shelves by year ───────────────────
+    const CreativeVaultV=({shelves,setModal})=>{
+      const [cquery,setCquery]=React.useState("");
+      const [ccat,setCcat]=React.useState("All");
+      const filteredShelves=shelves.map(s=>({...s,items:s.items.filter(i=>{
+        if(ccat!=="All"){
+          const itDur=parseInt(i.dur)||0;
+          const isRadio=(i.media||"").toLowerCase().indexOf("radio")>=0;
+          if(ccat==="TV"&&isRadio)return false;
+          if(ccat==="Radio"&&!isRadio)return false;
+        }
+        if(!cquery)return true;
+        const q=cquery.toLowerCase();
+        return (i.code||"").toLowerCase().includes(q)||(i.title||"").toLowerCase().includes(q)||String(s.year).includes(q);
+      })})).filter(s=>s.items.length>0);
+      const totalShown=filteredShelves.reduce((a,s)=>a+s.items.length,0);
+      const totalAll=shelves.reduce((a,s)=>a+s.items.length,0);
+      return <div>
+        <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:12,marginBottom:40,maxWidth:1100,margin:"0 auto 40px"}}>
+          <input value={cquery} onChange={e=>setCquery(e.target.value)} placeholder="Search the apothecary — code, title, year…" className="wkv-eb" style={{flex:"1 1 240px",maxWidth:380,background:"rgba(0,0,0,.4)",border:"1px solid rgba(212,168,87,.25)",color:"#f4ebd8",padding:"8px 12px",borderRadius:4,outline:"none"}}/>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            {["All","TV","Radio"].map(c=>(
+              <button key={c} onClick={()=>setCcat(c)} className="wkv-cinzel" style={{fontSize:10,letterSpacing:".22em",textTransform:"uppercase",padding:"4px 10px",borderRadius:4,border:"1px solid "+(ccat===c?"#d4a857":"rgba(212,168,87,.25)"),background:ccat===c?"rgba(212,168,87,.85)":"transparent",color:ccat===c?"#1a0a1f":"rgba(212,168,87,.7)",cursor:"pointer",fontWeight:600}}>{c}</button>
+            ))}
+          </div>
+          <div className="wkv-cormorant" style={{fontStyle:"italic",color:"rgba(201,168,212,.65)",fontSize:14}}>
+            {totalShown.toLocaleString()} of {totalAll.toLocaleString()} bottles
+          </div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:40}}>
+          {filteredShelves.length===0?
+            <div className="wkv-cormorant" style={{textAlign:"center",fontStyle:"italic",color:"rgba(201,168,212,.5)",padding:48}}>No bottles match that query.</div>
+            :filteredShelves.map(({year,items})=>
+              <VMSec key={year} initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:.05}} transition={{duration:.5,ease:"easeOut"}} style={{position:"relative"}}>
+                <div style={{display:"flex",alignItems:"flex-end",gap:12,marginBottom:8}}>
+                  <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"4px 12px",background:"linear-gradient(180deg,#e9c97a 0%,#c79a3e 45%,#8a5e1f 100%)",boxShadow:"inset 0 1px 0 rgba(255,240,200,.6), inset 0 -1px 2px rgba(60,30,0,.5), 0 2px 5px rgba(0,0,0,.55), 0 0 14px rgba(212,168,87,.2)",clipPath:"polygon(0 0, 100% 0, calc(100% - 10px) 100%, 10px 100%)"}}>
+                    <span style={{width:4,height:4,borderRadius:9999,background:"#2a0f2e"}}/>
+                    <span className="wkv-cinzel" style={{fontWeight:700,fontSize:11,letterSpacing:".3em",textTransform:"uppercase",color:"#2a0f08"}}>{year||"Unfiled"}</span>
+                    <span className="wkv-cormorant" style={{fontStyle:"italic",fontSize:11,color:"rgba(58,24,8,.85)"}}>· {items.length} {items.length===1?"bottle":"bottles"}</span>
+                  </div>
+                  <div style={{flex:1,height:1,background:"linear-gradient(to right, rgba(212,168,87,.3), transparent)"}}/>
+                </div>
+                <div style={{position:"relative"}}>
+                  <div style={{display:"flex",flexWrap:"wrap",columnGap:8,rowGap:8,alignItems:"flex-end",paddingBottom:8,paddingLeft:8}}>
+                    {items.map((i,idx)=>{
+                      const accent=accentPaletteV[(i.code||"").length*7%accentPaletteV.length];
+                      const rot=((idx*7)%5-2)*0.5;
+                      const cat=parseInt(i.dur)>=15?"TV":"Radio"; // rough
+                      return <ApothecaryBottleV
+                        key={i.code+"_"+i.dma}
+                        title={i.title||i.code}
+                        year={year||""}
+                        category={cat}
+                        accent={accent}
+                        rotation={rot}
+                        onClick={()=>{if(i.fileUrl)setModal({t:"creativeView",isci:i});else notify("No creative file linked for "+i.code)}}
+                      />;
+                    })}
+                  </div>
+                  <div style={{position:"relative",height:12,marginTop:-4}}>
+                    <div style={{position:"absolute",inset:0,top:0,height:12,borderRadius:2,background:"linear-gradient(180deg,#4a2a14 0%,#2a1408 60%,#14080a 100%)",boxShadow:"inset 0 1px 0 rgba(255,210,150,.25), inset 0 -1px 0 rgba(0,0,0,.7), 0 6px 12px rgba(0,0,0,.65)",border:"1px solid #0a0604"}}/>
+                    <div style={{position:"absolute",inset:0,top:0,height:12,opacity:.3,mixBlendMode:"overlay",pointerEvents:"none",backgroundImage:"repeating-linear-gradient(90deg, transparent 0px, transparent 12px, rgba(255,220,170,.4) 13px, transparent 14px)"}}/>
+                  </div>
+                  <div style={{height:8,margin:"-4px 16px 0",background:"rgba(0,0,0,.6)",filter:"blur(6px)",borderRadius:9999}}/>
+                </div>
+              </VMSec>
+            )
+          }
+        </div>
+      </div>;
+    };
+
+    return <div className="wkv-page" style={{position:"relative",margin:"-20px",padding:"0 0 60px",minHeight:"calc(100vh - 60px)",background:"radial-gradient(ellipse at center top, #4a1858 0%, #2a0f2e 35%, #1a0a1f 75%, #0d0512 100%)",overflow:"hidden",color:"#c9a8d4"}}>
+      <VaultAtmosphereV/>
+      <div style={{position:"relative",zIndex:10,padding:"20px 24px 0"}}>
+        {availableImport>0&&<div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
+          <button onClick={runImport} disabled={importing} className="wkv-cinzel" style={{padding:"6px 14px",background:"linear-gradient(180deg,#d4a857,#b8924a)",color:"#1a0a1f",border:"1px solid #8a6e3a",borderRadius:4,fontSize:11,fontWeight:700,letterSpacing:".18em",textTransform:"uppercase",cursor:importing?"wait":"pointer",opacity:importing?.6:1,boxShadow:"0 2px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,240,200,.4)"}}>
+            {importing?"Importing…":(legacyRecs.length>0?"↻ Re-import ("+availableImport+")":"⬇ Import "+availableImport+" Legacy Records")}
+          </button>
+        </div>}
+        <VaultHeaderV tab={tab} setTab={setTab} instructionsCount={legacyRecs.length} creativeCount={legacyIscis.filter(i=>i.fileUrl).length}/>
+        <VaultFilterBarV filterYear={filterYear} setFilterYear={setFilterYear} filterMarket={filterMarket} setFilterMarket={setFilterMarket} filterMedia={filterMedia} setFilterMedia={setFilterMedia} search={search} setSearch={setSearch} YEARS={YEARS} WK_MKTS_FULL={WK_MKTS_FULL} MEDIA_OPTS={MEDIA_OPTS} archiveCount={filteredLegacy.length}/>
+        <VAP mode="wait">
+          {tab==="instructions"?
+            <VM key="instructions" initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-20}} transition={{duration:.4}} style={{paddingBottom:128,marginTop:32}}>
+              <SectionBannerV title="The Archive" subtitle="A vault of every traffic instruction we've ever sent — wax-sealed, filed, and waiting."/>
+              <div style={{display:"flex",flexDirection:"column",gap:72,marginTop:56}}>
+                {visibleMonthsV.length===0?
+                  <div className="wkv-cormorant" style={{textAlign:"center",padding:60,fontStyle:"italic",color:"rgba(201,168,212,.5)",fontSize:18}}>
+                    {legacyRecs.length===0?"The vault is empty. Send legacy instructions in chat and they'll appear here.":"No entries match these filters."}
+                  </div>
+                :visibleMonthsV.map(mo=>{
+                  const byMedia=groupedV[mo];
+                  const visibleMedia=MEDIA_ORDER_V2.filter(m=>byMedia[m]).concat(Object.keys(byMedia).filter(m=>MEDIA_ORDER_V2.indexOf(m)===-1));
+                  const moTotal=Object.values(byMedia).flat().length;
+                  return <section key={mo}>
+                    <MonthBannerV label={mo} count={moTotal}/>
+                    <div style={{display:"flex",flexDirection:"column",gap:52,marginTop:36}}>
+                      {visibleMedia.map(med=>{
+                        const recs=byMedia[med].sort((a,b)=>(a.market||"").localeCompare(b.market||""));
+                        return <div key={med}>
+                          <MediaBannerV media={med} count={recs.length}/>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:12,marginTop:16,justifyContent:"flex-start",padding:"0 8px"}}>
+                            {recs.map((h,i)=><InstructionScrollV key={(h.ts||"")+"_"+i} record={h} index={i} onView={()=>setViewing(h)} buildLegacyHtml={buildLegacyHtml} iscis={iscis}/>)}
+                          </div>
+                        </div>;
+                      })}
+                    </div>
+                  </section>;
+                })}
+              </div>
+              {visibleMonthsV.length>0&&<div className="wkv-cormorant" style={{marginTop:80,textAlign:"center"}}>
+                <div style={{display:"inline-flex",alignItems:"center",gap:16,fontStyle:"italic",color:"rgba(201,168,212,.5)",fontSize:13}}>
+                  <span style={{height:1,width:64,background:"rgba(212,168,87,.3)"}}/>
+                  end of the underworld archive — for now
+                  <span style={{height:1,width:64,background:"rgba(212,168,87,.3)"}}/>
+                </div>
+              </div>}
+            </VM>
+          :
+            <VM key="creative" initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-20}} transition={{duration:.4}} style={{paddingBottom:128,marginTop:48}}>
+              <SectionBannerV title="The Apothecary" subtitle="Every TV spot and radio cut — bottled, labeled, shelved by the year it aired."/>
+              <div style={{marginTop:40,padding:"0 16px"}}>
+                {legacyIscis.length===0?
+                  <div className="wkv-cormorant" style={{textAlign:"center",padding:48,fontStyle:"italic",color:"rgba(201,168,212,.5)"}}>No legacy WK creative yet. Once legacy instructions are in the vault, their ISCIs appear here grouped by year.</div>
+                  :<CreativeVaultV shelves={apothecaryByYearV} setModal={setModal}/>
+                }
+              </div>
+            </VM>
+          }
+        </VAP>
+      </div>
+      {viewing&&<Mod xl title={"Legacy Instruction — "+(viewing.month||"")+" — "+(viewing.market||"")+" "+(viewing.media||"")} onClose={()=>setViewing(null)}>
+        <div style={{display:"flex",gap:10,marginBottom:10,flexWrap:"wrap"}}>
+          <Btn small onClick={()=>openInNewWindow(viewing)}>↗ Open in New Window</Btn>
+          <Btn small onClick={()=>{const w=window.open("","_blank");if(!w){notify("Pop-up blocked");return}w.document.write(buildLegacyHtml(viewing,iscis));w.document.close();setTimeout(()=>{try{w.print()}catch(e){}},400)}}>🖨 Print</Btn>
+          <Btn small color="#D4A040" onClick={async()=>{
+            try{
+              notify("Generating PDF…");
+              const html=buildLegacyHtml(viewing,iscis);
+              const uri=await generatePdfBase64(html,viewing);
+              if(!uri||typeof uri!=="string"){throw new Error("PDF generator returned empty result")}
+              let blobUrl;
+              try{
+                const b64=uri.split(",")[1]||"";
+                const bin=atob(b64);
+                const bytes=new Uint8Array(bin.length);
+                for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+                const blob=new Blob([bytes],{type:"application/pdf"});
+                blobUrl=URL.createObjectURL(blob);
+              }catch(decodeErr){console.error("PDF blob conversion failed, falling back to data URI:",decodeErr);blobUrl=uri}
+              const safe=s=>String(s||"").replace(/[^A-Za-z0-9-]+/g,"_");
+              const fname="Legacy_"+safe(viewing.market)+"_"+safe(viewing.month)+"_v"+(viewing.version||"1")+".pdf";
+              const a=document.createElement("a");
+              a.href=blobUrl;a.download=fname;a.target="_blank";a.rel="noopener";
+              document.body.appendChild(a);a.click();document.body.removeChild(a);
+              if(blobUrl.startsWith("blob:"))setTimeout(()=>URL.revokeObjectURL(blobUrl),60000);
+              notify("✓ Downloaded "+fname);
+            }catch(e){
+              console.error("PDF download failed:",e);
+              const msg=e?.message||String(e)||"unknown error";
+              notify("PDF failed: "+msg);
+              alert("PDF download failed.\n\n"+msg+"\n\nCheck the browser console for details.");
+            }
+          }}>⬇ Download PDF</Btn>
+        </div>
+        <iframe
+          title="Legacy Instruction"
+          srcDoc={buildLegacyHtml(viewing,iscis)}
+          style={{width:"100%",height:"calc(94vh - 180px)",minHeight:520,border:"1px solid #4a3565",borderRadius:8,background:"#fff"}}
+        />
+      </Mod>}
     </div>;
   };
 
