@@ -7570,27 +7570,26 @@ Rules:
         <button onClick={async()=>{
           const pw=prompt("Admin password — move creative files from Firebase Storage to Supabase Storage:");
           if(!pw)return;
-          if(!confirm("This downloads every creative file from Firebase Storage and re-uploads it to Supabase Storage, then rewrites the URL on each ISCI. Could take a few minutes. Continue?"))return;
-          let totalMigrated=0,totalSkipped=0,totalErrors=[],batches=0;
-          setUploadTracker({label:"Migrating creative files...",pct:0});
+          if(!confirm("Downloads every creative file from Firebase Storage and re-uploads to Supabase Storage. Skips errored files and keeps going. Saves progress every 10 files. Takes up to 5 minutes.\n\nContinue?"))return;
+          setUploadTracker({label:"Migrating creative files... (this can take a few minutes — leave the tab open)",pct:5});
           try{
-            while(true){
-              batches++;
-              const r=await fetch("/api/migrate-creative-files",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw,batchSize:4})});
-              const j=await r.json();
-              if(!r.ok){setUploadTracker(null);alert("Migration failed: "+(j.error||r.status)+(j.detail?"\n\n"+j.detail:""));return}
-              totalMigrated+=j.migrated;
-              totalSkipped+=j.skipped;
-              if(j.errors&&j.errors.length)totalErrors=totalErrors.concat(j.errors);
-              const done=j.total-j.remaining;
-              setUploadTracker({label:"Migrating creative: "+totalMigrated+" moved · "+j.remaining+" remaining",pct:j.total?Math.round((done/j.total)*100):100});
-              if(j.remaining<=0||j.migrated===0)break;
-              if(batches>500){setUploadTracker(null);alert("Stopped after 500 batches — something's looping. Check errors.");return}
-            }
+            const r=await fetch("/api/migrate-creative-files",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw})});
+            const j=await r.json();
             setUploadTracker(null);
-            const errMsg=totalErrors.length?"\n\nErrors ("+totalErrors.length+"):\n"+totalErrors.slice(0,10).map(e=>e.code+": "+e.stage+" "+(e.detail||e.status||"")).join("\n"):"";
-            alert("Creative file migration complete.\n\nMoved to Supabase: "+totalMigrated+"\nSkipped (no Firebase URL): "+totalSkipped+errMsg+"\n\nReload to see new URLs.");
-            log("Creative File Migration","Moved "+totalMigrated+" files to Supabase Storage ("+totalErrors.length+" errors)");
+            if(!r.ok){alert("Migration failed: "+(j.error||r.status)+(j.detail?"\n\n"+j.detail:""));return}
+            const errLines=(j.errors||[]).slice(0,15).map(e=>(e.code||"?")+": "+(e.stage||"")+" — "+(e.detail||e.status||""));
+            const errMore=(j.errors&&j.errors.length>15)?"\n...and "+(j.errors.length-15)+" more":"";
+            const tail=j.timedOut?"\n\n⚠️ Hit the 5-minute time budget — click the button again to continue with the rest.":"";
+            alert("Creative file migration "+(j.timedOut?"PAUSED":"COMPLETE")+".\n\n"+
+              "Total ISCIs: "+j.total+"\n"+
+              "Tried to migrate: "+j.attemptable+"\n"+
+              "Moved to Supabase: "+j.migrated+"\n"+
+              "Still on Firebase: "+j.remaining+"\n"+
+              "Errors: "+(j.errors?j.errors.length:0)+
+              (errLines.length?"\n\nFirst errors:\n"+errLines.join("\n")+errMore:"")+
+              tail+
+              "\n\nReload to see new URLs.");
+            log("Creative File Migration","Moved "+j.migrated+" / "+j.attemptable+" ("+(j.errors?j.errors.length:0)+" errors"+(j.timedOut?", timed out":"")+")");
           }catch(e){setUploadTracker(null);alert("Migration request failed: "+e.message)}
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #D4A040",background:"#D4A04015",color:"#D4A040",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🎬 Move Creative Files</button>
         <button onClick={async()=>{

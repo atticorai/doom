@@ -1,19 +1,17 @@
 // ═══════════════════════════════════════════════════════════════════
 // /api/migrate-creative-files — move creative bytes off Firebase Storage.
 // ═══════════════════════════════════════════════════════════════════
-// Reads the iscis blob in legacy_docs, finds every record whose
-// fileUrl still points at firebasestorage.googleapis.com, downloads
-// the file, re-uploads to Supabase Storage (bucket = 'creative'),
-// and rewrites fileUrl to the new public URL.
+// One call processes EVERYTHING in the iscis blob. Errors are
+// collected and the loop continues. Progress is saved every 10
+// migrated files so a function timeout never throws away work.
 //
-// Batched because each file is potentially tens of MB and Vercel
-// functions have a hard wall-clock limit. The client calls this in a
-// loop, processing BATCH_SIZE files per call, until { remaining: 0 }.
+// Concurrency: 4 files at a time (parallel downloads + uploads).
+// maxDuration: 300s (5 minutes) — Pro tier ceiling.
 //
-// POST { password, batchSize? }
-//   -> { processed, migrated, skipped, errors, remaining, total }
+// POST { password }
+//   → { total, migrated, skipped, errors, remaining, timedOut }
 //
-// Idempotent: re-running just skips already-migrated records.
+// Idempotent: re-running just continues from where it left off.
 // ═══════════════════════════════════════════════════════════════════
 
 const crypto = require('crypto');
@@ -23,9 +21,10 @@ const { archiveDoc } = require('./_archive');
 const ADMIN_PASSWORD_ENV = 'ADMIN_PASSWORD';
 const ISCIS_DOC = 'iscis';
 const BUCKET = 'creative';
-const DEFAULT_BATCH = 4;
-const MAX_BATCH = 10;
-const MAX_FILE_BYTES = 500 * 1024 * 1024; // 500 MB cap — same as bucket limit
+const CONCURRENCY = 4;             // files in flight at once
+const SAVE_EVERY = 10;             // checkpoint iscis blob this often
+const MAX_FILE_BYTES = 500 * 1024 * 1024; // 500 MB cap
+const WALL_CLOCK_BUDGET_MS = 270_000;     // 4m30s — leave room to checkpoint
 
 function timingSafeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
@@ -38,12 +37,6 @@ function isFirebaseUrl(u) {
   return typeof u === 'string' && u.indexOf('firebasestorage.googleapis.com') >= 0;
 }
 
-function isSupabaseUrl(u) {
-  return typeof u === 'string' && /supabase\.(co|in)\/storage\/v1\//.test(u);
-}
-
-// Best-effort: derive a sane extension from the Firebase URL or fileName.
-// Falls back to 'bin' if nothing is reliable.
 function extFromUrl(url, fileName) {
   if (fileName) {
     const m = String(fileName).match(/\.([a-z0-9]{2,5})(\?|$)/i);
@@ -51,7 +44,6 @@ function extFromUrl(url, fileName) {
   }
   try {
     const parsed = new URL(url);
-    // Firebase URL pattern: /v0/b/<bucket>/o/<encoded-path>?alt=media&token=...
     const m = parsed.pathname.match(/\/o\/(.+)$/);
     if (m) {
       const decoded = decodeURIComponent(m[1]);
@@ -73,11 +65,64 @@ function contentTypeFromExt(ext) {
   return map[ext] || 'application/octet-stream';
 }
 
+async function processOne(supabase, iscis, idx) {
+  const isci = iscis[idx];
+  const code = isci && isci.code;
+  const fileUrl = isci && isci.fileUrl;
+  if (!code) return { idx, result: 'skip', code: code || '?' };
+  if (!isFirebaseUrl(fileUrl)) return { idx, result: 'skip', code };
+
+  try {
+    const resp = await fetch(fileUrl);
+    if (!resp.ok) {
+      return { idx, result: 'error', code, stage: 'download', detail: resp.status + ' ' + resp.statusText };
+    }
+    const contentLength = parseInt(resp.headers.get('content-length') || '0', 10);
+    if (contentLength && contentLength > MAX_FILE_BYTES) {
+      return { idx, result: 'error', code, stage: 'size', detail: contentLength + ' bytes too large' };
+    }
+    const buf = Buffer.from(await resp.arrayBuffer());
+    if (buf.length > MAX_FILE_BYTES) {
+      return { idx, result: 'error', code, stage: 'size', detail: buf.length + ' bytes too large' };
+    }
+
+    const ext = extFromUrl(fileUrl, isci.fileName);
+    const path = code + '.' + ext;
+    const contentType = resp.headers.get('content-type') || contentTypeFromExt(ext);
+
+    const { error: upErr } = await supabase.storage
+      .from(BUCKET)
+      .upload(path, buf, { contentType, upsert: true });
+    if (upErr) {
+      return { idx, result: 'error', code, stage: 'upload', detail: upErr.message };
+    }
+
+    const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
+    return { idx, result: 'migrated', code, path, bytes: buf.length, newUrl: pub.publicUrl };
+  } catch (e) {
+    return { idx, result: 'error', code, stage: 'exception', detail: e.message };
+  }
+}
+
+async function saveBlob(supabase, iscis) {
+  await archiveDoc(supabase, 'appData', ISCIS_DOC, 'creative-migrate', 'migrate-creative-files');
+  const { error } = await supabase
+    .from('legacy_docs')
+    .upsert({
+      collection: 'appData',
+      doc_id: ISCIS_DOC,
+      data: JSON.stringify(iscis),
+      ts: Date.now(),
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'collection,doc_id' });
+  if (error) throw error;
+}
+
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { password, batchSize } = req.body || {};
+  const { password } = req.body || {};
   const ADMIN = (process.env[ADMIN_PASSWORD_ENV] || '').trim();
   if (!ADMIN) return res.status(503).json({ error: 'ADMIN_PASSWORD not set' });
   const submitted = typeof password === 'string' ? password.trim() : '';
@@ -88,13 +133,12 @@ module.exports = async function handler(req, res) {
   const supabase = getSupabase();
   if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
 
-  const N = Math.min(Math.max(parseInt(batchSize, 10) || DEFAULT_BATCH, 1), MAX_BATCH);
+  const startedAt = Date.now();
 
   try {
-    // Pull the iscis blob from legacy_docs
     const { data: row, error: rErr } = await supabase
       .from('legacy_docs')
-      .select('data, ts')
+      .select('data')
       .eq('collection', 'appData')
       .eq('doc_id', ISCIS_DOC)
       .maybeSingle();
@@ -107,93 +151,66 @@ module.exports = async function handler(req, res) {
     if (!Array.isArray(iscis)) return res.status(500).json({ error: 'iscis blob is not an array' });
 
     const total = iscis.length;
-    const remainingIndices = [];
+    const queue = [];
     for (let i = 0; i < iscis.length; i++) {
-      if (isFirebaseUrl(iscis[i] && iscis[i].fileUrl)) remainingIndices.push(i);
+      if (isFirebaseUrl(iscis[i] && iscis[i].fileUrl)) queue.push(i);
     }
+    const startingRemaining = queue.length;
 
-    const batch = remainingIndices.slice(0, N);
     let migrated = 0;
     let skipped = 0;
+    let unsaved = 0;
     const errors = [];
     const moved = [];
+    let timedOut = false;
 
-    for (const idx of batch) {
-      const isci = iscis[idx];
-      const code = isci.code;
-      const fileUrl = isci.fileUrl;
-      if (!code) { skipped++; continue; }
-      if (!isFirebaseUrl(fileUrl)) { skipped++; continue; }
-
-      try {
-        // Download the file. Firebase Storage public URLs include the
-        // token inline — no auth header needed.
-        const resp = await fetch(fileUrl);
-        if (!resp.ok) {
-          errors.push({ code, stage: 'download', status: resp.status, detail: resp.statusText });
-          continue;
+    // Pump CONCURRENCY workers off the shared queue.
+    let cursor = 0;
+    async function worker() {
+      while (cursor < queue.length) {
+        if (Date.now() - startedAt > WALL_CLOCK_BUDGET_MS) { timedOut = true; return; }
+        const my = cursor++;
+        const idx = queue[my];
+        const out = await processOne(supabase, iscis, idx);
+        if (out.result === 'migrated') {
+          iscis[idx] = { ...iscis[idx], fileUrl: out.newUrl };
+          moved.push({ code: out.code, path: out.path, bytes: out.bytes });
+          migrated++;
+          unsaved++;
+          if (unsaved >= SAVE_EVERY) {
+            try { await saveBlob(supabase, iscis); unsaved = 0; }
+            catch (e) { errors.push({ stage: 'checkpoint-save', detail: e.message }); }
+          }
+        } else if (out.result === 'error') {
+          errors.push({ code: out.code, stage: out.stage, detail: out.detail });
+        } else {
+          skipped++;
         }
-        const contentLength = parseInt(resp.headers.get('content-length') || '0', 10);
-        if (contentLength && contentLength > MAX_FILE_BYTES) {
-          errors.push({ code, stage: 'size', detail: `${contentLength} bytes > ${MAX_FILE_BYTES}` });
-          continue;
-        }
-        const arr = await resp.arrayBuffer();
-        const buf = Buffer.from(arr);
-        if (buf.length > MAX_FILE_BYTES) {
-          errors.push({ code, stage: 'size', detail: `${buf.length} bytes > ${MAX_FILE_BYTES}` });
-          continue;
-        }
-
-        const ext = extFromUrl(fileUrl, isci.fileName);
-        const path = `${code}.${ext}`;
-        const contentType = resp.headers.get('content-type') || contentTypeFromExt(ext);
-
-        const { error: upErr } = await supabase.storage
-          .from(BUCKET)
-          .upload(path, buf, { contentType, upsert: true });
-        if (upErr) {
-          errors.push({ code, stage: 'upload', detail: upErr.message });
-          continue;
-        }
-
-        const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
-        iscis[idx] = { ...isci, fileUrl: pub.publicUrl };
-        moved.push({ code, path, bytes: buf.length });
-        migrated++;
-      } catch (e) {
-        errors.push({ code, stage: 'exception', detail: e.message });
       }
     }
 
-    // Write updated iscis blob back ONLY if anything actually changed
-    if (migrated > 0) {
-      // SAFETY: snapshot prior iscis blob into legacy_docs_history
-      // before we overwrite. Recoverable if anything went sideways.
-      await archiveDoc(supabase, 'appData', ISCIS_DOC, 'creative-migrate', 'migrate-creative-files');
-      const { error: wErr } = await supabase
-        .from('legacy_docs')
-        .upsert({
-          collection: 'appData',
-          doc_id: ISCIS_DOC,
-          data: JSON.stringify(iscis),
-          ts: Date.now(),
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'collection,doc_id' });
-      if (wErr) throw wErr;
+    const workers = [];
+    for (let w = 0; w < CONCURRENCY; w++) workers.push(worker());
+    await Promise.all(workers);
+
+    // Final save if anything still unwritten
+    if (unsaved > 0) {
+      try { await saveBlob(supabase, iscis); unsaved = 0; }
+      catch (e) { errors.push({ stage: 'final-save', detail: e.message }); }
     }
 
-    const remainingAfter = Math.max(0, remainingIndices.length - batch.length);
+    const remainingAfter = startingRemaining - migrated;
     return res.status(200).json({
       ok: true,
       total,
-      considered: remainingIndices.length + (total - remainingIndices.length),
-      processed: batch.length,
+      attemptable: startingRemaining,
       migrated,
       skipped,
-      remaining: remainingAfter,
       errors,
-      moved,
+      moved: moved.slice(0, 50),
+      remaining: Math.max(0, remainingAfter),
+      timedOut,
+      elapsedMs: Date.now() - startedAt,
     });
   } catch (e) {
     console.error('migrate-creative-files error:', e);
@@ -201,10 +218,10 @@ module.exports = async function handler(req, res) {
   }
 };
 
-// Large response payloads (lists of moved files) — bump the limit.
 module.exports.config = {
   api: {
     bodyParser: { sizeLimit: '1mb' },
     responseLimit: '8mb',
   },
+  maxDuration: 300,
 };
