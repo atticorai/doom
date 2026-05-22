@@ -61,13 +61,87 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 });
 const BUCKET = 'legacy-vault';
 
-// Cloud Shell already has gcloud auth; GoogleAuth picks it up from
-// Application Default Credentials. If running locally, run:
-//   gcloud auth application-default login --scopes=https://www.googleapis.com/auth/drive.readonly,https://www.googleapis.com/auth/cloud-platform
-const auth = new google.auth.GoogleAuth({
-  scopes: ['https://www.googleapis.com/auth/drive.readonly'],
-});
-const drive = google.drive({ version: 'v3', auth });
+// ── Drive auth ──────────────────────────────────────────────────────
+// Google blocked the gcloud default OAuth client from using
+// drive.readonly. We bring our own: the user creates an OAuth Client
+// ID (Desktop type) in their personal Cloud project, downloads the
+// JSON, and points at it via OAUTH_CLIENT_JSON. First run does an
+// interactive consent (prints a URL, you paste back the code) and
+// caches a refresh token in OAUTH_TOKEN_PATH so re-runs are silent.
+//
+// Service account auth also still works if you can get a key
+// (GOOGLE_APPLICATION_CREDENTIALS pointing to the JSON) — google-auth
+// picks that up automatically.
+const OAUTH_CLIENT_JSON = process.env.OAUTH_CLIENT_JSON || null;
+const OAUTH_TOKEN_PATH = process.env.OAUTH_TOKEN_PATH || path.join(process.cwd(), 'drive-import-token.json');
+const DRIVE_SCOPES = ['https://www.googleapis.com/auth/drive.readonly'];
+
+async function makeDriveAuth() {
+  // Path 1: OAuth Desktop client (recommended — bypasses the
+  // default-client drive scope block).
+  if (OAUTH_CLIENT_JSON) {
+    if (!fs.existsSync(OAUTH_CLIENT_JSON)) {
+      console.error('OAUTH_CLIENT_JSON path does not exist:', OAUTH_CLIENT_JSON);
+      process.exit(1);
+    }
+    const raw = JSON.parse(fs.readFileSync(OAUTH_CLIENT_JSON, 'utf8'));
+    const block = raw.installed || raw.web;
+    if (!block) {
+      console.error('OAUTH_CLIENT_JSON is missing an "installed" or "web" block — wrong client type? Need Desktop OAuth client.');
+      process.exit(1);
+    }
+    const client = new google.auth.OAuth2(block.client_id, block.client_secret, 'urn:ietf:wg:oauth:2.0:oob');
+
+    // Try cached refresh token first.
+    if (fs.existsSync(OAUTH_TOKEN_PATH)) {
+      try {
+        const tok = JSON.parse(fs.readFileSync(OAUTH_TOKEN_PATH, 'utf8'));
+        client.setCredentials(tok);
+        // Force a refresh so we know it still works.
+        const fresh = await client.getAccessToken();
+        if (fresh && fresh.token) {
+          console.log('▸ using cached Drive credentials');
+          return client;
+        }
+      } catch (e) {
+        console.warn('Cached token invalid, re-authorizing:', e.message);
+      }
+    }
+
+    // Interactive consent.
+    const authUrl = client.generateAuthUrl({
+      access_type: 'offline',
+      prompt: 'consent',
+      scope: DRIVE_SCOPES,
+    });
+    console.log('\n────────────── DRIVE AUTHORIZATION REQUIRED ──────────────');
+    console.log('Open this URL on a machine where you can sign in to Google:');
+    console.log('\n' + authUrl + '\n');
+    console.log('Sign in with the Google account that has access to your Shared Drive,');
+    console.log('approve the consent screen, then copy the code Google gives you.');
+    process.stdout.write('Paste the code here: ');
+    const code = await new Promise(resolve => {
+      process.stdin.setEncoding('utf8');
+      process.stdin.once('data', d => resolve(String(d).trim()));
+    });
+    const { tokens } = await client.getToken(code);
+    client.setCredentials(tokens);
+    fs.writeFileSync(OAUTH_TOKEN_PATH, JSON.stringify(tokens, null, 2), { mode: 0o600 });
+    console.log('▸ saved refresh token to ' + OAUTH_TOKEN_PATH);
+    return client;
+  }
+
+  // Path 2: Application Default Credentials (gcloud / service account).
+  // Useful if the user has a service account JSON via
+  // GOOGLE_APPLICATION_CREDENTIALS, or if they're running somewhere
+  // with workload identity. The default gcloud OAuth client is BLOCKED
+  // for drive.readonly so this path mostly works only for service
+  // accounts now.
+  const gauth = new google.auth.GoogleAuth({ scopes: DRIVE_SCOPES });
+  return gauth.getClient();
+}
+
+let drive; // populated in main()
 
 // ── State (resumable) ────────────────────────────────────────────────
 let state = { processed: {}, errors: [], startedAt: new Date().toISOString() };
@@ -228,15 +302,26 @@ function sanitizeForKey(s) {
 }
 
 async function streamDownload(fileId) {
-  // Returns a Buffer. For very large files (>1GB) this will use a lot
-  // of RAM — Cloud Shell has 5GB so we have headroom for typical TV
-  // masters. If you regularly hit memory limits, switch to a stream
-  // pipe into a temp file and supabase.storage.upload(stream).
+  // Returns a Readable stream of the file bytes. Streaming so a 2 GB
+  // master doesn't have to sit in RAM. Supabase Storage's upload()
+  // accepts a ReadableStream directly via the underlying fetch
+  // (we pass it as a Blob-like through Buffer concat only for files
+  // smaller than CHUNK_BUFFER_THRESHOLD where the simpler path is
+  // faster).
   const res = await drive.files.get(
     { fileId, alt: 'media', supportsAllDrives: true },
-    { responseType: 'arraybuffer' }
+    { responseType: 'stream' }
   );
-  return Buffer.from(res.data);
+  return res.data; // Node.js Readable
+}
+
+function readStreamToBuffer(stream) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on('data', c => chunks.push(c));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', reject);
+  });
 }
 
 async function processFile(f, runTotals) {
@@ -287,11 +372,18 @@ async function processFile(f, runTotals) {
   }
 
   try {
-    // Download from Drive
-    const buf = await streamDownload(f.id);
+    // Download from Drive (streamed). For small/mid files we collect
+    // the buffer (fast path). For files > 50 MB we still buffer here
+    // — Supabase Storage's REST upload wants a Blob/Buffer/etc. (its
+    // resumable upload API would be the true streaming path but it
+    // requires extra session setup). 4 GB VM RAM is fine for typical
+    // ad creative (<1 GB per file).
+    const stream = await streamDownload(f.id);
+    const buf = await readStreamToBuffer(stream);
 
-    // Hash for dedupe
-    const hash = crypto.createHash('sha256').update(buf).digest('hex');
+    // Dedupe hash. Prefer Drive's md5Checksum (already computed by
+    // Google) when present; fall back to sha256 of what we just got.
+    const hash = f.md5Checksum || crypto.createHash('sha256').update(buf).digest('hex');
 
     // Upload to Supabase Storage
     const upRes = await supabase.storage
@@ -348,6 +440,10 @@ async function processFile(f, runTotals) {
 (async () => {
   const totals = { uploaded: 0, skipped: 0, filtered: 0, errors: 0, byType: {} };
   console.log(`▸ drive-import starting (folder=${folderId}, dry-run=${DRY_RUN}, types=${ONLY_TYPES || 'all'}, max=${MAX_FILES})`);
+
+  // Authorize Drive (interactive OAuth on first run, cached after).
+  const authClient = await makeDriveAuth();
+  drive = google.drive({ version: 'v3', auth: authClient });
 
   let count = 0;
   for await (const f of walk(folderId)) {
