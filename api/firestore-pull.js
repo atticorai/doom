@@ -37,10 +37,14 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { password } = req.body || {};
-  const ADMIN = process.env.ADMIN_PASSWORD;
+  const ADMIN = (process.env.ADMIN_PASSWORD || '').trim();
   if (!ADMIN) return res.status(503).json({ error: 'ADMIN_PASSWORD not set' });
-  if (!password || !timingSafeEqual(String(password), ADMIN)) {
-    return res.status(401).json({ error: 'Wrong admin password' });
+  const submitted = typeof password === 'string' ? password.trim() : '';
+  if (!submitted || !timingSafeEqual(submitted, ADMIN)) {
+    return res.status(401).json({
+      error: 'Wrong admin password',
+      detail: `submitted length: ${submitted.length}, expected length: ${ADMIN.length}`,
+    });
   }
 
   const fs = getDb();
