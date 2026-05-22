@@ -7593,6 +7593,41 @@ Rules:
             log("Creative File Migration","Moved "+totalMigrated+" files to Supabase Storage ("+totalErrors.length+" errors)");
           }catch(e){setUploadTracker(null);alert("Migration request failed: "+e.message)}
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #D4A040",background:"#D4A04015",color:"#D4A040",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🎬 Move Creative Files</button>
+        <button onClick={async()=>{
+          const pw=prompt("Admin password — take a manual snapshot of all data:");
+          if(!pw)return;
+          notify("Taking snapshot...");
+          try{
+            const r=await fetch("/api/snapshots",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw,action:"take"})});
+            const j=await r.json();
+            if(!r.ok){alert("Snapshot failed: "+(j.error||r.status));return}
+            alert("Snapshot saved.\n\n"+j.archived+" docs archived to legacy_docs_history.\n\nUse 'Snapshots / Restore' to roll back to this version later.");
+            log("Snapshot Taken",j.archived+" docs archived");
+          }catch(e){alert("Snapshot request failed: "+e.message)}
+        }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #5BC4A0",background:"#5BC4A015",color:"#5BC4A0",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📸 Take Snapshot</button>
+        <button onClick={async()=>{
+          const pw=prompt("Admin password — list snapshots:");
+          if(!pw)return;
+          try{
+            const r=await fetch("/api/snapshots",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw,action:"list"})});
+            const j=await r.json();
+            if(!r.ok){alert("List failed: "+(j.error||r.status));return}
+            if(!j.snapshots||!j.snapshots.length){alert("No snapshots yet. Take one with 📸 Take Snapshot or wait for an operation to auto-create one.");return}
+            const lines=j.snapshots.slice(0,30).map((s,i)=>(i+1)+". "+new Date(s.archived_at).toLocaleString()+" — "+s.archived_op+" ("+s.doc_count+" docs"+(s.archived_by?" via "+s.archived_by:"")+")");
+            const choice=prompt("Snapshots (newest first). Enter a NUMBER to restore that snapshot, or Cancel.\n\n"+lines.join("\n"));
+            if(!choice)return;
+            const idx=parseInt(choice,10)-1;
+            if(isNaN(idx)||idx<0||idx>=j.snapshots.length){alert("Invalid choice");return}
+            const target=j.snapshots[idx];
+            if(!confirm("RESTORE to "+new Date(target.archived_at).toLocaleString()+"?\n\nCurrent state will be archived first (so this restore is itself reversible). All legacy_docs rows will roll back to the most recent history at-or-before that time.\n\nContinue?"))return;
+            notify("Restoring snapshot...");
+            const rr=await fetch("/api/snapshots",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw,action:"restore",archived_at:target.archived_at})});
+            const jj=await rr.json();
+            if(!rr.ok){alert("Restore failed: "+(jj.error||rr.status));return}
+            alert("Restored.\n\n"+jj.restored+" docs rolled back to "+new Date(target.archived_at).toLocaleString()+"\n\nReload the app.");
+            log("Snapshot Restored",jj.restored+" docs to "+target.archived_at);
+          }catch(e){alert("Snapshot list failed: "+e.message)}
+        }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #E85A7A",background:"#E85A7A15",color:"#E85A7A",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>⏪ Snapshots / Restore</button>
       </div>
       <Cd style={{padding:0,overflow:"hidden"}}>
         <div style={{maxHeight:"calc(100vh - 280px)",overflowY:"auto"}}>

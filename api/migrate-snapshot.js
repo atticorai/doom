@@ -51,7 +51,7 @@ module.exports = async function handler(req, res) {
   const { cleaned, report } = cleanSnapshot(snapshot);
 
   try {
-    const writeResult = await writeSnapshotToSupabase(supabase, cleaned);
+    const writeResult = await writeSnapshotToSupabase(supabase, cleaned, 'migrate-snapshot');
     return res.status(200).json({ ok: true, ...writeResult, cleanup: report });
   } catch (e) {
     return res.status(500).json({ error: 'Supabase write failed', detail: e.message, cleanup: report });

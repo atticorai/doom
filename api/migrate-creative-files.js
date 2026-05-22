@@ -18,6 +18,7 @@
 
 const crypto = require('crypto');
 const { getSupabase } = require('./_supabase');
+const { archiveDoc } = require('./_archive');
 
 const ADMIN_PASSWORD_ENV = 'ADMIN_PASSWORD';
 const ISCIS_DOC = 'iscis';
@@ -167,6 +168,9 @@ module.exports = async function handler(req, res) {
 
     // Write updated iscis blob back ONLY if anything actually changed
     if (migrated > 0) {
+      // SAFETY: snapshot prior iscis blob into legacy_docs_history
+      // before we overwrite. Recoverable if anything went sideways.
+      await archiveDoc(supabase, 'appData', ISCIS_DOC, 'creative-migrate', 'migrate-creative-files');
       const { error: wErr } = await supabase
         .from('legacy_docs')
         .upsert({

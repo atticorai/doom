@@ -19,6 +19,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 const { getSupabase } = require('./_supabase');
+const { archiveDoc } = require('./_archive');
 
 const ALLOWED_COLLECTIONS = new Set(['appData', 'trafficSheets']);
 
@@ -67,7 +68,9 @@ const handler = async function(req, res) {
 
     if (action === 'set') {
       if (data === undefined) return res.status(400).json({ error: 'Missing data' });
-      // The app sends { data: stringifiedJSON, ts: number } — preserve that shape.
+      // SAFETY: archive the prior version into legacy_docs_history
+      // BEFORE we overwrite it. If this fails the write is aborted.
+      await archiveDoc(supabase, collection, doc, 'set', 'api/db');
       const blob = (data && typeof data === 'object' && 'data' in data) ? data.data : data;
       const ts = (data && typeof data === 'object' && 'ts' in data) ? data.ts : Date.now();
       const { error } = await supabase
@@ -78,6 +81,9 @@ const handler = async function(req, res) {
     }
 
     if (action === 'delete') {
+      // SAFETY: archive before delete. The row is gone after this
+      // returns, but it's recoverable from legacy_docs_history.
+      await archiveDoc(supabase, collection, doc, 'delete', 'api/db');
       const { error } = await supabase
         .from('legacy_docs')
         .delete()

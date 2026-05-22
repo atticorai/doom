@@ -347,6 +347,29 @@ create table if not exists legacy_docs (
 
 create index if not exists legacy_docs_collection_idx on legacy_docs (collection);
 
+-- ── Legacy doc HISTORY (every previous version, nothing is ever lost) ──
+-- Every set/delete on legacy_docs writes the OLD value here first.
+-- Recover any prior version by reading from this table. No automatic
+-- cleanup — history grows unbounded; trim manually after enough time
+-- has passed that you're confident the change was correct.
+create table if not exists legacy_docs_history (
+  id            bigserial primary key,
+  collection    text not null,
+  doc_id        text not null,
+  data          jsonb,
+  ts            bigint,
+  archived_at   timestamptz not null default now(),
+  archived_op   text not null,                 -- 'set' | 'delete' | 'pull' | 'creative-migrate'
+  archived_by   text                            -- caller hint (endpoint name, user, etc.)
+);
+
+create index if not exists legacy_docs_history_doc_idx
+  on legacy_docs_history (collection, doc_id, archived_at desc);
+create index if not exists legacy_docs_history_archived_at_idx
+  on legacy_docs_history (archived_at desc);
+
+alter table legacy_docs_history enable row level security;
+
 -- ── Rendered Traffic Sheets ────────────────────────────────────────
 -- The HTML traffic sheets that get linked from confirmation emails.
 -- These are bulky strings — kept separate from traffic_history so

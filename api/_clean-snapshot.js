@@ -126,7 +126,13 @@ function cleanSnapshot(snapshot) {
   return { cleaned: out, report };
 }
 
-async function writeSnapshotToSupabase(supabase, cleaned) {
+async function writeSnapshotToSupabase(supabase, cleaned, archiveBy) {
+  // SAFETY: snapshot EVERY current legacy_docs row before we overwrite
+  // anything. The pull is a bulk op that can touch dozens of docs;
+  // one history row per existing doc means nothing is lost.
+  const { archiveAll } = require('./_archive');
+  await archiveAll(supabase, 'pull', archiveBy || 'migrate-snapshot');
+
   const rows = [];
   const ts = Date.now();
   for (const [docId, payload] of Object.entries(cleaned.appData || {})) {

@@ -96,7 +96,7 @@ module.exports = async function handler(req, res) {
     };
 
     const { cleaned, report } = cleanSnapshot(snapshot);
-    const writeResult = await writeSnapshotToSupabase(supabase, cleaned);
+    const writeResult = await writeSnapshotToSupabase(supabase, cleaned, 'firestore-pull');
 
     return res.status(200).json({
       ok: true,
