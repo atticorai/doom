@@ -6,20 +6,55 @@ Total active time: ~25 minutes of clicking/pasting. Then it runs unattended.
 
 ---
 
-## Part A — DigitalOcean (5 minutes)
+## Part A — DigitalOcean (10–15 minutes for first-time signup)
 
-1. Go to **https://www.digitalocean.com** → **Sign Up**. Email + password + credit card.
-2. On the dashboard, click **Create → Droplets**.
-3. Settings:
-   - **Region**: closest one to you
-   - **OS image**: Ubuntu 22.04 (x64) — the default
-   - **Size**: Basic → Regular → **$6/month** (1 GB RAM, 25 GB disk, 1 TB transfer). For 50 GB you fit within the transfer cap easily because Supabase is the destination, not external.
-   - **Authentication**: pick **Password**. Set a strong password. (You'll paste this once.)
-   - **Hostname**: `doom-drive` (or whatever, doesn't matter)
-4. Click **Create Droplet**. Wait 30 seconds.
-5. The droplet appears in the list. **Copy the IPv4 address** — it's a number like `134.122.55.10`. You'll need it.
+### A1. Sign up
 
-You're now paying ~$0.009/hour ($0.22/day). Delete the droplet when done.
+1. Open **https://www.digitalocean.com** in a new tab.
+2. Click **Sign Up** (top right).
+3. Use email/password, Google, or GitHub login — whichever's easiest. (New accounts get $200 in free credit for 60 days; you'll burn ~$2 of it tops.)
+4. **Verify your email** when prompted (check inbox, click the link).
+5. DigitalOcean will ask you to add a payment method (credit card or PayPal). They run a small auth charge ($1, refunded) to verify the card.
+6. You may get a verification step asking for a phone number or, occasionally, a photo ID. Just complete it — it's anti-fraud, not a scam.
+7. When you land on the dashboard, it may ask you to create a **Project**. Name it `doom` (anything). Click **Create Project**.
+
+### A2. Create the Droplet
+
+1. Top right of the dashboard → big green **Create** button → **Droplets**.
+2. **Choose Region**: pick the one geographically closest to you. (New York 3, San Francisco 3, Toronto 1, Frankfurt 1, etc.) Doesn't really matter for our use case — the work happens between Google and Supabase, not between you and the droplet.
+3. **Choose an image**: leave on **Ubuntu** → version **22.04 (LTS) x64**. (Default.)
+4. **Choose Size**:
+   - Type tab: **Basic**
+   - CPU options: **Regular** (the cheapest column)
+   - Pick the **$6/mo** plan: 1 GB RAM / 1 CPU / 25 GB SSD / 1 TB transfer. (If you want a slight speed bump, $12/mo with 2 GB RAM also fine — your call.)
+5. **Add improved metrics**: leave unchecked (saves $)
+6. **Backups**: leave unchecked (we're deleting this in a few hours, no point)
+7. **Authentication Method**: this is the one that trips people up. DigitalOcean defaults to **SSH Key** and will try to push you that direction. Instead:
+   - Click the **Password** tab (it's a tab next to "SSH Key")
+   - Enter a strong password. Save it somewhere (1Password, Notes, etc.) — you'll paste it twice.
+   - DO will warn you that password auth is less secure. Ignore — this droplet exists for a few hours then gets destroyed.
+8. **Quantity**: 1
+9. **Hostname**: `doom-drive` (or anything — labels only)
+10. **Tags**: leave blank
+11. **Select Project**: the one you made earlier (`doom`)
+12. Click the big **Create Droplet** button at the bottom.
+13. Wait ~30 seconds. The droplet appears in your project's list with a green dot.
+14. **Click the droplet's name** to open its detail page. The IPv4 address is shown at top — looks like `134.122.55.10`. Click the small copy icon next to it. That's the address you'll use in Part C.
+
+### A3. (Optional) Test access from DigitalOcean's web console first
+
+If you're nervous about SSH, you can verify the droplet works from inside DigitalOcean's web UI:
+
+1. On the droplet detail page, top-right → **Console** button.
+2. A black terminal window opens in your browser, prompted with "login as:".
+3. Type `root`, Enter, then paste your password.
+4. **First-time login**: it will say "You are required to change your password immediately (administrator enforced)" and ask for:
+   - Current password (paste the one you set)
+   - New password (type a new one, twice)
+   - Save the new password. **Use this new one when you SSH from your laptop.**
+5. You're logged in. Type `exit` to close the web console.
+
+This step is optional but saves a back-and-forth if the password expiry thing surprises you in the next part.
 
 ---
 
@@ -54,27 +89,49 @@ Now create the actual client:
 
 You'll use Terminal (Mac) or PowerShell (Windows).
 
-- **Mac**: Open **Terminal** (Spotlight → "Terminal").
-- **Windows**: Open **PowerShell** (Start menu → "PowerShell").
+- **Mac**: Open **Terminal** (Spotlight → search "Terminal", Enter).
+- **Windows**: Open **PowerShell** (Start menu → search "PowerShell", Enter). Windows 10/11 has SSH built in. If on older Windows, install [PuTTY](https://www.putty.org/) instead.
 
-Connect to the droplet (paste this, replacing the IP with yours):
+Connect to the droplet (paste this, replacing the IP with yours — drop the angle brackets):
 
 ```
-ssh root@<YOUR_DROPLET_IP>
+ssh root@134.122.55.10
 ```
 
-- It'll warn about a new fingerprint the first time — type **yes** and Enter.
-- Paste the password you set when creating the droplet. (Won't show as you type, that's normal.)
+What happens, in order:
 
-You're now inside the rented Linux box. The prompt will look like `root@doom-drive:~#`.
+1. First time only, you'll see a "The authenticity of host can't be established" warning with a fingerprint. Type **yes** and Enter. (Adds the droplet to your known hosts file. Normal.)
+2. It asks for the password. Paste the one you set in Part A. **Note: nothing appears as you type/paste — no dots, no asterisks. That's normal.** Hit Enter.
+3. **First login only**: Ubuntu forces a password change. You'll see:
+   ```
+   You are required to change your password immediately (administrator enforced)
+   Current password: 
+   ```
+   - Paste your password again (Enter)
+   - It asks for a New password — type something (Enter). (No paste-from-1Password trick here — just type it. You can reuse the same password if you want.)
+   - Re-type the new password (Enter)
+   - **If you skipped Part A3**, this happens here in your laptop terminal. **If you did Part A3**, this already happened in the web console — use the new password from there at step 2, and you'll skip straight past this step.
+4. SSH will then immediately disconnect with the message "Connection to ... closed." (annoying, but normal — DO requires re-connecting after password change.) Re-run `ssh root@<IP>`, paste the **new** password.
+5. You're in. The prompt will look like `root@doom-drive:~#`.
 
-Run the one-shot bootstrap (installs Node, clones the repo, installs deps):
+Run the one-shot bootstrap (installs Node 20, git, clones the repo, installs deps):
 
 ```
 curl -fsSL https://raw.githubusercontent.com/atticorai/doom/main/scripts/setup-vm.sh | bash
 ```
 
-Wait ~30 seconds. It'll print "✓ VM ready." plus next steps.
+Wait ~30 seconds. It'll print "✓ VM ready." with next steps.
+
+**If `curl` errors**: it usually means the repo URL needs adjusting (private vs public). If `atticorai/doom` is private, swap the bootstrap step for:
+
+```
+apt-get update -y && apt-get install -y nodejs npm git
+git clone https://<your-github-username>:<your-personal-access-token>@github.com/atticorai/doom.git
+cd doom
+npm install --no-save googleapis @supabase/supabase-js
+```
+
+(GitHub personal access tokens: github.com → Settings → Developer settings → Personal access tokens → generate one with `repo` scope. Or share the repo publicly for the duration of this task.)
 
 ---
 
