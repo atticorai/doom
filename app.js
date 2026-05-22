@@ -7570,8 +7570,8 @@ Rules:
         <button onClick={async()=>{
           const pw=prompt("Admin password — move creative files from Firebase Storage to Supabase Storage:");
           if(!pw)return;
-          if(!confirm("Downloads every creative file from Firebase Storage and re-uploads to Supabase Storage. Skips errored files and keeps going. Saves progress every 10 files. Takes up to 5 minutes.\n\nContinue?"))return;
-          setUploadTracker({label:"Migrating creative files... (this can take a few minutes — leave the tab open)",pct:5});
+          if(!confirm("Downloads every creative file from Firebase Storage and re-uploads to Supabase Storage. Skips errored files and keeps going. Saves progress every 3 files. Each click runs up to ~50 seconds; if there's more to do it'll say PAUSED and you click again.\n\nContinue?"))return;
+          setUploadTracker({label:"Migrating creative files... (~50 seconds per click — leave the tab open)",pct:5});
           try{
             const r=await fetch("/api/migrate-creative-files",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw})});
             const j=await r.json();

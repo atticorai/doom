@@ -21,10 +21,13 @@ const { archiveDoc } = require('./_archive');
 const ADMIN_PASSWORD_ENV = 'ADMIN_PASSWORD';
 const ISCIS_DOC = 'iscis';
 const BUCKET = 'creative';
-const CONCURRENCY = 4;             // files in flight at once
-const SAVE_EVERY = 10;             // checkpoint iscis blob this often
+const CONCURRENCY = 2;             // files in flight at once (memory-safe)
+const SAVE_EVERY = 3;              // checkpoint iscis blob this often
 const MAX_FILE_BYTES = 500 * 1024 * 1024; // 500 MB cap
-const WALL_CLOCK_BUDGET_MS = 270_000;     // 4m30s — leave room to checkpoint
+// Vercel Hobby caps functions at 60s, Pro at 300s. Stay under 50s so
+// we always have time to checkpoint and return JSON before the platform
+// kills the function (which would return an HTML error page).
+const WALL_CLOCK_BUDGET_MS = 50_000;
 
 function timingSafeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
@@ -223,5 +226,7 @@ module.exports.config = {
     bodyParser: { sizeLimit: '1mb' },
     responseLimit: '8mb',
   },
-  maxDuration: 300,
+  // Cap at 60s — works on both Hobby (60s max) and Pro (300s max).
+  // The internal budget (50s) returns gracefully before this fires.
+  maxDuration: 60,
 };
