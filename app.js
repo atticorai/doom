@@ -8407,6 +8407,21 @@ Rules:
             log("Snapshot Restored",jj.restored+" docs to "+target.archived_at);
           }catch(e){alert("Snapshot list failed: "+e.message)}
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #E85A7A",background:"#E85A7A15",color:"#E85A7A",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>⏪ Snapshots / Restore</button>
+        <button onClick={async()=>{
+          try{
+            const r=await fetch("/api/legacy-assets-export",{credentials:"include"});
+            if(!r.ok){const j=await r.json().catch(()=>({}));alert("Export failed: "+(j.error||r.status));return}
+            const blob=await r.blob();
+            const cd=r.headers.get("Content-Disposition")||"";
+            const m=cd.match(/filename="?([^";]+)/);
+            const fname=m?m[1]:"legacy-assets-non-broadcast.csv";
+            const url=URL.createObjectURL(blob);
+            const a=document.createElement("a");
+            a.href=url;a.download=fname;document.body.appendChild(a);a.click();document.body.removeChild(a);
+            setTimeout(()=>URL.revokeObjectURL(url),60000);
+            log("Legacy Assets Export","Downloaded "+fname);
+          }catch(e){alert("Export request failed: "+e.message)}
+        }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #4AC8E8",background:"#4AC8E815",color:"#4AC8E8",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📦 Export Other Assets Manifest</button>
       </div>
       <Cd style={{padding:0,overflow:"hidden"}}>
         <div style={{maxHeight:"calc(100vh - 280px)",overflowY:"auto"}}>

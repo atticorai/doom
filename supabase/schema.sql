@@ -370,6 +370,52 @@ create index if not exists legacy_docs_history_archived_at_idx
 
 alter table legacy_docs_history enable row level security;
 
+-- ── Legacy ASSETS (Drive import — one row per Drive file) ──────────
+-- Home for every byte pulled out of Google Drive by the
+-- scripts/drive-import.js Cloud Shell tool. One row per Drive file.
+-- Bytes get copied into the 'legacy-vault' Storage bucket.
+-- Classification (TV/Radio/Logo/OOH/Banner/Social/B-roll/Print/
+-- Document/Other) is done by the import script's heuristics; brand
+-- and market are inferred from the Drive folder path where possible.
+--
+-- TV/Radio rows surface in the WK Legacy Vault Creative tab.
+-- Everything else stays here for the CSV export hand-off.
+--
+-- drive_id is unique so re-running the importer is idempotent.
+
+create table if not exists legacy_assets (
+  id              uuid primary key default uuid_generate_v4(),
+  drive_id        text unique,                  -- Google Drive file ID
+  drive_path      text,                         -- full folder path inside Drive, e.g. "/WK/Birmingham/April-2025"
+  filename        text not null,                -- original Drive filename, e.g. "MothersWreck_30s.mp4"
+  type            text not null,                -- 'TV' | 'Radio' | 'Logo' | 'OOH' | 'Banner' | 'Social' | 'B-roll' | 'Print' | 'Document' | 'Other'
+  brand           text,                         -- 'WK' | 'PL' | null (unknown)
+  market          text,                         -- canonical market name where known
+  year            int,                          -- pulled from Drive createdTime if available
+  mime_type       text,
+  file_size       bigint,                       -- bytes
+  duration_sec    numeric,                      -- for video/audio
+  width           int,                          -- for image/video
+  height          int,                          -- for image/video
+  hash            text,                         -- sha256 of bytes for dedupe
+  supabase_path   text,                         -- storage key inside 'legacy-vault' bucket, e.g. 'tv/2025/abc123.mp4'
+  supabase_url    text,                         -- public URL (since the bucket is public)
+  drive_created   timestamptz,
+  drive_modified  timestamptz,
+  classifier_note text,                         -- "matched ISCI pattern HSVWK2530007T", "vertical 9:16", etc.
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+
+create index if not exists legacy_assets_type_idx      on legacy_assets (type);
+create index if not exists legacy_assets_brand_idx     on legacy_assets (brand);
+create index if not exists legacy_assets_market_idx    on legacy_assets (market);
+create index if not exists legacy_assets_year_idx      on legacy_assets (year);
+create index if not exists legacy_assets_hash_idx      on legacy_assets (hash);
+create index if not exists legacy_assets_created_idx   on legacy_assets (created_at desc);
+
+alter table legacy_assets enable row level security;
+
 -- ── Rendered Traffic Sheets ────────────────────────────────────────
 -- The HTML traffic sheets that get linked from confirmation emails.
 -- These are bulky strings — kept separate from traffic_history so
@@ -451,9 +497,10 @@ create policy traffic_sheets_public_read
 
 insert into storage.buckets (id, name, public, file_size_limit)
 values
-  ('creative',  'creative',  true,  524288000),
-  ('ooh',       'ooh',       true,  524288000),
-  ('legacy-wk', 'legacy-wk', false, 524288000)
+  ('creative',     'creative',     true,  524288000),
+  ('ooh',          'ooh',          true,  524288000),
+  ('legacy-wk',    'legacy-wk',    false, 524288000),
+  ('legacy-vault', 'legacy-vault', true,  5368709120)  -- 5 GB cap; Drive ingest target
 on conflict (id) do update set
   public = excluded.public,
   file_size_limit = excluded.file_size_limit;
@@ -471,6 +518,11 @@ drop policy if exists "Public read on ooh" on storage.objects;
 create policy "Public read on ooh"
   on storage.objects for select
   using (bucket_id = 'ooh');
+
+drop policy if exists "Public read on legacy-vault" on storage.objects;
+create policy "Public read on legacy-vault"
+  on storage.objects for select
+  using (bucket_id = 'legacy-vault');
 
 -- legacy-wk has NO public policy: reads require a signed URL minted
 -- by /api/storage (which uses the service-role key).
