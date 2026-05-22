@@ -7534,37 +7534,33 @@ Rules:
     );
 
     // ── Closed Scroll: a rolled-up scroll button ─────────────────────
+    // The actual scroll artwork — antique gold scroll with wax seal.
+    // White pixels are color-keyed to transparent via SVG filter so the
+    // scroll floats on top of the underworld backdrop.
+    const SCROLL_IMG_V="/assets/wk-vault-scroll.jpg";
     const ClosedScrollV=({market,month,version,isOpen,onClick,rotation})=>{
-      const scrollW=240,scrollH=53;
-      return <VMBtn type="button" onClick={onClick} whileHover={{y:-3,scale:1.04}} whileTap={{scale:.98}} transition={{type:"spring",stiffness:320,damping:22}} style={{rotate:rotation+"deg",display:"block",textAlign:"left",position:"relative",background:"none",border:"none",cursor:"pointer",padding:0}} title={market+" · "+month+" · "+version}>
-        <div style={{position:"relative",width:scrollW,height:scrollH}}>
-          {/* Warm torch glow on hover */}
-          <div style={{position:"absolute",inset:-8,borderRadius:16,opacity:0,transition:"opacity .3s",pointerEvents:"none",filter:"blur(20px)",background:"radial-gradient(ellipse 70% 60% at 50% 50%, rgba(212,168,87,.55) 0%, rgba(160,40,80,.25) 50%, transparent 80%)"}} className="wkv-scroll-glow"/>
-          {/* Left rod cap */}
-          <div style={{position:"absolute",left:0,top:"50%",transform:"translateY(-50%)",width:18,height:scrollH,background:"radial-gradient(ellipse at 30% 30%, #f3dcae 0%, #c9a675 35%, #8a5e30 75%, #4a2f10 100%)",borderRadius:9,boxShadow:"0 2px 4px rgba(0,0,0,.5)",zIndex:3}}>
-            <div style={{position:"absolute",inset:3,borderRadius:6,border:"1px solid rgba(212,168,87,.7)"}}/>
+      return <VMBtn type="button" onClick={onClick} whileHover={{y:-3,scale:1.04}} whileTap={{scale:.98}} transition={{type:"spring",stiffness:320,damping:22}} style={{rotate:rotation+"deg",display:"block",textAlign:"left",position:"relative",background:"none",border:"none",cursor:"pointer",padding:0}} title={market+" · "+month+" · "+version} aria-expanded={isOpen}>
+        {/* Color-key filter — turns white pixels in the JPG transparent. */}
+        <svg width="0" height="0" style={{position:"absolute",width:0,height:0}} aria-hidden="true">
+          <defs>
+            <filter id="wkv-scroll-key-out" colorInterpolationFilters="sRGB">
+              <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -1.667 -1.667 -1.667 5 0"/>
+            </filter>
+          </defs>
+        </svg>
+        {/* Always-on subtle mystical glow + brighter on hover */}
+        <div style={{position:"absolute",inset:-10,borderRadius:18,opacity:.55,pointerEvents:"none",filter:"blur(22px)",background:"radial-gradient(ellipse 70% 60% at 50% 50%, rgba(212,168,87,.55) 0%, rgba(160,40,100,.3) 50%, transparent 80%)",transition:"opacity .3s"}} className="wkv-scroll-glow"/>
+        {/* Scroll artwork — background removed via SVG color-key filter */}
+        <div style={{position:"relative",width:240,aspectRatio:"1000 / 220"}}>
+          <div style={{position:"absolute",inset:0,backgroundImage:"url("+SCROLL_IMG_V+")",backgroundRepeat:"no-repeat",backgroundPosition:"center",backgroundSize:"contain",filter:"url(#wkv-scroll-key-out) drop-shadow(0 4px 8px rgba(0,0,0,.55))"}}/>
+          {/* MARKET — left flat panel of the scroll */}
+          <div style={{position:"absolute",left:"9%",right:"63%",top:"24%",bottom:"24%",display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center",pointerEvents:"none"}}>
+            <span className="wkv-cinzel" style={{fontWeight:700,textTransform:"uppercase",lineHeight:1.15,fontSize:(market||"").length>10?8:10,letterSpacing:".12em",color:"#3a2510",textShadow:"0 1px 0 rgba(255,235,180,.4)"}}>{market||"—"}</span>
           </div>
-          {/* Right rod cap */}
-          <div style={{position:"absolute",right:0,top:"50%",transform:"translateY(-50%)",width:18,height:scrollH,background:"radial-gradient(ellipse at 30% 30%, #f3dcae 0%, #c9a675 35%, #8a5e30 75%, #4a2f10 100%)",borderRadius:9,boxShadow:"0 2px 4px rgba(0,0,0,.5)",zIndex:3}}>
-            <div style={{position:"absolute",inset:3,borderRadius:6,border:"1px solid rgba(212,168,87,.7)"}}/>
-          </div>
-          {/* Parchment body */}
-          <div style={{position:"absolute",left:14,right:14,top:6,bottom:6,background:"linear-gradient(180deg,#f4ebd8 0%,#e8dcc0 50%,#d4c4a0 100%)",borderRadius:2,boxShadow:"inset 0 0 12px rgba(120,100,60,.35), 0 3px 8px rgba(0,0,0,.55)",zIndex:1}}>
-            {/* Vellum noise overlay */}
-            <div style={{position:"absolute",inset:0,opacity:.05,backgroundImage:"radial-gradient(#3a2510 1px, transparent 1px)",backgroundSize:"5px 5px",borderRadius:2}}/>
-            {/* Wax seal */}
-            <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:28,height:28,borderRadius:"50%",background:"radial-gradient(circle at 35% 30%, #d4596f 0%, #a82a40 40%, #6a1224 75%, #380612 100%)",boxShadow:"0 2px 4px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,180,180,.45)",zIndex:2,display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <span className="wkv-cinzel" style={{color:"rgba(255,235,200,.85)",fontSize:8,fontWeight:700,letterSpacing:".15em"}}>WK</span>
-            </div>
-            {/* MARKET — left panel */}
-            <div style={{position:"absolute",left:"6%",right:"58%",top:"18%",bottom:"18%",display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center",pointerEvents:"none"}}>
-              <span className="wkv-cinzel" style={{fontWeight:700,textTransform:"uppercase",lineHeight:1.15,fontSize:(market||"").length>10?9:11,letterSpacing:".1em",color:"#3a2510",textShadow:"0 1px 0 rgba(255,235,180,.4)"}}>{market||"—"}</span>
-            </div>
-            {/* MONTH / VERSION — right panel */}
-            <div style={{position:"absolute",left:"58%",right:"6%",top:"15%",bottom:"15%",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",pointerEvents:"none"}}>
-              <span className="wkv-cinzel" style={{fontWeight:700,textTransform:"uppercase",lineHeight:1.1,fontSize:10,letterSpacing:".1em",color:"#3a2510",textShadow:"0 1px 0 rgba(255,235,180,.4)"}}>{month||""}</span>
-              <span className="wkv-cinzel" style={{fontWeight:600,textTransform:"uppercase",fontSize:7,letterSpacing:".2em",color:"#5a3a18",opacity:.85,marginTop:2}}>{version||""}</span>
-            </div>
+          {/* MONTH / VERSION — right flat panel of the scroll */}
+          <div style={{position:"absolute",left:"63%",right:"9%",top:"22%",bottom:"22%",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",pointerEvents:"none"}}>
+            <span className="wkv-cinzel" style={{fontWeight:700,textTransform:"uppercase",lineHeight:1.1,fontSize:10,letterSpacing:".12em",color:"#3a2510",textShadow:"0 1px 0 rgba(255,235,180,.4)"}}>{month||""}</span>
+            <span className="wkv-cinzel" style={{fontWeight:600,textTransform:"uppercase",fontSize:7,letterSpacing:".2em",color:"#5a3a18",opacity:.85,marginTop:2}}>{version||""}</span>
           </div>
         </div>
       </VMBtn>;
@@ -7607,9 +7603,9 @@ Rules:
       // Build creative files list
       const reg=iscis||[];
       const creativeFiles=(record.iscis||[]).map(r=>{const full=reg.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:r.title||full.title||"",url:full.fileUrl}:null}).filter(Boolean);
-      return <VM initial={{opacity:0,scaleY:.6}} animate={{opacity:1,scaleY:1}} exit={{opacity:0,scaleY:.6}} transition={{duration:.45,ease:[.22,1,.36,1]}} style={{transformOrigin:"top center",width:"100%",maxWidth:780,marginTop:16,marginLeft:"auto",marginRight:"auto"}}>
+      return <VM className="wkv-open-scroll" initial={{opacity:0,scaleY:.6}} animate={{opacity:1,scaleY:1}} exit={{opacity:0,scaleY:.6}} transition={{duration:.45,ease:[.22,1,.36,1]}} style={{transformOrigin:"top center",width:"100%",maxWidth:780,marginTop:16,marginLeft:"auto",marginRight:"auto"}}>
         <HorizontalRodV position="top"/>
-        <div style={{position:"relative",background:"linear-gradient(to bottom, #f4ebd8, #e8dcc0, #d4c4a0)",boxShadow:"inset 0 0 60px rgba(120,100,60,.25), 0 8px 20px rgba(0,0,0,.4)"}}>
+        <div className="wkv-parchment" style={{position:"relative",background:"linear-gradient(to bottom, #f4ebd8, #e8dcc0, #d4c4a0)",boxShadow:"inset 0 0 60px rgba(120,100,60,.25), 0 8px 20px rgba(0,0,0,.4)"}}>
           <div style={{position:"absolute",top:0,left:0,right:0,height:20,background:"linear-gradient(to bottom, rgba(122,88,40,.3), transparent)",pointerEvents:"none",zIndex:10}}/>
           <div style={{position:"absolute",bottom:0,left:0,right:0,height:20,background:"linear-gradient(to top, rgba(122,88,40,.3), transparent)",pointerEvents:"none",zIndex:10}}/>
           <div style={{position:"absolute",inset:0,opacity:.04,pointerEvents:"none",backgroundImage:"radial-gradient(#3a2510 1px, transparent 1px)",backgroundSize:"5px 5px"}}/>
@@ -7651,7 +7647,7 @@ Rules:
                   {groupKeys.map(label=>{
                     const tone=toneForV(label);
                     return <React.Fragment key={label}>
-                      <tr style={{background:tone.bg,color:tone.text,borderTop:"1px solid "+tone.border,borderBottom:"1px solid "+tone.border}}>
+                      <tr className="wkv-group-row" style={{"--wkv-row-bg":tone.bg,"--wkv-row-text":tone.text,background:tone.bg,color:tone.text,borderTop:"1px solid "+tone.border,borderBottom:"1px solid "+tone.border}}>
                         <td colSpan={5} className="wkv-cinzel" style={{padding:"5px 10px",fontWeight:600,fontSize:10,letterSpacing:".18em",textTransform:"uppercase"}}>{label}</td>
                       </tr>
                       {(groups[label]||[]).map((r,ri)=><tr key={label+"_"+ri} style={{borderBottom:"1px solid rgba(181,163,122,.3)"}}>
@@ -7708,7 +7704,7 @@ Rules:
       const deep=darkenV(accent,.45);
       const dim=darkenV(accent,.75);
       return <VMBtn type="button" onClick={onClick} whileHover={{y:-4,scale:1.04}} whileTap={{scale:.97}} transition={{type:"spring",stiffness:320,damping:22}} style={{width:100,rotate:rotation+"deg",position:"relative",background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",flexDirection:"column",alignItems:"center"}} title={title+" · "+year}>
-        <div style={{position:"absolute",inset:-12,borderRadius:9999,opacity:0,transition:"opacity .3s",pointerEvents:"none",filter:"blur(28px)",background:"radial-gradient(ellipse 55% 65% at 50% 60%, "+accent+"88 0%, "+accent+"22 60%, transparent 85%)"}} className="wkv-bottle-glow"/>
+        <div style={{position:"absolute",inset:-12,borderRadius:9999,opacity:.5,transition:"opacity .3s",pointerEvents:"none",filter:"blur(28px)",background:"radial-gradient(ellipse 55% 65% at 50% 60%, "+accent+"aa 0%, "+accent+"44 50%, transparent 85%)"}} className="wkv-bottle-glow"/>
         <svg viewBox="0 0 100 180" width="100" height="180" style={{position:"relative",filter:"drop-shadow(0 10px 14px rgba(0,0,0,.75))"}}>
           <defs>
             <linearGradient id={"body-"+uid} x1="0" y1="0" x2="1" y2="0">

@@ -50,21 +50,33 @@ h1,h2,h3,h4{color:#F0E8F8;font-family:'Cormorant Garamond','DM Sans',serif}
 .book-leather button{border-color:transparent !important}
 .book-soul-particles,.book-soul-particles *{color:inherit !important;background:inherit !important}
 /* ═══ WK LEGACY VAULT — scoped overrides to neutralize the global dark theme ═══ */
-.wkv-page,.wkv-page *{color:inherit}
-.wkv-page input,.wkv-page select,.wkv-page textarea{background:rgba(26,10,31,.6) !important;color:#c9a8d4 !important;border-color:rgba(212,168,87,.25) !important}
-.wkv-page button{border-color:transparent !important;cursor:pointer}
-.wkv-page table tr td,.wkv-page table tr th{background:transparent !important;border-color:rgba(122,31,61,.18) !important;color:inherit !important}
-.wkv-page table tr:nth-child(odd) td,.wkv-page table tr:nth-child(even) td{background:transparent !important}
-.wkv-page h1,.wkv-page h2,.wkv-page h3,.wkv-page h4{font-family:'Cinzel',serif;color:inherit}
-.wkv-page label{color:inherit !important}
-.wkv-page::-webkit-scrollbar{width:8px}
-.wkv-page::-webkit-scrollbar-track{background:#1a0a1f}
-.wkv-page::-webkit-scrollbar-thumb{background:#7a1f3d;border-radius:4px}
+/* The page itself: defeat #R>div:not(#dd-loader)>div:last-child's !important bg */
+#R .wkv-page{background:radial-gradient(ellipse at center top, #4a1858 0%, #2a0f2e 35%, #1a0a1f 75%, #0d0512 100%) !important;color:#c9a8d4 !important}
+/* Inputs/selects inside the vault use the underworld theme */
+#R .wkv-page input,#R .wkv-page select,#R .wkv-page textarea{background:rgba(0,0,0,.45) !important;color:#f4ebd8 !important;border-color:rgba(212,168,87,.3) !important}
+#R .wkv-page button{border-color:transparent !important;cursor:pointer}
+#R .wkv-page label{color:inherit !important}
+/* Tabs row at top should NOT inherit the dark theme — let inline win */
+#R .wkv-page .wkv-page-content,#R .wkv-page .wkv-page-content *{background:transparent}
+/* OPEN SCROLL parchment table — defeat the global td/th !important + tr:nth-child stripes */
+#R .wkv-page .wkv-open-scroll td,#R .wkv-page .wkv-open-scroll th{background:transparent !important;border-color:rgba(181,163,122,.3) !important;color:#1a0a1f !important}
+#R .wkv-page .wkv-open-scroll tr:nth-child(odd) td,#R .wkv-page .wkv-open-scroll tr:nth-child(even) td{background:transparent !important}
+/* Schedule group header rows preserve their tone-colored background */
+#R .wkv-page .wkv-open-scroll tr.wkv-group-row td{background:var(--wkv-row-bg,transparent) !important;color:var(--wkv-row-text,#3a1f4a) !important}
+/* Defeat the global white-bg override that turns #fff → #2d1f42 — parchment must stay light */
+#R .wkv-page .wkv-parchment{background:linear-gradient(to bottom, #f4ebd8, #e8dcc0, #d4c4a0) !important;color:#1a0a1f !important;border-color:rgba(122,31,61,.2) !important}
+#R .wkv-page .wkv-parchment *{color:inherit}
+/* Font helpers */
 .wkv-cinzel{font-family:'Cinzel',serif !important;letter-spacing:.05em}
 .wkv-cormorant{font-family:'Cormorant Garamond',serif !important}
 .wkv-eb{font-family:'EB Garamond','Cormorant Garamond',serif !important}
-.wkv-page button:hover .wkv-scroll-glow,.wkv-page button:hover .wkv-bottle-glow{opacity:1}
-.wkv-page section{padding:0}
+/* Custom scrollbar inside the vault */
+#R .wkv-page::-webkit-scrollbar{width:8px}
+#R .wkv-page::-webkit-scrollbar-track{background:#1a0a1f}
+#R .wkv-page::-webkit-scrollbar-thumb{background:#7a1f3d;border-radius:4px}
+/* Hover glow brightens scrolls and bottles */
+#R .wkv-page button:hover .wkv-scroll-glow{opacity:1 !important}
+#R .wkv-page button:hover .wkv-bottle-glow{opacity:.95 !important}
 td{color:#D0C4DD !important;border-color:#2d1f42 !important}
 th{background:#2d1f42 !important;color:#9B8EAD !important;border-color:#4a3565 !important}
 /* Skip loader inputs from dark theme override */
