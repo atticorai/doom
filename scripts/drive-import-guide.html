@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Drive Import — DigitalOcean Walkthrough</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf8f3;
+    --ink: #1a1320;
+    --muted: #635a6f;
+    --rule: #d4c8d8;
+    --accent: #7a1f3d;
+    --accent-2: #d4a857;
+    --code-bg: #f0eae0;
+    --code-ink: #2a1a1a;
+  }
+  @media print {
+    :root { --bg: #fff; }
+    body { font-size: 10pt; }
+    .no-print { display: none !important; }
+    h1, h2, h3 { break-after: avoid; }
+    pre, .step, .callout { break-inside: avoid; }
+    @page { margin: 0.6in; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); }
+  body {
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+  }
+  header {
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 18px;
+    margin-bottom: 28px;
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  h1 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 36px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0;
+  }
+  h2 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 26px;
+    font-weight: 700;
+    margin: 40px 0 4px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink);
+  }
+  h2 .part {
+    color: var(--accent-2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-right: 8px;
+    vertical-align: 0.18em;
+  }
+  h2 .time {
+    float: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 400;
+    letter-spacing: .08em;
+    margin-top: 14px;
+    text-transform: none;
+  }
+  h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--accent);
+    margin: 22px 0 6px;
+  }
+  p { margin: 0.5em 0; }
+  ol, ul { padding-left: 1.4em; margin: 0.5em 0; }
+  li { margin: 0.35em 0; }
+  ul ul, ol ul, ul ol { margin: 0.2em 0; }
+  strong { font-weight: 700; color: var(--ink); }
+  em { font-style: italic; color: var(--muted); }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid #e2d8c8;
+  }
+  pre {
+    background: var(--code-ink);
+    color: #ead8a4;
+    border: none;
+    border-left: 3px solid var(--accent-2);
+    padding: 14px 16px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 12.5px;
+    line-height: 1.5;
+    margin: 10px 0;
+  }
+  pre code {
+    background: transparent;
+    color: inherit;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+  }
+  .callout {
+    background: #fff8e8;
+    border-left: 3px solid var(--accent-2);
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 13px;
+    border-radius: 0 4px 4px 0;
+  }
+  .callout strong { color: var(--accent); }
+  .step {
+    counter-increment: step;
+    position: relative;
+    padding-left: 36px;
+    margin: 14px 0;
+  }
+  .step::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    width: 24px;
+    height: 24px;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  section.part-section { counter-reset: step; }
+  hr { display: none; }
+  footer {
+    margin-top: 60px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+  }
+  .print-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,.12);
+  }
+  .print-btn:hover { background: #5a0f25; }
+</style>
+</head>
+<body>
+<button class="print-btn no-print" onclick="window.print()">🖨 Print / Save as PDF</button>
+
+<header>
+  <div class="eyebrow">Atticor · Doom &amp; Deliverables</div>
+  <h1>Drive Import — DigitalOcean Walkthrough</h1>
+  <p class="subtitle">Rent a $6/month Linux box, point it at a Google Drive folder, it streams every file into Supabase Storage and classifies them (TV / Radio / Logo / OOH / Banner / Social / B-roll / Print / Other). You don't touch the bytes. ~25 min active setup.</p>
+</header>
+
+<section class="part-section">
+  <h2><span class="part">Part A</span>DigitalOcean<span class="time">10–15 min</span></h2>
+
+  <h3>A1 · Sign up</h3>
+  <div class="step">Open <strong>https://www.digitalocean.com</strong> in a new tab and click <strong>Sign Up</strong> (top right).</div>
+  <div class="step">Use email/password, Google, or GitHub login — whichever's easiest. New accounts get <strong>$200 free credit for 60 days</strong>; you'll burn ~$2 of it tops.</div>
+  <div class="step">Verify your email when prompted (check inbox, click the link).</div>
+  <div class="step">Add a payment method (credit card or PayPal). DO runs a $1 auth charge (refunded) to verify the card.</div>
+  <div class="step">You may get a verification step asking for a phone number or, occasionally, a photo ID. Complete it — anti-fraud, not a scam.</div>
+  <div class="step">When you land on the dashboard, it may ask you to create a <strong>Project</strong>. Name it <code>doom</code> (anything). Click <strong>Create Project</strong>.</div>
+
+  <h3>A2 · Create the Droplet</h3>
+  <div class="step">Top right of dashboard → green <strong>Create</strong> button → <strong>Droplets</strong>.</div>
+  <div class="step"><strong>Choose Region</strong>: pick the one geographically closest to you. (The work happens between Google and Supabase, so this isn't critical.)</div>
+  <div class="step"><strong>Choose an image</strong>: leave on <strong>Ubuntu 22.04 (LTS) x64</strong> (default).</div>
+  <div class="step"><strong>Choose Size</strong>:
+    <ul>
+      <li>Type tab: <strong>Basic</strong></li>
+      <li>CPU options: <strong>Regular</strong> (cheapest column)</li>
+      <li>Pick the <strong>$6/mo</strong> plan: 1 GB RAM / 1 CPU / 25 GB SSD / 1 TB transfer</li>
+    </ul>
+  </div>
+  <div class="step"><strong>Add improved metrics</strong>: leave unchecked.</div>
+  <div class="step"><strong>Backups</strong>: leave unchecked — we're deleting this in a few hours.</div>
+  <div class="step"><strong>Authentication Method</strong>: <em>this is the one that trips people up</em>. DigitalOcean defaults to <strong>SSH Key</strong>. Click the <strong>Password</strong> tab next to it. Enter a strong password, save it (1Password / Notes). Ignore the "less secure" warning — droplet lives a few hours then gets destroyed.</div>
+  <div class="step"><strong>Quantity</strong>: 1. <strong>Hostname</strong>: <code>doom-drive</code>. <strong>Tags</strong>: blank. <strong>Project</strong>: the one you made.</div>
+  <div class="step">Click <strong>Create Droplet</strong>. Wait ~30 seconds. Droplet appears with a green dot.</div>
+  <div class="step"><strong>Click the droplet's name</strong>. Copy the IPv4 address at top (looks like <code>134.122.55.10</code>). That's the address you'll use in Part C.</div>
+
+  <div class="callout">
+    <strong>A3 (optional but recommended) — test access from DigitalOcean's web console first.</strong> On the droplet detail page, top-right → <strong>Console</strong> button. A black terminal opens in your browser. Login: <code>root</code>, then your password. First-time login forces a password change — set a new one. This handles the password-change dance before you SSH from your laptop, where it's more confusing.
+  </div>
+</section>
+
+<section class="part-section">
+  <h2><span class="part">Part B</span>Google Cloud OAuth client<span class="time">10 min</span></h2>
+
+  <p>You already have a Cloud project. We just need to add an OAuth Client so the script can sign in as you and read your Drive.</p>
+
+  <h3>B1 · OAuth Consent Screen</h3>
+  <div class="step">Go to <strong>https://console.cloud.google.com</strong>. Make sure your project is selected at the top.</div>
+  <div class="step">Top search bar: <code>OAuth consent screen</code> → click result.</div>
+  <div class="step">If asked, pick <strong>User Type → External</strong>, click <strong>CREATE</strong>.</div>
+  <div class="step">Fill in:
+    <ul>
+      <li>App name: <code>Doom Drive Import</code> (anything)</li>
+      <li>User support email: your email</li>
+      <li>Developer contact: your email</li>
+      <li>Leave rest blank → <strong>SAVE AND CONTINUE</strong></li>
+    </ul>
+  </div>
+  <div class="step"><strong>Scopes</strong> step → <strong>ADD OR REMOVE SCOPES</strong> → in filter type <code>drive.readonly</code> → check the row for <code>.../auth/drive.readonly</code> → <strong>UPDATE</strong> → <strong>SAVE AND CONTINUE</strong>.</div>
+  <div class="step"><strong>Test users</strong> step → <strong>+ ADD USERS</strong> → enter your Gmail → <strong>ADD</strong> → <strong>SAVE AND CONTINUE</strong>.</div>
+  <div class="step"><strong>Summary</strong> step → <strong>BACK TO DASHBOARD</strong>.</div>
+
+  <h3>B2 · Create the OAuth Client</h3>
+  <div class="step">Top search bar: <code>Credentials</code> → click result.</div>
+  <div class="step">Click <strong>+ CREATE CREDENTIALS</strong> → <strong>OAuth client ID</strong>.</div>
+  <div class="step"><strong>Application type</strong>: <strong>Desktop app</strong>.</div>
+  <div class="step">Name: <code>Doom Drive Import</code>. Click <strong>CREATE</strong>.</div>
+  <div class="step">Dialog shows your Client ID. Click <strong>DOWNLOAD JSON</strong>. A file named <code>client_secret_*.json</code> lands in your Downloads. Keep track of where it saved.</div>
+</section>
+
+<section class="part-section">
+  <h2><span class="part">Part C</span>Connect to the VM<span class="time">5 min</span></h2>
+
+  <p>You'll use Terminal (Mac) or PowerShell (Windows).</p>
+  <ul>
+    <li><strong>Mac</strong>: Open <strong>Terminal</strong> (Spotlight → "Terminal").</li>
+    <li><strong>Windows</strong>: Open <strong>PowerShell</strong>. Win 10/11 has SSH built in. Older Windows: install <a href="https://www.putty.org/">PuTTY</a>.</li>
+  </ul>
+
+  <p>Connect (replace IP, drop the angle brackets):</p>
+  <pre><code>ssh root@134.122.55.10</code></pre>
+
+  <p>What happens:</p>
+  <div class="step">First time: "authenticity of host can't be established" warning. Type <strong>yes</strong>, Enter. Normal.</div>
+  <div class="step">Password prompt. Paste it. <strong>Nothing appears as you type</strong> — no dots, no asterisks. Normal. Hit Enter.</div>
+  <div class="step"><strong>First login only</strong>: Ubuntu forces a password change. Paste current password, type a new one twice. SSH disconnects automatically after. Re-run <code>ssh root@&lt;IP&gt;</code> with the new password.
+    <div class="callout" style="margin-top: 8px;"><strong>If you did A3</strong> (web console test): this password-change already happened. Just use the new password at the password prompt above and skip this step.</div>
+  </div>
+  <div class="step">You're in. Prompt looks like <code>root@doom-drive:~#</code>.</div>
+
+  <p>Run the one-shot bootstrap (installs Node 20, git, clones the repo, installs deps):</p>
+  <pre><code>curl -fsSL https://raw.githubusercontent.com/atticorai/doom/main/scripts/setup-vm.sh | bash</code></pre>
+  <p>Wait ~30 seconds. It'll print "✓ VM ready." with next steps.</p>
+
+  <div class="callout">
+    <strong>If <code>curl</code> errors with 404</strong> — the repo is private. Use a GitHub personal access token instead:
+    <pre style="margin-top: 8px;"><code>apt-get update -y && apt-get install -y nodejs npm git
+git clone https://&lt;your-github-username&gt;:&lt;your-personal-access-token&gt;@github.com/atticorai/doom.git
+cd doom && npm install --no-save googleapis @supabase/supabase-js</code></pre>
+    Create a PAT at github.com → Settings → Developer settings → Personal access tokens → <code>repo</code> scope.
+  </div>
+</section>
+
+<section class="part-section">
+  <h2><span class="part">Part D</span>Upload OAuth JSON to the VM<span class="time">1 min</span></h2>
+
+  <p>Open a <strong>second Terminal window on your laptop</strong> (keep the SSH session open in the first). In the new window:</p>
+  <pre><code>scp ~/Downloads/client_secret_*.json root@134.122.55.10:/root/oauth.json</code></pre>
+  <p>Paste the VM password. The file uploads.</p>
+</section>
+
+<section class="part-section">
+  <h2><span class="part">Part E</span>Set credentials + smoke test<span class="time">3 min</span></h2>
+
+  <p>Back in the <strong>first terminal window</strong> (SSH session), paste:</p>
+  <pre><code>export SUPABASE_URL='https://&lt;YOUR-PROJECT&gt;.supabase.co'
+export SUPABASE_SERVICE_ROLE_KEY='&lt;YOUR-SERVICE-ROLE-KEY&gt;'
+export OAUTH_CLIENT_JSON='/root/oauth.json'
+cd ~/doom</code></pre>
+  <p>Get Supabase URL + service_role key from Supabase dashboard → Settings → API.</p>
+
+  <p>Find your Drive folder ID — long string in the folder's URL after <code>/folders/</code>:</p>
+  <pre><code>https://drive.google.com/drive/folders/<strong style="color:#ead8a4">1abc...XYZ</strong></code></pre>
+
+  <p><strong>Smoke test</strong> — walks, classifies, prints what it would do, no uploads:</p>
+  <pre><code>node scripts/drive-import.js &lt;FOLDER_ID&gt; --dry-run --max=20</code></pre>
+
+  <p>First run prints a URL. Open it on your laptop browser, sign in with the Gmail you added as a test user (Part B step 6), click <strong>Continue</strong> through the unverified-app warning, click <strong>Allow</strong>. Google shows a code — copy it. Paste into the VM terminal where it's waiting. Hit Enter.</p>
+  <p>Script processes 20 files (max=20) and prints a classification summary. Look at it. If it looks reasonable, kill with Ctrl-C — we're moving to the real run.</p>
+</section>
+
+<section class="part-section">
+  <h2><span class="part">Part F</span>Run for real<span class="time">unattended</span></h2>
+
+  <pre><code>node scripts/drive-import.js &lt;FOLDER_ID&gt;</code></pre>
+
+  <p>Walks the whole folder tree, streams every file Drive → Supabase, writes one <code>legacy_assets</code> row per file. Prints live progress. Checkpoints <code>drive-import-state.json</code> every 20 files so a disconnect doesn't lose work.</p>
+
+  <p>To leave it running after you disconnect from SSH:</p>
+  <pre><code>nohup node scripts/drive-import.js &lt;FOLDER_ID&gt; &gt; import.log 2&gt;&amp;1 &amp;</code></pre>
+  <p>Then <code>tail -f import.log</code> to watch progress. Close the SSH window, script keeps running. Reconnect any time.</p>
+</section>
+
+<section class="part-section">
+  <h2>When everything's done</h2>
+
+  <div class="step">In the Doom app → Audit Log → click <strong>📦 Export Other Assets Manifest</strong>. Downloads a CSV of everything that isn't TV/Radio. Hand it to your other app.</div>
+  <div class="step">On DigitalOcean → click the droplet → <strong>Destroy</strong> → <strong>Destroy this Droplet</strong>. Bill stops. Total compute spend: ~$0.50–$2 depending on how long the import ran.</div>
+</section>
+
+<section class="part-section">
+  <h2>Flags reference</h2>
+  <ul>
+    <li><code>--dry-run</code> — classify only, no uploads, no DB writes</li>
+    <li><code>--types=TV,Radio</code> — only process specific classifications</li>
+    <li><code>--max=100</code> — stop after N files (smoke test)</li>
+    <li><code>--reset</code> — ignore the state file and start fresh</li>
+    <li><code>--state=path.json</code> — use a non-default state file (one per Drive folder)</li>
+  </ul>
+  <p>Classification rules live in <code>classifyV()</code> near the top of <code>scripts/drive-import.js</code>. Tune them, re-run, idempotent.</p>
+</section>
+
+<footer>
+  Atticor · Doom &amp; Deliverables — Drive Import Guide
+</footer>
+
+</body>
+</html>
