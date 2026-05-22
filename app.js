@@ -7533,6 +7533,31 @@ Rules:
           };
           input.click();
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #4AC8E8",background:"#4AC8E815",color:"#4AC8E8",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📤 Migrate to Supabase</button>
+        <button onClick={async()=>{
+          const pw=prompt("Admin password — pull Firestore directly into Supabase (one-shot):");
+          if(!pw)return;
+          if(!confirm("This reads every appData + trafficSheets doc from Firestore via the service-account key and upserts them into Supabase legacy_docs. Existing rows are overwritten. Continue?"))return;
+          notify("Pulling Firestore → Supabase (server-side)...");
+          try{
+            const r=await fetch("/api/firestore-pull",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw})});
+            const j=await r.json();
+            if(!r.ok){alert("Pull failed: "+(j.error||r.status)+(j.detail?"\n\n"+j.detail:""));return}
+            const c=j.cleanup||{};
+            const msg="Pulled from Firestore: "+j.firestore_read.appData_docs+" appData docs, "+j.firestore_read.trafficSheets_docs+" trafficSheets docs.\n\n"+
+              "Wrote "+j.written+" rows to Supabase legacy_docs.\n\n"+
+              "Cleanup applied:\n"+
+              "  placeholders dropped:   "+c.placeholders+"\n"+
+              "  WK 4-digit links:       "+c.wk_legacy_links+"\n"+
+              "  markets normalized:     "+c.market_normalized+"\n"+
+              "  multi-market split:     "+c.market_split+"\n"+
+              "  bad markets dropped:    "+c.market_dropped+"\n"+
+              "  duplicates collapsed:   "+c.duplicates+"\n\n"+
+              "Traffic: "+(c.totals_before?.trafficHistory||0)+" → "+(c.totals_after?.trafficHistory||0)+"\n\n"+
+              "Reload the app to see the data.";
+            alert(msg);
+            log("Firestore Pull","Server-side pulled "+j.firestore_read.appData_docs+"+"+j.firestore_read.trafficSheets_docs+" docs, wrote "+j.written+" rows");
+          }catch(e){alert("Pull request failed: "+e.message)}
+        }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #5BC4A0",background:"#5BC4A015",color:"#5BC4A0",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🔄 Pull Firestore → Supabase</button>
       </div>
       <Cd style={{padding:0,overflow:"hidden"}}>
         <div style={{maxHeight:"calc(100vh - 280px)",overflowY:"auto"}}>
