@@ -1053,7 +1053,7 @@ const App=()=>{
   const confirmStation=(key,call)=>{
     const ts=new Date().toISOString();
     setConfirmations(p=>{
-      const updated={...p,[key]:{...(p[key]||{}),[call]:{confirmed:true,ts}}};
+      const updated={...p,[key]:{...(p[key]||{}),[call]:{...((p[key]||{})[call]||{}),confirmed:true,ts}}};
       try{db.collection("appData").doc("confirmations").set({data:JSON.stringify(updated),ts:Date.now()})}catch(e){console.warn("Failed to save confirmations:",e)}
       return updated;
     });
