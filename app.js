@@ -8358,7 +8358,7 @@ Rules:
               setUploadTracker({label:"Moving creative files — round "+rounds+", "+totalMoved+" done so far (leave tab open)",pct:Math.min(95,5+rounds*5)});
               let j=null;
               try{
-                const r=await fetch("/api/migrate-creative-files",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw})});
+                const r=await fetch("/api/migrate-creative-files",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw,retryFailed:rounds===1})});
                 if(!r.ok)throw new Error("server "+r.status);
                 j=await r.json();
               }catch(err){

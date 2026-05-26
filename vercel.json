@@ -2,6 +2,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".",
   "installCommand": "npm install",
+  "functions": {
+    "api/migrate-creative-files.js": { "memory": 3009, "maxDuration": 300 }
+  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],

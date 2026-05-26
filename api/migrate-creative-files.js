@@ -21,23 +21,22 @@ const { archiveDoc } = require('./_archive');
 const ADMIN_PASSWORD_ENV = 'ADMIN_PASSWORD';
 const ISCIS_DOC = 'iscis';
 const BUCKET = 'creative';
-const CONCURRENCY = 2;             // files in flight at once
-const SAVE_EVERY = 3;              // checkpoint iscis blob this often
-// Memory cap. The function buffers the whole file in RAM to upload it, so a
-// huge file OOM-crashes the function (a non-JSON 500 that breaks the loop).
-// We refuse anything bigger than this by its Content-Length BEFORE downloading
-// the body — those get marked and skipped, to be moved by other means.
-const MAX_FILE_BYTES = 60 * 1024 * 1024; // 60 MB
+const CONCURRENCY = 1;             // one big file at a time — memory-safe even at 700MB
+const SAVE_EVERY = 2;              // checkpoint iscis blob this often
+// Memory cap. The function buffers the whole file in RAM to upload it. With the
+// 3009MB memory allowance set in vercel.json, one ~700MB file (download buffer +
+// upload copy ≈ 1.4GB) is safe. Anything bigger is refused by its Content-Length
+// BEFORE the body is downloaded, then flagged and reported.
+const MAX_FILE_BYTES = 700 * 1024 * 1024; // 700 MB
 // Hard per-file deadline. A single slow/huge file must never run long enough
 // to let Vercel kill the whole function (which returns a non-JSON 500 page and
 // breaks the client loop). If a file exceeds this it's skipped as an error and
 // the batch keeps going.
-const PER_FILE_MS = 25_000;
-// Vercel Hobby caps functions at 60s. We stop starting new files at 20s; with
-// the 25s per-file cap that's a 45s worst case — safely under 60s so we always
-// return JSON. maxDuration is raised to 300 below, which gives extra headroom
-// on Pro but is harmlessly capped to 60 on Hobby.
-const WALL_CLOCK_BUDGET_MS = 20_000;
+const PER_FILE_MS = 150_000;
+// We stop starting new files at 120s; with the 150s per-file cap that's a 270s
+// worst case — safely under the 300s maxDuration so the function always returns
+// JSON before the platform kills it. (Big files take real time to move.)
+const WALL_CLOCK_BUDGET_MS = 120_000;
 
 function timingSafeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
@@ -179,6 +178,16 @@ module.exports = async function handler(req, res) {
     try { iscis = typeof row.data === 'string' ? JSON.parse(row.data) : row.data; }
     catch (e) { return res.status(500).json({ error: 'iscis blob is not parseable JSON' }); }
     if (!Array.isArray(iscis)) return res.status(500).json({ error: 'iscis blob is not an array' });
+
+    // retryFailed: clear the skip-flags once (client sends it on the first round
+    // only) so previously-skipped files get another attempt — e.g. after the
+    // size cap / memory were raised. Persist the clear so every round of this
+    // session sees it.
+    if (req.body && req.body.retryFailed) {
+      let cleared = 0;
+      for (const x of iscis) { if (x && x.cmFail) { delete x.cmFail; cleared++; } }
+      if (cleared) { try { await saveBlob(supabase, iscis); } catch (e) {} }
+    }
 
     const total = iscis.length;
     const queue = [];
