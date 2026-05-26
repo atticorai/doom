@@ -1172,41 +1172,34 @@ const App=()=>{
     if(estNum&&sta){
       const est=estimates.find(e=>e.num===estNum);
       const brand=BRANDS.find(b=>b.name===est?.brand);
-      const isWk=est&&est.brand==="Wettermark Keith"&&estNum.length<=3;
-      // PL keys are the bare estimate. WK keys are estNum|market, but the
-      // market is NOT carried in the confirm URL. Resolve the correct WK key
-      // by finding the confirmations entry under estNum|* whose per-station
-      // token matches the supplied token (tokens are unique per reservation).
-      // Falls back to the station's market only when no token matches (legacy
-      // links / 'auto'), preserving the old heuristic for those cases.
-      let confirmKey=estNum;
-      if(isWk){
-        let matched=null;
-        Object.keys(confirmations||{}).forEach(k=>{
-          if(k.indexOf(estNum+"|")!==0)return;
-          if(tok&&confirmations[k]?.[sta]?.token===tok)matched=k;
-        });
-        if(matched)confirmKey=matched;
-        else{const staObj=stations.find(s=>s.call===sta);confirmKey=estNum+"|"+(staObj?.market||est?.market||"");}
-      }
-      const airing=nowAiring[confirmKey];
-      // Validate confirmation token before granting access.
-      // Real tokens are 32-char hex generated server-issued via genToken(). The legacy
-      // 'auto' skeleton-key is no longer accepted when a stored token exists; it remains
-      // a soft fallback ONLY for legacy records sent before per-station tokens were wired
-      // through (no stored token to compare against).
-      const storedToken=confirmations[confirmKey]?.[sta]?.token;
-      const tokOk=storedToken?(tok===storedToken):(tok==='auto');
-      if(!tokOk){
-        console.warn("Invalid or missing confirmation token for",estNum,sta);
-        setConfirmMode({estNum,sta,tok:null,est,airing,brand,confirmKey,invalidToken:true});
-        return;
-      }
-      // Try to load saved traffic sheet from Firestore
-      try{db.collection("trafficSheets").doc(estNum+"_"+sta).get().then(doc=>{
-        if(doc.exists)setSheetHtml(doc.data().html);
-      }).catch(err=>{console.warn("Failed to load traffic sheet:",err)})}catch(e){console.warn("Traffic sheet load error:",e)}
-      setConfirmMode({estNum,sta,tok,est,airing,brand,confirmKey});
+      // Load the portal payload from the server. /api/confirm validates the
+      // per-station token and resolves the correct confirmKey (PL bare estimate
+      // or WK estNum|market — the market isn't carried in the URL, so the server
+      // matches it by token). Vendors have no staff session, so the server reads
+      // Supabase on their behalf; this is the only path that works for a
+      // session-less vendor. The old client-side read of the global db blob
+      // 401s for them on Supabase.
+      (async()=>{
+        try{
+          const resp=await fetch("/api/confirm",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"load",estNum,sta,token:tok})});
+          const j=await resp.json().catch(()=>({}));
+          if(!resp.ok||!j||!j.ok||j.invalid){
+            console.warn("Invalid or missing confirmation token for",estNum,sta);
+            setConfirmMode({estNum,sta,tok:null,est,brand,invalidToken:true});
+            return;
+          }
+          const confirmKey=j.confirmKey;
+          if(j.sheetHtml)setSheetHtml(j.sheetHtml);
+          // Seed local state so the portal render (which reads nowAiring /
+          // confirmations by confirmKey) has what it needs.
+          if(j.airing)setNowAiring(p=>({...p,[confirmKey]:j.airing}));
+          setConfirmations(p=>({...p,[confirmKey]:{...(p[confirmKey]||{}),[sta]:{token:tok,confirmed:!!j.confirmed,ts:j.ts||null}}}));
+          setConfirmMode({estNum,sta,tok,est,airing:j.airing||null,brand,confirmKey});
+        }catch(e){
+          console.warn("Portal load failed:",e&&e.message);
+          setConfirmMode({estNum,sta,tok:null,est,brand,invalidToken:true});
+        }
+      })();
     }
     // Report mode: ?report=wk or ?report=pl
     const reportClient=params.get('report');

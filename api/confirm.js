@@ -1,25 +1,29 @@
-// Vendor confirmation endpoint. Exists so the vendor portal can write
-// confirmations after Firestore rules are tightened to require auth — vendors
-// don't have a session, so they can't write directly. Instead, the per-station
-// token in their email URL gates this endpoint, and the server (using the
-// Admin SDK, which bypasses rules) writes on their behalf.
+// Vendor confirmation endpoint — Supabase edition.
+//
+// The vendor portal has no staff session, so it can't read or write the
+// Supabase data directly (middleware blocks /api/db for session-less callers).
+// This endpoint is the vendor's authenticated path: the per-station token in
+// their email URL is the credential, validated server-side, and the server
+// (using the Supabase service-role key, which bypasses RLS) reads/writes on
+// their behalf.
 //
 // Request:  POST /api/confirm
-// Body:     { action, confirmKey, sta, token, ...actionArgs }
-// Actions:  "confirm"     — mark a station as having confirmed receipt
-//           "addEmail"    — append an email to a station's contact list
-//           "removeNote"  — log a "please remove this contact" request
+// Body:     { action, ...args }
+// Actions:
+//   "load"        — { estNum, sta, token } → returns the portal payload
+//                   (airing, sheet HTML, confirmation status) after resolving
+//                   the correct confirmKey by token match. This is what lets
+//                   the portal render without a staff login.
+//   "confirm"     — mark a station as having confirmed receipt
+//   "addEmail"    — append an email to a station's contact list
+//   "removeNote"  — log a "please remove this contact" request
 //
-// All actions require the submitted token to match
-// confirmations[confirmKey][sta].token in Firestore.
-//
-// If FIREBASE_ADMIN_KEY isn't set the Admin SDK isn't available; the endpoint
-// returns 503 and the client falls back to writing directly to Firestore (the
-// pre-lockdown path). This means Phase B can ship without Admin configured —
-// and Admin can be configured later with no further code changes.
+// All write actions require the submitted token to match
+// confirmations[confirmKey][sta].token in Supabase.
 
 const crypto = require('crypto');
-const { getDb } = require('./_admin');
+const { getSupabase } = require('./_supabase');
+const { archiveDoc } = require('./_archive');
 
 function timingSafeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
@@ -40,11 +44,13 @@ function getCorsOrigin(req) {
   return '';
 }
 
-// Mirror of app.js's input sanitization. confirmKey is either the bare
-// estimate ("2609") or the WK composite ("213|Birmingham"). Reject anything
-// that doesn't match those shapes.
+// confirmKey is either the bare estimate ("2609") or the WK composite
+// ("213|Birmingham"). Reject anything that doesn't match those shapes.
 function isValidConfirmKey(s) {
   return typeof s === 'string' && /^[0-9]{3,4}(\|[A-Za-z][A-Za-z\s.\-]{0,32})?$/.test(s);
+}
+function isValidEstNum(s) {
+  return typeof s === 'string' && /^[0-9]{3,4}$/.test(s);
 }
 function isValidSta(s) {
   return typeof s === 'string' && /^[A-Za-z0-9_-]{1,32}$/.test(s);
@@ -56,8 +62,50 @@ function isValidEmail(s) {
   return typeof s === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) && s.length <= 254 && !/[\r\n]/.test(s);
 }
 
-// Simple in-memory rate limiter, scoped per IP. Not perfect across Vercel
-// instances but raises the bar for casual abuse.
+// ── Supabase legacy_docs blob helpers ──────────────────────────────
+// Each "collection/doc" is one JSON blob, mirroring the Firestore shape the
+// app was built against.
+async function readDoc(supabase, collection, docId) {
+  const { data, error } = await supabase
+    .from('legacy_docs')
+    .select('data')
+    .eq('collection', collection)
+    .eq('doc_id', docId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data || data.data == null) return null;
+  return typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
+}
+
+async function writeDoc(supabase, collection, docId, obj, op) {
+  // SAFETY: archive the prior version before overwriting.
+  await archiveDoc(supabase, collection, docId, op || 'confirm', 'api/confirm');
+  const { error } = await supabase
+    .from('legacy_docs')
+    .upsert(
+      { collection, doc_id: docId, data: JSON.stringify(obj), ts: Date.now(), updated_at: new Date().toISOString() },
+      { onConflict: 'collection,doc_id' }
+    );
+  if (error) throw error;
+}
+
+// Resolve the confirmKey for a (estNum, sta, token) tuple. PL keys are the
+// bare estimate; WK keys are estNum|market — and the market isn't in the URL,
+// so we locate it by finding the estNum|* entry whose token matches.
+function resolveConfirmKey(confirmations, estNum, sta, token) {
+  if (confirmations[estNum] && confirmations[estNum][sta] && confirmations[estNum][sta].token) {
+    return estNum;
+  }
+  const prefix = estNum + '|';
+  for (const k of Object.keys(confirmations)) {
+    if (k.indexOf(prefix) !== 0) continue;
+    const entry = confirmations[k] && confirmations[k][sta];
+    if (entry && entry.token && timingSafeEqual(String(token), String(entry.token))) return k;
+  }
+  return null;
+}
+
+// Simple in-memory rate limiter, scoped per IP.
 const recent = new Map();
 const RATE_WINDOW = 60 * 1000;
 const MAX_REQ = 30;
@@ -82,34 +130,65 @@ module.exports = async function handler(req, res) {
   const ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown';
   if (rateLimit(ip)) return res.status(429).json({ error: 'Too many requests' });
 
-  const db = getDb();
-  if (!db) {
-    // Admin SDK not configured — client falls back to direct Firestore write.
-    return res.status(503).json({ error: 'Admin not configured' });
-  }
+  const supabase = getSupabase();
+  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
 
-  const { action, confirmKey, sta, token } = req.body || {};
-
-  if (!isValidConfirmKey(confirmKey)) return res.status(400).json({ error: 'Invalid confirmKey' });
+  const { action, sta, token } = req.body || {};
+  if (typeof action !== 'string') return res.status(400).json({ error: 'Missing action' });
   if (!isValidSta(sta)) return res.status(400).json({ error: 'Invalid sta' });
   if (!isValidToken(token)) return res.status(400).json({ error: 'Invalid token' });
-  if (typeof action !== 'string') return res.status(400).json({ error: 'Missing action' });
 
-  // Load confirmations and validate the per-station token. Stored shape:
-  // { data: JSON.stringify({ [confirmKey]: { [sta]: { token, confirmed, ts } } }) }
   let confirmations;
   try {
-    const doc = await db.collection('appData').doc('confirmations').get();
-    confirmations = doc.exists && doc.data().data ? JSON.parse(doc.data().data) : {};
+    confirmations = (await readDoc(supabase, 'appData', 'confirmations')) || {};
   } catch (e) {
     console.error('confirm: read confirmations failed:', e.message);
     return res.status(500).json({ error: 'Read failed' });
   }
 
+  // ── LOAD: render the portal without a staff session ───────────────
+  // Token-gated public read. Resolves the confirmKey, validates the token,
+  // and returns everything the vendor view needs.
+  if (action === 'load') {
+    const { estNum } = req.body || {};
+    if (!isValidEstNum(estNum)) return res.status(400).json({ error: 'Invalid estNum' });
+    const confirmKey = resolveConfirmKey(confirmations, estNum, sta, token);
+    if (!confirmKey) return res.status(200).json({ ok: true, invalid: true });
+    const stored = confirmations[confirmKey][sta];
+    if (!timingSafeEqual(String(token), String(stored.token))) {
+      return res.status(200).json({ ok: true, invalid: true });
+    }
+    let airing = null, sheetHtml = null;
+    try {
+      const nowAiring = (await readDoc(supabase, 'appData', 'nowAiring')) || {};
+      airing = nowAiring[confirmKey] || null;
+    } catch (e) { console.error('confirm/load: nowAiring read failed:', e.message); }
+    try {
+      const sheet = await readDoc(supabase, 'trafficSheets', estNum + '_' + sta);
+      sheetHtml = (sheet && sheet.html) || null;
+    } catch (e) { console.error('confirm/load: sheet read failed:', e.message); }
+    const market = confirmKey.indexOf('|') >= 0 ? confirmKey.split('|')[1] : null;
+    return res.status(200).json({
+      ok: true,
+      confirmKey,
+      market,
+      confirmed: !!stored.confirmed,
+      ts: stored.ts || null,
+      airing,
+      sheetHtml,
+    });
+  }
+
+  // ── Write actions: confirmKey comes from the body (the portal passes
+  //    back the server-resolved key from the load step). Validate it and
+  //    the token before mutating.
+  const { confirmKey } = req.body || {};
+  if (!isValidConfirmKey(confirmKey)) return res.status(400).json({ error: 'Invalid confirmKey' });
+
   const stored = confirmations[confirmKey] && confirmations[confirmKey][sta];
   const storedToken = stored && stored.token;
   if (!storedToken) return res.status(404).json({ error: 'No confirmation pending for this station' });
-  if (!timingSafeEqual(token, storedToken)) return res.status(401).json({ error: 'Invalid token' });
+  if (!timingSafeEqual(String(token), String(storedToken))) return res.status(401).json({ error: 'Invalid token' });
 
   const ts = new Date().toISOString();
 
@@ -117,15 +196,13 @@ module.exports = async function handler(req, res) {
     confirmations[confirmKey] = confirmations[confirmKey] || {};
     confirmations[confirmKey][sta] = Object.assign({}, stored, { confirmed: true, ts });
     // Optional batch: confirm sibling stations in the same ownership group.
-    // The requesting vendor's token authorizes the batch; the server enforces
-    // that siblings actually share the requestor's ownership in stations data
-    // (so a token can't be replayed to confirm arbitrary stations).
+    // The server enforces that siblings actually share the requestor's
+    // ownership (so a token can't be replayed to confirm arbitrary stations).
     const { siblings } = req.body || {};
     let confirmedSiblings = [];
     if (Array.isArray(siblings) && siblings.length > 0) {
       try {
-        const stationsDoc = await db.collection('appData').doc('stations').get();
-        const stationsArr = stationsDoc.exists ? JSON.parse(stationsDoc.data().data || '[]') : [];
+        const stationsArr = (await readDoc(supabase, 'appData', 'stations')) || [];
         const requestor = stationsArr.find(s => s.call === sta);
         const ownership = requestor && requestor.ownership;
         if (ownership) {
@@ -145,7 +222,7 @@ module.exports = async function handler(req, res) {
       }
     }
     try {
-      await db.collection('appData').doc('confirmations').set({ data: JSON.stringify(confirmations), ts: Date.now() });
+      await writeDoc(supabase, 'appData', 'confirmations', confirmations, 'confirm');
       return res.status(200).json({ ok: true, ts, siblings: confirmedSiblings });
     } catch (e) {
       console.error('confirm: write failed:', e.message);
@@ -156,12 +233,8 @@ module.exports = async function handler(req, res) {
   if (action === 'addEmail') {
     const { email } = req.body || {};
     if (!isValidEmail(email)) return res.status(400).json({ error: 'Invalid email' });
-    // Append to the station's contact list. Read stations, find by call letter,
-    // append if not duplicate.
     try {
-      const stationsDoc = await db.collection('appData').doc('stations').get();
-      if (!stationsDoc.exists) return res.status(500).json({ error: 'Stations not found' });
-      const stations = JSON.parse(stationsDoc.data().data || '[]');
+      const stations = (await readDoc(supabase, 'appData', 'stations')) || [];
       let mutated = false;
       const next = stations.map(s => {
         if (s.call !== sta) return s;
@@ -171,14 +244,11 @@ module.exports = async function handler(req, res) {
         return Object.assign({}, s, { contact: existing.concat([email]).join('; ') });
       });
       if (mutated) {
-        await db.collection('appData').doc('stations').set({ data: JSON.stringify(next), ts: Date.now() });
+        await writeDoc(supabase, 'appData', 'stations', next, 'addEmail');
       }
-      // Also append to a portalRequests log so the operator sees the change.
-      const logsRef = db.collection('appData').doc('portalRequests');
-      const logsDoc = await logsRef.get();
-      const logs = logsDoc.exists && logsDoc.data().data ? JSON.parse(logsDoc.data().data) : [];
+      const logs = (await readDoc(supabase, 'appData', 'portalRequests')) || [];
       logs.unshift({ ts, action: 'addEmail', sta, email, confirmKey });
-      await logsRef.set({ data: JSON.stringify(logs.slice(0, 500)), ts: Date.now() });
+      await writeDoc(supabase, 'appData', 'portalRequests', logs.slice(0, 500), 'addEmail');
       return res.status(200).json({ ok: true, mutated });
     } catch (e) {
       console.error('confirm/addEmail: failed:', e.message);
@@ -192,11 +262,9 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid note' });
     }
     try {
-      const logsRef = db.collection('appData').doc('portalRequests');
-      const logsDoc = await logsRef.get();
-      const logs = logsDoc.exists && logsDoc.data().data ? JSON.parse(logsDoc.data().data) : [];
+      const logs = (await readDoc(supabase, 'appData', 'portalRequests')) || [];
       logs.unshift({ ts, action: 'removeNote', sta, note: note.trim(), confirmKey });
-      await logsRef.set({ data: JSON.stringify(logs.slice(0, 500)), ts: Date.now() });
+      await writeDoc(supabase, 'appData', 'portalRequests', logs.slice(0, 500), 'removeNote');
       return res.status(200).json({ ok: true });
     } catch (e) {
       console.error('confirm/removeNote: failed:', e.message);
