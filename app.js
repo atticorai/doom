@@ -9078,6 +9078,14 @@ Rules:
 
   if(confirmJsx)return confirmJsx;
 
+  // A vendor confirm/report link must NEVER fall through to the staff login
+  // while the portal payload is still loading. If the URL carries ?confirm=
+  // but confirmMode hasn't resolved yet, show a loader (not the password gate).
+  if(!confirmMode){
+    const _vurl=(typeof window!=="undefined")&&(/[?&]confirm=/.test(window.location.search||"")||/[?&]confirm=/.test(window.location.hash||""));
+    if(_vurl)return<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center",color:"#C4A0C8",fontFamily:"DM Sans,sans-serif"}}><div style={{fontSize:18,fontWeight:700,letterSpacing:1}}>Loading traffic details…</div></div></div>;
+  }
+
   // ── SHAREABLE REPORT PAGE (?report=wk or ?report=pl) ──
   if(reportMode&&dbLoaded){
     const isWK=reportMode==="wk";
