@@ -1346,9 +1346,14 @@ const App=()=>{
             })()}
             <button onClick={async()=>{
               const r=await portalApi("confirm",{confirmKey,sta,token:confirmMode?.tok});
-              if(r.ok||r.fallback)confirmStation(confirmKey,sta);
-              setConfirmDone(true);
-              log("Confirmed",sta+" confirmed Est "+estNum+(r.ok?" (server)":r.fallback?" (legacy)":""));
+              if(r.ok||r.fallback){
+                confirmStation(confirmKey,sta);
+                setConfirmDone(true);
+                log("Confirmed",sta+" confirmed Est "+estNum+(r.ok?" (server)":" (legacy)"));
+              }else{
+                alert("We couldn't record your confirmation: "+(r.error||"server error")+(r.status?" ("+r.status+")":"")+"\n\nPlease try again, or contact emm.caban@atticor.ai.");
+                log("Confirm Failed",sta+" Est "+estNum+" — "+(r.error||r.status||"error"));
+              }
             }} style={{width:"100%",padding:"18px 24px",borderRadius:12,border:"none",background:"linear-gradient(135deg,#a855f7,#9b7bb0)",color:"#fff",fontSize:16,fontWeight:800,cursor:"pointer"}}>
               ✓ Confirm Receipt of Traffic Instructions
             </button>
