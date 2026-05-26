@@ -21,9 +21,13 @@ const { archiveDoc } = require('./_archive');
 const ADMIN_PASSWORD_ENV = 'ADMIN_PASSWORD';
 const ISCIS_DOC = 'iscis';
 const BUCKET = 'creative';
-const CONCURRENCY = 1;             // one file in flight (memory-safe, predictable timing)
+const CONCURRENCY = 2;             // files in flight at once
 const SAVE_EVERY = 3;              // checkpoint iscis blob this often
-const MAX_FILE_BYTES = 500 * 1024 * 1024; // 500 MB cap
+// Memory cap. The function buffers the whole file in RAM to upload it, so a
+// huge file OOM-crashes the function (a non-JSON 500 that breaks the loop).
+// We refuse anything bigger than this by its Content-Length BEFORE downloading
+// the body — those get marked and skipped, to be moved by other means.
+const MAX_FILE_BYTES = 60 * 1024 * 1024; // 60 MB
 // Hard per-file deadline. A single slow/huge file must never run long enough
 // to let Vercel kill the whole function (which returns a non-JSON 500 page and
 // breaks the client loop). If a file exceeds this it's skipped as an error and
@@ -179,6 +183,10 @@ module.exports = async function handler(req, res) {
     const total = iscis.length;
     const queue = [];
     for (let i = 0; i < iscis.length; i++) {
+      // Skip files already flagged as un-migratable (too big / 404 / dead) so
+      // every round advances to fresh files instead of re-hitting the same
+      // blocker forever.
+      if (iscis[i] && iscis[i].cmFail) continue;
       if (isFirebaseUrl(iscis[i] && iscis[i].fileUrl)) queue.push(i);
     }
     const startingRemaining = queue.length;
@@ -209,6 +217,14 @@ module.exports = async function handler(req, res) {
           }
         } else if (out.result === 'error') {
           errors.push({ code: out.code, stage: out.stage, detail: out.detail });
+          // Flag it so it's excluded from future rounds — guarantees the queue
+          // shrinks every round and the loop can't get stuck on one bad file.
+          iscis[idx] = { ...iscis[idx], cmFail: out.stage || 'error' };
+          unsaved++;
+          if (unsaved >= SAVE_EVERY) {
+            try { await saveBlob(supabase, iscis); unsaved = 0; }
+            catch (e) { errors.push({ stage: 'checkpoint-save', detail: e.message }); }
+          }
         } else {
           skipped++;
         }
