@@ -21,13 +21,19 @@ const { archiveDoc } = require('./_archive');
 const ADMIN_PASSWORD_ENV = 'ADMIN_PASSWORD';
 const ISCIS_DOC = 'iscis';
 const BUCKET = 'creative';
-const CONCURRENCY = 2;             // files in flight at once (memory-safe)
+const CONCURRENCY = 1;             // one file in flight (memory-safe, predictable timing)
 const SAVE_EVERY = 3;              // checkpoint iscis blob this often
 const MAX_FILE_BYTES = 500 * 1024 * 1024; // 500 MB cap
-// Vercel Hobby caps functions at 60s, Pro at 300s. Stay under 50s so
-// we always have time to checkpoint and return JSON before the platform
-// kills the function (which would return an HTML error page).
-const WALL_CLOCK_BUDGET_MS = 50_000;
+// Hard per-file deadline. A single slow/huge file must never run long enough
+// to let Vercel kill the whole function (which returns a non-JSON 500 page and
+// breaks the client loop). If a file exceeds this it's skipped as an error and
+// the batch keeps going.
+const PER_FILE_MS = 25_000;
+// Vercel Hobby caps functions at 60s. We stop starting new files at 20s; with
+// the 25s per-file cap that's a 45s worst case — safely under 60s so we always
+// return JSON. maxDuration is raised to 300 below, which gives extra headroom
+// on Pro but is harmlessly capped to 60 on Hobby.
+const WALL_CLOCK_BUDGET_MS = 20_000;
 
 function timingSafeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
@@ -75,8 +81,18 @@ async function processOne(supabase, iscis, idx) {
   if (!code) return { idx, result: 'skip', code: code || '?' };
   if (!isFirebaseUrl(fileUrl)) return { idx, result: 'skip', code };
 
-  try {
-    const resp = await fetch(fileUrl);
+  // Bound the whole download+upload to PER_FILE_MS. The AbortController stops a
+  // slow download; the race rejects if download+upload together overrun, so a
+  // single oversized file is skipped (reported as a timeout error) instead of
+  // running long enough for Vercel to kill the function with a non-JSON 500.
+  const ctrl = new AbortController();
+  let timer;
+  const deadline = new Promise((_, rej) => {
+    timer = setTimeout(() => { try { ctrl.abort(); } catch (e) {} rej(new Error('per-file deadline')); }, PER_FILE_MS);
+  });
+
+  const work = (async () => {
+    const resp = await fetch(fileUrl, { signal: ctrl.signal });
     if (!resp.ok) {
       return { idx, result: 'error', code, stage: 'download', detail: resp.status + ' ' + resp.statusText };
     }
@@ -102,8 +118,15 @@ async function processOne(supabase, iscis, idx) {
 
     const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
     return { idx, result: 'migrated', code, path, bytes: buf.length, newUrl: pub.publicUrl };
+  })();
+
+  try {
+    return await Promise.race([work, deadline]);
   } catch (e) {
-    return { idx, result: 'error', code, stage: 'exception', detail: e.message };
+    const stage = (e && (e.name === 'AbortError' || /deadline/.test(e.message || ''))) ? 'timeout' : 'exception';
+    return { idx, result: 'error', code, stage, detail: e.message };
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -226,7 +249,7 @@ module.exports.config = {
     bodyParser: { sizeLimit: '1mb' },
     responseLimit: '8mb',
   },
-  // Cap at 60s — works on both Hobby (60s max) and Pro (300s max).
-  // The internal budget (50s) returns gracefully before this fires.
-  maxDuration: 60,
+  // Pro allows up to 300s; Hobby caps this to 60s automatically. Either way the
+  // internal 20s budget + 25s per-file cap return JSON well before the kill.
+  maxDuration: 300,
 };

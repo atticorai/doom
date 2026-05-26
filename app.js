@@ -8365,14 +8365,25 @@ Rules:
           const pw=prompt("Admin password — move creative files from Firebase to Supabase:");
           if(!pw)return;
           if(!confirm("Moves every creative file from Firebase to Supabase and rewrites each link. Runs in ~50-second batches and AUTO-CONTINUES until everything's moved — just leave this tab open. Files Firebase can't return (deleted/404) are skipped.\n\nContinue?"))return;
-          let totalMoved=0,rounds=0,lastRemaining=null,stalls=0,lastJson=null;
+          let totalMoved=0,rounds=0,lastRemaining=null,stalls=0,lastJson=null,fails=0;
           try{
             while(true){
               rounds++;
               setUploadTracker({label:"Moving creative files — round "+rounds+", "+totalMoved+" done so far (leave tab open)",pct:Math.min(95,5+rounds*5)});
-              const r=await fetch("/api/migrate-creative-files",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw})});
-              const j=await r.json();
-              if(!r.ok){setUploadTracker(null);alert("Migration failed: "+(j.error||r.status)+(j.detail?"\n\n"+j.detail:""));return}
+              let j=null;
+              try{
+                const r=await fetch("/api/migrate-creative-files",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw})});
+                if(!r.ok)throw new Error("server "+r.status);
+                j=await r.json();
+              }catch(err){
+                // Transient server hiccup (timeout/500 → non-JSON). Back off and
+                // retry the same round a few times before giving up.
+                fails++;
+                if(fails>=4){setUploadTracker(null);alert("Migration paused after a few server hiccups.\n\nMoved "+totalMoved+" so far — your progress is saved. Click the button again to keep going.");return}
+                await new Promise(res=>setTimeout(res,4000));
+                continue;
+              }
+              fails=0;
               lastJson=j;
               totalMoved+=(j.migrated||0);
               if(lastRemaining!==null&&j.remaining>=lastRemaining)stalls++;else stalls=0;
