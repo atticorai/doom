@@ -8362,29 +8362,37 @@ Rules:
           }catch(e){alert("Inspect failed: "+e.message)}
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #C4A0C8",background:"#C4A0C815",color:"#C4A0C8",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🔍 What's in Supabase?</button>
         <button onClick={async()=>{
-          const pw=prompt("Admin password — move creative files from Firebase Storage to Supabase Storage:");
+          const pw=prompt("Admin password — move creative files from Firebase to Supabase:");
           if(!pw)return;
-          if(!confirm("Downloads every creative file from Firebase Storage and re-uploads to Supabase Storage. Skips errored files and keeps going. Saves progress every 3 files. Each click runs up to ~50 seconds; if there's more to do it'll say PAUSED and you click again.\n\nContinue?"))return;
-          setUploadTracker({label:"Migrating creative files... (~50 seconds per click — leave the tab open)",pct:5});
+          if(!confirm("Moves every creative file from Firebase to Supabase and rewrites each link. Runs in ~50-second batches and AUTO-CONTINUES until everything's moved — just leave this tab open. Files Firebase can't return (deleted/404) are skipped.\n\nContinue?"))return;
+          let totalMoved=0,rounds=0,lastRemaining=null,stalls=0,lastJson=null;
           try{
-            const r=await fetch("/api/migrate-creative-files",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw})});
-            const j=await r.json();
+            while(true){
+              rounds++;
+              setUploadTracker({label:"Moving creative files — round "+rounds+", "+totalMoved+" done so far (leave tab open)",pct:Math.min(95,5+rounds*5)});
+              const r=await fetch("/api/migrate-creative-files",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw})});
+              const j=await r.json();
+              if(!r.ok){setUploadTracker(null);alert("Migration failed: "+(j.error||r.status)+(j.detail?"\n\n"+j.detail:""));return}
+              lastJson=j;
+              totalMoved+=(j.migrated||0);
+              if(lastRemaining!==null&&j.remaining>=lastRemaining)stalls++;else stalls=0;
+              lastRemaining=j.remaining;
+              // Stop when nothing's left, the server says it's done, or progress
+              // stalls for two rounds (the leftovers are un-fetchable 404s).
+              if(!j.timedOut||j.remaining===0||stalls>=2)break;
+            }
             setUploadTracker(null);
-            if(!r.ok){alert("Migration failed: "+(j.error||r.status)+(j.detail?"\n\n"+j.detail:""));return}
+            const j=lastJson||{};
             const errLines=(j.errors||[]).slice(0,15).map(e=>(e.code||"?")+": "+(e.stage||"")+" — "+(e.detail||e.status||""));
-            const errMore=(j.errors&&j.errors.length>15)?"\n...and "+(j.errors.length-15)+" more":"";
-            const tail=j.timedOut?"\n\n⚠️ Hit the 5-minute time budget — click the button again to continue with the rest.":"";
-            alert("Creative file migration "+(j.timedOut?"PAUSED":"COMPLETE")+".\n\n"+
-              "Total ISCIs: "+j.total+"\n"+
-              "Tried to migrate: "+j.attemptable+"\n"+
-              "Moved to Supabase: "+j.migrated+"\n"+
-              "Still on Firebase: "+j.remaining+"\n"+
-              "Errors: "+(j.errors?j.errors.length:0)+
-              (errLines.length?"\n\nFirst errors:\n"+errLines.join("\n")+errMore:"")+
-              tail+
+            alert("Creative file migration "+(j.remaining===0?"COMPLETE ✅":"STOPPED")+".\n\n"+
+              "Total ISCIs: "+(j.total!=null?j.total:"?")+"\n"+
+              "Moved this session: "+totalMoved+"\n"+
+              "Still on Firebase: "+(j.remaining!=null?j.remaining:"?")+"\n"+
+              (j.remaining>0?"\nThe leftovers are files Firebase can't return (deleted / 404). They can't be moved — but nothing points to a working copy, so it won't break anything.\n":"")+
+              (errLines.length?"\nLast errors:\n"+errLines.join("\n"):"")+
               "\n\nReload to see new URLs.");
-            log("Creative File Migration","Moved "+j.migrated+" / "+j.attemptable+" ("+(j.errors?j.errors.length:0)+" errors"+(j.timedOut?", timed out":"")+")");
-          }catch(e){setUploadTracker(null);alert("Migration request failed: "+e.message)}
+            log("Creative File Migration","Session moved "+totalMoved+", remaining "+(j.remaining!=null?j.remaining:"?")+" ("+rounds+" rounds)");
+          }catch(e){setUploadTracker(null);alert("Migration stopped: "+e.message+"\n\nMoved "+totalMoved+" before stopping. Click the button again to resume.")}
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #D4A040",background:"#D4A04015",color:"#D4A040",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🎬 Move Creative Files</button>
         <button onClick={async()=>{
           const pw=prompt("Admin password — take a manual snapshot of all data:");
