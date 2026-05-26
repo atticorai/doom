@@ -634,6 +634,8 @@ const App=()=>{
   const[stations,setStations]=useState(STATIONS);
   const[modal,setModal]=useState(null);
   const[toast,setToast]=useState(null);
+  const[infoBox,setInfoBox]=useState(null);// {title,text} — big copyable popup replacing native alert()
+  const[snapPicker,setSnapPicker]=useState(null);// {pw,snapshots:[...]} — scrollable restore picker
   const[uploadTracker,setUploadTracker]=useState(null);// {label, current, total, pct}
   const[sf,setSf]=useState({brand:"",media:"",dma:"",search:"",estGroup:""});
   const[sorts,setSorts]=useState({});
@@ -1053,7 +1055,7 @@ const App=()=>{
   const confirmStation=(key,call)=>{
     const ts=new Date().toISOString();
     setConfirmations(p=>{
-      const updated={...p,[key]:{...(p[key]||{}),[call]:{confirmed:true,ts}}};
+      const updated={...p,[key]:{...(p[key]||{}),[call]:{...((p[key]||{})[call]||{}),confirmed:true,ts}}};
       try{db.collection("appData").doc("confirmations").set({data:JSON.stringify(updated),ts:Date.now()})}catch(e){console.warn("Failed to save confirmations:",e)}
       return updated;
     });
@@ -1346,9 +1348,14 @@ const App=()=>{
             })()}
             <button onClick={async()=>{
               const r=await portalApi("confirm",{confirmKey,sta,token:confirmMode?.tok});
-              if(r.ok||r.fallback)confirmStation(confirmKey,sta);
-              setConfirmDone(true);
-              log("Confirmed",sta+" confirmed Est "+estNum+(r.ok?" (server)":r.fallback?" (legacy)":""));
+              if(r.ok||r.fallback){
+                confirmStation(confirmKey,sta);
+                setConfirmDone(true);
+                log("Confirmed",sta+" confirmed Est "+estNum+(r.ok?" (server)":" (legacy)"));
+              }else{
+                alert("We couldn't record your confirmation: "+(r.error||"server error")+(r.status?" ("+r.status+")":"")+"\n\nPlease try again, or contact emm.caban@atticor.ai.");
+                log("Confirm Failed",sta+" Est "+estNum+" — "+(r.error||r.status||"error"));
+              }
             }} style={{width:"100%",padding:"18px 24px",borderRadius:12,border:"none",background:"linear-gradient(135deg,#a855f7,#9b7bb0)",color:"#fff",fontSize:16,fontWeight:800,cursor:"pointer"}}>
               ✓ Confirm Receipt of Traffic Instructions
             </button>
@@ -8358,8 +8365,8 @@ Rules:
             const j=await r.json();
             if(!r.ok){alert("Inspect failed: "+(j.error||r.status));return}
             const lines=j.rows.map(x=>x.collection+" / "+x.doc_id+" — "+(x.bytes>1024?Math.round(x.bytes/1024)+" KB":x.bytes+" B")).join("\n");
-            alert("Supabase legacy_docs: "+j.total+" rows\n\n"+(lines||"(empty)"));
-          }catch(e){alert("Inspect failed: "+e.message)}
+            setInfoBox({title:"What's in Supabase",text:"Supabase legacy_docs: "+j.total+" rows\n\n"+(lines||"(empty)")});
+          }catch(e){setInfoBox({title:"Inspect failed",text:String(e.message)})}
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #C4A0C8",background:"#C4A0C815",color:"#C4A0C8",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🔍 What's in Supabase?</button>
         <button onClick={async()=>{
           const pw=prompt("Admin password — move creative files from Firebase to Supabase:");
@@ -8382,7 +8389,7 @@ Rules:
                 // visible. Back off and retry a few times before giving up.
                 fails++;
                 if(!lastErr)lastErr=err&&err.message||"unknown error";
-                if(fails>=4){setUploadTracker(null);alert("Migration paused after a few server hiccups.\n\nLAST SERVER RESPONSE:\n"+lastErr+"\n\nMoved "+totalMoved+" so far — progress saved. Click again to resume.");return}
+                if(fails>=4){setUploadTracker(null);setInfoBox({title:"Migration paused",text:"Paused after a few server hiccups.\n\nLAST SERVER RESPONSE:\n"+lastErr+"\n\nMoved "+totalMoved+" so far — progress saved. Click again to resume."});return}
                 await new Promise(res=>setTimeout(res,4000));
                 continue;
               }
@@ -8402,15 +8409,15 @@ Rules:
             const onFb=(j.stillOnFirebase!=null?j.stillOnFirebase:"?");
             const allClear=j.stillOnFirebase===0;
             const stuckLines=Object.entries(stuck).slice(0,20).map(([c,r])=>"   • "+c+": "+r);
-            alert("Creative file migration "+(allClear?"COMPLETE ✅ — Firebase is empty":"DONE — a few files stuck ⚠️")+".\n\n"+
+            setInfoBox({title:"Creative file migration",text:(allClear?"COMPLETE ✅ — Firebase is empty":"DONE — a few files stuck ⚠️")+"\n\n"+
               "Total ISCIs: "+(j.total!=null?j.total:"?")+"\n"+
               "Now on Supabase: "+(j.onSupabase!=null?j.onSupabase:"?")+"\n"+
               "STILL ON FIREBASE: "+onFb+"\n"+
               (stuckLines.length?"\nStuck files (code: reason):\n"+stuckLines.join("\n")+"\n":"")+
               (!allClear?"\n⚠️ Firebase is NOT safe to delete yet — "+onFb+" file(s) still live only there.\n":"")+
-              "\nReload to see new URLs.");
+              "\nReload to see new URLs."});
             log("Creative File Migration","Session moved "+totalMoved+"; still on Firebase "+onFb+"; stuck: "+(Object.keys(stuck).join(", ")||"none"));
-          }catch(e){setUploadTracker(null);alert("Migration stopped: "+e.message+"\n\nMoved "+totalMoved+" before stopping. Click the button again to resume.")}
+          }catch(e){setUploadTracker(null);setInfoBox({title:"Migration stopped",text:e.message+"\n\nMoved "+totalMoved+" before stopping. Click the button again to resume."})}
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #D4A040",background:"#D4A04015",color:"#D4A040",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🎬 Move Creative Files</button>
         <button onClick={async()=>{
           const pw=prompt("Admin password — take a manual snapshot of all data:");
@@ -8419,10 +8426,10 @@ Rules:
           try{
             const r=await fetch("/api/snapshots",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw,action:"take"})});
             const j=await r.json();
-            if(!r.ok){alert("Snapshot failed: "+(j.error||r.status));return}
-            alert("Snapshot saved.\n\n"+j.archived+" docs archived to legacy_docs_history.\n\nUse 'Snapshots / Restore' to roll back to this version later.");
+            if(!r.ok){setInfoBox({title:"Snapshot failed",text:String(j.error||r.status)});return}
+            setInfoBox({title:"Snapshot saved ✅",text:j.archived+" docs archived to legacy_docs_history.\n\nUse '⏪ Snapshots / Restore' to roll back to this version later."});
             log("Snapshot Taken",j.archived+" docs archived");
-          }catch(e){alert("Snapshot request failed: "+e.message)}
+          }catch(e){setInfoBox({title:"Snapshot request failed",text:String(e.message)})}
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #5BC4A0",background:"#5BC4A015",color:"#5BC4A0",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📸 Take Snapshot</button>
         <button onClick={async()=>{
           const pw=prompt("Admin password — list snapshots:");
@@ -8430,22 +8437,11 @@ Rules:
           try{
             const r=await fetch("/api/snapshots",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw,action:"list"})});
             const j=await r.json();
-            if(!r.ok){alert("List failed: "+(j.error||r.status));return}
-            if(!j.snapshots||!j.snapshots.length){alert("No snapshots yet. Take one with 📸 Take Snapshot or wait for an operation to auto-create one.");return}
-            const lines=j.snapshots.slice(0,30).map((s,i)=>(i+1)+". "+new Date(s.archived_at).toLocaleString()+" — "+s.archived_op+" ("+s.doc_count+" docs"+(s.archived_by?" via "+s.archived_by:"")+")");
-            const choice=prompt("Snapshots (newest first). Enter a NUMBER to restore that snapshot, or Cancel.\n\n"+lines.join("\n"));
-            if(!choice)return;
-            const idx=parseInt(choice,10)-1;
-            if(isNaN(idx)||idx<0||idx>=j.snapshots.length){alert("Invalid choice");return}
-            const target=j.snapshots[idx];
-            if(!confirm("RESTORE to "+new Date(target.archived_at).toLocaleString()+"?\n\nCurrent state will be archived first (so this restore is itself reversible). All legacy_docs rows will roll back to the most recent history at-or-before that time.\n\nContinue?"))return;
-            notify("Restoring snapshot...");
-            const rr=await fetch("/api/snapshots",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw,action:"restore",archived_at:target.archived_at})});
-            const jj=await rr.json();
-            if(!rr.ok){alert("Restore failed: "+(jj.error||rr.status));return}
-            alert("Restored.\n\n"+jj.restored+" docs rolled back to "+new Date(target.archived_at).toLocaleString()+"\n\nReload the app.");
-            log("Snapshot Restored",jj.restored+" docs to "+target.archived_at);
-          }catch(e){alert("Snapshot list failed: "+e.message)}
+            if(!r.ok){setInfoBox({title:"List failed",text:String(j.error||r.status)});return}
+            if(!j.snapshots||!j.snapshots.length){setInfoBox({title:"No snapshots yet",text:"Take one with 📸 Take Snapshot, or wait for an operation to auto-create one."});return}
+            // Open the scrollable, copyable picker instead of a truncated native prompt.
+            setSnapPicker({pw,snapshots:j.snapshots});
+          }catch(e){setInfoBox({title:"Snapshot list failed",text:String(e.message)})}
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #E85A7A",background:"#E85A7A15",color:"#E85A7A",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>⏪ Snapshots / Restore</button>
         <button onClick={async()=>{
           try{
@@ -9981,6 +9977,49 @@ Rules:
       {uploadTracker.current&&uploadTracker.total&&<div style={{fontSize:11,color:"#94a3b8"}}>{uploadTracker.current}/{uploadTracker.total}</div>}
     </div>}
     {toast&&<div style={{position:"fixed",bottom:14,right:14,background:"linear-gradient(135deg,#2d1f42,#1e1233)",color:"#E8DFF0",padding:"10px 16px",borderRadius:8,fontSize:13,fontWeight:600,boxShadow:"0 8px 32px rgba(155,123,176,.2),0 0 1px rgba(196,160,200,.3)",zIndex:2e3,borderLeft:"3px solid #C4A0C8",maxWidth:400}}>{toast}</div>}
+    {infoBox&&<div onClick={()=>setInfoBox(null)} style={{position:"fixed",inset:0,background:"rgba(20,12,40,.7)",zIndex:5001,display:"flex",alignItems:"center",justifyContent:"center",padding:20,backdropFilter:"blur(4px)"}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"#2d1f42",border:"1px solid #4a3565",borderRadius:12,width:640,maxWidth:"96vw",maxHeight:"84vh",display:"flex",flexDirection:"column",boxShadow:"0 24px 80px rgba(0,0,0,.55)"}}>
+        <div style={{padding:"12px 16px",borderBottom:"1px solid #4a3565",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+          <span style={{fontWeight:800,color:"#F0E8F8",fontSize:15}}>{infoBox.title||"Details"}</span>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>{navigator.clipboard?.writeText(infoBox.text||"");notify("Copied to clipboard")}} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #4AC8E8",background:"rgba(74,200,232,.12)",color:"#4AC8E8",fontSize:13,fontWeight:700,cursor:"pointer"}}>📋 Copy</button>
+            <button onClick={()=>setInfoBox(null)} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #9b7bb0",background:"transparent",color:"#9B8EAD",fontSize:13,fontWeight:700,cursor:"pointer"}}>Close</button>
+          </div>
+        </div>
+        <pre style={{margin:0,padding:16,overflowY:"auto",whiteSpace:"pre-wrap",wordBreak:"break-word",fontSize:13,lineHeight:1.55,color:"#E8DFF0",userSelect:"text",fontFamily:"'DM Sans',sans-serif"}}>{infoBox.text}</pre>
+      </div>
+    </div>}
+    {snapPicker&&<div onClick={()=>setSnapPicker(null)} style={{position:"fixed",inset:0,background:"rgba(20,12,40,.7)",zIndex:5001,display:"flex",alignItems:"center",justifyContent:"center",padding:20,backdropFilter:"blur(4px)"}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"#2d1f42",border:"1px solid #4a3565",borderRadius:12,width:720,maxWidth:"96vw",maxHeight:"86vh",display:"flex",flexDirection:"column",boxShadow:"0 24px 80px rgba(0,0,0,.55)"}}>
+        <div style={{padding:"12px 16px",borderBottom:"1px solid #4a3565",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+          <span style={{fontWeight:800,color:"#F0E8F8",fontSize:15}}>Snapshots — newest first ({snapPicker.snapshots.length})</span>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>{const t=snapPicker.snapshots.map((s,i)=>(i+1)+". "+new Date(s.archived_at).toLocaleString()+" — "+s.archived_op+" ("+s.doc_count+" docs"+(s.archived_by?" via "+s.archived_by:"")+")"+(s.samples&&s.samples.length?" ["+s.samples.join(", ")+"]":"")).join("\n");navigator.clipboard?.writeText(t);notify("Snapshot list copied")}} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #4AC8E8",background:"rgba(74,200,232,.12)",color:"#4AC8E8",fontSize:13,fontWeight:700,cursor:"pointer"}}>📋 Copy all</button>
+            <button onClick={()=>setSnapPicker(null)} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #9b7bb0",background:"transparent",color:"#9B8EAD",fontSize:13,fontWeight:700,cursor:"pointer"}}>Close</button>
+          </div>
+        </div>
+        <div style={{overflowY:"auto"}}>
+          {snapPicker.snapshots.map((s,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,padding:"9px 16px",borderBottom:"1px solid #1e1233",userSelect:"text"}}>
+            <div style={{fontSize:13,color:"#E8DFF0",minWidth:0}}>
+              <div style={{fontWeight:700}}>{i+1}. {new Date(s.archived_at).toLocaleString()}</div>
+              <div style={{fontSize:12,color:"#9B8EAD",overflowWrap:"anywhere"}}>{s.archived_op} · {s.doc_count} docs{s.archived_by?" · "+s.archived_by:""}{s.samples&&s.samples.length?" · "+s.samples.join(", "):""}</div>
+            </div>
+            <button onClick={async()=>{
+              if(!confirm("RESTORE everything to "+new Date(s.archived_at).toLocaleString()+"?\n\nCurrent state is archived first, so this is reversible. Continue?"))return;
+              notify("Restoring snapshot...");
+              try{
+                const rr=await fetch("/api/snapshots",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:snapPicker.pw,action:"restore",archived_at:s.archived_at})});
+                const jj=await rr.json();
+                if(!rr.ok){setInfoBox({title:"Restore failed",text:(jj.error||rr.status)+(jj.detail?"\n\n"+jj.detail:"")});return}
+                setSnapPicker(null);
+                setInfoBox({title:"Restored ✅",text:jj.restored+" docs rolled back to "+new Date(s.archived_at).toLocaleString()+"\n\nReload the app to see the restored data."});
+                log("Snapshot Restored",jj.restored+" docs to "+s.archived_at);
+              }catch(e){setInfoBox({title:"Restore failed",text:e.message})}
+            }} style={{padding:"6px 14px",borderRadius:6,border:"1px solid #5BC4A0",background:"rgba(91,196,160,.12)",color:"#5BC4A0",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>Restore</button>
+          </div>)}
+        </div>
+      </div>
+    </div>}
   </div>;
 };
 ReactDOM.createRoot(document.getElementById('R')).render(<App/>);
