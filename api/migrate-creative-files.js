@@ -242,6 +242,15 @@ module.exports = async function handler(req, res) {
     }
 
     const remainingAfter = startingRemaining - migrated;
+    // HONEST accounting computed from the full blob (not the queue, which
+    // excludes flagged files). stillOnFirebase = every record whose fileUrl is
+    // still a Firebase URL, INCLUDING the oversized ones we flagged and skipped.
+    // skippedTooBig = those flagged un-migratable but still physically on
+    // Firebase — they need a different move method, so Firebase is NOT safe to
+    // delete while this is > 0.
+    const stillOnFirebase = iscis.filter(x => isFirebaseUrl(x && x.fileUrl)).length;
+    const skippedTooBig = iscis.filter(x => x && x.cmFail && isFirebaseUrl(x.fileUrl)).length;
+    const onSupabase = iscis.filter(x => x && x.fileUrl && !isFirebaseUrl(x.fileUrl)).length;
     return res.status(200).json({
       ok: true,
       total,
@@ -250,7 +259,13 @@ module.exports = async function handler(req, res) {
       skipped,
       errors,
       moved: moved.slice(0, 50),
+      // queueRemaining = unflagged files left to try (drives the client loop);
+      // stillOnFirebase = the real number physically left on Firebase.
+      queueRemaining: Math.max(0, remainingAfter),
       remaining: Math.max(0, remainingAfter),
+      stillOnFirebase,
+      skippedTooBig,
+      onSupabase,
       timedOut,
       elapsedMs: Date.now() - startedAt,
     });

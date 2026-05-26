@@ -8372,23 +8372,24 @@ Rules:
               fails=0;
               lastJson=j;
               totalMoved+=(j.migrated||0);
-              if(lastRemaining!==null&&j.remaining>=lastRemaining)stalls++;else stalls=0;
-              lastRemaining=j.remaining;
-              // Stop when nothing's left, the server says it's done, or progress
-              // stalls for two rounds (the leftovers are un-fetchable 404s).
-              if(!j.timedOut||j.remaining===0||stalls>=2)break;
+              // Loop continues while there are still UNFLAGGED files to try.
+              if(lastRemaining!==null&&j.queueRemaining>=lastRemaining)stalls++;else stalls=0;
+              lastRemaining=j.queueRemaining;
+              if(!j.timedOut||j.queueRemaining===0||stalls>=2)break;
             }
             setUploadTracker(null);
             const j=lastJson||{};
-            const errLines=(j.errors||[]).slice(0,15).map(e=>(e.code||"?")+": "+(e.stage||"")+" — "+(e.detail||e.status||""));
-            alert("Creative file migration "+(j.remaining===0?"COMPLETE ✅":"STOPPED")+".\n\n"+
+            const onFb=(j.stillOnFirebase!=null?j.stillOnFirebase:"?");
+            const tooBig=(j.skippedTooBig!=null?j.skippedTooBig:0);
+            const allClear=j.stillOnFirebase===0;
+            alert("Creative file migration "+(allClear?"COMPLETE ✅ — Firebase is empty":"DONE WITH SMALL FILES ⚠️")+".\n\n"+
               "Total ISCIs: "+(j.total!=null?j.total:"?")+"\n"+
-              "Moved this session: "+totalMoved+"\n"+
-              "Still on Firebase: "+(j.remaining!=null?j.remaining:"?")+"\n"+
-              (j.remaining>0?"\nThe leftovers are files Firebase can't return (deleted / 404). They can't be moved — but nothing points to a working copy, so it won't break anything.\n":"")+
-              (errLines.length?"\nLast errors:\n"+errLines.join("\n"):"")+
-              "\n\nReload to see new URLs.");
-            log("Creative File Migration","Session moved "+totalMoved+", remaining "+(j.remaining!=null?j.remaining:"?")+" ("+rounds+" rounds)");
+              "Now on Supabase: "+(j.onSupabase!=null?j.onSupabase:"?")+"\n"+
+              "STILL ON FIREBASE: "+onFb+"\n"+
+              (tooBig>0?"   ↳ "+tooBig+" of those are too big (>60MB) for this tool and were skipped.\n":"")+
+              (!allClear?"\n⚠️ Firebase is NOT safe to delete yet — "+onFb+" files still live only there. The big ones need a different move method.\n":"")+
+              "\nReload to see new URLs.");
+            log("Creative File Migration","Session moved "+totalMoved+"; still on Firebase "+onFb+" (too big: "+tooBig+")");
           }catch(e){setUploadTracker(null);alert("Migration stopped: "+e.message+"\n\nMoved "+totalMoved+" before stopping. Click the button again to resume.")}
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #D4A040",background:"#D4A04015",color:"#D4A040",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🎬 Move Creative Files</button>
         <button onClick={async()=>{
