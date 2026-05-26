@@ -8351,21 +8351,24 @@ Rules:
           const pw=prompt("Admin password — move creative files from Firebase to Supabase:");
           if(!pw)return;
           if(!confirm("Moves every creative file from Firebase to Supabase and rewrites each link. Runs in ~50-second batches and AUTO-CONTINUES until everything's moved — just leave this tab open. Files Firebase can't return (deleted/404) are skipped.\n\nContinue?"))return;
-          let totalMoved=0,rounds=0,lastRemaining=null,stalls=0,lastJson=null,fails=0;
+          let totalMoved=0,rounds=0,lastRemaining=null,stalls=0,lastJson=null,fails=0,lastErr="";
           try{
             while(true){
               rounds++;
               setUploadTracker({label:"Moving creative files — round "+rounds+", "+totalMoved+" done so far (leave tab open)",pct:Math.min(95,5+rounds*5)});
               let j=null;
+              lastErr="";
               try{
                 const r=await fetch("/api/migrate-creative-files",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw,retryFailed:rounds===1})});
-                if(!r.ok)throw new Error("server "+r.status);
+                if(!r.ok){let bt="";try{bt=(await r.text()).slice(0,180)}catch(e){}lastErr="HTTP "+r.status+(r.statusText?" "+r.statusText:"")+(bt?" — "+bt:"");throw new Error(lastErr)}
                 j=await r.json();
               }catch(err){
-                // Transient server hiccup (timeout/500 → non-JSON). Back off and
-                // retry the same round a few times before giving up.
+                // Server hiccup (timeout/500/crash → non-JSON). Capture the real
+                // response so the cause (504 timeout vs 500 out-of-memory) is
+                // visible. Back off and retry a few times before giving up.
                 fails++;
-                if(fails>=4){setUploadTracker(null);alert("Migration paused after a few server hiccups.\n\nMoved "+totalMoved+" so far — your progress is saved. Click the button again to keep going.");return}
+                if(!lastErr)lastErr=err&&err.message||"unknown error";
+                if(fails>=4){setUploadTracker(null);alert("Migration paused after a few server hiccups.\n\nLAST SERVER RESPONSE:\n"+lastErr+"\n\nMoved "+totalMoved+" so far — progress saved. Click again to resume.");return}
                 await new Promise(res=>setTimeout(res,4000));
                 continue;
               }
