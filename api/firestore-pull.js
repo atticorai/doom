@@ -41,10 +41,7 @@ module.exports = async function handler(req, res) {
   if (!ADMIN) return res.status(503).json({ error: 'ADMIN_PASSWORD not set' });
   const submitted = typeof password === 'string' ? password.trim() : '';
   if (!submitted || !timingSafeEqual(submitted, ADMIN)) {
-    return res.status(401).json({
-      error: 'Wrong admin password',
-      detail: `submitted length: ${submitted.length}, expected length: ${ADMIN.length}`,
-    });
+    return res.status(401).json({ error: 'Wrong admin password' });
   }
 
   const fs = getDb();

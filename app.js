@@ -1,6 +1,13 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="monthly-summary-2026-04-29-32";
+const __APP_VERSION__="monthly-summary-2026-04-29-33";
+
+// HTML-escape any free-text/user-controlled value before it is concatenated
+// into a string that gets written to a same-origin window via document.write
+// or assigned as innerHTML. Stops stored XSS where a station/ISCI/vendor field
+// (title, comments, notes, loc, contact email, file URL) carries markup like
+// <img src=x onerror=...>. Use everywhere data flows into raw HTML strings.
+const escHtml=(v)=>String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 
 // Server-side auth verification. On successful login, /api/auth may return a
 // Firebase Auth custom token (when FIREBASE_ADMIN_KEY is set on the server) —
@@ -924,7 +931,7 @@ const App=()=>{
         if(trafficFbCountRef.current>10){
           const dropCount=trafficFbCountRef.current-next.length;
           const dropPct=1-(next.length/trafficFbCountRef.current);
-          if(dropCount>5&&dropPct>0.4){
+          if(dropCount>5&&dropPct>0.2){
             const msg="⚠ SAVE BLOCKED — protected "+dropCount+" traffic record(s) from bulk deletion ("+trafficFbCountRef.current+"→"+next.length+"). Delete one at a time to confirm.";
             console.error("SAVE BLOCKED [trafficHistory]: count dropped from "+trafficFbCountRef.current+" to "+next.length+" ("+Math.round(dropPct*100)+"% loss)");
             try{notify(msg)}catch(e){}
@@ -1165,9 +1172,23 @@ const App=()=>{
     if(estNum&&sta){
       const est=estimates.find(e=>e.num===estNum);
       const brand=BRANDS.find(b=>b.name===est?.brand);
-      // For WK 3-digit estimates, find the market from the station
-      const staObj=stations.find(s=>s.call===sta);
-      const confirmKey=est&&est.brand==="Wettermark Keith"&&estNum.length<=3?estNum+"|"+(staObj?.market||est?.market||""):estNum;
+      const isWk=est&&est.brand==="Wettermark Keith"&&estNum.length<=3;
+      // PL keys are the bare estimate. WK keys are estNum|market, but the
+      // market is NOT carried in the confirm URL. Resolve the correct WK key
+      // by finding the confirmations entry under estNum|* whose per-station
+      // token matches the supplied token (tokens are unique per reservation).
+      // Falls back to the station's market only when no token matches (legacy
+      // links / 'auto'), preserving the old heuristic for those cases.
+      let confirmKey=estNum;
+      if(isWk){
+        let matched=null;
+        Object.keys(confirmations||{}).forEach(k=>{
+          if(k.indexOf(estNum+"|")!==0)return;
+          if(tok&&confirmations[k]?.[sta]?.token===tok)matched=k;
+        });
+        if(matched)confirmKey=matched;
+        else{const staObj=stations.find(s=>s.call===sta);confirmKey=estNum+"|"+(staObj?.market||est?.market||"");}
+      }
       const airing=nowAiring[confirmKey];
       // Validate confirmation token before granting access.
       // Real tokens are 32-char hex generated server-issued via genToken(). The legacy
@@ -2034,8 +2055,8 @@ const App=()=>{
     const buildSheetHtml=()=>{
       const bc=getBrandColor(brand.code);const bcBg=getBrandBg(brand.code);
       let h='<html><head><title>Traffic Instructions</title><style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}body{padding:28px}table{width:100%;border-collapse:collapse;margin-top:14px}th{background:#F0E8F8;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#6B5E80}td{padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)}.sig{margin-top:36px;border-top:2px solid '+bc+';padding-top:8px}.note{background:'+bcBg+';padding:7px;font-size:10px;color:'+bc+';margin-top:6px}.grp{padding:5px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid rgba(0,0,0,.1)}</style></head><body>';
-      h+='<div style="text-align:center;margin-bottom:14px"><img src="'+brand.logo+'" style="height:48px"/></div>';
-      const hdr=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+v+'</span></div>';
+      h+='<div style="text-align:center;margin-bottom:14px"><img src="'+escHtml(brand.logo)+'" style="height:48px"/></div>';
+      const hdr=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+escHtml(v)+'</span></div>';
       h+=hdr("Agency",getBrandAgency(brand.code));
       h+=hdr("Client",brand.name,getBrandColor(brand.code));
       h+=hdr("Market",est.market);
@@ -2047,7 +2068,7 @@ const App=()=>{
         h+='<table style="margin:8px 0;font-size:11px;border:1px solid #ddd"><thead><tr style="background:#F0E8F8"><th style="padding:4px 8px;text-align:left;color:#5b21b6">Estimate</th><th style="padding:4px 8px;text-align:left;color:#5b21b6">Buy Type</th><th style="padding:4px 8px;text-align:left;color:#5b21b6">Stations</th></tr></thead><tbody>';
         est._combined.forEach(ce=>{
           const stas=getEstStations(ce);
-          h+='<tr><td style="padding:3px 8px;font-weight:700;border-bottom:1px solid #eee">'+ce.num+'</td><td style="padding:3px 8px;border-bottom:1px solid #eee">'+ce.group+'</td><td style="padding:3px 8px;border-bottom:1px solid #eee;font-size:10px">'+(stas.length?stas.map(s=>s.call).join(", "):"—")+'</td></tr>';
+          h+='<tr><td style="padding:3px 8px;font-weight:700;border-bottom:1px solid #eee">'+escHtml(ce.num)+'</td><td style="padding:3px 8px;border-bottom:1px solid #eee">'+escHtml(ce.group)+'</td><td style="padding:3px 8px;border-bottom:1px solid #eee;font-size:10px">'+(stas.length?escHtml(stas.map(s=>s.call).join(", ")):"—")+'</td></tr>';
         });
         h+='</tbody></table>';
       } else {
@@ -2062,15 +2083,15 @@ const App=()=>{
       const grouped={};sel.forEach(r=>{const s=r.sched||"All Week";if(!grouped[s])grouped[s]=[];grouped[s].push(r)});
       const validBk=(b)=>typeof b==="string"&&b&&b!=="true"&&b!=="false";
       SCHED_ORDER.forEach(s=>{if(!grouped[s])return;const bg=SCHED_COLORS[s]||"#2d1f42";const items=grouped[s].sort((a,b)=>(parseInt(b.isci.dur)||0)-(parseInt(a.isci.dur)||0));
-        h+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
+        h+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+escHtml(s)+'</td></tr>';
         items.forEach(r=>{const len=validBk(r.bookend)?r.bookend:":"+r.isci.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk(r.bookend)?r.bookend:s;
-          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>:'+r.isci.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
+          h+='<tr style="background:'+bg+'44"><td>'+escHtml(flight)+'</td><td style="font-family:monospace;font-weight:600">'+escHtml(r.isci.code)+' - '+escHtml(r.isci.title)+'</td><td>:'+escHtml(r.isci.dur)+'</td><td style="font-weight:600">'+escHtml(pct)+'</td><td style="font-size:10px;color:#555">'+escHtml(note)+'</td></tr>';
         });
       });
       Object.keys(grouped).filter(s=>!SCHED_ORDER.includes(s)).forEach(s=>{const bg="#F0E8F8";const items=grouped[s].sort((a,b)=>(parseInt(b.isci.dur)||0)-(parseInt(a.isci.dur)||0));
-        h+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
+        h+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+escHtml(s)+'</td></tr>';
         items.forEach(r=>{const len=validBk(r.bookend)?r.bookend:":"+r.isci.dur;const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk(r.bookend)?r.bookend:s;
-          h+='<tr style="background:'+bg+'44"><td>'+flight+'</td><td style="font-family:monospace;font-weight:600">'+r.isci.code+' - '+r.isci.title+'</td><td>:'+r.isci.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
+          h+='<tr style="background:'+bg+'44"><td>'+escHtml(flight)+'</td><td style="font-family:monospace;font-weight:600">'+escHtml(r.isci.code)+' - '+escHtml(r.isci.title)+'</td><td>:'+escHtml(r.isci.dur)+'</td><td style="font-weight:600">'+escHtml(pct)+'</td><td style="font-size:10px;color:#555">'+escHtml(note)+'</td></tr>';
         });
       });
       h+='</tbody></table>';
@@ -2080,7 +2101,7 @@ const App=()=>{
         if(thirties.length>0){
           h+='<div style="margin-top:14px;padding:8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#0369a1;margin-bottom:6px">📺 Cable Digital Streaming — :30 Rotation</div>';
           h+='<table style="width:100%;border-collapse:collapse"><thead><tr><th style="padding:4px 6px;font-size:10px;text-align:left;border-bottom:1px solid #bae6fd">ISCI</th><th style="padding:4px 6px;font-size:10px;text-align:left;border-bottom:1px solid #bae6fd">Title</th><th style="padding:4px 6px;font-size:10px;text-align:center;border-bottom:1px solid #bae6fd">%</th></tr></thead><tbody>';
-          thirties.forEach(r=>{h+='<tr><td style="padding:3px 6px;font-size:11px;font-family:monospace;font-weight:600">'+r.isci.code+'</td><td style="padding:3px 6px;font-size:11px">'+r.isci.title+'</td><td style="padding:3px 6px;font-size:11px;text-align:center;font-weight:600">'+(r.pct?r.pct+'%':'')+'</td></tr>'});
+          thirties.forEach(r=>{h+='<tr><td style="padding:3px 6px;font-size:11px;font-family:monospace;font-weight:600">'+escHtml(r.isci.code)+'</td><td style="padding:3px 6px;font-size:11px">'+escHtml(r.isci.title)+'</td><td style="padding:3px 6px;font-size:11px;text-align:center;font-weight:600">'+(r.pct?escHtml(r.pct)+'%':'')+'</td></tr>'});
           h+='</tbody></table></div>';
         }
       }
@@ -2466,9 +2487,9 @@ const App=()=>{
     const printStream=function(){
       var vLabel=vendorMode;
       var w=window.open("","","width=1000,height=900");
-      w.document.write("<html><head><title>"+mediaLabel+" Traffic - "+est.market+" - "+vLabel+"</title><style>body{font-family:Arial,sans-serif;margin:30px;font-size:12px;background:#fff;color:#1e1233}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.blu{color:#4AC8E8}.amb{color:#D4A040}.url{font-size:9px;word-break:break-all;color:#4AC8E8;font-family:monospace}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}.section{margin-top:16px;padding-top:8px;border-top:2px solid #E8DFF0;font-size:13px;font-weight:700}@media print{body{margin:20px}}</style></head><body>");
-      w.document.write('<div style="text-align:center;margin-bottom:20px"><img src="'+brand.logo+'" style="height:48px;margin-bottom:8px"/><h2 style="margin:0;letter-spacing:2px">'+est.brand.toUpperCase()+'</h2><div style="font-size:11px;color:#555;margin-top:4px">'+mediaLabel.toUpperCase()+' TRAFFIC INSTRUCTIONS</div></div>');
-      var hd=function(l,v,c){return '<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+v+'</span></div>'};
+      w.document.write("<html><head><title>"+escHtml(mediaLabel)+" Traffic - "+escHtml(est.market)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px;font-size:12px;background:#fff;color:#1e1233}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.blu{color:#4AC8E8}.amb{color:#D4A040}.url{font-size:9px;word-break:break-all;color:#4AC8E8;font-family:monospace}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}.section{margin-top:16px;padding-top:8px;border-top:2px solid #E8DFF0;font-size:13px;font-weight:700}@media print{body{margin:20px}}</style></head><body>");
+      w.document.write('<div style="text-align:center;margin-bottom:20px"><img src="'+escHtml(brand.logo)+'" style="height:48px;margin-bottom:8px"/><h2 style="margin:0;letter-spacing:2px">'+escHtml(est.brand.toUpperCase())+'</h2><div style="font-size:11px;color:#555;margin-top:4px">'+escHtml(mediaLabel.toUpperCase())+' TRAFFIC INSTRUCTIONS</div></div>');
+      var hd=function(l,v,c){return '<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>'};
       w.document.write(hd("Agency","Atticor Media"));w.document.write(hd("Client","Postman Law","red"));
       w.document.write(hd("Market",est.market));w.document.write(hd("Vendor",vLabel+(isDigital?" / GKBPS":""),"amb"));
       w.document.write(hd("Buyer",est.buyer+(isDigital?" — jessica.flynn@atticor.ai":""),"red"));w.document.write(hd("Media",mediaLabel,"blu"));
@@ -2493,8 +2514,8 @@ const App=()=>{
             w.document.write('<tr style="background:'+bgColor+'"><td colspan="7" style="font-weight:700;font-size:11px;padding:6px 8px;border-bottom:2px solid '+borderColor+';color:'+textColor+'">'+dmaName+' ('+d+')</td></tr>');
             w.document.write('<tr style="background:'+bgColor+'"><td colspan="7" style="padding:3px 8px;font-size:9px;font-family:monospace;color:#4AC8E8;word-break:break-all">Click-Through URL: <a href="'+sectionUrl+'" style="color:#4AC8E8">'+sectionUrl+'</a></td></tr>');
             videoSel.filter(function(r){return r.isci.dma===d}).sort(function(a,b){return(parseInt(b.isci.dur)||0)-(parseInt(a.isci.dur)||0)}).forEach(function(r){
-              var fileLink=r.isci.fileUrl?'<a href="'+r.isci.fileUrl+'" style="color:#4AC8E8;font-size:9px">Download</a>':"TBD";
-              w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td style='text-align:center;font-weight:700'>"+(r.pct||"")+"%</td><td>"+r.sched+"</td><td>"+r.flight+"</td><td>"+fileLink+"</td></tr>");
+              var fileLink=r.isci.fileUrl?'<a href="'+escHtml(r.isci.fileUrl)+'" style="color:#4AC8E8;font-size:9px">Download</a>':"TBD";
+              w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+escHtml(r.isci.code)+"</td><td>"+escHtml(r.isci.title)+"</td><td>:"+escHtml(r.isci.dur)+"</td><td style='text-align:center;font-weight:700'>"+escHtml(r.pct||"")+"%</td><td>"+escHtml(r.sched)+"</td><td>"+escHtml(r.flight)+"</td><td>"+fileLink+"</td></tr>");
             });
           });
           w.document.write("</tbody></table>");
@@ -2526,8 +2547,8 @@ const App=()=>{
             displayDmas.forEach(function(d){
               var r=items.find(function(x){return x.isci.dma===d});
               if(!r)return;
-              var fileLink=r.isci.fileUrl?'<a href="'+r.isci.fileUrl+'" style="color:#4AC8E8;font-size:9px">Download</a>':"TBD";
-              w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>"+sz+"</td><td>"+fileLink+"</td></tr>");
+              var fileLink=r.isci.fileUrl?'<a href="'+escHtml(r.isci.fileUrl)+'" style="color:#4AC8E8;font-size:9px">Download</a>':"TBD";
+              w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+escHtml(r.isci.code)+"</td><td>"+escHtml(r.isci.title)+"</td><td>"+escHtml(sz)+"</td><td>"+fileLink+"</td></tr>");
             });
           });
           w.document.write("</tbody></table>");
@@ -2544,7 +2565,7 @@ const App=()=>{
           w.document.write("<table><thead><tr><th>UTM_Content</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Placement</th><th>Full URL</th></tr></thead><tbody>");
           mktIscis.forEach(function(r){
             var url=pandoraUrl(mkt,r.isci.code,"AudioSelect");
-            w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td style='text-align:center;font-weight:700'>"+(r.pct||"")+"%</td><td>AudioSelect</td><td class='url'><a href='"+url+"' style='color:#4AC8E8'>"+url+"</a></td></tr>");
+            w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+escHtml(r.isci.code)+"</td><td>"+escHtml(r.isci.title)+"</td><td>:"+escHtml(r.isci.dur)+"</td><td style='text-align:center;font-weight:700'>"+escHtml(r.pct||"")+"%</td><td>AudioSelect</td><td class='url'><a href='"+escHtml(url)+"' style='color:#4AC8E8'>"+escHtml(url)+"</a></td></tr>");
           });
           w.document.write("</tbody></table>");
           // Companion banners
@@ -2556,7 +2577,7 @@ const App=()=>{
               // Replace market prefix in banner name for this market
               var name=c.name.trim();
               var url=pandoraUrl(mkt,name,"CompanionBanners");
-              w.document.write("<tr><td style='font-family:monospace;font-size:10px'>"+name+"</td><td>"+c.size+"</td><td>CompanionBanners</td><td class='url'><a href='"+url+"' style='color:#4AC8E8'>"+url+"</a></td></tr>");
+              w.document.write("<tr><td style='font-family:monospace;font-size:10px'>"+escHtml(name)+"</td><td>"+escHtml(c.size)+"</td><td>CompanionBanners</td><td class='url'><a href='"+escHtml(url)+"' style='color:#4AC8E8'>"+escHtml(url)+"</a></td></tr>");
             });
             w.document.write("</tbody></table>");
           }
@@ -2568,7 +2589,7 @@ const App=()=>{
             disps.forEach(function(d){
               var name=d.name.trim();
               var url=pandoraUrl(mkt,name,"DisplayBanners");
-              w.document.write("<tr><td style='font-family:monospace;font-size:10px'>"+name+"</td><td>"+d.size+"</td><td>DisplayBanners</td><td class='url'><a href='"+url+"' style='color:#4AC8E8'>"+url+"</a></td></tr>");
+              w.document.write("<tr><td style='font-family:monospace;font-size:10px'>"+escHtml(name)+"</td><td>"+escHtml(d.size)+"</td><td>DisplayBanners</td><td class='url'><a href='"+escHtml(url)+"' style='color:#4AC8E8'>"+escHtml(url)+"</a></td></tr>");
             });
             w.document.write("</tbody></table>");
           }
@@ -2580,7 +2601,7 @@ const App=()=>{
         w.document.write('<div class="section">'+mediaLabel.toUpperCase()+' ROTATION</div>');
         w.document.write("<table><thead><tr><th>ISCI</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Schedule</th><th>Flight</th></tr></thead><tbody>");
         sel.forEach(function(r){
-          w.document.write("<tr><td style='font-family:monospace;font-weight:700'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td style='text-align:center;font-weight:700'>"+(r.pct||"")+"%</td><td>"+r.sched+"</td><td>"+r.flight+"</td></tr>");
+          w.document.write("<tr><td style='font-family:monospace;font-weight:700'>"+escHtml(r.isci.code)+"</td><td>"+escHtml(r.isci.title)+"</td><td>:"+escHtml(r.isci.dur)+"</td><td style='text-align:center;font-weight:700'>"+escHtml(r.pct||"")+"%</td><td>"+escHtml(r.sched)+"</td><td>"+escHtml(r.flight)+"</td></tr>");
         });
         w.document.write("</tbody></table>");
         Object.entries(durGroups).forEach(function(e){var g=e[1];var dmaName=DM[g.dma]||g.dma;w.document.write('<div style="margin-top:4px;font-size:10px;color:#555">'+dmaName+' :'+g.dur+' rotation: '+g.total+'%'+(Math.abs(g.total-100)<0.5?' \u2713':' \u26A0')+'</div>')});
@@ -3492,9 +3513,9 @@ const App=()=>{
           const vLabel=trafficVendor||"All Vendors";
           const hasPanel=oLines.some(l=>l.panel);
           const w=window.open("","","width=900,height=700");
-          w.document.write("<html><head><title>OOH Traffic - "+dmaLabel+" - "+vLabel+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
+          w.document.write("<html><head><title>OOH Traffic - "+escHtml(dmaLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
           w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">WETTERMARK KEITH</h2><div style="font-weight:bold;color:#555">PERSONAL INJURY LAWYERS</div></div>');
-          const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+v+'</span></div>';
+          const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
           w.document.write(hd("Agency","WK Advertising Solutions"));w.document.write(hd("Client","Wettermark Keith"));
           w.document.write(hd("Market",dmaLabel));w.document.write(hd("Vendor",vLabel,"amb"));
           w.document.write(hd("Buyer","Amy Coffey","red"));w.document.write(hd("Media","OOH","red"));
@@ -3503,10 +3524,10 @@ const App=()=>{
           if(oComments)w.document.write(hd("Comments",oComments));
           if(hasPanel){
             w.document.write("<table><thead><tr><th>Flight Dates</th><th>Unit #</th><th>DMA</th><th>Location</th><th>ISCI / Creative</th><th>Notes</th></tr></thead><tbody>");
-            oLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel);w.document.write("<tr><td><b>"+(l.flight||oPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+(l.panel||"")+"</td><td>"+(bd?bd.dma:"")+"</td><td style='font-size:10px'>"+(bd?bd.loc:"")+"</td><td>"+l.isci+"</td><td>"+(l.notes||"")+"</td></tr>")});
+            oLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel);w.document.write("<tr><td><b>"+escHtml(l.flight||oPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+escHtml(l.panel||"")+"</td><td>"+escHtml(bd?bd.dma:"")+"</td><td style='font-size:10px'>"+escHtml(bd?bd.loc:"")+"</td><td>"+escHtml(l.isci)+"</td><td>"+escHtml(l.notes||"")+"</td></tr>")});
           }else{
             w.document.write("<table><thead><tr><th>Flight Dates</th><th>ISCI Codes &amp; Title</th><th>Market</th><th>Rot %</th><th>Unit Amounts</th><th>Notes</th></tr></thead><tbody>");
-            oLines.filter(l=>l.isci).forEach(l=>{w.document.write("<tr><td><b>"+(l.flight||oPostDates||"")+"</b></td><td>"+l.isci+"</td><td>"+(l.market||dmaLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?l.pct+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+(l.units||"")+"</td><td>"+(l.notes||"")+"</td></tr>")});
+            oLines.filter(l=>l.isci).forEach(l=>{w.document.write("<tr><td><b>"+escHtml(l.flight||oPostDates||"")+"</b></td><td>"+escHtml(l.isci)+"</td><td>"+escHtml(l.market||dmaLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?escHtml(l.pct)+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+escHtml(l.units||"")+"</td><td>"+escHtml(l.notes||"")+"</td></tr>")});
           }
           w.document.write("</tbody></table>");
           if(hasPanel)w.document.write('<div style="margin-top:6px;font-size:11px"><b>Total Panels:</b> '+totalPanels+"</div>");
@@ -3902,9 +3923,9 @@ const App=()=>{
           const vLabel=trafficVendor||"All Vendors";
           const hasPanel=plOLines.some(l=>l.panel);
           const w=window.open("","","width=900,height=700");
-          w.document.write("<html><head><title>OOH Traffic - PL "+mktLabel+" - "+vLabel+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
+          w.document.write("<html><head><title>OOH Traffic - PL "+escHtml(mktLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
           w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">POSTMAN LAW</h2></div>');
-          const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+v+'</span></div>';
+          const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
           w.document.write(hd("Agency","Atticor Media"));w.document.write(hd("Client","Postman Law"));
           w.document.write(hd("Market",mktLabel));w.document.write(hd("Vendor",vLabel,"amb"));
           w.document.write(hd("Buyer","Ken Lazar","red"));w.document.write(hd("Media","OOH","red"));
@@ -3913,10 +3934,10 @@ const App=()=>{
           if(plOComments)w.document.write(hd("Comments",plOComments));
           if(hasPanel){
             w.document.write("<table><thead><tr><th>Flight Dates</th><th>Unit #</th><th>Market</th><th>Location</th><th>ISCI / Creative</th><th>Face #s</th><th>Notes</th></tr></thead><tbody>");
-            plOLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel);w.document.write("<tr><td><b>"+(l.flight||plOPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+(l.panel||"")+"</td><td>"+(bd?bd.mkt:"")+"</td><td style='font-size:10px'>"+(bd?bd.loc:"")+"</td><td>"+l.isci+"</td><td style='font-family:monospace;font-size:10px'>"+(l.faces&&l.faces.length?l.faces.join(", "):"")+"</td><td>"+(l.notes||"")+"</td></tr>")});
+            plOLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel);w.document.write("<tr><td><b>"+escHtml(l.flight||plOPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+escHtml(l.panel||"")+"</td><td>"+escHtml(bd?bd.mkt:"")+"</td><td style='font-size:10px'>"+escHtml(bd?bd.loc:"")+"</td><td>"+escHtml(l.isci)+"</td><td style='font-family:monospace;font-size:10px'>"+escHtml(l.faces&&l.faces.length?l.faces.join(", "):"")+"</td><td>"+escHtml(l.notes||"")+"</td></tr>")});
           }else{
             w.document.write("<table><thead><tr><th>Flight Dates</th><th>ISCI Codes &amp; Title</th><th>Market</th><th>Rot %</th><th>Unit Amounts</th><th>Face Numbers</th><th>Notes</th></tr></thead><tbody>");
-            plOLines.filter(l=>l.isci).forEach(l=>{w.document.write("<tr><td><b>"+(l.flight||plOPostDates||"")+"</b></td><td>"+l.isci+"</td><td>"+(l.market||mktLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?l.pct+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+(l.units||"")+"</td><td style='font-family:monospace;font-size:10px'>"+(l.faces&&l.faces.length?l.faces.join(", "):"")+"</td><td>"+(l.notes||"")+"</td></tr>")});
+            plOLines.filter(l=>l.isci).forEach(l=>{w.document.write("<tr><td><b>"+escHtml(l.flight||plOPostDates||"")+"</b></td><td>"+escHtml(l.isci)+"</td><td>"+escHtml(l.market||mktLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?escHtml(l.pct)+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+escHtml(l.units||"")+"</td><td style='font-family:monospace;font-size:10px'>"+escHtml(l.faces&&l.faces.length?l.faces.join(", "):"")+"</td><td>"+escHtml(l.notes||"")+"</td></tr>")});
           }
           w.document.write("</tbody></table>");
           if(hasPanel)w.document.write('<div style="margin-top:6px;font-size:11px"><b>Total Panels:</b> '+totalPanels+"</div>");
@@ -5655,8 +5676,8 @@ ${fullText.substring(0,3000)}`}]
       const bc=h.brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");
       const lg=h.brand==="Postman Law"?LOGO_PL:LOGO_WK;
       let x='<html><head><style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}body{padding:28px;background:#fff;color:#1e1233}table{width:100%;border-collapse:collapse;margin-top:14px}th{background:#F0E8F8;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#6B5E80}td{padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)}.grp{font-weight:700;font-size:11px;text-transform:uppercase;padding:5px 9px;color:#333}.sig{margin-top:36px;border-top:2px solid '+bc+';padding-top:8px}.note{background:#fffbeb;padding:7px;font-size:10px;color:#92400e;margin-top:6px;border:1px solid #fde68a}</style></head><body>';
-      const hd=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+v+'</span></div>';
-      x+='<div style="text-align:center;margin-bottom:14px"><img src="'+lg+'" style="height:48px"/></div>';
+      const hd=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+escHtml(v)+'</span></div>';
+      x+='<div style="text-align:center;margin-bottom:14px"><img src="'+escHtml(lg)+'" style="height:48px"/></div>';
       x+=hd("Agency",getBrandAgency(h.brand));
       x+=hd("Client",h.brand,bc);x+=hd("Market",(DM[normMkt(h.market)]||h.market)+(normMkt(h.market)?" ("+normMkt(h.market)+")":""));x+=hd("Buyer",h.buyer,"#D4A040");
       x+=hd("Media",h.media,h.isOoh?"#D4A040":"#4AC8E8");x+=hd("Broadcast Month",h.month,"#E85A7A");
@@ -5667,7 +5688,7 @@ ${fullText.substring(0,3000)}`}]
       if(h.comments)x+=hd("Comments",h.comments);
       if(h.isOoh){
         x+='<table><thead><tr><th>Flight Dates</th><th>ISCI Codes &amp; Title:</th><th style="text-align:center">Unit Amounts</th><th>Notes:</th></tr></thead><tbody>';
-        (h.iscis||[]).forEach(r=>{x+='<tr><td>'+(r.sched||h.postDates||h.flight||"")+'</td><td>'+r.title+'.pdf</td><td style="text-align:center;font-weight:700">'+(r.units||"")+'</td><td></td></tr>'});
+        (h.iscis||[]).forEach(r=>{x+='<tr><td>'+escHtml(r.sched||h.postDates||h.flight||"")+'</td><td>'+escHtml(r.title)+'.pdf</td><td style="text-align:center;font-weight:700">'+escHtml(r.units||"")+'</td><td></td></tr>'});
         x+='</tbody></table>';
         if(h.totalUnits)x+='<div style="margin-top:8px;font-size:11px;color:#555"><b>Total Units:</b> '+h.totalUnits+'</div>';
         x+='<div class="sig"><div style="display:flex;justify-content:space-between"><div><b>Accepted by:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div class="note">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></div>';
@@ -5690,7 +5711,7 @@ ${fullText.substring(0,3000)}`}]
           x+='<tr style="background:#1f2540"><td colspan="6" style="font-weight:700;font-size:11px;padding:6px 8px;border-bottom:2px solid #4AC8E8;color:#1e40af">'+dmaName+' ('+d+')</td></tr>';
           x+='<tr style="background:#1f2540"><td colspan="6" style="padding:2px 8px;font-size:8px;font-family:monospace;color:#4AC8E8;word-break:break-all">Click-Through URL: '+sectionUrl+'</td></tr>';
           videoIscis.filter(function(r){return r.code&&r.code.startsWith(d)}).forEach(function(r){
-            x+='<tr><td style="font-family:monospace;font-weight:700;font-size:10px">'+r.code+'</td><td>'+r.title+'</td><td>:'+(r.dur||"")+'</td><td style="text-align:center;font-weight:700">'+(r.pct||"")+'</td><td>'+(r.sched||"")+'</td><td>'+(r.flight||h.flight||"")+'</td></tr>';
+            x+='<tr><td style="font-family:monospace;font-weight:700;font-size:10px">'+escHtml(r.code)+'</td><td>'+escHtml(r.title)+'</td><td>:'+escHtml(r.dur||"")+'</td><td style="text-align:center;font-weight:700">'+escHtml(r.pct||"")+'</td><td>'+escHtml(r.sched||"")+'</td><td>'+escHtml(r.flight||h.flight||"")+'</td></tr>';
           });
         });
         x+='</tbody></table>';
@@ -5703,7 +5724,7 @@ ${fullText.substring(0,3000)}`}]
           x+='<tr style="background:#F0E8F8"><td colspan="6" style="font-weight:700;font-size:11px;padding:6px 8px;border-bottom:2px solid #9b7bb0;color:#5b21b6">'+dmaName+' ('+d+')</td></tr>';
           x+='<tr style="background:#F0E8F8"><td colspan="6" style="padding:2px 8px;font-size:8px;font-family:monospace;color:#9b7bb0;word-break:break-all">Click-Through URL: '+sectionUrl+'</td></tr>';
           videoIscis.filter(function(r){return r.code&&r.code.startsWith(d)}).forEach(function(r){
-            x+='<tr><td style="font-family:monospace;font-weight:700;font-size:10px">'+r.code+'</td><td>'+r.title+'</td><td>:'+(r.dur||"")+'</td><td style="text-align:center;font-weight:700">'+(r.pct||"")+'</td><td>'+(r.sched||"")+'</td><td>'+(r.flight||h.flight||"")+'</td></tr>';
+            x+='<tr><td style="font-family:monospace;font-weight:700;font-size:10px">'+escHtml(r.code)+'</td><td>'+escHtml(r.title)+'</td><td>:'+escHtml(r.dur||"")+'</td><td style="text-align:center;font-weight:700">'+escHtml(r.pct||"")+'</td><td>'+escHtml(r.sched||"")+'</td><td>'+escHtml(r.flight||h.flight||"")+'</td></tr>';
           });
         });
         x+='</tbody></table>';
@@ -5718,7 +5739,7 @@ ${fullText.substring(0,3000)}`}]
           });
           x+='<table><thead><tr><th>ISCI</th><th>Title</th></tr></thead><tbody>';
           displayIscis.forEach(function(r){
-            x+='<tr><td style="font-family:monospace;font-weight:700;font-size:10px">'+r.code+'</td><td>'+r.title+'</td></tr>';
+            x+='<tr><td style="font-family:monospace;font-weight:700;font-size:10px">'+escHtml(r.code)+'</td><td>'+escHtml(r.title)+'</td></tr>';
           });
           x+='</tbody></table>';
         }
@@ -5733,21 +5754,21 @@ ${fullText.substring(0,3000)}`}]
         // Group by schedule type like Traffic Center does
         const grouped={};(h.iscis||[]).forEach(r=>{const s=r.sched||"All Week";if(!grouped[s])grouped[s]=[];grouped[s].push(r)});
         SCHED_ORDER_LIB.forEach(s=>{if(!grouped[s])return;const bg=SCHED_COLORS_LIB[s]||"#2d1f42";const items=grouped[s].sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0));
-          x+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
+          x+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+escHtml(s)+'</td></tr>';
           items.forEach(r=>{const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk2(r.bookend)?r.bookend:s;
-            x+='<tr style="background:'+bg+'44"><td>'+(r.flight||h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>:'+r.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
+            x+='<tr style="background:'+bg+'44"><td>'+escHtml(r.flight||h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+escHtml(r.code)+' - '+escHtml(r.title)+'</td><td>:'+escHtml(r.dur)+'</td><td style="font-weight:600">'+escHtml(pct)+'</td><td style="font-size:10px;color:#555">'+escHtml(note)+'</td></tr>';
           });
         });
         Object.keys(grouped).filter(s=>!SCHED_ORDER_LIB.includes(s)).forEach(s=>{const bg="#F0E8F8";const items=grouped[s];
-          x+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+s+'</td></tr>';
+          x+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+escHtml(s)+'</td></tr>';
           items.forEach(r=>{const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk2(r.bookend)?r.bookend:s;
-            x+='<tr style="background:'+bg+'44"><td>'+(r.flight||h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>:'+r.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
+            x+='<tr style="background:'+bg+'44"><td>'+escHtml(r.flight||h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+escHtml(r.code)+' - '+escHtml(r.title)+'</td><td>:'+escHtml(r.dur)+'</td><td style="font-weight:600">'+escHtml(pct)+'</td><td style="font-size:10px;color:#555">'+escHtml(note)+'</td></tr>';
           });
         });
       } else {
         // Simple flat list (PL style or imported without schedules)
         (h.iscis||[]).forEach(r=>{const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk2(r.bookend)?r.bookend:"";
-          x+='<tr><td>'+(r.flight||h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+r.code+' - '+r.title+'</td><td>:'+r.dur+'</td><td style="font-weight:600">'+pct+'</td><td style="font-size:10px;color:#555">'+note+'</td></tr>';
+          x+='<tr><td>'+escHtml(r.flight||h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+escHtml(r.code)+' - '+escHtml(r.title)+'</td><td>:'+escHtml(r.dur)+'</td><td style="font-weight:600">'+escHtml(pct)+'</td><td style="font-size:10px;color:#555">'+escHtml(note)+'</td></tr>';
         });
       }
       x+='</tbody></table>';
@@ -5759,7 +5780,7 @@ ${fullText.substring(0,3000)}`}]
       const filesWithUrls=(h.iscis||[]).map(r=>{const full=iscis.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:r.title||full.title||"",url:full.fileUrl}:null}).filter(Boolean);
       if(filesWithUrls.length>0){
         x+='<div style="margin-top:14px;padding:8px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0369a1;letter-spacing:.5px;margin-bottom:5px">Creative Files — Click to Download</div>';
-        filesWithUrls.forEach(r=>{x+='<div style="font-size:11px;margin:2px 0"><a href="'+r.url+'" style="color:#0369a1;text-decoration:underline;font-family:monospace;font-weight:600">'+r.code+'</a> — '+r.title+'</div>'});
+        filesWithUrls.forEach(r=>{x+='<div style="font-size:11px;margin:2px 0"><a href="'+escHtml(r.url)+'" rel="noopener noreferrer" style="color:#0369a1;text-decoration:underline;font-family:monospace;font-weight:600">'+escHtml(r.code)+'</a> — '+escHtml(r.title)+'</div>'});
         x+='</div>';
       }
       x+='<div class="sig"><div style="display:flex;justify-content:space-between"><div><b>Accepted by:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div class="note">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></div>';
@@ -7130,7 +7151,7 @@ Rules:
       const filesWithUrls=iscis.map(r=>{const full=reg.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:r.title||full.title||"",url:full.fileUrl}:null}).filter(Boolean);
       if(filesWithUrls.length>0){
         x+='<div style="margin-top:14px;padding:8px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0369a1;letter-spacing:.5px;margin-bottom:5px">Creative Files — Click to Download</div>';
-        filesWithUrls.forEach(r=>{x+='<div style="font-size:11px;margin:2px 0"><a href="'+r.url+'" target="_blank" style="color:#0369a1;text-decoration:underline;font-family:monospace;font-weight:600">'+r.code+'</a> — '+(r.title||"")+'</div>'});
+        filesWithUrls.forEach(r=>{x+='<div style="font-size:11px;margin:2px 0"><a href="'+escHtml(r.url)+'" target="_blank" rel="noopener noreferrer" style="color:#0369a1;text-decoration:underline;font-family:monospace;font-weight:600">'+escHtml(r.code)+'</a> — '+escHtml(r.title||"")+'</div>'});
         x+='</div>';
       }
       x+='<div class="sig"><div style="display:flex;justify-content:space-between"><div><b>Originally accepted:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div class="note">Note: This is an archived legacy instruction. It is no longer actionable.</div></div>';
