@@ -21,13 +21,12 @@ const { archiveDoc } = require('./_archive');
 const ADMIN_PASSWORD_ENV = 'ADMIN_PASSWORD';
 const ISCIS_DOC = 'iscis';
 const BUCKET = 'creative';
-const CONCURRENCY = 1;             // one big file at a time — memory-safe even at 700MB
+const CONCURRENCY = 2;             // streaming keeps memory flat, so 2 is safe
 const SAVE_EVERY = 2;              // checkpoint iscis blob this often
-// Memory cap. The function buffers the whole file in RAM to upload it. With the
-// 3009MB memory allowance set in vercel.json, one ~700MB file (download buffer +
-// upload copy ≈ 1.4GB) is safe. Anything bigger is refused by its Content-Length
-// BEFORE the body is downloaded, then flagged and reported.
-const MAX_FILE_BYTES = 700 * 1024 * 1024; // 700 MB
+// Sanity ceiling only. Streaming means we don't buffer the file, so memory is
+// no longer the constraint — this just refuses absurdly large objects by their
+// Content-Length before starting.
+const MAX_FILE_BYTES = 2 * 1024 * 1024 * 1024; // 2 GB
 // Hard per-file deadline. A single slow/huge file must never run long enough
 // to let Vercel kill the whole function (which returns a non-JSON 500 page and
 // breaks the client loop). If a file exceeds this it's skipped as an error and
@@ -103,24 +102,35 @@ async function processOne(supabase, iscis, idx) {
     if (contentLength && contentLength > MAX_FILE_BYTES) {
       return { idx, result: 'error', code, stage: 'size', detail: contentLength + ' bytes too large' };
     }
-    const buf = Buffer.from(await resp.arrayBuffer());
-    if (buf.length > MAX_FILE_BYTES) {
-      return { idx, result: 'error', code, stage: 'size', detail: buf.length + ' bytes too large' };
-    }
 
     const ext = extFromUrl(fileUrl, isci.fileName);
     const path = code + '.' + ext;
     const contentType = resp.headers.get('content-type') || contentTypeFromExt(ext);
 
-    const { error: upErr } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, buf, { contentType, upsert: true });
-    if (upErr) {
-      return { idx, result: 'error', code, stage: 'upload', detail: upErr.message };
+    // STREAM the bytes straight from Firebase into Supabase via a signed upload
+    // URL. We never hold the whole file in memory (which OOM-crashed the
+    // function on big videos) — the download stream is piped directly to the
+    // upload request body.
+    const { data: signed, error: suErr } = await supabase.storage.from(BUCKET).createSignedUploadUrl(path, { upsert: true });
+    if (suErr) {
+      return { idx, result: 'error', code, stage: 'sign', detail: suErr.message };
+    }
+    const putHeaders = { 'content-type': contentType, 'x-upsert': 'true' };
+    if (contentLength) putHeaders['content-length'] = String(contentLength);
+    const putResp = await fetch(signed.signedUrl, {
+      method: 'PUT',
+      headers: putHeaders,
+      body: resp.body,
+      duplex: 'half',
+      signal: ctrl.signal,
+    });
+    if (!putResp.ok) {
+      const t = await putResp.text().catch(() => '');
+      return { idx, result: 'error', code, stage: 'upload', detail: putResp.status + ' ' + t.slice(0, 140) };
     }
 
     const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
-    return { idx, result: 'migrated', code, path, bytes: buf.length, newUrl: pub.publicUrl };
+    return { idx, result: 'migrated', code, path, bytes: contentLength || 0, newUrl: pub.publicUrl };
   })();
 
   try {
