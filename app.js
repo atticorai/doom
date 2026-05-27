@@ -920,6 +920,9 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("deletedIscis",[...deletedIsciKeys])},[deletedIsciKeys,dbLoaded]);
   const trafficFbCountRef=React.useRef(0);
   const trafficDirtyRef=React.useRef(false);
+  // Set true for an intentional bulk rewrite (e.g. re-running the importer, which
+  // removes the prior import set before re-adding) so the drop guard lets it through.
+  const trafficBulkRef=React.useRef(false);
   const setTrafficHistoryRaw=setTrafficHistory;
   const setTrafficHistoryAndSave=React.useCallback((updater)=>{
     // Mark the change as user-initiated; the effect below persists it.
@@ -937,7 +940,7 @@ const App=()=>{
     if(!dbLoaded||!loadCompleteRef.current||!trafficLoadedRef.current)return;
     if(!trafficDirtyRef.current)return;
     if(!Array.isArray(trafficHistory)||trafficHistory.length===0)return;
-    if(trafficFbCountRef.current>10){
+    if(trafficFbCountRef.current>10&&!trafficBulkRef.current){
       const dropCount=trafficFbCountRef.current-trafficHistory.length;
       const dropPct=1-(trafficHistory.length/trafficFbCountRef.current);
       if(dropCount>5&&dropPct>0.2){
@@ -949,7 +952,7 @@ const App=()=>{
     trafficDirtyRef.current=false;
     try{backupBeforeSave("trafficHistory",trafficHistory)}catch(e){}
     saveToDb("trafficHistory",trafficHistory)
-      .then(()=>{trafficFbCountRef.current=trafficHistory.length})
+      .then(()=>{trafficFbCountRef.current=trafficHistory.length;trafficBulkRef.current=false})
       .catch(e=>{trafficDirtyRef.current=true;console.error("trafficHistory save failed:",e);try{notify("⚠ Traffic save FAILED — your change did NOT persist: "+(e&&e.message||e))}catch(_){}});
   },[trafficHistory,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(workMonth)saveToDb("workMonth",workMonth)},[workMonth,dbLoaded]);
@@ -8478,8 +8481,9 @@ Rules:
             const version=parseInt((vraw.match(/(\d+)/)||[])[1]||"1")||1;
             let est=((gf("Estimate(s)")||gf("Estimate")).match(/(\d{3,4})/)||[])[1]||"";
             if(!est&&brand==="Wettermark Keith"&&WK_EST[month])est=WK_EST[month];
-            const code=normMkt(rawMkt);
-            const market=((typeof DM!=="undefined"&&DM[code])||rawMkt||"").trim();
+            const firstMkt=(rawMkt||"").split("/")[0].trim();
+            const code=normMkt(firstMkt);
+            const market=((typeof DM!=="undefined"&&DM[code])||firstMkt||rawMkt||"").trim();
             const campaign=(t.match(/UTM_Campaign=[A-Z]{3}([A-Za-z]+?)&/)||[])[1]||"";
             // Grab EVERY ISCI code globally (TV/Radio/Cable/Digital/OOH formats all covered);
             // OOH codes have letters mid-string (e.g. BRMWK26SP009O) so don't require all-digits.
@@ -8499,10 +8503,15 @@ Rules:
               comments:(gf("Comments")||"")+(campaign?" | Campaign: "+campaign:"")+" | Imported",
               stations:[],iscis,isOoh:media==="OOH",status:"print_only",imported:true};
           };
-          const sig=(b,mkt,med,mo,v,is)=>[b,normMkt(mkt)||mkt,med,mo,String(v),(is||[]).length,((is||[])[0]&&((is||[])[0].code))||""].join("|");
+          // Logical identity of a traffic sheet — NOT its ISCI contents. Normalizes
+          // media ("Digital Video"→"digital") and month ("May 2026"→"may") so an
+          // imported sheet matches an equivalent record already in the library.
+          const lk=(b,mkt,med,mo,v,est,camp)=>[String(b||"").toLowerCase().trim(),(normMkt(mkt)||String(mkt||"")).toLowerCase(),String(med||"").toLowerCase().split(" ")[0],String(mo||"").toLowerCase().replace(/20\d\d/g,"").replace(/[^a-z]/g,"").slice(0,3),String(v),String(est||"").toLowerCase(),String(camp||"").toLowerCase()].join("|");
           notify("Importing missing sheets...");
-          // Existing signatures (skip the prior broken import's garbage records).
-          const existing=new Set(trafficHistory.filter(h=>h.status!=="imported").map(h=>sig(h.brand,h.market,h.media,h.month,h.version,h.iscis)));
+          const isImport=h=>h.imported||h.status==="imported";
+          // Match against the user's REAL records only (ignore any prior import run,
+          // which this run rebuilds from scratch — so re-running can never pile up).
+          const existing=new Set(trafficHistory.filter(h=>!isImport(h)).map(h=>lk(h.brand,h.market,h.media,h.month,h.version,h.est,h.campaign)));
           let added=0,skipped=0,failed=0;const out=[];const newRecs=[];
           for(const path of PDFS){
             const name=path.split("/").pop();
@@ -8513,15 +8522,18 @@ Rules:
               let text="";for(let pn=1;pn<=pdf.numPages;pn++){const pg=await pdf.getPage(pn);const c=await pg.getTextContent();text+=c.items.map(i=>i.str).join(" ")+"\n";}
               const parsed=parseSheet(text);
               if(!parsed){failed++;out.push("✗ "+name+" — no ISCIs parsed");continue}
-              const s=sig(parsed.brand,parsed.market,parsed.media,parsed.month,parsed.version,parsed.iscis);
-              if(existing.has(s)){skipped++;out.push("• "+parsed.market+" "+parsed.month+" "+parsed.media+" v"+parsed.version+" — already there");continue}
-              existing.add(s);newRecs.push(parsed);added++;
+              const k=lk(parsed.brand,parsed.market,parsed.media,parsed.month,parsed.version,parsed.est,parsed.campaign);
+              if(existing.has(k)){skipped++;out.push("• "+parsed.market+" "+parsed.month+" "+parsed.media+" v"+parsed.version+" — already there");continue}
+              existing.add(k);newRecs.push(parsed);added++;
               out.push("✓ "+parsed.brand+" · "+parsed.market+" · "+parsed.month+" · "+parsed.media+" v"+parsed.version+" — est "+(parsed.est||"—")+" — "+parsed.iscis.length+" ISCIs");
             }catch(e){failed++;out.push("✗ "+name+" — "+(e&&e.message||e))}
           }
-          // One atomic update: drop the prior broken import's garbage records, prepend the clean ones.
-          if(newRecs.length||trafficHistory.some(h=>h.status==="imported"))
-            setTrafficHistory(p=>[...newRecs,...p.filter(h=>h.status!=="imported")]);
+          // One atomic, guard-bypassed rewrite: remove EVERY prior import (clean or
+          // garbage) and prepend the freshly-deduped set. Idempotent across re-runs.
+          if(newRecs.length||trafficHistory.some(isImport)){
+            trafficBulkRef.current=true;
+            setTrafficHistory(p=>[...newRecs,...p.filter(h=>!isImport(h))]);
+          }
           setInfoBox({title:"Import Missing Sheets — +"+added+" added, "+skipped+" dup, "+failed+" failed",text:out.join("\n")+(added?"\n\nReload the app to see them in the Library.":"")});
           log("Import Missing Sheets","added "+added+", skipped "+skipped+", failed "+failed);
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #4AC8E8",background:"#4AC8E815",color:"#4AC8E8",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📥 Import Missing Sheets</button>
