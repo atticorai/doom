@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="tracker-month-match-2026-05-27";
+const __APP_VERSION__="tracker-debug-2026-05-27";
 // Startup banner so it's possible to confirm, from the browser console, EXACTLY
 // which app.js the live site is serving. If this tag isn't in the console after a
 // hard-reload, the deploy is stale and you're running old code.
@@ -6976,6 +6976,15 @@ Rules:
     // Map buy types to estimate groups for matching
     const buyToGroup={"TV Base":"Base","TV Sponsorship":"Sponsorship","TV UD/AV":"UD/AV","TV Sports":"Sports","Cable":"Cable","Heavy Up":"Heavy Up","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
     const buyToMedia={"TV Base":"TV","TV Sponsorship":"TV","TV UD/AV":"TV","TV Sports":"TV","Cable":"Cable","Heavy Up":"TV","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
+    // TEMP DIAGNOSTIC — dumps the exact fields of every record for the selected
+    // brand so we can see why the tracker reads built traffic as empty. Open the
+    // Tracker on the brand, open the console, copy the [TrackerDbg] lines.
+    try{
+      const _tM=String(trackerMonth||"").trim().split(/\s+/)[0].toLowerCase();
+      const _recs=trafficHistory.filter(h=>h.brand===trackerBrand);
+      console.log("%c[TrackerDbg] brand="+JSON.stringify(trackerBrand)+" trackerMonth="+JSON.stringify(trackerMonth)+" — "+_recs.length+" records","color:#D4A040;font-weight:700");
+      _recs.forEach(h=>{const _hM=String(h.month||"").trim().split(/\s+/)[0].toLowerCase();console.log("[TrackerDbg]","month="+JSON.stringify(h.month),"market="+JSON.stringify(h.market),"media="+JSON.stringify(h.media),"combined="+h.combined,"group="+JSON.stringify(h.group),"status="+JSON.stringify(h.status),"monthMatches="+(_hM===_tM));});
+    }catch(e){console.warn("TrackerDbg failed",e);}
     // Find traffic record for a market + buy type + month
     const getStatus=(mkt,buyType)=>{
       const media=buyToMedia[buyType];const group=buyToGroup[buyType];
