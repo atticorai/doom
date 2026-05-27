@@ -825,6 +825,7 @@ const App=()=>{
         if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}
         console.log("Supabase: loaded",Object.keys(docs).length,"collections");
         loadCompleteRef.current=true;
+        trafficDirtyRef.current=false;// loaded data is not a user edit — don't auto-resave it
       }catch(e){console.warn("Firestore load failed, using defaults:",e);iscisLoadedRef.current=true;stationsLoadedRef.current=true;estimatesLoadedRef.current=true;trafficLoadedRef.current=true;
         console.error("⚠ SAVES BLOCKED — Firestore load failed. Default/seed data will NOT overwrite your database. Refresh to retry.")}
       setDbLoaded(true);
@@ -919,43 +920,38 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("deletedIscis",[...deletedIsciKeys])},[deletedIsciKeys,dbLoaded]);
   const trafficFbCountRef=React.useRef(0);
   const trafficDirtyRef=React.useRef(false);
-  const trafficSaveTimerRef=React.useRef(null);
   const setTrafficHistoryRaw=setTrafficHistory;
   const setTrafficHistoryAndSave=React.useCallback((updater)=>{
+    // Mark the change as user-initiated; the effect below persists it.
     trafficDirtyRef.current=true;
-    setTrafficHistoryRaw(prev=>{
-      const next=typeof updater==='function'?updater(prev):updater;
-      if(dbLoaded&&trafficLoadedRef.current&&trafficDirtyRef.current&&next.length>0){
-        // Drop guard: block save if traffic count drops >20% from loaded count.
-        // Compares against the LAST PERSISTED count (trafficFbCountRef), which is only
-        // updated after a save acks — that way two rapid edits in <100ms can't hide a
-        // regression by bumping the count before the first save lands.
-        if(trafficFbCountRef.current>10){
-          const dropCount=trafficFbCountRef.current-next.length;
-          const dropPct=1-(next.length/trafficFbCountRef.current);
-          if(dropCount>5&&dropPct>0.2){
-            const msg="⚠ SAVE BLOCKED — protected "+dropCount+" traffic record(s) from bulk deletion ("+trafficFbCountRef.current+"→"+next.length+"). Delete one at a time to confirm.";
-            console.error("SAVE BLOCKED [trafficHistory]: count dropped from "+trafficFbCountRef.current+" to "+next.length+" ("+Math.round(dropPct*100)+"% loss)");
-            try{notify(msg)}catch(e){}
-            try{log("Save Blocked","trafficHistory: "+trafficFbCountRef.current+"→"+next.length+" ("+Math.round(dropPct*100)+"% drop) — REVERTED")}catch(e){}
-            return prev;
-          }
-        }
-        backupBeforeSave("trafficHistory",next);
-        // Debounce: cancel any pending save and schedule a fresh one. Multiple
-        // rapid edits collapse into a single Firestore write of the latest state.
-        if(trafficSaveTimerRef.current)clearTimeout(trafficSaveTimerRef.current);
-        trafficSaveTimerRef.current=setTimeout(async()=>{
-          trafficSaveTimerRef.current=null;
-          try{await saveToDb("trafficHistory",next);trafficFbCountRef.current=next.length}
-          catch(e){console.error("trafficHistory save failed:",e);try{notify("⚠ Traffic save failed — reload to verify your changes persisted. Error: "+(e?.message||e))}catch(_){}}
-        },100);
-      }
-      return next;
-    });
-  },[dbLoaded]);
-  // Re-alias so all existing code uses the saving version
+    setTrafficHistoryRaw(updater);
+  },[]);
+  // Re-alias so every existing call site marks the change as dirty.
   setTrafficHistory=setTrafficHistoryAndSave;
+  // Persist trafficHistory whenever it changes from a user action — the SAME
+  // reliable effect-based pattern every other doc uses (iscis/estimates/etc.,
+  // which never stopped saving). Replaces the old save-inside-the-state-updater
+  // debounce, which silently stopped persisting traffic. Keeps the bulk-delete
+  // drop guard.
+  React.useEffect(()=>{
+    if(!dbLoaded||!loadCompleteRef.current||!trafficLoadedRef.current)return;
+    if(!trafficDirtyRef.current)return;
+    if(!Array.isArray(trafficHistory)||trafficHistory.length===0)return;
+    if(trafficFbCountRef.current>10){
+      const dropCount=trafficFbCountRef.current-trafficHistory.length;
+      const dropPct=1-(trafficHistory.length/trafficFbCountRef.current);
+      if(dropCount>5&&dropPct>0.2){
+        console.error("SAVE BLOCKED [trafficHistory]: "+trafficFbCountRef.current+"→"+trafficHistory.length+" ("+Math.round(dropPct*100)+"% drop)");
+        try{notify("⚠ Save blocked — protected "+dropCount+" traffic record(s) from bulk deletion. Delete one at a time.")}catch(e){}
+        return;
+      }
+    }
+    trafficDirtyRef.current=false;
+    try{backupBeforeSave("trafficHistory",trafficHistory)}catch(e){}
+    saveToDb("trafficHistory",trafficHistory)
+      .then(()=>{trafficFbCountRef.current=trafficHistory.length})
+      .catch(e=>{trafficDirtyRef.current=true;console.error("trafficHistory save failed:",e);try{notify("⚠ Traffic save FAILED — your change did NOT persist: "+(e&&e.message||e))}catch(_){}});
+  },[trafficHistory,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(workMonth)saveToDb("workMonth",workMonth)},[workMonth,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(confirmations).length>0)saveToDb("confirmations",confirmations)},[confirmations,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohRemindersSent).length>0)saveToDb("oohRemindersSent",oohRemindersSent)},[oohRemindersSent,dbLoaded]);
