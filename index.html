@@ -412,7 +412,7 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
           'import * as ReactDOM from "react-dom";',
           'import { createRoot } from "react-dom/client";',
           'import { motion, AnimatePresence, useAnimation, useInView } from "framer-motion";',
-          'import { App as MegaraLibrary, ThemeContext as MegaraThemeContext } from "/library-ui.js";',
+          'import { App as MegaraLibrary, ThemeContext as MegaraThemeContext } from "/library-ui.js?v='+Date.now()+'";',
           'window.React = React;',
           'window.ReactDOM = Object.assign({}, (ReactDOM.default || ReactDOM), { createRoot: createRoot });',
           'window.FramerMotion = { motion: motion, AnimatePresence: AnimatePresence, useAnimation: useAnimation, useInView: useInView };',

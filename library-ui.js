@@ -1893,7 +1893,7 @@ function Ue() {
     "October",
     "November",
     "December"
-  ], g = Array.from(new Set(x.map((o) => o.month))), h = (()=>{const yr=(mo)=>{const rec=x.find((o)=>o.month===mo);return rec?rec.year||0:0};return p.filter((o)=>g.includes(o)).sort((a,b)=>{const dy=yr(b)-yr(a);return dy!==0?dy:p.indexOf(b)-p.indexOf(a)})})(), f = x.reduce(
+  ], g = Array.from(new Set(x.map((o) => o.month))), h = p.filter((o) => g.includes(o)).reverse(), f = x.reduce(
     (o, v) => (o[v.month] || (o[v.month] = []), o[v.month].push(v), o),
     {}
   ), j = h.filter((o) => {
