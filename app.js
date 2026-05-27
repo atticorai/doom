@@ -8464,35 +8464,46 @@ Rules:
         <button onClick={async()=>{
           if(!window.pdfjsLib){setInfoBox({title:"PDF engine not loaded",text:"pdf.js didn't load — hard-refresh (Ctrl+Shift+R) and try again."});return}
           const PDFS=["/recovery/espn-mlb-april-v1.pdf","/recovery/gkbps-april-v1.pdf","/recovery/wk-ttwn-feb-radio.pdf","/recovery/wk-ttwn-mar-radio.pdf","/recovery/pl-msp-jan2026-tv.pdf","/recovery/wk-may-brm-v2.pdf","/recovery/wk-may-hsv-v2.pdf","/recovery/wk-may-knx-v2.pdf","/recovery/wk-may-cha-v2.pdf","/recovery/wk-may-mtg-v2.pdf","/recovery/wk-may-dhn-v2.pdf","/recovery/pl-cable-denver-apr.pdf","/recovery/pl-cable-streaming-apr.pdf","/recovery/pl-cable-chicago-apr.pdf","/recovery/pl-cable-cincinnati-apr.pdf","/recovery/pl-cable-minneapolis-apr.pdf","/recovery/ooh-mtg-lamar-poster.pdf","/recovery/ooh-knx-lamar-poster.pdf","/recovery/ooh-gad-lamar-poster.pdf","/recovery/ooh-brm-lamar-poster.pdf","/recovery/ooh-brm-panel8815-bb.pdf","/recovery/ooh-brm-panel8815.pdf"];
-          const nm=(typeof normMkt==="function")?normMkt:(x=>x);
+          const WK_EST={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};
           const parseSheet=(t)=>{
-            t=t.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
-            const gf=(label)=>{const m=t.match(new RegExp(label.replace(/[()\/]/g,"\\$&")+"\\s*:\\s*(.+?)(?:\\n|$)","i"));return m?m[1].trim():""};
+            // pdf.js gives one space-joined line per page; keep multi-space gaps as field delimiters.
+            t=t.replace(/\r/g,"").replace(/\n/g," ");
+            const gf=(label)=>{const m=t.match(new RegExp(label.replace(/[()\/]/g,"\\$&")+"\\s*:\\s*(.+?)(?=\\s{2,}|$)","i"));return m?m[1].trim():""};
             let brand=gf("Client");if(/postman/i.test(brand))brand="Postman Law";else if(/wettermark/i.test(brand))brand="Wettermark Keith";else brand=brand||"Unknown";
-            const market=gf("Market");
+            const rawMkt=gf("Market");
             const media=gf("Media")||"TV";
             const month=gf("Broadcast Month")||gf("Month");
-            const flight=gf("Flight Dates")||gf("Flight");
+            const flight=gf("Flight Dates")||gf("Flight")||gf("Post Dates");
             const vraw=gf("Version/ Links")||gf("Version");
             const version=parseInt((vraw.match(/(\d+)/)||[])[1]||"1")||1;
-            const estRaw=gf("Estimate(s)")||gf("Estimate");
-            const est=(estRaw.match(/(\d{3,4})/)||[])[1]||"";
-            const dma=nm(market)||market||"";
-            const iscis=[];const seen=new Set();
-            t.split("\n").forEach(line=>{
-              const m=line.match(/([A-Z]{3,4}(?:PL|WK)\d{4,7}[A-Z0-9])\s*-?\s*(.*)/);
-              if(!m)return;const code=m[1];if(seen.has(code))return;seen.add(code);
-              const rest=m[2]||"";
-              const dur=(rest.match(/:(\d{2,3})\b/)||[])[1]||"";
-              const pct=(rest.match(/(\d+(?:\.\d+)?)\s*%/)||[])[1]||"";
-              const title=(rest.split(/\s+:/)[0]||"").trim();
-              iscis.push({code,title,dur,pct,sched:"",bookend:""});
-            });
+            let est=((gf("Estimate(s)")||gf("Estimate")).match(/(\d{3,4})/)||[])[1]||"";
+            if(!est&&brand==="Wettermark Keith"&&WK_EST[month])est=WK_EST[month];
+            const code=normMkt(rawMkt);
+            const market=((typeof DM!=="undefined"&&DM[code])||rawMkt||"").trim();
+            const campaign=(t.match(/UTM_Campaign=[A-Z]{3}([A-Za-z]+?)&/)||[])[1]||"";
+            // Grab EVERY ISCI code globally (TV/Radio/Cable/Digital/OOH formats all covered);
+            // OOH codes have letters mid-string (e.g. BRMWK26SP009O) so don't require all-digits.
+            const codeRe=/([A-Z]{3}(?:PL|WK)[0-9][A-Z0-9]{4,9})/g;
+            const iscis=[];const seen=new Set();let m;
+            while((m=codeRe.exec(t))){const c=m[1];if(seen.has(c))continue;seen.add(c);
+              const after=t.slice(m.index+c.length,m.index+c.length+90);
+              const dur=(after.match(/:(\d{2,3})\b/)||[])[1]||"";
+              const pct=(after.match(/(\d+(?:\.\d+)?)\s*%/)||[])[1]||"";
+              const title=after.replace(/^\s*[-—:]\s*/,"").split(/\s{2,}|:\d|—/)[0].trim();
+              iscis.push({code:c,title,dur,pct,sched:"",bookend:""});
+            }
             if(!iscis.length)return null;
-            return{est:est||(dma+"-"+(brand==="Postman Law"?"PL":"WK")+"-"+media),brand,market:dma,media,buyer:gf("Buyer"),month,version,flight,comments:gf("Comments"),stations:[],iscis,ts:Date.now(),status:"imported"};
+            return{ts:new Date().toISOString(),est,brand,market,media,
+              buyer:gf("Buyer")||(brand==="Wettermark Keith"?"Amy Coffey":""),
+              month,version,flight,campaign,
+              comments:(gf("Comments")||"")+(campaign?" | Campaign: "+campaign:"")+" | Imported",
+              stations:[],iscis,isOoh:media==="OOH",status:"print_only",imported:true};
           };
+          const sig=(b,mkt,med,mo,v,is)=>[b,normMkt(mkt)||mkt,med,mo,String(v),(is||[]).length,((is||[])[0]&&((is||[])[0].code))||""].join("|");
           notify("Importing missing sheets...");
-          let added=0,skipped=0,failed=0;const out=[];
+          // Existing signatures (skip the prior broken import's garbage records).
+          const existing=new Set(trafficHistory.filter(h=>h.status!=="imported").map(h=>sig(h.brand,h.market,h.media,h.month,h.version,h.iscis)));
+          let added=0,skipped=0,failed=0;const out=[];const newRecs=[];
           for(const path of PDFS){
             const name=path.split("/").pop();
             try{
@@ -8502,12 +8513,15 @@ Rules:
               let text="";for(let pn=1;pn<=pdf.numPages;pn++){const pg=await pdf.getPage(pn);const c=await pg.getTextContent();text+=c.items.map(i=>i.str).join(" ")+"\n";}
               const parsed=parseSheet(text);
               if(!parsed){failed++;out.push("✗ "+name+" — no ISCIs parsed");continue}
-              const dup=trafficHistory.some(h=>h.brand===parsed.brand&&nm(h.market)===nm(parsed.market)&&h.media===parsed.media&&h.month===parsed.month&&String(h.version)===String(parsed.version));
-              if(dup){skipped++;out.push("• "+parsed.market+" "+parsed.month+" "+parsed.media+" v"+parsed.version+" — already there");continue}
-              setTrafficHistory(p=>[parsed,...p]);
-              added++;out.push("✓ "+parsed.brand+" · "+parsed.market+" · "+parsed.month+" · "+parsed.media+" v"+parsed.version+" — est "+parsed.est+" — "+parsed.iscis.length+" ISCIs");
+              const s=sig(parsed.brand,parsed.market,parsed.media,parsed.month,parsed.version,parsed.iscis);
+              if(existing.has(s)){skipped++;out.push("• "+parsed.market+" "+parsed.month+" "+parsed.media+" v"+parsed.version+" — already there");continue}
+              existing.add(s);newRecs.push(parsed);added++;
+              out.push("✓ "+parsed.brand+" · "+parsed.market+" · "+parsed.month+" · "+parsed.media+" v"+parsed.version+" — est "+(parsed.est||"—")+" — "+parsed.iscis.length+" ISCIs");
             }catch(e){failed++;out.push("✗ "+name+" — "+(e&&e.message||e))}
           }
+          // One atomic update: drop the prior broken import's garbage records, prepend the clean ones.
+          if(newRecs.length||trafficHistory.some(h=>h.status==="imported"))
+            setTrafficHistory(p=>[...newRecs,...p.filter(h=>h.status!=="imported")]);
           setInfoBox({title:"Import Missing Sheets — +"+added+" added, "+skipped+" dup, "+failed+" failed",text:out.join("\n")+(added?"\n\nReload the app to see them in the Library.":"")});
           log("Import Missing Sheets","added "+added+", skipped "+skipped+", failed "+failed);
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #4AC8E8",background:"#4AC8E815",color:"#4AC8E8",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📥 Import Missing Sheets</button>
