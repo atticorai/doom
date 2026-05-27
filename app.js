@@ -1,6 +1,10 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="monthly-summary-2026-04-29-33";
+const __APP_VERSION__="pergroup-send+tracking-2026-05-27";
+// Startup banner so it's possible to confirm, from the browser console, EXACTLY
+// which app.js the live site is serving. If this tag isn't in the console after a
+// hard-reload, the deploy is stale and you're running old code.
+try{console.log("%c⚡ DOOM build: "+__APP_VERSION__,"background:#1e1233;color:#D4A040;font-weight:700;padding:3px 8px;border-radius:4px")}catch(e){}
 
 // HTML-escape any free-text/user-controlled value before it is concatenated
 // into a string that gets written to a same-origin window via document.write
@@ -9590,7 +9594,13 @@ Rules:
                 // reminders see it — same as the main builder.
                 if(sent>0){
                   const allCalls=linkedStations.map(s=>s.call);
-                  setTrafficHistory(p=>p.map(r=>(r.ts===h.ts&&r.est===h.est&&String(r.version)===String(h.version)&&r.market===h.market)?{...r,status:failed===0?"sent":"partial",stations:[...new Set([...(r.stations||[]),...allCalls])]}:r));
+                  setTrafficHistory(p=>{
+                    const hit=(r)=>r===h||(r.ts===h.ts&&r.est===h.est&&String(r.version)===String(h.version)&&r.market===h.market);
+                    let found=false;
+                    const next=p.map(r=>{if(!hit(r))return r;found=true;return{...r,status:failed===0?"sent":"partial",stations:[...new Set([...(r.stations||[]),...allCalls])]}});
+                    if(!found)console.warn("[library send] record not found to mark sent:",h&&h.ts,h&&h.est,h&&h.market);
+                    return next;
+                  });
                   notify(doomPick(DOOM.send)+" — "+sent+" group"+(sent===1?"":"s")+" sent"+(failed?" ("+failed+" failed)":""));
                   log("Traffic Sent",h.brand+" "+h.market+" "+h.media+" "+h.month+" v"+(h.version||"1")+" — "+sent+" group(s)"+(failed?", "+failed+" failed":""));
                 }else notify("Send failed — nothing sent"+(noEmail.length?" ("+noEmail.length+" group(s) had no email contacts)":""));
@@ -9944,7 +9954,11 @@ Rules:
               },
             };
             console.log("[MegaraLibrary] piped",data.length,"records from trafficHistory");
-            const libKey="lib_"+trafficHistory.length+"_"+(trafficHistory[0]?.ts||"0");
+            // dataVersion must change on ANY displayed change — not just count — or
+            // the library won't re-read window.MegaraLibraryData (e.g. a status flip
+            // to "sent" leaves the count unchanged, so the spine wouldn't refresh).
+            const libSig=trafficHistory.reduce((a,h)=>{const s=(h.status||"")+"|"+((h.stations||[]).length)+"|"+(h.version||"")+"|"+(h.ts||"");for(let k=0;k<s.length;k++)a=(a*31+s.charCodeAt(k))|0;return a},0);
+            const libKey="lib_"+trafficHistory.length+"_"+libSig;
             const ML=window.MegaraLibrary;
             if(!ML)return null;
             // Portal to document.body so the library is outside every ancestor
