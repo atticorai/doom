@@ -5552,10 +5552,11 @@ ${fullText.substring(0,3000)}`}]
         let market=getField("Market")||"";
         let buyer=getField("Buyer")||"";
         let media=getField("Media")||"TV";
-        let month=getField("Broadcast Month")||"";
-        let flight=getField("Flight Dates")||"";
+        let month=getField("Broadcast Month")||getField("Month")||"";
+        let flight=getField("Flight Dates")||getField("Flight")||"";
         let versionRaw=getField("Version/ Links")||getField("Version")||"";
         let comments=getField("Comments")||"";
+        const estRaw=(getField("Estimate(s)")||getField("Estimate")||"").trim();
         const version=versionRaw.match(/(\d+)/)?.[1]||"1";
         let dma=normMkt(market)||(market.length<=4?market.replace(/[^A-Z]/gi,"").toUpperCase().substring(0,3):market.substring(0,3).toUpperCase());
         if(!dma)dma="UNK";
@@ -5619,7 +5620,7 @@ ${fullText.substring(0,3000)}`}]
         const deduped=[];const seenCodes=new Set();
         iscis.forEach(r=>{if(seenCodes.has(r.code)){const existing=deduped.find(d=>d.code===r.code);if(existing&&!existing.pct&&r.pct)Object.assign(existing,r);return}seenCodes.add(r.code);deduped.push(r)});
         if(!deduped.length)return null;
-        const est=dma+"-"+(brand==="Postman Law"?"PL":"WK")+"-"+media;
+        const est=((estRaw.match(/(\d{3,4})/)||[])[1])||(dma+"-"+(brand==="Postman Law"?"PL":"WK")+"-"+media);
         return{est,brand,market:dma,media,buyer,month,version:parseInt(version),stations:[],ts:Date.now(),comments:comments||versionRaw,isRevision:false,combined:false,iscis:deduped,flight};
       }catch(e){console.error("Parse error:",e);return null}
     };
