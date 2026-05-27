@@ -9547,32 +9547,53 @@ Rules:
                 const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
                 if(!linkedStations.length){notify("No stations linked to this record — link stations in the Stations page first.");return}
                 const isWK=h.brand==="Wettermark Keith";
+                // Clean, single estimate number for the confirm URL + key, so the portal
+                // resolves correctly (even for combined PL records, which use the first est).
+                const cleanEst=(h.est||"").split(/\s*[+\/]\s*/)[0].trim();
+                const confirmKey=(isWK&&cleanEst.length<=3)?cleanEst+"|"+h.market:cleanEst;
+                // Per-station confirmation tokens — reuse any already reserved so links
+                // stay stable across re-sends. This mirrors the main builder so the
+                // vendor portal, tracker, and reminders all work for library sends.
+                const prevConf=confirmations[confirmKey]||{};
+                const tokens={};
+                linkedStations.forEach(s=>{const ex=prevConf[s.call];tokens[s.call]={confirmed:!!(ex&&ex.confirmed),token:(ex&&ex.token)||genToken()}});
+                setConfirmations(p=>{const next={...p,[confirmKey]:{...(p[confirmKey]||{}),...tokens}};try{db.collection("appData").doc("confirmations").set({data:JSON.stringify(next),ts:Date.now()})}catch(e){console.warn("confirmations save:",e)}return next});
+                // Seed nowAiring so the portal + Traffic Tracker reflect this send.
+                const airingRec={iscis:h.iscis||[],month:h.month,flight:h.flight,version:h.version,ts:new Date().toISOString(),stations:linkedStations.map(s=>s.call)};
+                setNowAiring(p=>({...p,[confirmKey]:airingRec}));
+                // Persist the sheet HTML per station so the portal can render it.
+                try{linkedStations.forEach(s=>{db.collection("trafficSheets").doc(cleanEst+"_"+s.call).set({html:sheetHtml,est:cleanEst,station:s.call,ts:Date.now()})})}catch(e){console.warn("Sheet save failed:",e)}
                 const buyerCc=BUYER_EMAILS[h.buyer]||"";
                 // The n8n webhook drops CC, so for WK Amy (acoffey@wkfirm.com) is added
                 // as a TO recipient once per ownership group. emm stays on CC; PL unchanged.
                 const ccList=isWK?"emm.caban@atticor.ai":[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(",");
                 const confirmBase=window.location.href.split("?")[0].split("#")[0];
-                const resendTok=reserveToken(akFromHistory(h),"resend");
-                let emailBody="Hello,<br><br>Please find the attached traffic instructions for "+(h.brand||"")+" — "+(h.market||"")+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br>";
-                if(note)emailBody+="<b>Note:</b> "+note+"<br><br>";
-                emailBody+="<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
-                emailBody+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmBase+'?confirm='+encodeURIComponent(h.est||"")+'&sta=resend&tok='+encodeURIComponent(resendTok)+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager';
                 const subj=(h.brand||"")+" - Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+(h.market||"");
-                // ONE email per ownership group (one Amy per WK group as a TO recipient).
+                const bodyPrefix="Hello,<br><br>Please find the attached traffic instructions for "+(h.brand||"")+" — "+(h.market||"")+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br>"+(note?"<b>Note:</b> "+note+"<br><br>":"")+"<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
+                // ONE email per ownership group, with PER-STATION confirm links and
+                // (for WK) Amy added as a recipient once per group.
                 const groups={};
                 linkedStations.forEach(s=>{const g=s.ownership||s.call;(groups[g]=groups[g]||[]).push(s)});
                 let sent=0,failed=0;const noEmail=[];
                 for(const[gName,gStations]of Object.entries(groups)){
                   const emails=[...new Set([...gStations.flatMap(s=>(s.contact||"").split(/[,;]\s*/)),...(isWK?["acoffey@wkfirm.com"]:[])].map(e=>e.trim()))].filter(Boolean);
                   if(!emails.length){noEmail.push(gName);continue}
+                  const confirmLinks=gStations.map(s=>{const url=confirmBase+"?confirm="+encodeURIComponent(cleanEst)+"&sta="+encodeURIComponent(s.call)+"&tok="+encodeURIComponent(tokens[s.call].token);return'<a href="'+url+'" style="display:inline-block;padding:6px 16px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:4px 2px">Confirm '+s.call+'</a>'}).join(" ");
+                  const emailBody=bodyPrefix+"<b>Station(s):</b> "+gStations.map(s=>s.call).join(", ")+"<br><br>Please confirm receipt of this traffic within 24 hours:<br>"+confirmLinks+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
                   notify("Sending "+gName+" ("+emails.length+" recipient"+(emails.length===1?"":"s")+")...");
                   try{
                     const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:emails.join(","),cc:ccList,subject:subj,message:emailBody,pdfBase64:pdfB64,pdfName:pdfName})});
                     if(resp.ok)sent++;else{failed++;notify("FAIL: "+gName+" — n8n "+resp.status)}
                   }catch(e){failed++;console.error("Send failed ["+gName+"]:",e);notify("FAIL: "+gName+" — "+(e.message||e))}
                 }
-                if(sent>0){notify(doomPick(DOOM.send)+" — "+sent+" group"+(sent===1?"":"s")+" sent"+(failed?" ("+failed+" failed)":""));log("Traffic Sent",h.brand+" "+h.market+" "+h.media+" "+h.month+" v"+(h.version||"1")+" — "+sent+" group(s)"+(failed?", "+failed+" failed":""))}
-                else notify("Send failed — nothing sent"+(noEmail.length?" ("+noEmail.length+" group(s) had no email contacts)":""));
+                // Reflect the send on the record (status + stations) so the tracker and
+                // reminders see it — same as the main builder.
+                if(sent>0){
+                  const allCalls=linkedStations.map(s=>s.call);
+                  setTrafficHistory(p=>p.map(r=>(r.ts===h.ts&&r.est===h.est&&String(r.version)===String(h.version)&&r.market===h.market)?{...r,status:failed===0?"sent":"partial",stations:[...new Set([...(r.stations||[]),...allCalls])]}:r));
+                  notify(doomPick(DOOM.send)+" — "+sent+" group"+(sent===1?"":"s")+" sent"+(failed?" ("+failed+" failed)":""));
+                  log("Traffic Sent",h.brand+" "+h.market+" "+h.media+" "+h.month+" v"+(h.version||"1")+" — "+sent+" group(s)"+(failed?", "+failed+" failed":""));
+                }else notify("Send failed — nothing sent"+(noEmail.length?" ("+noEmail.length+" group(s) had no email contacts)":""));
               },
               copyTo:(idx)=>{
                 // BookOpen's "Copy to" button. Prompts the user for a target —
