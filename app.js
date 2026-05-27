@@ -1402,17 +1402,20 @@ const App=()=>{
     // Brand logo at top — preserve aspect ratio per brand so the WK
     // PNG (4:1) doesn't get vertically stretched into the rotation table.
     // PL logo is JPEG (~2.67:1), WK logo is PNG (~4.06:1).
+    let logoDrawn=false;
     try{
       const isPL=trafficRec.brand==="Postman Law";
       const logoSrc=isPL?LOGO_PL:LOGO_WK;
       const logoFmt=isPL?"JPEG":"PNG";
       const logoW=isPL?28:32; // mm
       const logoH=isPL?logoW/2.67:logoW/4.06;
-      if(logoSrc){pdf.addImage(logoSrc,logoFmt,pw/2-logoW/2,y-2,logoW,logoH);y+=logoH+2}
+      if(logoSrc){pdf.addImage(logoSrc,logoFmt,pw/2-logoW/2,y-2,logoW,logoH);y+=logoH+2;logoDrawn=true}
     }catch(e){/* logo fails silently, text header still renders */}
-    // Header
-    pdf.setFont("helvetica","bold");pdf.setFontSize(16);pdf.setTextColor(bc[0],bc[1],bc[2]);
-    pdf.text(S(trafficRec.brand).toUpperCase(),pw/2,y,{align:"center"});y+=5;
+    // Header — the logo lockup already contains the brand name, so only print
+    // the brand name as text when the logo did NOT render. Drawing both is what
+    // made the WK header clash with its logo.
+    pdf.setFont("helvetica","bold");pdf.setTextColor(bc[0],bc[1],bc[2]);
+    if(!logoDrawn){pdf.setFontSize(16);pdf.text(S(trafficRec.brand).toUpperCase(),pw/2,y,{align:"center"});y+=5}
     pdf.setFontSize(8);pdf.setTextColor(120,120,120);
     pdf.text((trafficRec.media||"TV").toUpperCase()+" TRAFFIC INSTRUCTIONS",pw/2,y,{align:"center"});y+=8;
     // Info fields — fall back to estimate lookup so Market/Buyer/Brand
