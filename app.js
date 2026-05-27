@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="flight-from-month-2026-05-27";
+const __APP_VERSION__="fix-flight-data-2026-05-27";
 // Startup banner so it's possible to confirm, from the browser console, EXACTLY
 // which app.js the live site is serving. If this tag isn't in the console after a
 // hard-reload, the deploy is stale and you're running old code.
@@ -8608,6 +8608,21 @@ Rules:
           setInfoBox({title:"Split PL TV/Cable — "+split+" split, "+skipped+" skipped",text:out.join("\n")+(split?"\n\nReload to see TV and Cable as separate records on the shelf and tracker.":"")});
           log("Split PL TV/Cable","split "+split+", skipped "+skipped);
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #9b7bb0",background:"#9b7bb015",color:"#C4A0C8",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>✂ Split PL TV/Cable</button>
+        <button onClick={()=>{
+          // Correct every record's stored flight to its month's broadcast window.
+          // Copied/combined records carried stale flights (e.g. June showing May's
+          // 4/27-5/31). Flight = the month's window by definition, so this is safe
+          // and idempotent. Backed up automatically before the write.
+          const monthFlight=(mo)=>{const c=CALENDAR.find(c=>String(c.month).toLowerCase()===String(mo||"").trim().split(/\s+/)[0].toLowerCase());return c?(fDs(c.bcStart)+" - "+fDs(c.bcEnd)):null};
+          let fixed=0;const out=[];
+          trafficHistory.forEach(h=>{const nf=monthFlight(h.month);if(nf&&h.flight!==nf){fixed++;if(out.length<120)out.push((DM[h.market]||h.market)+" "+(h.media||"")+" "+(h.month||"")+":  "+(h.flight||"(blank)")+"  ->  "+nf)}});
+          if(!fixed){setInfoBox({title:"Fix Flight Dates",text:"Every record's flight already matches its month — nothing to fix."});return}
+          if(!confirm("Correct "+fixed+" record(s) whose flight doesn't match their month? Backed up first."))return;
+          trafficBulkRef.current=true;
+          setTrafficHistory(prev=>prev.map(h=>{const nf=monthFlight(h.month);return(nf&&h.flight!==nf)?{...h,flight:nf}:h}));
+          setInfoBox({title:"Fix Flight Dates — "+fixed+" corrected",text:out.join("\n")+(fixed>out.length?"\n…+"+(fixed-out.length)+" more":"")+"\n\nReload to see them, then re-send."});
+          log("Fix Flight Dates","corrected "+fixed);
+        }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #D4A040",background:"#D4A04015",color:"#D4A040",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🗓 Fix Flight Dates</button>
         <button onClick={async()=>{
           try{
             const r=await fetch("/api/legacy-assets-export",{credentials:"include"});
