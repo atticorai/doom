@@ -24,7 +24,7 @@
 
 const crypto = require('crypto');
 const { getSupabase } = require('./_supabase');
-const { archiveAll } = require('./_archive');
+const { archiveAll, archiveDoc } = require('./_archive');
 
 function timingSafeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
@@ -48,7 +48,7 @@ module.exports = async function handler(req, res) {
   const supabase = getSupabase();
   if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
 
-  if (!action || !['list', 'take', 'restore'].includes(action)) {
+  if (!action || !['list', 'take', 'restore', 'recover-traffic'].includes(action)) {
     return res.status(400).json({ error: 'Invalid action' });
   }
 
@@ -137,6 +137,61 @@ module.exports = async function handler(req, res) {
         written += toRestore.slice(i, i + CHUNK).length;
       }
       return res.status(200).json({ ok: true, restored: written });
+    }
+
+    // ── RECOVER-TRAFFIC: non-destructive merge ────────────────────
+    // Walks EVERY archived trafficHistory version + the current one, and
+    // adds back any traffic record that exists in history but is missing
+    // from the current blob (keyed by est|market|month|media|version).
+    // ONLY adds — never removes — so nothing current is lost. This brings
+    // back records (like a wiped v2) that a later overwrite dropped, without
+    // rolling back any other document.
+    if (action === 'recover-traffic') {
+      const parse = (d) => { try { return JSON.parse(typeof d === 'string' ? d : JSON.stringify(d)); } catch (e) { return []; } };
+      const keyOf = (r) => [r.est, (r.market || ''), (r.month || ''), (r.media || ''), (r.version != null ? r.version : '')].join('|');
+
+      const { data: curRow, error: cErr } = await supabase
+        .from('legacy_docs').select('data')
+        .eq('collection', 'appData').eq('doc_id', 'trafficHistory').maybeSingle();
+      if (cErr) throw cErr;
+      let current = curRow && curRow.data ? parse(curRow.data) : [];
+      if (!Array.isArray(current)) current = [];
+      const currentCount = current.length;
+
+      const { data: hist, error: hErr } = await supabase
+        .from('legacy_docs_history').select('data, archived_at')
+        .eq('collection', 'appData').eq('doc_id', 'trafficHistory')
+        .order('archived_at', { ascending: false });
+      if (hErr) throw hErr;
+
+      const seen = new Set(current.map(keyOf));
+      const added = [];
+      for (const row of (hist || [])) {
+        const arr = parse(row.data);
+        if (!Array.isArray(arr)) continue;
+        for (const r of arr) {
+          if (!r || typeof r !== 'object') continue;
+          const k = keyOf(r);
+          if (!seen.has(k)) { seen.add(k); current.push(r); added.push(k); }
+        }
+      }
+
+      if (added.length > 0) {
+        await archiveDoc(supabase, 'appData', 'trafficHistory', 'recover-traffic', 'snapshots');
+        const { error: wErr } = await supabase
+          .from('legacy_docs')
+          .upsert({ collection: 'appData', doc_id: 'trafficHistory', data: JSON.stringify(current), ts: Date.now(), updated_at: new Date().toISOString() }, { onConflict: 'collection,doc_id' });
+        if (wErr) throw wErr;
+      }
+
+      return res.status(200).json({
+        ok: true,
+        before: currentCount,
+        recovered: added.length,
+        after: current.length,
+        historyVersions: (hist || []).length,
+        sample: added.slice(0, 80),
+      });
     }
   } catch (e) {
     console.error('snapshots error:', e);

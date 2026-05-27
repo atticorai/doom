@@ -8440,6 +8440,24 @@ Rules:
           }catch(e){setInfoBox({title:"Snapshot list failed",text:String(e.message)})}
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #E85A7A",background:"#E85A7A15",color:"#E85A7A",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>⏪ Snapshots / Restore</button>
         <button onClick={async()=>{
+          const pw=prompt("Admin password — recover lost traffic records:");
+          if(!pw)return;
+          if(!confirm("Scans every archived traffic-history version and ADDS BACK any record missing from your current data (e.g. a wiped v2). It only adds — nothing current is removed, and no other data is touched.\n\nContinue?"))return;
+          notify("Scanning history for lost traffic...");
+          try{
+            const r=await fetch("/api/snapshots",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({password:pw,action:"recover-traffic"})});
+            const j=await r.json();
+            if(!r.ok){setInfoBox({title:"Recover failed",text:String(j.error||r.status)+(j.detail?"\n\n"+j.detail:"")});return}
+            setInfoBox({title:"Traffic recovery "+(j.recovered>0?"✅":"— nothing missing"),text:
+              "Before: "+j.before+" records\n"+
+              "Recovered: "+j.recovered+"\n"+
+              "After: "+j.after+" records\n"+
+              "(scanned "+j.historyVersions+" archived versions)\n"+
+              (j.recovered>0?"\nRecovered (est|market|month|media|version):\n"+(j.sample||[]).join("\n")+"\n\nReload the app to see them.":"\nEvery record in history is already present — nothing was lost from the database.")});
+            log("Traffic Recovery","recovered "+j.recovered+" ("+j.before+"→"+j.after+")");
+          }catch(e){setInfoBox({title:"Recover failed",text:String(e.message)})}
+        }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #5BC4A0",background:"#5BC4A015",color:"#5BC4A0",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🩹 Recover Lost Traffic</button>
+        <button onClick={async()=>{
           try{
             const r=await fetch("/api/legacy-assets-export",{credentials:"include"});
             if(!r.ok){const j=await r.json().catch(()=>({}));alert("Export failed: "+(j.error||r.status));return}
