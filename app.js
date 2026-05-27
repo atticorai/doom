@@ -5824,7 +5824,7 @@ ${fullText.substring(0,3000)}`}]
     // under /recovery and run through the SAME parser the drag-import uses, so
     // it's accurate (no transcription). Skips anything already present, so it's
     // safe to click more than once.
-    const RECOVERY_PDFS=["/recovery/espn-mlb-april-v1.pdf","/recovery/gkbps-april-v1.pdf","/recovery/wk-ttwn-feb-radio.pdf","/recovery/wk-ttwn-mar-radio.pdf","/recovery/pl-msp-jan2026-tv.pdf"];
+    const RECOVERY_PDFS=["/recovery/espn-mlb-april-v1.pdf","/recovery/gkbps-april-v1.pdf","/recovery/wk-ttwn-feb-radio.pdf","/recovery/wk-ttwn-mar-radio.pdf","/recovery/pl-msp-jan2026-tv.pdf","/recovery/wk-may-brm-v2.pdf","/recovery/wk-may-hsv-v2.pdf","/recovery/wk-may-knx-v2.pdf","/recovery/wk-may-cha-v2.pdf","/recovery/wk-may-mtg-v2.pdf","/recovery/wk-may-dhn-v2.pdf"];
     const importRecovered=async()=>{
       notify("Importing missing sheets...");
       let added=0,skipped=0,failed=0;const out=[];
