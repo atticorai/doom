@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="preview-per-group-2026-05-27";
+const __APP_VERSION__="buyer-per-group-2026-05-27";
 // Startup banner so it's possible to confirm, from the browser console, EXACTLY
 // which app.js the live site is serving. If this tag isn't in the console after a
 // hard-reload, the deploy is stale and you're running old code.
@@ -2328,17 +2328,16 @@ const App=()=>{
           // ── GROUP BY OWNERSHIP+MARKET — one email per ownership group within same market ──
           const ownershipGroups={};
           sendable.forEach(s=>{const grp=(s.ownership||s.call)+"||"+est.market;if(!ownershipGroups[grp])ownershipGroups[grp]=[];ownershipGroups[grp].push(s)});
-          const isWK=est.brand==="Wettermark Keith";
-          const buyerCc=BUYER_EMAILS[est.buyer]||"";
           const emmCc="emm.caban@atticor.ai";
-          // WK: Amy (acoffey@wkfirm.com) is added as a recipient once per ownership
-          // group (like a station contact), so she's in TO — not double-listed in CC.
-          const ccList=isWK?emmCc:[buyerCc,emmCc].filter(Boolean).join(",");
+          // The n8n webhook drops CC, so the buyer (Amy for WK, Ken/Lynn for PL) is
+          // added as a TO recipient once per ownership group. emm stays on CC.
+          const buyerEmail=BUYER_EMAILS[est.buyer]||"";
+          const ccList=emmCc;
           // extraEmails already parsed above
           let sent=0;let failed=0;
           for(const[grpName,grpStations]of Object.entries(ownershipGroups)){
-            // Collect ALL unique emails across stations in this group (one Amy per group for WK)
-            const allEmails=[...new Set([...grpStations.flatMap(s=>parseEmails(s.contact)),...(isWK?["acoffey@wkfirm.com"]:[])])].join(",");
+            // Collect ALL unique emails across stations in this group (+ buyer once per group)
+            const allEmails=[...new Set([...grpStations.flatMap(s=>parseEmails(s.contact)),...(buyerEmail?[buyerEmail]:[])])].join(",");
             if(!allEmails)continue;
             const staCalls=grpStations.map(s=>s.call);
             const confirmLinks=grpStations.map(s=>{
@@ -9540,7 +9539,8 @@ Rules:
                 const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+(h.market||"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
                 const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
                 const isWK=h.brand==="Wettermark Keith";
-                const ccList=isWK?"emm.caban@atticor.ai":[(BUYER_EMAILS[h.buyer]||""),"emm.caban@atticor.ai"].filter(Boolean).join(", ");
+                const buyerEmail=BUYER_EMAILS[h.buyer]||"";
+                const ccList="emm.caban@atticor.ai";
                 const subj=(h.brand||"")+" - Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+(h.market||"");
                 const body="Hello,<br><br>Please find the attached traffic instructions for "+escHtml(h.brand||"")+" — "+escHtml(h.market||"")+" — "+escHtml(h.month||"")+" V"+escHtml(h.version||"1")+".<br><br><b>Broadcast Month:</b> "+escHtml(h.month||"")+"<br><b>Flight Dates:</b> "+escHtml(h.flight||"")+"<br><b>Estimate:</b> "+escHtml(h.est||"")+"<br><br><span style=\"display:inline-block;padding:8px 18px;background:#9b7bb0;color:#fff;border-radius:6px;font-weight:700;margin:6px 0\">Confirm {STATION}</span> <span style=\"color:#6b7280;font-size:12px\">(one per-station link per station in the group)</span><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
                 // Group EXACTLY like Send does — one email per ownership group, with
@@ -9550,12 +9550,12 @@ Rules:
                 const pEntries=Object.entries(pGroups);
                 let pTotal=0;
                 const groupCards=pEntries.map(([gName,gs],gi)=>{
-                  const emails=[...new Set([...gs.flatMap(s=>(s.contact||"").split(/[,;]\s*/)),...(isWK?["acoffey@wkfirm.com"]:[])].map(e=>e.trim()))].filter(Boolean);
+                  const emails=[...new Set([...gs.flatMap(s=>(s.contact||"").split(/[,;]\s*/)),...(buyerEmail?[buyerEmail]:[])].map(e=>e.trim()))].filter(Boolean);
                   pTotal+=emails.length;
-                  const amyTag=isWK?' <span style="background:#D4A040;color:#1e1233;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:700">+ Amy</span>':'';
-                  return '<div class="card"><div style="font-weight:700;color:#1e1233;margin-bottom:6px">✉ Email '+(gi+1)+' — '+escHtml(gName)+' ('+gs.length+' station'+(gs.length>1?"s":"")+')'+amyTag+'</div><div><b>To:</b> '+(emails.length?escHtml(emails.join(", ")):'<span style="color:#b91c1c">(no emails — this group would be skipped)</span>')+'</div><div style="margin-top:4px;color:#6b7280;font-size:12px">Stations: '+gs.map(s=>escHtml(s.call)).join(", ")+'</div></div>';
+                  const buyerTag=buyerEmail?' <span style="background:#D4A040;color:#1e1233;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:700">+ '+escHtml(h.buyer||"buyer")+'</span>':'';
+                  return '<div class="card"><div style="font-weight:700;color:#1e1233;margin-bottom:6px">✉ Email '+(gi+1)+' — '+escHtml(gName)+' ('+gs.length+' station'+(gs.length>1?"s":"")+')'+buyerTag+'</div><div><b>To:</b> '+(emails.length?escHtml(emails.join(", ")):'<span style="color:#b91c1c">(no emails — this group would be skipped)</span>')+'</div><div style="margin-top:4px;color:#6b7280;font-size:12px">Stations: '+gs.map(s=>escHtml(s.call)).join(", ")+'</div></div>';
                 }).join("");
-                const previewHtml='<!doctype html><html><head><meta charset="UTF-8"><title>Send Preview — '+escHtml(h.brand+' '+h.market+' '+h.media)+'</title><style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f9fafb;color:#111827}header{background:linear-gradient(135deg,#1e1233,#2a1a3e);color:#E8DFF0;padding:18px 24px}h1{margin:0 0 4px;font-size:20px;font-weight:700}.banner{display:inline-block;padding:4px 10px;background:#D4A040;color:#1e1233;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-right:10px}.meta{color:#9B8EAD;font-size:13px;margin-top:6px}main{padding:24px;max-width:900px;margin:0 auto}.pdfbtn{display:inline-block;padding:10px 18px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin-bottom:20px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px;color:#374151}.card b{color:#1e1233}.sec{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#9B8EAD;margin:18px 0 8px}</style></head><body><header><div><span class="banner">PREVIEW — NOT SENT</span><span style="color:#D4A040;font-weight:700">'+escHtml(h.brand+' · '+h.market+' · '+h.media+' · '+h.month+' · v'+(h.version||"1"))+'</span></div><h1>'+pEntries.length+' separate email'+(pEntries.length===1?"":"s")+' — one per ownership group · '+pTotal+' recipient(s)</h1><div class="meta">Nothing has been sent. Each ownership group below gets its OWN email'+(isWK?' with acoffey@wkfirm.com added as a recipient':'')+'.</div></header><main><a class="pdfbtn" href="'+pdfUri+'" download="'+pdfName+'" target="_blank">📄 Open the actual PDF attachment</a><div class="card"><b>Subject:</b> '+escHtml(subj)+'</div><div class="card"><b>Cc (every email):</b> '+escHtml(ccList)+' &nbsp;<span style="color:#b91c1c;font-size:11px">the n8n webhook drops CC — that is why Amy is added to To, not Cc</span></div><div class="card"><b>Attachment:</b> '+escHtml(pdfName)+'</div><div class="sec">'+pEntries.length+' email(s) — one per ownership group</div>'+(groupCards||'<div class="card"><span style="color:#b91c1c">No stations linked — Send would fail.</span></div>')+'<div class="sec">Email body (same in each)</div><div class="card"><div style="line-height:1.5">'+body+'</div></div></main></body></html>';
+                const previewHtml='<!doctype html><html><head><meta charset="UTF-8"><title>Send Preview — '+escHtml(h.brand+' '+h.market+' '+h.media)+'</title><style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f9fafb;color:#111827}header{background:linear-gradient(135deg,#1e1233,#2a1a3e);color:#E8DFF0;padding:18px 24px}h1{margin:0 0 4px;font-size:20px;font-weight:700}.banner{display:inline-block;padding:4px 10px;background:#D4A040;color:#1e1233;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-right:10px}.meta{color:#9B8EAD;font-size:13px;margin-top:6px}main{padding:24px;max-width:900px;margin:0 auto}.pdfbtn{display:inline-block;padding:10px 18px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin-bottom:20px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px;color:#374151}.card b{color:#1e1233}.sec{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#9B8EAD;margin:18px 0 8px}</style></head><body><header><div><span class="banner">PREVIEW — NOT SENT</span><span style="color:#D4A040;font-weight:700">'+escHtml(h.brand+' · '+h.market+' · '+h.media+' · '+h.month+' · v'+(h.version||"1"))+'</span></div><h1>'+pEntries.length+' separate email'+(pEntries.length===1?"":"s")+' — one per ownership group · '+pTotal+' recipient(s)</h1><div class="meta">Nothing has been sent. Each ownership group below gets its OWN email'+(buyerEmail?' with '+escHtml(h.buyer||"the buyer")+' ('+escHtml(buyerEmail)+') added as a recipient':'')+'.</div></header><main><a class="pdfbtn" href="'+pdfUri+'" download="'+pdfName+'" target="_blank">📄 Open the actual PDF attachment</a><div class="card"><b>Subject:</b> '+escHtml(subj)+'</div><div class="card"><b>Cc (every email):</b> '+escHtml(ccList)+' &nbsp;<span style="color:#b91c1c;font-size:11px">the n8n webhook drops CC — that is why the buyer is added to To, not Cc</span></div><div class="card"><b>Attachment:</b> '+escHtml(pdfName)+'</div><div class="sec">'+pEntries.length+' email(s) — one per ownership group</div>'+(groupCards||'<div class="card"><span style="color:#b91c1c">No stations linked — Send would fail.</span></div>')+'<div class="sec">Email body (same in each)</div><div class="card"><div style="line-height:1.5">'+body+'</div></div></main></body></html>';
                 const w=window.open("","","width=1100,height=900");
                 if(!w){notify("Popup blocked — allow popups to see preview");return}
                 w.document.write(previewHtml);w.document.close();w.focus();
@@ -9587,10 +9587,11 @@ Rules:
                 setNowAiring(p=>({...p,[confirmKey]:airingRec}));
                 // Persist the sheet HTML per station so the portal can render it.
                 try{linkedStations.forEach(s=>{db.collection("trafficSheets").doc(cleanEst+"_"+s.call).set({html:sheetHtml,est:cleanEst,station:s.call,ts:Date.now()})})}catch(e){console.warn("Sheet save failed:",e)}
-                const buyerCc=BUYER_EMAILS[h.buyer]||"";
-                // The n8n webhook drops CC, so for WK Amy (acoffey@wkfirm.com) is added
-                // as a TO recipient once per ownership group. emm stays on CC; PL unchanged.
-                const ccList=isWK?"emm.caban@atticor.ai":[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(",");
+                // The n8n webhook drops CC, so the record's BUYER (Amy for WK,
+                // Ken/Lynn for PL) is added as a TO recipient once per ownership
+                // group instead of relied on via CC. emm stays on CC for the copy.
+                const buyerEmail=BUYER_EMAILS[h.buyer]||"";
+                const ccList="emm.caban@atticor.ai";
                 const confirmBase=window.location.href.split("?")[0].split("#")[0];
                 const subj=(h.brand||"")+" - Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+(h.market||"");
                 const bodyPrefix="Hello,<br><br>Please find the attached traffic instructions for "+(h.brand||"")+" — "+(h.market||"")+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br>"+(note?"<b>Note:</b> "+note+"<br><br>":"")+"<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
@@ -9600,7 +9601,7 @@ Rules:
                 linkedStations.forEach(s=>{const g=s.ownership||s.call;(groups[g]=groups[g]||[]).push(s)});
                 let sent=0,failed=0;const noEmail=[];
                 for(const[gName,gStations]of Object.entries(groups)){
-                  const emails=[...new Set([...gStations.flatMap(s=>(s.contact||"").split(/[,;]\s*/)),...(isWK?["acoffey@wkfirm.com"]:[])].map(e=>e.trim()))].filter(Boolean);
+                  const emails=[...new Set([...gStations.flatMap(s=>(s.contact||"").split(/[,;]\s*/)),...(buyerEmail?[buyerEmail]:[])].map(e=>e.trim()))].filter(Boolean);
                   if(!emails.length){noEmail.push(gName);continue}
                   const confirmLinks=gStations.map(s=>{const url=confirmBase+"?confirm="+encodeURIComponent(cleanEst)+"&sta="+encodeURIComponent(s.call)+"&tok="+encodeURIComponent(tokens[s.call].token);return'<a href="'+url+'" style="display:inline-block;padding:6px 16px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:4px 2px">Confirm '+s.call+'</a>'}).join(" ");
                   const emailBody=bodyPrefix+"<b>Station(s):</b> "+gStations.map(s=>s.call).join(", ")+"<br><br>Please confirm receipt of this traffic within 24 hours:<br>"+confirmLinks+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
