@@ -5820,6 +5820,32 @@ ${fullText.substring(0,3000)}`}]
       notify(msg||"Done");
       setImportPreview(results);
     };
+    // One-click recovery of the missing sheets the user handed over — committed
+    // under /recovery and run through the SAME parser the drag-import uses, so
+    // it's accurate (no transcription). Skips anything already present, so it's
+    // safe to click more than once.
+    const RECOVERY_PDFS=["/recovery/espn-mlb-april-v1.pdf","/recovery/gkbps-april-v1.pdf","/recovery/wk-ttwn-feb-radio.pdf","/recovery/wk-ttwn-mar-radio.pdf","/recovery/pl-msp-jan2026-tv.pdf"];
+    const importRecovered=async()=>{
+      notify("Importing missing sheets...");
+      let added=0,skipped=0,failed=0;const out=[];
+      for(const path of RECOVERY_PDFS){
+        const name=path.split("/").pop();
+        try{
+          const resp=await fetch(path);
+          if(!resp.ok)throw new Error("fetch "+resp.status);
+          const buf=await resp.arrayBuffer();
+          const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+          const text=await extractPdfText(pdf);
+          const parsed=parseTrafficText(text);
+          if(!parsed){failed++;out.push("✗ "+name+" — could not parse");continue}
+          const exists=trafficHistory.some(h=>h.brand===parsed.brand&&normMkt(h.market)===normMkt(parsed.market)&&h.media===parsed.media&&h.month===parsed.month&&String(h.version)===String(parsed.version));
+          if(exists){skipped++;out.push("• "+name+" — already there ("+parsed.market+" "+parsed.month+" "+parsed.media+" v"+parsed.version+")");continue}
+          setTrafficHistory(p=>[{...parsed,status:"imported"},...p]);
+          added++;out.push("✓ "+name+" — "+parsed.market+" "+parsed.month+" "+parsed.media+" v"+parsed.version+" · est "+parsed.est+" · "+parsed.iscis.length+" ISCIs");
+        }catch(e){failed++;out.push("✗ "+name+" — "+(e&&e.message||e))}
+      }
+      setInfoBox({title:"Missing-sheet import",text:"Added: "+added+"   Skipped: "+skipped+"   Failed: "+failed+"\n\n"+out.join("\n")+(added>0?"\n\nReload the app to see them in the Library.":"")});
+    };
     const pdfUploadJsx=<div>
       <div style={{border:"2px dashed #9b7bb0",borderRadius:10,padding:"40px 20px",textAlign:"center",cursor:"pointer",background:"rgba(124,107,196,.04)",position:"relative"}} onDragOver={e=>{e.preventDefault();e.stopPropagation()}} onDrop={async e=>{e.preventDefault();e.stopPropagation();const files=[...e.dataTransfer.files].filter(f=>f.type==="application/pdf"||f.name.toLowerCase().endsWith(".pdf"));if(!files.length){notify("No PDF files detected");return}await processPdfs(files)}}>
         <input type="file" multiple accept=".pdf" style={{position:"absolute",inset:0,opacity:0,cursor:"pointer"}} onChange={async e=>{const files=[...e.target.files].filter(f=>f.type==="application/pdf"||f.name.toLowerCase().endsWith(".pdf"));if(!files.length)return;await processPdfs(files)}}/>
@@ -5845,6 +5871,7 @@ ${fullText.substring(0,3000)}`}]
           <button onClick={()=>{const rows=[["Brand","Market","Media","Month","Version","Buyer","ISCI","Title","Duration","Pct","Schedule","Bookend","Units"].join(","),...trafficHistory.flatMap(h=>(h.iscis||[]).map(r=>[h.brand,h.market,h.media,h.month,h.version,h.buyer,r.code,r.title,r.dur,r.pct,r.sched,r.bookend||"",r.units||""].join(",")))];const blob=new Blob([rows.join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="traffic_library_"+new Date().toISOString().slice(0,10)+".csv";a.click()}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #9b7bb0",background:"#1e1233",fontSize:13,fontWeight:700,cursor:"pointer",color:"#9B8EAD"}}>Export CSV</button>
           <button onClick={sendConfirmReminders} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #D4A040",background:"rgba(245,158,11,.12)",fontSize:13,fontWeight:700,cursor:"pointer",color:"#D4A040"}}>🔔 Send Reminders</button>
           <button onClick={()=>setShowImport(!showImport)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(showImport?"#E85A7A":"#9b7bb0"),background:showImport?"#3a1f35":"#F0E8F8",color:showImport?"#E85A7A":"#9b7bb0",fontSize:13,fontWeight:700,cursor:"pointer"}}>{showImport?"Cancel":"+ Import"}</button>
+          <button onClick={importRecovered} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #5BC4A0",background:"rgba(91,196,160,.12)",color:"#5BC4A0",fontSize:13,fontWeight:700,cursor:"pointer"}}>🩹 Import Missing Sheets</button>
         </div>
       </div>
       {showImport&&<Cd style={{padding:14,marginBottom:12}}>
