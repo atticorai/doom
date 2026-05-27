@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="portal-market-2026-05-27";
+const __APP_VERSION__="flight-from-month-2026-05-27";
 // Startup banner so it's possible to confirm, from the browser console, EXACTLY
 // which app.js the live site is serving. If this tag isn't in the console after a
 // hard-reload, the deploy is stale and you're running old code.
@@ -9583,8 +9583,11 @@ Rules:
                 // anything goes out. Does NOT call /api/send-traffic.
                 const h=trafficHistory[idx];if(!h)return;
                 notify("Building preview — no emails will be sent…");
+                // Derive flight from the record's month (copied records can carry a stale flight).
+                const _cmF=CALENDAR.find(c=>String(c.month).toLowerCase()===String(h.month||"").trim().split(/\s+/)[0].toLowerCase());
+                const flightDates=_cmF?(fDs(_cmF.bcStart)+" - "+fDs(_cmF.bcEnd)):(h.flight||"");
                 const sheetHtml=data[idx]?.sheetHtml||"";
-                let pdfUri="";try{pdfUri=await generatePdfBase64(sheetHtml,h)}catch(pe){notify("PDF gen failed: "+pe.message);return}
+                let pdfUri="";try{pdfUri=await generatePdfBase64(sheetHtml,{...h,flight:flightDates})}catch(pe){notify("PDF gen failed: "+pe.message);return}
                 const mktName=DM[h.market]||h.market||"";
                 const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+mktName.replace(/\s/g,"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
                 const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
@@ -9592,7 +9595,7 @@ Rules:
                 const buyerEmail=BUYER_EMAILS[h.buyer]||"";
                 const ccList="emm.caban@atticor.ai";
                 const subj=(h.brand||"")+" - Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+mktName;
-                const body="Hello,<br><br>Please find the attached traffic instructions for "+escHtml(h.brand||"")+" — "+escHtml(mktName)+" — "+escHtml(h.month||"")+" V"+escHtml(h.version||"1")+".<br><br><b>Broadcast Month:</b> "+escHtml(h.month||"")+"<br><b>Flight Dates:</b> "+escHtml(h.flight||"")+"<br><b>Estimate:</b> "+escHtml(h.est||"")+"<br><br><span style=\"display:inline-block;padding:8px 18px;background:#9b7bb0;color:#fff;border-radius:6px;font-weight:700;margin:6px 0\">Confirm {STATION}</span> <span style=\"color:#6b7280;font-size:12px\">(one per-station link per station in the group)</span><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
+                const body="Hello,<br><br>Please find the attached traffic instructions for "+escHtml(h.brand||"")+" — "+escHtml(mktName)+" — "+escHtml(h.month||"")+" V"+escHtml(h.version||"1")+".<br><br><b>Broadcast Month:</b> "+escHtml(h.month||"")+"<br><b>Flight Dates:</b> "+escHtml(flightDates)+"<br><b>Estimate:</b> "+escHtml(h.est||"")+"<br><br><span style=\"display:inline-block;padding:8px 18px;background:#9b7bb0;color:#fff;border-radius:6px;font-weight:700;margin:6px 0\">Confirm {STATION}</span> <span style=\"color:#6b7280;font-size:12px\">(one per-station link per station in the group)</span><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
                 // Group EXACTLY like Send does — one email per ownership group, with
                 // Amy added once per WK group. The preview now mirrors the real send.
                 const pGroups={};
@@ -9618,8 +9621,14 @@ Rules:
                 // Always show the FULL market name to vendors (CLAUDE.md rule #7),
                 // never the DMA code — PL records store the code (e.g. "CIN").
                 const mktName=DM[h.market]||h.market||"";
+                // Flight dates are the broadcast window of the record's MONTH. Copied
+                // records can carry a stale flight (e.g. June copied from May still
+                // showed May's dates), so derive from the month's calendar at send time.
+                const _cmF=CALENDAR.find(c=>String(c.month).toLowerCase()===String(h.month||"").trim().split(/\s+/)[0].toLowerCase());
+                const flightDates=_cmF?(fDs(_cmF.bcStart)+" - "+fDs(_cmF.bcEnd)):(h.flight||"");
+                const hPdf={...h,flight:flightDates};
                 const sheetHtml=data[idx]?.sheetHtml||"";
-                let pdfB64="";try{const pdfUri=await generatePdfBase64(sheetHtml,h);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
+                let pdfB64="";try{const pdfUri=await generatePdfBase64(sheetHtml,hPdf);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
                 const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+mktName.replace(/\s/g,"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
                 const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
                 if(!linkedStations.length){notify("No stations linked to this record — link stations in the Stations page first.");return}
@@ -9647,7 +9656,7 @@ Rules:
                 const ccList="emm.caban@atticor.ai";
                 const confirmBase=window.location.href.split("?")[0].split("#")[0];
                 const subj=(h.brand||"")+" - Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+mktName;
-                const bodyPrefix="Hello,<br><br>Please find the attached traffic instructions for "+(h.brand||"")+" — "+mktName+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br>"+(note?"<b>Note:</b> "+note+"<br><br>":"")+"<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
+                const bodyPrefix="Hello,<br><br>Please find the attached traffic instructions for "+(h.brand||"")+" — "+mktName+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br>"+(note?"<b>Note:</b> "+note+"<br><br>":"")+"<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+flightDates+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
                 // ONE email per ownership group, with PER-STATION confirm links and
                 // (for WK) Amy added as a recipient once per group.
                 const groups={};
