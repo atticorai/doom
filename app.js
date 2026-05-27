@@ -5829,6 +5829,7 @@ ${fullText.substring(0,3000)}`}]
     // safe to click more than once.
     const RECOVERY_PDFS=["/recovery/espn-mlb-april-v1.pdf","/recovery/gkbps-april-v1.pdf","/recovery/wk-ttwn-feb-radio.pdf","/recovery/wk-ttwn-mar-radio.pdf","/recovery/pl-msp-jan2026-tv.pdf","/recovery/wk-may-brm-v2.pdf","/recovery/wk-may-hsv-v2.pdf","/recovery/wk-may-knx-v2.pdf","/recovery/wk-may-cha-v2.pdf","/recovery/wk-may-mtg-v2.pdf","/recovery/wk-may-dhn-v2.pdf","/recovery/pl-cable-denver-apr.pdf","/recovery/pl-cable-streaming-apr.pdf","/recovery/pl-cable-chicago-apr.pdf","/recovery/pl-cable-cincinnati-apr.pdf","/recovery/pl-cable-minneapolis-apr.pdf","/recovery/ooh-mtg-lamar-poster.pdf","/recovery/ooh-knx-lamar-poster.pdf","/recovery/ooh-gad-lamar-poster.pdf","/recovery/ooh-brm-lamar-poster.pdf","/recovery/ooh-brm-panel8815-bb.pdf","/recovery/ooh-brm-panel8815.pdf"];
     const importRecovered=async()=>{
+      if(typeof pdfjsLib==="undefined"&&!window.pdfjsLib){setInfoBox({title:"PDF engine not loaded",text:"pdf.js (the PDF reader) didn't load — that's why imports do nothing. Hard-refresh the page (Ctrl+Shift+R) and click again."});return}
       notify("Importing missing sheets...");
       let added=0,skipped=0,failed=0;const out=[];
       for(const path of RECOVERY_PDFS){
