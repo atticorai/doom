@@ -8508,10 +8508,13 @@ Rules:
           // imported sheet matches an equivalent record already in the library.
           const lk=(b,mkt,med,mo,v,est,camp)=>[String(b||"").toLowerCase().trim(),(normMkt(mkt)||String(mkt||"")).toLowerCase(),String(med||"").toLowerCase().split(" ")[0],String(mo||"").toLowerCase().replace(/20\d\d/g,"").replace(/[^a-z]/g,"").slice(0,3),String(v),String(est||"").toLowerCase(),String(camp||"").toLowerCase()].join("|");
           notify("Importing missing sheets...");
-          const isImport=h=>h.imported||h.status==="imported";
-          // Match against the user's REAL records only (ignore any prior import run,
-          // which this run rebuilds from scratch — so re-running can never pile up).
-          const existing=new Set(trafficHistory.filter(h=>!isImport(h)).map(h=>lk(h.brand,h.market,h.media,h.month,h.version,h.est,h.campaign)));
+          // Garbage = ONLY the very first broken run's records (full PDF text dumped
+          // into market). These are worthless and safe to drop. Everything else —
+          // including valid prior imports — is real data and is NEVER removed.
+          const isGarbage=h=>h.status==="imported"&&(h.market||"").length>40;
+          // Add-only: dedup against EVERY current record so we never re-add a sheet
+          // that is already present, and never delete anything we can't regenerate.
+          const existing=new Set(trafficHistory.filter(h=>!isGarbage(h)).map(h=>lk(h.brand,h.market,h.media,h.month,h.version,h.est,h.campaign)));
           let added=0,skipped=0,failed=0;const out=[];const newRecs=[];
           for(const path of PDFS){
             const name=path.split("/").pop();
@@ -8528,11 +8531,11 @@ Rules:
               out.push("✓ "+parsed.brand+" · "+parsed.market+" · "+parsed.month+" · "+parsed.media+" v"+parsed.version+" — est "+(parsed.est||"—")+" — "+parsed.iscis.length+" ISCIs");
             }catch(e){failed++;out.push("✗ "+name+" — "+(e&&e.message||e))}
           }
-          // One atomic, guard-bypassed rewrite: remove EVERY prior import (clean or
-          // garbage) and prepend the freshly-deduped set. Idempotent across re-runs.
-          if(newRecs.length||trafficHistory.some(isImport)){
+          // Add-only: prepend the new records and drop ONLY the first-run garbage.
+          // Nothing else is ever removed, so this can't wipe v1/v2 or any real data.
+          if(newRecs.length||trafficHistory.some(isGarbage)){
             trafficBulkRef.current=true;
-            setTrafficHistory(p=>[...newRecs,...p.filter(h=>!isImport(h))]);
+            setTrafficHistory(p=>[...newRecs,...p.filter(h=>!isGarbage(h))]);
           }
           setInfoBox({title:"Import Missing Sheets — +"+added+" added, "+skipped+" dup, "+failed+" failed",text:out.join("\n")+(added?"\n\nReload the app to see them in the Library.":"")});
           log("Import Missing Sheets","added "+added+", skipped "+skipped+", failed "+failed);
