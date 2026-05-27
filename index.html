@@ -426,9 +426,11 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
       });
     }).then(function(){
       // Tailwind is precompiled to /tailwind.css — no runtime config needed.
-      // Add Babel-transpiled source files. Cache-bust via ?v= query so
-      // browsers refetch after a deploy instead of serving stale js.
-      var __V="2026-05-11-pl-creative-map-v2";
+      // Add Babel-transpiled source files. Cache-bust via ?v= query. Use a
+      // per-load timestamp so EVERY load fetches the latest app.js/config.js —
+      // a fixed token meant deploys served stale cached code until a manual
+      // hard-refresh.
+      var __V=Date.now();
       var c=document.createElement("script");c.type="text/babel";c.src="config.js?v="+__V;c.setAttribute("data-type","module");document.body.appendChild(c);
       var a=document.createElement("script");a.type="text/babel";a.src="app.js?v="+__V;a.setAttribute("data-type","module");document.body.appendChild(a);
       // Trigger Babel to transform and execute
