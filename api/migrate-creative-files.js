@@ -299,7 +299,7 @@ module.exports.config = {
     bodyParser: { sizeLimit: '1mb' },
     responseLimit: '8mb',
   },
-  // Pro allows up to 300s; Hobby caps this to 60s automatically. Either way the
-  // internal 20s budget + 25s per-file cap return JSON well before the kill.
-  maxDuration: 300,
+  // 60s works on every plan tier (avoids deploys being rejected on non-Pro).
+  // The creative migration is already complete, so this endpoint is dormant.
+  maxDuration: 60,
 };
