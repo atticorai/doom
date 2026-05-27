@@ -1,6 +1,6 @@
-import E, { forwardRef as S, createElement as z, useState as N, useEffect as T, useContext as H, createContext as K, useMemo as W } from "react";
+import H, { forwardRef as R, createElement as z, useState as N, useEffect as T, useContext as K, createContext as G, useMemo as W } from "react";
 import { motion as k, AnimatePresence as F } from "framer-motion";
-var R = { exports: {} }, C = {};
+var S = { exports: {} }, C = {};
 /**
  * @license React
  * react-jsx-runtime.production.min.js
@@ -10,32 +10,32 @@ var R = { exports: {} }, C = {};
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-var G = E, q = Symbol.for("react.element"), U = Symbol.for("react.fragment"), Y = Object.prototype.hasOwnProperty, J = G.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, Z = { key: !0, ref: !0, __self: !0, __source: !0 };
+var q = H, U = Symbol.for("react.element"), Y = Symbol.for("react.fragment"), J = Object.prototype.hasOwnProperty, Z = q.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner, X = { key: !0, ref: !0, __self: !0, __source: !0 };
 function P(t, s, a) {
   var r, n = {}, l = null, b = null;
   a !== void 0 && (l = "" + a), s.key !== void 0 && (l = "" + s.key), s.ref !== void 0 && (b = s.ref);
-  for (r in s) Y.call(s, r) && !Z.hasOwnProperty(r) && (n[r] = s[r]);
+  for (r in s) J.call(s, r) && !X.hasOwnProperty(r) && (n[r] = s[r]);
   if (t && t.defaultProps) for (r in s = t.defaultProps, s) n[r] === void 0 && (n[r] = s[r]);
-  return { $$typeof: q, type: t, key: l, ref: b, props: n, _owner: J.current };
+  return { $$typeof: U, type: t, key: l, ref: b, props: n, _owner: Z.current };
 }
-C.Fragment = U;
+C.Fragment = Y;
 C.jsx = P;
 C.jsxs = P;
-R.exports = C;
-var e = R.exports;
+S.exports = C;
+var e = S.exports;
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const X = (t) => t.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase(), Q = (t) => t.replace(
+const Q = (t) => t.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase(), ee = (t) => t.replace(
   /^([A-Z])|[\s-_]+(\w)/g,
   (s, a, r) => r ? r.toUpperCase() : a.toLowerCase()
-), I = (t) => {
-  const s = Q(t);
+), L = (t) => {
+  const s = ee(t);
   return s.charAt(0).toUpperCase() + s.slice(1);
-}, D = (...t) => t.filter((s, a, r) => !!s && s.trim() !== "" && r.indexOf(s) === a).join(" ").trim(), ee = (t) => {
+}, D = (...t) => t.filter((s, a, r) => !!s && s.trim() !== "" && r.indexOf(s) === a).join(" ").trim(), te = (t) => {
   for (const s in t)
     if (s.startsWith("aria-") || s === "role" || s === "title")
       return !0;
@@ -46,7 +46,7 @@ const X = (t) => t.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase(), Q = (t)
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-var te = {
+var ae = {
   xmlns: "http://www.w3.org/2000/svg",
   width: 24,
   height: 24,
@@ -63,7 +63,7 @@ var te = {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const ae = S(
+const re = R(
   ({
     color: t = "currentColor",
     size: s = 24,
@@ -77,13 +77,13 @@ const ae = S(
     "svg",
     {
       ref: i,
-      ...te,
+      ...ae,
       width: s,
       height: s,
       stroke: t,
       strokeWidth: r ? Number(a) * 24 / Number(s) : a,
       className: D("lucide", n),
-      ...!l && !ee(d) && { "aria-hidden": "true" },
+      ...!l && !te(d) && { "aria-hidden": "true" },
       ...d
     },
     [
@@ -99,19 +99,19 @@ const ae = S(
  * See the LICENSE file in the root directory of this source tree.
  */
 const u = (t, s) => {
-  const a = S(
-    ({ className: r, ...n }, l) => z(ae, {
+  const a = R(
+    ({ className: r, ...n }, l) => z(re, {
       ref: l,
       iconNode: s,
       className: D(
-        `lucide-${X(I(t))}`,
+        `lucide-${Q(L(t))}`,
         `lucide-${t}`,
         r
       ),
       ...n
     })
   );
-  return a.displayName = I(t), a;
+  return a.displayName = L(t), a;
 };
 /**
  * @license lucide-react v0.522.0 - ISC
@@ -119,18 +119,18 @@ const u = (t, s) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const re = [
+const se = [
   ["rect", { width: "20", height: "5", x: "2", y: "3", rx: "1", key: "1wp1u1" }],
   ["path", { d: "M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8", key: "1s80jp" }],
   ["path", { d: "M10 12h4", key: "a56b0p" }]
-], se = u("archive", re);
+], oe = u("archive", se);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const oe = [
+const ne = [
   ["path", { d: "M10.268 21a2 2 0 0 0 3.464 0", key: "vwvbt9" }],
   [
     "path",
@@ -139,63 +139,47 @@ const oe = [
       key: "11g9vi"
     }
   ]
-], ne = u("bell", oe);
+], ie = u("bell", ne);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const ie = [
+const le = [
   ["path", { d: "M8 2v4", key: "1cmpym" }],
   ["path", { d: "M16 2v4", key: "4m81vk" }],
   ["rect", { width: "18", height: "18", x: "3", y: "4", rx: "2", key: "1hopcy" }],
   ["path", { d: "M3 10h18", key: "8toen8" }]
-], le = u("calendar", ie);
+], de = u("calendar", le);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const de = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]], ce = u("chevron-down", de);
+const ce = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]], pe = u("chevron-down", ce);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const pe = [
+const me = [
   ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
   ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
-], me = u("copy", pe);
+], xe = u("copy", me);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const xe = [
+const ge = [
   ["path", { d: "M12 15V3", key: "m9g1x1" }],
   ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
   ["path", { d: "m7 10 5 5 5-5", key: "brsn70" }]
-], ge = u("download", xe);
-/**
- * @license lucide-react v0.522.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const be = [
-  [
-    "path",
-    {
-      d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
-      key: "1nclc0"
-    }
-  ],
-  ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
-], L = u("eye", be);
+], be = u("download", ge);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -206,20 +190,36 @@ const ue = [
   [
     "path",
     {
-      d: "M12 2c1 3 2.5 3.5 3.5 4.5A5 5 0 0 1 17 10a5 5 0 1 1-10 0c0-.3 0-.6.1-.9a2 2 0 1 0 3.3-2C8 4.5 11 2 12 2Z",
-      key: "1ir223"
+      d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
+      key: "1nclc0"
     }
   ],
-  ["path", { d: "m5 22 14-4", key: "1brv4h" }],
-  ["path", { d: "m5 18 14 4", key: "lgyyje" }]
-], he = u("flame-kindling", ue);
+  ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
+], I = u("eye", ue);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const ye = [
+const he = [
+  [
+    "path",
+    {
+      d: "M12 2c1 3 2.5 3.5 3.5 4.5A5 5 0 0 1 17 10a5 5 0 1 1-10 0c0-.3 0-.6.1-.9a2 2 0 1 0 3.3-2C8 4.5 11 2 12 2Z",
+      key: "1ir223"
+    }
+  ],
+  ["path", { d: "m5 22 14-4", key: "1brv4h" }],
+  ["path", { d: "m5 18 14 4", key: "lgyyje" }]
+], ye = u("flame-kindling", he);
+/**
+ * @license lucide-react v0.522.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const fe = [
   [
     "path",
     {
@@ -227,14 +227,14 @@ const ye = [
       key: "96xj49"
     }
   ]
-], fe = u("flame", ye);
+], ve = u("flame", fe);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const ve = [
+const we = [
   [
     "path",
     {
@@ -242,24 +242,24 @@ const ve = [
       key: "1a8usu"
     }
   ]
-], we = u("pen", ve);
+], je = u("pen", we);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const je = [
+const ke = [
   ["path", { d: "M5 12h14", key: "1ays0h" }],
   ["path", { d: "M12 5v14", key: "s699le" }]
-], ke = u("plus", je);
+], Ne = u("plus", ke);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const Ne = [
+const _e = [
   [
     "path",
     {
@@ -269,24 +269,24 @@ const Ne = [
   ],
   ["path", { d: "M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6", key: "1itne7" }],
   ["rect", { x: "6", y: "14", width: "12", height: "8", rx: "1", key: "1ue0tg" }]
-], _e = u("printer", Ne);
+], Ce = u("printer", _e);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const Ce = [
+const $e = [
   ["path", { d: "m21 21-4.34-4.34", key: "14j7rj" }],
   ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }]
-], $e = u("search", Ce);
+], ze = u("search", $e);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const ze = [
+const Te = [
   [
     "path",
     {
@@ -295,20 +295,20 @@ const ze = [
     }
   ],
   ["path", { d: "m21.854 2.147-10.94 10.939", key: "12cjpa" }]
-], Te = u("send", ze);
+], Me = u("send", Te);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const Me = [
+const Ae = [
   ["path", { d: "M3 6h18", key: "d0wm0j" }],
   ["path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", key: "4alrt4" }],
   ["path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", key: "v07s0e" }],
   ["line", { x1: "10", x2: "10", y1: "11", y2: "17", key: "1uufr5" }],
   ["line", { x1: "14", x2: "14", y1: "11", y2: "17", key: "xtxkd" }]
-], Ae = u("trash-2", Me);
+], Le = u("trash-2", Ae);
 /**
  * @license lucide-react v0.522.0 - ISC
  *
@@ -318,7 +318,7 @@ const Me = [
 const Ie = [
   ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
   ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
-], Le = u("x", Ie);
+], Re = u("x", Ie);
 function Se({
   isLightMode: t,
   toggleTheme: s,
@@ -399,7 +399,7 @@ function Se({
           {
             className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${p ? "border-purple-300 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light/70 hover:bg-megara-dark/20 hover:text-megara-light"}`,
             children: [
-              /* @__PURE__ */ e.jsx(ge, { size: 16 }),
+              /* @__PURE__ */ e.jsx(be, { size: 16 }),
               " Export CSV"
             ]
           }
@@ -409,7 +409,7 @@ function Se({
           {
             className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${p ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100" : "bg-magic-gold/10 border-magic-gold/40 text-magic-gold hover:bg-magic-gold/20 hover:shadow-glow-gold"}`,
             children: [
-              /* @__PURE__ */ e.jsx(ne, { size: 16 }),
+              /* @__PURE__ */ e.jsx(ie, { size: 16 }),
               " Send Reminders"
             ]
           }
@@ -419,7 +419,7 @@ function Se({
           {
             className: `px-4 py-2 rounded border transition-all text-sm flex items-center gap-2 ${p ? "bg-purple-100 border-purple-300 text-purple-700 hover:bg-purple-200" : "bg-megara-primary/20 border-megara-primary/50 text-megara-light hover:bg-megara-primary/30 hover:shadow-glow-purple"}`,
             children: [
-              /* @__PURE__ */ e.jsx(ke, { size: 16 }),
+              /* @__PURE__ */ e.jsx(Ne, { size: 16 }),
               " Import"
             ]
           }
@@ -431,7 +431,7 @@ function Se({
             className: `ml-3 p-2.5 rounded-full transition-all relative group ${p ? "text-amber-600 hover:bg-amber-100 hover:shadow-[0_0_20px_4px_rgba(217,119,6,0.2)]" : "text-magic-gold hover:bg-white/10 hover:shadow-[0_0_20px_4px_rgba(255,215,0,0.3)]"}`,
             title: "Toggle Illumination",
             children: [
-              t ? /* @__PURE__ */ e.jsx(he, { size: 22 }) : /* @__PURE__ */ e.jsx(fe, { size: 22 }),
+              t ? /* @__PURE__ */ e.jsx(ye, { size: 22 }) : /* @__PURE__ */ e.jsx(ve, { size: 22 }),
               /* @__PURE__ */ e.jsx(
                 "div",
                 {
@@ -491,7 +491,7 @@ function Se({
     /* @__PURE__ */ e.jsxs("div", { className: "flex gap-4 items-center w-full", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "relative flex-1 group", children: [
         /* @__PURE__ */ e.jsx(
-          $e,
+          ze,
           {
             className: `absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${p ? "text-purple-400 group-focus-within:text-purple-600" : "text-magic-teal/50 group-focus-within:text-magic-teal"}`,
             size: 18
@@ -519,7 +519,7 @@ function Se({
           className: `flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm backdrop-blur-sm transition-colors cursor-pointer ${p ? i ? "border-amber-400 bg-amber-50" : "border-purple-200 bg-white/60 hover:border-purple-400" : i ? "border-magic-gold/60 bg-magic-gold/10" : "border-megara-dark/25 bg-underworld-800/40 hover:border-magic-gold/40"}`,
           children: [
             /* @__PURE__ */ e.jsx(
-              se,
+              oe,
               {
                 size: 16,
                 className: p ? "text-amber-600/70" : "text-magic-gold/70"
@@ -565,12 +565,12 @@ function Se({
     )
   ] });
 }
-const Re = {
+const Pe = {
   April: "001.04",
   March: "001.03",
   December: "001.12"
 };
-function Pe({
+function De({
   instructions: t,
   months: s,
   light: a = !1
@@ -615,11 +615,11 @@ function Pe({
                 "span",
                 {
                   className: `font-mono text-[10px] font-bold tracking-wider ${a ? "text-purple-400 group-hover:text-purple-600" : "text-magic-teal/40 group-hover:text-magic-teal/70"}`,
-                  children: Re[n] || "001"
+                  children: Pe[n] || "001"
                 }
               ),
               /* @__PURE__ */ e.jsx(
-                le,
+                de,
                 {
                   size: 14,
                   className: `transition-colors ${a ? "text-purple-300 group-hover:text-purple-500" : "text-magic-teal/30 group-hover:text-magic-teal/60"}`
@@ -657,7 +657,7 @@ function Pe({
     );
   }) }) });
 }
-const De = [
+const Oe = [
   // Postman Law - April - TV
   {
     id: "1",
@@ -978,7 +978,7 @@ const De = [
     buyer: "Lynn Cortelezzi",
     status: "pending"
   }
-], _ = () => typeof window < "u" && window.MegaraLibraryData ? window.MegaraLibraryData : De, $ = new Proxy([], {
+], _ = () => typeof window < "u" && window.MegaraLibraryData ? window.MegaraLibraryData : Oe, $ = new Proxy([], {
   get(t, s) {
     const a = _(), r = a[s];
     return typeof r == "function" ? r.bind(a) : r;
@@ -1004,7 +1004,7 @@ const De = [
   Montgomery: "text-market-montgomery",
   Dothan: "text-market-dothan",
   Gadsden: "text-market-gadsden"
-}, Oe = {
+}, Ve = {
   Chicago: "bg-market-chicago",
   Cincinnati: "bg-market-cincinnati",
   Denver: "bg-market-denver",
@@ -1017,8 +1017,8 @@ const De = [
   Dothan: "bg-market-dothan",
   Gadsden: "bg-market-gadsden"
 };
-function Ve({ instruction: t, onClick: s }) {
-  const a = H(V), r = t.status === "sent", n = parseInt(t.iscis) || 5, l = n > 8 ? "h-48" : n > 5 ? "h-44" : "h-40", b = {
+function Be({ instruction: t, onClick: s }) {
+  const a = K(V), r = t.status === "sent", n = parseInt(t.iscis) || 5, l = n > 8 ? "h-48" : n > 5 ? "h-44" : "h-40", b = {
     TV: "from-[#2a1540] to-[#1a0d2e]",
     Radio: "from-[#1a2040] to-[#0d1530]",
     "Streaming Audio": "from-[#1a3030] to-[#0d2020]",
@@ -1079,7 +1079,7 @@ function Ve({ instruction: t, onClick: s }) {
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `w-full h-3 ${Oe[t.market]} opacity-90 shadow-inner relative z-10`,
+            className: `w-full h-3 ${Ve[t.market]} opacity-90 shadow-inner relative z-10`,
             children: /* @__PURE__ */ e.jsx("div", { className: "absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" })
           }
         ),
@@ -1165,7 +1165,7 @@ function Ve({ instruction: t, onClick: s }) {
     }
   );
 }
-function Be({
+function Ee({
   month: t,
   instructions: s,
   onBookClick: a,
@@ -1338,7 +1338,7 @@ function Be({
                         delay: i * 0.1 + w * 0.03
                       },
                       children: /* @__PURE__ */ e.jsx(
-                        Ve,
+                        Be,
                         {
                           instruction: x,
                           onClick: () => a(x)
@@ -1373,7 +1373,7 @@ function Be({
   );
 }
 const M = () => new (window.AudioContext || window.webkitAudioContext)();
-function Ee() {
+function He() {
   try {
     const t = M(), s = t.currentTime;
     [880, 1320].forEach((l, b) => {
@@ -1389,7 +1389,7 @@ function Ee() {
   } catch {
   }
 }
-function He() {
+function Ke() {
   try {
     const t = M(), s = t.currentTime, a = t.createOscillator();
     a.type = "sine", a.frequency.setValueAtTime(440, s), a.frequency.exponentialRampToValueAtTime(220, s + 0.08);
@@ -1398,7 +1398,7 @@ function He() {
   } catch {
   }
 }
-function Ke() {
+function Ge() {
   try {
     const t = M(), s = t.currentTime;
     [1047, 1319, 1568, 2093].forEach((b, d) => {
@@ -1429,7 +1429,7 @@ function Fe({
   light: a = !1
 }) {
   if (T(() => {
-    t && Ee();
+    t && He();
   }, [t]), !t) return null;
   const r = We(t), l = {
     Chicago: "CHI",
@@ -1444,9 +1444,9 @@ function Fe({
     Dothan: "DHN",
     Gadsden: "GAD"
   }[t.market] || t.market.slice(0, 3).toUpperCase(), b = () => {
-    He(), s();
+    Ke(), s();
   }, d = () => {
-    Ke(), i("send");
+    Ge(), i("send");
   }, i = (c) => {
     const m = typeof window < "u" && window.MegaraLibraryActions || {}, x = t == null ? void 0 : t.historyIdx;
     typeof m[c] == "function" && typeof x == "number" && (m[c](x), c === "delete" && s());
@@ -1644,7 +1644,7 @@ function Fe({
                     {
                       onClick: b,
                       className: `p-2 rounded-full transition-colors ${a ? "text-purple-400 hover:text-purple-700 hover:bg-purple-100" : "text-megara-light/60 hover:text-megara-light hover:bg-white/10"}`,
-                      children: /* @__PURE__ */ e.jsx(Le, { size: 20 })
+                      children: /* @__PURE__ */ e.jsx(Re, { size: 20 })
                     }
                   ) }),
                   /* @__PURE__ */ e.jsxs(
@@ -1723,7 +1723,7 @@ function Fe({
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            we,
+                            je,
                             {
                               size: 16,
                               className: "text-megara-primary group-hover:scale-110 transition-transform"
@@ -1741,7 +1741,7 @@ function Fe({
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group font-medium ${a ? "border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100" : "border-magic-teal/40 bg-magic-teal/10 text-magic-teal hover:bg-magic-teal/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            L,
+                            I,
                             {
                               size: 16,
                               className: "group-hover:scale-110 transition-transform"
@@ -1759,7 +1759,7 @@ function Fe({
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            _e,
+                            Ce,
                             {
                               size: 16,
                               className: `group-hover:scale-110 transition-transform ${a ? "text-amber-600" : "text-magic-gold"}`
@@ -1778,7 +1778,7 @@ function Fe({
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-teal-300 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-magic-teal/40 bg-magic-teal/10 text-magic-teal hover:bg-magic-teal/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            L,
+                            I,
                             {
                               size: 16,
                               className: "group-hover:scale-110 transition-transform"
@@ -1796,7 +1796,7 @@ function Fe({
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            Te,
+                            Me,
                             {
                               size: 16,
                               className: "text-megara-primary group-hover:scale-110 transition-transform group-hover:translate-x-0.5"
@@ -1814,7 +1814,7 @@ function Fe({
                         className: `w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group ${a ? "border-purple-200 text-purple-700 hover:bg-purple-100" : "border-megara-dark/40 text-megara-light hover:bg-megara-dark/20"}`,
                         children: [
                           /* @__PURE__ */ e.jsx(
-                            me,
+                            xe,
                             {
                               size: 16,
                               className: `group-hover:scale-110 transition-transform ${a ? "text-purple-400" : "text-megara-light/60"}`
@@ -1823,7 +1823,7 @@ function Fe({
                           " ",
                           "Copy to...",
                           /* @__PURE__ */ e.jsx(
-                            ce,
+                            pe,
                             {
                               size: 14,
                               className: `ml-auto ${a ? "text-purple-300" : "text-megara-light/40"}`
@@ -1839,7 +1839,7 @@ function Fe({
                       onClick: () => i("delete"),
                       className: `w-full py-2.5 px-4 rounded border text-sm flex items-center justify-center gap-2 transition-colors ${a ? "border-red-200 text-red-500 hover:bg-red-50" : "border-red-900/40 text-red-400 hover:bg-red-900/20"}`,
                       children: [
-                        /* @__PURE__ */ e.jsx(Ae, { size: 16 }),
+                        /* @__PURE__ */ e.jsx(Le, { size: 16 }),
                         " Delete"
                       ]
                     }
@@ -1853,8 +1853,8 @@ function Fe({
     }
   ) });
 }
-const V = K(!1);
-function Ue() {
+const V = G(!1);
+function Ye() {
   const [t, s] = N(!1), [a, r] = N("Postman Law"), [n, l] = N(!1), [b, d] = N(null);
   T(() => {
     t ? document.body.classList.add("light") : document.body.classList.remove("light");
@@ -1899,7 +1899,7 @@ function Ue() {
   ), j = h.filter((o) => {
     var v;
     return ((v = f[o]) == null ? void 0 : v.length) > 0;
-  }), B = new Set(x.map((o) => o.market)).size, y = t;
+  }), E = new Set(x.map((o) => o.market)).size, y = t;
   return /* @__PURE__ */ e.jsx(V.Provider, { value: t, children: /* @__PURE__ */ e.jsxs(
     "div",
     {
@@ -1962,14 +1962,14 @@ function Ue() {
             onBrandChange: r,
             brandCounts: c,
             totalInstructions: x.length,
-            totalMarkets: B,
+            totalMarkets: E,
             archivedCount: w,
             showArchived: n,
             onToggleArchived: () => l((o) => !o)
           }
         ),
         /* @__PURE__ */ e.jsx(
-          Pe,
+          De,
           {
             instructions: x,
             months: j,
@@ -1999,7 +1999,7 @@ function Ue() {
           ),
           /* @__PURE__ */ e.jsx("div", { className: "max-w-6xl mx-auto relative z-10", children: j.map(
             (o) => /* @__PURE__ */ e.jsx("div", { id: `month-${o}`, children: /* @__PURE__ */ e.jsx(
-              Be,
+              Ee,
               {
                 month: o,
                 instructions: f[o],
@@ -2021,7 +2021,16 @@ function Ue() {
     }
   ) });
 }
+const B = "delegate-send-2026-05-27";
+try {
+  console.log(
+    "%c📚 MegaraLibrary bundle: " + B,
+    "background:#2d1f42;color:#4AC8E8;font-weight:700;padding:3px 8px;border-radius:4px"
+  );
+} catch {
+}
+typeof window < "u" && (window.MEGARA_BUNDLE_VERSION = B);
 export {
-  Ue as App,
+  Ye as App,
   V as ThemeContext
 };
