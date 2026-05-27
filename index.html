@@ -398,8 +398,9 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
         console.log("Firebase initialized");
       }).catch(function(e){console.error("DB init failed:",e)});
 
-      // Load all data files in parallel
-      return Promise.all(dataFiles.map(function(f){return loadScript(f)}));
+      // Load all data files in parallel — cache-bust per load so seed updates
+      // (e.g. reinstated ISCIs/estimates) reach the browser without a hard refresh.
+      return Promise.all(dataFiles.map(function(f){return loadScript(f+"?v="+Date.now())}));
     }).then(function(){
       // Load React + ReactDOM + Framer Motion as ESM in a single module so
       // they share one React instance (via the importmap above). Then expose

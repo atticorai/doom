@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="fix-flight-data-2026-05-27";
+const __APP_VERSION__="reinstate-digital-2026-05-27";
 // Startup banner so it's possible to confirm, from the browser console, EXACTLY
 // which app.js the live site is serving. If this tag isn't in the console after a
 // hard-reload, the deploy is stale and you're running old code.
