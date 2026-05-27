@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="buyer-per-group-2026-05-27";
+const __APP_VERSION__="tracker-month-match-2026-05-27";
 // Startup banner so it's possible to confirm, from the browser console, EXACTLY
 // which app.js the live site is serving. If this tag isn't in the console after a
 // hard-reload, the deploy is stale and you're running old code.
@@ -6981,8 +6981,14 @@ Rules:
       const media=buyToMedia[buyType];const group=buyToGroup[buyType];
       const mktCode=Object.entries(DM).find(([_,n])=>n===mkt)?.[0]||"";
       // Check traffic history
+      // Compare on the MONTH NAME only (first word, case-insensitive) so a record
+      // stored as "June 2026" still matches the tracker's "June" — the library
+      // shelf already does this split, which is why a built record can show there
+      // but read as empty here. That mismatch is the library/tracker disconnect.
+      const tMonth=String(trackerMonth||"").trim().split(/\s+/)[0].toLowerCase();
       const rec=trafficHistory.find(h=>{
-        if(h.brand!==trackerBrand||h.month!==trackerMonth)return false;
+        const hMonth=String(h.month||"").trim().split(/\s+/)[0].toLowerCase();
+        if(h.brand!==trackerBrand||hMonth!==tMonth)return false;
         // Match market (handle both code and full name, and multi-market records)
         const hMkt=normMkt(h.market)||h.market;
         const matchMkt=hMkt===mktCode||h.market===mkt||(h.market||"").includes(mkt);
