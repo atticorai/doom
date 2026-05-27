@@ -5823,33 +5823,6 @@ ${fullText.substring(0,3000)}`}]
       notify(msg||"Done");
       setImportPreview(results);
     };
-    // One-click recovery of the missing sheets the user handed over — committed
-    // under /recovery and run through the SAME parser the drag-import uses, so
-    // it's accurate (no transcription). Skips anything already present, so it's
-    // safe to click more than once.
-    const RECOVERY_PDFS=["/recovery/espn-mlb-april-v1.pdf","/recovery/gkbps-april-v1.pdf","/recovery/wk-ttwn-feb-radio.pdf","/recovery/wk-ttwn-mar-radio.pdf","/recovery/pl-msp-jan2026-tv.pdf","/recovery/wk-may-brm-v2.pdf","/recovery/wk-may-hsv-v2.pdf","/recovery/wk-may-knx-v2.pdf","/recovery/wk-may-cha-v2.pdf","/recovery/wk-may-mtg-v2.pdf","/recovery/wk-may-dhn-v2.pdf","/recovery/pl-cable-denver-apr.pdf","/recovery/pl-cable-streaming-apr.pdf","/recovery/pl-cable-chicago-apr.pdf","/recovery/pl-cable-cincinnati-apr.pdf","/recovery/pl-cable-minneapolis-apr.pdf","/recovery/ooh-mtg-lamar-poster.pdf","/recovery/ooh-knx-lamar-poster.pdf","/recovery/ooh-gad-lamar-poster.pdf","/recovery/ooh-brm-lamar-poster.pdf","/recovery/ooh-brm-panel8815-bb.pdf","/recovery/ooh-brm-panel8815.pdf"];
-    const importRecovered=async()=>{
-      if(typeof pdfjsLib==="undefined"&&!window.pdfjsLib){setInfoBox({title:"PDF engine not loaded",text:"pdf.js (the PDF reader) didn't load — that's why imports do nothing. Hard-refresh the page (Ctrl+Shift+R) and click again."});return}
-      notify("Importing missing sheets...");
-      let added=0,skipped=0,failed=0;const out=[];
-      for(const path of RECOVERY_PDFS){
-        const name=path.split("/").pop();
-        try{
-          const resp=await fetch(path);
-          if(!resp.ok)throw new Error("fetch "+resp.status);
-          const buf=await resp.arrayBuffer();
-          const pdf=await pdfjsLib.getDocument({data:buf}).promise;
-          const text=await extractPdfText(pdf);
-          const parsed=parseTrafficText(text);
-          if(!parsed){failed++;out.push("✗ "+name+" — could not parse");continue}
-          const exists=trafficHistory.some(h=>h.brand===parsed.brand&&normMkt(h.market)===normMkt(parsed.market)&&h.media===parsed.media&&h.month===parsed.month&&String(h.version)===String(parsed.version));
-          if(exists){skipped++;out.push("• "+name+" — already there ("+parsed.market+" "+parsed.month+" "+parsed.media+" v"+parsed.version+")");continue}
-          setTrafficHistory(p=>[{...parsed,status:"imported"},...p]);
-          added++;out.push("✓ "+name+" — "+parsed.market+" "+parsed.month+" "+parsed.media+" v"+parsed.version+" · est "+parsed.est+" · "+parsed.iscis.length+" ISCIs");
-        }catch(e){failed++;out.push("✗ "+name+" — "+(e&&e.message||e))}
-      }
-      setInfoBox({title:"Missing-sheet import",text:"Added: "+added+"   Skipped: "+skipped+"   Failed: "+failed+"\n\n"+out.join("\n")+(added>0?"\n\nReload the app to see them in the Library.":"")});
-    };
     const pdfUploadJsx=<div>
       <div style={{border:"2px dashed #9b7bb0",borderRadius:10,padding:"40px 20px",textAlign:"center",cursor:"pointer",background:"rgba(124,107,196,.04)",position:"relative"}} onDragOver={e=>{e.preventDefault();e.stopPropagation()}} onDrop={async e=>{e.preventDefault();e.stopPropagation();const files=[...e.dataTransfer.files].filter(f=>f.type==="application/pdf"||f.name.toLowerCase().endsWith(".pdf"));if(!files.length){notify("No PDF files detected");return}await processPdfs(files)}}>
         <input type="file" multiple accept=".pdf" style={{position:"absolute",inset:0,opacity:0,cursor:"pointer"}} onChange={async e=>{const files=[...e.target.files].filter(f=>f.type==="application/pdf"||f.name.toLowerCase().endsWith(".pdf"));if(!files.length)return;await processPdfs(files)}}/>
@@ -5875,7 +5848,6 @@ ${fullText.substring(0,3000)}`}]
           <button onClick={()=>{const rows=[["Brand","Market","Media","Month","Version","Buyer","ISCI","Title","Duration","Pct","Schedule","Bookend","Units"].join(","),...trafficHistory.flatMap(h=>(h.iscis||[]).map(r=>[h.brand,h.market,h.media,h.month,h.version,h.buyer,r.code,r.title,r.dur,r.pct,r.sched,r.bookend||"",r.units||""].join(",")))];const blob=new Blob([rows.join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="traffic_library_"+new Date().toISOString().slice(0,10)+".csv";a.click()}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #9b7bb0",background:"#1e1233",fontSize:13,fontWeight:700,cursor:"pointer",color:"#9B8EAD"}}>Export CSV</button>
           <button onClick={sendConfirmReminders} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #D4A040",background:"rgba(245,158,11,.12)",fontSize:13,fontWeight:700,cursor:"pointer",color:"#D4A040"}}>🔔 Send Reminders</button>
           <button onClick={()=>setShowImport(!showImport)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(showImport?"#E85A7A":"#9b7bb0"),background:showImport?"#3a1f35":"#F0E8F8",color:showImport?"#E85A7A":"#9b7bb0",fontSize:13,fontWeight:700,cursor:"pointer"}}>{showImport?"Cancel":"+ Import"}</button>
-          <button onClick={importRecovered} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #5BC4A0",background:"rgba(91,196,160,.12)",color:"#5BC4A0",fontSize:13,fontWeight:700,cursor:"pointer"}}>🩹 Import Missing Sheets</button>
         </div>
       </div>
       {showImport&&<Cd style={{padding:14,marginBottom:12}}>
@@ -8489,6 +8461,56 @@ Rules:
             log("Traffic Recovery","recovered "+j.recovered+" ("+j.before+"→"+j.after+")");
           }catch(e){setInfoBox({title:"Recover failed",text:String(e.message)})}
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #5BC4A0",background:"#5BC4A015",color:"#5BC4A0",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🩹 Recover Lost Traffic</button>
+        <button onClick={async()=>{
+          if(!window.pdfjsLib){setInfoBox({title:"PDF engine not loaded",text:"pdf.js didn't load — hard-refresh (Ctrl+Shift+R) and try again."});return}
+          const PDFS=["/recovery/espn-mlb-april-v1.pdf","/recovery/gkbps-april-v1.pdf","/recovery/wk-ttwn-feb-radio.pdf","/recovery/wk-ttwn-mar-radio.pdf","/recovery/pl-msp-jan2026-tv.pdf","/recovery/wk-may-brm-v2.pdf","/recovery/wk-may-hsv-v2.pdf","/recovery/wk-may-knx-v2.pdf","/recovery/wk-may-cha-v2.pdf","/recovery/wk-may-mtg-v2.pdf","/recovery/wk-may-dhn-v2.pdf","/recovery/pl-cable-denver-apr.pdf","/recovery/pl-cable-streaming-apr.pdf","/recovery/pl-cable-chicago-apr.pdf","/recovery/pl-cable-cincinnati-apr.pdf","/recovery/pl-cable-minneapolis-apr.pdf","/recovery/ooh-mtg-lamar-poster.pdf","/recovery/ooh-knx-lamar-poster.pdf","/recovery/ooh-gad-lamar-poster.pdf","/recovery/ooh-brm-lamar-poster.pdf","/recovery/ooh-brm-panel8815-bb.pdf","/recovery/ooh-brm-panel8815.pdf"];
+          const nm=(typeof normMkt==="function")?normMkt:(x=>x);
+          const parseSheet=(t)=>{
+            t=t.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+            const gf=(label)=>{const m=t.match(new RegExp(label.replace(/[()\/]/g,"\\$&")+"\\s*:\\s*(.+?)(?:\\n|$)","i"));return m?m[1].trim():""};
+            let brand=gf("Client");if(/postman/i.test(brand))brand="Postman Law";else if(/wettermark/i.test(brand))brand="Wettermark Keith";else brand=brand||"Unknown";
+            const market=gf("Market");
+            const media=gf("Media")||"TV";
+            const month=gf("Broadcast Month")||gf("Month");
+            const flight=gf("Flight Dates")||gf("Flight");
+            const vraw=gf("Version/ Links")||gf("Version");
+            const version=parseInt((vraw.match(/(\d+)/)||[])[1]||"1")||1;
+            const estRaw=gf("Estimate(s)")||gf("Estimate");
+            const est=(estRaw.match(/(\d{3,4})/)||[])[1]||"";
+            const dma=nm(market)||market||"";
+            const iscis=[];const seen=new Set();
+            t.split("\n").forEach(line=>{
+              const m=line.match(/([A-Z]{3,4}(?:PL|WK)\d{4,7}[A-Z0-9])\s*-?\s*(.*)/);
+              if(!m)return;const code=m[1];if(seen.has(code))return;seen.add(code);
+              const rest=m[2]||"";
+              const dur=(rest.match(/:(\d{2,3})\b/)||[])[1]||"";
+              const pct=(rest.match(/(\d+(?:\.\d+)?)\s*%/)||[])[1]||"";
+              const title=(rest.split(/\s+:/)[0]||"").trim();
+              iscis.push({code,title,dur,pct,sched:"",bookend:""});
+            });
+            if(!iscis.length)return null;
+            return{est:est||(dma+"-"+(brand==="Postman Law"?"PL":"WK")+"-"+media),brand,market:dma,media,buyer:gf("Buyer"),month,version,flight,comments:gf("Comments"),stations:[],iscis,ts:Date.now(),status:"imported"};
+          };
+          notify("Importing missing sheets...");
+          let added=0,skipped=0,failed=0;const out=[];
+          for(const path of PDFS){
+            const name=path.split("/").pop();
+            try{
+              const r=await fetch(path);if(!r.ok)throw new Error("fetch "+r.status);
+              const buf=await r.arrayBuffer();
+              const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+              let text="";for(let pn=1;pn<=pdf.numPages;pn++){const pg=await pdf.getPage(pn);const c=await pg.getTextContent();text+=c.items.map(i=>i.str).join(" ")+"\n";}
+              const parsed=parseSheet(text);
+              if(!parsed){failed++;out.push("✗ "+name+" — no ISCIs parsed");continue}
+              const dup=trafficHistory.some(h=>h.brand===parsed.brand&&nm(h.market)===nm(parsed.market)&&h.media===parsed.media&&h.month===parsed.month&&String(h.version)===String(parsed.version));
+              if(dup){skipped++;out.push("• "+parsed.market+" "+parsed.month+" "+parsed.media+" v"+parsed.version+" — already there");continue}
+              setTrafficHistory(p=>[parsed,...p]);
+              added++;out.push("✓ "+parsed.brand+" · "+parsed.market+" · "+parsed.month+" · "+parsed.media+" v"+parsed.version+" — est "+parsed.est+" — "+parsed.iscis.length+" ISCIs");
+            }catch(e){failed++;out.push("✗ "+name+" — "+(e&&e.message||e))}
+          }
+          setInfoBox({title:"Import Missing Sheets — +"+added+" added, "+skipped+" dup, "+failed+" failed",text:out.join("\n")+(added?"\n\nReload the app to see them in the Library.":"")});
+          log("Import Missing Sheets","added "+added+", skipped "+skipped+", failed "+failed);
+        }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #4AC8E8",background:"#4AC8E815",color:"#4AC8E8",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📥 Import Missing Sheets</button>
         <button onClick={async()=>{
           try{
             const r=await fetch("/api/legacy-assets-export",{credentials:"include"});
