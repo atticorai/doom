@@ -9522,9 +9522,12 @@ Rules:
                 let pdfUri="";try{pdfUri=await generatePdfBase64(sheetHtml,h)}catch(pe){notify("PDF gen failed: "+pe.message);return}
                 const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+(h.market||"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
                 const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
-                const recipients=[...new Set(linkedStations.map(s=>s.contact).filter(Boolean).flatMap(c=>c.split(/[,;]\s*/)))].filter(Boolean);
+                const isWK=h.brand==="Wettermark Keith";
+                const baseRecipients=[...new Set(linkedStations.map(s=>s.contact).filter(Boolean).flatMap(c=>c.split(/[,;]\s*/)))].filter(Boolean);
+                // WK: Amy is a TO recipient (once per ownership group); CC is dropped by the webhook.
+                const recipients=isWK?[...new Set([...baseRecipients,"acoffey@wkfirm.com"])]:baseRecipients;
                 const buyerCc=BUYER_EMAILS[h.buyer]||"";
-                const ccList=[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(", ");
+                const ccList=isWK?"emm.caban@atticor.ai":[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(", ");
                 const subj=(h.brand||"")+" - Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+(h.market||"");
                 const body="Hello,<br><br>Please find the attached traffic instructions for "+(h.brand||"")+" — "+(h.market||"")+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br><b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br><a href=\"#\" onclick=\"return false\" style=\"display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0\">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
                 const stationList=linkedStations.length?linkedStations.map(s=>s.call+" ("+(s.contact||"no email")+")").join("<br>"):'<span style="color:#b91c1c">No stations linked — Send would fail.</span>';
@@ -9542,23 +9545,34 @@ Rules:
                 let pdfB64="";try{const pdfUri=await generatePdfBase64(sheetHtml,h);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
                 const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+(h.market||"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
                 const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
-                const recipients=[...new Set(linkedStations.map(s=>s.contact).filter(Boolean).flatMap(c=>c.split(/[,;]\s*/)))].filter(Boolean);
-                if(!recipients.length){notify("No station email contacts found for this record — link stations in the Stations page first.");return}
+                if(!linkedStations.length){notify("No stations linked to this record — link stations in the Stations page first.");return}
+                const isWK=h.brand==="Wettermark Keith";
                 const buyerCc=BUYER_EMAILS[h.buyer]||"";
-                const ccList=[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(",");
+                // The n8n webhook drops CC, so for WK Amy (acoffey@wkfirm.com) is added
+                // as a TO recipient once per ownership group. emm stays on CC; PL unchanged.
+                const ccList=isWK?"emm.caban@atticor.ai":[buyerCc,"emm.caban@atticor.ai"].filter(Boolean).join(",");
                 const confirmBase=window.location.href.split("?")[0].split("#")[0];
+                const resendTok=reserveToken(akFromHistory(h),"resend");
                 let emailBody="Hello,<br><br>Please find the attached traffic instructions for "+(h.brand||"")+" — "+(h.market||"")+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br>";
                 if(note)emailBody+="<b>Note:</b> "+note+"<br><br>";
                 emailBody+="<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
-                const resendTok=reserveToken(akFromHistory(h),"resend");
                 emailBody+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmBase+'?confirm='+encodeURIComponent(h.est||"")+'&sta=resend&tok='+encodeURIComponent(resendTok)+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager';
                 const subj=(h.brand||"")+" - Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+(h.market||"");
-                notify("Sending to "+recipients.length+" recipient"+(recipients.length===1?"":"s")+"...");
-                try{
-                  const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients.join(","),cc:ccList,subject:subj,message:emailBody,pdfBase64:pdfB64,pdfName:pdfName})});
-                  if(resp.ok){notify(doomPick(DOOM.send));log("Traffic Sent",h.brand+" "+h.market+" "+h.media+" "+h.month+" v"+(h.version||"1"))}
-                  else throw new Error("n8n "+resp.status);
-                }catch(e){notify("Send failed: "+(e.message||e));console.error("Send failed:",e)}
+                // ONE email per ownership group (one Amy per WK group as a TO recipient).
+                const groups={};
+                linkedStations.forEach(s=>{const g=s.ownership||s.call;(groups[g]=groups[g]||[]).push(s)});
+                let sent=0,failed=0;const noEmail=[];
+                for(const[gName,gStations]of Object.entries(groups)){
+                  const emails=[...new Set([...gStations.flatMap(s=>(s.contact||"").split(/[,;]\s*/)),...(isWK?["acoffey@wkfirm.com"]:[])].map(e=>e.trim()))].filter(Boolean);
+                  if(!emails.length){noEmail.push(gName);continue}
+                  notify("Sending "+gName+" ("+emails.length+" recipient"+(emails.length===1?"":"s")+")...");
+                  try{
+                    const resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:emails.join(","),cc:ccList,subject:subj,message:emailBody,pdfBase64:pdfB64,pdfName:pdfName})});
+                    if(resp.ok)sent++;else{failed++;notify("FAIL: "+gName+" — n8n "+resp.status)}
+                  }catch(e){failed++;console.error("Send failed ["+gName+"]:",e);notify("FAIL: "+gName+" — "+(e.message||e))}
+                }
+                if(sent>0){notify(doomPick(DOOM.send)+" — "+sent+" group"+(sent===1?"":"s")+" sent"+(failed?" ("+failed+" failed)":""));log("Traffic Sent",h.brand+" "+h.market+" "+h.media+" "+h.month+" v"+(h.version||"1")+" — "+sent+" group(s)"+(failed?", "+failed+" failed":""))}
+                else notify("Send failed — nothing sent"+(noEmail.length?" ("+noEmail.length+" group(s) had no email contacts)":""));
               },
               copyTo:(idx)=>{
                 // BookOpen's "Copy to" button. Prompts the user for a target —
