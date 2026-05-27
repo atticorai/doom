@@ -2311,14 +2311,17 @@ const App=()=>{
           // ── GROUP BY OWNERSHIP+MARKET — one email per ownership group within same market ──
           const ownershipGroups={};
           sendable.forEach(s=>{const grp=(s.ownership||s.call)+"||"+est.market;if(!ownershipGroups[grp])ownershipGroups[grp]=[];ownershipGroups[grp].push(s)});
+          const isWK=est.brand==="Wettermark Keith";
           const buyerCc=BUYER_EMAILS[est.buyer]||"";
           const emmCc="emm.caban@atticor.ai";
-          const ccList=[buyerCc,emmCc].filter(Boolean).join(",");
+          // WK: Amy (acoffey@wkfirm.com) is added as a recipient once per ownership
+          // group (like a station contact), so she's in TO — not double-listed in CC.
+          const ccList=isWK?emmCc:[buyerCc,emmCc].filter(Boolean).join(",");
           // extraEmails already parsed above
           let sent=0;let failed=0;
           for(const[grpName,grpStations]of Object.entries(ownershipGroups)){
-            // Collect ALL unique emails across stations in this group
-            const allEmails=[...new Set(grpStations.flatMap(s=>parseEmails(s.contact)))].join(",");
+            // Collect ALL unique emails across stations in this group (one Amy per group for WK)
+            const allEmails=[...new Set([...grpStations.flatMap(s=>parseEmails(s.contact)),...(isWK?["acoffey@wkfirm.com"]:[])])].join(",");
             if(!allEmails)continue;
             const staCalls=grpStations.map(s=>s.call);
             const confirmLinks=grpStations.map(s=>{
