@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="tracker-combined-media-2026-05-27";
+const __APP_VERSION__="split-pl-tv-cable-2026-05-27";
 // Startup banner so it's possible to confirm, from the browser console, EXACTLY
 // which app.js the live site is serving. If this tag isn't in the console after a
 // hard-reload, the deploy is stale and you're running old code.
@@ -8571,6 +8571,38 @@ Rules:
           setInfoBox({title:"Import Missing Sheets — +"+added+" added, "+skipped+" dup, "+failed+" failed",text:out.join("\n")+(added?"\n\nReload the app to see them in the Library.":"")});
           log("Import Missing Sheets","added "+added+", skipped "+skipped+", failed "+failed);
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #4AC8E8",background:"#4AC8E815",color:"#4AC8E8",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📥 Import Missing Sheets</button>
+        <button onClick={()=>{
+          // Split combined "TV / Cable" Postman Law records into a separate TV
+          // record and a separate Cable record. The cable estimate is identified
+          // via the estimate→media map; both records keep the same ISCIs (PL cable
+          // runs the same spots). Records where TV vs Cable can't be told apart are
+          // left untouched — no guessing with traffic data.
+          const isCableEst=(n)=>{const e=estimates.find(x=>String(x.num)===String(n));return!!(e&&/cable/i.test(e.media||""))};
+          const isCombo=(h)=>h.brand==="Postman Law"&&/cable/i.test(h.media||"")&&/tv/i.test(h.media||"");
+          const targets=trafficHistory.filter(isCombo);
+          if(!targets.length){setInfoBox({title:"Split PL TV/Cable","text":"No combined 'TV / Cable' Postman Law records found — nothing to split."});return}
+          if(!confirm("Split "+targets.length+" combined 'TV / Cable' Postman Law record(s) into separate TV and Cable records?\n\nEach keeps the same ISCIs. Your data is backed up before the change."))return;
+          let split=0,skipped=0;const out=[];
+          trafficBulkRef.current=true;
+          setTrafficHistory(prev=>{
+            const next=[];
+            prev.forEach(h=>{
+              if(!isCombo(h)){next.push(h);return}
+              const ests=String(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);
+              const cableEsts=ests.filter(isCableEst);
+              const tvEsts=ests.filter(n=>!cableEsts.includes(n));
+              if(!cableEsts.length||!tvEsts.length){next.push(h);skipped++;out.push("• "+h.market+" "+h.month+" — can't tell TV vs Cable estimates apart, left as-is");return}
+              const base={...h};delete base._combined;
+              const tvRec={...base,media:"TV",est:tvEsts.join(" + "),combined:tvEsts.length>1,_id:Date.now()+Math.floor(Math.random()*1e6)};
+              const cableRec={...base,media:"Cable",est:cableEsts.join(" + "),combined:cableEsts.length>1,_id:Date.now()+Math.floor(Math.random()*1e6)+1};
+              next.push(tvRec,cableRec);
+              split++;out.push("✓ "+h.market+" "+h.month+" → TV (est "+tvEsts.join(" + ")+") + Cable (est "+cableEsts.join(" + ")+")");
+            });
+            return next;
+          });
+          setInfoBox({title:"Split PL TV/Cable — "+split+" split, "+skipped+" skipped",text:out.join("\n")+(split?"\n\nReload to see TV and Cable as separate records on the shelf and tracker.":"")});
+          log("Split PL TV/Cable","split "+split+", skipped "+skipped);
+        }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #9b7bb0",background:"#9b7bb015",color:"#C4A0C8",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>✂ Split PL TV/Cable</button>
         <button onClick={async()=>{
           try{
             const r=await fetch("/api/legacy-assets-export",{credentials:"include"});
