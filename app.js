@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="restore-espn-button-2026-05-27";
+const __APP_VERSION__="media-filter-stations-2026-05-27";
 // Startup banner so it's possible to confirm, from the browser console, EXACTLY
 // which app.js the live site is serving. If this tag isn't in the console after a
 // hard-reload, the deploy is stale and you're running old code.
@@ -1059,7 +1059,15 @@ const App=()=>{
   };
   const getEstStations=(est)=>{
     const em=est.market?normMkt(est.market)||est.market:"";
-    return stations.filter(s=>{if(em){const sm=normMkt(s.market)||s.market;if(sm!==em&&s.market!==est.market)return false}const linked=staEstLinks[staKey(s)]||[];return linked.includes(est.num)});
+    const eMedia=String(est.media||"").toLowerCase();
+    return stations.filter(s=>{
+      if(em){const sm=normMkt(s.market)||s.market;if(sm!==em&&s.market!==est.market)return false}
+      // Media must match — WK monthly estimates (e.g. 215) are shared across ALL
+      // media, so without this filter a Radio estimate would also match TV stations
+      // linked to the same estimate number.
+      if(eMedia&&String(s.media||"").toLowerCase()!==eMedia)return false;
+      const linked=staEstLinks[staKey(s)]||[];return linked.includes(est.num);
+    });
   };
 
   // ── NOW AIRING / CONFIRMATIONS ──────────────────────────
@@ -9622,7 +9630,7 @@ Rules:
                 let pdfUri="";try{pdfUri=await generatePdfBase64(sheetHtml,{...h,flight:flightDates})}catch(pe){notify("PDF gen failed: "+pe.message);return}
                 const mktName=DM[h.market]||h.market||"";
                 const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+mktName.replace(/\s/g,"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
-                const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
+                const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const hMedias=String(h.media||"").split(/\s*\/\s*/).map(x=>x.trim().toLowerCase()).filter(Boolean);const sMedia=String(s.media||"").toLowerCase();if(hMedias.length&&!hMedias.includes(sMedia))return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
                 const isWK=h.brand==="Wettermark Keith";
                 const buyerEmail=BUYER_EMAILS[h.buyer]||"";
                 const ccList="emm.caban@atticor.ai";
@@ -9662,7 +9670,7 @@ Rules:
                 const sheetHtml=data[idx]?.sheetHtml||"";
                 let pdfB64="";try{const pdfUri=await generatePdfBase64(sheetHtml,hPdf);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
                 const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+mktName.replace(/\s/g,"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
-                const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
+                const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const hMedias=String(h.media||"").split(/\s*\/\s*/).map(x=>x.trim().toLowerCase()).filter(Boolean);const sMedia=String(s.media||"").toLowerCase();if(hMedias.length&&!hMedias.includes(sMedia))return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
                 if(!linkedStations.length){notify("No stations linked to this record — link stations in the Stations page first.");return}
                 const isWK=h.brand==="Wettermark Keith";
                 // Clean, single estimate number for the confirm URL + key, so the portal
