@@ -21,6 +21,7 @@
 //   --dry-run         walk + classify only, no uploads / DB writes
 //   --types=TV,Radio  only process these classifications
 //   --max=100         stop after N files (smoke test)
+//   --max-size=500    skip files over N MB (avoids OOM on small VMs)
 //   --reset           ignore state.json and start fresh
 //   --state=path.json use a non-default state file
 // ════════════════════════════════════════════════════════════════════
@@ -35,7 +36,7 @@ const { createClient } = require('@supabase/supabase-js');
 const args = process.argv.slice(2);
 const folderId = args.find(a => !a.startsWith('--'));
 if (!folderId) {
-  console.error('Usage: node scripts/drive-import.js <DRIVE_FOLDER_ID> [--dry-run] [--types=TV,Radio] [--max=N] [--reset] [--state=path.json]');
+  console.error('Usage: node scripts/drive-import.js <DRIVE_FOLDER_ID> [--dry-run] [--types=TV,Radio] [--max=N] [--max-size=MB] [--reset] [--state=path.json]');
   process.exit(1);
 }
 const flag = name => args.some(a => a === '--' + name);
@@ -46,6 +47,7 @@ const flagVal = name => {
 const DRY_RUN = flag('dry-run');
 const ONLY_TYPES = flagVal('types') ? flagVal('types').split(',').map(s => s.trim()) : null;
 const MAX_FILES = flagVal('max') ? parseInt(flagVal('max'), 10) : Infinity;
+const MAX_SIZE_MB = flagVal('max-size') ? parseInt(flagVal('max-size'), 10) : Infinity;
 const STATE_PATH = flagVal('state') || path.join(process.cwd(), 'drive-import-state.json');
 const RESET = flag('reset');
 
@@ -365,6 +367,15 @@ async function processFile(f, runTotals) {
 
   console.log(`▸ ${cls.type.padEnd(8)} ${(meta.path || '').padEnd(40)} ${f.name}  (${(sizeBytes / 1024 / 1024).toFixed(1)} MB) — ${cls.note}`);
 
+  if (sizeBytes > MAX_SIZE_MB * 1024 * 1024) {
+    console.log(`  ⊘ skipped (${(sizeBytes / 1024 / 1024).toFixed(0)} MB > --max-size=${MAX_SIZE_MB} MB)`);
+    state.skippedBig = state.skippedBig || [];
+    state.skippedBig.push({ id: f.id, name: f.name, path: meta.path, size: sizeBytes, type: cls.type });
+    runTotals.skippedBig = (runTotals.skippedBig || 0) + 1;
+    saveState();
+    return;
+  }
+
   if (DRY_RUN) {
     runTotals.byType[cls.type] = (runTotals.byType[cls.type] || 0) + 1;
     runTotals.uploaded++;
@@ -458,6 +469,7 @@ async function processFile(f, runTotals) {
   console.log(`Walked:    ${count} file(s)`);
   console.log(`Uploaded:  ${totals.uploaded}`);
   console.log(`Skipped:   ${totals.skipped} (already in state)`);
+  if (totals.skippedBig) console.log(`Too big:   ${totals.skippedBig} (> --max-size, see state.skippedBig)`);
   if (ONLY_TYPES) console.log(`Filtered:  ${totals.filtered} (type filter)`);
   console.log(`Errors:    ${totals.errors}`);
   console.log('By type:');
