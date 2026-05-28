@@ -1,6 +1,6 @@
 const {useState, useEffect, useRef, useCallback, useMemo} = React;
 // Cache-bust marker — bump this string when forcing browsers to refetch app.js
-const __APP_VERSION__="reinstate-digital-2026-05-27";
+const __APP_VERSION__="restore-espn-button-2026-05-27";
 // Startup banner so it's possible to confirm, from the browser console, EXACTLY
 // which app.js the live site is serving. If this tag isn't in the console after a
 // hard-reload, the deploy is stale and you're running old code.
@@ -8623,6 +8623,23 @@ Rules:
           setInfoBox({title:"Fix Flight Dates — "+fixed+" corrected",text:out.join("\n")+(fixed>out.length?"\n…+"+(fixed-out.length)+" more":"")+"\n\nReload to see them, then re-send."});
           log("Fix Flight Dates","corrected "+fixed);
         }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #D4A040",background:"#D4A04015",color:"#D4A040",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🗓 Fix Flight Dates</button>
+        <button onClick={()=>{
+          // Force-restore the ESPN digital ISCIs into the registry. The seed
+          // contains them now, but if the codes are in deletedIsciKeys the seed
+          // restore is intentionally skipped — this bypasses that for the ESPN set,
+          // un-deletes them, and ensures the Digital builder pool is populated.
+          const dmas=["CHI","CIN","DEN","MSP"];
+          const set=[];
+          dmas.forEach(d=>{set.push({code:d+"PL2630005D",title:"Justice & Representation_30",media:"Digital",brand:"Postman Law",dma:d,dur:"30",suffix:"D",active:true,fileUrl:"",sentAt:null,sentInEst:null});set.push({code:d+"PL2630006D",title:"Legal Firepower_30",media:"Digital",brand:"Postman Law",dma:d,dur:"30",suffix:"D",active:true,fileUrl:"",sentAt:null,sentInEst:null})});
+          [["MB002B","320x50"],["MR002B","300x250"],["SL002B","970x66px"],["LB002B","728x90"],["WB002B","1280x100"]].forEach(([code,size])=>dmas.forEach(d=>set.push({code:d+"PL26"+code,title:"ESPN Banner Ad - "+size+" - Home Team for PI",media:"Display",brand:"Postman Law",dma:d,dur:"",suffix:"B",active:true,fileUrl:"",sentAt:null,sentInEst:null})));
+          const existingKeys=new Set(iscis.map(i=>i.code+"|"+(i.dma||"")));
+          const toAdd=set.filter(s=>!existingKeys.has(s.code+"|"+s.dma));
+          let unblockedCount=0;
+          setDeletedIsciKeys(prev=>{const n=new Set(prev);set.forEach(s=>{const k=s.code+"|"+(s.dma||"");if(n.has(k)){n.delete(k);unblockedCount++}});return n});
+          if(toAdd.length){setIscis(p=>[...p,...toAdd]);}
+          setInfoBox({title:"Restore ESPN Digital ISCIs",text:"Added: "+toAdd.length+" ISCI(s)\nUn-deleted: "+unblockedCount+" code(s)\nAlready present: "+(set.length-toAdd.length)+"\n\n"+set.map(s=>(toAdd.includes(s)?"+ ":"= ")+s.code+"  "+s.title).join("\n")+"\n\nReload, then open the Digital estimate — the video + banner pool will be populated."});
+          log("Restore ESPN Digital",toAdd.length+" added, "+unblockedCount+" un-deleted");
+        }} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #4AC8E8",background:"#4AC8E815",color:"#4AC8E8",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>🎬 Restore ESPN Digital ISCIs</button>
         <button onClick={async()=>{
           try{
             const r=await fetch("/api/legacy-assets-export",{credentials:"include"});
