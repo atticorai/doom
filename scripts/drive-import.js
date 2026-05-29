@@ -29,6 +29,8 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const os = require('os');
+const { pipeline } = require('stream/promises');
 const { google } = require('googleapis');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -345,6 +347,47 @@ async function streamToPreallocatedBuffer(stream, totalSize) {
   return buf;
 }
 
+// Threshold above which we use disk staging instead of in-memory buffer.
+// In-RAM path is faster for tons of small files; disk path is the only
+// safe path for videos that would otherwise OOM the VM.
+const DISK_STAGE_BYTES = 200 * 1024 * 1024; // 200 MB
+
+async function hashFile(absPath) {
+  const h = crypto.createHash('sha256');
+  for await (const chunk of fs.createReadStream(absPath)) {
+    h.update(chunk);
+  }
+  return h.digest('hex');
+}
+
+// Upload a file by POSTing the stream directly to Supabase Storage.
+// Bypasses @supabase/storage-js for big uploads — the SDK has been
+// observed wrapping streams in ways that double memory use, and its
+// "Invalid Compact JWS" errors on slow uploads point at internal
+// re-signing we'd rather not trigger.
+async function uploadFileFromDisk(absPath, storageKey, contentType, sizeBytes) {
+  const url = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${storageKey
+    .split('/')
+    .map(encodeURIComponent)
+    .join('/')}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': contentType || 'application/octet-stream',
+      'Content-Length': String(sizeBytes),
+      'x-upsert': 'true',
+      'cache-control': '3600',
+    },
+    body: fs.createReadStream(absPath),
+    duplex: 'half',
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`upload: HTTP ${res.status} ${body.slice(0, 200)}`);
+  }
+}
+
 async function processFile(f, runTotals) {
   if (state.processed[f.id]) {
     runTotals.skipped++;
@@ -401,28 +444,32 @@ async function processFile(f, runTotals) {
     return;
   }
 
+  let tmpPath = null;
   try {
-    // Download from Drive. For files where Drive gave us a size,
-    // pre-allocate a single Buffer of exactly that size and fill it.
-    // Peak memory ≈ file size. Fall back to chunk-concat only when
-    // size is unknown (rare).
-    const stream = await streamDownload(f.id);
-    const buf = sizeBytes > 0
-      ? await streamToPreallocatedBuffer(stream, sizeBytes)
-      : await readStreamToBuffer(stream);
+    let hash;
 
-    // Dedupe hash. Prefer Drive's md5Checksum (already computed by
-    // Google) when present; fall back to sha256 of what we just got.
-    const hash = f.md5Checksum || crypto.createHash('sha256').update(buf).digest('hex');
+    if (sizeBytes > DISK_STAGE_BYTES) {
+      // Big file: stage on disk so RAM stays flat regardless of size.
+      tmpPath = path.join(os.tmpdir(), `drive-import-${f.id}`);
+      await pipeline(await streamDownload(f.id), fs.createWriteStream(tmpPath));
+      hash = f.md5Checksum || await hashFile(tmpPath);
+      await uploadFileFromDisk(tmpPath, storageKey, f.mimeType, sizeBytes);
+    } else {
+      // Small/mid file: in-memory path is faster.
+      const stream = await streamDownload(f.id);
+      const buf = sizeBytes > 0
+        ? await streamToPreallocatedBuffer(stream, sizeBytes)
+        : await readStreamToBuffer(stream);
+      hash = f.md5Checksum || crypto.createHash('sha256').update(buf).digest('hex');
 
-    // Upload to Supabase Storage
-    const upRes = await supabase.storage
-      .from(BUCKET)
-      .upload(storageKey, buf, {
-        contentType: f.mimeType || 'application/octet-stream',
-        upsert: true,
-      });
-    if (upRes.error) throw new Error('upload: ' + upRes.error.message);
+      const upRes = await supabase.storage
+        .from(BUCKET)
+        .upload(storageKey, buf, {
+          contentType: f.mimeType || 'application/octet-stream',
+          upsert: true,
+        });
+      if (upRes.error) throw new Error('upload: ' + upRes.error.message);
+    }
 
     const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(storageKey);
 
@@ -463,6 +510,10 @@ async function processFile(f, runTotals) {
     state.errors.push({ id: f.id, name: f.name, path: meta.path, error: e.message, at: new Date().toISOString() });
     runTotals.errors++;
     saveState();
+  } finally {
+    if (tmpPath) {
+      try { await fs.promises.unlink(tmpPath); } catch {}
+    }
   }
 }
 
