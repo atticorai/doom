@@ -360,27 +360,30 @@ async function hashFile(absPath) {
   return h.digest('hex');
 }
 
-// Upload a file by POSTing the stream directly to Supabase Storage.
-// Bypasses @supabase/storage-js for big uploads — the SDK has been
-// observed wrapping streams in ways that double memory use, and its
-// "Invalid Compact JWS" errors on slow uploads point at internal
-// re-signing we'd rather not trigger.
+// Upload a file by POSTing the bytes directly to Supabase Storage.
+// Bypasses @supabase/storage-js for big uploads — its internal stream
+// handling has been observed inflating memory use, and we also need
+// fine control over headers (the gateway requires BOTH `apikey` and
+// `Authorization` or you get "Invalid Compact JWS" back). Reads the
+// staged temp file into a single Buffer at upload time; with 200 MB+
+// budgeted, peak ≈ file size, fine on a multi-GB VM.
 async function uploadFileFromDisk(absPath, storageKey, contentType, sizeBytes) {
   const url = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${storageKey
     .split('/')
     .map(encodeURIComponent)
     .join('/')}`;
+  const buf = await fs.promises.readFile(absPath);
   const res = await fetch(url, {
     method: 'POST',
     headers: {
+      apikey: SUPABASE_KEY,
       Authorization: `Bearer ${SUPABASE_KEY}`,
       'Content-Type': contentType || 'application/octet-stream',
       'Content-Length': String(sizeBytes),
       'x-upsert': 'true',
       'cache-control': '3600',
     },
-    body: fs.createReadStream(absPath),
-    duplex: 'half',
+    body: buf,
   });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
