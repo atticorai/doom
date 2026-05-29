@@ -326,6 +326,25 @@ function readStreamToBuffer(stream) {
   });
 }
 
+// Pre-allocate a single Buffer of the known size and fill it as chunks
+// arrive. Avoids the array-of-chunks + Buffer.concat dance, which peaks
+// at ~2x the file size in memory. Critical for multi-hundred-MB videos.
+async function streamToPreallocatedBuffer(stream, totalSize) {
+  const buf = Buffer.allocUnsafe(totalSize);
+  let offset = 0;
+  for await (const chunk of stream) {
+    if (offset + chunk.length > totalSize) {
+      throw new Error(`stream produced more bytes than expected (size=${totalSize}, got=${offset + chunk.length})`);
+    }
+    chunk.copy(buf, offset);
+    offset += chunk.length;
+  }
+  if (offset !== totalSize) {
+    throw new Error(`stream ended early (size=${totalSize}, got=${offset})`);
+  }
+  return buf;
+}
+
 async function processFile(f, runTotals) {
   if (state.processed[f.id]) {
     runTotals.skipped++;
@@ -383,14 +402,14 @@ async function processFile(f, runTotals) {
   }
 
   try {
-    // Download from Drive (streamed). For small/mid files we collect
-    // the buffer (fast path). For files > 50 MB we still buffer here
-    // — Supabase Storage's REST upload wants a Blob/Buffer/etc. (its
-    // resumable upload API would be the true streaming path but it
-    // requires extra session setup). 4 GB VM RAM is fine for typical
-    // ad creative (<1 GB per file).
+    // Download from Drive. For files where Drive gave us a size,
+    // pre-allocate a single Buffer of exactly that size and fill it.
+    // Peak memory ≈ file size. Fall back to chunk-concat only when
+    // size is unknown (rare).
     const stream = await streamDownload(f.id);
-    const buf = await readStreamToBuffer(stream);
+    const buf = sizeBytes > 0
+      ? await streamToPreallocatedBuffer(stream, sizeBytes)
+      : await readStreamToBuffer(stream);
 
     // Dedupe hash. Prefer Drive's md5Checksum (already computed by
     // Google) when present; fall back to sha256 of what we just got.
