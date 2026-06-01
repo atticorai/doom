@@ -5381,11 +5381,23 @@ ${fullText.substring(0,3000)}`}]
       </select>
     </div>;
 
+    const BarRow=({label,pct,count,color})=><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+      <div style={{width:140,fontSize:13,fontWeight:700,color:"#9B8EAD",textAlign:"right",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{label}</div>
+      <div style={{flex:1,height:22,background:"#1e1233",borderRadius:6,overflow:"hidden",position:"relative"}}>
+        <div style={{height:"100%",width:pct+"%",background:color,borderRadius:6,transition:"width .5s",minWidth:pct>0?2:0}}/>
+        {pct>8&&<span style={{position:"absolute",left:8,top:3,fontSize:15,fontWeight:800,color:"#fff"}}>{pct}%</span>}
+      </div>
+      <div style={{width:35,fontSize:13,fontWeight:800,color:"#9B8EAD"}}>{pct}%</div>
+      <div style={{width:60,fontSize:13,color:"#9B8EAD"}}>{count} spots</div>
+    </div>;
+    const MO_ORDER=["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const moKey=(m)=>{const p=(m||"").split(" ");const y=parseInt(p[1])||2026;return y*12+Math.max(0,MO_ORDER.indexOf(p[0]))};
+
     return<div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
         <PageHead title="Metrics" pgKey="metrics" sub="Creative Intelligence · Traffic Tracking · Performance"/>
         <div style={{display:"flex",gap:4}}>
-          {[["mix","Creative Mix"],["tracking","Traffic Tracking"],["savings","Time Savings"]].map(([k,l])=>
+          {[["mix","Creative Mix"],["trends","Trends"],["freshness","Freshness"],["confirm","Confirmations"],["tracking","Traffic Tracking"],["savings","Time Savings"]].map(([k,l])=>
             <button key={k} onClick={()=>setView(k)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(view===k?"#4AC8E8":"#E8DFF0"),background:view===k?"#4AC8E8":"#2d1f42",color:view===k?"#fff":"#4a3565",fontSize:13,fontWeight:700,cursor:"pointer"}}>{l}</button>
           )}
         </div>
@@ -5437,6 +5449,56 @@ ${fullText.substring(0,3000)}`}]
             })}
           </Cd>
 
+          {/* Value Prop mix — surfaces the valueProp field per market, flags over-concentration */}
+          {totalVP>0&&(()=>{
+            const tagged=vpArr.filter(v=>v.tag!=="Untagged");
+            const tTot=tagged.reduce((s,v)=>s+v.count,0);
+            const top=tagged[0];
+            const topPct=tTot>0&&top?Math.round((top.count/tTot)*100):0;
+            const over=topPct>=50&&tagged.length>1;
+            return<Cd style={{padding:16,marginBottom:14}}>
+              <div style={{fontSize:14,fontWeight:800,marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+                <span>Value Prop Mix {fMarket!=="all"?"· "+fMarket:""}</span>
+                {over&&<span style={{fontSize:11,fontWeight:700,color:"#D4A040",background:"rgba(212,160,64,.12)",padding:"2px 8px",borderRadius:4}}>⚠ Over-indexed on {top.tag} ({topPct}% of tagged)</span>}
+              </div>
+              {vpArr.map((m,i)=><BarRow key={m.tag} label={m.tag} pct={totalVP>0?Math.round((m.count/totalVP)*100):0} count={m.count} color={colors[i%colors.length]}/>)}
+              {tagged.length===0&&<div style={{fontSize:12,color:"#64748b",fontStyle:"italic"}}>No value props tagged yet — set them in the ISCI Registry to see the balance here.</div>}
+            </Cd>;
+          })()}
+
+          {/* VO mix */}
+          {voArr.length>0&&<Cd style={{padding:16,marginBottom:14}}>
+            <div style={{fontSize:14,fontWeight:800,marginBottom:10}}>Voice (VO) Mix {fMarket!=="all"?"· "+fMarket:""}</div>
+            {voArr.map((m,i)=>{const t=voArr.reduce((s,v)=>s+v.count,0);return<BarRow key={m.tag} label={m.tag} pct={t>0?Math.round((m.count/t)*100):0} count={m.count} color={colors[i%colors.length]}/>;})}
+          </Cd>}
+
+          {/* Per-market value-prop balance — flags markets leaning hard on one prop */}
+          {(()=>{
+            const mvp={};
+            filtered.forEach(d=>{const vp=d.valueProp||"Untagged";if(!mvp[d.market])mvp[d.market]={};mvp[d.market][vp]=(mvp[d.market][vp]||0)+1;});
+            const mkts=Object.keys(mvp).filter(m=>{const tags=Object.keys(mvp[m]).filter(t=>t!=="Untagged");return tags.length>0;});
+            if(mkts.length<2)return null;
+            return<Cd style={{padding:16,marginBottom:14}}>
+              <div style={{fontSize:14,fontWeight:800,marginBottom:10}}>Value Prop by Market</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:10}}>
+                {mkts.sort().map(mkt=>{
+                  const tags=mvp[mkt];const tot=Object.values(tags).reduce((s,v)=>s+v,0);
+                  const sorted=Object.entries(tags).sort((a,b)=>b[1]-a[1]);
+                  const topT=sorted.find(([t])=>t!=="Untagged");
+                  const topShare=topT?Math.round((topT[1]/tot)*100):0;
+                  return<div key={mkt} style={{background:"#1e1233",borderRadius:8,padding:10,border:"1px solid "+(topShare>=60?"#D4A04066":"#4a3565")}}>
+                    <div style={{fontSize:14,fontWeight:800,marginBottom:6,display:"flex",justifyContent:"space-between"}}><span>{DM[mkt]||mkt}</span>{topShare>=60&&<span title="Heavily weighted to one value prop" style={{fontSize:10,color:"#D4A040"}}>⚠</span>}</div>
+                    {sorted.slice(0,5).map(([tag,cnt],i)=>{const p=Math.round((cnt/tot)*100);return<div key={tag} style={{display:"flex",alignItems:"center",gap:4,marginBottom:3}}>
+                      <div style={{width:8,height:8,borderRadius:4,background:colors[i%colors.length],flexShrink:0}}/>
+                      <div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{tag}</div>
+                      <div style={{fontSize:14,fontWeight:800,color:"#9B8EAD"}}>{p}%</div>
+                    </div>;})}
+                  </div>;
+                })}
+              </div>
+            </Cd>;
+          })()}
+
           {/* Per-market breakdown */}
           {Object.keys(byMarket).length>1&&<Cd style={{padding:16}}>
             <div style={{fontSize:14,fontWeight:800,marginBottom:10}}>Market Breakdown</div>
@@ -5460,6 +5522,125 @@ ${fullText.substring(0,3000)}`}]
           </Cd>}
         </div>}
       </div>}
+
+      {/* TRENDS VIEW — month-over-month completion % and category-mix drift */}
+      {view==="trends"&&(()=>{
+        const bh=trafficHistory.filter(h=>h.brand===fBrand&&(fMarket==="all"||normMkt(h.market)===fMarket)&&(fMedia==="all"||h.media===fMedia));
+        if(!bh.length)return<Cd style={{padding:30,textAlign:"center"}}><div style={{fontSize:13,color:"#9B8EAD",fontWeight:600}}>Not enough history yet</div><div style={{fontSize:14,color:"#9B8EAD",marginTop:4}}>Trends appear once you have traffic across two or more months.</div></Cd>;
+        const eMkts=[...new Set(estimates.filter(e=>e.brand===fBrand&&(fMarket==="all"||normMkt(e.market)===fMarket)).map(e=>normMkt(e.market)))].filter(Boolean);
+        const eMedias=[...new Set(estimates.filter(e=>e.brand===fBrand&&(fMedia==="all"||e.media===fMedia)).map(e=>e.media))].filter(m=>m!=="Event"&&m!=="OOH");
+        const expected=eMkts.length*eMedias.length;
+        const cats=[...new Set(bh.flatMap(h=>(h.iscis||[]).map(ic=>{const f=iscis.find(x=>x.code===ic.code);return f?.category||f?.caseType||"Untagged"})))];
+        const catColor={};cats.forEach((c,i)=>catColor[c]=colors[i%colors.length]);
+        const byMo={};bh.forEach(h=>{const mo=h.month||"Unknown";(byMo[mo]=byMo[mo]||[]).push(h)});
+        const moList=Object.keys(byMo).sort((a,b)=>moKey(a)-moKey(b));
+        const rows=moList.map(mo=>{
+          const recs=byMo[mo];
+          const covered=new Set(recs.map(h=>normMkt(h.market)+"_"+h.media)).size;
+          const comp=expected>0?Math.min(100,Math.round(covered/expected*100)):0;
+          const catCount={};recs.forEach(h=>(h.iscis||[]).forEach(ic=>{const f=iscis.find(x=>x.code===ic.code);const c=f?.category||f?.caseType||"Untagged";catCount[c]=(catCount[c]||0)+1}));
+          const tot=Object.values(catCount).reduce((s,v)=>s+v,0);
+          return{mo,covered,comp,catCount,tot};
+        });
+        return<div>
+          <Cd style={{padding:16,marginBottom:14}}>
+            <div style={{fontSize:14,fontWeight:800,marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>Completion % by Month</span>{expected>0&&<Sparkline data={rows.map(r=>r.comp)} color="#4AC8E8" width={120} height={26}/>}</div>
+            {expected===0?<div style={{fontSize:12,color:"#64748b",fontStyle:"italic"}}>No estimates configured for this brand/filter to measure completion against.</div>:rows.map(r=><div key={r.mo} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+              <div style={{width:120,fontSize:13,fontWeight:700,color:"#9B8EAD",textAlign:"right"}}>{r.mo}</div>
+              <div style={{flex:1,height:22,background:"#1e1233",borderRadius:6,overflow:"hidden",position:"relative"}}>
+                <div style={{height:"100%",width:r.comp+"%",background:r.comp>=80?"#5BC4A0":r.comp>=50?"#D4A040":"#E85A7A",borderRadius:6,transition:"width .5s"}}/>
+                {r.comp>8&&<span style={{position:"absolute",left:8,top:3,fontSize:15,fontWeight:800,color:"#fff"}}>{r.comp}%</span>}
+              </div>
+              <div style={{width:90,fontSize:12,color:"#9B8EAD"}}>{r.covered}/{expected} slots</div>
+            </div>)}
+          </Cd>
+          <Cd style={{padding:16}}>
+            <div style={{fontSize:14,fontWeight:800,marginBottom:4}}>Category Mix Drift</div>
+            <div style={{fontSize:11,color:"#64748b",marginBottom:10}}>Each bar is one month — watch the colors shift to see your creative mix change over time.</div>
+            {rows.map(r=><div key={r.mo} style={{marginBottom:8}}>
+              <div style={{fontSize:12,fontWeight:700,color:"#9B8EAD",marginBottom:2}}>{r.mo} <span style={{color:"#64748b"}}>· {r.tot} spots</span></div>
+              <div style={{display:"flex",height:20,borderRadius:5,overflow:"hidden",background:"#1e1233"}}>
+                {Object.entries(r.catCount).sort((a,b)=>b[1]-a[1]).map(([c,n])=>{const p=r.tot>0?(n/r.tot)*100:0;return<div key={c} title={c+": "+Math.round(p)+"%"} style={{width:p+"%",background:catColor[c]||"#64748b",height:"100%"}}/>;})}
+              </div>
+            </div>)}
+            <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:10}}>
+              {cats.map(c=><div key={c} style={{display:"flex",alignItems:"center",gap:4,fontSize:11,color:"#9B8EAD"}}><div style={{width:10,height:10,borderRadius:3,background:catColor[c]}}/>{c}</div>)}
+            </div>
+          </Cd>
+        </div>;
+      })()}
+
+      {/* FRESHNESS VIEW — creative that has been running too long */}
+      {view==="freshness"&&(()=>{
+        const bh=trafficHistory.filter(h=>h.brand===fBrand&&(fMarket==="all"||normMkt(h.market)===fMarket)&&(fMedia==="all"||h.media===fMedia));
+        if(!bh.length)return<Cd style={{padding:30,textAlign:"center"}}><div style={{fontSize:13,color:"#9B8EAD",fontWeight:600}}>No rotation history yet</div><div style={{fontSize:14,color:"#9B8EAD",marginTop:4}}>Freshness tracks how many months each ISCI has been running — send some traffic first.</div></Cd>;
+        const codeMap={};
+        bh.forEach(h=>{(h.iscis||[]).forEach(ic=>{const k=ic.code;if(!codeMap[k])codeMap[k]={code:k,title:ic.title,months:new Set(),markets:new Set()};if(h.month)codeMap[k].months.add(h.month);codeMap[k].markets.add(normMkt(h.market));});});
+        const all=Object.values(codeMap).map(r=>{const f=iscis.find(x=>x.code===r.code);return{code:r.code,title:r.title||f?.title||"",cat:f?.category||f?.caseType||"Untagged",vp:f?.valueProp||"",months:[...r.months].sort((a,b)=>moKey(a)-moKey(b)),markets:[...r.markets]};});
+        const stale=all.filter(r=>r.months.length>=2).sort((a,b)=>b.months.length-a.months.length);
+        const benchN=iscis.filter(i=>i.brand===fBrand&&i.active&&i.suffix!=="O"&&!codeMap[i.code]).length;
+        return<div>
+          <div style={{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap"}}>
+            <Cd style={{padding:14,flex:1,minWidth:130}}><div style={{fontSize:28,fontWeight:900,color:stale.length?"#D4A040":"#5BC4A0"}}>{stale.length}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Running 2+ Months</div></Cd>
+            <Cd style={{padding:14,flex:1,minWidth:130}}><div style={{fontSize:28,fontWeight:900,color:"#E85A7A"}}>{stale.filter(r=>r.months.length>=4).length}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Running 4+ Months</div></Cd>
+            <Cd style={{padding:14,flex:1,minWidth:130}}><div style={{fontSize:28,fontWeight:900,color:"#4AC8E8"}}>{benchN}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Fresh On Bench</div></Cd>
+          </div>
+          {stale.length===0?<Cd style={{padding:24,textAlign:"center"}}><div style={{fontSize:14,color:"#5BC4A0",fontWeight:700}}>Nothing stale — every ISCI has run a single month.</div></Cd>:
+          <Cd style={{padding:0,overflow:"hidden"}}>
+            <div style={{display:"grid",gridTemplateColumns:"90px 1fr 130px 70px 1fr",gap:0,padding:"8px 12px",background:"#1e1233",fontSize:10,fontWeight:800,color:"#9B8EAD",textTransform:"uppercase",letterSpacing:.5}}>
+              <div>ISCI</div><div>Title</div><div>Category</div><div>Months</div><div>Running In</div>
+            </div>
+            {stale.map((r,i)=>{const sev=r.months.length>=4?"#E85A7A":r.months.length>=3?"#D4A040":"#9B8EAD";return<div key={r.code} style={{display:"grid",gridTemplateColumns:"90px 1fr 130px 70px 1fr",gap:0,padding:"8px 12px",borderTop:"1px solid #2d1f42",fontSize:12,alignItems:"center"}}>
+              <div style={{fontFamily:"monospace",fontSize:11,color:"#4AC8E8",fontWeight:700,overflow:"hidden",textOverflow:"ellipsis"}}>{r.code}</div>
+              <div style={{color:"#E8DFF0",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.title||"—"}</div>
+              <div style={{color:"#9B8EAD"}}>{r.cat}</div>
+              <div style={{fontWeight:900,color:sev}}>{r.months.length} mo</div>
+              <div style={{color:"#9B8EAD",fontSize:11}}>{r.months.join(", ")}{r.markets.length>1?" · "+r.markets.length+" mkts":""}</div>
+            </div>;})}
+          </Cd>}
+        </div>;
+      })()}
+
+      {/* CONFIRMATIONS VIEW — who hasn't confirmed, and for how long */}
+      {view==="confirm"&&(()=>{
+        const bh=trafficHistory.filter(h=>h.brand===fBrand&&(h.status==="sent"||h.status==="partial")&&(fMarket==="all"||normMkt(h.market)===fMarket)&&(fMedia==="all"||h.media===fMedia)&&(fMonth==="all"||h.month===fMonth));
+        const pending=[];const staPending={};
+        bh.forEach(h=>{const conf=confirmations[h.est]||{};const stas=h.stations||[];const pend=stas.filter(s=>!conf[s]?.confirmed);if(pend.length){const days=h.ts?Math.floor((Date.now()-new Date(h.ts).getTime())/86400000):null;pending.push({h,pend,days});pend.forEach(s=>{staPending[s]=(staPending[s]||0)+1});}});
+        pending.sort((a,b)=>(b.days||0)-(a.days||0));
+        const totalPend=Object.values(staPending).reduce((s,v)=>s+v,0);
+        const repeat=Object.entries(staPending).filter(([,c])=>c>=2).sort((a,b)=>b[1]-a[1]);
+        const oldest=pending[0]?.days;
+        if(!bh.length)return<Cd style={{padding:30,textAlign:"center"}}><div style={{fontSize:13,color:"#9B8EAD",fontWeight:600}}>No sent traffic to confirm</div><div style={{fontSize:14,color:"#9B8EAD",marginTop:4}}>Send rotations through the system to track station confirmations here.</div></Cd>;
+        return<div>
+          <div style={{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap"}}>
+            <Cd style={{padding:14,flex:1,minWidth:130}}><div style={{fontSize:28,fontWeight:900,color:totalPend?"#E85A7A":"#5BC4A0"}}>{totalPend}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Stations Pending</div></Cd>
+            <Cd style={{padding:14,flex:1,minWidth:130}}><div style={{fontSize:28,fontWeight:900,color:"#D4A040"}}>{pending.length}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Instructions Awaiting</div></Cd>
+            <Cd style={{padding:14,flex:1,minWidth:130}}><div style={{fontSize:28,fontWeight:900,color:oldest>=7?"#E85A7A":oldest>=3?"#D4A040":"#9B8EAD"}}>{oldest!=null?oldest+"d":"—"}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Oldest Pending</div></Cd>
+          </div>
+          {totalPend===0?<Cd style={{padding:24,textAlign:"center"}}><div style={{fontSize:14,color:"#5BC4A0",fontWeight:700}}>All stations confirmed. Nothing outstanding.</div></Cd>:<div>
+            {repeat.length>0&&<Cd style={{padding:16,marginBottom:14}}>
+              <div style={{fontSize:14,fontWeight:800,marginBottom:8}}>Repeat Non-Responders</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{repeat.map(([s,c])=><span key={s} style={{fontSize:12,fontWeight:700,padding:"3px 8px",borderRadius:4,background:"rgba(232,90,122,.1)",color:"#E85A7A",border:"1px solid #E85A7A33"}}>{s} · {c} open</span>)}</div>
+            </Cd>}
+            <Cd style={{padding:0,overflow:"hidden"}}>
+              {pending.map(({h,pend,days},i)=>{const mkt=normMkt(h.market);return<div key={i} style={{padding:"10px 12px",borderTop:i?"1px solid #2d1f42":"none",borderLeft:"3px solid "+(days>=7?"#E85A7A":days>=3?"#D4A040":"#64748b")}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                  <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                    <span style={{fontSize:14,fontWeight:800,color:"#F0E8F8"}}>{DM[mkt]||mkt}</span>
+                    <B l={h.media} c={mc(h.media)}/>
+                    <span style={{fontSize:11,color:"#64748b"}}>Est {h.est||"—"} · v{h.version||"1"}</span>
+                  </div>
+                  <span style={{fontSize:12,fontWeight:700,color:days>=7?"#E85A7A":days>=3?"#D4A040":"#9B8EAD"}}>{days!=null?days+" days since sent":"sent"}</span>
+                </div>
+                <div style={{display:"flex",gap:3,flexWrap:"wrap",marginTop:5}}>
+                  <span style={{fontSize:10,color:"#64748b",fontWeight:600,alignSelf:"center"}}>{pend.length} pending →</span>
+                  {pend.map(s=><span key={s} style={{fontSize:11,fontWeight:600,padding:"1px 5px",borderRadius:3,background:"rgba(100,116,139,.08)",color:"#94a3b8",border:"1px solid #4a356544"}}>○ {s}</span>)}
+                </div>
+              </div>;})}
+            </Cd>
+          </div>}
+        </div>;
+      })()}
 
       {/* TRAFFIC TRACKING VIEW */}
       {view==="tracking"&&(()=>{
