@@ -266,8 +266,23 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
 <div id="dd-status" style="margin-top:18px;font-size:15px;color:#C4A0C8;font-style:italic;font-family:'Cormorant Garamond',serif;max-width:320px;margin-left:auto;margin-right:auto;animation:fadeUp .5s ease-out 1.8s both;opacity:0;min-height:22px"></div>
 <div id="dd-bar" style="width:200px;height:4px;background:#2d1f42;border-radius:4px;overflow:hidden;margin:16px auto 0"><div style="height:100%;width:30%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#7c3aed);border-radius:4px;animation:ldbar 1.5s ease-in-out infinite"></div></div>
 <div id="dd-login-form" style="display:none;margin-top:20px;animation:fadeUp .4s ease-out both;max-width:320px;margin-left:auto;margin-right:auto">
-  <input type="password" id="dd-pw" placeholder="Password" style="width:100%;padding:14px 18px;border-radius:10px;border:2px solid rgba(155,123,176,.3);background:rgba(30,18,51,.5);color:#E8DFF0;font-size:16px;text-align:center;outline:none;margin-bottom:14px;letter-spacing:2px;font-family:'DM Sans',sans-serif;backdrop-filter:blur(8px)"/>
-  <button id="dd-login-btn" style="width:100%;padding:14px;border-radius:10px;border:none !important;background:linear-gradient(135deg,#9b7bb0,#C4A0C8);color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;box-shadow:0 4px 16px rgba(155,123,176,.3);font-family:'DM Sans',sans-serif">Let Me In</button>
+  <!-- Stage 1: App Password -->
+  <div id="dd-stage1">
+    <input type="password" id="dd-pw" placeholder="App Password" style="width:100%;padding:14px 18px;border-radius:10px;border:2px solid rgba(155,123,176,.3);background:rgba(30,18,51,.5);color:#E8DFF0;font-size:16px;text-align:center;outline:none;margin-bottom:14px;letter-spacing:2px;font-family:'DM Sans',sans-serif;backdrop-filter:blur(8px)"/>
+    <button id="dd-continue" style="width:100%;padding:14px;border-radius:10px;border:none !important;background:linear-gradient(135deg,#9b7bb0,#C4A0C8);color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;box-shadow:0 4px 16px rgba(155,123,176,.3);font-family:'DM Sans',sans-serif">Continue</button>
+  </div>
+  <!-- Stage 2: Pick name, then PIN -->
+  <div id="dd-stage2" style="display:none">
+    <div id="dd-roster" style="display:flex;flex-direction:column;gap:8px;margin-bottom:6px"></div>
+    <div id="dd-pinbox" style="display:none">
+      <div id="dd-who" style="font-size:14px;color:#C4A0C8;font-weight:700;margin-bottom:8px;font-family:'DM Sans',sans-serif"></div>
+      <div id="dd-pin-hint" style="display:none;font-size:12px;color:#9B8EAD;margin-bottom:8px;font-family:'DM Sans',sans-serif">First time in — create a PIN (4–8 digits). You'll use it from now on.</div>
+      <input type="password" inputmode="numeric" id="dd-pin" placeholder="PIN" style="width:100%;padding:14px 18px;border-radius:10px;border:2px solid rgba(155,123,176,.3);background:rgba(30,18,51,.5);color:#E8DFF0;font-size:16px;text-align:center;outline:none;margin-bottom:10px;letter-spacing:6px;font-family:'DM Sans',sans-serif;backdrop-filter:blur(8px)"/>
+      <input type="password" inputmode="numeric" id="dd-pin2" placeholder="Confirm PIN" style="display:none;width:100%;padding:14px 18px;border-radius:10px;border:2px solid rgba(155,123,176,.3);background:rgba(30,18,51,.5);color:#E8DFF0;font-size:16px;text-align:center;outline:none;margin-bottom:10px;letter-spacing:6px;font-family:'DM Sans',sans-serif;backdrop-filter:blur(8px)"/>
+      <button id="dd-login-btn" style="width:100%;padding:14px;border-radius:10px;border:none !important;background:linear-gradient(135deg,#9b7bb0,#C4A0C8);color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;box-shadow:0 4px 16px rgba(155,123,176,.3);font-family:'DM Sans',sans-serif">Let Me In</button>
+    </div>
+    <button id="dd-back" style="width:100%;margin-top:10px;padding:8px;border-radius:8px;border:1px solid rgba(155,123,176,.3);background:transparent;color:#9B8EAD;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">← Back</button>
+  </div>
   <div id="dd-login-error" style="display:none;margin-top:10px;font-size:13px;color:#f87171;font-weight:600"></div>
 </div>
 </div>
@@ -282,9 +297,20 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
   var status=document.getElementById("dd-status");
   var bar=document.getElementById("dd-bar");
   var loginForm=document.getElementById("dd-login-form");
+  var stage1=document.getElementById("dd-stage1");
+  var stage2=document.getElementById("dd-stage2");
   var pwInput=document.getElementById("dd-pw");
+  var continueBtn=document.getElementById("dd-continue");
+  var rosterBox=document.getElementById("dd-roster");
+  var pinBox=document.getElementById("dd-pinbox");
+  var whoEl=document.getElementById("dd-who");
+  var pinHint=document.getElementById("dd-pin-hint");
+  var pinInput=document.getElementById("dd-pin");
+  var pin2Input=document.getElementById("dd-pin2");
   var loginBtn=document.getElementById("dd-login-btn");
+  var backBtn=document.getElementById("dd-back");
   var loginError=document.getElementById("dd-login-error");
+  var appPw="",selName="",selNew=false;
   var quipInterval=null;
 
   function showStatus(msg){status.textContent=msg;status.style.opacity="1"}
@@ -303,6 +329,7 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
     stopQuipCycle();
     showStatus(pick(loginQuips));
     loginForm.style.display="block";
+    stage1.style.display="block";stage2.style.display="none";
     bar.style.display="none";
     pwInput.focus();
   }
@@ -445,34 +472,76 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
     });
   }
 
-  function doLogin(){
+  function err(msg){loginError.textContent=msg;loginError.style.display="block"}
+  function roleTag(r){return r==="owner"?"Owner":r==="admin"?"Admin":"Member"}
+
+  // Stage 1 → 2: verify the App Password, then show the name picker.
+  function doContinue(){
     var pw=pwInput.value;
     if(!pw)return;
+    continueBtn.disabled=true;continueBtn.textContent="Checking...";
+    loginError.style.display="none";
+    fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pw,type:"roster"})})
+      .then(function(r){return r.json()})
+      .then(function(d){
+        continueBtn.disabled=false;continueBtn.textContent="Continue";
+        if(d&&d.ok){appPw=pw;buildRoster(d.users||[]);stage1.style.display="none";stage2.style.display="block"}
+        else{pwInput.value="";err(pick(wrongQuips));pwInput.focus()}
+      }).catch(function(){continueBtn.disabled=false;continueBtn.textContent="Continue";err("Connection error. Try again.")});
+  }
+
+  function buildRoster(users){
+    rosterBox.innerHTML="";
+    if(!users.length){var n=document.createElement("div");n.style.cssText="color:#9B8EAD;font-size:13px;font-family:'DM Sans',sans-serif";n.textContent="No people set up yet. The owner adds people in Team.";rosterBox.appendChild(n);return}
+    users.forEach(function(u){
+      var b=document.createElement("button");
+      b.style.cssText="display:flex;justify-content:space-between;align-items:center;width:100%;padding:12px 16px;border-radius:10px;border:1px solid rgba(155,123,176,.3);background:rgba(30,18,51,.5);color:#E8DFF0;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif";
+      b.innerHTML='<span>'+u.name+'</span><span style="font-size:11px;font-weight:600;color:#9B8EAD">'+roleTag(u.role)+(u.hasPin?'':' · set PIN')+'</span>';
+      b.addEventListener("click",function(){selectName(u)});
+      rosterBox.appendChild(b);
+    });
+    pinBox.style.display="none";
+  }
+
+  function selectName(u){
+    selName=u.name;selNew=!u.hasPin;
+    whoEl.textContent=u.name+" — "+roleTag(u.role);
+    pinHint.style.display=selNew?"block":"none";
+    pin2Input.style.display=selNew?"block":"none";
+    pinInput.value="";pin2Input.value="";
+    pinInput.placeholder=selNew?"Create a PIN":"PIN";
+    loginBtn.textContent=selNew?"Create PIN & Enter":"Let Me In";
+    rosterBox.style.display="none";pinBox.style.display="block";
+    loginError.style.display="none";
+    pinInput.focus();
+  }
+
+  function doLogin(){
+    var pin=(pinInput.value||"").trim();
+    if(!/^[0-9]{4,8}$/.test(pin)){err("PIN must be 4–8 digits");return}
+    if(selNew&&pin!==(pin2Input.value||"").trim()){err("PINs don't match");return}
     loginBtn.disabled=true;loginBtn.textContent="Checking...";
     loginError.style.display="none";
-    fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pw,type:"login"})})
+    fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:appPw,name:selName,pin:pin,type:"login"})})
       .then(function(r){return r.json()})
       .then(function(d){
         if(d.success){
-          // Remember who signed in (and their role / forced-change flag) so the
-          // app can stamp the audit log and gate the Team page.
-          try{
-            if(d.user)sessionStorage.setItem("dd_user",d.user);
-            sessionStorage.setItem("dd_role",d.role||"member");
-            sessionStorage.setItem("dd_mustchange",d.mustChange?"1":"0");
-          }catch(e){}
-          // If the server minted a Firebase Auth custom token (FIREBASE_ADMIN_KEY
-          // configured), sign in so locked-down Firestore rules accept our writes.
-          // No token = legacy mode; loadApp regardless.
+          try{if(d.user)sessionStorage.setItem("dd_user",d.user);sessionStorage.setItem("dd_role",d.role||"member")}catch(e){}
           if(d.customToken){window.__pendingCustomToken=d.customToken}
           loadApp();
         }
-        else{loginBtn.disabled=false;loginBtn.textContent="Let Me In";pwInput.value="";loginError.textContent=pick(wrongQuips);loginError.style.display="block";pwInput.focus()}
-      }).catch(function(){loginBtn.disabled=false;loginBtn.textContent="Let Me In";loginError.textContent="Connection error. Try again.";loginError.style.display="block"});
+        else{loginBtn.disabled=false;loginBtn.textContent=selNew?"Create PIN & Enter":"Let Me In";pinInput.value="";pin2Input.value="";err(selNew?"Couldn't set that PIN — it may be taken. Try another.":pick(wrongQuips));pinInput.focus()}
+      }).catch(function(){loginBtn.disabled=false;loginBtn.textContent=selNew?"Create PIN & Enter":"Let Me In";err("Connection error. Try again.")});
   }
 
+  function goBack(){pinBox.style.display="none";rosterBox.style.display="flex";loginError.style.display="none"}
+
+  continueBtn.addEventListener("click",doContinue);
+  pwInput.addEventListener("keydown",function(e){if(e.key==="Enter")doContinue()});
   loginBtn.addEventListener("click",doLogin);
-  pwInput.addEventListener("keydown",function(e){if(e.key==="Enter")doLogin()});
+  pinInput.addEventListener("keydown",function(e){if(e.key==="Enter")doLogin()});
+  pin2Input.addEventListener("keydown",function(e){if(e.key==="Enter")doLogin()});
+  backBtn.addEventListener("click",goBack);
 
   // On load: show quips while checking auth
   showStatus(pick(quips));
@@ -498,7 +567,7 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
     fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"check"})})
       .then(function(r){return r.json()})
       .then(function(d){
-        if(d.authenticated){try{if(d.user)sessionStorage.setItem("dd_user",d.user);sessionStorage.setItem("dd_role",d.role||"member");sessionStorage.setItem("dd_mustchange",d.mustChange?"1":"0")}catch(e){}if(d.customToken){window.__pendingCustomToken=d.customToken}loadApp()}
+        if(d.authenticated){try{if(d.user)sessionStorage.setItem("dd_user",d.user);sessionStorage.setItem("dd_role",d.role||"member")}catch(e){}if(d.customToken){window.__pendingCustomToken=d.customToken}loadApp()}
         else{showLogin()}
       })
       .catch(function(){showLogin()});

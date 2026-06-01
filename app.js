@@ -35,15 +35,14 @@ if(typeof window!=="undefined"&&window.__pendingCustomToken){
   signInWithFbToken(window.__pendingCustomToken);
   window.__pendingCustomToken=null;
 }
-const verifyAuth=async(password,type)=>{
+const verifyAuth=async(password,type,pin)=>{
   try{
-    const r=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password,type})});
+    const r=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password,pin,type})});
     const d=await r.json();
     if(d.success===true&&type==="login"){
       try{
         if(d.user)sessionStorage.setItem("dd_user",d.user);
         sessionStorage.setItem("dd_role",d.role||"member");
-        sessionStorage.setItem("dd_mustchange",d.mustChange?"1":"0");
       }catch(e){}
       if(d.customToken){await signInWithFbToken(d.customToken)}
     }
@@ -690,6 +689,7 @@ const App=()=>{
   const[mustChangePw,setMustChangePw]=useState(()=>{try{return sessionStorage.getItem("dd_mustchange")==="1"}catch(e){return false}});
   const[showChangePw,setShowChangePw]=useState(false);
   const[authInput,setAuthInput]=useState("");
+  const[authPin,setAuthPin]=useState("");
 
   // ── FIRESTORE PERSISTENCE ────────────────────────────
   const loadCompleteRef=React.useRef(false);
@@ -8364,19 +8364,19 @@ Rules:
   // their password is env-managed (Owner / shared team password).
   const ChangePwModal=()=>{
     const[p1,setP1]=useState("");const[p2,setP2]=useState("");const[busy,setBusy]=useState(false);const[err,setErr]=useState("");
-    const pwStyle={width:"100%",padding:"11px 14px",borderRadius:8,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:15,outline:"none",marginBottom:10,boxSizing:"border-box"};
+    const pwStyle={width:"100%",padding:"11px 14px",borderRadius:8,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:15,outline:"none",marginBottom:10,boxSizing:"border-box",textAlign:"center",letterSpacing:4};
     const submit=async()=>{
-      if(p1.length<6){setErr("At least 6 characters");return}
-      if(p1!==p2){setErr("Passwords don't match");return}
+      if(!/^[0-9]{4,8}$/.test(p1)){setErr("PIN must be 4–8 digits");return}
+      if(p1!==p2){setErr("PINs don't match");return}
       setBusy(true);setErr("");
-      try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"changeOwnPassword",newPassword:p1})});const d=await r.json();setBusy(false);if(!r.ok){setErr(d.error||"Failed");return}setShowChangePw(false);notify("Password changed")}catch(e){setBusy(false);setErr("Network error")}
+      try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"changeOwnPin",pin:p1})});const d=await r.json();setBusy(false);if(!r.ok){setErr(d.error||"Failed");return}setShowChangePw(false);notify("PIN changed")}catch(e){setBusy(false);setErr("Network error")}
     };
     return<div onClick={()=>setShowChangePw(false)} style={{position:"fixed",inset:0,background:"rgba(10,6,18,.7)",zIndex:10000,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div onClick={e=>e.stopPropagation()} style={{width:360,background:"#2d1f42",border:"1px solid #4a3565",borderRadius:12,padding:20}}>
-        <div style={{fontSize:18,fontWeight:800,color:"#F0E8F8",marginBottom:4,fontFamily:"'Cormorant Garamond',serif"}}>Change your password</div>
-        <div style={{fontSize:12,color:"#9B8EAD",marginBottom:14}}>Forgot it? An admin can reset it for you — no one gets locked out.</div>
-        <input type="password" value={p1} onChange={e=>setP1(e.target.value)} placeholder="New password" style={pwStyle}/>
-        <input type="password" value={p2} onChange={e=>setP2(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")submit()}} placeholder="Confirm new password" style={pwStyle}/>
+        <div style={{fontSize:18,fontWeight:800,color:"#F0E8F8",marginBottom:4,fontFamily:"'Cormorant Garamond',serif"}}>Change your PIN</div>
+        <div style={{fontSize:12,color:"#9B8EAD",marginBottom:14}}>4–8 digits. Forgot it? An admin can reset it for you — no one gets locked out.</div>
+        <input type="password" inputMode="numeric" value={p1} onChange={e=>setP1(e.target.value.replace(/[^0-9]/g,"").slice(0,8))} placeholder="New PIN" style={pwStyle}/>
+        <input type="password" inputMode="numeric" value={p2} onChange={e=>setP2(e.target.value.replace(/[^0-9]/g,"").slice(0,8))} onKeyDown={e=>{if(e.key==="Enter")submit()}} placeholder="Confirm new PIN" style={pwStyle}/>
         {err&&<div style={{color:"#E85A7A",fontSize:13,fontWeight:600,marginBottom:8}}>{err}</div>}
         <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
           <Btn small onClick={()=>setShowChangePw(false)}>Cancel</Btn>
@@ -8394,7 +8394,6 @@ Rules:
     const[err,setErr]=useState("");
     const[newName,setNewName]=useState("");
     const[newRole,setNewRole]=useState("member");
-    const[tempShown,setTempShown]=useState(null); // {name,temp}
     const load=async()=>{setErr("");try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"list"})});const d=await r.json();if(!r.ok){setErr(d.error||"Failed to load team");return}setList(d.users||[]);setMeInfo(d.me||null)}catch(e){setErr("Network error loading team")}};
     React.useEffect(()=>{load()},[]);
     const call=async(body)=>{setBusy(true);setErr("");try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(body)});const d=await r.json();setBusy(false);if(!r.ok){setErr(d.error||"Action failed");return null}return d}catch(e){setBusy(false);setErr("Network error");return null}};
@@ -8403,45 +8402,35 @@ Rules:
     const roleLabel=r=>r==="owner"?"Owner":r==="admin"?"Admin":"Member";
     const roleColor=r=>r==="owner"?"#D4A040":r==="admin"?"#4AC8E8":"#9B8EAD";
     const canTouch=(t)=>t.role==="owner"?false:(isOwner?true:(myRole==="admin"&&t.role==="member"));
-    const add=async()=>{const nm=newName.trim();if(!nm)return;const d=await call({action:"add",name:nm,role:newRole});if(d){setTempShown({name:d.name,temp:d.tempPassword});setNewName("");setNewRole("member");load()}};
-    const reset=async(t)=>{if(!confirm("Reset password for "+t.name+"? They'll get a temporary password and must set a new one at next login."))return;const d=await call({action:"reset",name:t.name});if(d){setTempShown({name:d.name,temp:d.tempPassword});load()}};
+    const add=async()=>{const nm=newName.trim();if(!nm)return;const d=await call({action:"add",name:nm,role:newRole});if(d){notify(nm+" added — they'll set their own PIN at first sign-in");setNewName("");setNewRole("member");load()}};
+    const reset=async(t)=>{if(!confirm("Reset "+t.name+"'s PIN? Their current PIN stops working and they set a new one the next time they sign in."))return;const d=await call({action:"resetPin",name:t.name});if(d){notify(t.name+"'s PIN was reset — they'll pick a new one at next sign-in");load()}};
     const remove=async(t)=>{if(!confirm("Remove "+t.name+"? They will no longer be able to sign in."))return;const d=await call({action:"remove",name:t.name});if(d)load()};
     const setR=async(t,r)=>{const d=await call({action:"setRole",name:t.name,role:r});if(d)load()};
     const ibox={padding:"7px 10px",borderRadius:6,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:13,outline:"none"};
     return<div>
-      <PageHead title="Team" pgKey="team" sub="Add people, set roles, and reset passwords. New people and resets get a one-time temporary password they must change at first login."/>
+      <PageHead title="Team" pgKey="team" sub="Everyone shares the App Password to get in; each person picks their own PIN the first time they sign in. You just set names and roles here."/>
       {err&&<Cd style={{padding:"8px 12px",marginBottom:10,border:"1px solid #E85A7A",background:"rgba(232,90,122,.08)"}}><span style={{color:"#E85A7A",fontWeight:600,fontSize:13}}>{err}</span></Cd>}
-      {tempShown&&<Cd style={{padding:14,marginBottom:12,border:"1px solid #D4A040",background:"rgba(212,160,64,.1)"}}>
-        <div style={{fontWeight:800,color:"#D4A040",marginBottom:4}}>Temporary password for {tempShown.name}</div>
-        <div style={{fontSize:13,color:"#C9BBD9",marginBottom:8}}>Give this to them now — it won't be shown again. They'll be required to set their own password the first time they log in.</div>
-        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-          <code style={{fontSize:18,fontWeight:800,background:"#1e1233",padding:"6px 12px",borderRadius:6,color:"#5BC4A0",letterSpacing:1}}>{tempShown.temp}</code>
-          <Btn small onClick={()=>{try{navigator.clipboard&&navigator.clipboard.writeText(tempShown.temp)}catch(e){}notify("Copied")}}>Copy</Btn>
-          <Btn small onClick={()=>setTempShown(null)}>Done</Btn>
-        </div>
-      </Cd>}
       <Cd style={{padding:14,marginBottom:12}}>
         <div style={{fontSize:14,fontWeight:800,marginBottom:8,color:"#E8DFF0"}}>Add a person</div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-          <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Name" style={{...ibox,minWidth:180}}/>
+          <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Name" style={{...ibox,minWidth:160}}/>
           <select value={newRole} onChange={e=>setNewRole(e.target.value)} style={ibox}>
             <option value="member">Member</option>
             {isOwner&&<option value="admin">Admin</option>}
           </select>
-          <Btn primary disabled={busy||!newName.trim()} onClick={add}>Add — generate temp password</Btn>
+          <Btn primary disabled={busy||!newName.trim()} onClick={add}>Add person</Btn>
         </div>
-        {!isOwner&&<div style={{fontSize:11,color:"#6B5E80",marginTop:6}}>Admins can add Members. Only the Owner can add Admins.</div>}
+        <div style={{fontSize:11,color:"#6B5E80",marginTop:6}}>They'll appear on the login screen and set their own PIN the first time they pick their name.{!isOwner?" Admins can add Members; only the Owner can add Admins.":""}</div>
       </Cd>
       <Cd style={{padding:0,overflow:"hidden"}}>
-        {list===null?<div style={{padding:20,color:"#9B8EAD"}}>Loading…</div>:list.length===0?<div style={{padding:20,color:"#9B8EAD"}}>No managed users yet. Add someone above.</div>:list.map((t,i)=><div key={t.name} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderTop:i?"1px solid #2d1f42":"none",flexWrap:"wrap"}}>
+        {list===null?<div style={{padding:20,color:"#9B8EAD"}}>Loading…</div>:list.length===0?<div style={{padding:20,color:"#9B8EAD"}}>No people added yet. Add someone above.</div>:list.map((t,i)=><div key={t.name} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderTop:i?"1px solid #2d1f42":"none",flexWrap:"wrap"}}>
           <div style={{flex:1,minWidth:140}}>
             <span style={{fontWeight:700,color:"#E8DFF0"}}>{t.name}</span>
-            {t.mustChange&&<span style={{marginLeft:8,fontSize:10,fontWeight:700,color:"#D4A040"}}>temp pw — must change</span>}
-            {t.active===false&&<span style={{marginLeft:8,fontSize:10,color:"#E85A7A"}}>inactive</span>}
+            {!t.hasPin&&<span style={{marginLeft:8,fontSize:10,fontWeight:700,color:"#D4A040"}}>hasn't set PIN yet</span>}
           </div>
           <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:4,background:roleColor(t.role)+"22",color:roleColor(t.role)}}>{roleLabel(t.role)}</span>
           {isOwner&&t.role!=="owner"&&<select value={t.role} onChange={e=>setR(t,e.target.value)} style={{...ibox,padding:"4px 6px",fontSize:12}}><option value="member">Member</option><option value="admin">Admin</option></select>}
-          {canTouch(t)&&<Btn small onClick={()=>reset(t)} disabled={busy}>Reset PW</Btn>}
+          {canTouch(t)&&<Btn small onClick={()=>reset(t)} disabled={busy}>Reset PIN</Btn>}
           {canTouch(t)&&<Btn small danger onClick={()=>remove(t)} disabled={busy}>Remove</Btn>}
         </div>)}
       </Cd>
@@ -9432,18 +9421,18 @@ Rules:
         <BookMarginNote author="muses">We are the Muses, goddesses of the arts<br/>We'll sing of your traffic — the sum of its parts!</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:32,right:24,opacity:.5,transform:"rotate(10deg) scale(1.1)"}}/>}{<BookDroolStain style={{bottom:16,left:32,width:80,height:80,opacity:.2}}/>}</>},
 
-      {title:"Signing In & Your Account",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p>Everyone has their own password. Type it on the login screen — the app knows who you are from it, and stamps your name on everything you do in the Activity Log. Your name shows at the bottom of the sidebar ("Signed in as …").</p>
-        <p>New here, or had your password reset? You'll be given a <b>temporary password</b> (looks like <code>doom-1a2b3c4d</code>). Log in with it once and the app immediately asks you to set your own password before you can do anything else.</p>
-        <p>Forgot your password? Ask an admin to reset it for you — they'll hand you a new temporary one. There's no email reset.</p>
-        <BookMarginNote author="meg">Your password. Your name on your mistakes. Choose wisely.</BookMarginNote>
+      {title:"Signing In & Your PIN",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>Logging in is two quick steps. First, the shared <b>App Password</b> unlocks the door. Then you see the list of names — <b>tap yours</b> and enter your PIN. Your name shows at the bottom of the sidebar ("Signed in as …") and gets stamped on everything you do in the Activity Log.</p>
+        <p><b>First time?</b> When you tap your name the app asks you to <b>create your own PIN</b> (4–8 digits). That's yours from then on — no one else sets it or sees it.</p>
+        <p>Forgot your PIN? Ask an admin to reset it — your name goes back to "create a PIN" so you just pick a new one next time. You can also change it anytime via <b>Change PIN</b> at the bottom of the sidebar. No one ever gets locked out.</p>
+        <BookMarginNote author="meg">Pick your name, punch your PIN. Try to remember it this time.</BookMarginNote>
       </div>,damageEffects:<>{<BookInkSplatter style={{bottom:16,right:16,opacity:.4}}/>}</>},
 
       {title:"Team & Roles (Admins)",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p>If you're an admin, a <b>Team</b> item appears in the sidebar. There you add people, set their role, and reset passwords. Adding someone (or resetting them) produces a one-time temporary password — copy it and give it to them; it's shown only once.</p>
-        <p>There are three roles. <b>Owner</b>: full control, can't be removed or demoted. <b>Admin</b>: can add, remove and reset <i>members</i>. <b>Member</b>: uses the app, no team management. Only the Owner can create or change Admins.</p>
-        <p>Removing someone stops them signing in immediately. Everything they did stays in the Activity Log under their name.</p>
-        <BookMarginNote author="hades">Hand out access carefully. The log remembers who you let in.</BookMarginNote>
+        <p>If you're an admin, a <b>Team</b> item appears in the sidebar. You manage <i>names and roles</i> — that's it. Add someone by typing their name and picking a role; they show up on the login screen and <b>set their own PIN</b> the first time they sign in. You never handle PINs.</p>
+        <p>Three roles. <b>Owner</b>: full control, can't be removed or demoted. <b>Admin</b>: can add, remove and reset <i>members</i>. <b>Member</b>: uses the app, no team management. Only the Owner can create or change Admins.</p>
+        <p><b>Reset PIN</b> clears someone's PIN so they pick a new one next sign-in (use it if they're locked out). <b>Remove</b> blocks them immediately; everything they did stays in the Activity Log under their name.</p>
+        <BookMarginNote author="hades">Names and roles are yours to hand out. The log remembers every one.</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:24,opacity:.4,transform:"rotate(10deg)"}}/>}</>},
 
       {title:"Saving & Staying in Sync",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -9583,8 +9572,7 @@ Rules:
     <div style={{fontSize:28,fontWeight:800,color:"#9b7bb0",letterSpacing:2,textShadow:"0 0 20px rgba(155,123,176,.4),0 0 40px rgba(155,123,176,.15)"}}>DOOM & DELIVERABLES</div>
     <div style={{fontSize:11,fontWeight:600,color:"#C4A0C8",letterSpacing:3,marginTop:4}}>ATTICOR MEDIA</div>
     <div style={{fontSize:13,color:"#9b7bb0",marginTop:20,marginBottom:24,fontStyle:"italic"}}>{doomPick(DOOM.login)}</div>
-    <input type="password" value={authInput} onChange={e=>setAuthInput(e.target.value)} onKeyDown={async e=>{if(e.key==="Enter"){const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");try{if(sessionStorage.getItem("dd_mustchange")==="1")setMustChangePw(true)}catch(e){}setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}}} placeholder="Password" style={{width:"100%",padding:"14px 18px",borderRadius:10,border:"2px solid rgba(155,123,176,.35)",background:"rgba(20,15,30,.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",color:"#E8DFF0",fontSize:16,textAlign:"center",outline:"none",marginBottom:14,letterSpacing:2}}/>
-    <button onClick={async()=>{const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");try{if(sessionStorage.getItem("dd_mustchange")==="1")setMustChangePw(true)}catch(e){}setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(155,123,176,.3)"}}>Let Me In</button>
+    <button onClick={()=>{try{["dd_auth","dd_user","dd_role"].forEach(k=>sessionStorage.removeItem(k))}catch(e){}window.location.reload()}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(155,123,176,.3)"}}>Sign in</button>
   </div></div>;
   if(authed&&mustChangePw)return<ForcedPwChange/>;
   if(!dbLoaded)return null; // HTML loader stays visible until data is ready
@@ -9614,7 +9602,7 @@ Rules:
         </div>})()}
       </div>
       <nav style={{flex:1,padding:"3px 0"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:(pg===n.id&&!isOohHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 12px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative",transition:"all .15s",letterSpacing:a?.3:0}} onMouseEnter={e=>{if(!a)e.currentTarget.style.background="rgba(155,123,176,.06)"}} onMouseLeave={e=>{if(!a)e.currentTarget.style.background="transparent"}}><span style={{fontSize:14}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:12,fontWeight:800,padding:"1px 6px",borderRadius:10,background:typeof badge==="number"?"#E85A7A":"#D4A040",color:"#fff",boxShadow:typeof badge==="number"?"0 2px 8px rgba(232,90,122,.3)":"0 2px 8px rgba(212,160,64,.3)"}}>{badge}</span>}</button>})}</nav>
-      <div style={{padding:"10px 12px",borderTop:"1px solid rgba(212,160,64,.1)",fontSize:12,color:"#6B5E80"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,color:"#D4A040",letterSpacing:1}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #4a3565",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#9B8EAD",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:syncError?"#E85A7A":"#5BC4A0"}}>{syncError?"Save failed":"Synced "+(Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago")}</span>}</div><div style={{marginTop:2,color:"#6B5E80",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>Signed in as <span style={{color:"#9B8EAD",fontWeight:700}}>{currentUser()}</span></span><span style={{display:"flex",gap:8}}><button onClick={()=>setShowChangePw(true)} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Change password</button><button onClick={signOut} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Sign out</button></span></div></div>
+      <div style={{padding:"10px 12px",borderTop:"1px solid rgba(212,160,64,.1)",fontSize:12,color:"#6B5E80"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,color:"#D4A040",letterSpacing:1}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #4a3565",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#9B8EAD",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:syncError?"#E85A7A":"#5BC4A0"}}>{syncError?"Save failed":"Synced "+(Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago")}</span>}</div><div style={{marginTop:2,color:"#6B5E80",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>Signed in as <span style={{color:"#9B8EAD",fontWeight:700}}>{currentUser()}</span></span><span style={{display:"flex",gap:8}}><button onClick={()=>setShowChangePw(true)} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Change PIN</button><button onClick={signOut} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Sign out</button></span></div></div>
     </div>
     <div style={{flex:1,overflowY:"auto",padding:16}}>
       <AnimatePresence mode="wait" initial={false}>

@@ -2,22 +2,22 @@
 // /api/users — in-app team management (role-gated, service-role).
 // ═══════════════════════════════════════════════════════════════════
 // Actions (POST { action, ... }):
-//   list               — owner/admin: list users (no secrets)
-//   add {name,role}     — owner/admin: create user, returns one-time tempPassword
-//   reset {name}        — owner/admin: reset to a new tempPassword (forced change)
+//   list                — owner/admin: list users (no PINs)
+//   add {name,role,pin} — owner/admin: create a user with a PIN
+//   setPin {name,pin}   — owner/admin: reset someone's PIN
 //   remove {name}       — owner/admin: delete a user
 //   setRole {name,role} — owner only: change a user's role
-//   changeOwnPassword {newPassword} — any signed-in user: set own password
+//   changeOwnPin {pin}  — any signed-in user: change own PIN
 //
-// Roles: owner (protected — can't be removed/demoted; only owner manages
-// admins), admin (manages members only), member (no management).
-// Identity comes from the signed dd_session cookie; role is looked up
-// server-side from the store — the client is never trusted for authorization.
+// Roles: owner (protected), admin (manages members only), member.
+// Identity comes from the signed dd_session cookie; role is resolved
+// server-side from the store — the client is never trusted for authz.
+// PINs are 4-8 digits, unique across users, scrypt-hashed.
 // ═══════════════════════════════════════════════════════════════════
 
 const {
   getSupabase, ensureSeed, findUser, publicUser,
-  hashPassword, generateTempPassword, writeUsersDoc,
+  hashSecret, writeUsersDoc, isValidPin, pinInUse,
 } = require('./_users');
 const { validateSessionToken, userFromToken, getSessionSecret } = require('./auth');
 
@@ -31,7 +31,6 @@ function callerName(req) {
 }
 
 const isManager = (role) => role === 'owner' || role === 'admin';
-// Who an actor may act on. Owner → anyone except the owner. Admin → members.
 function canManage(actorRole, targetRole) {
   if (targetRole === 'owner') return false;
   if (actorRole === 'owner') return true;
@@ -58,22 +57,16 @@ module.exports = async function handler(req, res) {
   const ownerName = (process.env.OWNER_NAME || 'Emm').trim().toLowerCase();
   const myRole = me ? me.role : (name.toLowerCase() === ownerName ? 'owner' : 'member');
   const { action } = req.body || {};
+  const pinOf = (b) => String((b && b.pin) || '').trim();
 
   try {
-    // Anyone signed in can change their own password (used by forced change
-    // and self-service). The Owner and shared-password "Staff" have no managed
-    // store account — their passwords live in env config, so explain that
-    // instead of failing silently.
-    if (action === 'changeOwnPassword') {
-      const np = (req.body && req.body.newPassword) || '';
-      if (typeof np !== 'string' || np.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
-      if (!me) {
-        const why = myRole === 'owner'
-          ? 'The Owner password is set in system config (OWNER_PASSWORD), not here.'
-          : 'You are signed in with the shared team password. Ask an admin to create a personal login for you.';
-        return res.status(400).json({ error: why });
-      }
-      me.pw = hashPassword(np); me.mustChange = false; me.updatedAt = Date.now();
+    // Anyone signed in can change their own PIN.
+    if (action === 'changeOwnPin') {
+      const np = pinOf(req.body);
+      if (!isValidPin(np)) return res.status(400).json({ error: 'PIN must be 4–8 digits' });
+      if (!me) return res.status(400).json({ error: 'No account to set a PIN on (you signed in with the App Password only).' });
+      if (pinInUse(doc, np, me.name)) return res.status(409).json({ error: 'That PIN is already taken — pick another.' });
+      me.pin = hashSecret(np); me.updatedAt = Date.now();
       await writeUsersDoc(supabase, doc);
       return res.status(200).json({ ok: true });
     }
@@ -81,11 +74,9 @@ module.exports = async function handler(req, res) {
     if (action === 'list') {
       if (!isManager(myRole)) return res.status(403).json({ error: 'Not allowed' });
       const out = doc.users.map(publicUser);
-      // Owner isn't stored (env-authenticated) — surface a read-only row so the
-      // team list shows who the Owner is.
       const ownerDisplay = (process.env.OWNER_NAME || 'Emm').trim();
       if (!out.some(u => u.role === 'owner')) {
-        out.unshift({ name: ownerDisplay, role: 'owner', active: true, mustChange: false, updatedAt: null });
+        out.unshift({ name: ownerDisplay, role: 'owner', active: true, hasPin: true, updatedAt: null });
       }
       return res.status(200).json({ users: out, me: { name, role: myRole } });
     }
@@ -97,25 +88,24 @@ module.exports = async function handler(req, res) {
       let rr = ((req.body && req.body.role) || 'member').trim();
       if (!nn) return res.status(400).json({ error: 'Name required' });
       if (findUser(doc, nn)) return res.status(409).json({ error: 'A user with that name already exists' });
-      // Only the owner can mint admins; everyone else's adds are members.
       if (rr === 'admin' && myRole !== 'owner') return res.status(403).json({ error: 'Only the owner can add admins' });
       if (rr !== 'admin') rr = 'member';
-      const temp = generateTempPassword();
       const now = Date.now();
-      doc.users.push({ name: nn, role: rr, pw: hashPassword(temp), active: true, mustChange: true, createdAt: now, updatedAt: now });
+      // No PIN — the person creates their own the first time they sign in.
+      doc.users.push({ name: nn, role: rr, pin: null, active: true, createdAt: now, updatedAt: now });
       await writeUsersDoc(supabase, doc);
-      return res.status(200).json({ ok: true, tempPassword: temp, name: nn, role: rr });
+      return res.status(200).json({ ok: true, name: nn, role: rr });
     }
 
-    if (action === 'reset') {
+    if (action === 'resetPin') {
       const tn = ((req.body && req.body.name) || '').trim();
       const target = findUser(doc, tn);
       if (!target) return res.status(404).json({ error: 'User not found' });
-      if (!canManage(myRole, target.role)) return res.status(403).json({ error: 'Not allowed to reset that user' });
-      const temp = generateTempPassword();
-      target.pw = hashPassword(temp); target.mustChange = true; target.updatedAt = Date.now();
+      if (!canManage(myRole, target.role)) return res.status(403).json({ error: 'Not allowed to change that user' });
+      // Clear the PIN — they'll set a fresh one at their next sign-in.
+      target.pin = null; target.updatedAt = Date.now();
       await writeUsersDoc(supabase, doc);
-      return res.status(200).json({ ok: true, tempPassword: temp, name: target.name });
+      return res.status(200).json({ ok: true, name: target.name });
     }
 
     if (action === 'remove') {

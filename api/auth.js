@@ -164,9 +164,7 @@ module.exports = async function handler(req, res) {
     // Recover the signed-in name from the token so the client can stamp the
     // audit log after a reload without re-logging in.
     const user = authenticated ? userFromToken(rawToken) : null;
-    // Look up role + forced-password-change flag from the managed user store
-    // (best effort — if the store is unavailable we just omit them).
-    let role = null, mustChange = false;
+    let role = null;
     if (authenticated && user) {
       const um = usersMod();
       if (um) {
@@ -175,7 +173,7 @@ module.exports = async function handler(req, res) {
           if (supabase) {
             const doc = await um.ensureSeed(supabase);
             const u = um.findUser(doc, user);
-            if (u) { role = u.role; mustChange = !!u.mustChange; }
+            if (u) { role = u.role; }
             else { role = user.trim().toLowerCase() === (process.env.OWNER_NAME || 'Emm').trim().toLowerCase() ? 'owner' : 'member'; }
           }
         } catch (e) { console.error('role lookup (check) failed:', e.message); }
@@ -191,7 +189,7 @@ module.exports = async function handler(req, res) {
         catch (e) { console.error('createCustomToken (check) failed:', e.message); }
       }
     }
-    return res.status(200).json({ authenticated, user, role, mustChange, customToken });
+    return res.status(200).json({ authenticated, user, role, customToken });
   }
 
   if (type === 'logout') {
@@ -217,43 +215,61 @@ module.exports = async function handler(req, res) {
     return res.status(429).json({ error: 'Too many attempts. Try again later.' });
   }
 
-  if (type === 'login') {
+  // Step 1 → 2 of login: the App Password unlocks the name picker. Returns the
+  // roster (names + roles + whether each has a PIN yet) so the client can show
+  // "enter your PIN" vs "create your PIN" on the second screen.
+  if (type === 'roster') {
     recordAttempt(clientIp);
-    let matched = null; // { name, role?, mustChange? }
-    const ownerName = (process.env.OWNER_NAME || 'Emm').trim();
-    // 1. Managed user store (Admins / Members with their own hashed passwords).
-    //    Owner-role rows are never honored here — Owner auth is env-only below,
-    //    so the shared password can never grant Owner.
+    if (!timingSafeEqual(password, SYS_PASSWORD)) return res.status(200).json({ ok: false });
+    let users = [];
     const um = usersMod();
     if (um) {
       try {
         const supabase = um.getSupabase();
-        if (supabase) {
-          const doc = await um.ensureSeed(supabase);
-          for (const u of (doc.users || [])) {
-            if (u.role !== 'owner' && u.active !== false && um.verifyPassword(password, u.pw)) {
-              matched = { name: u.name, role: u.role, mustChange: !!u.mustChange };
+        if (supabase) { const doc = await um.ensureSeed(supabase); users = um.roster(doc); }
+      } catch (e) { console.error('roster failed:', e.message); }
+    }
+    return res.status(200).json({ ok: true, users });
+  }
+
+  if (type === 'login') {
+    recordAttempt(clientIp);
+    let matched = null; // { name, role }
+    const ownerName = (process.env.OWNER_NAME || 'Emm').trim();
+    const pin = (req.body && typeof req.body.pin === 'string') ? req.body.pin.trim() : '';
+    const pickedName = (req.body && typeof req.body.name === 'string') ? req.body.name.trim() : '';
+    // Both required: App Password (shared gate) + the person's name & PIN.
+    const appOk = timingSafeEqual(password, SYS_PASSWORD);
+    if (appOk && pin) {
+      // Owner break-glass: OWNER_PIN env always authenticates the Owner, so the
+      // Owner can never be locked out (e.g. if they forget their own PIN).
+      const ownerPin = process.env.OWNER_PIN;
+      if (ownerPin && timingSafeEqual(pin, ownerPin)) matched = { name: ownerName, role: 'owner' };
+      // Otherwise look the person up by the name they picked.
+      if (!matched && pickedName) {
+        const um = usersMod();
+        if (um) {
+          try {
+            const supabase = um.getSupabase();
+            if (supabase) {
+              const doc = await um.ensureSeed(supabase);
+              const u = um.findUser(doc, pickedName);
+              if (u && u.active !== false) {
+                if (u.pin) {
+                  // Returning user — verify their PIN.
+                  if (um.verifySecret(pin, u.pin)) matched = { name: u.name, role: u.role };
+                } else {
+                  // First login — they're creating their PIN now.
+                  if (um.isValidPin(pin) && !um.pinInUse(doc, pin, u.name)) {
+                    u.pin = um.hashSecret(pin); u.updatedAt = Date.now();
+                    await um.writeUsersDoc(supabase, doc);
+                    matched = { name: u.name, role: u.role };
+                  }
+                }
+              }
             }
-          }
+          } catch (e) { console.error('login store err:', e.message); }
         }
-      } catch (e) { console.error('store login failed, falling back:', e.message); }
-    }
-    // 2. Owner — a dedicated PRIVATE password, separate from the shared team
-    //    password. This is also the permanent break-glass: it always works, so
-    //    the Owner can never be locked out even after in-app password changes.
-    if (!matched) {
-      const ownerPw = process.env.OWNER_PASSWORD;
-      if (ownerPw && timingSafeEqual(password, ownerPw)) matched = { name: ownerName, role: 'owner' };
-    }
-    // 3. Shared team access (the original password) → plain Member, no admin
-    //    powers. Named STAFF_USERS entries are Members with their own name.
-    if (!matched) {
-      const staffUsers = parseStaffUsers();
-      for (const u of staffUsers) {
-        if (timingSafeEqual(password, u.password)) matched = { name: u.name, role: 'member' };
-      }
-      if (!matched && timingSafeEqual(password, SYS_PASSWORD)) {
-        matched = { name: 'Staff', role: 'member' };
       }
     }
     const success = !!matched;
@@ -273,7 +289,7 @@ module.exports = async function handler(req, res) {
           console.error('createCustomToken failed:', e.message);
         }
       }
-      return res.status(200).json({ success, user: matched.name, role: matched.role || null, mustChange: !!matched.mustChange, customToken });
+      return res.status(200).json({ success, user: matched.name, role: matched.role || 'member', customToken });
     }
     return res.status(200).json({ success });
   }
