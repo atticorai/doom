@@ -5299,11 +5299,14 @@ ${fullText.substring(0,3000)}`}]
       });
     });
 
-    // Unique filter values
+    // Unique filter values — scoped to the selected brand (no cross-brand
+    // leakage) and limited to real, full markets (drops codes / junk like
+    // "All Markets" that aren't a single DMA). Markets show full names.
+    const brandRows=trackingData.filter(d=>d.brand===fBrand);
     const brands=[...new Set(trackingData.map(d=>d.brand))].sort();
-    const markets=[...new Set(trackingData.map(d=>d.market))].sort();
-    const medias=[...new Set(trackingData.map(d=>d.media))].sort();
-    const months=(()=>{const mo=["January","February","March","April","May","June","July","August","September","October","November","December"];const raw=[...new Set(trackingData.map(d=>d.month).filter(Boolean))];return raw.sort((a,b)=>{const pa=a.split(" ");const pb=b.split(" ");const ya=parseInt(pa[1])||2026;const yb=parseInt(pb[1])||2026;if(ya!==yb)return ya-yb;return mo.indexOf(pa[0])-mo.indexOf(pb[0])})})();
+    const markets=[...new Set(brandRows.map(d=>d.market))].filter(m=>DM[m]).sort((a,b)=>(DM[a]||a).localeCompare(DM[b]||b));
+    const medias=[...new Set(brandRows.map(d=>d.media))].sort();
+    const months=(()=>{const mo=["January","February","March","April","May","June","July","August","September","October","November","December"];const raw=[...new Set(brandRows.map(d=>d.month).filter(Boolean))];return raw.sort((a,b)=>{const pa=a.split(" ");const pb=b.split(" ");const ya=parseInt(pa[1])||2026;const yb=parseInt(pb[1])||2026;if(ya!==yb)return ya-yb;return mo.indexOf(pa[0])-mo.indexOf(pb[0])})})();
 
     // Apply filters
     const filtered=trackingData.filter(d=>{
@@ -5343,9 +5346,10 @@ ${fullText.substring(0,3000)}`}]
     });
     const voArr=Object.values(byVO).map(t=>({...t,iscis:t.iscis.size})).sort((a,b)=>b.count-a.count);
 
-    // Market breakdown
+    // Market breakdown — only real single-market DMAs (skip "All Markets" etc.)
     const byMarket={};
     filtered.forEach(d=>{
+      if(!DM[d.market])return;
       const cat=d.category||"Untagged";
       if(!byMarket[d.market])byMarket[d.market]={};
       if(!byMarket[d.market][cat])byMarket[d.market][cat]=0;
@@ -5373,11 +5377,11 @@ ${fullText.substring(0,3000)}`}]
 
     const colors=["#4AC8E8","#8b5cf6","#ec4899","#D4A040","#10b981","#ef4444","#06b6d4","#84cc16","#f97316","#6366f1","#14b8a6","#e11d48"];
 
-    const FiltSel=({label,value,onChange,options})=><div style={{display:"flex",flexDirection:"column",gap:2}}>
+    const FiltSel=({label,value,onChange,options,fmt})=><div style={{display:"flex",flexDirection:"column",gap:2}}>
       <label style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase",letterSpacing:.5}}>{label}</label>
       <select value={value} onChange={e=>onChange(e.target.value)} style={{padding:"4px 6px",borderRadius:5,border:"1px solid #9b7bb0",fontSize:13,fontWeight:600,background:"#1e1233",color:"#9B8EAD"}}>
         <option value="all">All</option>
-        {options.map(o=><option key={o} value={o}>{o}</option>)}
+        {options.map(o=><option key={o} value={o}>{fmt?fmt(o):o}</option>)}
       </select>
     </div>;
 
@@ -5399,7 +5403,7 @@ ${fullText.substring(0,3000)}`}]
       {/* FILTERS */}
       <Cd style={{padding:10,marginBottom:12,borderRadius:"0 8px 8px 8px",borderTop:"2px solid "+(fBrand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK"))}}>
         <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"end"}}>
-          <FiltSel label="Market" value={fMarket} onChange={setFMarket} options={markets}/>
+          <FiltSel label="Market" value={fMarket} onChange={setFMarket} options={markets} fmt={o=>DM[o]||o}/>
           <FiltSel label="Media" value={fMedia} onChange={setFMedia} options={medias}/>
           <FiltSel label="Month" value={fMonth} onChange={setFMonth} options={months}/>
           <button onClick={()=>{setFMarket("all");setFMedia("all");setFMonth("all")}} style={{padding:"4px 10px",borderRadius:5,border:"1px solid #4a3565",background:"#1e1233",fontSize:14,fontWeight:600,cursor:"pointer",color:"#9B8EAD",alignSelf:"end"}}>Clear</button>
@@ -5421,7 +5425,7 @@ ${fullText.substring(0,3000)}`}]
           {/* Creative mix bar chart */}
           <Cd style={{padding:16,marginBottom:14}}>
             <div style={{fontSize:14,fontWeight:800,marginBottom:10}}>
-              {fBrand!=="all"?fBrand:"All Brands"} — Creative Mix {fMonth!=="all"?"· "+fMonth:""} {fMarket!=="all"?"· "+fMarket:""}
+              {fBrand!=="all"?fBrand:"All Brands"} — Creative Mix {fMonth!=="all"?"· "+fMonth:""} {fMarket!=="all"?"· "+(DM[fMarket]||fMarket):""}
             </div>
             {mixArr.map((m,i)=>{
               const pct=totalMix>0?Math.round((m.count/totalMix)*100):0;
