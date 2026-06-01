@@ -8393,6 +8393,7 @@ Rules:
     const[busy,setBusy]=useState(false);
     const[err,setErr]=useState("");
     const[newName,setNewName]=useState("");
+    const[newTitle,setNewTitle]=useState("");
     const[newRole,setNewRole]=useState("member");
     const load=async()=>{setErr("");try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"list"})});const d=await r.json();if(!r.ok){setErr(d.error||"Failed to load team");return}setList(d.users||[]);setMeInfo(d.me||null)}catch(e){setErr("Network error loading team")}};
     React.useEffect(()=>{load()},[]);
@@ -8402,7 +8403,7 @@ Rules:
     const roleLabel=r=>r==="owner"?"Owner":r==="admin"?"Admin":"Member";
     const roleColor=r=>r==="owner"?"#D4A040":r==="admin"?"#4AC8E8":"#9B8EAD";
     const canTouch=(t)=>t.role==="owner"?false:(isOwner?true:(myRole==="admin"&&t.role==="member"));
-    const add=async()=>{const nm=newName.trim();if(!nm)return;const d=await call({action:"add",name:nm,role:newRole});if(d){notify(nm+" added — they'll set their own PIN at first sign-in");setNewName("");setNewRole("member");load()}};
+    const add=async()=>{const nm=newName.trim();if(!nm)return;const d=await call({action:"add",name:nm,role:newRole,title:newTitle.trim()});if(d){notify(nm+" added — they'll set their own PIN at first sign-in");setNewName("");setNewTitle("");setNewRole("member");load()}};
     const reset=async(t)=>{if(!confirm("Reset "+t.name+"'s PIN? Their current PIN stops working and they set a new one the next time they sign in."))return;const d=await call({action:"resetPin",name:t.name});if(d){notify(t.name+"'s PIN was reset — they'll pick a new one at next sign-in");load()}};
     const remove=async(t)=>{if(!confirm("Remove "+t.name+"? They will no longer be able to sign in."))return;const d=await call({action:"remove",name:t.name});if(d)load()};
     const setR=async(t,r)=>{const d=await call({action:"setRole",name:t.name,role:r});if(d)load()};
@@ -8413,7 +8414,8 @@ Rules:
       <Cd style={{padding:14,marginBottom:12}}>
         <div style={{fontSize:14,fontWeight:800,marginBottom:8,color:"#E8DFF0"}}>Add a person</div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-          <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Name" style={{...ibox,minWidth:160}}/>
+          <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Name" style={{...ibox,minWidth:150}}/>
+          <input value={newTitle} onChange={e=>setNewTitle(e.target.value)} placeholder="Title (e.g. Paid Media Manager)" style={{...ibox,minWidth:180}}/>
           <select value={newRole} onChange={e=>setNewRole(e.target.value)} style={ibox}>
             <option value="member">Member</option>
             {isOwner&&<option value="admin">Admin</option>}
@@ -8426,6 +8428,7 @@ Rules:
         {list===null?<div style={{padding:20,color:"#9B8EAD"}}>Loading…</div>:list.length===0?<div style={{padding:20,color:"#9B8EAD"}}>No people added yet. Add someone above.</div>:list.map((t,i)=><div key={t.name} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderTop:i?"1px solid #2d1f42":"none",flexWrap:"wrap"}}>
           <div style={{flex:1,minWidth:140}}>
             <span style={{fontWeight:700,color:"#E8DFF0"}}>{t.name}</span>
+            {t.title&&<span style={{marginLeft:8,fontSize:12,color:"#9B8EAD"}}>{t.title}</span>}
             {!t.hasPin&&<span style={{marginLeft:8,fontSize:10,fontWeight:700,color:"#D4A040"}}>hasn't set PIN yet</span>}
           </div>
           <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:4,background:roleColor(t.role)+"22",color:roleColor(t.role)}}>{roleLabel(t.role)}</span>

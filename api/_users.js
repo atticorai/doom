@@ -39,6 +39,16 @@ function verifySecret(secret, stored) {
 
 const isValidPin = (pin) => typeof pin === 'string' && /^[0-9]{4,8}$/.test(pin);
 
+// The starting roster — shown on the login name-picker. Each person sets their
+// own PIN the first time they pick their name. Roles: owner/admin/member;
+// title is display-only.
+const DEFAULT_TEAM = [
+  { name: 'Emm Caban', role: 'owner', title: 'Traffic Manager' },
+  { name: 'Hayley Banks', role: 'admin', title: 'VP of Creative' },
+  { name: 'Jessica Flynn', role: 'member', title: 'Paid Media Manager' },
+  { name: 'Hazel Wolf', role: 'member', title: 'Marketing & Communications Manager' },
+];
+
 async function readUsersDoc(supabase) {
   const { data: row, error } = await supabase
     .from('legacy_docs')
@@ -59,21 +69,32 @@ async function writeUsersDoc(supabase, doc) {
   if (error) throw error;
 }
 
-// Returns the users doc, seeding the Owner (name + role, no PIN) the first
-// time so they appear in the roster and set their own PIN on first login.
-// OWNER_PIN env stays a permanent break-glass for the Owner (see api/auth.js).
+// Ensures the starting roster exists (idempotent). Adds any missing person
+// from DEFAULT_TEAM (no PIN — they create it at first login), backfills titles,
+// and clears out the old auto-seed placeholder "Emm" if it's lingering from an
+// earlier build. Never touches an existing person's PIN.
 async function ensureSeed(supabase) {
   let doc = await readUsersDoc(supabase);
-  if (doc && Array.isArray(doc.users) && doc.users.length) return doc;
-  const ownerName = (process.env.OWNER_NAME || 'Emm').trim();
-  doc = { users: [{ name: ownerName, role: 'owner', pin: null, active: true, createdAt: Date.now(), updatedAt: Date.now() }] };
-  try { await writeUsersDoc(supabase, doc); } catch (e) { /* best effort */ }
+  if (!doc || !Array.isArray(doc.users)) doc = { users: [] };
+  let changed = false;
+  // Drop the legacy placeholder owner named exactly "Emm" (real owner is "Emm Caban").
+  const before = doc.users.length;
+  doc.users = doc.users.filter(u => (u.name || '').trim().toLowerCase() !== 'emm');
+  if (doc.users.length !== before) changed = true;
+  DEFAULT_TEAM.forEach(d => {
+    const ex = findUser(doc, d.name);
+    if (!ex) {
+      doc.users.push({ name: d.name, role: d.role, title: d.title, pin: null, active: true, createdAt: Date.now(), updatedAt: Date.now() });
+      changed = true;
+    } else if (!ex.title && d.title) { ex.title = d.title; changed = true; }
+  });
+  if (changed) { try { await writeUsersDoc(supabase, doc); } catch (e) { /* best effort */ } }
   return doc;
 }
 
-// Roster for the login name-picker: names + roles + whether a PIN is set yet.
+// Roster for the login name-picker: names + roles + titles + whether a PIN is set.
 function roster(doc) {
-  return (doc && doc.users || []).filter(u => u.active !== false).map(u => ({ name: u.name, role: u.role, hasPin: !!u.pin }));
+  return (doc && doc.users || []).filter(u => u.active !== false).map(u => ({ name: u.name, role: u.role, title: u.title || '', hasPin: !!u.pin }));
 }
 
 function findUser(doc, name) {
@@ -96,7 +117,7 @@ function pinInUse(doc, pin, exceptName) {
 
 // Strip secrets before returning to the client.
 function publicUser(u) {
-  return { name: u.name, role: u.role, active: u.active !== false, hasPin: !!u.pin, updatedAt: u.updatedAt || null };
+  return { name: u.name, role: u.role, title: u.title || '', active: u.active !== false, hasPin: !!u.pin, updatedAt: u.updatedAt || null };
 }
 
 module.exports = {

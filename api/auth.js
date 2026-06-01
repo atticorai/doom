@@ -174,7 +174,7 @@ module.exports = async function handler(req, res) {
             const doc = await um.ensureSeed(supabase);
             const u = um.findUser(doc, user);
             if (u) { role = u.role; }
-            else { role = user.trim().toLowerCase() === (process.env.OWNER_NAME || 'Emm').trim().toLowerCase() ? 'owner' : 'member'; }
+            else { role = user.trim().toLowerCase() === (process.env.OWNER_NAME || 'Emm Caban').trim().toLowerCase() ? 'owner' : 'member'; }
           }
         } catch (e) { console.error('role lookup (check) failed:', e.message); }
       }
@@ -235,7 +235,7 @@ module.exports = async function handler(req, res) {
   if (type === 'login') {
     recordAttempt(clientIp);
     let matched = null; // { name, role }
-    const ownerName = (process.env.OWNER_NAME || 'Emm').trim();
+    const ownerName = (process.env.OWNER_NAME || 'Emm Caban').trim();
     const pin = (req.body && typeof req.body.pin === 'string') ? req.body.pin.trim() : '';
     const pickedName = (req.body && typeof req.body.name === 'string') ? req.body.name.trim() : '';
     // Both required: App Password (shared gate) + the person's name & PIN.

@@ -54,7 +54,7 @@ module.exports = async function handler(req, res) {
   if (!doc.users) doc.users = [];
 
   const me = findUser(doc, name);
-  const ownerName = (process.env.OWNER_NAME || 'Emm').trim().toLowerCase();
+  const ownerName = (process.env.OWNER_NAME || 'Emm Caban').trim().toLowerCase();
   const myRole = me ? me.role : (name.toLowerCase() === ownerName ? 'owner' : 'member');
   const { action } = req.body || {};
   const pinOf = (b) => String((b && b.pin) || '').trim();
@@ -74,9 +74,9 @@ module.exports = async function handler(req, res) {
     if (action === 'list') {
       if (!isManager(myRole)) return res.status(403).json({ error: 'Not allowed' });
       const out = doc.users.map(publicUser);
-      const ownerDisplay = (process.env.OWNER_NAME || 'Emm').trim();
+      const ownerDisplay = (process.env.OWNER_NAME || 'Emm Caban').trim();
       if (!out.some(u => u.role === 'owner')) {
-        out.unshift({ name: ownerDisplay, role: 'owner', active: true, hasPin: true, updatedAt: null });
+        out.unshift({ name: ownerDisplay, role: 'owner', title: 'Traffic Manager', active: true, hasPin: true, updatedAt: null });
       }
       return res.status(200).json({ users: out, me: { name, role: myRole } });
     }
@@ -86,13 +86,14 @@ module.exports = async function handler(req, res) {
     if (action === 'add') {
       const nn = ((req.body && req.body.name) || '').trim();
       let rr = ((req.body && req.body.role) || 'member').trim();
+      const title = ((req.body && req.body.title) || '').trim().slice(0, 60);
       if (!nn) return res.status(400).json({ error: 'Name required' });
       if (findUser(doc, nn)) return res.status(409).json({ error: 'A user with that name already exists' });
       if (rr === 'admin' && myRole !== 'owner') return res.status(403).json({ error: 'Only the owner can add admins' });
       if (rr !== 'admin') rr = 'member';
       const now = Date.now();
       // No PIN — the person creates their own the first time they sign in.
-      doc.users.push({ name: nn, role: rr, pin: null, active: true, createdAt: now, updatedAt: now });
+      doc.users.push({ name: nn, role: rr, title, pin: null, active: true, createdAt: now, updatedAt: now });
       await writeUsersDoc(supabase, doc);
       return res.status(200).json({ ok: true, name: nn, role: rr });
     }
