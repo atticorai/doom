@@ -76,22 +76,15 @@ async function writeUsersDoc(supabase, doc) {
   if (error) throw error;
 }
 
-// Returns the users doc, seeding the Owner on first use. Never throws for a
-// missing Owner password — it just seeds an empty list so the caller can fall
-// back to env logins.
+// Returns the users doc. The Owner authenticates via the OWNER_PASSWORD env
+// var (not the store), so this also prunes any stale 'owner' rows that older
+// builds seeded — that's what stops the shared password from granting Owner.
 async function ensureSeed(supabase) {
   let doc = await readUsersDoc(supabase);
-  if (doc && Array.isArray(doc.users) && doc.users.length) return doc;
-  const now = Date.now();
-  const ownerName = (process.env.OWNER_NAME || 'Emm').trim();
-  const staff = firstStaffPassword();
-  const ownerPw = process.env.SYS_PASSWORD || (staff && staff.pw) || null;
-  const users = [];
-  if (ownerPw) {
-    users.push({ name: ownerName, role: 'owner', pw: hashPassword(ownerPw), active: true, mustChange: false, createdAt: now, updatedAt: now });
-  }
-  doc = { users };
-  if (users.length) { try { await writeUsersDoc(supabase, doc); } catch (e) { /* best effort */ } }
+  if (!doc || !Array.isArray(doc.users)) doc = { users: [] };
+  const before = doc.users.length;
+  doc.users = doc.users.filter(u => u.role !== 'owner');
+  if (doc.users.length !== before) { try { await writeUsersDoc(supabase, doc); } catch (e) { /* best effort */ } }
   return doc;
 }
 

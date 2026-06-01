@@ -60,11 +60,19 @@ module.exports = async function handler(req, res) {
   const { action } = req.body || {};
 
   try {
-    // Anyone signed in can change their own password (used by forced change).
+    // Anyone signed in can change their own password (used by forced change
+    // and self-service). The Owner and shared-password "Staff" have no managed
+    // store account — their passwords live in env config, so explain that
+    // instead of failing silently.
     if (action === 'changeOwnPassword') {
       const np = (req.body && req.body.newPassword) || '';
       if (typeof np !== 'string' || np.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
-      if (!me) return res.status(400).json({ error: 'No managed account for this user' });
+      if (!me) {
+        const why = myRole === 'owner'
+          ? 'The Owner password is set in system config (OWNER_PASSWORD), not here.'
+          : 'You are signed in with the shared team password. Ask an admin to create a personal login for you.';
+        return res.status(400).json({ error: why });
+      }
       me.pw = hashPassword(np); me.mustChange = false; me.updatedAt = Date.now();
       await writeUsersDoc(supabase, doc);
       return res.status(200).json({ ok: true });
@@ -72,7 +80,14 @@ module.exports = async function handler(req, res) {
 
     if (action === 'list') {
       if (!isManager(myRole)) return res.status(403).json({ error: 'Not allowed' });
-      return res.status(200).json({ users: doc.users.map(publicUser), me: { name, role: myRole } });
+      const out = doc.users.map(publicUser);
+      // Owner isn't stored (env-authenticated) — surface a read-only row so the
+      // team list shows who the Owner is.
+      const ownerDisplay = (process.env.OWNER_NAME || 'Emm').trim();
+      if (!out.some(u => u.role === 'owner')) {
+        out.unshift({ name: ownerDisplay, role: 'owner', active: true, mustChange: false, updatedAt: null });
+      }
+      return res.status(200).json({ users: out, me: { name, role: myRole } });
     }
 
     if (!isManager(myRole)) return res.status(403).json({ error: 'Not allowed' });

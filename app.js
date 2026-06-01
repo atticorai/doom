@@ -682,6 +682,7 @@ const App=()=>{
   const legacyPurgedRef=React.useRef(false);
   const[authed,setAuthed]=useState(()=>sessionStorage.getItem("dd_auth")==="1");
   const[mustChangePw,setMustChangePw]=useState(()=>{try{return sessionStorage.getItem("dd_mustchange")==="1"}catch(e){return false}});
+  const[showChangePw,setShowChangePw]=useState(false);
   const[authInput,setAuthInput]=useState("");
 
   // ── FIRESTORE PERSISTENCE ────────────────────────────
@@ -8352,6 +8353,33 @@ Rules:
     </div>;
   };
 
+  // Self-service change password — a dismissible modal (vs the blocking
+  // ForcedPwChange). Available to anyone signed in; the server explains if
+  // their password is env-managed (Owner / shared team password).
+  const ChangePwModal=()=>{
+    const[p1,setP1]=useState("");const[p2,setP2]=useState("");const[busy,setBusy]=useState(false);const[err,setErr]=useState("");
+    const pwStyle={width:"100%",padding:"11px 14px",borderRadius:8,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:15,outline:"none",marginBottom:10,boxSizing:"border-box"};
+    const submit=async()=>{
+      if(p1.length<6){setErr("At least 6 characters");return}
+      if(p1!==p2){setErr("Passwords don't match");return}
+      setBusy(true);setErr("");
+      try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"changeOwnPassword",newPassword:p1})});const d=await r.json();setBusy(false);if(!r.ok){setErr(d.error||"Failed");return}setShowChangePw(false);notify("Password changed")}catch(e){setBusy(false);setErr("Network error")}
+    };
+    return<div onClick={()=>setShowChangePw(false)} style={{position:"fixed",inset:0,background:"rgba(10,6,18,.7)",zIndex:10000,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div onClick={e=>e.stopPropagation()} style={{width:360,background:"#2d1f42",border:"1px solid #4a3565",borderRadius:12,padding:20}}>
+        <div style={{fontSize:18,fontWeight:800,color:"#F0E8F8",marginBottom:4,fontFamily:"'Cormorant Garamond',serif"}}>Change your password</div>
+        <div style={{fontSize:12,color:"#9B8EAD",marginBottom:14}}>Forgot it? An admin can reset it for you — no one gets locked out.</div>
+        <input type="password" value={p1} onChange={e=>setP1(e.target.value)} placeholder="New password" style={pwStyle}/>
+        <input type="password" value={p2} onChange={e=>setP2(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")submit()}} placeholder="Confirm new password" style={pwStyle}/>
+        {err&&<div style={{color:"#E85A7A",fontSize:13,fontWeight:600,marginBottom:8}}>{err}</div>}
+        <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+          <Btn small onClick={()=>setShowChangePw(false)}>Cancel</Btn>
+          <Btn small primary disabled={busy} onClick={submit}>{busy?"Saving…":"Save"}</Btn>
+        </div>
+      </div>
+    </div>;
+  };
+
   // ── TEAM MANAGEMENT ───────────────────────────────────
   const TeamPg=()=>{
     const[list,setList]=useState(null);
@@ -9580,7 +9608,7 @@ Rules:
         </div>})()}
       </div>
       <nav style={{flex:1,padding:"3px 0"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:(pg===n.id&&!isOohHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 12px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative",transition:"all .15s",letterSpacing:a?.3:0}} onMouseEnter={e=>{if(!a)e.currentTarget.style.background="rgba(155,123,176,.06)"}} onMouseLeave={e=>{if(!a)e.currentTarget.style.background="transparent"}}><span style={{fontSize:14}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:12,fontWeight:800,padding:"1px 6px",borderRadius:10,background:typeof badge==="number"?"#E85A7A":"#D4A040",color:"#fff",boxShadow:typeof badge==="number"?"0 2px 8px rgba(232,90,122,.3)":"0 2px 8px rgba(212,160,64,.3)"}}>{badge}</span>}</button>})}</nav>
-      <div style={{padding:"10px 12px",borderTop:"1px solid rgba(212,160,64,.1)",fontSize:12,color:"#6B5E80"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,color:"#D4A040",letterSpacing:1}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #4a3565",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#9B8EAD",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:syncError?"#E85A7A":"#5BC4A0"}}>{syncError?"Save failed":"Synced "+(Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago")}</span>}</div><div style={{marginTop:2,color:"#6B5E80"}}>Signed in as <span style={{color:"#9B8EAD",fontWeight:700}}>{currentUser()}</span></div></div>
+      <div style={{padding:"10px 12px",borderTop:"1px solid rgba(212,160,64,.1)",fontSize:12,color:"#6B5E80"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,color:"#D4A040",letterSpacing:1}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #4a3565",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#9B8EAD",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:syncError?"#E85A7A":"#5BC4A0"}}>{syncError?"Save failed":"Synced "+(Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago")}</span>}</div><div style={{marginTop:2,color:"#6B5E80",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>Signed in as <span style={{color:"#9B8EAD",fontWeight:700}}>{currentUser()}</span></span><button onClick={()=>setShowChangePw(true)} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Change password</button></div></div>
     </div>
     <div style={{flex:1,overflowY:"auto",padding:16}}>
       <AnimatePresence mode="wait" initial={false}>
@@ -10422,6 +10450,7 @@ Rules:
       {uploadTracker.current&&uploadTracker.total&&<div style={{fontSize:11,color:"#94a3b8"}}>{uploadTracker.current}/{uploadTracker.total}</div>}
     </div>}
     {toast&&<div style={{position:"fixed",bottom:14,right:14,background:"linear-gradient(135deg,#2d1f42,#1e1233)",color:"#E8DFF0",padding:"10px 16px",borderRadius:8,fontSize:13,fontWeight:600,boxShadow:"0 8px 32px rgba(155,123,176,.2),0 0 1px rgba(196,160,200,.3)",zIndex:2e3,borderLeft:"3px solid #C4A0C8",maxWidth:400}}>{toast}</div>}
+    {showChangePw&&<ChangePwModal/>}
     {infoBox&&<div onClick={()=>setInfoBox(null)} style={{position:"fixed",inset:0,background:"rgba(20,12,40,.7)",zIndex:5001,display:"flex",alignItems:"center",justifyContent:"center",padding:20,backdropFilter:"blur(4px)"}}>
       <div onClick={e=>e.stopPropagation()} style={{background:"#2d1f42",border:"1px solid #4a3565",borderRadius:12,width:640,maxWidth:"96vw",maxHeight:"84vh",display:"flex",flexDirection:"column",boxShadow:"0 24px 80px rgba(0,0,0,.55)"}}>
         <div style={{padding:"12px 16px",borderBottom:"1px solid #4a3565",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>

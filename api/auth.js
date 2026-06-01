@@ -214,7 +214,10 @@ module.exports = async function handler(req, res) {
   if (type === 'login') {
     recordAttempt(clientIp);
     let matched = null; // { name, role?, mustChange? }
-    // 1. Managed user store (hashed passwords + roles), if Supabase is set up.
+    const ownerName = (process.env.OWNER_NAME || 'Emm').trim();
+    // 1. Managed user store (Admins / Members with their own hashed passwords).
+    //    Owner-role rows are never honored here — Owner auth is env-only below,
+    //    so the shared password can never grant Owner.
     const um = usersMod();
     if (um) {
       try {
@@ -222,23 +225,29 @@ module.exports = async function handler(req, res) {
         if (supabase) {
           const doc = await um.ensureSeed(supabase);
           for (const u of (doc.users || [])) {
-            if (u.active !== false && um.verifyPassword(password, u.pw)) {
+            if (u.role !== 'owner' && u.active !== false && um.verifyPassword(password, u.pw)) {
               matched = { name: u.name, role: u.role, mustChange: !!u.mustChange };
             }
           }
         }
       } catch (e) { console.error('store login failed, falling back:', e.message); }
     }
-    // 2. Fallback: env-configured logins (bootstrap / store unavailable). The
-    //    shared SYS_PASSWORD always works as a safety net so no one is locked out.
+    // 2. Owner — a dedicated PRIVATE password, separate from the shared team
+    //    password. This is also the permanent break-glass: it always works, so
+    //    the Owner can never be locked out even after in-app password changes.
+    if (!matched) {
+      const ownerPw = process.env.OWNER_PASSWORD;
+      if (ownerPw && timingSafeEqual(password, ownerPw)) matched = { name: ownerName, role: 'owner' };
+    }
+    // 3. Shared team access (the original password) → plain Member, no admin
+    //    powers. Named STAFF_USERS entries are Members with their own name.
     if (!matched) {
       const staffUsers = parseStaffUsers();
       for (const u of staffUsers) {
-        if (timingSafeEqual(password, u.password)) matched = { name: u.name };
+        if (timingSafeEqual(password, u.password)) matched = { name: u.name, role: 'member' };
       }
       if (!matched && timingSafeEqual(password, SYS_PASSWORD)) {
-        const ownerName = (process.env.OWNER_NAME || 'Emm').trim();
-        matched = { name: ownerName, role: 'owner' };
+        matched = { name: 'Staff', role: 'member' };
       }
     }
     const success = !!matched;
