@@ -194,6 +194,12 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ authenticated, user, role, mustChange, customToken });
   }
 
+  if (type === 'logout') {
+    // Expire the session cookie (it's HttpOnly, so the client can't clear it).
+    res.setHeader('Set-Cookie', 'dd_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0');
+    return res.status(200).json({ ok: true });
+  }
+
   if (!password || typeof password !== 'string') {
     return res.status(400).json({ error: 'Missing password' });
   }
