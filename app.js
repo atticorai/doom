@@ -40,7 +40,11 @@ const verifyAuth=async(password,type)=>{
     const r=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password,type})});
     const d=await r.json();
     if(d.success===true&&type==="login"){
-      if(d.user){try{sessionStorage.setItem("dd_user",d.user)}catch(e){}}
+      try{
+        if(d.user)sessionStorage.setItem("dd_user",d.user);
+        sessionStorage.setItem("dd_role",d.role||"member");
+        sessionStorage.setItem("dd_mustchange",d.mustChange?"1":"0");
+      }catch(e){}
       if(d.customToken){await signInWithFbToken(d.customToken)}
     }
     return d.success===true;
@@ -49,6 +53,8 @@ const verifyAuth=async(password,type)=>{
 // Who is signed in (set by the login flow / session check). Used to stamp the
 // activity log so edits are attributable per person, not a generic label.
 const currentUser=()=>{try{return sessionStorage.getItem("dd_user")||"Staff"}catch(e){return "Staff"}};
+const currentRole=()=>{try{return sessionStorage.getItem("dd_role")||"member"}catch(e){return "member"}};
+const isManagerRole=()=>{const r=currentRole();return r==="owner"||r==="admin"};
 // Friendly names for the stored collections — used in the save-failed and
 // "updated in another session" banners so users see "ISCI Registry", not "iscis".
 const COL_LABELS={iscis:"ISCI Registry",stations:"Stations",estimates:"Estimates",trafficHistory:"Traffic History",customTags:"Tags",confirmations:"Confirmations",nowAiring:"Now Airing",staEstLinks:"Station Links",auditLog:"Activity Log",workMonth:"Work Month",oohContracts:"OOH Contracts",oohPhotos:"OOH Photos",deletedIscis:"Deleted ISCIs"};
@@ -675,6 +681,7 @@ const App=()=>{
   const[deletedIsciKeys,setDeletedIsciKeys]=useState(new Set());
   const legacyPurgedRef=React.useRef(false);
   const[authed,setAuthed]=useState(()=>sessionStorage.getItem("dd_auth")==="1");
+  const[mustChangePw,setMustChangePw]=useState(()=>{try{return sessionStorage.getItem("dd_mustchange")==="1"}catch(e){return false}});
   const[authInput,setAuthInput]=useState("");
 
   // ── FIRESTORE PERSISTENCE ────────────────────────────
@@ -8323,8 +8330,92 @@ Rules:
   };
 
 
+  // Forced password change — shown when a user logs in with a temp password.
+  const ForcedPwChange=()=>{
+    const[p1,setP1]=useState("");const[p2,setP2]=useState("");const[busy,setBusy]=useState(false);const[err,setErr]=useState("");
+    const pwStyle={width:"100%",padding:"12px 16px",borderRadius:10,border:"2px solid rgba(155,123,176,.35)",background:"rgba(20,15,30,.4)",color:"#E8DFF0",fontSize:15,textAlign:"center",outline:"none",marginBottom:10};
+    const submit=async()=>{
+      if(p1.length<6){setErr("At least 6 characters");return}
+      if(p1!==p2){setErr("Passwords don't match");return}
+      setBusy(true);setErr("");
+      try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"changeOwnPassword",newPassword:p1})});const d=await r.json();setBusy(false);if(!r.ok){setErr(d.error||"Failed to set password");return}try{sessionStorage.setItem("dd_mustchange","0")}catch(e){}setMustChangePw(false);notify("Password updated")}catch(e){setBusy(false);setErr("Network error")}
+    };
+    return<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{width:380,textAlign:"center"}}>
+        <h1 style={{fontFamily:"'Cormorant Garamond',serif",color:"#F0E8F8",fontSize:28,marginBottom:4}}>Set your password</h1>
+        <p style={{color:"#9B8EAD",fontSize:13,marginBottom:16}}>You're signed in with a temporary password. Choose a new one to continue.</p>
+        <input type="password" value={p1} onChange={e=>setP1(e.target.value)} placeholder="New password" style={pwStyle}/>
+        <input type="password" value={p2} onChange={e=>setP2(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")submit()}} placeholder="Confirm new password" style={pwStyle}/>
+        {err&&<div style={{color:"#E85A7A",fontSize:13,fontWeight:600,marginBottom:8}}>{err}</div>}
+        <button onClick={submit} disabled={busy} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",color:"#fff",fontSize:15,fontWeight:700,cursor:busy?"wait":"pointer",letterSpacing:1}}>{busy?"Saving…":"Save & Continue"}</button>
+      </div>
+    </div>;
+  };
+
+  // ── TEAM MANAGEMENT ───────────────────────────────────
+  const TeamPg=()=>{
+    const[list,setList]=useState(null);
+    const[meInfo,setMeInfo]=useState(null);
+    const[busy,setBusy]=useState(false);
+    const[err,setErr]=useState("");
+    const[newName,setNewName]=useState("");
+    const[newRole,setNewRole]=useState("member");
+    const[tempShown,setTempShown]=useState(null); // {name,temp}
+    const load=async()=>{setErr("");try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"list"})});const d=await r.json();if(!r.ok){setErr(d.error||"Failed to load team");return}setList(d.users||[]);setMeInfo(d.me||null)}catch(e){setErr("Network error loading team")}};
+    React.useEffect(()=>{load()},[]);
+    const call=async(body)=>{setBusy(true);setErr("");try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(body)});const d=await r.json();setBusy(false);if(!r.ok){setErr(d.error||"Action failed");return null}return d}catch(e){setBusy(false);setErr("Network error");return null}};
+    const myRole=meInfo?.role||currentRole();
+    const isOwner=myRole==="owner";
+    const roleLabel=r=>r==="owner"?"Owner":r==="admin"?"Admin":"Member";
+    const roleColor=r=>r==="owner"?"#D4A040":r==="admin"?"#4AC8E8":"#9B8EAD";
+    const canTouch=(t)=>t.role==="owner"?false:(isOwner?true:(myRole==="admin"&&t.role==="member"));
+    const add=async()=>{const nm=newName.trim();if(!nm)return;const d=await call({action:"add",name:nm,role:newRole});if(d){setTempShown({name:d.name,temp:d.tempPassword});setNewName("");setNewRole("member");load()}};
+    const reset=async(t)=>{if(!confirm("Reset password for "+t.name+"? They'll get a temporary password and must set a new one at next login."))return;const d=await call({action:"reset",name:t.name});if(d){setTempShown({name:d.name,temp:d.tempPassword});load()}};
+    const remove=async(t)=>{if(!confirm("Remove "+t.name+"? They will no longer be able to sign in."))return;const d=await call({action:"remove",name:t.name});if(d)load()};
+    const setR=async(t,r)=>{const d=await call({action:"setRole",name:t.name,role:r});if(d)load()};
+    const ibox={padding:"7px 10px",borderRadius:6,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:13,outline:"none"};
+    return<div>
+      <PageHead title="Team" pgKey="team" sub="Add people, set roles, and reset passwords. New people and resets get a one-time temporary password they must change at first login."/>
+      {err&&<Cd style={{padding:"8px 12px",marginBottom:10,border:"1px solid #E85A7A",background:"rgba(232,90,122,.08)"}}><span style={{color:"#E85A7A",fontWeight:600,fontSize:13}}>{err}</span></Cd>}
+      {tempShown&&<Cd style={{padding:14,marginBottom:12,border:"1px solid #D4A040",background:"rgba(212,160,64,.1)"}}>
+        <div style={{fontWeight:800,color:"#D4A040",marginBottom:4}}>Temporary password for {tempShown.name}</div>
+        <div style={{fontSize:13,color:"#C9BBD9",marginBottom:8}}>Give this to them now — it won't be shown again. They'll be required to set their own password the first time they log in.</div>
+        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+          <code style={{fontSize:18,fontWeight:800,background:"#1e1233",padding:"6px 12px",borderRadius:6,color:"#5BC4A0",letterSpacing:1}}>{tempShown.temp}</code>
+          <Btn small onClick={()=>{try{navigator.clipboard&&navigator.clipboard.writeText(tempShown.temp)}catch(e){}notify("Copied")}}>Copy</Btn>
+          <Btn small onClick={()=>setTempShown(null)}>Done</Btn>
+        </div>
+      </Cd>}
+      <Cd style={{padding:14,marginBottom:12}}>
+        <div style={{fontSize:14,fontWeight:800,marginBottom:8,color:"#E8DFF0"}}>Add a person</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+          <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Name" style={{...ibox,minWidth:180}}/>
+          <select value={newRole} onChange={e=>setNewRole(e.target.value)} style={ibox}>
+            <option value="member">Member</option>
+            {isOwner&&<option value="admin">Admin</option>}
+          </select>
+          <Btn primary disabled={busy||!newName.trim()} onClick={add}>Add — generate temp password</Btn>
+        </div>
+        {!isOwner&&<div style={{fontSize:11,color:"#6B5E80",marginTop:6}}>Admins can add Members. Only the Owner can add Admins.</div>}
+      </Cd>
+      <Cd style={{padding:0,overflow:"hidden"}}>
+        {list===null?<div style={{padding:20,color:"#9B8EAD"}}>Loading…</div>:list.length===0?<div style={{padding:20,color:"#9B8EAD"}}>No managed users yet. Add someone above.</div>:list.map((t,i)=><div key={t.name} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderTop:i?"1px solid #2d1f42":"none",flexWrap:"wrap"}}>
+          <div style={{flex:1,minWidth:140}}>
+            <span style={{fontWeight:700,color:"#E8DFF0"}}>{t.name}</span>
+            {t.mustChange&&<span style={{marginLeft:8,fontSize:10,fontWeight:700,color:"#D4A040"}}>temp pw — must change</span>}
+            {t.active===false&&<span style={{marginLeft:8,fontSize:10,color:"#E85A7A"}}>inactive</span>}
+          </div>
+          <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:4,background:roleColor(t.role)+"22",color:roleColor(t.role)}}>{roleLabel(t.role)}</span>
+          {isOwner&&t.role!=="owner"&&<select value={t.role} onChange={e=>setR(t,e.target.value)} style={{...ibox,padding:"4px 6px",fontSize:12}}><option value="member">Member</option><option value="admin">Admin</option></select>}
+          {canTouch(t)&&<Btn small onClick={()=>reset(t)} disabled={busy}>Reset PW</Btn>}
+          {canTouch(t)&&<Btn small danger onClick={()=>remove(t)} disabled={busy}>Remove</Btn>}
+        </div>)}
+      </Cd>
+    </div>;
+  };
+
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
@@ -9438,9 +9529,10 @@ Rules:
     <div style={{fontSize:28,fontWeight:800,color:"#9b7bb0",letterSpacing:2,textShadow:"0 0 20px rgba(155,123,176,.4),0 0 40px rgba(155,123,176,.15)"}}>DOOM & DELIVERABLES</div>
     <div style={{fontSize:11,fontWeight:600,color:"#C4A0C8",letterSpacing:3,marginTop:4}}>ATTICOR MEDIA</div>
     <div style={{fontSize:13,color:"#9b7bb0",marginTop:20,marginBottom:24,fontStyle:"italic"}}>{doomPick(DOOM.login)}</div>
-    <input type="password" value={authInput} onChange={e=>setAuthInput(e.target.value)} onKeyDown={async e=>{if(e.key==="Enter"){const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}}} placeholder="Password" style={{width:"100%",padding:"14px 18px",borderRadius:10,border:"2px solid rgba(155,123,176,.35)",background:"rgba(20,15,30,.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",color:"#E8DFF0",fontSize:16,textAlign:"center",outline:"none",marginBottom:14,letterSpacing:2}}/>
-    <button onClick={async()=>{const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(155,123,176,.3)"}}>Let Me In</button>
+    <input type="password" value={authInput} onChange={e=>setAuthInput(e.target.value)} onKeyDown={async e=>{if(e.key==="Enter"){const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");try{if(sessionStorage.getItem("dd_mustchange")==="1")setMustChangePw(true)}catch(e){}setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}}} placeholder="Password" style={{width:"100%",padding:"14px 18px",borderRadius:10,border:"2px solid rgba(155,123,176,.35)",background:"rgba(20,15,30,.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",color:"#E8DFF0",fontSize:16,textAlign:"center",outline:"none",marginBottom:14,letterSpacing:2}}/>
+    <button onClick={async()=>{const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");try{if(sessionStorage.getItem("dd_mustchange")==="1")setMustChangePw(true)}catch(e){}setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(155,123,176,.3)"}}>Let Me In</button>
   </div></div>;
+  if(authed&&mustChangePw)return<ForcedPwChange/>;
   if(!dbLoaded)return null; // HTML loader stays visible until data is ready
   if(isOohHub)return<React.Fragment>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
@@ -10159,6 +10251,7 @@ Rules:
           })()}
           {pg==="planner"&&PlannerPg()}
           {pg==="notif"&&pages["notif"]}
+          {pg==="team"&&isManagerRole()&&<TeamPg/>}
           {pg==="docs"&&<DocsPg/>}
         </MDiv>
       </AnimatePresence>

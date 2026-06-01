@@ -454,8 +454,13 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
       .then(function(r){return r.json()})
       .then(function(d){
         if(d.success){
-          // Remember who signed in so the app can stamp the audit log.
-          if(d.user){try{sessionStorage.setItem("dd_user",d.user)}catch(e){}}
+          // Remember who signed in (and their role / forced-change flag) so the
+          // app can stamp the audit log and gate the Team page.
+          try{
+            if(d.user)sessionStorage.setItem("dd_user",d.user);
+            sessionStorage.setItem("dd_role",d.role||"member");
+            sessionStorage.setItem("dd_mustchange",d.mustChange?"1":"0");
+          }catch(e){}
           // If the server minted a Firebase Auth custom token (FIREBASE_ADMIN_KEY
           // configured), sign in so locked-down Firestore rules accept our writes.
           // No token = legacy mode; loadApp regardless.
@@ -493,7 +498,7 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
     fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"check"})})
       .then(function(r){return r.json()})
       .then(function(d){
-        if(d.authenticated){if(d.user){try{sessionStorage.setItem("dd_user",d.user)}catch(e){}}if(d.customToken){window.__pendingCustomToken=d.customToken}loadApp()}
+        if(d.authenticated){try{if(d.user)sessionStorage.setItem("dd_user",d.user);sessionStorage.setItem("dd_role",d.role||"member");sessionStorage.setItem("dd_mustchange",d.mustChange?"1":"0")}catch(e){}if(d.customToken){window.__pendingCustomToken=d.customToken}loadApp()}
         else{showLogin()}
       })
       .catch(function(){showLogin()});
