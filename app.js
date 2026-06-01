@@ -9398,6 +9398,26 @@ Rules:
         <BookMarginNote author="muses">We are the Muses, goddesses of the arts<br/>We'll sing of your traffic — the sum of its parts!</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:32,right:24,opacity:.5,transform:"rotate(10deg) scale(1.1)"}}/>}{<BookDroolStain style={{bottom:16,left:32,width:80,height:80,opacity:.2}}/>}</>},
 
+      {title:"Signing In & Your Account",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>Everyone has their own password. Type it on the login screen — the app knows who you are from it, and stamps your name on everything you do in the Activity Log. Your name shows at the bottom of the sidebar ("Signed in as …").</p>
+        <p>New here, or had your password reset? You'll be given a <b>temporary password</b> (looks like <code>doom-1a2b3c4d</code>). Log in with it once and the app immediately asks you to set your own password before you can do anything else.</p>
+        <p>Forgot your password? Ask an admin to reset it for you — they'll hand you a new temporary one. There's no email reset.</p>
+        <BookMarginNote author="meg">Your password. Your name on your mistakes. Choose wisely.</BookMarginNote>
+      </div>,damageEffects:<>{<BookInkSplatter style={{bottom:16,right:16,opacity:.4}}/>}</>},
+
+      {title:"Team & Roles (Admins)",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>If you're an admin, a <b>Team</b> item appears in the sidebar. There you add people, set their role, and reset passwords. Adding someone (or resetting them) produces a one-time temporary password — copy it and give it to them; it's shown only once.</p>
+        <p>There are three roles. <b>Owner</b>: full control, can't be removed or demoted. <b>Admin</b>: can add, remove and reset <i>members</i>. <b>Member</b>: uses the app, no team management. Only the Owner can create or change Admins.</p>
+        <p>Removing someone stops them signing in immediately. Everything they did stays in the Activity Log under their name.</p>
+        <BookMarginNote author="hades">Hand out access carefully. The log remembers who you let in.</BookMarginNote>
+      </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:24,opacity:.4,transform:"rotate(10deg)"}}/>}</>},
+
+      {title:"Saving & Staying in Sync",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>You never hit a save button — every change saves automatically. The sidebar shows "Synced" with how long ago. If it ever says <b style={{color:"#E85A7A"}}>Save failed</b>, a red banner appears too: your last change may not have saved — reload and check.</p>
+        <p>Since more than one person can be in here, watch for the gold <b style={{color:"#D4A040"}}>"Updated in another session"</b> banner. It means someone else changed something — reload before you keep editing so you don't overwrite their work.</p>
+        <BookMarginNote author="muses">It saves itself, no button to press<br/>But heed the banners — avoid the mess!</BookMarginNote>
+      </div>,damageEffects:<>{<BookDroolStain style={{bottom:16,left:24,width:72,height:72,opacity:.2}}/>}</>},
+
       {title:"End of the Line",content:<div style={{display:"flex",flexDirection:"column",gap:14,textAlign:"center",paddingTop:24}}>
         <p style={{fontSize:17,fontFamily:"'Cinzel',serif",color:"#4a1a1a"}}>Thus concludes the operating manual for Doom & Deliverables.</p>
         <p style={{fontStyle:"italic",color:"#5a4a3a",fontSize:12}}>May your rotations total 100%, your confirmations come swiftly, and your ISCIs never drop below the safeguard.</p>
