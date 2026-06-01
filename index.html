@@ -266,7 +266,8 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
 <div id="dd-status" style="margin-top:18px;font-size:15px;color:#C4A0C8;font-style:italic;font-family:'Cormorant Garamond',serif;max-width:320px;margin-left:auto;margin-right:auto;animation:fadeUp .5s ease-out 1.8s both;opacity:0;min-height:22px"></div>
 <div id="dd-bar" style="width:200px;height:4px;background:#2d1f42;border-radius:4px;overflow:hidden;margin:16px auto 0"><div style="height:100%;width:30%;background:linear-gradient(90deg,#7c3aed,#a78bfa,#7c3aed);border-radius:4px;animation:ldbar 1.5s ease-in-out infinite"></div></div>
 <div id="dd-login-form" style="display:none;margin-top:20px;animation:fadeUp .4s ease-out both;max-width:320px;margin-left:auto;margin-right:auto">
-  <input type="password" id="dd-pw" placeholder="Password" style="width:100%;padding:14px 18px;border-radius:10px;border:2px solid rgba(155,123,176,.3);background:rgba(30,18,51,.5);color:#E8DFF0;font-size:16px;text-align:center;outline:none;margin-bottom:14px;letter-spacing:2px;font-family:'DM Sans',sans-serif;backdrop-filter:blur(8px)"/>
+  <input type="password" id="dd-pw" placeholder="App Password" style="width:100%;padding:14px 18px;border-radius:10px;border:2px solid rgba(155,123,176,.3);background:rgba(30,18,51,.5);color:#E8DFF0;font-size:16px;text-align:center;outline:none;margin-bottom:10px;letter-spacing:2px;font-family:'DM Sans',sans-serif;backdrop-filter:blur(8px)"/>
+  <input type="password" inputmode="numeric" id="dd-pin" placeholder="Your PIN (optional)" style="width:100%;padding:14px 18px;border-radius:10px;border:2px solid rgba(155,123,176,.3);background:rgba(30,18,51,.5);color:#E8DFF0;font-size:16px;text-align:center;outline:none;margin-bottom:14px;letter-spacing:4px;font-family:'DM Sans',sans-serif;backdrop-filter:blur(8px)"/>
   <button id="dd-login-btn" style="width:100%;padding:14px;border-radius:10px;border:none !important;background:linear-gradient(135deg,#9b7bb0,#C4A0C8);color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;box-shadow:0 4px 16px rgba(155,123,176,.3);font-family:'DM Sans',sans-serif">Let Me In</button>
   <div id="dd-login-error" style="display:none;margin-top:10px;font-size:13px;color:#f87171;font-weight:600"></div>
 </div>
@@ -283,6 +284,7 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
   var bar=document.getElementById("dd-bar");
   var loginForm=document.getElementById("dd-login-form");
   var pwInput=document.getElementById("dd-pw");
+  var pinInput=document.getElementById("dd-pin");
   var loginBtn=document.getElementById("dd-login-btn");
   var loginError=document.getElementById("dd-login-error");
   var quipInterval=null;
@@ -447,19 +449,19 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
 
   function doLogin(){
     var pw=pwInput.value;
+    var pin=pinInput?pinInput.value:"";
     if(!pw)return;
     loginBtn.disabled=true;loginBtn.textContent="Checking...";
     loginError.style.display="none";
-    fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pw,type:"login"})})
+    fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pw,pin:pin,type:"login"})})
       .then(function(r){return r.json()})
       .then(function(d){
         if(d.success){
-          // Remember who signed in (and their role / forced-change flag) so the
-          // app can stamp the audit log and gate the Team page.
+          // Remember who signed in (and their role) so the app can stamp the
+          // audit log and gate the Team page.
           try{
             if(d.user)sessionStorage.setItem("dd_user",d.user);
             sessionStorage.setItem("dd_role",d.role||"member");
-            sessionStorage.setItem("dd_mustchange",d.mustChange?"1":"0");
           }catch(e){}
           // If the server minted a Firebase Auth custom token (FIREBASE_ADMIN_KEY
           // configured), sign in so locked-down Firestore rules accept our writes.
@@ -473,6 +475,7 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
 
   loginBtn.addEventListener("click",doLogin);
   pwInput.addEventListener("keydown",function(e){if(e.key==="Enter")doLogin()});
+  if(pinInput)pinInput.addEventListener("keydown",function(e){if(e.key==="Enter")doLogin()});
 
   // On load: show quips while checking auth
   showStatus(pick(quips));
@@ -498,7 +501,7 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
     fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"check"})})
       .then(function(r){return r.json()})
       .then(function(d){
-        if(d.authenticated){try{if(d.user)sessionStorage.setItem("dd_user",d.user);sessionStorage.setItem("dd_role",d.role||"member");sessionStorage.setItem("dd_mustchange",d.mustChange?"1":"0")}catch(e){}if(d.customToken){window.__pendingCustomToken=d.customToken}loadApp()}
+        if(d.authenticated){try{if(d.user)sessionStorage.setItem("dd_user",d.user);sessionStorage.setItem("dd_role",d.role||"member")}catch(e){}if(d.customToken){window.__pendingCustomToken=d.customToken}loadApp()}
         else{showLogin()}
       })
       .catch(function(){showLogin()});

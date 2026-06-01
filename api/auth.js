@@ -164,9 +164,7 @@ module.exports = async function handler(req, res) {
     // Recover the signed-in name from the token so the client can stamp the
     // audit log after a reload without re-logging in.
     const user = authenticated ? userFromToken(rawToken) : null;
-    // Look up role + forced-password-change flag from the managed user store
-    // (best effort — if the store is unavailable we just omit them).
-    let role = null, mustChange = false;
+    let role = null;
     if (authenticated && user) {
       const um = usersMod();
       if (um) {
@@ -175,7 +173,7 @@ module.exports = async function handler(req, res) {
           if (supabase) {
             const doc = await um.ensureSeed(supabase);
             const u = um.findUser(doc, user);
-            if (u) { role = u.role; mustChange = !!u.mustChange; }
+            if (u) { role = u.role; }
             else { role = user.trim().toLowerCase() === (process.env.OWNER_NAME || 'Emm').trim().toLowerCase() ? 'owner' : 'member'; }
           }
         } catch (e) { console.error('role lookup (check) failed:', e.message); }
@@ -191,7 +189,7 @@ module.exports = async function handler(req, res) {
         catch (e) { console.error('createCustomToken (check) failed:', e.message); }
       }
     }
-    return res.status(200).json({ authenticated, user, role, mustChange, customToken });
+    return res.status(200).json({ authenticated, user, role, customToken });
   }
 
   if (type === 'logout') {
@@ -219,41 +217,33 @@ module.exports = async function handler(req, res) {
 
   if (type === 'login') {
     recordAttempt(clientIp);
-    let matched = null; // { name, role?, mustChange? }
+    let matched = null; // { name, role }
     const ownerName = (process.env.OWNER_NAME || 'Emm').trim();
-    // 1. Managed user store (Admins / Members with their own hashed passwords).
-    //    Owner-role rows are never honored here — Owner auth is env-only below,
-    //    so the shared password can never grant Owner.
-    const um = usersMod();
-    if (um) {
-      try {
-        const supabase = um.getSupabase();
-        if (supabase) {
-          const doc = await um.ensureSeed(supabase);
-          for (const u of (doc.users || [])) {
-            if (u.role !== 'owner' && u.active !== false && um.verifyPassword(password, u.pw)) {
-              matched = { name: u.name, role: u.role, mustChange: !!u.mustChange };
-            }
-          }
-        }
-      } catch (e) { console.error('store login failed, falling back:', e.message); }
-    }
-    // 2. Owner — a dedicated PRIVATE password, separate from the shared team
-    //    password. This is also the permanent break-glass: it always works, so
-    //    the Owner can never be locked out even after in-app password changes.
-    if (!matched) {
-      const ownerPw = process.env.OWNER_PASSWORD;
-      if (ownerPw && timingSafeEqual(password, ownerPw)) matched = { name: ownerName, role: 'owner' };
-    }
-    // 3. Shared team access (the original password) → plain Member, no admin
-    //    powers. Named STAFF_USERS entries are Members with their own name.
-    if (!matched) {
-      const staffUsers = parseStaffUsers();
-      for (const u of staffUsers) {
-        if (timingSafeEqual(password, u.password)) matched = { name: u.name, role: 'member' };
-      }
-      if (!matched && timingSafeEqual(password, SYS_PASSWORD)) {
+    const pin = (req.body && typeof req.body.pin === 'string') ? req.body.pin.trim() : '';
+    // The App Password (SYS_PASSWORD) is the shared gate — required for everyone.
+    const appOk = timingSafeEqual(password, SYS_PASSWORD);
+    if (appOk) {
+      if (!pin) {
+        // App Password only → generic Staff member (no name, no admin powers).
         matched = { name: 'Staff', role: 'member' };
+      } else {
+        // The PIN says WHO this is. Check the managed store, then the OWNER_PIN
+        // break-glass. A wrong PIN fails outright (never silently downgraded).
+        const um = usersMod();
+        if (um) {
+          try {
+            const supabase = um.getSupabase();
+            if (supabase) {
+              const doc = await um.ensureSeed(supabase);
+              const u = um.findByPin(doc, pin);
+              if (u) matched = { name: u.name, role: u.role };
+            }
+          } catch (e) { console.error('pin lookup failed:', e.message); }
+        }
+        if (!matched) {
+          const ownerPin = process.env.OWNER_PIN;
+          if (ownerPin && timingSafeEqual(pin, ownerPin)) matched = { name: ownerName, role: 'owner' };
+        }
       }
     }
     const success = !!matched;
@@ -273,7 +263,7 @@ module.exports = async function handler(req, res) {
           console.error('createCustomToken failed:', e.message);
         }
       }
-      return res.status(200).json({ success, user: matched.name, role: matched.role || null, mustChange: !!matched.mustChange, customToken });
+      return res.status(200).json({ success, user: matched.name, role: matched.role || 'member', customToken });
     }
     return res.status(200).json({ success });
   }
