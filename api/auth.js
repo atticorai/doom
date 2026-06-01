@@ -9,6 +9,36 @@ const { getAuth } = require('./_admin');
 // (vendor portals) blocked.
 const STAFF_UID = 'atticor-staff';
 
+// Per-user logins. Configure in Vercel as STAFF_USERS, pipe-separated
+// "Name:password" pairs, e.g.  STAFF_USERS="Emm:hunter2|Jordan:correcthorse".
+// The matched name is embedded (signed) in the session token so the audit log
+// can show who did what. If STAFF_USERS is unset, the app falls back to the
+// shared SYS_PASSWORD as user "Staff" — nothing breaks, no one gets locked out.
+function parseStaffUsers() {
+  const raw = process.env.STAFF_USERS || '';
+  const users = [];
+  raw.split('|').forEach(pair => {
+    const idx = pair.indexOf(':');
+    if (idx > 0) {
+      const name = pair.slice(0, idx).trim();
+      const pw = pair.slice(idx + 1).replace(/[\r\n]+$/, '');
+      if (name && pw) users.push({ name, password: pw });
+    }
+  });
+  return users;
+}
+
+function userFromToken(token) {
+  const parts = (token || '').split('.');
+  if (parts.length === 4) {
+    try {
+      const b64 = parts[0].replace(/-/g, '+').replace(/_/g, '/');
+      return Buffer.from(b64, 'base64').toString('utf8') || null;
+    } catch (e) { return null; }
+  }
+  return null; // legacy 3-part token carries no identity
+}
+
 function timingSafeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
   const bufA = Buffer.from(a);
@@ -38,22 +68,36 @@ function b64url(buf) {
 // Token format: <id>.<expiry>.<sig> where sig = HMAC-SHA256(secret, id+"."+expiry).
 // Replaces the previous "random hex of any 64 chars passes" scheme — middleware
 // can now reject any cookie that isn't issued (and signed) by this server.
-function generateSessionToken(secret) {
+// Token format: <user>.<id>.<expiry>.<sig>  (user = base64url of the name).
+// sig = HMAC-SHA256(secret, user+"."+id+"."+expiry). Legacy 3-part tokens
+// (no embedded user) are still accepted by validateSessionToken below so
+// existing sessions survive the rollout.
+function generateSessionToken(secret, user) {
   const id = b64url(crypto.randomBytes(18));
   const expiry = String(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-  const sig = b64url(crypto.createHmac('sha256', secret).update(id + '.' + expiry).digest());
-  return id + '.' + expiry + '.' + sig;
+  const u = b64url(Buffer.from(user || '', 'utf8'));
+  const sig = b64url(crypto.createHmac('sha256', secret).update(u + '.' + id + '.' + expiry).digest());
+  return u + '.' + id + '.' + expiry + '.' + sig;
 }
 
 function validateSessionToken(token, secret) {
   if (typeof token !== 'string') return false;
   const parts = token.split('.');
-  if (parts.length !== 3) return false;
-  const [id, expiry, sig] = parts;
-  if (!/^[A-Za-z0-9_-]+$/.test(id) || !/^[0-9]+$/.test(expiry) || !/^[A-Za-z0-9_-]+$/.test(sig)) return false;
-  if (Number(expiry) < Date.now()) return false;
-  const expected = b64url(crypto.createHmac('sha256', secret).update(id + '.' + expiry).digest());
-  return timingSafeEqual(sig, expected);
+  if (parts.length === 4) {
+    const [u, id, expiry, sig] = parts;
+    if (!/^[A-Za-z0-9_-]*$/.test(u) || !/^[A-Za-z0-9_-]+$/.test(id) || !/^[0-9]+$/.test(expiry) || !/^[A-Za-z0-9_-]+$/.test(sig)) return false;
+    if (Number(expiry) < Date.now()) return false;
+    const expected = b64url(crypto.createHmac('sha256', secret).update(u + '.' + id + '.' + expiry).digest());
+    return timingSafeEqual(sig, expected);
+  }
+  if (parts.length === 3) {
+    const [id, expiry, sig] = parts;
+    if (!/^[A-Za-z0-9_-]+$/.test(id) || !/^[0-9]+$/.test(expiry) || !/^[A-Za-z0-9_-]+$/.test(sig)) return false;
+    if (Number(expiry) < Date.now()) return false;
+    const expected = b64url(crypto.createHmac('sha256', secret).update(id + '.' + expiry).digest());
+    return timingSafeEqual(sig, expected);
+  }
+  return false;
 }
 
 const loginAttempts = new Map();
@@ -108,7 +152,11 @@ module.exports = async function handler(req, res) {
   if (type === 'check') {
     const cookie = req.headers.cookie || '';
     const match = cookie.match(/dd_session=([^;]+)/);
-    const authenticated = !!(match && sessionSecret && validateSessionToken(decodeURIComponent(match[1]), sessionSecret));
+    const rawToken = match ? decodeURIComponent(match[1]) : '';
+    const authenticated = !!(rawToken && sessionSecret && validateSessionToken(rawToken, sessionSecret));
+    // Recover the signed-in name from the token so the client can stamp the
+    // audit log after a reload without re-logging in.
+    const user = authenticated ? userFromToken(rawToken) : null;
     // Also mint a Firebase custom token for already-authed clients so they can
     // sign into Firebase Auth without re-logging in.
     let customToken = null;
@@ -119,7 +167,7 @@ module.exports = async function handler(req, res) {
         catch (e) { console.error('createCustomToken (check) failed:', e.message); }
       }
     }
-    return res.status(200).json({ authenticated, customToken });
+    return res.status(200).json({ authenticated, user, customToken });
   }
 
   if (!password || typeof password !== 'string') {
@@ -141,9 +189,18 @@ module.exports = async function handler(req, res) {
 
   if (type === 'login') {
     recordAttempt(clientIp);
-    const success = timingSafeEqual(password, SYS_PASSWORD);
+    // Match the password against each configured per-user login (timing-safe,
+    // no short-circuit). Fall back to the shared SYS_PASSWORD as "Staff" so the
+    // existing password always works even before STAFF_USERS is configured.
+    const staffUsers = parseStaffUsers();
+    let matched = null;
+    for (const u of staffUsers) {
+      if (timingSafeEqual(password, u.password)) matched = u;
+    }
+    if (!matched && timingSafeEqual(password, SYS_PASSWORD)) matched = { name: 'Staff' };
+    const success = !!matched;
     if (success) {
-      const sessionToken = generateSessionToken(sessionSecret);
+      const sessionToken = generateSessionToken(sessionSecret, matched.name);
       res.setHeader('Set-Cookie', `dd_session=${sessionToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=604800`);
       // Mint a Firebase Auth custom token if the Admin SDK is configured.
       // Client uses signInWithCustomToken so locked-down Firestore rules
@@ -158,7 +215,7 @@ module.exports = async function handler(req, res) {
           console.error('createCustomToken failed:', e.message);
         }
       }
-      return res.status(200).json({ success, customToken });
+      return res.status(200).json({ success, user: matched.name, customToken });
     }
     return res.status(200).json({ success });
   }
