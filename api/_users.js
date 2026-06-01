@@ -59,20 +59,21 @@ async function writeUsersDoc(supabase, doc) {
   if (error) throw error;
 }
 
-// Returns the users doc, seeding the Owner from OWNER_NAME + OWNER_PIN the
-// first time. Owner remains break-glass via env even after seeding.
+// Returns the users doc, seeding the Owner (name + role, no PIN) the first
+// time so they appear in the roster and set their own PIN on first login.
+// OWNER_PIN env stays a permanent break-glass for the Owner (see api/auth.js).
 async function ensureSeed(supabase) {
   let doc = await readUsersDoc(supabase);
   if (doc && Array.isArray(doc.users) && doc.users.length) return doc;
   const ownerName = (process.env.OWNER_NAME || 'Emm').trim();
-  const ownerPin = process.env.OWNER_PIN;
-  const users = [];
-  if (ownerPin && isValidPin(ownerPin)) {
-    users.push({ name: ownerName, role: 'owner', pin: hashSecret(ownerPin), active: true, createdAt: Date.now(), updatedAt: Date.now() });
-  }
-  doc = { users };
-  if (users.length) { try { await writeUsersDoc(supabase, doc); } catch (e) { /* best effort */ } }
+  doc = { users: [{ name: ownerName, role: 'owner', pin: null, active: true, createdAt: Date.now(), updatedAt: Date.now() }] };
+  try { await writeUsersDoc(supabase, doc); } catch (e) { /* best effort */ }
   return doc;
+}
+
+// Roster for the login name-picker: names + roles + whether a PIN is set yet.
+function roster(doc) {
+  return (doc && doc.users || []).filter(u => u.active !== false).map(u => ({ name: u.name, role: u.role, hasPin: !!u.pin }));
 }
 
 function findUser(doc, name) {
@@ -100,6 +101,6 @@ function publicUser(u) {
 
 module.exports = {
   getSupabase, hashSecret, verifySecret, isValidPin,
-  readUsersDoc, writeUsersDoc, ensureSeed, findUser, findByPin, pinInUse, publicUser,
+  readUsersDoc, writeUsersDoc, ensureSeed, findUser, findByPin, pinInUse, publicUser, roster,
   AUTH_COLLECTION, USERS_DOC,
 };

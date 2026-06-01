@@ -8394,7 +8394,6 @@ Rules:
     const[err,setErr]=useState("");
     const[newName,setNewName]=useState("");
     const[newRole,setNewRole]=useState("member");
-    const[newPin,setNewPin]=useState("");
     const load=async()=>{setErr("");try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"list"})});const d=await r.json();if(!r.ok){setErr(d.error||"Failed to load team");return}setList(d.users||[]);setMeInfo(d.me||null)}catch(e){setErr("Network error loading team")}};
     React.useEffect(()=>{load()},[]);
     const call=async(body)=>{setBusy(true);setErr("");try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(body)});const d=await r.json();setBusy(false);if(!r.ok){setErr(d.error||"Action failed");return null}return d}catch(e){setBusy(false);setErr("Network error");return null}};
@@ -8403,33 +8402,31 @@ Rules:
     const roleLabel=r=>r==="owner"?"Owner":r==="admin"?"Admin":"Member";
     const roleColor=r=>r==="owner"?"#D4A040":r==="admin"?"#4AC8E8":"#9B8EAD";
     const canTouch=(t)=>t.role==="owner"?false:(isOwner?true:(myRole==="admin"&&t.role==="member"));
-    const validPin=p=>/^[0-9]{4,8}$/.test(p);
-    const add=async()=>{const nm=newName.trim();if(!nm||!validPin(newPin))return;const d=await call({action:"add",name:nm,role:newRole,pin:newPin});if(d){notify(nm+" added — PIN "+newPin);setNewName("");setNewRole("member");setNewPin("");load()}};
-    const reset=async(t)=>{const p=prompt("New PIN for "+t.name+" (4–8 digits):");if(!p)return;if(!validPin(p.trim())){alert("PIN must be 4–8 digits");return}const d=await call({action:"setPin",name:t.name,pin:p.trim()});if(d){notify(t.name+"'s PIN is now "+p.trim());load()}};
-    const remove=async(t)=>{if(!confirm("Remove "+t.name+"? They will no longer be able to sign in with their PIN."))return;const d=await call({action:"remove",name:t.name});if(d)load()};
+    const add=async()=>{const nm=newName.trim();if(!nm)return;const d=await call({action:"add",name:nm,role:newRole});if(d){notify(nm+" added — they'll set their own PIN at first sign-in");setNewName("");setNewRole("member");load()}};
+    const reset=async(t)=>{if(!confirm("Reset "+t.name+"'s PIN? Their current PIN stops working and they set a new one the next time they sign in."))return;const d=await call({action:"resetPin",name:t.name});if(d){notify(t.name+"'s PIN was reset — they'll pick a new one at next sign-in");load()}};
+    const remove=async(t)=>{if(!confirm("Remove "+t.name+"? They will no longer be able to sign in."))return;const d=await call({action:"remove",name:t.name});if(d)load()};
     const setR=async(t,r)=>{const d=await call({action:"setRole",name:t.name,role:r});if(d)load()};
     const ibox={padding:"7px 10px",borderRadius:6,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:13,outline:"none"};
     return<div>
-      <PageHead title="Team" pgKey="team" sub="Everyone shares the App Password to get in. Give each person a PIN here so the app knows who they are. Reset = just set a new PIN."/>
+      <PageHead title="Team" pgKey="team" sub="Everyone shares the App Password to get in; each person picks their own PIN the first time they sign in. You just set names and roles here."/>
       {err&&<Cd style={{padding:"8px 12px",marginBottom:10,border:"1px solid #E85A7A",background:"rgba(232,90,122,.08)"}}><span style={{color:"#E85A7A",fontWeight:600,fontSize:13}}>{err}</span></Cd>}
       <Cd style={{padding:14,marginBottom:12}}>
         <div style={{fontSize:14,fontWeight:800,marginBottom:8,color:"#E8DFF0"}}>Add a person</div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
           <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Name" style={{...ibox,minWidth:160}}/>
-          <input value={newPin} onChange={e=>setNewPin(e.target.value.replace(/[^0-9]/g,"").slice(0,8))} inputMode="numeric" placeholder="PIN (4–8 digits)" style={{...ibox,width:140,letterSpacing:3}}/>
           <select value={newRole} onChange={e=>setNewRole(e.target.value)} style={ibox}>
             <option value="member">Member</option>
             {isOwner&&<option value="admin">Admin</option>}
           </select>
-          <Btn primary disabled={busy||!newName.trim()||!validPin(newPin)} onClick={add}>Add person</Btn>
+          <Btn primary disabled={busy||!newName.trim()} onClick={add}>Add person</Btn>
         </div>
-        <div style={{fontSize:11,color:"#6B5E80",marginTop:6}}>Pick a PIN for them and tell them what it is. They log in with the App Password + that PIN.{!isOwner?" Admins can add Members; only the Owner can add Admins.":""}</div>
+        <div style={{fontSize:11,color:"#6B5E80",marginTop:6}}>They'll appear on the login screen and set their own PIN the first time they pick their name.{!isOwner?" Admins can add Members; only the Owner can add Admins.":""}</div>
       </Cd>
       <Cd style={{padding:0,overflow:"hidden"}}>
         {list===null?<div style={{padding:20,color:"#9B8EAD"}}>Loading…</div>:list.length===0?<div style={{padding:20,color:"#9B8EAD"}}>No people added yet. Add someone above.</div>:list.map((t,i)=><div key={t.name} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderTop:i?"1px solid #2d1f42":"none",flexWrap:"wrap"}}>
           <div style={{flex:1,minWidth:140}}>
             <span style={{fontWeight:700,color:"#E8DFF0"}}>{t.name}</span>
-            {!t.hasPin&&<span style={{marginLeft:8,fontSize:10,fontWeight:700,color:"#D4A040"}}>no PIN set</span>}
+            {!t.hasPin&&<span style={{marginLeft:8,fontSize:10,fontWeight:700,color:"#D4A040"}}>hasn't set PIN yet</span>}
           </div>
           <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:4,background:roleColor(t.role)+"22",color:roleColor(t.role)}}>{roleLabel(t.role)}</span>
           {isOwner&&t.role!=="owner"&&<select value={t.role} onChange={e=>setR(t,e.target.value)} style={{...ibox,padding:"4px 6px",fontSize:12}}><option value="member">Member</option><option value="admin">Admin</option></select>}
@@ -9425,17 +9422,17 @@ Rules:
       </div>,damageEffects:<>{<BookLipstickMark style={{top:32,right:24,opacity:.5,transform:"rotate(10deg) scale(1.1)"}}/>}{<BookDroolStain style={{bottom:16,left:32,width:80,height:80,opacity:.2}}/>}</>},
 
       {title:"Signing In & Your PIN",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p>Two parts: the shared <b>App Password</b> gets you into the app, and your personal <b>PIN</b> tells the app who you are. Enter both on the login screen. Your name then shows at the bottom of the sidebar ("Signed in as …") and gets stamped on everything you do in the Activity Log.</p>
-        <p>No PIN? You can still get in with just the App Password — you'll be a generic "Staff" member with no admin powers and no name on the log. Enter your PIN to be recognized.</p>
-        <p>Forgot your PIN? Ask an admin to reset it — they'll just set you a new one. To change your own PIN, use <b>Change PIN</b> at the bottom of the sidebar. No one ever gets locked out.</p>
-        <BookMarginNote author="meg">One password to enter, one PIN that's yours. Don't share it.</BookMarginNote>
+        <p>Logging in is two quick steps. First, the shared <b>App Password</b> unlocks the door. Then you see the list of names — <b>tap yours</b> and enter your PIN. Your name shows at the bottom of the sidebar ("Signed in as …") and gets stamped on everything you do in the Activity Log.</p>
+        <p><b>First time?</b> When you tap your name the app asks you to <b>create your own PIN</b> (4–8 digits). That's yours from then on — no one else sets it or sees it.</p>
+        <p>Forgot your PIN? Ask an admin to reset it — your name goes back to "create a PIN" so you just pick a new one next time. You can also change it anytime via <b>Change PIN</b> at the bottom of the sidebar. No one ever gets locked out.</p>
+        <BookMarginNote author="meg">Pick your name, punch your PIN. Try to remember it this time.</BookMarginNote>
       </div>,damageEffects:<>{<BookInkSplatter style={{bottom:16,right:16,opacity:.4}}/>}</>},
 
       {title:"Team & Roles (Admins)",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p>If you're an admin, a <b>Team</b> item appears in the sidebar. There you add people, set their role, and reset PINs. To add someone: type their name, pick a PIN (4–8 digits) and tell them what it is — they log in with the App Password + that PIN.</p>
+        <p>If you're an admin, a <b>Team</b> item appears in the sidebar. You manage <i>names and roles</i> — that's it. Add someone by typing their name and picking a role; they show up on the login screen and <b>set their own PIN</b> the first time they sign in. You never handle PINs.</p>
         <p>Three roles. <b>Owner</b>: full control, can't be removed or demoted. <b>Admin</b>: can add, remove and reset <i>members</i>. <b>Member</b>: uses the app, no team management. Only the Owner can create or change Admins.</p>
-        <p>Resetting a PIN just sets a new one — hand it to them. Removing someone blocks their PIN immediately; everything they did stays in the Activity Log under their name.</p>
-        <BookMarginNote author="hades">Hand out PINs carefully. The log remembers who you let in.</BookMarginNote>
+        <p><b>Reset PIN</b> clears someone's PIN so they pick a new one next sign-in (use it if they're locked out). <b>Remove</b> blocks them immediately; everything they did stays in the Activity Log under their name.</p>
+        <BookMarginNote author="hades">Names and roles are yours to hand out. The log remembers every one.</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:24,opacity:.4,transform:"rotate(10deg)"}}/>}</>},
 
       {title:"Saving & Staying in Sync",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -9575,9 +9572,7 @@ Rules:
     <div style={{fontSize:28,fontWeight:800,color:"#9b7bb0",letterSpacing:2,textShadow:"0 0 20px rgba(155,123,176,.4),0 0 40px rgba(155,123,176,.15)"}}>DOOM & DELIVERABLES</div>
     <div style={{fontSize:11,fontWeight:600,color:"#C4A0C8",letterSpacing:3,marginTop:4}}>ATTICOR MEDIA</div>
     <div style={{fontSize:13,color:"#9b7bb0",marginTop:20,marginBottom:24,fontStyle:"italic"}}>{doomPick(DOOM.login)}</div>
-    <input type="password" value={authInput} onChange={e=>setAuthInput(e.target.value)} placeholder="App Password" style={{width:"100%",padding:"14px 18px",borderRadius:10,border:"2px solid rgba(155,123,176,.35)",background:"rgba(20,15,30,.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",color:"#E8DFF0",fontSize:16,textAlign:"center",outline:"none",marginBottom:10,letterSpacing:2}}/>
-    <input type="password" inputMode="numeric" value={authPin} onChange={e=>setAuthPin(e.target.value)} onKeyDown={async e=>{if(e.key==="Enter"){const ok=await verifyAuth(authInput,"login",authPin);if(ok){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthPin("");notify(doomPick(DOOM.wrong))}}}} placeholder="Your PIN (optional)" style={{width:"100%",padding:"14px 18px",borderRadius:10,border:"2px solid rgba(155,123,176,.35)",background:"rgba(20,15,30,.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",color:"#E8DFF0",fontSize:16,textAlign:"center",outline:"none",marginBottom:14,letterSpacing:4}}/>
-    <button onClick={async()=>{const ok=await verifyAuth(authInput,"login",authPin);if(ok){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthPin("");notify(doomPick(DOOM.wrong))}}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(155,123,176,.3)"}}>Let Me In</button>
+    <button onClick={()=>{try{["dd_auth","dd_user","dd_role"].forEach(k=>sessionStorage.removeItem(k))}catch(e){}window.location.reload()}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(155,123,176,.3)"}}>Sign in</button>
   </div></div>;
   if(authed&&mustChangePw)return<ForcedPwChange/>;
   if(!dbLoaded)return null; // HTML loader stays visible until data is ready

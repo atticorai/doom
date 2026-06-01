@@ -86,28 +86,24 @@ module.exports = async function handler(req, res) {
     if (action === 'add') {
       const nn = ((req.body && req.body.name) || '').trim();
       let rr = ((req.body && req.body.role) || 'member').trim();
-      const pin = pinOf(req.body);
       if (!nn) return res.status(400).json({ error: 'Name required' });
-      if (!isValidPin(pin)) return res.status(400).json({ error: 'PIN must be 4–8 digits' });
       if (findUser(doc, nn)) return res.status(409).json({ error: 'A user with that name already exists' });
-      if (pinInUse(doc, pin)) return res.status(409).json({ error: 'That PIN is already taken — pick another.' });
       if (rr === 'admin' && myRole !== 'owner') return res.status(403).json({ error: 'Only the owner can add admins' });
       if (rr !== 'admin') rr = 'member';
       const now = Date.now();
-      doc.users.push({ name: nn, role: rr, pin: hashSecret(pin), active: true, createdAt: now, updatedAt: now });
+      // No PIN — the person creates their own the first time they sign in.
+      doc.users.push({ name: nn, role: rr, pin: null, active: true, createdAt: now, updatedAt: now });
       await writeUsersDoc(supabase, doc);
       return res.status(200).json({ ok: true, name: nn, role: rr });
     }
 
-    if (action === 'setPin') {
+    if (action === 'resetPin') {
       const tn = ((req.body && req.body.name) || '').trim();
-      const pin = pinOf(req.body);
       const target = findUser(doc, tn);
       if (!target) return res.status(404).json({ error: 'User not found' });
       if (!canManage(myRole, target.role)) return res.status(403).json({ error: 'Not allowed to change that user' });
-      if (!isValidPin(pin)) return res.status(400).json({ error: 'PIN must be 4–8 digits' });
-      if (pinInUse(doc, pin, target.name)) return res.status(409).json({ error: 'That PIN is already taken — pick another.' });
-      target.pin = hashSecret(pin); target.updatedAt = Date.now();
+      // Clear the PIN — they'll set a fresh one at their next sign-in.
+      target.pin = null; target.updatedAt = Date.now();
       await writeUsersDoc(supabase, doc);
       return res.status(200).json({ ok: true, name: target.name });
     }

@@ -215,34 +215,60 @@ module.exports = async function handler(req, res) {
     return res.status(429).json({ error: 'Too many attempts. Try again later.' });
   }
 
+  // Step 1 → 2 of login: the App Password unlocks the name picker. Returns the
+  // roster (names + roles + whether each has a PIN yet) so the client can show
+  // "enter your PIN" vs "create your PIN" on the second screen.
+  if (type === 'roster') {
+    recordAttempt(clientIp);
+    if (!timingSafeEqual(password, SYS_PASSWORD)) return res.status(200).json({ ok: false });
+    let users = [];
+    const um = usersMod();
+    if (um) {
+      try {
+        const supabase = um.getSupabase();
+        if (supabase) { const doc = await um.ensureSeed(supabase); users = um.roster(doc); }
+      } catch (e) { console.error('roster failed:', e.message); }
+    }
+    return res.status(200).json({ ok: true, users });
+  }
+
   if (type === 'login') {
     recordAttempt(clientIp);
     let matched = null; // { name, role }
     const ownerName = (process.env.OWNER_NAME || 'Emm').trim();
     const pin = (req.body && typeof req.body.pin === 'string') ? req.body.pin.trim() : '';
-    // The App Password (SYS_PASSWORD) is the shared gate — required for everyone.
+    const pickedName = (req.body && typeof req.body.name === 'string') ? req.body.name.trim() : '';
+    // Both required: App Password (shared gate) + the person's name & PIN.
     const appOk = timingSafeEqual(password, SYS_PASSWORD);
-    if (appOk) {
-      if (!pin) {
-        // App Password only → generic Staff member (no name, no admin powers).
-        matched = { name: 'Staff', role: 'member' };
-      } else {
-        // The PIN says WHO this is. Check the managed store, then the OWNER_PIN
-        // break-glass. A wrong PIN fails outright (never silently downgraded).
+    if (appOk && pin) {
+      // Owner break-glass: OWNER_PIN env always authenticates the Owner, so the
+      // Owner can never be locked out (e.g. if they forget their own PIN).
+      const ownerPin = process.env.OWNER_PIN;
+      if (ownerPin && timingSafeEqual(pin, ownerPin)) matched = { name: ownerName, role: 'owner' };
+      // Otherwise look the person up by the name they picked.
+      if (!matched && pickedName) {
         const um = usersMod();
         if (um) {
           try {
             const supabase = um.getSupabase();
             if (supabase) {
               const doc = await um.ensureSeed(supabase);
-              const u = um.findByPin(doc, pin);
-              if (u) matched = { name: u.name, role: u.role };
+              const u = um.findUser(doc, pickedName);
+              if (u && u.active !== false) {
+                if (u.pin) {
+                  // Returning user — verify their PIN.
+                  if (um.verifySecret(pin, u.pin)) matched = { name: u.name, role: u.role };
+                } else {
+                  // First login — they're creating their PIN now.
+                  if (um.isValidPin(pin) && !um.pinInUse(doc, pin, u.name)) {
+                    u.pin = um.hashSecret(pin); u.updatedAt = Date.now();
+                    await um.writeUsersDoc(supabase, doc);
+                    matched = { name: u.name, role: u.role };
+                  }
+                }
+              }
             }
-          } catch (e) { console.error('pin lookup failed:', e.message); }
-        }
-        if (!matched) {
-          const ownerPin = process.env.OWNER_PIN;
-          if (ownerPin && timingSafeEqual(pin, ownerPin)) matched = { name: ownerName, role: 'owner' };
+          } catch (e) { console.error('login store err:', e.message); }
         }
       }
     }
