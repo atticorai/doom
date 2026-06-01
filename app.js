@@ -39,10 +39,32 @@ const verifyAuth=async(password,type)=>{
   try{
     const r=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password,type})});
     const d=await r.json();
-    if(d.success===true&&type==="login"&&d.customToken){await signInWithFbToken(d.customToken)}
+    if(d.success===true&&type==="login"){
+      try{
+        if(d.user)sessionStorage.setItem("dd_user",d.user);
+        sessionStorage.setItem("dd_role",d.role||"member");
+        sessionStorage.setItem("dd_mustchange",d.mustChange?"1":"0");
+      }catch(e){}
+      if(d.customToken){await signInWithFbToken(d.customToken)}
+    }
     return d.success===true;
   }catch(e){console.error("Auth check failed:",e);return false}
 };
+// Who is signed in (set by the login flow / session check). Used to stamp the
+// activity log so edits are attributable per person, not a generic label.
+const currentUser=()=>{try{return sessionStorage.getItem("dd_user")||"Staff"}catch(e){return "Staff"}};
+const currentRole=()=>{try{return sessionStorage.getItem("dd_role")||"member"}catch(e){return "member"}};
+const isManagerRole=()=>{const r=currentRole();return r==="owner"||r==="admin"};
+const signOut=async()=>{
+  try{await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"logout"})})}catch(e){}
+  try{["dd_auth","dd_user","dd_role","dd_mustchange"].forEach(k=>sessionStorage.removeItem(k))}catch(e){}
+  try{if(window.fbAuth&&window.fbAuth.signOut)window.fbAuth.signOut()}catch(e){}
+  window.location.reload();
+};
+// Friendly names for the stored collections — used in the save-failed and
+// "updated in another session" banners so users see "ISCI Registry", not "iscis".
+const COL_LABELS={iscis:"ISCI Registry",stations:"Stations",estimates:"Estimates",trafficHistory:"Traffic History",customTags:"Tags",confirmations:"Confirmations",nowAiring:"Now Airing",staEstLinks:"Station Links",auditLog:"Activity Log",workMonth:"Work Month",oohContracts:"OOH Contracts",oohPhotos:"OOH Photos",deletedIscis:"Deleted ISCIs"};
+const COL_LABEL=(c)=>COL_LABELS[c]||c;
 // All emails go through /api/send-traffic (n8n webhook proxy)
 
 // Sparkline mini-chart component
@@ -665,13 +687,29 @@ const App=()=>{
   const[deletedIsciKeys,setDeletedIsciKeys]=useState(new Set());
   const legacyPurgedRef=React.useRef(false);
   const[authed,setAuthed]=useState(()=>sessionStorage.getItem("dd_auth")==="1");
+  const[mustChangePw,setMustChangePw]=useState(()=>{try{return sessionStorage.getItem("dd_mustchange")==="1"}catch(e){return false}});
+  const[showChangePw,setShowChangePw]=useState(false);
   const[authInput,setAuthInput]=useState("");
 
   // ── FIRESTORE PERSISTENCE ────────────────────────────
   const loadCompleteRef=React.useRef(false);
+  // Tracks the last ts WE wrote (or loaded) per collection. Change-detection
+  // compares the server's ts against this to spot edits from another session.
+  const docTsRef=React.useRef({});
   const saveToDb=React.useCallback((col,data)=>{
     if(!loadCompleteRef.current){console.warn("saveToDb BLOCKED (load incomplete):",col);return Promise.reject(new Error("load incomplete"))}
-    try{const p=db.collection("appData").doc(col).set({data:JSON.stringify(data),ts:Date.now()});setLastSynced(new Date());return p}catch(e){console.warn("Save failed:",col,e);return Promise.reject(e)}
+    const ts=Date.now();
+    // Record our intended ts up front so the change-detection poller doesn't
+    // mistake our own in-flight write for someone else's edit.
+    docTsRef.current[col]=ts;
+    let p;
+    try{p=db.collection("appData").doc(col).set({data:JSON.stringify(data),ts})}
+    catch(e){console.warn("Save failed:",col,e);setSyncError({col,msg:(e&&e.message)||String(e),ts:Date.now()});return Promise.reject(e)}
+    // Only mark "synced" once the write actually lands — never optimistically.
+    // Surface failures so a dropped save can't masquerade as a successful one.
+    return Promise.resolve(p)
+      .then(r=>{const wts=(r&&r.ts)||ts;docTsRef.current[col]=wts;setLastSynced(new Date());setSyncError(null);return r})
+      .catch(e=>{console.error("Save failed:",col,e);setSyncError({col,msg:(e&&e.message)||String(e),ts:Date.now()});throw e});
   },[]);
   // Load all data on mount
   React.useEffect(()=>{
@@ -681,6 +719,9 @@ const App=()=>{
         if(!db)throw new Error("Firebase DB not available after init");
         const snap=await db.collection("appData").get();
         const docs={};snap.forEach(d=>{docs[d.id]=d.data()});
+        // Seed the per-collection ts baseline so change-detection knows what
+        // we loaded — anything newer on the server later = another session.
+        try{Object.keys(docs).forEach(k=>{const t=docs[k]&&docs[k].ts;if(t!=null)docTsRef.current[k]=t})}catch(_e){}
         let _loadedStations=stations; // Will be updated if Firestore has station data
         if(docs.stations?.data){const d=JSON.parse(docs.stations.data);if(d.length){
           // Apply authoritative station patches — filter out old stations, update contacts, add new
@@ -758,12 +799,12 @@ const App=()=>{
           if(missing.length>0)console.warn("ISCI RESTORE: "+missing.length+" seed ISCIs were missing from Firestore — restored");
           console.log("ISCI load: "+enhanced.length+" from Firestore + "+missing.length+" restored = "+all.length+" total");
           // Save tagged ISCIs back to Firestore immediately
-          try{db.collection("appData").doc("iscis").set({data:JSON.stringify(all),ts:Date.now()}).catch(()=>{})}catch(e){}
+          {const _ts=Date.now();docTsRef.current.iscis=_ts;try{db.collection("appData").doc("iscis").set({data:JSON.stringify(all),ts:_ts}).catch(()=>{})}catch(e){}}
           setIscis(all);isciFbCountRef.current=all.length;iscisLoadedRef.current=true
         }else{
           // No Firestore data at all — write seed as initial data
           console.warn("No ISCI data in Firestore — initializing from seed ("+ISCIS_INIT.length+" ISCIs)");
-          try{db.collection("appData").doc("iscis").set({data:JSON.stringify(ISCIS_INIT),ts:Date.now()})}catch(he){}
+          {const _ts=Date.now();docTsRef.current.iscis=_ts;try{db.collection("appData").doc("iscis").set({data:JSON.stringify(ISCIS_INIT),ts:_ts})}catch(he){}}
           iscisLoadedRef.current=true
         }
         // Old 4-digit WK estimate numbers to clean from all data
@@ -878,7 +919,7 @@ const App=()=>{
             }
             if(found>0){
               const healed=live.map(i=>updates[i.code]?{...i,fileUrl:updates[i.code]}:i);
-              await db.collection("appData").doc("iscis").set({data:JSON.stringify(healed),ts:Date.now()});
+              {const _ts=Date.now();docTsRef.current.iscis=_ts;await db.collection("appData").doc("iscis").set({data:JSON.stringify(healed),ts:_ts});}
               setIscis(healed);
               console.log("Creative recovery: RE-LINKED "+found+" files. Refresh to see them.");
             }else{console.log("Creative recovery: no files found in Storage")}
@@ -935,6 +976,29 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(nowAiring).length>0)saveToDb("nowAiring",nowAiring)},[nowAiring,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(auditLog.length>0)saveToDb("auditLog",auditLog)},[auditLog,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("deletedIscis",[...deletedIsciKeys])},[deletedIsciKeys,dbLoaded]);
+  // ── CHANGE DETECTION (multi-user awareness) ───────────────────────────
+  // Polls the server's per-collection ts (cheap — no blobs) on an interval
+  // and when the tab regains focus. If anything is newer than what WE last
+  // wrote/loaded, another session edited it — surface a non-blocking banner
+  // so the user can reload before their next save clobbers it. Supabase-only
+  // (db.metaTs is absent in Firebase mode), and never blocks saving.
+  React.useEffect(()=>{
+    if(!dbLoaded||!loadCompleteRef.current)return;
+    if(!db||typeof db.metaTs!=="function")return;
+    let cancelled=false;
+    const check=async()=>{
+      try{
+        const map=await db.metaTs("appData");
+        if(cancelled||!map)return;
+        const changed=Object.keys(map).filter(k=>!k.endsWith("_backup")&&Number(map[k])>Number(docTsRef.current[k]||0));
+        setExternalChange(changed.length?changed:null);
+      }catch(_e){/* offline / transient — ignore, try again next tick */}
+    };
+    const id=setInterval(check,30000);
+    const onFocus=()=>check();
+    window.addEventListener("focus",onFocus);
+    return()=>{cancelled=true;clearInterval(id);window.removeEventListener("focus",onFocus)};
+  },[dbLoaded]);
   const trafficFbCountRef=React.useRef(0);
   const trafficDirtyRef=React.useRef(false);
   // Set true for an intentional bulk rewrite (e.g. re-running the importer, which
@@ -1179,6 +1243,8 @@ const App=()=>{
   const[confirmRemindersSent,setConfirmRemindersSent]=useState({});
   const[oohEmailRecipients,setOohEmailRecipients]=useState("jwhitlock@atticor.com");
   const[lastSynced,setLastSynced]=useState(null);
+  const[syncError,setSyncError]=useState(null); // {col,msg,ts} when a save fails
+  const[externalChange,setExternalChange]=useState(null); // [collections] edited in another session
   React.useEffect(()=>{
     if(!dbLoaded)return;
     // Read confirm params from either the search string or the hash fragment.
@@ -1656,7 +1722,7 @@ const App=()=>{
     pdf.text("Note: You have 24 hours to return signed traffic instructions or confirm receipt via email.",mx+3,y);
     return pdf.output("datauristring");
   };
-  const log=useCallback((a,d)=>setAuditLog(p=>[{ts:new Date().toISOString(),a,d,u:"Traffic Mgr"},...p]),[]);
+  const log=useCallback((a,d)=>setAuditLog(p=>[{ts:new Date().toISOString(),a,d,u:currentUser()},...p]),[]);
   const setF=(k,v)=>setSf(p=>({...p,[k]:v}));
   const today=new Date();today.setHours(0,0,0,0);const in14=new Date(today.getTime()+14*864e5);const in7=new Date(today.getTime()+7*864e5);
   const nextRot=CALENDAR.find(c=>new Date(c.rotDue+"T00:00:00")>=today);
@@ -5247,11 +5313,14 @@ ${fullText.substring(0,3000)}`}]
       });
     });
 
-    // Unique filter values
+    // Unique filter values — scoped to the selected brand (no cross-brand
+    // leakage) and limited to real, full markets (drops codes / junk like
+    // "All Markets" that aren't a single DMA). Markets show full names.
+    const brandRows=trackingData.filter(d=>d.brand===fBrand);
     const brands=[...new Set(trackingData.map(d=>d.brand))].sort();
-    const markets=[...new Set(trackingData.map(d=>d.market))].sort();
-    const medias=[...new Set(trackingData.map(d=>d.media))].sort();
-    const months=(()=>{const mo=["January","February","March","April","May","June","July","August","September","October","November","December"];const raw=[...new Set(trackingData.map(d=>d.month).filter(Boolean))];return raw.sort((a,b)=>{const pa=a.split(" ");const pb=b.split(" ");const ya=parseInt(pa[1])||2026;const yb=parseInt(pb[1])||2026;if(ya!==yb)return ya-yb;return mo.indexOf(pa[0])-mo.indexOf(pb[0])})})();
+    const markets=[...new Set(brandRows.map(d=>d.market))].filter(m=>DM[m]).sort((a,b)=>(DM[a]||a).localeCompare(DM[b]||b));
+    const medias=[...new Set(brandRows.map(d=>d.media))].sort();
+    const months=(()=>{const mo=["January","February","March","April","May","June","July","August","September","October","November","December"];const raw=[...new Set(brandRows.map(d=>d.month).filter(Boolean))];return raw.sort((a,b)=>{const pa=a.split(" ");const pb=b.split(" ");const ya=parseInt(pa[1])||2026;const yb=parseInt(pb[1])||2026;if(ya!==yb)return ya-yb;return mo.indexOf(pa[0])-mo.indexOf(pb[0])})})();
 
     // Apply filters
     const filtered=trackingData.filter(d=>{
@@ -5291,9 +5360,10 @@ ${fullText.substring(0,3000)}`}]
     });
     const voArr=Object.values(byVO).map(t=>({...t,iscis:t.iscis.size})).sort((a,b)=>b.count-a.count);
 
-    // Market breakdown
+    // Market breakdown — only real single-market DMAs (skip "All Markets" etc.)
     const byMarket={};
     filtered.forEach(d=>{
+      if(!DM[d.market])return;
       const cat=d.category||"Untagged";
       if(!byMarket[d.market])byMarket[d.market]={};
       if(!byMarket[d.market][cat])byMarket[d.market][cat]=0;
@@ -5321,11 +5391,11 @@ ${fullText.substring(0,3000)}`}]
 
     const colors=["#4AC8E8","#8b5cf6","#ec4899","#D4A040","#10b981","#ef4444","#06b6d4","#84cc16","#f97316","#6366f1","#14b8a6","#e11d48"];
 
-    const FiltSel=({label,value,onChange,options})=><div style={{display:"flex",flexDirection:"column",gap:2}}>
+    const FiltSel=({label,value,onChange,options,fmt})=><div style={{display:"flex",flexDirection:"column",gap:2}}>
       <label style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase",letterSpacing:.5}}>{label}</label>
       <select value={value} onChange={e=>onChange(e.target.value)} style={{padding:"4px 6px",borderRadius:5,border:"1px solid #9b7bb0",fontSize:13,fontWeight:600,background:"#1e1233",color:"#9B8EAD"}}>
         <option value="all">All</option>
-        {options.map(o=><option key={o} value={o}>{o}</option>)}
+        {options.map(o=><option key={o} value={o}>{fmt?fmt(o):o}</option>)}
       </select>
     </div>;
 
@@ -5347,7 +5417,7 @@ ${fullText.substring(0,3000)}`}]
       {/* FILTERS */}
       <Cd style={{padding:10,marginBottom:12,borderRadius:"0 8px 8px 8px",borderTop:"2px solid "+(fBrand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK"))}}>
         <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"end"}}>
-          <FiltSel label="Market" value={fMarket} onChange={setFMarket} options={markets}/>
+          <FiltSel label="Market" value={fMarket} onChange={setFMarket} options={markets} fmt={o=>DM[o]||o}/>
           <FiltSel label="Media" value={fMedia} onChange={setFMedia} options={medias}/>
           <FiltSel label="Month" value={fMonth} onChange={setFMonth} options={months}/>
           <button onClick={()=>{setFMarket("all");setFMedia("all");setFMonth("all")}} style={{padding:"4px 10px",borderRadius:5,border:"1px solid #4a3565",background:"#1e1233",fontSize:14,fontWeight:600,cursor:"pointer",color:"#9B8EAD",alignSelf:"end"}}>Clear</button>
@@ -5369,7 +5439,7 @@ ${fullText.substring(0,3000)}`}]
           {/* Creative mix bar chart */}
           <Cd style={{padding:16,marginBottom:14}}>
             <div style={{fontSize:14,fontWeight:800,marginBottom:10}}>
-              {fBrand!=="all"?fBrand:"All Brands"} — Creative Mix {fMonth!=="all"?"· "+fMonth:""} {fMarket!=="all"?"· "+fMarket:""}
+              {fBrand!=="all"?fBrand:"All Brands"} — Creative Mix {fMonth!=="all"?"· "+fMonth:""} {fMarket!=="all"?"· "+(DM[fMarket]||fMarket):""}
             </div>
             {mixArr.map((m,i)=>{
               const pct=totalMix>0?Math.round((m.count/totalMix)*100):0;
@@ -8267,8 +8337,119 @@ Rules:
   };
 
 
+  // Forced password change — shown when a user logs in with a temp password.
+  const ForcedPwChange=()=>{
+    const[p1,setP1]=useState("");const[p2,setP2]=useState("");const[busy,setBusy]=useState(false);const[err,setErr]=useState("");
+    const pwStyle={width:"100%",padding:"12px 16px",borderRadius:10,border:"2px solid rgba(155,123,176,.35)",background:"rgba(20,15,30,.4)",color:"#E8DFF0",fontSize:15,textAlign:"center",outline:"none",marginBottom:10};
+    const submit=async()=>{
+      if(p1.length<6){setErr("At least 6 characters");return}
+      if(p1!==p2){setErr("Passwords don't match");return}
+      setBusy(true);setErr("");
+      try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"changeOwnPassword",newPassword:p1})});const d=await r.json();setBusy(false);if(!r.ok){setErr(d.error||"Failed to set password");return}try{sessionStorage.setItem("dd_mustchange","0")}catch(e){}setMustChangePw(false);notify("Password updated")}catch(e){setBusy(false);setErr("Network error")}
+    };
+    return<div style={{minHeight:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{width:380,textAlign:"center"}}>
+        <h1 style={{fontFamily:"'Cormorant Garamond',serif",color:"#F0E8F8",fontSize:28,marginBottom:4}}>Set your password</h1>
+        <p style={{color:"#9B8EAD",fontSize:13,marginBottom:16}}>You're signed in with a temporary password. Choose a new one to continue.</p>
+        <input type="password" value={p1} onChange={e=>setP1(e.target.value)} placeholder="New password" style={pwStyle}/>
+        <input type="password" value={p2} onChange={e=>setP2(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")submit()}} placeholder="Confirm new password" style={pwStyle}/>
+        {err&&<div style={{color:"#E85A7A",fontSize:13,fontWeight:600,marginBottom:8}}>{err}</div>}
+        <button onClick={submit} disabled={busy} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",color:"#fff",fontSize:15,fontWeight:700,cursor:busy?"wait":"pointer",letterSpacing:1}}>{busy?"Saving…":"Save & Continue"}</button>
+      </div>
+    </div>;
+  };
+
+  // Self-service change password — a dismissible modal (vs the blocking
+  // ForcedPwChange). Available to anyone signed in; the server explains if
+  // their password is env-managed (Owner / shared team password).
+  const ChangePwModal=()=>{
+    const[p1,setP1]=useState("");const[p2,setP2]=useState("");const[busy,setBusy]=useState(false);const[err,setErr]=useState("");
+    const pwStyle={width:"100%",padding:"11px 14px",borderRadius:8,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:15,outline:"none",marginBottom:10,boxSizing:"border-box"};
+    const submit=async()=>{
+      if(p1.length<6){setErr("At least 6 characters");return}
+      if(p1!==p2){setErr("Passwords don't match");return}
+      setBusy(true);setErr("");
+      try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"changeOwnPassword",newPassword:p1})});const d=await r.json();setBusy(false);if(!r.ok){setErr(d.error||"Failed");return}setShowChangePw(false);notify("Password changed")}catch(e){setBusy(false);setErr("Network error")}
+    };
+    return<div onClick={()=>setShowChangePw(false)} style={{position:"fixed",inset:0,background:"rgba(10,6,18,.7)",zIndex:10000,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div onClick={e=>e.stopPropagation()} style={{width:360,background:"#2d1f42",border:"1px solid #4a3565",borderRadius:12,padding:20}}>
+        <div style={{fontSize:18,fontWeight:800,color:"#F0E8F8",marginBottom:4,fontFamily:"'Cormorant Garamond',serif"}}>Change your password</div>
+        <div style={{fontSize:12,color:"#9B8EAD",marginBottom:14}}>Forgot it? An admin can reset it for you — no one gets locked out.</div>
+        <input type="password" value={p1} onChange={e=>setP1(e.target.value)} placeholder="New password" style={pwStyle}/>
+        <input type="password" value={p2} onChange={e=>setP2(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")submit()}} placeholder="Confirm new password" style={pwStyle}/>
+        {err&&<div style={{color:"#E85A7A",fontSize:13,fontWeight:600,marginBottom:8}}>{err}</div>}
+        <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+          <Btn small onClick={()=>setShowChangePw(false)}>Cancel</Btn>
+          <Btn small primary disabled={busy} onClick={submit}>{busy?"Saving…":"Save"}</Btn>
+        </div>
+      </div>
+    </div>;
+  };
+
+  // ── TEAM MANAGEMENT ───────────────────────────────────
+  const TeamPg=()=>{
+    const[list,setList]=useState(null);
+    const[meInfo,setMeInfo]=useState(null);
+    const[busy,setBusy]=useState(false);
+    const[err,setErr]=useState("");
+    const[newName,setNewName]=useState("");
+    const[newRole,setNewRole]=useState("member");
+    const[tempShown,setTempShown]=useState(null); // {name,temp}
+    const load=async()=>{setErr("");try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"list"})});const d=await r.json();if(!r.ok){setErr(d.error||"Failed to load team");return}setList(d.users||[]);setMeInfo(d.me||null)}catch(e){setErr("Network error loading team")}};
+    React.useEffect(()=>{load()},[]);
+    const call=async(body)=>{setBusy(true);setErr("");try{const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(body)});const d=await r.json();setBusy(false);if(!r.ok){setErr(d.error||"Action failed");return null}return d}catch(e){setBusy(false);setErr("Network error");return null}};
+    const myRole=meInfo?.role||currentRole();
+    const isOwner=myRole==="owner";
+    const roleLabel=r=>r==="owner"?"Owner":r==="admin"?"Admin":"Member";
+    const roleColor=r=>r==="owner"?"#D4A040":r==="admin"?"#4AC8E8":"#9B8EAD";
+    const canTouch=(t)=>t.role==="owner"?false:(isOwner?true:(myRole==="admin"&&t.role==="member"));
+    const add=async()=>{const nm=newName.trim();if(!nm)return;const d=await call({action:"add",name:nm,role:newRole});if(d){setTempShown({name:d.name,temp:d.tempPassword});setNewName("");setNewRole("member");load()}};
+    const reset=async(t)=>{if(!confirm("Reset password for "+t.name+"? They'll get a temporary password and must set a new one at next login."))return;const d=await call({action:"reset",name:t.name});if(d){setTempShown({name:d.name,temp:d.tempPassword});load()}};
+    const remove=async(t)=>{if(!confirm("Remove "+t.name+"? They will no longer be able to sign in."))return;const d=await call({action:"remove",name:t.name});if(d)load()};
+    const setR=async(t,r)=>{const d=await call({action:"setRole",name:t.name,role:r});if(d)load()};
+    const ibox={padding:"7px 10px",borderRadius:6,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:13,outline:"none"};
+    return<div>
+      <PageHead title="Team" pgKey="team" sub="Add people, set roles, and reset passwords. New people and resets get a one-time temporary password they must change at first login."/>
+      {err&&<Cd style={{padding:"8px 12px",marginBottom:10,border:"1px solid #E85A7A",background:"rgba(232,90,122,.08)"}}><span style={{color:"#E85A7A",fontWeight:600,fontSize:13}}>{err}</span></Cd>}
+      {tempShown&&<Cd style={{padding:14,marginBottom:12,border:"1px solid #D4A040",background:"rgba(212,160,64,.1)"}}>
+        <div style={{fontWeight:800,color:"#D4A040",marginBottom:4}}>Temporary password for {tempShown.name}</div>
+        <div style={{fontSize:13,color:"#C9BBD9",marginBottom:8}}>Give this to them now — it won't be shown again. They'll be required to set their own password the first time they log in.</div>
+        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+          <code style={{fontSize:18,fontWeight:800,background:"#1e1233",padding:"6px 12px",borderRadius:6,color:"#5BC4A0",letterSpacing:1}}>{tempShown.temp}</code>
+          <Btn small onClick={()=>{try{navigator.clipboard&&navigator.clipboard.writeText(tempShown.temp)}catch(e){}notify("Copied")}}>Copy</Btn>
+          <Btn small onClick={()=>setTempShown(null)}>Done</Btn>
+        </div>
+      </Cd>}
+      <Cd style={{padding:14,marginBottom:12}}>
+        <div style={{fontSize:14,fontWeight:800,marginBottom:8,color:"#E8DFF0"}}>Add a person</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+          <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Name" style={{...ibox,minWidth:180}}/>
+          <select value={newRole} onChange={e=>setNewRole(e.target.value)} style={ibox}>
+            <option value="member">Member</option>
+            {isOwner&&<option value="admin">Admin</option>}
+          </select>
+          <Btn primary disabled={busy||!newName.trim()} onClick={add}>Add — generate temp password</Btn>
+        </div>
+        {!isOwner&&<div style={{fontSize:11,color:"#6B5E80",marginTop:6}}>Admins can add Members. Only the Owner can add Admins.</div>}
+      </Cd>
+      <Cd style={{padding:0,overflow:"hidden"}}>
+        {list===null?<div style={{padding:20,color:"#9B8EAD"}}>Loading…</div>:list.length===0?<div style={{padding:20,color:"#9B8EAD"}}>No managed users yet. Add someone above.</div>:list.map((t,i)=><div key={t.name} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderTop:i?"1px solid #2d1f42":"none",flexWrap:"wrap"}}>
+          <div style={{flex:1,minWidth:140}}>
+            <span style={{fontWeight:700,color:"#E8DFF0"}}>{t.name}</span>
+            {t.mustChange&&<span style={{marginLeft:8,fontSize:10,fontWeight:700,color:"#D4A040"}}>temp pw — must change</span>}
+            {t.active===false&&<span style={{marginLeft:8,fontSize:10,color:"#E85A7A"}}>inactive</span>}
+          </div>
+          <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:4,background:roleColor(t.role)+"22",color:roleColor(t.role)}}>{roleLabel(t.role)}</span>
+          {isOwner&&t.role!=="owner"&&<select value={t.role} onChange={e=>setR(t,e.target.value)} style={{...ibox,padding:"4px 6px",fontSize:12}}><option value="member">Member</option><option value="admin">Admin</option></select>}
+          {canTouch(t)&&<Btn small onClick={()=>reset(t)} disabled={busy}>Reset PW</Btn>}
+          {canTouch(t)&&<Btn small danger onClick={()=>remove(t)} disabled={busy}>Remove</Btn>}
+        </div>)}
+      </Cd>
+    </div>;
+  };
+
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
@@ -9251,6 +9432,26 @@ Rules:
         <BookMarginNote author="muses">We are the Muses, goddesses of the arts<br/>We'll sing of your traffic — the sum of its parts!</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:32,right:24,opacity:.5,transform:"rotate(10deg) scale(1.1)"}}/>}{<BookDroolStain style={{bottom:16,left:32,width:80,height:80,opacity:.2}}/>}</>},
 
+      {title:"Signing In & Your Account",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>Everyone has their own password. Type it on the login screen — the app knows who you are from it, and stamps your name on everything you do in the Activity Log. Your name shows at the bottom of the sidebar ("Signed in as …").</p>
+        <p>New here, or had your password reset? You'll be given a <b>temporary password</b> (looks like <code>doom-1a2b3c4d</code>). Log in with it once and the app immediately asks you to set your own password before you can do anything else.</p>
+        <p>Forgot your password? Ask an admin to reset it for you — they'll hand you a new temporary one. There's no email reset.</p>
+        <BookMarginNote author="meg">Your password. Your name on your mistakes. Choose wisely.</BookMarginNote>
+      </div>,damageEffects:<>{<BookInkSplatter style={{bottom:16,right:16,opacity:.4}}/>}</>},
+
+      {title:"Team & Roles (Admins)",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>If you're an admin, a <b>Team</b> item appears in the sidebar. There you add people, set their role, and reset passwords. Adding someone (or resetting them) produces a one-time temporary password — copy it and give it to them; it's shown only once.</p>
+        <p>There are three roles. <b>Owner</b>: full control, can't be removed or demoted. <b>Admin</b>: can add, remove and reset <i>members</i>. <b>Member</b>: uses the app, no team management. Only the Owner can create or change Admins.</p>
+        <p>Removing someone stops them signing in immediately. Everything they did stays in the Activity Log under their name.</p>
+        <BookMarginNote author="hades">Hand out access carefully. The log remembers who you let in.</BookMarginNote>
+      </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:24,opacity:.4,transform:"rotate(10deg)"}}/>}</>},
+
+      {title:"Saving & Staying in Sync",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>You never hit a save button — every change saves automatically. The sidebar shows "Synced" with how long ago. If it ever says <b style={{color:"#E85A7A"}}>Save failed</b>, a red banner appears too: your last change may not have saved — reload and check.</p>
+        <p>Since more than one person can be in here, watch for the gold <b style={{color:"#D4A040"}}>"Updated in another session"</b> banner. It means someone else changed something — reload before you keep editing so you don't overwrite their work.</p>
+        <BookMarginNote author="muses">It saves itself, no button to press<br/>But heed the banners — avoid the mess!</BookMarginNote>
+      </div>,damageEffects:<>{<BookDroolStain style={{bottom:16,left:24,width:72,height:72,opacity:.2}}/>}</>},
+
       {title:"End of the Line",content:<div style={{display:"flex",flexDirection:"column",gap:14,textAlign:"center",paddingTop:24}}>
         <p style={{fontSize:17,fontFamily:"'Cinzel',serif",color:"#4a1a1a"}}>Thus concludes the operating manual for Doom & Deliverables.</p>
         <p style={{fontStyle:"italic",color:"#5a4a3a",fontSize:12}}>May your rotations total 100%, your confirmations come swiftly, and your ISCIs never drop below the safeguard.</p>
@@ -9382,12 +9583,15 @@ Rules:
     <div style={{fontSize:28,fontWeight:800,color:"#9b7bb0",letterSpacing:2,textShadow:"0 0 20px rgba(155,123,176,.4),0 0 40px rgba(155,123,176,.15)"}}>DOOM & DELIVERABLES</div>
     <div style={{fontSize:11,fontWeight:600,color:"#C4A0C8",letterSpacing:3,marginTop:4}}>ATTICOR MEDIA</div>
     <div style={{fontSize:13,color:"#9b7bb0",marginTop:20,marginBottom:24,fontStyle:"italic"}}>{doomPick(DOOM.login)}</div>
-    <input type="password" value={authInput} onChange={e=>setAuthInput(e.target.value)} onKeyDown={async e=>{if(e.key==="Enter"){const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}}} placeholder="Password" style={{width:"100%",padding:"14px 18px",borderRadius:10,border:"2px solid rgba(155,123,176,.35)",background:"rgba(20,15,30,.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",color:"#E8DFF0",fontSize:16,textAlign:"center",outline:"none",marginBottom:14,letterSpacing:2}}/>
-    <button onClick={async()=>{const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(155,123,176,.3)"}}>Let Me In</button>
+    <input type="password" value={authInput} onChange={e=>setAuthInput(e.target.value)} onKeyDown={async e=>{if(e.key==="Enter"){const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");try{if(sessionStorage.getItem("dd_mustchange")==="1")setMustChangePw(true)}catch(e){}setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}}} placeholder="Password" style={{width:"100%",padding:"14px 18px",borderRadius:10,border:"2px solid rgba(155,123,176,.35)",background:"rgba(20,15,30,.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",color:"#E8DFF0",fontSize:16,textAlign:"center",outline:"none",marginBottom:14,letterSpacing:2}}/>
+    <button onClick={async()=>{const ok=await verifyAuth(authInput,"login");if(ok){sessionStorage.setItem("dd_auth","1");try{if(sessionStorage.getItem("dd_mustchange")==="1")setMustChangePw(true)}catch(e){}setAuthed(true)}else{setAuthInput("");notify(doomPick(DOOM.wrong))}}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(155,123,176,.3)"}}>Let Me In</button>
   </div></div>;
+  if(authed&&mustChangePw)return<ForcedPwChange/>;
   if(!dbLoaded)return null; // HTML loader stays visible until data is ready
   if(isOohHub)return<React.Fragment>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
+    {syncError&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ A save just failed ({COL_LABEL(syncError.col)}) — your last change may NOT have been saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setSyncError(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
+    {externalChange&&<div style={{position:"fixed",top:syncError?37:0,left:0,right:0,zIndex:9998,background:"#D4A040",color:"#1e1233",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ Updated in another session: {externalChange.map(COL_LABEL).join(", ")}. Reload before editing so you don't overwrite it. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #1e1233",background:"transparent",color:"#1e1233",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setExternalChange(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #1e1233",background:"transparent",color:"#1e1233",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
     <OohHub/>
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
     {modal?.type==="oohPhoto"&&<OohPhotoModal modal={modal}/>}
@@ -9395,6 +9599,8 @@ Rules:
   </React.Fragment>;
   return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",overflow:"hidden"}}>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
+    {syncError&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ A save just failed ({COL_LABEL(syncError.col)}) — your last change may NOT have been saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setSyncError(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
+    {externalChange&&<div style={{position:"fixed",top:syncError?37:0,left:0,right:0,zIndex:9998,background:"#D4A040",color:"#1e1233",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ Updated in another session: {externalChange.map(COL_LABEL).join(", ")}. Reload before editing so you don't overwrite it. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #1e1233",background:"transparent",color:"#1e1233",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setExternalChange(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #1e1233",background:"transparent",color:"#1e1233",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
     <div style={{width:200,background:"linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
       <div style={{padding:"14px 12px 12px",borderBottom:"1px solid rgba(212,160,64,.15)"}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:36,height:36,borderRadius:8,background:"linear-gradient(135deg,#2d1f42,#1e1233)",border:"1.5px solid #D4A040",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 12px rgba(212,160,64,.15)"}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="url(#sflm)"/><defs><linearGradient id="sflm" x1="12" y1="3" x2="12" y2="22"><stop stopColor="#D4A040"/><stop offset=".5" stopColor="#C4A0C8"/><stop offset="1" stopColor="#9b7bb0"/></linearGradient></defs></svg></div><div><div style={{fontSize:15,fontWeight:800,color:"#D4A040",lineHeight:1,letterSpacing:1}}>ATTICOR</div><div style={{fontSize:7,color:"#9B8EAD",fontWeight:600,letterSpacing:1.5}}>DOOM & DELIVERABLES</div></div></div></div>
       <div style={{padding:"6px 10px",position:"relative"}}><input value={globalSearch} onChange={e=>setGlobalSearch(e.target.value)} placeholder="Search ISCIs, markets..." style={{width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",background:"#F0E8F8",color:"#9B8EAD",fontSize:14,outline:"none"}}/>
@@ -9408,7 +9614,7 @@ Rules:
         </div>})()}
       </div>
       <nav style={{flex:1,padding:"3px 0"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:(pg===n.id&&!isOohHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 12px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative",transition:"all .15s",letterSpacing:a?.3:0}} onMouseEnter={e=>{if(!a)e.currentTarget.style.background="rgba(155,123,176,.06)"}} onMouseLeave={e=>{if(!a)e.currentTarget.style.background="transparent"}}><span style={{fontSize:14}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:12,fontWeight:800,padding:"1px 6px",borderRadius:10,background:typeof badge==="number"?"#E85A7A":"#D4A040",color:"#fff",boxShadow:typeof badge==="number"?"0 2px 8px rgba(232,90,122,.3)":"0 2px 8px rgba(212,160,64,.3)"}}>{badge}</span>}</button>})}</nav>
-      <div style={{padding:"10px 12px",borderTop:"1px solid rgba(212,160,64,.1)",fontSize:12,color:"#6B5E80"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,color:"#D4A040",letterSpacing:1}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #4a3565",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#9B8EAD",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:"#5BC4A0"}}>Synced {Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago"}</span>}</div></div>
+      <div style={{padding:"10px 12px",borderTop:"1px solid rgba(212,160,64,.1)",fontSize:12,color:"#6B5E80"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,color:"#D4A040",letterSpacing:1}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #4a3565",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#9B8EAD",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:syncError?"#E85A7A":"#5BC4A0"}}>{syncError?"Save failed":"Synced "+(Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago")}</span>}</div><div style={{marginTop:2,color:"#6B5E80",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>Signed in as <span style={{color:"#9B8EAD",fontWeight:700}}>{currentUser()}</span></span><span style={{display:"flex",gap:8}}><button onClick={()=>setShowChangePw(true)} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Change password</button><button onClick={signOut} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Sign out</button></span></div></div>
     </div>
     <div style={{flex:1,overflowY:"auto",padding:16}}>
       <AnimatePresence mode="wait" initial={false}>
@@ -10099,6 +10305,7 @@ Rules:
           })()}
           {pg==="planner"&&PlannerPg()}
           {pg==="notif"&&pages["notif"]}
+          {pg==="team"&&isManagerRole()&&<TeamPg/>}
           {pg==="docs"&&<DocsPg/>}
         </MDiv>
       </AnimatePresence>
@@ -10249,6 +10456,7 @@ Rules:
       {uploadTracker.current&&uploadTracker.total&&<div style={{fontSize:11,color:"#94a3b8"}}>{uploadTracker.current}/{uploadTracker.total}</div>}
     </div>}
     {toast&&<div style={{position:"fixed",bottom:14,right:14,background:"linear-gradient(135deg,#2d1f42,#1e1233)",color:"#E8DFF0",padding:"10px 16px",borderRadius:8,fontSize:13,fontWeight:600,boxShadow:"0 8px 32px rgba(155,123,176,.2),0 0 1px rgba(196,160,200,.3)",zIndex:2e3,borderLeft:"3px solid #C4A0C8",maxWidth:400}}>{toast}</div>}
+    {showChangePw&&<ChangePwModal/>}
     {infoBox&&<div onClick={()=>setInfoBox(null)} style={{position:"fixed",inset:0,background:"rgba(20,12,40,.7)",zIndex:5001,display:"flex",alignItems:"center",justifyContent:"center",padding:20,backdropFilter:"blur(4px)"}}>
       <div onClick={e=>e.stopPropagation()} style={{background:"#2d1f42",border:"1px solid #4a3565",borderRadius:12,width:640,maxWidth:"96vw",maxHeight:"84vh",display:"flex",flexDirection:"column",boxShadow:"0 24px 80px rgba(0,0,0,.55)"}}>
         <div style={{padding:"12px 16px",borderBottom:"1px solid #4a3565",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>

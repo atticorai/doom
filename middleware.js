@@ -33,14 +33,23 @@ async function getSessionSecret() {
 async function validateSession(token) {
   if (typeof token !== 'string') return false;
   const parts = token.split('.');
-  if (parts.length !== 3) return false;
-  const [id, expiry, sig] = parts;
-  if (!/^[A-Za-z0-9_-]+$/.test(id) || !/^[0-9]+$/.test(expiry) || !/^[A-Za-z0-9_-]+$/.test(sig)) return false;
-  if (Number(expiry) < Date.now()) return false;
+  if (parts.length !== 3 && parts.length !== 4) return false;
   const secret = await getSessionSecret();
   if (!secret) return false;
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  if (parts.length === 4) {
+    // New format: <user>.<id>.<expiry>.<sig>
+    const [u, id, expiry, sig] = parts;
+    if (!/^[A-Za-z0-9_-]*$/.test(u) || !/^[A-Za-z0-9_-]+$/.test(id) || !/^[0-9]+$/.test(expiry) || !/^[A-Za-z0-9_-]+$/.test(sig)) return false;
+    if (Number(expiry) < Date.now()) return false;
+    const expected = await crypto.subtle.sign('HMAC', key, enc.encode(u + '.' + id + '.' + expiry));
+    return bufToB64url(expected) === sig;
+  }
+  // Legacy format: <id>.<expiry>.<sig>
+  const [id, expiry, sig] = parts;
+  if (!/^[A-Za-z0-9_-]+$/.test(id) || !/^[0-9]+$/.test(expiry) || !/^[A-Za-z0-9_-]+$/.test(sig)) return false;
+  if (Number(expiry) < Date.now()) return false;
   const expected = await crypto.subtle.sign('HMAC', key, enc.encode(id + '.' + expiry));
   return bufToB64url(expected) === sig;
 }
@@ -64,6 +73,7 @@ export default async function middleware(request) {
     pathname === '/api/planner' ||
     pathname === '/api/send-traffic' ||
     pathname === '/api/db' ||
+    pathname === '/api/users' ||
     pathname === '/api/db-inspect' ||
     pathname === '/api/legacy-assets-export' ||
     pathname === '/api/migrate-snapshot' ||
