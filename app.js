@@ -63,8 +63,10 @@ const signOut=async()=>{
 };
 // Friendly names for the stored collections — used in the save-failed and
 // "updated in another session" banners so users see "ISCI Registry", not "iscis".
-const COL_LABELS={iscis:"ISCI Registry",stations:"Stations",estimates:"Estimates",trafficHistory:"Traffic History",customTags:"Tags",confirmations:"Confirmations",nowAiring:"Now Airing",staEstLinks:"Station Links",auditLog:"Activity Log",workMonth:"Work Month",oohContracts:"OOH Contracts",oohPhotos:"OOH Photos",deletedIscis:"Deleted ISCIs"};
+const COL_LABELS={iscis:"ISCI Registry",stations:"Stations",estimates:"Estimates",trafficHistory:"Traffic History",customTags:"Tags",confirmations:"Confirmations",nowAiring:"Now Airing",staEstLinks:"Station Links",auditLog:"Activity Log",workMonth:"Work Month",oohContracts:"OOH Contracts",oohPhotos:"OOH Photos",deletedIscis:"Deleted ISCIs",settings:"Settings"};
 const COL_LABEL=(c)=>COL_LABELS[c]||c;
+// Default Notion calendar link (admins can change it in-app on the Calendar page).
+const NOTION_CAL_DEFAULT="https://www.notion.so/blackacre-marketing/Marketing-Comms-Calendar-35f991a2b603801dafcbe9c3ee571aca";
 // All emails go through /api/send-traffic (n8n webhook proxy)
 
 // Sparkline mini-chart component
@@ -680,6 +682,7 @@ const App=()=>{
   const[plPanels,setPlPanels]=useState(PL_PANELS);
   let[trafficHistory,setTrafficHistory]=useState(TRAFFIC_HISTORY_INIT);
   const[workMonth,setWorkMonth]=useState(()=>nextTrafficMonth());
+  const[notionCalUrl,setNotionCalUrl]=useState(NOTION_CAL_DEFAULT);
   const[alertsDismissed,setAlertsDismissed]=useState([]);
   const[oohContracts,setOohContracts]=useState(OOH_CONTRACTS_INIT);
   const[oohPhotos,setOohPhotos]=useState({});
@@ -878,6 +881,7 @@ const App=()=>{
         if(docs.confirmRemindersSent?.data){const d=JSON.parse(docs.confirmRemindersSent.data);setConfirmRemindersSent(d)}
         if(docs.oohContracts?.data){const d=JSON.parse(docs.oohContracts.data);if(Object.keys(d).length)setOohContracts(prev=>{const merged={...prev};Object.entries(d).forEach(([k,v])=>{merged[k]={...(prev[k]||{}),...v}});return merged})}
         if(docs.customTags?.data){const d=JSON.parse(docs.customTags.data);if(d["Postman Law"]?.categories||d["Wettermark Keith"]?.categories)setCustomFields(d);else if(Object.keys(d).length){const migrated={};Object.entries(d).forEach(([brand,tags])=>{if(Array.isArray(tags)){migrated[brand]={categories:tags.filter(t=>["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),valueProps:tags.filter(t=>!["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),vos:[]}}else{migrated[brand]=tags}});setCustomFields(migrated)}}
+        if(docs.settings?.data){try{const s=JSON.parse(docs.settings.data);if(typeof s.notionCalUrl==="string"&&s.notionCalUrl)setNotionCalUrl(s.notionCalUrl)}catch(_e){}}
         if(docs.wkOohIscis?.data){const d=JSON.parse(docs.wkOohIscis.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>d[p.boardId]!==undefined?{...p,isci:d[p.boardId]}:p))}
         if(docs.plOohIscis?.data){const d=JSON.parse(docs.plOohIscis.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isci:d[p.unit]}:p))}
         if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}
@@ -8386,6 +8390,35 @@ Rules:
     </div>;
   };
 
+  // ── CALENDAR (Notion) ─────────────────────────────────
+  const CalendarPg=()=>{
+    const isSite=/notion\.site/i.test(notionCalUrl||"");
+    const[editing,setEditing]=useState(false);
+    const[draft,setDraft]=useState(notionCalUrl||"");
+    const save=()=>{const u=draft.trim();setNotionCalUrl(u);saveToDb("settings",{notionCalUrl:u});setEditing(false);notify("Calendar link saved")};
+    return<div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,gap:8,flexWrap:"wrap"}}>
+        <PageHead title="Calendar" pgKey="cal" sub="Your Marketing & Comms calendar, straight from Notion"/>
+        <div style={{display:"flex",gap:6}}>
+          {notionCalUrl&&<Btn onClick={()=>window.open(notionCalUrl,"_blank","noopener")}>Open in Notion ↗</Btn>}
+          {isManagerRole()&&<Btn small onClick={()=>{setDraft(notionCalUrl||"");setEditing(e=>!e)}}>{editing?"Cancel":"Edit link"}</Btn>}
+        </div>
+      </div>
+      {editing&&<Cd style={{padding:12,marginBottom:10}}>
+        <div style={{fontSize:12,color:"#9B8EAD",marginBottom:6}}>Paste a Notion link. A published <b>notion.site</b> link embeds inline here; a private <b>notion.so</b> link opens in a new tab (you'll already be logged in). To embed inline, in Notion use <b>Share → Publish</b> and paste that link.</div>
+        <div style={{display:"flex",gap:8}}><input value={draft} onChange={e=>setDraft(e.target.value)} placeholder="https://…notion.site/… or notion.so/…" style={{flex:1,padding:"8px 10px",borderRadius:6,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:13}}/><Btn primary onClick={save}>Save</Btn></div>
+      </Cd>}
+      {!notionCalUrl?<Cd style={{padding:30,textAlign:"center",color:"#9B8EAD"}}>No calendar linked yet.{isManagerRole()?" Click 'Edit link' to add your Notion calendar.":""}</Cd>:
+       isSite?<Cd style={{padding:0,overflow:"hidden"}}><iframe src={notionCalUrl} title="Marketing & Comms Calendar" style={{width:"100%",height:"calc(100vh - 200px)",border:"none",background:"#fff"}}/></Cd>:
+       <Cd style={{padding:36,textAlign:"center"}}>
+         <div style={{fontSize:44,marginBottom:10}}>🗓️</div>
+         <div style={{fontSize:16,fontWeight:800,color:"#E8DFF0",marginBottom:6}}>Marketing & Comms Calendar</div>
+         <div style={{fontSize:13,color:"#9B8EAD",marginBottom:16,maxWidth:480,margin:"0 auto 16px"}}>This is a private Notion page, so it opens in Notion rather than embedding here.{isManagerRole()?" To show it inline instead, publish the page to web in Notion (Share → Publish) and paste the notion.site link via 'Edit link'.":""}</div>
+         <Btn primary onClick={()=>window.open(notionCalUrl,"_blank","noopener")}>Open Calendar in Notion ↗</Btn>
+       </Cd>}
+    </div>;
+  };
+
   // ── TEAM MANAGEMENT ───────────────────────────────────
   const TeamPg=()=>{
     const[list,setList]=useState(null);
@@ -8449,7 +8482,7 @@ Rules:
   };
 
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"cal",l:"Calendar",e:"🗓"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
@@ -10306,6 +10339,7 @@ Rules:
           {pg==="planner"&&PlannerPg()}
           {pg==="notif"&&pages["notif"]}
           {pg==="team"&&isManagerRole()&&<TeamPg/>}
+          {pg==="cal"&&<CalendarPg/>}
           {pg==="docs"&&<DocsPg/>}
         </MDiv>
       </AnimatePresence>
