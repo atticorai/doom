@@ -5397,7 +5397,7 @@ ${fullText.substring(0,3000)}`}]
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
         <PageHead title="Metrics" pgKey="metrics" sub="Creative Intelligence · Traffic Tracking · Performance"/>
         <div style={{display:"flex",gap:4}}>
-          {[["mix","Creative Mix"],["trends","Trends"],["freshness","Freshness"],["confirm","Confirmations"],["tracking","Traffic Tracking"],["savings","Time Savings"]].map(([k,l])=>
+          {[["mix","Creative Mix"],["trends","Over Time"],["freshness","Aging Creative"],["confirm","Confirmations"],["tracking","Sent Traffic"],["savings","Time Saved"]].map(([k,l])=>
             <button key={k} onClick={()=>setView(k)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid "+(view===k?"#4AC8E8":"#E8DFF0"),background:view===k?"#4AC8E8":"#2d1f42",color:view===k?"#fff":"#4a3565",fontSize:13,fontWeight:700,cursor:"pointer"}}>{l}</button>
           )}
         </div>
@@ -5419,13 +5419,26 @@ ${fullText.substring(0,3000)}`}]
         </div>
       </Cd>
 
+      {/* Plain-English explainer for whichever view is open */}
+      <div style={{display:"flex",alignItems:"flex-start",gap:8,padding:"8px 12px",marginBottom:12,background:"rgba(74,200,232,.06)",border:"1px solid rgba(74,200,232,.18)",borderRadius:8,fontSize:13,color:"#C9BBD9",lineHeight:1.5}}>
+        <span style={{fontSize:14}}>💡</span>
+        <span>{({
+          mix:"What kinds of creative you're running. One “spot” = one ISCI placed in one rotation. Use it to check your case-type, value-prop and voice balance.",
+          trends:"How things change month to month. “Completion” = the share of this brand's market × media slots that actually got trafficked that month.",
+          freshness:"ISCIs that have run across multiple months — the ones to consider refreshing or retiring before they wear out.",
+          confirm:"Stations that haven't confirmed traffic you sent, and how many days they've been sitting. Chase the oldest first.",
+          tracking:"Every traffic instruction on record, grouped by month, with its send and confirmation status.",
+          savings:"A rough estimate of the time saved versus building rotations and station emails by hand."
+        })[view]}</span>
+      </div>
+
       {/* CREATIVE MIX VIEW */}
       {view==="mix"&&<div>
         {filtered.length===0?<Cd style={{padding:30,textAlign:"center"}}><div style={{fontSize:13,color:"#9B8EAD",fontWeight:600}}>{doomPick(DOOM.empty)}</div><div style={{fontSize:14,color:"#9B8EAD",marginTop:4}}>Send your first rotation to see creative mix analytics</div></Cd>:<div>
           {/* Summary cards */}
           <div style={{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap"}}>
-            <Cd style={{padding:14,flex:1,minWidth:130}}><div style={{fontSize:28,fontWeight:900,color:"#9B8EAD"}}>{mixArr.length}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Creative Themes</div></Cd>
-            <Cd style={{padding:14,flex:1,minWidth:130}}><div style={{fontSize:28,fontWeight:900,color:"#4AC8E8"}}>{filtered.length}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>ISCI Placements</div></Cd>
+            <Cd style={{padding:14,flex:1,minWidth:130}} title="Distinct case-type categories running"><div style={{fontSize:28,fontWeight:900,color:"#9B8EAD"}}>{mixArr.length}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Case Types</div></Cd>
+            <Cd style={{padding:14,flex:1,minWidth:130}} title="Total ISCI placements: each time an ISCI appears in a rotation counts once"><div style={{fontSize:28,fontWeight:900,color:"#4AC8E8"}}>{filtered.length}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Spots Run</div></Cd>
             <Cd style={{padding:14,flex:1,minWidth:130}}><div style={{fontSize:28,fontWeight:900,color:"#8b5cf6"}}>{[...new Set(filtered.map(d=>d.market))].length}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Markets</div></Cd>
             <Cd style={{padding:14,flex:1,minWidth:130}}><div style={{fontSize:28,fontWeight:900,color:confRate>=80?"#5BC4A0":confRate>=50?"#D4A040":"#E85A7A"}}>{confRate}%</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Confirmed</div></Cd>
           </div>
@@ -5459,7 +5472,7 @@ ${fullText.substring(0,3000)}`}]
             return<Cd style={{padding:16,marginBottom:14}}>
               <div style={{fontSize:14,fontWeight:800,marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
                 <span>Value Prop Mix {fMarket!=="all"?"· "+fMarket:""}</span>
-                {over&&<span style={{fontSize:11,fontWeight:700,color:"#D4A040",background:"rgba(212,160,64,.12)",padding:"2px 8px",borderRadius:4}}>⚠ Over-indexed on {top.tag} ({topPct}% of tagged)</span>}
+                {over&&<span title="More than half of your tagged spots lean on a single value prop" style={{fontSize:11,fontWeight:700,color:"#D4A040",background:"rgba(212,160,64,.12)",padding:"2px 8px",borderRadius:4}}>⚠ Leaning hard on “{top.tag}” ({topPct}% of tagged spots)</span>}
               </div>
               {vpArr.map((m,i)=><BarRow key={m.tag} label={m.tag} pct={totalVP>0?Math.round((m.count/totalVP)*100):0} count={m.count} color={colors[i%colors.length]}/>)}
               {tagged.length===0&&<div style={{fontSize:12,color:"#64748b",fontStyle:"italic"}}>No value props tagged yet — set them in the ISCI Registry to see the balance here.</div>}
@@ -5583,7 +5596,7 @@ ${fullText.substring(0,3000)}`}]
           <div style={{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap"}}>
             <Cd style={{padding:14,flex:1,minWidth:130}}><div style={{fontSize:28,fontWeight:900,color:stale.length?"#D4A040":"#5BC4A0"}}>{stale.length}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Running 2+ Months</div></Cd>
             <Cd style={{padding:14,flex:1,minWidth:130}}><div style={{fontSize:28,fontWeight:900,color:"#E85A7A"}}>{stale.filter(r=>r.months.length>=4).length}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Running 4+ Months</div></Cd>
-            <Cd style={{padding:14,flex:1,minWidth:130}}><div style={{fontSize:28,fontWeight:900,color:"#4AC8E8"}}>{benchN}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Fresh On Bench</div></Cd>
+            <Cd style={{padding:14,flex:1,minWidth:130}} title="Active ISCIs for this brand that aren't in any rotation yet"><div style={{fontSize:28,fontWeight:900,color:"#4AC8E8"}}>{benchN}</div><div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase"}}>Ready, Not Running</div></Cd>
           </div>
           {stale.length===0?<Cd style={{padding:24,textAlign:"center"}}><div style={{fontSize:14,color:"#5BC4A0",fontWeight:700}}>Nothing stale — every ISCI has run a single month.</div></Cd>:
           <Cd style={{padding:0,overflow:"hidden"}}>
