@@ -1,5 +1,12 @@
 const crypto = require('crypto');
 const { getAuth } = require('./_admin');
+let _usersMod = null;
+function usersMod() {
+  // Lazy-require so api/users.js (which requires this file) doesn't create a
+  // load-order problem, and so auth keeps working if the module is absent.
+  if (_usersMod === null) { try { _usersMod = require('./_users'); } catch (e) { _usersMod = false; } }
+  return _usersMod;
+}
 
 // Stable Firebase Auth uid for any password-authed staff member. The app uses
 // a single shared password for all staff — there's no per-user identity to
@@ -157,6 +164,23 @@ module.exports = async function handler(req, res) {
     // Recover the signed-in name from the token so the client can stamp the
     // audit log after a reload without re-logging in.
     const user = authenticated ? userFromToken(rawToken) : null;
+    // Look up role + forced-password-change flag from the managed user store
+    // (best effort — if the store is unavailable we just omit them).
+    let role = null, mustChange = false;
+    if (authenticated && user) {
+      const um = usersMod();
+      if (um) {
+        try {
+          const supabase = um.getSupabase();
+          if (supabase) {
+            const doc = await um.ensureSeed(supabase);
+            const u = um.findUser(doc, user);
+            if (u) { role = u.role; mustChange = !!u.mustChange; }
+            else { role = user.trim().toLowerCase() === (process.env.OWNER_NAME || 'Emm').trim().toLowerCase() ? 'owner' : 'member'; }
+          }
+        } catch (e) { console.error('role lookup (check) failed:', e.message); }
+      }
+    }
     // Also mint a Firebase custom token for already-authed clients so they can
     // sign into Firebase Auth without re-logging in.
     let customToken = null;
@@ -167,7 +191,7 @@ module.exports = async function handler(req, res) {
         catch (e) { console.error('createCustomToken (check) failed:', e.message); }
       }
     }
-    return res.status(200).json({ authenticated, user, customToken });
+    return res.status(200).json({ authenticated, user, role, mustChange, customToken });
   }
 
   if (!password || typeof password !== 'string') {
@@ -189,15 +213,34 @@ module.exports = async function handler(req, res) {
 
   if (type === 'login') {
     recordAttempt(clientIp);
-    // Match the password against each configured per-user login (timing-safe,
-    // no short-circuit). Fall back to the shared SYS_PASSWORD as "Staff" so the
-    // existing password always works even before STAFF_USERS is configured.
-    const staffUsers = parseStaffUsers();
-    let matched = null;
-    for (const u of staffUsers) {
-      if (timingSafeEqual(password, u.password)) matched = u;
+    let matched = null; // { name, role?, mustChange? }
+    // 1. Managed user store (hashed passwords + roles), if Supabase is set up.
+    const um = usersMod();
+    if (um) {
+      try {
+        const supabase = um.getSupabase();
+        if (supabase) {
+          const doc = await um.ensureSeed(supabase);
+          for (const u of (doc.users || [])) {
+            if (u.active !== false && um.verifyPassword(password, u.pw)) {
+              matched = { name: u.name, role: u.role, mustChange: !!u.mustChange };
+            }
+          }
+        }
+      } catch (e) { console.error('store login failed, falling back:', e.message); }
     }
-    if (!matched && timingSafeEqual(password, SYS_PASSWORD)) matched = { name: 'Staff' };
+    // 2. Fallback: env-configured logins (bootstrap / store unavailable). The
+    //    shared SYS_PASSWORD always works as a safety net so no one is locked out.
+    if (!matched) {
+      const staffUsers = parseStaffUsers();
+      for (const u of staffUsers) {
+        if (timingSafeEqual(password, u.password)) matched = { name: u.name };
+      }
+      if (!matched && timingSafeEqual(password, SYS_PASSWORD)) {
+        const ownerName = (process.env.OWNER_NAME || 'Emm').trim();
+        matched = { name: ownerName, role: 'owner' };
+      }
+    }
     const success = !!matched;
     if (success) {
       const sessionToken = generateSessionToken(sessionSecret, matched.name);
@@ -215,7 +258,7 @@ module.exports = async function handler(req, res) {
           console.error('createCustomToken failed:', e.message);
         }
       }
-      return res.status(200).json({ success, user: matched.name, customToken });
+      return res.status(200).json({ success, user: matched.name, role: matched.role || null, mustChange: !!matched.mustChange, customToken });
     }
     return res.status(200).json({ success });
   }
@@ -227,3 +270,9 @@ module.exports = async function handler(req, res) {
 
   return res.status(400).json({ error: 'Invalid auth type' });
 };
+
+// Exposed for api/users.js to authenticate the session cookie and recover the
+// signed-in identity. (module.exports is the handler above; attach helpers.)
+module.exports.validateSessionToken = validateSessionToken;
+module.exports.userFromToken = userFromToken;
+module.exports.getSessionSecret = getSessionSecret;
