@@ -43,6 +43,10 @@ const verifyAuth=async(password,type)=>{
     return d.success===true;
   }catch(e){console.error("Auth check failed:",e);return false}
 };
+// Friendly names for the stored collections — used in the save-failed and
+// "updated in another session" banners so users see "ISCI Registry", not "iscis".
+const COL_LABELS={iscis:"ISCI Registry",stations:"Stations",estimates:"Estimates",trafficHistory:"Traffic History",customTags:"Tags",confirmations:"Confirmations",nowAiring:"Now Airing",staEstLinks:"Station Links",auditLog:"Activity Log",workMonth:"Work Month",oohContracts:"OOH Contracts",oohPhotos:"OOH Photos",deletedIscis:"Deleted ISCIs"};
+const COL_LABEL=(c)=>COL_LABELS[c]||c;
 // All emails go through /api/send-traffic (n8n webhook proxy)
 
 // Sparkline mini-chart component
@@ -669,9 +673,23 @@ const App=()=>{
 
   // ── FIRESTORE PERSISTENCE ────────────────────────────
   const loadCompleteRef=React.useRef(false);
+  // Tracks the last ts WE wrote (or loaded) per collection. Change-detection
+  // compares the server's ts against this to spot edits from another session.
+  const docTsRef=React.useRef({});
   const saveToDb=React.useCallback((col,data)=>{
     if(!loadCompleteRef.current){console.warn("saveToDb BLOCKED (load incomplete):",col);return Promise.reject(new Error("load incomplete"))}
-    try{const p=db.collection("appData").doc(col).set({data:JSON.stringify(data),ts:Date.now()});setLastSynced(new Date());return p}catch(e){console.warn("Save failed:",col,e);return Promise.reject(e)}
+    const ts=Date.now();
+    // Record our intended ts up front so the change-detection poller doesn't
+    // mistake our own in-flight write for someone else's edit.
+    docTsRef.current[col]=ts;
+    let p;
+    try{p=db.collection("appData").doc(col).set({data:JSON.stringify(data),ts})}
+    catch(e){console.warn("Save failed:",col,e);setSyncError({col,msg:(e&&e.message)||String(e),ts:Date.now()});return Promise.reject(e)}
+    // Only mark "synced" once the write actually lands — never optimistically.
+    // Surface failures so a dropped save can't masquerade as a successful one.
+    return Promise.resolve(p)
+      .then(r=>{const wts=(r&&r.ts)||ts;docTsRef.current[col]=wts;setLastSynced(new Date());setSyncError(null);return r})
+      .catch(e=>{console.error("Save failed:",col,e);setSyncError({col,msg:(e&&e.message)||String(e),ts:Date.now()});throw e});
   },[]);
   // Load all data on mount
   React.useEffect(()=>{
@@ -681,6 +699,9 @@ const App=()=>{
         if(!db)throw new Error("Firebase DB not available after init");
         const snap=await db.collection("appData").get();
         const docs={};snap.forEach(d=>{docs[d.id]=d.data()});
+        // Seed the per-collection ts baseline so change-detection knows what
+        // we loaded — anything newer on the server later = another session.
+        try{Object.keys(docs).forEach(k=>{const t=docs[k]&&docs[k].ts;if(t!=null)docTsRef.current[k]=t})}catch(_e){}
         let _loadedStations=stations; // Will be updated if Firestore has station data
         if(docs.stations?.data){const d=JSON.parse(docs.stations.data);if(d.length){
           // Apply authoritative station patches — filter out old stations, update contacts, add new
@@ -758,12 +779,12 @@ const App=()=>{
           if(missing.length>0)console.warn("ISCI RESTORE: "+missing.length+" seed ISCIs were missing from Firestore — restored");
           console.log("ISCI load: "+enhanced.length+" from Firestore + "+missing.length+" restored = "+all.length+" total");
           // Save tagged ISCIs back to Firestore immediately
-          try{db.collection("appData").doc("iscis").set({data:JSON.stringify(all),ts:Date.now()}).catch(()=>{})}catch(e){}
+          {const _ts=Date.now();docTsRef.current.iscis=_ts;try{db.collection("appData").doc("iscis").set({data:JSON.stringify(all),ts:_ts}).catch(()=>{})}catch(e){}}
           setIscis(all);isciFbCountRef.current=all.length;iscisLoadedRef.current=true
         }else{
           // No Firestore data at all — write seed as initial data
           console.warn("No ISCI data in Firestore — initializing from seed ("+ISCIS_INIT.length+" ISCIs)");
-          try{db.collection("appData").doc("iscis").set({data:JSON.stringify(ISCIS_INIT),ts:Date.now()})}catch(he){}
+          {const _ts=Date.now();docTsRef.current.iscis=_ts;try{db.collection("appData").doc("iscis").set({data:JSON.stringify(ISCIS_INIT),ts:_ts})}catch(he){}}
           iscisLoadedRef.current=true
         }
         // Old 4-digit WK estimate numbers to clean from all data
@@ -878,7 +899,7 @@ const App=()=>{
             }
             if(found>0){
               const healed=live.map(i=>updates[i.code]?{...i,fileUrl:updates[i.code]}:i);
-              await db.collection("appData").doc("iscis").set({data:JSON.stringify(healed),ts:Date.now()});
+              {const _ts=Date.now();docTsRef.current.iscis=_ts;await db.collection("appData").doc("iscis").set({data:JSON.stringify(healed),ts:_ts});}
               setIscis(healed);
               console.log("Creative recovery: RE-LINKED "+found+" files. Refresh to see them.");
             }else{console.log("Creative recovery: no files found in Storage")}
@@ -935,6 +956,29 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(nowAiring).length>0)saveToDb("nowAiring",nowAiring)},[nowAiring,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(auditLog.length>0)saveToDb("auditLog",auditLog)},[auditLog,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("deletedIscis",[...deletedIsciKeys])},[deletedIsciKeys,dbLoaded]);
+  // ── CHANGE DETECTION (multi-user awareness) ───────────────────────────
+  // Polls the server's per-collection ts (cheap — no blobs) on an interval
+  // and when the tab regains focus. If anything is newer than what WE last
+  // wrote/loaded, another session edited it — surface a non-blocking banner
+  // so the user can reload before their next save clobbers it. Supabase-only
+  // (db.metaTs is absent in Firebase mode), and never blocks saving.
+  React.useEffect(()=>{
+    if(!dbLoaded||!loadCompleteRef.current)return;
+    if(!db||typeof db.metaTs!=="function")return;
+    let cancelled=false;
+    const check=async()=>{
+      try{
+        const map=await db.metaTs("appData");
+        if(cancelled||!map)return;
+        const changed=Object.keys(map).filter(k=>!k.endsWith("_backup")&&Number(map[k])>Number(docTsRef.current[k]||0));
+        setExternalChange(changed.length?changed:null);
+      }catch(_e){/* offline / transient — ignore, try again next tick */}
+    };
+    const id=setInterval(check,30000);
+    const onFocus=()=>check();
+    window.addEventListener("focus",onFocus);
+    return()=>{cancelled=true;clearInterval(id);window.removeEventListener("focus",onFocus)};
+  },[dbLoaded]);
   const trafficFbCountRef=React.useRef(0);
   const trafficDirtyRef=React.useRef(false);
   // Set true for an intentional bulk rewrite (e.g. re-running the importer, which
@@ -1179,6 +1223,8 @@ const App=()=>{
   const[confirmRemindersSent,setConfirmRemindersSent]=useState({});
   const[oohEmailRecipients,setOohEmailRecipients]=useState("jwhitlock@atticor.com");
   const[lastSynced,setLastSynced]=useState(null);
+  const[syncError,setSyncError]=useState(null); // {col,msg,ts} when a save fails
+  const[externalChange,setExternalChange]=useState(null); // [collections] edited in another session
   React.useEffect(()=>{
     if(!dbLoaded)return;
     // Read confirm params from either the search string or the hash fragment.
@@ -9388,6 +9434,8 @@ Rules:
   if(!dbLoaded)return null; // HTML loader stays visible until data is ready
   if(isOohHub)return<React.Fragment>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
+    {syncError&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ A save just failed ({COL_LABEL(syncError.col)}) — your last change may NOT have been saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setSyncError(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
+    {externalChange&&<div style={{position:"fixed",top:syncError?37:0,left:0,right:0,zIndex:9998,background:"#D4A040",color:"#1e1233",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ Updated in another session: {externalChange.map(COL_LABEL).join(", ")}. Reload before editing so you don't overwrite it. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #1e1233",background:"transparent",color:"#1e1233",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setExternalChange(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #1e1233",background:"transparent",color:"#1e1233",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
     <OohHub/>
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
     {modal?.type==="oohPhoto"&&<OohPhotoModal modal={modal}/>}
@@ -9395,6 +9443,8 @@ Rules:
   </React.Fragment>;
   return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",overflow:"hidden"}}>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
+    {syncError&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ A save just failed ({COL_LABEL(syncError.col)}) — your last change may NOT have been saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setSyncError(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
+    {externalChange&&<div style={{position:"fixed",top:syncError?37:0,left:0,right:0,zIndex:9998,background:"#D4A040",color:"#1e1233",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ Updated in another session: {externalChange.map(COL_LABEL).join(", ")}. Reload before editing so you don't overwrite it. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #1e1233",background:"transparent",color:"#1e1233",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setExternalChange(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #1e1233",background:"transparent",color:"#1e1233",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
     <div style={{width:200,background:"linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
       <div style={{padding:"14px 12px 12px",borderBottom:"1px solid rgba(212,160,64,.15)"}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:36,height:36,borderRadius:8,background:"linear-gradient(135deg,#2d1f42,#1e1233)",border:"1.5px solid #D4A040",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 12px rgba(212,160,64,.15)"}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="url(#sflm)"/><defs><linearGradient id="sflm" x1="12" y1="3" x2="12" y2="22"><stop stopColor="#D4A040"/><stop offset=".5" stopColor="#C4A0C8"/><stop offset="1" stopColor="#9b7bb0"/></linearGradient></defs></svg></div><div><div style={{fontSize:15,fontWeight:800,color:"#D4A040",lineHeight:1,letterSpacing:1}}>ATTICOR</div><div style={{fontSize:7,color:"#9B8EAD",fontWeight:600,letterSpacing:1.5}}>DOOM & DELIVERABLES</div></div></div></div>
       <div style={{padding:"6px 10px",position:"relative"}}><input value={globalSearch} onChange={e=>setGlobalSearch(e.target.value)} placeholder="Search ISCIs, markets..." style={{width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",background:"#F0E8F8",color:"#9B8EAD",fontSize:14,outline:"none"}}/>

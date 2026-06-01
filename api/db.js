@@ -37,11 +37,25 @@ const handler = async function(req, res) {
   if (!collection || !ALLOWED_COLLECTIONS.has(collection)) {
     return res.status(400).json({ error: 'Invalid or missing collection' });
   }
-  if (!action || !['get', 'set', 'delete', 'list'].includes(action)) {
+  if (!action || !['get', 'set', 'delete', 'list', 'ts'].includes(action)) {
     return res.status(400).json({ error: 'Invalid action' });
   }
 
   try {
+    if (action === 'ts') {
+      // Cheap change-detection probe: return only doc_id -> ts (no blobs) so
+      // clients can poll for edits made by another session without pulling
+      // every collection. Used by the "updated in another session" banner.
+      const { data: rows, error } = await supabase
+        .from('legacy_docs')
+        .select('doc_id, ts')
+        .eq('collection', collection);
+      if (error) throw error;
+      const map = {};
+      (rows || []).forEach(r => { map[r.doc_id] = r.ts; });
+      return res.status(200).json({ ts: map });
+    }
+
     if (action === 'list') {
       const { data: rows, error } = await supabase
         .from('legacy_docs')
@@ -77,7 +91,9 @@ const handler = async function(req, res) {
         .from('legacy_docs')
         .upsert({ collection, doc_id: doc, data: blob, ts, updated_at: new Date().toISOString() });
       if (error) throw error;
-      return res.status(200).json({ ok: true });
+      // Return the ts we wrote so the client can track its own writes and
+      // distinguish them from edits made by another session.
+      return res.status(200).json({ ok: true, ts });
     }
 
     if (action === 'delete') {

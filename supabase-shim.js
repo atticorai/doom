@@ -25,7 +25,9 @@
     });
     if (!r.ok) {
       const t = await r.text().catch(() => '');
-      throw new Error('db ' + action + ' failed (' + r.status + '): ' + t.slice(0, 200));
+      const e = new Error('db ' + action + ' failed (' + r.status + '): ' + t.slice(0, 200));
+      e.status = r.status;
+      throw e;
     }
     return r.json();
   }
@@ -76,5 +78,12 @@
 
   window.__supabaseDb = {
     collection(name) { return collectionRef(name); },
+    // Lightweight change-detection probe — returns { doc_id: ts } for a
+    // collection without pulling the blobs. Feature-detected by app.js
+    // (absent in Firebase mode), so it never affects the Firestore path.
+    async metaTs(collection) {
+      const r = await call('ts', collection);
+      return (r && r.ts) || {};
+    },
   };
 })();
