@@ -4324,6 +4324,11 @@ const App=()=>{
       {isOoh?<Sel label="Board Type" options={OOH_TYPES.map(t=>({v:t.code,l:t.code+" — "+t.name}))} value={f2.oohType} onChange={v=>u2("oohType",v)}/>:
       isDisplay?<Sel label="Banner Size" options={DISPLAY_TYPES.map(t=>({v:t.code,l:t.code+" — "+t.name}))} value={f2.displayType} onChange={v=>u2("displayType",v)}/>:
       <Inp label={isTag?"Recording length (sec)":"Duration (sec)"} value={f2.dur} onChange={e=>u2("dur",e.target.value)}/>}
+      {isTag&&<React.Fragment><div style={{height:8}}/>
+      <div style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase",marginBottom:3}}>Use</div>
+      <div style={{display:"flex",gap:6}}>{["audio","visual"].map(t=>{const s=(f2.tagUse||"audio")===t;return<button key={t} onClick={()=>u2("tagUse",t)} style={{flex:1,padding:"7px 0",borderRadius:6,border:s?"2px solid #4AC8E8":"1px solid #4a3565",background:s?"#4AC8E81a":"#162032",color:s?"#4AC8E8":"#9B8EAD",fontSize:14,fontWeight:700,cursor:"pointer"}}>{t==="audio"?"🎙 Audio (radio)":"📺 Visual (TV)"}</button>})}</div>
+      <div style={{fontSize:12,color:"#9B8EAD",marginTop:3}}>Visual taglines become selectable in TV rotation building.</div>
+      </React.Fragment>}
       {!isTag&&<React.Fragment><div style={{height:5}}/>
       <div style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase",marginBottom:3}}>DMAs</div>
       <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{bD.map(d=>{const s=f2.dmas.includes(d);return<button key={d} onClick={()=>u2("dmas",s?f2.dmas.filter(x=>x!==d):[...f2.dmas,d])} style={{padding:"4px 9px",borderRadius:5,border:s?"2px solid #4AC8E8":"1px solid #d1d5db",background:s?"#4AC8E80c":"#fff",color:s?"#4AC8E8":"#64748b",fontSize:14,fontWeight:600,cursor:"pointer"}}>{d} — {DM[d]}</button>})}<Btn small onClick={()=>u2("dmas",bD)}>All</Btn></div></React.Fragment>}
@@ -4360,7 +4365,7 @@ const App=()=>{
         </div>}
       </div>}
       <div style={{height:8}}/>
-      <Btn primary disabled={!f2.title||(isTag?!f2.dur:!f2.dmas.length)} onClick={()=>{const bn=brandName;const ni=isTag?[{code:f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt,title:f2.title,media:"Tagline",brand:bn,dma:"",dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):f2.dmas.filter(d=>!alreadyRegistered.includes(d)).map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify(isTag?"That tagline is already registered":"All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(isTag?("Tagline registered — "+ni[0].code):(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":"")));setModal(null)}}>{isTag?"Register Tagline":("Register "+f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length+" ISCI"+(f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":"")+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""))}</Btn>
+      <Btn primary disabled={!f2.title||(isTag?!f2.dur:!f2.dmas.length)} onClick={()=>{const bn=brandName;const ni=isTag?[{code:f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt,title:f2.title,media:"Tagline",brand:bn,dma:"",dur:durField,suffix:suf,tagUse:f2.tagUse||"audio",active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):f2.dmas.filter(d=>!alreadyRegistered.includes(d)).map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify(isTag?"That tagline is already registered":"All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(isTag?("Tagline registered — "+ni[0].code):(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":"")));setModal(null)}}>{isTag?"Register Tagline":("Register "+f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length+" ISCI"+(f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":"")+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""))}</Btn>
     </Mod>;
   };
 
@@ -4386,7 +4391,10 @@ const App=()=>{
     const SUFFIX_FOR_MEDIA={"TV":"T","Cable":"T","TV / Cable":"T","Sports":"T","Heavy Up":"T","Sponsorship":"T","UD/AV":"T","Radio":"R","Streaming Audio":"S","OOH":"O","Digital":"D","Display":"B"};
     const ehDma=normMkt(eh.market)||eh.market||"";
     const wantSuffix=SUFFIX_FOR_MEDIA[(String(eh.media||"").split(/\s*\/\s*/)[0])]||SUFFIX_FOR_MEDIA[eh.media]||"T";
-    const isciPool=iscis.filter(i=>i.brand===eh.brand&&i.active&&(i.dma||"")===ehDma&&i.suffix===wantSuffix).sort((a,b)=>{const dd=(parseInt(b.dur)||0)-(parseInt(a.dur)||0);if(dd)return dd;return a.code.localeCompare(b.code)});
+    // Visual taglines (suffix G, brand-wide) are selectable in TV-family
+    // rotations alongside the market's T-suffix spots.
+    const tagPool=wantSuffix==="T"?iscis.filter(i=>i.brand===eh.brand&&i.active&&i.suffix==="G"&&(i.tagUse||"audio")==="visual"):[];
+    const isciPool=[...iscis.filter(i=>i.brand===eh.brand&&i.active&&(i.dma||"")===ehDma&&i.suffix===wantSuffix),...tagPool].sort((a,b)=>{const dd=(parseInt(b.dur)||0)-(parseInt(a.dur)||0);if(dd)return dd;return a.code.localeCompare(b.code)});
     const updI=(idx,k,v)=>setEditIscis(p=>p.map((r,i)=>i===idx?{...r,[k]:v}:r));
     // Pick from registry: fills code + title + dur from the ISCI record
     const pickIsci=(idx,code)=>{
