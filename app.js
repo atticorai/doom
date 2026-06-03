@@ -4391,9 +4391,11 @@ const App=()=>{
     const SUFFIX_FOR_MEDIA={"TV":"T","Cable":"T","TV / Cable":"T","Sports":"T","Heavy Up":"T","Sponsorship":"T","UD/AV":"T","Radio":"R","Streaming Audio":"S","OOH":"O","Digital":"D","Display":"B"};
     const ehDma=normMkt(eh.market)||eh.market||"";
     const wantSuffix=SUFFIX_FOR_MEDIA[(String(eh.media||"").split(/\s*\/\s*/)[0])]||SUFFIX_FOR_MEDIA[eh.media]||"T";
-    // Visual taglines (suffix G, brand-wide) are selectable in TV-family
-    // rotations alongside the market's T-suffix spots.
-    const tagPool=wantSuffix==="T"?iscis.filter(i=>i.brand===eh.brand&&i.active&&i.suffix==="G"&&(i.tagUse||"audio")==="visual"):[];
+    // Taglines are brand-wide; surface the right kind in the right build —
+    // audio recordings in Radio/Streaming Audio rotations, visual tags in the
+    // TV-family rotations — alongside that market's normal suffix-matched spots.
+    const tagUseForRot=wantSuffix==="T"?"visual":(wantSuffix==="R"||wantSuffix==="S")?"audio":null;
+    const tagPool=tagUseForRot?iscis.filter(i=>i.brand===eh.brand&&i.active&&i.suffix==="G"&&(i.tagUse||"audio")===tagUseForRot):[];
     const isciPool=[...iscis.filter(i=>i.brand===eh.brand&&i.active&&(i.dma||"")===ehDma&&i.suffix===wantSuffix),...tagPool].sort((a,b)=>{const dd=(parseInt(b.dur)||0)-(parseInt(a.dur)||0);if(dd)return dd;return a.code.localeCompare(b.code)});
     const updI=(idx,k,v)=>setEditIscis(p=>p.map((r,i)=>i===idx?{...r,[k]:v}:r));
     // Pick from registry: fills code + title + dur from the ISCI record
