@@ -5774,7 +5774,15 @@ ${fullText.substring(0,3000)}`}]
     // Sort newest first; months are stored as "January 2026" so split off the
     // year before indexing into MO_NAMES (otherwise indexOf returns -1 for
     // every entry and the order collapses to insertion order).
-    const brandMonths=(()=>{const raw=[...new Set(brandData.map(h=>h.month))].filter(Boolean);return raw.sort((a,b)=>{const pa=a.split(/\s+/),pb=b.split(/\s+/);const ya=parseInt(pa[1])||0,yb=parseInt(pb[1])||0;if(ya!==yb)return yb-ya;return MO_NAMES.indexOf(pb[0])-MO_NAMES.indexOf(pa[0])})})();
+    // A record's broadcast month never stored a year, so two different years
+    // of the same month (e.g. April 2025 / April 2026) used to collapse into
+    // one heading. Derive a year per record — an explicit year in the month
+    // string wins, then a stamped year field, then the year it was
+    // created/sent/imported (ts) — and group/sort by "Month Year".
+    const recYear=(h)=>{const m=String(h.month||"").match(/\b(20\d{2})\b/);if(m)return parseInt(m[1]);if(h.year)return parseInt(h.year);const t=h.ts?new Date(h.ts):null;return t&&!isNaN(t)?t.getFullYear():new Date().getFullYear();};
+    const moBase=(h)=>String(h.month||"").replace(/\s*20\d{2}\s*/," ").trim()||"—";
+    const moKey=(h)=>moBase(h)+" "+recYear(h);
+    const brandMonths=(()=>{const raw=[...new Set(brandData.map(h=>moKey(h)))].filter(Boolean);return raw.sort((a,b)=>{const pa=a.split(/\s+/),pb=b.split(/\s+/);const ya=parseInt(pa[1])||0,yb=parseInt(pb[1])||0;if(ya!==yb)return yb-ya;return MO_NAMES.indexOf(pb[0])-MO_NAMES.indexOf(pa[0])})})();
     const brandMedias=(()=>{const raw=[...new Set(brandData.map(h=>h.media))];return raw.sort((a,b)=>(MEDIA_ORDER.indexOf(a)===-1?99:MEDIA_ORDER.indexOf(a))-(MEDIA_ORDER.indexOf(b)===-1?99:MEDIA_ORDER.indexOf(b)))})();
     const now2=new Date();const archCutoff=new Date(now2.getFullYear(),now2.getMonth()-1,1);
     // Archive by the record's broadcast month, not its timestamp. Imports get
@@ -5999,8 +6007,8 @@ ${fullText.substring(0,3000)}`}]
       </Cd>
       {/* Summary cards removed — Traffic Tracker page owns coverage tracking. */}
       {/* ═══ TRAFFIC LIST — by month > media type > market ═══ */}
-      {brandMonths.filter(mo=>searched.some(h=>h.month===mo)).map(mo=>{
-        const moData=searched.filter(h=>h.month===mo);
+      {brandMonths.filter(mo=>searched.some(h=>moKey(h)===mo)).map(mo=>{
+        const moData=searched.filter(h=>moKey(h)===mo);
         const moMedias=(()=>{const raw=[...new Set(moData.map(h=>h.media))];return raw.sort((a,b)=>(MEDIA_ORDER.indexOf(a)===-1?99:MEDIA_ORDER.indexOf(a))-(MEDIA_ORDER.indexOf(b)===-1?99:MEDIA_ORDER.indexOf(b)))})();
         return<div key={mo} style={{marginBottom:20}}>
           <div style={{fontSize:18,fontWeight:800,color:"#F0E8F8",marginBottom:6,paddingBottom:4,borderBottom:"2px solid "+bc2+"44"}}>{mo} <span style={{fontSize:12,color:"#9B8EAD",fontWeight:600}}>({moData.length} instruction{moData.length!==1?"s":""})</span></div>
