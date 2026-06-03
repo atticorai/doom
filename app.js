@@ -4294,7 +4294,7 @@ const App=()=>{
     const isDisplay=f2.media==="Display";
     const isTag=f2.media==="Tagline";
     const suf=SUFFIXES[f2.media]||"T";const bD=f2.brand==="PL"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
-    const durField=isOoh?f2.oohType:isDisplay?f2.displayType:isTag?"00":f2.dur;
+    const durField=isOoh?f2.oohType:isDisplay?f2.displayType:f2.dur;
     const brandName=f2.brand==="PL"?"Postman Law":"Wettermark Keith";
     const normTitle=function(t){var s=(t||"").toLowerCase().trim();Object.values(DM).forEach(function(n){s=s.split(n.toLowerCase()).join("")});Object.keys(DM).forEach(function(c){s=s.split(c.toLowerCase()).join("")});return s.replace(/[-–—,_\s]+/g," ").trim()};
     const normInput=normTitle(f2.title);
@@ -4304,7 +4304,7 @@ const App=()=>{
     const allSeqs=brandIscis.map(i=>{const m=i.code.match(/([0-9]{3})[TRDSOBG]?$/);return m?parseInt(m[1]):0});
     const nxt=existingSeq||String(Math.max(0,...allSeqs)+1).padStart(3,"0");
     const yr=new Date().getFullYear().toString().slice(2);
-    const prev=isTag?[f2.brand+"TAG"+yr+nxt]:f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf);
+    const prev=isTag?[f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt]:f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf);
     const alreadyRegistered=isTag?[]:(normInput?f2.dmas.filter(d=>existingWithTitle.some(i=>i.dma===d)):[]);
     const dupeWarnings=prev.filter(code=>iscis.some(i=>i.code===code));
     return<Mod title="Register ISCI (Uniform)" onClose={()=>setModal(null)} wide>
@@ -4313,7 +4313,7 @@ const App=()=>{
         <div style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#1e1233"}}>{prev.length?prev.join(", "):("[DMA]"+f2.brand+yr+durField.padStart(2,"0")+nxt+suf)}</div>
         {isOoh&&<div style={{fontSize:14,color:"#0369a1",marginTop:3}}>Format: [DMA][Brand][Year][BoardType][Seq]O</div>}
         {isDisplay&&<div style={{fontSize:14,color:"#ec4899",marginTop:3}}>Format: [DMA][Brand][Year][BannerSize][Seq]B — e.g., CHIPL26MR001B</div>}
-        {isTag&&<div style={{fontSize:14,color:"#C4A0C8",marginTop:3}}>Format: [Brand]TAG[Year][Seq] — brand-wide, no market/duration. e.g., PLTAG26001</div>}
+        {isTag&&<div style={{fontSize:14,color:"#C4A0C8",marginTop:3}}>Format: [Brand][Year]TG[Duration][Seq] — brand-wide, no market. e.g., PL26TG05001</div>}
         {existingSeq&&<div style={{fontSize:12,color:"#5BC4A0",marginTop:3,fontWeight:600}}>✓ Title match found — reusing sequence #{existingSeq} ({existingWithTitle.map(i=>i.dma).join(", ")} already registered)</div>}
         {alreadyRegistered.length>0&&<div style={{fontSize:12,color:"#D4A040",marginTop:3,fontWeight:600}}>⚠ {alreadyRegistered.join(", ")} already has this title — will be skipped</div>}
         {dupeWarnings.length>0&&<div style={{fontSize:12,color:"#E85A7A",marginTop:3,fontWeight:600}}>⚠ Duplicate codes: {dupeWarnings.join(", ")} — will be skipped</div>}
@@ -4323,14 +4323,13 @@ const App=()=>{
       <div style={{height:5}}/>
       {isOoh?<Sel label="Board Type" options={OOH_TYPES.map(t=>({v:t.code,l:t.code+" — "+t.name}))} value={f2.oohType} onChange={v=>u2("oohType",v)}/>:
       isDisplay?<Sel label="Banner Size" options={DISPLAY_TYPES.map(t=>({v:t.code,l:t.code+" — "+t.name}))} value={f2.displayType} onChange={v=>u2("displayType",v)}/>:
-      isTag?null:
-      <Inp label="Duration (sec)" value={f2.dur} onChange={e=>u2("dur",e.target.value)}/>}
+      <Inp label={isTag?"Recording length (sec)":"Duration (sec)"} value={f2.dur} onChange={e=>u2("dur",e.target.value)}/>}
       {!isTag&&<React.Fragment><div style={{height:5}}/>
       <div style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase",marginBottom:3}}>DMAs</div>
       <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{bD.map(d=>{const s=f2.dmas.includes(d);return<button key={d} onClick={()=>u2("dmas",s?f2.dmas.filter(x=>x!==d):[...f2.dmas,d])} style={{padding:"4px 9px",borderRadius:5,border:s?"2px solid #4AC8E8":"1px solid #d1d5db",background:s?"#4AC8E80c":"#fff",color:s?"#4AC8E8":"#64748b",fontSize:14,fontWeight:600,cursor:"pointer"}}>{d} — {DM[d]}</button>})}<Btn small onClick={()=>u2("dmas",bD)}>All</Btn></div></React.Fragment>}
       <div style={{height:8}}/>
-      {!isTag&&<div style={{display:"flex",flexDirection:"column",gap:4}}>
-        <label style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Creative File (optional — can add later)</label>
+      {<div style={{display:"flex",flexDirection:"column",gap:4}}>
+        <label style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>{isTag?"Recording (audio — can add later)":"Creative File (optional — can add later)"}</label>
         {f2.fileUrl?<div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"rgba(22,163,98,.15)",border:"1px solid #bbf7d0",borderRadius:6}}>
           <span style={{fontSize:13,color:"#5BC4A0",fontWeight:700}}>✓ {f2.fileName||"File uploaded"}</span>
           <button onClick={()=>{u2("fileUrl","");u2("fileName","")}} style={{marginLeft:"auto",fontSize:14,padding:"2px 6px",borderRadius:4,border:"1px solid #fca5a5",background:"rgba(220,38,38,.15)",color:"#E85A7A",cursor:"pointer",fontWeight:600}}>Remove</button>
@@ -4341,11 +4340,11 @@ const App=()=>{
               var file=fileList instanceof FileList?fileList[0]:Array.isArray(fileList)?fileList[0]:fileList;
               if(!file){notify("No file selected");return}
               if(!storage){notify("Storage not loaded — try refreshing");return}
-              if(!f2.dmas.length){notify("Select at least one DMA first");return}
+              if(!isTag&&!f2.dmas.length){notify("Select at least one DMA first");return}
               notify("Starting upload: "+file.name);
               u2("uploading",true);u2("uploadPct",0);
               var ext=file.name.split(".").pop();
-              var tempCode=f2.dmas[0]?f2.dmas[0]+f2.brand+yr+"_temp":"temp_"+Date.now();
+              var tempCode=isTag?(f2.brand+yr+"TG_temp_"+Date.now()):(f2.dmas[0]?f2.dmas[0]+f2.brand+yr+"_temp":"temp_"+Date.now());
               var path="creative/"+tempCode+"."+ext;
               var ref=storage.ref(path);
               var metadata={customMetadata:{originalName:file.name,title:f2.title||"",brand:f2.brand||"",media:f2.media||""}};
@@ -4361,7 +4360,7 @@ const App=()=>{
         </div>}
       </div>}
       <div style={{height:8}}/>
-      <Btn primary disabled={!f2.title||(!isTag&&!f2.dmas.length)} onClick={()=>{const bn=brandName;const ni=isTag?[{code:f2.brand+"TAG"+yr+nxt,title:f2.title,media:"Tagline",brand:bn,dma:"",dur:"00",suffix:suf,active:true,fileUrl:"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):f2.dmas.filter(d=>!alreadyRegistered.includes(d)).map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify(isTag?"That tagline is already registered":"All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(isTag?("Tagline registered — "+ni[0].code):(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":"")));setModal(null)}}>{isTag?"Register Tagline":("Register "+f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length+" ISCI"+(f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":"")+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""))}</Btn>
+      <Btn primary disabled={!f2.title||(isTag?!f2.dur:!f2.dmas.length)} onClick={()=>{const bn=brandName;const ni=isTag?[{code:f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt,title:f2.title,media:"Tagline",brand:bn,dma:"",dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):f2.dmas.filter(d=>!alreadyRegistered.includes(d)).map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify(isTag?"That tagline is already registered":"All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(isTag?("Tagline registered — "+ni[0].code):(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":"")));setModal(null)}}>{isTag?"Register Tagline":("Register "+f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length+" ISCI"+(f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":"")+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""))}</Btn>
     </Mod>;
   };
 
