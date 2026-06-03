@@ -390,9 +390,9 @@ const BRANDS=[
 const getBrandColor=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.color:"#9B8EAD"};
 const getBrandBg=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.colorBg:"#F0E8F8"};
 const getBrandAgency=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.agency:"Atticor"};
-const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display"];const OOH_TYPES=[{code:"SB",name:"Static Billboard"},{code:"DB",name:"Digital Billboard"},{code:"SP",name:"Static Poster"},{code:"DP",name:"Digital Poster"},{code:"BS",name:"Bus Shelter"},{code:"WS",name:"Wallscape"},{code:"TR",name:"Transit"},{code:"SF",name:"Street Furniture"},{code:"JP",name:"Junior Poster"}];
+const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display","Tagline"];const OOH_TYPES=[{code:"SB",name:"Static Billboard"},{code:"DB",name:"Digital Billboard"},{code:"SP",name:"Static Poster"},{code:"DP",name:"Digital Poster"},{code:"BS",name:"Bus Shelter"},{code:"WS",name:"Wallscape"},{code:"TR",name:"Transit"},{code:"SF",name:"Street Furniture"},{code:"JP",name:"Junior Poster"}];
 const DISPLAY_TYPES=[{code:"MR",name:"Medium Rectangle (300x250)"},{code:"LB",name:"Leaderboard (728x90)"},{code:"SQ",name:"Square (640x640)"},{code:"SK",name:"Skyscraper (300x600)"},{code:"MB",name:"Mobile Banner (320x50)"},{code:"WB",name:"Wide Banner (1280x100)"},{code:"SL",name:"Slim Banner (970x66)"},{code:"BN",name:"Banner (Generic)"}];
-const SUFFIXES={TV:"T",Radio:"R",Digital:"D","Streaming Audio":"S",OOH:"O",Cable:"T",Display:"B"};const OOH_SUFFIXES={SB:"O",DB:"O",SP:"O",DP:"O",BS:"O",WS:"O",TR:"O",SF:"O",JP:"O"};
+const SUFFIXES={TV:"T",Radio:"R",Digital:"D","Streaming Audio":"S",OOH:"O",Cable:"T",Display:"B",Tagline:"G"};const OOH_SUFFIXES={SB:"O",DB:"O",SP:"O",DP:"O",BS:"O",WS:"O",TR:"O",SF:"O",JP:"O"};
 const OOH_TYPE_MAP=Object.fromEntries(OOH_TYPES.map(t=>[t.code,t.name]));
 // Map raw physical media type strings to canonical category for filtering/badges
 const mediaCategory=(t)=>{const s=(t||"").toLowerCase();if(s.includes("digital"))return"Digital";if(s.includes("poster"))return"Poster";if(s.includes("bulletin"))return"Bulletin";if(s.includes("wall")||s.includes("hotspot")||s.includes("overpass"))return"Other";return"Other"};
@@ -411,7 +411,7 @@ const EG=[...new Set(ESTIMATES.map(e=>e.group))].sort();
 const SCHED=["M-F Schedule","Weekend Schedule","M-F Bookend","Weekend Bookend","All Week","Holiday Only"];
 const BOOKENDS=["","Bookend :15 A","Bookend :15 B","Bookend :15 C","Bookend :15 D","Bookend :30 A","Bookend :30 B"];
 
-const mc=m=>({TV:"#4AC8E8",Radio:"#9b7bb0",Digital:"#059669","Streaming Audio":"#4AC8E8",Cable:"#6366f1",OOH:"#D4A040",Display:"#ec4899"})[m]||"#64748b";
+const mc=m=>({TV:"#4AC8E8",Radio:"#9b7bb0",Digital:"#059669","Streaming Audio":"#4AC8E8",Cable:"#6366f1",OOH:"#D4A040",Display:"#ec4899",Tagline:"#C4A0C8"})[m]||"#64748b";
 const fD=d=>d?new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}):"—";
 const fDs=d=>d?new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"numeric",day:"numeric"}):"";
 
@@ -1979,7 +1979,7 @@ const App=()=>{
       </div>
       <Cd><div style={{overflowX:"auto",maxHeight:"calc(100vh - 320px)"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><STH tbl="isci" col="code">ISCI</STH><STH tbl="isci" col="title">Title</STH><STH tbl="isci" col="media">Media</STH><STH tbl="isci" col="dma">DMA</STH><STH tbl="isci" col="dur">Dur</STH><STH tbl="isci" col="category">Category</STH>{showValueProp&&<STH tbl="isci" col="valueProp">Value Prop</STH>}<STH tbl="isci" col="vo">VO</STH><STH tbl="isci" col="status">Status</STH><TH w="60">Actions</TH></tr></thead>
         <tbody>{fl.slice(0,250).map((i,idx)=>{const gi=iscis.findIndex(x=>x.code===i.code&&x.dma===i.dma&&x.media===i.media);return<tr key={i.code+i.dma+i.media} style={{opacity:i.active?1:.45}}>
-          <TD m b><span title="Preview / download creative" style={{cursor:"pointer",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"creativeView",isci:i})}>{i.code}</span>{isIsciSent(i.code)&&<span title="Locked — sent in traffic" style={{marginLeft:3,fontSize:13,color:"#E85A7A"}}>🔒</span>}{i.fileUrl&&<a href={i.fileUrl} target="_blank" rel="noopener" download title="Download creative" style={{marginLeft:3,fontSize:13,color:"#5BC4A0",textDecoration:"none"}}>📁</a>}</TD><TD>{i.title}</TD><TD><B l={i.media} c={mc(i.media)}/></TD><TD>{i.dma}</TD><TD>{i.media==="OOH"?(OOH_TYPE_MAP[i.dur]||i.dur):i.media==="Display"?(DISPLAY_TYPE_MAP[i.dur]||i.dur):i.dur?`:${i.dur}`:""}</TD>
+          <TD m b><span title="Preview / download creative" style={{cursor:"pointer",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"creativeView",isci:i})}>{i.code}</span>{isIsciSent(i.code)&&<span title="Locked — sent in traffic" style={{marginLeft:3,fontSize:13,color:"#E85A7A"}}>🔒</span>}{i.fileUrl&&<a href={i.fileUrl} target="_blank" rel="noopener" download title="Download creative" style={{marginLeft:3,fontSize:13,color:"#5BC4A0",textDecoration:"none"}}>📁</a>}</TD><TD>{i.title}</TD><TD><B l={i.media} c={mc(i.media)}/></TD><TD>{i.dma}</TD><TD>{i.media==="Tagline"?"—":i.media==="OOH"?(OOH_TYPE_MAP[i.dur]||i.dur):i.media==="Display"?(DISPLAY_TYPE_MAP[i.dur]||i.dur):i.dur?`:${i.dur}`:""}</TD>
           <TD><select value={i.category||i.caseType||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New category:");if(!n||!n.trim())return;const t=n.trim();const nextCF=(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),categories:[...(p[i.brand]?.categories||[]).filter(x=>x!==t),t]}}))(customFields);setCustomFields(nextCF);saveToDb("customTags",nextCF);setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,category:t,caseType:t}:x);return nx})}else setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,category:v,caseType:v}:x);return nx})}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #4a3565",background:i.category||i.caseType?"#dbeafe":"#2d1f42",color:"#4a3565",fontWeight:600,maxWidth:100}}>
             <option value="">—</option>{(customFields[i.brand]?.categories||[]).map(t=><option key={t} value={t}>{t}</option>)}<option value="__add__">＋</option>
           </select></TD>
@@ -4292,19 +4292,20 @@ const App=()=>{
   const NewIsciMod=({defaultMedia})=>{const[f2,setF2]=useState({brand:"PL",title:"",dur:defaultMedia==="OOH"?"SP":"30",media:defaultMedia||"TV",dmas:[],oohType:"SP",displayType:"MR"});const u2=(k,v)=>setF2(p=>({...p,[k]:v}));
     const isOoh=f2.media==="OOH";
     const isDisplay=f2.media==="Display";
+    const isTag=f2.media==="Tagline";
     const suf=SUFFIXES[f2.media]||"T";const bD=f2.brand==="PL"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
-    const durField=isOoh?f2.oohType:isDisplay?f2.displayType:f2.dur;
+    const durField=isOoh?f2.oohType:isDisplay?f2.displayType:isTag?"00":f2.dur;
     const brandName=f2.brand==="PL"?"Postman Law":"Wettermark Keith";
     const normTitle=function(t){var s=(t||"").toLowerCase().trim();Object.values(DM).forEach(function(n){s=s.split(n.toLowerCase()).join("")});Object.keys(DM).forEach(function(c){s=s.split(c.toLowerCase()).join("")});return s.replace(/[-–—,_\s]+/g," ").trim()};
     const normInput=normTitle(f2.title);
     const brandIscis=iscis.filter(i=>i.brand===brandName&&i.dur===durField&&i.suffix===suf);
     const existingWithTitle=normInput?brandIscis.filter(i=>normTitle(i.title)===normInput):[];
-    const existingSeq=existingWithTitle.length>0?(()=>{const m=existingWithTitle[0].code.match(/([0-9]{3})[TRDSOB]?$/);return m?m[1]:null})():null;
-    const allSeqs=brandIscis.map(i=>{const m=i.code.match(/([0-9]{3})[TRDSOB]?$/);return m?parseInt(m[1]):0});
+    const existingSeq=existingWithTitle.length>0?(()=>{const m=existingWithTitle[0].code.match(/([0-9]{3})[TRDSOBG]?$/);return m?m[1]:null})():null;
+    const allSeqs=brandIscis.map(i=>{const m=i.code.match(/([0-9]{3})[TRDSOBG]?$/);return m?parseInt(m[1]):0});
     const nxt=existingSeq||String(Math.max(0,...allSeqs)+1).padStart(3,"0");
     const yr=new Date().getFullYear().toString().slice(2);
-    const prev=f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf);
-    const alreadyRegistered=normInput?f2.dmas.filter(d=>existingWithTitle.some(i=>i.dma===d)):[];
+    const prev=isTag?[f2.brand+yr+durField.padStart(2,"0")+nxt+suf]:f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf);
+    const alreadyRegistered=isTag?[]:(normInput?f2.dmas.filter(d=>existingWithTitle.some(i=>i.dma===d)):[]);
     const dupeWarnings=prev.filter(code=>iscis.some(i=>i.code===code));
     return<Mod title="Register ISCI (Uniform)" onClose={()=>setModal(null)} wide>
       <div style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:7,padding:8,marginBottom:10}}>
@@ -4312,21 +4313,23 @@ const App=()=>{
         <div style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#1e1233"}}>{prev.length?prev.join(", "):("[DMA]"+f2.brand+yr+durField.padStart(2,"0")+nxt+suf)}</div>
         {isOoh&&<div style={{fontSize:14,color:"#0369a1",marginTop:3}}>Format: [DMA][Brand][Year][BoardType][Seq]O</div>}
         {isDisplay&&<div style={{fontSize:14,color:"#ec4899",marginTop:3}}>Format: [DMA][Brand][Year][BannerSize][Seq]B — e.g., CHIPL26MR001B</div>}
+        {isTag&&<div style={{fontSize:14,color:"#C4A0C8",marginTop:3}}>Format: [Brand][Year]00[Seq]G — brand-wide, no market/duration. e.g., PL2600001G</div>}
         {existingSeq&&<div style={{fontSize:12,color:"#5BC4A0",marginTop:3,fontWeight:600}}>✓ Title match found — reusing sequence #{existingSeq} ({existingWithTitle.map(i=>i.dma).join(", ")} already registered)</div>}
         {alreadyRegistered.length>0&&<div style={{fontSize:12,color:"#D4A040",marginTop:3,fontWeight:600}}>⚠ {alreadyRegistered.join(", ")} already has this title — will be skipped</div>}
         {dupeWarnings.length>0&&<div style={{fontSize:12,color:"#E85A7A",marginTop:3,fontWeight:600}}>⚠ Duplicate codes: {dupeWarnings.join(", ")} — will be skipped</div>}
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}><Sel label="Brand" options={BRANDS.map(b=>({v:b.code,l:b.name}))} value={f2.brand} onChange={v=>{u2("brand",v);u2("dmas",[])}}/><Sel label="Media" options={MEDIA.map(m=>({v:m,l:m}))} value={f2.media} onChange={v=>u2("media",v)}/></div>
-      <div style={{height:5}}/><Inp label="Title" value={f2.title} onChange={e=>u2("title",e.target.value)} placeholder={isOoh?"e.g., Local, Injured H2H, Southern Justice":isDisplay?"e.g., Companion - Harvard, Display - Fall":"e.g., Harvard"}/>
+      <div style={{height:5}}/><Inp label={isTag?"Tagline":"Title"} value={f2.title} onChange={e=>u2("title",e.target.value)} placeholder={isTag?"e.g., When the unexpected strikes, strike back.":isOoh?"e.g., Local, Injured H2H, Southern Justice":isDisplay?"e.g., Companion - Harvard, Display - Fall":"e.g., Harvard"}/>
       <div style={{height:5}}/>
       {isOoh?<Sel label="Board Type" options={OOH_TYPES.map(t=>({v:t.code,l:t.code+" — "+t.name}))} value={f2.oohType} onChange={v=>u2("oohType",v)}/>:
       isDisplay?<Sel label="Banner Size" options={DISPLAY_TYPES.map(t=>({v:t.code,l:t.code+" — "+t.name}))} value={f2.displayType} onChange={v=>u2("displayType",v)}/>:
+      isTag?null:
       <Inp label="Duration (sec)" value={f2.dur} onChange={e=>u2("dur",e.target.value)}/>}
-      <div style={{height:5}}/>
+      {!isTag&&<React.Fragment><div style={{height:5}}/>
       <div style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase",marginBottom:3}}>DMAs</div>
-      <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{bD.map(d=>{const s=f2.dmas.includes(d);return<button key={d} onClick={()=>u2("dmas",s?f2.dmas.filter(x=>x!==d):[...f2.dmas,d])} style={{padding:"4px 9px",borderRadius:5,border:s?"2px solid #4AC8E8":"1px solid #d1d5db",background:s?"#4AC8E80c":"#fff",color:s?"#4AC8E8":"#64748b",fontSize:14,fontWeight:600,cursor:"pointer"}}>{d} — {DM[d]}</button>})}<Btn small onClick={()=>u2("dmas",bD)}>All</Btn></div>
+      <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{bD.map(d=>{const s=f2.dmas.includes(d);return<button key={d} onClick={()=>u2("dmas",s?f2.dmas.filter(x=>x!==d):[...f2.dmas,d])} style={{padding:"4px 9px",borderRadius:5,border:s?"2px solid #4AC8E8":"1px solid #d1d5db",background:s?"#4AC8E80c":"#fff",color:s?"#4AC8E8":"#64748b",fontSize:14,fontWeight:600,cursor:"pointer"}}>{d} — {DM[d]}</button>})}<Btn small onClick={()=>u2("dmas",bD)}>All</Btn></div></React.Fragment>}
       <div style={{height:8}}/>
-      <div style={{display:"flex",flexDirection:"column",gap:4}}>
+      {!isTag&&<div style={{display:"flex",flexDirection:"column",gap:4}}>
         <label style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Creative File (optional — can add later)</label>
         {f2.fileUrl?<div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"rgba(22,163,98,.15)",border:"1px solid #bbf7d0",borderRadius:6}}>
           <span style={{fontSize:13,color:"#5BC4A0",fontWeight:700}}>✓ {f2.fileName||"File uploaded"}</span>
@@ -4356,9 +4359,9 @@ const App=()=>{
             <div style={{fontSize:16}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Drag & drop or click to upload</div><div style={{fontSize:13,color:"#9B8EAD"}}>.mp4, .mov, .wav, .mp3, .jpg, .png, .pdf</div>
           </DropZone>}
         </div>}
-      </div>
+      </div>}
       <div style={{height:8}}/>
-      <Btn primary disabled={!f2.title||!f2.dmas.length} onClick={()=>{const bn=brandName;const safeDmas=f2.dmas.filter(d=>!alreadyRegistered.includes(d));const ni=safeDmas.map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify("All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""));setModal(null)}}>Register {f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length} ISCI{f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":""}{alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""}</Btn>
+      <Btn primary disabled={!f2.title||(!isTag&&!f2.dmas.length)} onClick={()=>{const bn=brandName;const ni=isTag?[{code:f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:"Tagline",brand:bn,dma:"",dur:"00",suffix:suf,active:true,fileUrl:"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):f2.dmas.filter(d=>!alreadyRegistered.includes(d)).map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify(isTag?"That tagline is already registered":"All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(isTag?("Tagline registered — "+ni[0].code):(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":"")));setModal(null)}}>{isTag?"Register Tagline":("Register "+f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length+" ISCI"+(f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":"")+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""))}</Btn>
     </Mod>;
   };
 
