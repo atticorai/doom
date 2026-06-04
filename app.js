@@ -443,7 +443,8 @@ const DOOM={
     docs:["You actually need help? That's… not surprising.","I'd explain it myself but I have better things to do.","Read the docs. Or don't. I'm not your mother.","Even Pegasus could figure this out. Probably."],
     tracker:["I can see everything you haven't done.","This board doesn't lie. Unlike your excuses.","Green means done. See any? Exactly.","I keep score, Wonderboy. Always have.","Your progress — or lack thereof."],
     ooh:["Billboards. Because subtlety was never the goal.","Outdoor media. At least these can't reply to your emails.","OOH. Three letters. Still more organized than your inbox.","I manage 300+ boards. What do you manage?"],
-    vault:["The dusty scroll room. Mind the cobwebs.","Every ghost of WK past, filed away by yours truly.","Yes, I keep records older than Hercules' first heroic act.","Someone else's mess, finally organized. By me. Obviously.","The archive. Where bad rotations come to be remembered.","You're cataloging history now? How quaint.","I've been holding onto these scrolls. Try not to lose them again."]
+    vault:["The dusty scroll room. Mind the cobwebs.","Every ghost of WK past, filed away by yours truly.","Yes, I keep records older than Hercules' first heroic act.","Someone else's mess, finally organized. By me. Obviously.","The archive. Where bad rotations come to be remembered.","You're cataloging history now? How quaint.","I've been holding onto these scrolls. Try not to lose them again."],
+    invoices:["Let's count what actually ran. Reported numbers lie. The invoices don't.","Drop the invoices. I'll do the math you've been avoiding.","Actual spots vs. what they told you. This should be fun.","Hand over the invoices. I'll tally the truth.","You want real counts? Feed me invoices, Wonderboy.","I'll count every spot. Then you can argue with the stations."]
   }
 };
 const doomPick=(arr)=>arr[Math.floor(Math.random()*arr.length)];
@@ -8491,8 +8492,290 @@ Rules:
     </div>;
   };
 
+  // ── INVOICE SPOT COUNTER ──────────────────────────────
+  // Quick, in-the-meantime tool: drop TV/Radio invoices, auto-detect
+  // market + medium + month, best-guess the spot count, and roll it all
+  // up per market. Auto-detection is approximate (station invoice formats
+  // vary wildly) so every field is editable — verify before you trust.
+  const InvoicePg=()=>{
+    const PL_MKTS=["Chicago","Cincinnati","Denver","Minneapolis"];
+    const WK_MKTS=["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan"];
+    const ALL_MKTS=[...PL_MKTS,...WK_MKTS,"Gadsden"];
+    const MEDIA_OPTS=["TV","Radio","Cable","Streaming Audio","Digital","Other"];
+    const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const[files,setFiles]=useState([]);   // {id,name,brand,market,media,month,spots,method,note,text,lines}
+    const[parsing,setParsing]=useState(false);
+    const[monthFilter,setMonthFilter]=useState("");
+    const[viewText,setViewText]=useState(null);
+    const idRef=useRef(0);
+
+    // call-letter → market / media lookup from the station registry
+    const callMap=useMemo(()=>{
+      const mk={},md={};
+      stations.forEach(s=>{
+        const call=(s.call||"").toUpperCase();
+        const full=call.replace(/[^A-Z0-9]/g,"");
+        const base=full.replace(/(TV|FM|AM|DT|CD|LD|HD)$/,"");
+        [full,base].forEach(k=>{if(k.length>=4&&!mk[k])mk[k]={market:s.market}});
+        if(full.length>=4)md[full]=s.media;
+      });
+      return{mk,md};
+    },[stations]);
+
+    // ── extract text + reconstructed lines from a file ──
+    const extractPdf=async(file)=>{
+      const buf=await file.arrayBuffer();
+      const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+      let text="";const lines=[];
+      for(let p=1;p<=pdf.numPages;p++){
+        const pg=await pdf.getPage(p);const tc=await pg.getTextContent();
+        text+=tc.items.map(i=>i.str).join(" ")+"\n";
+        // group items into visual lines by y-coordinate so we can count detail rows
+        const rows={};
+        tc.items.forEach(it=>{const y=Math.round((it.transform&&it.transform[5])||0);if(!rows[y])rows[y]=[];rows[y].push(it.str)});
+        Object.keys(rows).map(Number).sort((a,b)=>b-a).forEach(y=>{const ln=rows[y].join(" ").replace(/\s+/g," ").trim();if(ln)lines.push(ln)});
+      }
+      return{text,lines};
+    };
+    const extractSheet=async(file)=>{
+      const buf=await file.arrayBuffer();
+      const wb=XLSX.read(new Uint8Array(buf),{type:"array"});
+      let text="";const lines=[];const rowsAll=[];
+      wb.SheetNames.forEach(name=>{
+        const ws=wb.Sheets[name];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,blankrows:false});
+        rows.forEach(r=>{const ln=r.map(c=>c==null?"":String(c)).join(" ").trim();if(ln){lines.push(ln);text+=ln+"\n"}rowsAll.push(r)});
+      });
+      return{text,lines,rowsAll};
+    };
+
+    // ── detection heuristics ──
+    const detectMarket=(text,lines)=>{
+      const T=text.toUpperCase();
+      const score={};const add=(m,n)=>{if(m)score[m]=(score[m]||0)+n};
+      // city-name hits
+      ALL_MKTS.forEach(m=>{const c=(T.match(new RegExp("\\b"+m.toUpperCase()+"\\b","g"))||[]).length;if(c)add(m,c*2)});
+      // call-letter hits
+      const toks=T.match(/[A-Z0-9]{4,7}/g)||[];
+      toks.forEach(tk=>{const hit=callMap.mk[tk];if(hit)add(hit.market,1)});
+      const best=Object.entries(score).sort((a,b)=>b[1]-a[1])[0];
+      return best?best[0]:"";
+    };
+    const detectMedia=(text)=>{
+      const T=text.toUpperCase();
+      const toks=T.match(/[A-Z0-9]{4,7}/g)||[];
+      const v={TV:0,Radio:0,Cable:0};
+      toks.forEach(tk=>{const m=callMap.md[tk];if(m==="TV")v.TV++;else if(m==="Radio")v.Radio++;else if(m==="Cable")v.Cable++});
+      // keyword nudges
+      if(/\bTELEVISION\b|\bBROADCAST TV\b|-TV\b/.test(T))v.TV+=2;
+      if(/\bRADIO\b|-FM\b|-AM\b|\bAUDIO\b/.test(T))v.Radio+=2;
+      if(/\bCABLE\b|\bINTERCONNECT\b|AMPERSAND/.test(T))v.Cable+=2;
+      const best=Object.entries(v).sort((a,b)=>b[1]-a[1])[0];
+      return best&&best[1]>0?best[0]:"";
+    };
+    const detectMonth=(text)=>{
+      const tally={};const add=(m,y)=>{if(m<1||m>12)return;const k=(y||"2026")+"-"+String(m).padStart(2,"0");tally[k]=(tally[k]||0)+1};
+      // numeric dates  M/D/YY or M/D/YYYY
+      (text.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b/g)||[]).forEach(d=>{const p=d.split("/");let y=p[2];if(y.length===2)y="20"+y;add(+p[0],y)});
+      // month names
+      const mn={JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12};
+      (text.toUpperCase().match(/\b(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\.?\s*(\d{4})?/g)||[]).forEach(s=>{const k=s.slice(0,3);const ym=s.match(/(\d{4})/);add(mn[k],ym?ym[1]:"2026")});
+      const best=Object.entries(tally).sort((a,b)=>b[1]-a[1])[0];
+      return best?best[0]:"";
+    };
+    const detectBrand=(text,market)=>{
+      const T=text.toUpperCase();
+      if(/POSTMAN/.test(T))return"Postman Law";
+      if(/WETTERMARK|WK ADVERTISING/.test(T))return"Wettermark Keith";
+      if(PL_MKTS.includes(market))return"Postman Law";
+      if(WK_MKTS.includes(market))return"Wettermark Keith";
+      return"";
+    };
+    // best-guess spot count + which method produced it
+    const countSpots=(text,lines,rowsAll)=>{
+      const flat=text.replace(/\s+/g," ");
+      // Strategy A — explicit totals stated on the invoice
+      const pats=[
+        /total\s+(?:number\s+of\s+)?spots?\b[^0-9]{0,12}([0-9][0-9,]*)/ig,
+        /spots?\s+(?:aired|run|delivered|ordered|telecast)\b[^0-9]{0,12}([0-9][0-9,]*)/ig,
+        /(?:no\.?|number)\s+of\s+spots?\b[^0-9]{0,12}([0-9][0-9,]*)/ig,
+        /spot\s+count\b[^0-9]{0,12}([0-9][0-9,]*)/ig,
+        /total\s+(?:announcements|commercials|airings|telecasts|units)\b[^0-9]{0,12}([0-9][0-9,]*)/ig
+      ];
+      let explicit=null;
+      pats.forEach(re=>{let m;while((m=re.exec(flat))){const n=parseInt(m[1].replace(/,/g,""),10);if(n>0&&n<100000)explicit=Math.max(explicit||0,n)}});
+      if(explicit!=null)return{spots:explicit,method:"stated total"};
+      // Strategy B — spreadsheet column named "spots"
+      if(rowsAll&&rowsAll.length){
+        const header=(rowsAll[0]||[]).map(c=>String(c||"").toLowerCase());
+        let col=header.findIndex(h=>/spot|airing|unit|count|aired/.test(h));
+        if(col>=0){let sum=0,any=false;for(let i=1;i<rowsAll.length;i++){const v=parseInt(String(rowsAll[i][col]||"").replace(/[^0-9]/g,""),10);if(!isNaN(v)){sum+=v;any=true}}if(any&&sum>0)return{spots:sum,method:"sheet column"}}
+      }
+      // Strategy C — count airing detail lines (date + time/length)
+      const dateRe=/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/;
+      const timeRe=/\b\d{1,2}:\d{2}\s?[AP]?M?\b|\b\d{1,2}\s?[AP]M\b/;
+      const lenRe=/[:\s]:?(?:10|15|30|45|60)\b|:\d{2}\b/;
+      const detail=lines.filter(ln=>dateRe.test(ln)&&(timeRe.test(ln)||lenRe.test(ln)));
+      if(detail.length)return{spots:detail.length,method:"counted lines"};
+      return{spots:0,method:"unknown"};
+    };
+
+    const handleFiles=async(fl)=>{
+      const arr=[...fl];if(!arr.length)return;
+      setParsing(true);
+      const added=[];
+      for(const f of arr){
+        try{
+          const ext=f.name.toLowerCase();
+          let ex;
+          if(ext.endsWith(".pdf"))ex=await extractPdf(f);
+          else if(ext.endsWith(".xlsx")||ext.endsWith(".xls")||ext.endsWith(".csv"))ex=await extractSheet(f);
+          else{ added.push({id:++idRef.current,name:f.name,brand:"",market:"",media:"",month:"",spots:0,method:"unsupported",note:"Unsupported file type",text:"",lines:[]});continue}
+          const market=detectMarket(ex.text,ex.lines);
+          const media=detectMedia(ex.text);
+          const month=detectMonth(ex.text);
+          const brand=detectBrand(ex.text,market);
+          const{spots,method}=countSpots(ex.text,ex.lines,ex.rowsAll);
+          added.push({id:++idRef.current,name:f.name,brand,market,media,month,spots,method,note:"",text:ex.text,lines:ex.lines});
+        }catch(err){
+          added.push({id:++idRef.current,name:f.name,brand:"",market:"",media:"",month:"",spots:0,method:"error",note:err.message||"Parse failed",text:"",lines:[]});
+        }
+      }
+      setFiles(prev=>[...prev,...added]);
+      setParsing(false);
+      notify(added.length+" invoice"+(added.length>1?"s":"")+" parsed — verify the counts");
+    };
+
+    const upd=(id,k,v)=>setFiles(prev=>prev.map(f=>f.id===id?{...f,[k]:k==="spots"?(parseInt(String(v).replace(/[^0-9]/g,""),10)||0):v}:f));
+    const removeFile=id=>setFiles(prev=>prev.filter(f=>f.id!==id));
+    const addManual=()=>setFiles(prev=>[...prev,{id:++idRef.current,name:"(manual entry)",brand:"",market:"",media:"",month:monthFilter||"",spots:0,method:"manual",note:"",text:"",lines:[]}]);
+    const clearAll=()=>{if(files.length&&!confirm("Clear all "+files.length+" invoices?"))return;setFiles([]);setMonthFilter("")};
+
+    // months present in the data, for the filter dropdown
+    const monthsPresent=useMemo(()=>[...new Set(files.map(f=>f.month).filter(Boolean))].sort(),[files]);
+    const fmtMonth=(ym)=>{if(!ym)return"—";const[y,m]=ym.split("-");return(MONTHS[+m-1]||m)+" "+y};
+    const shown=useMemo(()=>monthFilter?files.filter(f=>f.month===monthFilter):files,[files,monthFilter]);
+
+    // roll-up: brand → market → media → spots
+    const summary=useMemo(()=>{
+      const map={};let grand=0;
+      shown.forEach(f=>{
+        const b=f.brand||"Unassigned",m=f.market||"Unknown",md=f.media||"Other";
+        map[b]=map[b]||{};map[b][m]=map[b][m]||{__total:0};
+        map[b][m][md]=(map[b][m][md]||0)+(f.spots||0);
+        map[b][m].__total+=(f.spots||0);grand+=(f.spots||0);
+      });
+      return{map,grand};
+    },[shown]);
+
+    const copyCsv=()=>{
+      const rows=[["Brand","Market","Medium","Spots","Month"]];
+      shown.forEach(f=>rows.push([f.brand||"Unassigned",f.market||"Unknown",f.media||"Other",f.spots||0,fmtMonth(f.month)]));
+      const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\n");
+      navigator.clipboard.writeText(csv).then(()=>notify("Summary copied as CSV")).catch(()=>notify("Copy failed"));
+    };
+
+    const th={textAlign:"left",fontSize:10,fontWeight:700,color:"#D4A040",textTransform:"uppercase",letterSpacing:.5,padding:"6px 8px",borderBottom:"1px solid #4a3565",whiteSpace:"nowrap"};
+    const td={fontSize:13,color:"#E8DFF0",padding:"5px 8px",borderBottom:"1px solid #3a2955",verticalAlign:"middle"};
+    const methodColor=m=>m==="stated total"?"#5BC4A0":m==="sheet column"?"#4AC8E8":m==="counted lines"?"#D4A040":m==="manual"?"#C4A0C8":"#E85A7A";
+    const cellSel=(f,k,opts,ph)=><select value={f[k]} onChange={e=>upd(f.id,k,e.target.value)} style={{padding:"4px 6px",borderRadius:5,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:f[k]?"#E8DFF0":"#9B8EAD",maxWidth:130}}><option value="">{ph}</option>{opts.map(o=><option key={o} value={o}>{o}</option>)}</select>;
+
+    return<div>
+      <PageHead title="Invoice Spot Counter" sub="Drop TV & Radio invoices — get actual spot counts per market" pgKey="invoices"/>
+
+      <Cd style={{padding:14,marginBottom:12,borderColor:"rgba(212,160,64,.25)"}}>
+        <div style={{fontSize:13,color:"#C4A0C8",lineHeight:1.5}}>
+          <b style={{color:"#D4A040"}}>Quick & dirty, on purpose.</b> Drop in station invoices (PDF, Excel, or CSV) and I'll best-guess the market, medium, and spot count for each one, then total them up per market. Station invoice formats are all over the place, so <b style={{color:"#E8DFF0"}}>treat every number as a draft and fix anything that looks off</b> — the <span style={{color:"#5BC4A0"}}>green "stated total"</span> guesses are most trustworthy; <span style={{color:"#D4A040"}}>gold "counted lines"</span> are rougher. This is a stopgap until Media Norm is ready.
+        </div>
+      </Cd>
+
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:12}}>
+        <DropZone multiple accept=".pdf,.xlsx,.xls,.csv" onFiles={handleFiles} disabled={parsing} style={{flex:"1 1 320px",minWidth:280,padding:22}}>
+          <div style={{fontSize:14,fontWeight:700,color:"#E8DFF0"}}>{parsing?"Reading invoices…":"Drop invoices here"}</div>
+          <div style={{fontSize:12,color:"#9B8EAD",marginTop:3}}>{parsing?"Counting spots, hang on":"PDF · Excel · CSV — multiple at once"}</div>
+        </DropZone>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          <Btn small onClick={addManual}>+ Manual row</Btn>
+          {files.length>0&&<Btn small danger onClick={clearAll}>Clear all</Btn>}
+        </div>
+      </div>
+
+      {files.length===0&&!parsing&&<Cd style={{padding:34,textAlign:"center"}}>
+        <div style={{fontSize:30,marginBottom:6}}>🧾</div>
+        <div style={{fontSize:14,color:"#9B8EAD",fontWeight:600}}>No invoices yet</div>
+        <div style={{fontSize:13,color:"#6B5E80",marginTop:4}}>Drop a batch above. I'll sort out which market each one belongs to.</div>
+      </Cd>}
+
+      {files.length>0&&<>
+        {/* ── SUMMARY ── */}
+        <Cd style={{padding:14,marginBottom:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8,marginBottom:10}}>
+            <div style={{display:"flex",alignItems:"baseline",gap:10}}>
+              <span style={{fontSize:15,fontWeight:800,color:"#F0E8F8",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.3}}>Spot Totals</span>
+              <span style={{fontSize:12,color:"#9B8EAD"}}>{shown.length} invoice{shown.length!==1?"s":""} · <b style={{color:"#D4A040"}}>{summary.grand.toLocaleString()}</b> spots</span>
+            </div>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <select value={monthFilter} onChange={e=>setMonthFilter(e.target.value)} style={{padding:"5px 8px",borderRadius:6,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:"#E8DFF0"}}>
+                <option value="">All months</option>
+                {monthsPresent.map(m=><option key={m} value={m}>{fmtMonth(m)}</option>)}
+              </select>
+              <Btn small onClick={copyCsv}>⧉ Copy CSV</Btn>
+            </div>
+          </div>
+          {Object.keys(summary.map).length===0?<div style={{fontSize:13,color:"#9B8EAD"}}>Nothing to total for this month.</div>:
+          Object.entries(summary.map).sort().map(([brand,markets])=>{
+            const bColor=brand==="Wettermark Keith"?"#D4A040":brand==="Postman Law"?"#9b7bb0":"#6B5E80";
+            const bTotal=Object.values(markets).reduce((s,m)=>s+m.__total,0);
+            return<div key={brand} style={{marginBottom:12}}>
+              <div style={{fontSize:12,fontWeight:800,color:bColor,textTransform:"uppercase",letterSpacing:.6,marginBottom:6,display:"flex",justifyContent:"space-between"}}><span>{brand}</span><span>{bTotal.toLocaleString()} spots</span></div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                {Object.entries(markets).sort((a,b)=>b[1].__total-a[1].__total).map(([mk,data])=><div key={mk} style={{flex:"1 1 180px",minWidth:170,background:"#1e1233",border:"1px solid "+bColor+"33",borderRadius:10,padding:"10px 12px"}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"#E8DFF0",marginBottom:2}}>{mk}</div>
+                  <div style={{fontSize:24,fontWeight:800,color:bColor}}>{data.__total.toLocaleString()}</div>
+                  <div style={{fontSize:11,color:"#9B8EAD",marginTop:3,lineHeight:1.5}}>{Object.entries(data).filter(([k])=>k!=="__total").sort().map(([md,n])=><div key={md} style={{display:"flex",justifyContent:"space-between"}}><span>{md}</span><span style={{fontWeight:600,color:"#C4A0C8"}}>{n.toLocaleString()}</span></div>)}</div>
+                </div>)}
+              </div>
+            </div>;
+          })}
+        </Cd>
+
+        {/* ── PER-FILE TABLE ── */}
+        <Cd style={{padding:0,overflow:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",minWidth:760}}>
+            <thead><tr>
+              <th style={th}>File</th><th style={th}>Brand</th><th style={th}>Market</th><th style={th}>Medium</th><th style={th}>Month</th><th style={{...th,textAlign:"right"}}>Spots</th><th style={th}>Source</th><th style={th}></th>
+            </tr></thead>
+            <tbody>
+              {files.map(f=><tr key={f.id} style={monthFilter&&f.month!==monthFilter?{opacity:.35}:null}>
+                <td style={{...td,maxWidth:200}}><div style={{fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:190}} title={f.name}>{f.name}</div>{f.note&&<div style={{fontSize:11,color:"#E85A7A"}}>{f.note}</div>}</td>
+                <td style={td}>{cellSel(f,"brand",["Postman Law","Wettermark Keith"],"—")}</td>
+                <td style={td}>{cellSel(f,"market",ALL_MKTS,"—")}</td>
+                <td style={td}>{cellSel(f,"media",MEDIA_OPTS,"—")}</td>
+                <td style={td}><select value={f.month} onChange={e=>upd(f.id,"month",e.target.value)} style={{padding:"4px 6px",borderRadius:5,border:"1px solid #4a3565",fontSize:12,background:"#1e1233",color:f.month?"#E8DFF0":"#9B8EAD"}}><option value="">—</option>{[...new Set([...monthsPresent,...["01","02","03","04","05","06","07","08","09","10","11","12"].map(mm=>"2026-"+mm)])].sort().map(m=><option key={m} value={m}>{fmtMonth(m)}</option>)}</select></td>
+                <td style={{...td,textAlign:"right"}}><input value={f.spots} onChange={e=>upd(f.id,"spots",e.target.value)} style={{width:64,padding:"4px 6px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,fontWeight:700,textAlign:"right",background:"#1e1233",color:"#E8DFF0"}}/></td>
+                <td style={td}><span style={{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:99,background:methodColor(f.method)+"22",color:methodColor(f.method),whiteSpace:"nowrap"}}>{f.method}</span></td>
+                <td style={{...td,whiteSpace:"nowrap"}}>{f.text&&<button onClick={()=>setViewText(f)} style={{fontSize:11,border:"none",background:"transparent",color:"#4AC8E8",cursor:"pointer",fontWeight:600}}>view</button>}<button onClick={()=>removeFile(f.id)} style={{fontSize:11,border:"none",background:"transparent",color:"#E85A7A",cursor:"pointer",fontWeight:600,marginLeft:6}}>✕</button></td>
+              </tr>)}
+            </tbody>
+          </table>
+        </Cd>
+      </>}
+
+      {/* ── raw-text viewer ── */}
+      {viewText&&<div onClick={()=>setViewText(null)} style={{position:"fixed",inset:0,background:"rgba(15,8,28,.8)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+        <div onClick={e=>e.stopPropagation()} style={{background:"#2d1f42",border:"1px solid #4a3565",borderRadius:12,maxWidth:820,width:"100%",maxHeight:"82vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",borderBottom:"1px solid #4a3565"}}>
+            <div><div style={{fontSize:14,fontWeight:700,color:"#F0E8F8"}}>{viewText.name}</div><div style={{fontSize:11,color:"#9B8EAD"}}>Extracted text — use this to verify the count ({viewText.lines.length} lines)</div></div>
+            <button onClick={()=>setViewText(null)} style={{border:"none",background:"transparent",color:"#9B8EAD",fontSize:20,cursor:"pointer"}}>✕</button>
+          </div>
+          <pre style={{margin:0,padding:16,overflow:"auto",fontSize:12,color:"#C4A0C8",whiteSpace:"pre-wrap",fontFamily:"monospace",lineHeight:1.45}}>{viewText.lines.join("\n")}</pre>
+        </div>
+      </div>}
+    </div>;
+  };
+
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"cal",l:"Calendar",e:"🗓"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"cal",l:"Calendar",e:"🗓"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"invoices",l:"Invoice Counter",e:"🧾"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
@@ -9685,6 +9968,7 @@ Rules:
           {pg==="est"&&<EstPg/>}
           {pg==="sta"&&<StaPg/>}
           {pg==="metrics"&&<MetricsPg/>}
+          {pg==="invoices"&&<InvoicePg/>}
           {pg==="vault"&&<VaultPg/>}
           {pg==="library"&&(()=>{
             // Library is rendered OUTSIDE the MDiv page-transition wrapper
