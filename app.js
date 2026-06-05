@@ -7075,9 +7075,9 @@ Rules:
           <DropZone multiple accept="*/*" style={{marginBottom:8}} onFiles={(fileList)=>{
             const files=Array.from(fileList);if(!files.length){notify("No files selected");return}
             if(!storage){notify("ERROR: Storage not loaded.");return}
-            let matched=0,notFound=0,failed=0;const updates={};const total=files.length;
+            let matched=0,notFound=0,failed=0,lastErr="";const updates={};const total=files.length;
             const uploadNext=(fi)=>{
-              if(fi>=total){setUploadTracker(null);if(Object.keys(updates).length>0){setIscis(function(prev){return prev.map(function(x,j){return updates[j]?Object.assign({},x,{fileUrl:updates[j]}):x})})}log("Bulk OOH Creative",matched+" uploaded, "+notFound+" no match, "+failed+" failed");notify(matched+" linked"+(notFound?" | "+notFound+" not matched":"")+(failed?" | "+failed+" failed":""));return}
+              if(fi>=total){setUploadTracker(null);if(Object.keys(updates).length>0){setIscis(function(prev){return prev.map(function(x,j){return updates[j]?Object.assign({},x,{fileUrl:updates[j]}):x})})}log("Bulk OOH Creative",matched+" uploaded, "+notFound+" no match, "+failed+" failed");notify(matched+" linked"+(notFound?" | "+notFound+" not matched":"")+(failed?" | "+failed+" failed: "+lastErr:""));return}
               const file=files[fi];const baseUpper=file.name.replace(/\.[^.]+$/,"").trim().toUpperCase();
               let idx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper===i.code.toUpperCase());
               if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&(baseUpper.startsWith(i.code.toUpperCase()+" ")||baseUpper.startsWith(i.code.toUpperCase()+"-")||baseUpper.startsWith(i.code.toUpperCase()+"_")));
@@ -7090,8 +7090,8 @@ Rules:
               const task=ref.put(file,meta);
               task.on("state_changed",
                 snap=>{const p=Math.round((snap.bytesTransferred/snap.totalBytes)*100);setUploadTracker({label:"Uploading "+file.name+" ("+iscis[idx].code+")",current:fi+1,total:total,pct:Math.round(((fi+p/100)/total)*100)})},
-                err=>{failed++;console.warn("Upload failed:",file.name,err);setUploadTracker({label:file.name+" — FAILED",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});uploadNext(fi+1)},
-                async()=>{const url=await ref.getDownloadURL();updates[idx]=url;matched++;uploadNext(fi+1)}
+                err=>{failed++;lastErr=(err&&err.message)||String(err);notify("Upload failed ("+file.name+"): "+lastErr);console.warn("Upload failed:",file.name,err);setUploadTracker({label:file.name+" — FAILED",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});uploadNext(fi+1)},
+                ()=>{ref.getDownloadURL().then(url=>{updates[idx]=url;matched++;uploadNext(fi+1)}).catch(e2=>{failed++;lastErr="link: "+((e2&&e2.message)||String(e2));notify("Linked file but URL failed ("+iscis[idx].code+"): "+lastErr);uploadNext(fi+1)})}
               );
             };
             setUploadTracker({label:"Starting bulk upload...",current:0,total:total,pct:0});uploadNext(0);
