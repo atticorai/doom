@@ -390,10 +390,26 @@ const BRANDS=[
 const getBrandColor=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.color:"#9B8EAD"};
 const getBrandBg=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.colorBg:"#F0E8F8"};
 const getBrandAgency=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.agency:"Atticor"};
-const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display","Tagline"];const OOH_TYPES=[{code:"SB",name:"Static Billboard"},{code:"DB",name:"Digital Billboard"},{code:"SP",name:"Static Poster"},{code:"DP",name:"Digital Poster"},{code:"BS",name:"Bus Shelter"},{code:"WS",name:"Wallscape"},{code:"TR",name:"Transit"},{code:"SF",name:"Street Furniture"},{code:"JP",name:"Junior Poster"}];
+const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display","Tagline"];const OOH_TYPES=[{code:"SB",name:"Static Billboard"},{code:"DB",name:"Digital Billboard"},{code:"SP",name:"Static Poster"},{code:"DP",name:"Digital Poster"},{code:"BS",name:"Bus Shelter"},{code:"PT",name:"Gas Pump Topper"},{code:"WS",name:"Wallscape"},{code:"TR",name:"Transit"},{code:"SF",name:"Street Furniture"},{code:"JP",name:"Junior Poster"}];
 const DISPLAY_TYPES=[{code:"MR",name:"Medium Rectangle (300x250)"},{code:"LB",name:"Leaderboard (728x90)"},{code:"SQ",name:"Square (640x640)"},{code:"SK",name:"Skyscraper (300x600)"},{code:"MB",name:"Mobile Banner (320x50)"},{code:"WB",name:"Wide Banner (1280x100)"},{code:"SL",name:"Slim Banner (970x66)"},{code:"BN",name:"Banner (Generic)"}];
-const SUFFIXES={TV:"T",Radio:"R",Digital:"D","Streaming Audio":"S",OOH:"O",Cable:"T",Display:"B",Tagline:"G"};const OOH_SUFFIXES={SB:"O",DB:"O",SP:"O",DP:"O",BS:"O",WS:"O",TR:"O",SF:"O",JP:"O"};
+const SUFFIXES={TV:"T",Radio:"R",Digital:"D","Streaming Audio":"S",OOH:"O",Cable:"T",Display:"B",Tagline:"G"};const OOH_SUFFIXES={SB:"O",DB:"O",SP:"O",DP:"O",BS:"O",PT:"O",WS:"O",TR:"O",SF:"O",JP:"O"};
 const OOH_TYPE_MAP=Object.fromEntries(OOH_TYPES.map(t=>[t.code,t.name]));
+// OOH artwork specs by board type (DEN Postman Law). Pump toppers ship one
+// creative produced at 3 frame sizes; shelters are a single large format.
+// All dimensions are Height x Width (inches), per the vendor spec sheet.
+const OOH_SPECS={
+  PT:{name:"Gas Pump Topper",market:"DEN",contract:"2026-41356",colorMode:"CMYK",dpi:408,
+    fileFormats:"Native layered files & PDF · Photoshop CS6/CC, InDesign CS6/CC, or Illustrator CS6/CC",
+    artDue:"2026-05-25",start:"2026-06-22",dimNote:"Height × Width (in)",
+    frames:[
+      {name:"Clip Frame",   trim:"12.5 × 20.625", live:"9.75 × 18.25", critical:"9.25 × 17.75", bleed:"14.5 × 22.625"},
+      {name:"Chevron Frame",trim:"10.75 × 25",    live:"8.5 × 23.375", critical:"8 × 22.875",   bleed:"12.75 × 27"},
+      {name:"Eclipse Frame",trim:"21 × 21.5",     live:"18.5 × 19.5",  critical:"17.5 × 18.75", bleed:"23 × 23.5"}
+    ]},
+  BS:{name:"Transit / Bus Shelter",market:"DEN",contract:"2026-41356",colorMode:"CMYK",dpi:600,
+    fileFormats:"Native layered files & PDF",artDue:"2026-06-01",start:"2026-06-22",dimNote:"Height × Width (in)",
+    frames:[{name:"Transit Shelter",trim:"68.25 × 47.5",live:"",critical:"",bleed:""}]}
+};
 // Map raw physical media type strings to canonical category for filtering/badges
 const mediaCategory=(t)=>{const s=(t||"").toLowerCase();if(s.includes("digital"))return"Digital";if(s.includes("poster"))return"Poster";if(s.includes("bulletin"))return"Bulletin";if(s.includes("wall")||s.includes("hotspot")||s.includes("overpass"))return"Other";return"Other"};
 const MEDIA_CAT_COLORS={Poster:{fg:"#F4C242",bg:"rgba(244,194,66,.15)",border:"#F4C242"},Bulletin:{fg:"#4AC8E8",bg:"rgba(74,200,232,.15)",border:"#4AC8E8"},Digital:{fg:"#C084FC",bg:"rgba(192,132,252,.15)",border:"#C084FC"},Other:{fg:"#94a3b8",bg:"rgba(148,163,184,.15)",border:"#94a3b8"}};
@@ -4324,6 +4340,19 @@ const App=()=>{
       {isOoh?<Sel label="Board Type" options={OOH_TYPES.map(t=>({v:t.code,l:t.code+" — "+t.name}))} value={f2.oohType} onChange={v=>u2("oohType",v)}/>:
       isDisplay?<Sel label="Banner Size" options={DISPLAY_TYPES.map(t=>({v:t.code,l:t.code+" — "+t.name}))} value={f2.displayType} onChange={v=>u2("displayType",v)}/>:
       <Inp label={isTag?"Recording length (sec)":"Duration (sec)"} value={f2.dur} onChange={e=>u2("dur",e.target.value)}/>}
+      {isOoh&&OOH_SPECS[f2.oohType]&&(()=>{const sp=OOH_SPECS[f2.oohType];return<div style={{marginTop:8,padding:"8px 10px",borderRadius:8,border:"1px solid #4a3565",background:"#162032"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:4}}>
+          <span style={{fontSize:13,fontWeight:800,color:"#D4A040"}}>📐 {sp.name} specs{sp.frames.length>1?" — "+sp.frames.length+" frame sizes":""}</span>
+          <span style={{fontSize:11,color:"#9B8EAD"}}>{sp.colorMode} {sp.dpi}dpi · Art due {sp.artDue} · Live {sp.start} · Contract {sp.contract}</span>
+        </div>
+        <div style={{fontSize:11,color:"#9B8EAD",marginTop:4,marginBottom:3}}>{sp.dimNote}</div>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr>
+          {["Frame","Trim","Live","Critical","Bleed"].map(h=><th key={h} style={{textAlign:"left",padding:"2px 6px",color:"#9B8EAD",borderBottom:"1px solid #4a3565",fontWeight:700}}>{h}</th>)}
+        </tr></thead><tbody>
+          {sp.frames.map(fr=><tr key={fr.name}><td style={{padding:"2px 6px",color:"#E8DFF0",fontWeight:700}}>{fr.name}</td><td style={{padding:"2px 6px",color:"#C4A0C8",fontFamily:"monospace"}}>{fr.trim||"—"}</td><td style={{padding:"2px 6px",color:"#C4A0C8",fontFamily:"monospace"}}>{fr.live||"—"}</td><td style={{padding:"2px 6px",color:"#C4A0C8",fontFamily:"monospace"}}>{fr.critical||"—"}</td><td style={{padding:"2px 6px",color:"#C4A0C8",fontFamily:"monospace"}}>{fr.bleed||"—"}</td></tr>)}
+        </tbody></table>
+        <div style={{fontSize:11,color:"#9B8EAD",marginTop:4}}><b>Files:</b> {sp.fileFormats}</div>
+      </div>;})()}
       {isTag&&<React.Fragment><div style={{height:8}}/>
       <div style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase",marginBottom:3}}>Use</div>
       <div style={{display:"flex",gap:6}}>{["audio","visual"].map(t=>{const s=(f2.tagUse||"audio")===t;return<button key={t} onClick={()=>u2("tagUse",t)} style={{flex:1,padding:"7px 0",borderRadius:6,border:s?"2px solid #4AC8E8":"1px solid #4a3565",background:s?"#4AC8E81a":"#162032",color:s?"#4AC8E8":"#9B8EAD",fontSize:14,fontWeight:700,cursor:"pointer"}}>{t==="audio"?"🎙 Audio (radio)":"📺 Visual (TV)"}</button>})}</div>
