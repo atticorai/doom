@@ -410,7 +410,7 @@ const OOH_SPECS={
   BS:{name:"Transit / Bus Shelter",market:"DEN",contract:"2026-41356",colorMode:"CMYK",dpi:600,
     fileFormats:"Native layered files & PDF",artDue:"2026-06-01",start:"2026-06-22",dimNote:"Height × Width (in)",
     note:"Shelters run 50/50 — two creatives at 50% each in the rotation.",
-    frames:[{name:"Transit Shelter",trim:"68.25 × 47.5",live:"",critical:"",bleed:""}]}
+    frames:[{name:"Transit Shelter",trim:"68.25 × 47.5",live:"65.25 × 44.5",critical:"63.25 × 42.5",bleed:"69.25 × 48.5"}]}
 };
 // Map raw physical media type strings to canonical category for filtering/badges
 const mediaCategory=(t)=>{const s=(t||"").toLowerCase();if(s.includes("digital"))return"Digital";if(s.includes("poster"))return"Poster";if(s.includes("bulletin"))return"Bulletin";if(s.includes("wall")||s.includes("hotspot")||s.includes("overpass"))return"Other";return"Other"};
