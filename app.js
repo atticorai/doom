@@ -390,7 +390,7 @@ const BRANDS=[
 const getBrandColor=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.color:"#9B8EAD"};
 const getBrandBg=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.colorBg:"#F0E8F8"};
 const getBrandAgency=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.agency:"Atticor"};
-const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display","Tagline"];const OOH_TYPES=[{code:"SB",name:"Static Billboard"},{code:"DB",name:"Digital Billboard"},{code:"SP",name:"Static Poster"},{code:"DP",name:"Digital Poster"},{code:"BS",name:"Bus Shelter"},{code:"PT",name:"Gas Pump Topper"},{code:"WS",name:"Wallscape"},{code:"TR",name:"Transit"},{code:"SF",name:"Street Furniture"},{code:"JP",name:"Junior Poster"}];
+const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display","Tagline"];const OOH_TYPES=[{code:"SB",name:"Static Billboard"},{code:"DB",name:"Digital Billboard"},{code:"SP",name:"Static Poster"},{code:"DP",name:"Digital Poster"},{code:"BS",name:"Transit / Bus Shelter"},{code:"PT",name:"Gas Pump Topper"},{code:"WS",name:"Wallscape"},{code:"TR",name:"Transit"},{code:"SF",name:"Street Furniture"},{code:"JP",name:"Junior Poster"}];
 const DISPLAY_TYPES=[{code:"MR",name:"Medium Rectangle (300x250)"},{code:"LB",name:"Leaderboard (728x90)"},{code:"SQ",name:"Square (640x640)"},{code:"SK",name:"Skyscraper (300x600)"},{code:"MB",name:"Mobile Banner (320x50)"},{code:"WB",name:"Wide Banner (1280x100)"},{code:"SL",name:"Slim Banner (970x66)"},{code:"BN",name:"Banner (Generic)"}];
 const SUFFIXES={TV:"T",Radio:"R",Digital:"D","Streaming Audio":"S",OOH:"O",Cable:"T",Display:"B",Tagline:"G"};const OOH_SUFFIXES={SB:"O",DB:"O",SP:"O",DP:"O",BS:"O",PT:"O",WS:"O",TR:"O",SF:"O",JP:"O"};
 const OOH_TYPE_MAP=Object.fromEntries(OOH_TYPES.map(t=>[t.code,t.name]));
@@ -401,6 +401,7 @@ const OOH_SPECS={
   PT:{name:"Gas Pump Topper",market:"DEN",contract:"2026-41356",colorMode:"CMYK",dpi:408,
     fileFormats:"Native layered files & PDF · Photoshop CS6/CC, InDesign CS6/CC, or Illustrator CS6/CC",
     artDue:"2026-05-25",start:"2026-06-22",dimNote:"Height × Width (in)",
+    note:"Registers as 3 separate creatives — one ISCI per frame size.",
     frames:[
       {name:"Clip Frame",   trim:"12.5 × 20.625", live:"9.75 × 18.25", critical:"9.25 × 17.75", bleed:"14.5 × 22.625"},
       {name:"Chevron Frame",trim:"10.75 × 25",    live:"8.5 × 23.375", critical:"8 × 22.875",   bleed:"12.75 × 27"},
@@ -408,6 +409,7 @@ const OOH_SPECS={
     ]},
   BS:{name:"Transit / Bus Shelter",market:"DEN",contract:"2026-41356",colorMode:"CMYK",dpi:600,
     fileFormats:"Native layered files & PDF",artDue:"2026-06-01",start:"2026-06-22",dimNote:"Height × Width (in)",
+    note:"Shelters run 50/50 — two creatives at 50% each in the rotation.",
     frames:[{name:"Transit Shelter",trim:"68.25 × 47.5",live:"",critical:"",bleed:""}]}
 };
 // Map raw physical media type strings to canonical category for filtering/badges
@@ -4309,6 +4311,8 @@ const App=()=>{
     const isOoh=f2.media==="OOH";
     const isDisplay=f2.media==="Display";
     const isTag=f2.media==="Tagline";
+    const isPT=isOoh&&f2.oohType==="PT";
+    const ptFrames=(typeof OOH_SPECS!=="undefined"&&OOH_SPECS.PT?OOH_SPECS.PT.frames:[]);
     const suf=SUFFIXES[f2.media]||"T";const bD=f2.brand==="PL"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
     const durField=isOoh?f2.oohType:isDisplay?f2.displayType:f2.dur;
     const brandName=f2.brand==="PL"?"Postman Law":"Wettermark Keith";
@@ -4320,7 +4324,7 @@ const App=()=>{
     const allSeqs=brandIscis.map(i=>{const m=i.code.match(/([0-9]{3})[TRDSOBG]?$/);return m?parseInt(m[1]):0});
     const nxt=existingSeq||String(Math.max(0,...allSeqs)+1).padStart(3,"0");
     const yr=new Date().getFullYear().toString().slice(2);
-    const prev=isTag?[f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt]:f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf);
+    const prev=isTag?[f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt]:isPT?(()=>{let s=parseInt(nxt)||1;const out=[];f2.dmas.forEach(d=>{ptFrames.forEach(()=>{out.push(d+f2.brand+yr+"PT"+String(s).padStart(3,"0")+"O");s++})});return out;})():f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf);
     const alreadyRegistered=isTag?[]:(normInput?f2.dmas.filter(d=>existingWithTitle.some(i=>i.dma===d)):[]);
     const dupeWarnings=prev.filter(code=>iscis.some(i=>i.code===code));
     return<Mod title="Register ISCI (Uniform)" onClose={()=>setModal(null)} wide>
@@ -4352,6 +4356,7 @@ const App=()=>{
           {sp.frames.map(fr=><tr key={fr.name}><td style={{padding:"2px 6px",color:"#E8DFF0",fontWeight:700}}>{fr.name}</td><td style={{padding:"2px 6px",color:"#C4A0C8",fontFamily:"monospace"}}>{fr.trim||"—"}</td><td style={{padding:"2px 6px",color:"#C4A0C8",fontFamily:"monospace"}}>{fr.live||"—"}</td><td style={{padding:"2px 6px",color:"#C4A0C8",fontFamily:"monospace"}}>{fr.critical||"—"}</td><td style={{padding:"2px 6px",color:"#C4A0C8",fontFamily:"monospace"}}>{fr.bleed||"—"}</td></tr>)}
         </tbody></table>
         <div style={{fontSize:11,color:"#9B8EAD",marginTop:4}}><b>Files:</b> {sp.fileFormats}</div>
+        {sp.note&&<div style={{fontSize:11,color:"#5BC4A0",fontWeight:700,marginTop:4}}>→ {sp.note}</div>}
       </div>;})()}
       {isTag&&<React.Fragment><div style={{height:8}}/>
       <div style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase",marginBottom:3}}>Use</div>
@@ -4394,7 +4399,7 @@ const App=()=>{
         </div>}
       </div>}
       <div style={{height:8}}/>
-      <Btn primary disabled={!f2.title||(isTag?!f2.dur:!f2.dmas.length)} onClick={()=>{const bn=brandName;const ni=isTag?[{code:f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt,title:f2.title,media:"Tagline",brand:bn,dma:"",dur:durField,suffix:suf,tagUse:f2.tagUse||"audio",active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):f2.dmas.filter(d=>!alreadyRegistered.includes(d)).map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify(isTag?"That tagline is already registered":"All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(isTag?("Tagline registered — "+ni[0].code):(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":"")));setModal(null)}}>{isTag?"Register Tagline":("Register "+f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length+" ISCI"+(f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":"")+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""))}</Btn>
+      <Btn primary disabled={!f2.title||(isTag?!f2.dur:!f2.dmas.length)} onClick={()=>{const bn=brandName;const ni=isTag?[{code:f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt,title:f2.title,media:"Tagline",brand:bn,dma:"",dur:durField,suffix:suf,tagUse:f2.tagUse||"audio",active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):isPT?(()=>{let s=parseInt(nxt)||1;const out=[];f2.dmas.forEach(d=>{ptFrames.forEach(fr=>{const code=d+f2.brand+yr+"PT"+String(s).padStart(3,"0")+"O";s++;if(iscis.some(i=>i.code===code))return;out.push({code,title:f2.title+" — "+fr.name,media:"OOH",brand:bn,dma:d,dur:"PT",suffix:"O",frame:fr.name,size:fr.trim,active:true,fileUrl:"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})})});return out;})():f2.dmas.filter(d=>!alreadyRegistered.includes(d)).map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify(isTag?"That tagline is already registered":"All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(isTag?("Tagline registered — "+ni[0].code):(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":"")));setModal(null)}}>{isTag?"Register Tagline":isPT?("Register "+(f2.dmas.length*ptFrames.length)+" Pump Topper ISCIs ("+ptFrames.length+" frames × "+f2.dmas.length+" market"+(f2.dmas.length!==1?"s":"")+")"):("Register "+f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length+" ISCI"+(f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":"")+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""))}</Btn>
     </Mod>;
   };
 
