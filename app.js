@@ -401,7 +401,7 @@ const OOH_SPECS={
   PT:{name:"Gas Pump Topper",market:"DEN",contract:"2026-41356",colorMode:"CMYK",dpi:408,
     fileFormats:"Native layered files & PDF · Photoshop CS6/CC, InDesign CS6/CC, or Illustrator CS6/CC",
     artDue:"2026-05-25",start:"2026-06-22",dimNote:"Height × Width (in)",
-    note:"Registers as 3 separate creatives — one ISCI per frame size.",
+    note:"One creative, produced in all 3 frame sizes — register once, upload the art.",
     frames:[
       {name:"Clip Frame",   trim:"12.5 × 20.625", live:"9.75 × 18.25", critical:"9.25 × 17.75", bleed:"14.5 × 22.625"},
       {name:"Chevron Frame",trim:"10.75 × 25",    live:"8.5 × 23.375", critical:"8 × 22.875",   bleed:"12.75 × 27"},
@@ -4312,7 +4312,6 @@ const App=()=>{
     const isDisplay=f2.media==="Display";
     const isTag=f2.media==="Tagline";
     const isPT=isOoh&&f2.oohType==="PT";
-    const ptFrames=(typeof OOH_SPECS!=="undefined"&&OOH_SPECS.PT?OOH_SPECS.PT.frames:[]);
     const suf=SUFFIXES[f2.media]||"T";const bD=f2.brand==="PL"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
     const durField=isOoh?f2.oohType:isDisplay?f2.displayType:f2.dur;
     const brandName=f2.brand==="PL"?"Postman Law":"Wettermark Keith";
@@ -4324,7 +4323,7 @@ const App=()=>{
     const allSeqs=brandIscis.map(i=>{const m=i.code.match(/([0-9]{3})[TRDSOBG]?$/);return m?parseInt(m[1]):0});
     const nxt=existingSeq||String(Math.max(0,...allSeqs)+1).padStart(3,"0");
     const yr=new Date().getFullYear().toString().slice(2);
-    const prev=isTag?[f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt]:isPT?(()=>{let s=parseInt(nxt)||1;const out=[];f2.dmas.forEach(d=>{ptFrames.forEach(()=>{out.push(d+f2.brand+yr+"PT"+String(s).padStart(3,"0")+"O");s++})});return out;})():f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf);
+    const prev=isTag?[f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt]:f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf);
     const alreadyRegistered=isTag?[]:(normInput?f2.dmas.filter(d=>existingWithTitle.some(i=>i.dma===d)):[]);
     const dupeWarnings=prev.filter(code=>iscis.some(i=>i.code===code));
     return<Mod title="Register ISCI (Uniform)" onClose={()=>setModal(null)} wide>
@@ -4399,7 +4398,7 @@ const App=()=>{
         </div>}
       </div>}
       <div style={{height:8}}/>
-      <Btn primary disabled={!f2.title||(isTag?!f2.dur:!f2.dmas.length)} onClick={()=>{const bn=brandName;const ni=isTag?[{code:f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt,title:f2.title,media:"Tagline",brand:bn,dma:"",dur:durField,suffix:suf,tagUse:f2.tagUse||"audio",active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):isPT?(()=>{let s=parseInt(nxt)||1;const out=[];f2.dmas.forEach(d=>{ptFrames.forEach(fr=>{const code=d+f2.brand+yr+"PT"+String(s).padStart(3,"0")+"O";s++;if(iscis.some(i=>i.code===code))return;out.push({code,title:f2.title+" — "+fr.name,media:"OOH",brand:bn,dma:d,dur:"PT",suffix:"O",frame:fr.name,size:fr.trim,active:true,fileUrl:"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})})});return out;})():f2.dmas.filter(d=>!alreadyRegistered.includes(d)).map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify(isTag?"That tagline is already registered":"All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(isTag?("Tagline registered — "+ni[0].code):(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":"")));setModal(null)}}>{isTag?"Register Tagline":isPT?("Register "+(f2.dmas.length*ptFrames.length)+" Pump Topper ISCIs ("+ptFrames.length+" frames × "+f2.dmas.length+" market"+(f2.dmas.length!==1?"s":"")+")"):("Register "+f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length+" ISCI"+(f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":"")+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""))}</Btn>
+      <Btn primary disabled={!f2.title||(isTag?!f2.dur:!f2.dmas.length)} onClick={()=>{const bn=brandName;const ni=isTag?[{code:f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt,title:f2.title,media:"Tagline",brand:bn,dma:"",dur:durField,suffix:suf,tagUse:f2.tagUse||"audio",active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):f2.dmas.filter(d=>!alreadyRegistered.includes(d)).map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify(isTag?"That tagline is already registered":"All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(isTag?("Tagline registered — "+ni[0].code):(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":"")));setModal(null)}}>{isTag?"Register Tagline":("Register "+f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length+" ISCI"+(f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":"")+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""))}</Btn>
     </Mod>;
   };
 
