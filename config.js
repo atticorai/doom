@@ -32,14 +32,14 @@ const getBrand=(v)=>BRANDS.find(b=>b.name===v||b.code===v)||BRANDS[0];
 const getBrandColor=(v)=>{const b=getBrand(v);return b?b.color:"#9B8EAD"};
 const getBrandBg=(v)=>{const b=getBrand(v);return b?b.colorBg:"#F0E8F8"};
 const getBrandAgency=(v)=>{const b=getBrand(v);return b?b.agency:"Atticor"};
-const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH"];const OOH_TYPES=[{code:"SB",name:"Static Billboard"},{code:"DB",name:"Digital Billboard"},{code:"SP",name:"Static Poster"},{code:"DP",name:"Digital Poster"},{code:"BS",name:"Bus Shelter"},{code:"WS",name:"Wallscape"},{code:"TR",name:"Transit"},{code:"SF",name:"Street Furniture"},{code:"JP",name:"Junior Poster"}];
-const SUFFIXES={TV:"T",Radio:"R",Digital:"D","Streaming Audio":"S",OOH:"O",Cable:"T"};const OOH_SUFFIXES={SB:"O",DB:"O",SP:"O",DP:"O",BS:"O",WS:"O",TR:"O",SF:"O",JP:"O"};
+const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Tagline"];const OOH_TYPES=[{code:"SB",name:"Static Billboard"},{code:"DB",name:"Digital Billboard"},{code:"SP",name:"Static Poster"},{code:"DP",name:"Digital Poster"},{code:"BS",name:"Transit / Bus Shelter"},{code:"PT",name:"Gas Pump Topper"},{code:"WS",name:"Wallscape"},{code:"TR",name:"Transit"},{code:"SF",name:"Street Furniture"},{code:"JP",name:"Junior Poster"}];
+const SUFFIXES={TV:"T",Radio:"R",Digital:"D","Streaming Audio":"S",OOH:"O",Cable:"T",Tagline:"G"};const OOH_SUFFIXES={SB:"O",DB:"O",SP:"O",DP:"O",BS:"O",PT:"O",WS:"O",TR:"O",SF:"O",JP:"O"};
 const OOH_TYPE_MAP=Object.fromEntries(OOH_TYPES.map(t=>[t.code,t.name]));
 const EG=[...new Set(ESTIMATES.map(e=>e.group))].sort();
 const SCHED=["M-F Schedule","Weekend Schedule","M-F Bookend","Weekend Bookend","All Week","Holiday Only"];
 const BOOKENDS=["","Bookend :15 A","Bookend :15 B","Bookend :15 C","Bookend :15 D","Bookend :30 A","Bookend :30 B"];
 
-const mc=m=>({TV:"#2563eb",Radio:"#7c3aed",Digital:"#059669","Streaming Audio":"#0891b2",Cable:"#6366f1",OOH:"#d97706"})[m]||"#64748b";
+const mc=m=>({TV:"#2563eb",Radio:"#7c3aed",Digital:"#059669","Streaming Audio":"#0891b2",Cable:"#6366f1",OOH:"#d97706",Tagline:"#C4A0C8"})[m]||"#64748b";
 const fD=d=>d?new Date(d+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}):"—";
 const fDs=d=>d?new Date(d+"T12:00:00").toLocaleDateString("en-US",{month:"numeric",day:"numeric"}):"";
 

@@ -78,7 +78,7 @@ const PL_PANELS=D_PL.map(r=>{
   const media=r[2],unit=r[3],mkt=r[0];
   let vendor="Lamar";
   if(/Train Overpass|Wall|HotSpot/.test(media))vendor="View Chicago";
-  else if(/Transit Shelter|Gas Pump/.test(media))vendor="Intersection";
+  else if(/Transit Shelter|Gas Pump/.test(media))vendor="Wilkins Media";
   else if(mkt==="CIN")vendor="Lamar";
   else vendor="Wilkins Media";
   return{market:r[0],city:r[1],media:r[2],unit:r[3],location:r[4],facing:r[5],size:r[6],flight:r[7],cycles:r[8],impressions:r[9],illuminated:r[10],lat:r[11],lng:r[12],status:r[13],plan:r[14],numUnits:r[15],vendor};

@@ -276,7 +276,7 @@ const STATIONS=(()=>{
     "Ampersand-MSP":"effectv_ampersand_ad-copy@comcast.com",
     "Wilkins-CHI":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com",
     "Wilkins-CIN":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com",
-    "Wilkins-DEN":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com",
+    "Wilkins-DEN":"llateju@wilkinsmedia.com; robert@wilkinsmedia.com; brianna@wilkinsmedia.com",
     "Wilkins-MSP":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com",
     "TTWN-PL":"adahu@iheartmedia.com; melissaberry@iheartmedia.com",
   };
@@ -345,7 +345,7 @@ const STATIONS=(()=>{
     ["Minneapolis","Ampersand-MSP","Cable","Ampersand TV","effectv_ampersand_ad-copy@comcast.com","Postman Law","Ken Lazar"],
     ["Chicago","Wilkins-CHI","OOH","Wilkins","Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","Postman Law","Lynn Cortelezzi"],
     ["Cincinnati","Wilkins-CIN","OOH","Wilkins","Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","Postman Law","Lynn Cortelezzi"],
-    ["Denver","Wilkins-DEN","OOH","Wilkins","Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","Postman Law","Lynn Cortelezzi"],
+    ["Denver","Wilkins-DEN","OOH","Wilkins","llateju@wilkinsmedia.com; robert@wilkinsmedia.com; brianna@wilkinsmedia.com","Postman Law","Lynn Cortelezzi"],
     ["Minneapolis","Wilkins-MSP","OOH","Wilkins","Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","Postman Law","Lynn Cortelezzi"],
     ["Chicago","TTWN-PL","Streaming Audio","TTWN Network","adahu@iheartmedia.com; melissaberry@iheartmedia.com","Postman Law","Lynn Cortelezzi"],
     ["Cincinnati","TTWN-PL","Streaming Audio","TTWN Network","adahu@iheartmedia.com; melissaberry@iheartmedia.com","Postman Law","Lynn Cortelezzi"],
@@ -360,7 +360,7 @@ const STATIONS=(()=>{
 })();
 // Station patch maps — used during Firebase load to filter/update
 const WK_STA_PATCH={"WBRC-TV":"allwbrctraffic@wbrc.com; cburns@wbrc.com; wbrc-traffic@gray.tv","WBMA-TV":"cmadams@sbgtv.com; SASO-WTTO-Traffic@sbgtv.com; Saso-wbma-traffic@sbgtv.com; smridderhoff@ampmediasales.com","WABM-TV":"cmadams@sbgtv.com; SASO-WTTO-Traffic@sbgtv.com; Saso-wbma-traffic@sbgtv.com; smridderhoff@ampmediasales.com","WTTO-TV":"cmadams@sbgtv.com; SASO-WTTO-Traffic@sbgtv.com; Saso-wbma-traffic@sbgtv.com; smridderhoff@ampmediasales.com","WVTM-FM":"WVTM_traffic@hearst.com","EVTM-TV":"WVTM_traffic@hearst.com","WIAT-TV":"jtroxell@cbs42.com; birminghamtraffic@nexstar.tv","WBPT-FM":"radiosupport@summitmediacorp.com","WQEN-FM":"adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","WDXB-FM":"adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","WERC-FM":"adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","WMJJ-FM":"adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","WRCB-TV":"lhudson@local3news.com; ryoung@local3news.com","WTVC-TV":"jifaw@sbgtv.com; saso-wtvc-traffic@sbgtv.com; tonettajones@sbgtv.com","ETVC-TV":"jifaw@sbgtv.com; saso-wtvc-traffic@sbgtv.com; tonettajones@sbgtv.com","WFLI-TV":"jifaw@sbgtv.com; saso-wtvc-traffic@sbgtv.com; tonettajones@sbgtv.com","WDEF-TV":"Traffic@wdef.com; cmiller@wdef.com","WRGX-TV":"ashley.wright@wtvy.com; wtvy-traffic@gray.tv","WTVY-TV":"ashley.wright@wtvy.com; wtvy-traffic@gray.tv","GTVY-TV":"ashley.wright@wtvy.com; wtvy-traffic@gray.tv","WDHN-TV":"DPforte@wdhn.com","WAAY-TV":"traffic@waaytv.com; eragus@waaytv.com","WAFF-TV":"traffic@waff.com; Megan.Wooten@WAFF.com","EZDX-TV":"hsvtraffic@tegna.com; WZDXTraffic@tegna.com","WAMY-TV":"hsvtraffic@tegna.com; WZDXTraffic@tegna.com","WZDX-TV":"hsvtraffic@tegna.com; WZDXTraffic@tegna.com","WHNT-TV":"Whnt-salesfax@nexstar.tv; Huntsvilletraffic@nexstar.tv; Laurie.Skelton@whnt.com","WHDF-TV":"Whnt-salesfax@nexstar.tv; Huntsvilletraffic@nexstar.tv; Laurie.Skelton@whnt.com","WDRM-FM":"adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","WQRV-FM":"adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","WTAK-FM":"adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","WBIR-TV":"WBIR-Traffic@wbir.com; traffic@wbir.com; epiekosz@wbir.com","WATE-TV":"kflowers@wate.com; knoxvilletraffic@nexstar.tv; stdavis@wate.com","WVLT-TV":"allen.koch@wvlt-tv.com; amy.bent@wvlt-tv.com; wvlt-traffic@graymedia.com","WBXX-TV":"allen.koch@wvlt-tv.com; amy.bent@wvlt-tv.com; wvlt-traffic@graymedia.com","EVLT-TV":"allen.koch@wvlt-tv.com; amy.bent@wvlt-tv.com; wvlt-traffic@graymedia.com","WTNZ-TV":"ltruitt@wtnzfox43.com","WKNX-TV":"ltruitt@wtnzfox43.com","WSFA-TV":"wsfa-traffic@gray.tv; tarlesha.acoff@wsfa.com","WAKA-TV":"traffic@waka.com; kcarr@bahakelcomm.com","WNCF-TV":"traffic@waka.com; kcarr@bahakelcomm.com","WBMM-TV":"traffic@waka.com; kcarr@bahakelcomm.com","EAKA-TV":"traffic@waka.com; kcarr@bahakelcomm.com","WCOV-TV":"traffic@wcov.com; AOShea@wcov.com; MColeman@wcov.com","WHLW-FM":"adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","WWMG-FM":"adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","WZHT-FM":"adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","TTWN-WK":"adahu@iheartmedia.com; melissaberry@iheartmedia.com"};
-const PL_STA_PATCH={"WBBM-TV":"copychicago@cbs.com; bjteixeira@cbs.com","WGN-TV":"mrudman@wgntv.com; WGNTV-Traffic@nexstar.tv","WMEU":"ChicagoTVTraffic@wciu.com; ccasillas@wciu.com","WICU-TV":"ChicagoTVTraffic@wciu.com; ccasillas@wciu.com","WMAQ-TV":"wmaq.ti@nbcuni.com","WPWR-TV":"ftscopy@fox.com; nadia.harriott@fox.com","WFLD-TV":"ftscopy@fox.com; nadia.harriott@fox.com","CHSN":"CHSNTrafficTeam@chsn.com","WLS-TV":"otvs-cto.copy@abc.com","WLEY-FM":"mbarrera@sbschicago.com","WLS-FM":"elena.myers@cumulus.com","WKSC-FM":"melissaBerry@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; terrihill@iheartmedia.com","WBBM-FM":"theresa.lane@audacy.com","WBMX-FM":"theresa.lane@audacy.com","WDRV-FM":"chicagosalesassistants@hubbardradio.com","WTMX-FM":"chicagosalesassistants@hubbardradio.com","WTBC-FM":"chicagosalesassistants@hubbardradio.com","WMVP":"dlynch@goodkarmabrands.com","Ampersand-CHI":"effectv_ampersand_ad-copy@comcast.com","WLWT-TV":"wlwt_local_traffic@hearst.com","ELWT-TV":"wlwt_local_traffic@hearst.com","WCPO-TV":"WCPOtraffic@scripps.com; Diana.douglass@wcpo.com","WXIX-TV":"WXIX.Traffic@graymedia.com","WKRC-TV":"saso-wkrc-traffic@sbgtv.com","WSTR-TV":"saso-wkrc-traffic@sbgtv.com","EKRC-TV":"saso-wkrc-traffic@sbgtv.com","WKFS-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","WOFX-FM":"cincy.production@cumulus.com; dave.brokesh@cumulus.com","WOSL-FM":"cdeslandes@urban1.com","WIZF-FM":"cdeslandes@urban1.com","WUBE-FM":"bsublet@hbi.com","WYGY-FM":"bsublet@hbi.com","Ampersand-CIN":"NCC.OhioTraffic@charter.com","KDVR-TV":"DenverTraffic@nexstar.tv","KWGN-FM":"DenverTraffic@nexstar.tv","KUSA-TV":"traffic@9news.com; kiana.smith@9news.com","KTVD-TV":"traffic@9news.com; kiana.smith@9news.com","KMGH-TV":"traffic@denver7.com","KCDO-TV":"traffic@denver7.com","KCNC-TV":"copydenver@cbs.com","Altitude":"paul.santos@altitude.tv; suzanne.jaramillo@altitude.tv","KOSI-FM":"mromano@bonneville.com","KYGO-FM":"mromano@bonneville.com","KALC-FM":"Nick.Voelker@audacy.com","KQMT-FM":"Nick.Voelker@audacy.com","KQKS--FM":"Nick.Voelker@audacy.com","KIMN-FM":"Megan.Rose@KSERadio.com; radiotraffic@kseradio.com","KXKL-FM":"Megan.Rose@KSERadio.com; radiotraffic@kseradio.com","KBCO-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","KTCL-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","KWBL-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","KDHT-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","KRFX-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Ampersand-DEN":"effectv_ampersand_ad-copy@comcast.com","KMSP-TV":"John.Barry@fox.com","WFTC-TV":"John.Barry@fox.com","KARE-TV":"cott@kare11.com","WCCO-TV":"Tlbrown@cbs.com","KSTP-TV":"Elizabeth.korbisch@hbi.com","KSTC-TV":"","Ampersand-MSP":"effectv_ampersand_ad-copy@comcast.com","Wilkins-CHI":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","Wilkins-CIN":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","Wilkins-DEN":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","Wilkins-MSP":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","TTWN-PL":"adahu@iheartmedia.com; melissaberry@iheartmedia.com"};
+const PL_STA_PATCH={"WBBM-TV":"copychicago@cbs.com; bjteixeira@cbs.com","WGN-TV":"mrudman@wgntv.com; WGNTV-Traffic@nexstar.tv","WMEU":"ChicagoTVTraffic@wciu.com; ccasillas@wciu.com","WICU-TV":"ChicagoTVTraffic@wciu.com; ccasillas@wciu.com","WMAQ-TV":"wmaq.ti@nbcuni.com","WPWR-TV":"ftscopy@fox.com; nadia.harriott@fox.com","WFLD-TV":"ftscopy@fox.com; nadia.harriott@fox.com","CHSN":"CHSNTrafficTeam@chsn.com","WLS-TV":"otvs-cto.copy@abc.com","WLEY-FM":"mbarrera@sbschicago.com","WLS-FM":"elena.myers@cumulus.com","WKSC-FM":"melissaBerry@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; terrihill@iheartmedia.com","WBBM-FM":"theresa.lane@audacy.com","WBMX-FM":"theresa.lane@audacy.com","WDRV-FM":"chicagosalesassistants@hubbardradio.com","WTMX-FM":"chicagosalesassistants@hubbardradio.com","WTBC-FM":"chicagosalesassistants@hubbardradio.com","WMVP":"dlynch@goodkarmabrands.com","Ampersand-CHI":"effectv_ampersand_ad-copy@comcast.com","WLWT-TV":"wlwt_local_traffic@hearst.com","ELWT-TV":"wlwt_local_traffic@hearst.com","WCPO-TV":"WCPOtraffic@scripps.com; Diana.douglass@wcpo.com","WXIX-TV":"WXIX.Traffic@graymedia.com","WKRC-TV":"saso-wkrc-traffic@sbgtv.com","WSTR-TV":"saso-wkrc-traffic@sbgtv.com","EKRC-TV":"saso-wkrc-traffic@sbgtv.com","WKFS-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","WOFX-FM":"cincy.production@cumulus.com; dave.brokesh@cumulus.com","WOSL-FM":"cdeslandes@urban1.com","WIZF-FM":"cdeslandes@urban1.com","WUBE-FM":"bsublet@hbi.com","WYGY-FM":"bsublet@hbi.com","Ampersand-CIN":"NCC.OhioTraffic@charter.com","KDVR-TV":"DenverTraffic@nexstar.tv","KWGN-FM":"DenverTraffic@nexstar.tv","KUSA-TV":"traffic@9news.com; kiana.smith@9news.com","KTVD-TV":"traffic@9news.com; kiana.smith@9news.com","KMGH-TV":"traffic@denver7.com","KCDO-TV":"traffic@denver7.com","KCNC-TV":"copydenver@cbs.com","Altitude":"paul.santos@altitude.tv; suzanne.jaramillo@altitude.tv","KOSI-FM":"mromano@bonneville.com","KYGO-FM":"mromano@bonneville.com","KALC-FM":"Nick.Voelker@audacy.com","KQMT-FM":"Nick.Voelker@audacy.com","KQKS--FM":"Nick.Voelker@audacy.com","KIMN-FM":"Megan.Rose@KSERadio.com; radiotraffic@kseradio.com","KXKL-FM":"Megan.Rose@KSERadio.com; radiotraffic@kseradio.com","KBCO-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","KTCL-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","KWBL-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","KDHT-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","KRFX-FM":"ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Ampersand-DEN":"effectv_ampersand_ad-copy@comcast.com","KMSP-TV":"John.Barry@fox.com","WFTC-TV":"John.Barry@fox.com","KARE-TV":"cott@kare11.com","WCCO-TV":"Tlbrown@cbs.com","KSTP-TV":"Elizabeth.korbisch@hbi.com","KSTC-TV":"","Ampersand-MSP":"effectv_ampersand_ad-copy@comcast.com","Wilkins-CHI":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","Wilkins-CIN":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","Wilkins-DEN":"llateju@wilkinsmedia.com; robert@wilkinsmedia.com; brianna@wilkinsmedia.com","Wilkins-MSP":"Robert@wilkinsmedia.com; llateju@wilkinsmedia.com; cecily@wilkinsmedia.com; iruiz@wilkinsmedia.com; brianna@wilkinsmedia.com; jpadilla@wilkinsmedia.com","TTWN-PL":"adahu@iheartmedia.com; melissaberry@iheartmedia.com"};
 const CALENDAR=D_C.map(r=>({month:r[0],rotDue:r[1],bcStart:r[2],bcEnd:r[3]}));
 // The month you should be TRAFFICKING right now = the next broadcast month that
 // hasn't started airing yet (you build a month before it airs). On 5/27 this is
@@ -390,10 +390,28 @@ const BRANDS=[
 const getBrandColor=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.color:"#9B8EAD"};
 const getBrandBg=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.colorBg:"#F0E8F8"};
 const getBrandAgency=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.agency:"Atticor"};
-const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display"];const OOH_TYPES=[{code:"SB",name:"Static Billboard"},{code:"DB",name:"Digital Billboard"},{code:"SP",name:"Static Poster"},{code:"DP",name:"Digital Poster"},{code:"BS",name:"Bus Shelter"},{code:"WS",name:"Wallscape"},{code:"TR",name:"Transit"},{code:"SF",name:"Street Furniture"},{code:"JP",name:"Junior Poster"}];
+const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display","Tagline"];const OOH_TYPES=[{code:"SB",name:"Static Billboard"},{code:"DB",name:"Digital Billboard"},{code:"SP",name:"Static Poster"},{code:"DP",name:"Digital Poster"},{code:"BS",name:"Transit / Bus Shelter"},{code:"PT",name:"Gas Pump Topper"},{code:"WS",name:"Wallscape"},{code:"TR",name:"Transit"},{code:"SF",name:"Street Furniture"},{code:"JP",name:"Junior Poster"}];
 const DISPLAY_TYPES=[{code:"MR",name:"Medium Rectangle (300x250)"},{code:"LB",name:"Leaderboard (728x90)"},{code:"SQ",name:"Square (640x640)"},{code:"SK",name:"Skyscraper (300x600)"},{code:"MB",name:"Mobile Banner (320x50)"},{code:"WB",name:"Wide Banner (1280x100)"},{code:"SL",name:"Slim Banner (970x66)"},{code:"BN",name:"Banner (Generic)"}];
-const SUFFIXES={TV:"T",Radio:"R",Digital:"D","Streaming Audio":"S",OOH:"O",Cable:"T",Display:"B"};const OOH_SUFFIXES={SB:"O",DB:"O",SP:"O",DP:"O",BS:"O",WS:"O",TR:"O",SF:"O",JP:"O"};
+const SUFFIXES={TV:"T",Radio:"R",Digital:"D","Streaming Audio":"S",OOH:"O",Cable:"T",Display:"B",Tagline:"G"};const OOH_SUFFIXES={SB:"O",DB:"O",SP:"O",DP:"O",BS:"O",PT:"O",WS:"O",TR:"O",SF:"O",JP:"O"};
 const OOH_TYPE_MAP=Object.fromEntries(OOH_TYPES.map(t=>[t.code,t.name]));
+// OOH artwork specs by board type (DEN Postman Law). Pump toppers ship one
+// creative produced at 3 frame sizes; shelters are a single large format.
+// All dimensions are Height x Width (inches), per the vendor spec sheet.
+const OOH_SPECS={
+  PT:{name:"Gas Pump Topper",market:"DEN",contract:"2026-41356",colorMode:"CMYK",dpi:408,
+    fileFormats:"Native layered files & PDF · Photoshop CS6/CC, InDesign CS6/CC, or Illustrator CS6/CC",
+    artDue:"2026-05-25",start:"2026-06-22",dimNote:"Height × Width (in)",
+    note:"One creative, produced in all 3 frame sizes — register once, upload the art.",
+    frames:[
+      {name:"Clip Frame",   trim:"12.5 × 20.625", live:"9.75 × 18.25", critical:"9.25 × 17.75", bleed:"14.5 × 22.625"},
+      {name:"Chevron Frame",trim:"10.75 × 25",    live:"8.5 × 23.375", critical:"8 × 22.875",   bleed:"12.75 × 27"},
+      {name:"Eclipse Frame",trim:"21 × 21.5",     live:"18.5 × 19.5",  critical:"17.5 × 18.75", bleed:"23 × 23.5"}
+    ]},
+  BS:{name:"Transit / Bus Shelter",market:"DEN",contract:"2026-41356",colorMode:"CMYK",dpi:600,
+    fileFormats:"Native layered files & PDF",artDue:"2026-06-01",start:"2026-06-22",dimNote:"Height × Width (in)",
+    note:"Shelters run 50/50 — two creatives at 50% each in the rotation.",
+    frames:[{name:"Transit Shelter",trim:"68.25 × 47.5",live:"",critical:"",bleed:""}]}
+};
 // Map raw physical media type strings to canonical category for filtering/badges
 const mediaCategory=(t)=>{const s=(t||"").toLowerCase();if(s.includes("digital"))return"Digital";if(s.includes("poster"))return"Poster";if(s.includes("bulletin"))return"Bulletin";if(s.includes("wall")||s.includes("hotspot")||s.includes("overpass"))return"Other";return"Other"};
 const MEDIA_CAT_COLORS={Poster:{fg:"#F4C242",bg:"rgba(244,194,66,.15)",border:"#F4C242"},Bulletin:{fg:"#4AC8E8",bg:"rgba(74,200,232,.15)",border:"#4AC8E8"},Digital:{fg:"#C084FC",bg:"rgba(192,132,252,.15)",border:"#C084FC"},Other:{fg:"#94a3b8",bg:"rgba(148,163,184,.15)",border:"#94a3b8"}};
@@ -411,7 +429,7 @@ const EG=[...new Set(ESTIMATES.map(e=>e.group))].sort();
 const SCHED=["M-F Schedule","Weekend Schedule","M-F Bookend","Weekend Bookend","All Week","Holiday Only"];
 const BOOKENDS=["","Bookend :15 A","Bookend :15 B","Bookend :15 C","Bookend :15 D","Bookend :30 A","Bookend :30 B"];
 
-const mc=m=>({TV:"#4AC8E8",Radio:"#9b7bb0",Digital:"#059669","Streaming Audio":"#4AC8E8",Cable:"#6366f1",OOH:"#D4A040",Display:"#ec4899"})[m]||"#64748b";
+const mc=m=>({TV:"#4AC8E8",Radio:"#9b7bb0",Digital:"#059669","Streaming Audio":"#4AC8E8",Cable:"#6366f1",OOH:"#D4A040",Display:"#ec4899",Tagline:"#C4A0C8"})[m]||"#64748b";
 const fD=d=>d?new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}):"—";
 const fDs=d=>d?new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"numeric",day:"numeric"}):"";
 
@@ -1979,7 +1997,7 @@ const App=()=>{
       </div>
       <Cd><div style={{overflowX:"auto",maxHeight:"calc(100vh - 320px)"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><STH tbl="isci" col="code">ISCI</STH><STH tbl="isci" col="title">Title</STH><STH tbl="isci" col="media">Media</STH><STH tbl="isci" col="dma">DMA</STH><STH tbl="isci" col="dur">Dur</STH><STH tbl="isci" col="category">Category</STH>{showValueProp&&<STH tbl="isci" col="valueProp">Value Prop</STH>}<STH tbl="isci" col="vo">VO</STH><STH tbl="isci" col="status">Status</STH><TH w="60">Actions</TH></tr></thead>
         <tbody>{fl.slice(0,250).map((i,idx)=>{const gi=iscis.findIndex(x=>x.code===i.code&&x.dma===i.dma&&x.media===i.media);return<tr key={i.code+i.dma+i.media} style={{opacity:i.active?1:.45}}>
-          <TD m b><span title="Preview / download creative" style={{cursor:"pointer",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"creativeView",isci:i})}>{i.code}</span>{isIsciSent(i.code)&&<span title="Locked — sent in traffic" style={{marginLeft:3,fontSize:13,color:"#E85A7A"}}>🔒</span>}{i.fileUrl&&<a href={i.fileUrl} target="_blank" rel="noopener" download title="Download creative" style={{marginLeft:3,fontSize:13,color:"#5BC4A0",textDecoration:"none"}}>📁</a>}</TD><TD>{i.title}</TD><TD><B l={i.media} c={mc(i.media)}/></TD><TD>{i.dma}</TD><TD>{i.media==="OOH"?(OOH_TYPE_MAP[i.dur]||i.dur):i.media==="Display"?(DISPLAY_TYPE_MAP[i.dur]||i.dur):i.dur?`:${i.dur}`:""}</TD>
+          <TD m b><span title="Preview / download creative" style={{cursor:"pointer",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"creativeView",isci:i})}>{i.code}</span>{isIsciSent(i.code)&&<span title="Locked — sent in traffic" style={{marginLeft:3,fontSize:13,color:"#E85A7A"}}>🔒</span>}{i.fileUrl&&<a href={i.fileUrl} target="_blank" rel="noopener" download title="Download creative" style={{marginLeft:3,fontSize:13,color:"#5BC4A0",textDecoration:"none"}}>📁</a>}</TD><TD>{i.title}</TD><TD><B l={i.media} c={mc(i.media)}/></TD><TD>{i.dma}</TD><TD>{i.media==="Tagline"?"—":i.media==="OOH"?(OOH_TYPE_MAP[i.dur]||i.dur):i.media==="Display"?(DISPLAY_TYPE_MAP[i.dur]||i.dur):i.dur?`:${i.dur}`:""}</TD>
           <TD><select value={i.category||i.caseType||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New category:");if(!n||!n.trim())return;const t=n.trim();const nextCF=(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),categories:[...(p[i.brand]?.categories||[]).filter(x=>x!==t),t]}}))(customFields);setCustomFields(nextCF);saveToDb("customTags",nextCF);setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,category:t,caseType:t}:x);return nx})}else setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,category:v,caseType:v}:x);return nx})}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #4a3565",background:i.category||i.caseType?"#dbeafe":"#2d1f42",color:"#4a3565",fontWeight:600,maxWidth:100}}>
             <option value="">—</option>{(customFields[i.brand]?.categories||[]).map(t=><option key={t} value={t}>{t}</option>)}<option value="__add__">＋</option>
           </select></TD>
@@ -4292,6 +4310,8 @@ const App=()=>{
   const NewIsciMod=({defaultMedia})=>{const[f2,setF2]=useState({brand:"PL",title:"",dur:defaultMedia==="OOH"?"SP":"30",media:defaultMedia||"TV",dmas:[],oohType:"SP",displayType:"MR"});const u2=(k,v)=>setF2(p=>({...p,[k]:v}));
     const isOoh=f2.media==="OOH";
     const isDisplay=f2.media==="Display";
+    const isTag=f2.media==="Tagline";
+    const isPT=isOoh&&f2.oohType==="PT";
     const suf=SUFFIXES[f2.media]||"T";const bD=f2.brand==="PL"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
     const durField=isOoh?f2.oohType:isDisplay?f2.displayType:f2.dur;
     const brandName=f2.brand==="PL"?"Postman Law":"Wettermark Keith";
@@ -4299,12 +4319,12 @@ const App=()=>{
     const normInput=normTitle(f2.title);
     const brandIscis=iscis.filter(i=>i.brand===brandName&&i.dur===durField&&i.suffix===suf);
     const existingWithTitle=normInput?brandIscis.filter(i=>normTitle(i.title)===normInput):[];
-    const existingSeq=existingWithTitle.length>0?(()=>{const m=existingWithTitle[0].code.match(/([0-9]{3})[TRDSOB]?$/);return m?m[1]:null})():null;
-    const allSeqs=brandIscis.map(i=>{const m=i.code.match(/([0-9]{3})[TRDSOB]?$/);return m?parseInt(m[1]):0});
+    const existingSeq=existingWithTitle.length>0?(()=>{const m=existingWithTitle[0].code.match(/([0-9]{3})[TRDSOBG]?$/);return m?m[1]:null})():null;
+    const allSeqs=brandIscis.map(i=>{const m=i.code.match(/([0-9]{3})[TRDSOBG]?$/);return m?parseInt(m[1]):0});
     const nxt=existingSeq||String(Math.max(0,...allSeqs)+1).padStart(3,"0");
     const yr=new Date().getFullYear().toString().slice(2);
-    const prev=f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf);
-    const alreadyRegistered=normInput?f2.dmas.filter(d=>existingWithTitle.some(i=>i.dma===d)):[];
+    const prev=isTag?[f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt]:f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf);
+    const alreadyRegistered=isTag?[]:(normInput?f2.dmas.filter(d=>existingWithTitle.some(i=>i.dma===d)):[]);
     const dupeWarnings=prev.filter(code=>iscis.some(i=>i.code===code));
     return<Mod title="Register ISCI (Uniform)" onClose={()=>setModal(null)} wide>
       <div style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:7,padding:8,marginBottom:10}}>
@@ -4312,22 +4332,42 @@ const App=()=>{
         <div style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#1e1233"}}>{prev.length?prev.join(", "):("[DMA]"+f2.brand+yr+durField.padStart(2,"0")+nxt+suf)}</div>
         {isOoh&&<div style={{fontSize:14,color:"#0369a1",marginTop:3}}>Format: [DMA][Brand][Year][BoardType][Seq]O</div>}
         {isDisplay&&<div style={{fontSize:14,color:"#ec4899",marginTop:3}}>Format: [DMA][Brand][Year][BannerSize][Seq]B — e.g., CHIPL26MR001B</div>}
+        {isTag&&<div style={{fontSize:14,color:"#C4A0C8",marginTop:3}}>Format: [Brand][Year]TG[Duration][Seq] — brand-wide, no market. e.g., PL26TG05001</div>}
         {existingSeq&&<div style={{fontSize:12,color:"#5BC4A0",marginTop:3,fontWeight:600}}>✓ Title match found — reusing sequence #{existingSeq} ({existingWithTitle.map(i=>i.dma).join(", ")} already registered)</div>}
         {alreadyRegistered.length>0&&<div style={{fontSize:12,color:"#D4A040",marginTop:3,fontWeight:600}}>⚠ {alreadyRegistered.join(", ")} already has this title — will be skipped</div>}
         {dupeWarnings.length>0&&<div style={{fontSize:12,color:"#E85A7A",marginTop:3,fontWeight:600}}>⚠ Duplicate codes: {dupeWarnings.join(", ")} — will be skipped</div>}
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}><Sel label="Brand" options={BRANDS.map(b=>({v:b.code,l:b.name}))} value={f2.brand} onChange={v=>{u2("brand",v);u2("dmas",[])}}/><Sel label="Media" options={MEDIA.map(m=>({v:m,l:m}))} value={f2.media} onChange={v=>u2("media",v)}/></div>
-      <div style={{height:5}}/><Inp label="Title" value={f2.title} onChange={e=>u2("title",e.target.value)} placeholder={isOoh?"e.g., Local, Injured H2H, Southern Justice":isDisplay?"e.g., Companion - Harvard, Display - Fall":"e.g., Harvard"}/>
+      <div style={{height:5}}/><Inp label={isTag?"Tagline":"Title"} value={f2.title} onChange={e=>u2("title",e.target.value)} placeholder={isTag?"e.g., When the unexpected strikes, strike back.":isOoh?"e.g., Local, Injured H2H, Southern Justice":isDisplay?"e.g., Companion - Harvard, Display - Fall":"e.g., Harvard"}/>
       <div style={{height:5}}/>
       {isOoh?<Sel label="Board Type" options={OOH_TYPES.map(t=>({v:t.code,l:t.code+" — "+t.name}))} value={f2.oohType} onChange={v=>u2("oohType",v)}/>:
       isDisplay?<Sel label="Banner Size" options={DISPLAY_TYPES.map(t=>({v:t.code,l:t.code+" — "+t.name}))} value={f2.displayType} onChange={v=>u2("displayType",v)}/>:
-      <Inp label="Duration (sec)" value={f2.dur} onChange={e=>u2("dur",e.target.value)}/>}
-      <div style={{height:5}}/>
+      <Inp label={isTag?"Recording length (sec)":"Duration (sec)"} value={f2.dur} onChange={e=>u2("dur",e.target.value)}/>}
+      {isOoh&&OOH_SPECS[f2.oohType]&&(()=>{const sp=OOH_SPECS[f2.oohType];return<div style={{marginTop:8,padding:"8px 10px",borderRadius:8,border:"1px solid #4a3565",background:"#162032"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:4}}>
+          <span style={{fontSize:13,fontWeight:800,color:"#D4A040"}}>📐 {sp.name} specs{sp.frames.length>1?" — "+sp.frames.length+" frame sizes":""}</span>
+          <span style={{fontSize:11,color:"#9B8EAD"}}>{sp.colorMode} {sp.dpi}dpi · Art due {sp.artDue} · Live {sp.start} · Contract {sp.contract}</span>
+        </div>
+        <div style={{fontSize:11,color:"#9B8EAD",marginTop:4,marginBottom:3}}>{sp.dimNote}</div>
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr>
+          {["Frame","Trim","Live","Critical","Bleed"].map(h=><th key={h} style={{textAlign:"left",padding:"2px 6px",color:"#9B8EAD",borderBottom:"1px solid #4a3565",fontWeight:700}}>{h}</th>)}
+        </tr></thead><tbody>
+          {sp.frames.map(fr=><tr key={fr.name}><td style={{padding:"2px 6px",color:"#E8DFF0",fontWeight:700}}>{fr.name}</td><td style={{padding:"2px 6px",color:"#C4A0C8",fontFamily:"monospace"}}>{fr.trim||"—"}</td><td style={{padding:"2px 6px",color:"#C4A0C8",fontFamily:"monospace"}}>{fr.live||"—"}</td><td style={{padding:"2px 6px",color:"#C4A0C8",fontFamily:"monospace"}}>{fr.critical||"—"}</td><td style={{padding:"2px 6px",color:"#C4A0C8",fontFamily:"monospace"}}>{fr.bleed||"—"}</td></tr>)}
+        </tbody></table>
+        <div style={{fontSize:11,color:"#9B8EAD",marginTop:4}}><b>Files:</b> {sp.fileFormats}</div>
+        {sp.note&&<div style={{fontSize:11,color:"#5BC4A0",fontWeight:700,marginTop:4}}>→ {sp.note}</div>}
+      </div>;})()}
+      {isTag&&<React.Fragment><div style={{height:8}}/>
+      <div style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase",marginBottom:3}}>Use</div>
+      <div style={{display:"flex",gap:6}}>{["audio","visual"].map(t=>{const s=(f2.tagUse||"audio")===t;return<button key={t} onClick={()=>u2("tagUse",t)} style={{flex:1,padding:"7px 0",borderRadius:6,border:s?"2px solid #4AC8E8":"1px solid #4a3565",background:s?"#4AC8E81a":"#162032",color:s?"#4AC8E8":"#9B8EAD",fontSize:14,fontWeight:700,cursor:"pointer"}}>{t==="audio"?"🎙 Audio (radio)":"📺 Visual (TV)"}</button>})}</div>
+      <div style={{fontSize:12,color:"#9B8EAD",marginTop:3}}>Visual taglines become selectable in TV rotation building.</div>
+      </React.Fragment>}
+      {!isTag&&<React.Fragment><div style={{height:5}}/>
       <div style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase",marginBottom:3}}>DMAs</div>
-      <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{bD.map(d=>{const s=f2.dmas.includes(d);return<button key={d} onClick={()=>u2("dmas",s?f2.dmas.filter(x=>x!==d):[...f2.dmas,d])} style={{padding:"4px 9px",borderRadius:5,border:s?"2px solid #4AC8E8":"1px solid #d1d5db",background:s?"#4AC8E80c":"#fff",color:s?"#4AC8E8":"#64748b",fontSize:14,fontWeight:600,cursor:"pointer"}}>{d} — {DM[d]}</button>})}<Btn small onClick={()=>u2("dmas",bD)}>All</Btn></div>
+      <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{bD.map(d=>{const s=f2.dmas.includes(d);return<button key={d} onClick={()=>u2("dmas",s?f2.dmas.filter(x=>x!==d):[...f2.dmas,d])} style={{padding:"4px 9px",borderRadius:5,border:s?"2px solid #4AC8E8":"1px solid #d1d5db",background:s?"#4AC8E80c":"#fff",color:s?"#4AC8E8":"#64748b",fontSize:14,fontWeight:600,cursor:"pointer"}}>{d} — {DM[d]}</button>})}<Btn small onClick={()=>u2("dmas",bD)}>All</Btn></div></React.Fragment>}
       <div style={{height:8}}/>
-      <div style={{display:"flex",flexDirection:"column",gap:4}}>
-        <label style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Creative File (optional — can add later)</label>
+      {<div style={{display:"flex",flexDirection:"column",gap:4}}>
+        <label style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>{isTag?"Recording (audio — can add later)":"Creative File (optional — can add later)"}</label>
         {f2.fileUrl?<div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"rgba(22,163,98,.15)",border:"1px solid #bbf7d0",borderRadius:6}}>
           <span style={{fontSize:13,color:"#5BC4A0",fontWeight:700}}>✓ {f2.fileName||"File uploaded"}</span>
           <button onClick={()=>{u2("fileUrl","");u2("fileName","")}} style={{marginLeft:"auto",fontSize:14,padding:"2px 6px",borderRadius:4,border:"1px solid #fca5a5",background:"rgba(220,38,38,.15)",color:"#E85A7A",cursor:"pointer",fontWeight:600}}>Remove</button>
@@ -4338,11 +4378,11 @@ const App=()=>{
               var file=fileList instanceof FileList?fileList[0]:Array.isArray(fileList)?fileList[0]:fileList;
               if(!file){notify("No file selected");return}
               if(!storage){notify("Storage not loaded — try refreshing");return}
-              if(!f2.dmas.length){notify("Select at least one DMA first");return}
+              if(!isTag&&!f2.dmas.length){notify("Select at least one DMA first");return}
               notify("Starting upload: "+file.name);
               u2("uploading",true);u2("uploadPct",0);
               var ext=file.name.split(".").pop();
-              var tempCode=f2.dmas[0]?f2.dmas[0]+f2.brand+yr+"_temp":"temp_"+Date.now();
+              var tempCode=isTag?(f2.brand+yr+"TG_temp_"+Date.now()):(f2.dmas[0]?f2.dmas[0]+f2.brand+yr+"_temp":"temp_"+Date.now());
               var path="creative/"+tempCode+"."+ext;
               var ref=storage.ref(path);
               var metadata={customMetadata:{originalName:file.name,title:f2.title||"",brand:f2.brand||"",media:f2.media||""}};
@@ -4356,9 +4396,9 @@ const App=()=>{
             <div style={{fontSize:16}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Drag & drop or click to upload</div><div style={{fontSize:13,color:"#9B8EAD"}}>.mp4, .mov, .wav, .mp3, .jpg, .png, .pdf</div>
           </DropZone>}
         </div>}
-      </div>
+      </div>}
       <div style={{height:8}}/>
-      <Btn primary disabled={!f2.title||!f2.dmas.length} onClick={()=>{const bn=brandName;const safeDmas=f2.dmas.filter(d=>!alreadyRegistered.includes(d));const ni=safeDmas.map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify("All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""));setModal(null)}}>Register {f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length} ISCI{f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":""}{alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""}</Btn>
+      <Btn primary disabled={!f2.title||(isTag?!f2.dur:!f2.dmas.length)} onClick={()=>{const bn=brandName;const ni=isTag?[{code:f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt,title:f2.title,media:"Tagline",brand:bn,dma:"",dur:durField,suffix:suf,tagUse:f2.tagUse||"audio",active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):f2.dmas.filter(d=>!alreadyRegistered.includes(d)).map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify(isTag?"That tagline is already registered":"All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(isTag?("Tagline registered — "+ni[0].code):(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":"")));setModal(null)}}>{isTag?"Register Tagline":("Register "+f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length+" ISCI"+(f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":"")+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""))}</Btn>
     </Mod>;
   };
 
@@ -4384,7 +4424,12 @@ const App=()=>{
     const SUFFIX_FOR_MEDIA={"TV":"T","Cable":"T","TV / Cable":"T","Sports":"T","Heavy Up":"T","Sponsorship":"T","UD/AV":"T","Radio":"R","Streaming Audio":"S","OOH":"O","Digital":"D","Display":"B"};
     const ehDma=normMkt(eh.market)||eh.market||"";
     const wantSuffix=SUFFIX_FOR_MEDIA[(String(eh.media||"").split(/\s*\/\s*/)[0])]||SUFFIX_FOR_MEDIA[eh.media]||"T";
-    const isciPool=iscis.filter(i=>i.brand===eh.brand&&i.active&&(i.dma||"")===ehDma&&i.suffix===wantSuffix).sort((a,b)=>{const dd=(parseInt(b.dur)||0)-(parseInt(a.dur)||0);if(dd)return dd;return a.code.localeCompare(b.code)});
+    // Taglines are brand-wide; surface the right kind in the right build —
+    // audio recordings in Radio/Streaming Audio rotations, visual tags in the
+    // TV-family rotations — alongside that market's normal suffix-matched spots.
+    const tagUseForRot=wantSuffix==="T"?"visual":(wantSuffix==="R"||wantSuffix==="S")?"audio":null;
+    const tagPool=tagUseForRot?iscis.filter(i=>i.brand===eh.brand&&i.active&&i.suffix==="G"&&(i.tagUse||"audio")===tagUseForRot):[];
+    const isciPool=[...iscis.filter(i=>i.brand===eh.brand&&i.active&&(i.dma||"")===ehDma&&i.suffix===wantSuffix),...tagPool].sort((a,b)=>{const dd=(parseInt(b.dur)||0)-(parseInt(a.dur)||0);if(dd)return dd;return a.code.localeCompare(b.code)});
     const updI=(idx,k,v)=>setEditIscis(p=>p.map((r,i)=>i===idx?{...r,[k]:v}:r));
     // Pick from registry: fills code + title + dur from the ISCI record
     const pickIsci=(idx,code)=>{
@@ -5762,7 +5807,15 @@ ${fullText.substring(0,3000)}`}]
     // Sort newest first; months are stored as "January 2026" so split off the
     // year before indexing into MO_NAMES (otherwise indexOf returns -1 for
     // every entry and the order collapses to insertion order).
-    const brandMonths=(()=>{const raw=[...new Set(brandData.map(h=>h.month))].filter(Boolean);return raw.sort((a,b)=>{const pa=a.split(/\s+/),pb=b.split(/\s+/);const ya=parseInt(pa[1])||0,yb=parseInt(pb[1])||0;if(ya!==yb)return yb-ya;return MO_NAMES.indexOf(pb[0])-MO_NAMES.indexOf(pa[0])})})();
+    // A record's broadcast month never stored a year, so two different years
+    // of the same month (e.g. April 2025 / April 2026) used to collapse into
+    // one heading. Derive a year per record — an explicit year in the month
+    // string wins, then a stamped year field, then the year it was
+    // created/sent/imported (ts) — and group/sort by "Month Year".
+    const recYear=(h)=>{const m=String(h.month||"").match(/\b(20\d{2})\b/);if(m)return parseInt(m[1]);if(h.year)return parseInt(h.year);const t=h.ts?new Date(h.ts):null;return t&&!isNaN(t)?t.getFullYear():new Date().getFullYear();};
+    const moBase=(h)=>String(h.month||"").replace(/\s*20\d{2}\s*/," ").trim()||"—";
+    const moKey=(h)=>moBase(h)+" "+recYear(h);
+    const brandMonths=(()=>{const raw=[...new Set(brandData.map(h=>moKey(h)))].filter(Boolean);return raw.sort((a,b)=>{const pa=a.split(/\s+/),pb=b.split(/\s+/);const ya=parseInt(pa[1])||0,yb=parseInt(pb[1])||0;if(ya!==yb)return yb-ya;return MO_NAMES.indexOf(pb[0])-MO_NAMES.indexOf(pa[0])})})();
     const brandMedias=(()=>{const raw=[...new Set(brandData.map(h=>h.media))];return raw.sort((a,b)=>(MEDIA_ORDER.indexOf(a)===-1?99:MEDIA_ORDER.indexOf(a))-(MEDIA_ORDER.indexOf(b)===-1?99:MEDIA_ORDER.indexOf(b)))})();
     const now2=new Date();const archCutoff=new Date(now2.getFullYear(),now2.getMonth()-1,1);
     // Archive by the record's broadcast month, not its timestamp. Imports get
@@ -5987,8 +6040,8 @@ ${fullText.substring(0,3000)}`}]
       </Cd>
       {/* Summary cards removed — Traffic Tracker page owns coverage tracking. */}
       {/* ═══ TRAFFIC LIST — by month > media type > market ═══ */}
-      {brandMonths.filter(mo=>searched.some(h=>h.month===mo)).map(mo=>{
-        const moData=searched.filter(h=>h.month===mo);
+      {brandMonths.filter(mo=>searched.some(h=>moKey(h)===mo)).map(mo=>{
+        const moData=searched.filter(h=>moKey(h)===mo);
         const moMedias=(()=>{const raw=[...new Set(moData.map(h=>h.media))];return raw.sort((a,b)=>(MEDIA_ORDER.indexOf(a)===-1?99:MEDIA_ORDER.indexOf(a))-(MEDIA_ORDER.indexOf(b)===-1?99:MEDIA_ORDER.indexOf(b)))})();
         return<div key={mo} style={{marginBottom:20}}>
           <div style={{fontSize:18,fontWeight:800,color:"#F0E8F8",marginBottom:6,paddingBottom:4,borderBottom:"2px solid "+bc2+"44"}}>{mo} <span style={{fontSize:12,color:"#9B8EAD",fontWeight:600}}>({moData.length} instruction{moData.length!==1?"s":""})</span></div>
