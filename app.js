@@ -899,14 +899,19 @@ const App=()=>{
         if(docs.oohContracts?.data){const d=JSON.parse(docs.oohContracts.data);if(Object.keys(d).length)setOohContracts(prev=>{const merged={...prev};Object.entries(d).forEach(([k,v])=>{merged[k]={...(prev[k]||{}),...v}});return merged})}
         if(docs.customTags?.data){const d=JSON.parse(docs.customTags.data);if(d["Postman Law"]?.categories||d["Wettermark Keith"]?.categories)setCustomFields(d);else if(Object.keys(d).length){const migrated={};Object.entries(d).forEach(([brand,tags])=>{if(Array.isArray(tags)){migrated[brand]={categories:tags.filter(t=>["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),valueProps:tags.filter(t=>!["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),vos:[]}}else{migrated[brand]=tags}});setCustomFields(migrated)}}
         if(docs.settings?.data){try{const s=JSON.parse(docs.settings.data);if(typeof s.campaignIcsUrl==="string")setCampaignIcsUrl(s.campaignIcsUrl)}catch(_e){}}
-        if(docs.wkOohIscis?.data){const d=JSON.parse(docs.wkOohIscis.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>d[p.boardId]!==undefined?{...p,isci:d[p.boardId]}:p))}
-        if(docs.plOohIscis?.data){const d=JSON.parse(docs.plOohIscis.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isci:d[p.unit]}:p))}
-        if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}
+        try{if(docs.wkOohIscis?.data){const d=JSON.parse(docs.wkOohIscis.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>d[p.boardId]!==undefined?{...p,isci:d[p.boardId]}:p))}}catch(_e){console.warn("wkOohIscis load skipped",_e)}
+        try{if(docs.plOohIscis?.data){const d=JSON.parse(docs.plOohIscis.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isci:d[p.unit]}:p))}}catch(_e){console.warn("plOohIscis load skipped",_e)}
+        try{if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}}catch(_e){console.warn("oohPhotos load skipped",_e)}
         console.log("Supabase: loaded",Object.keys(docs).length,"collections");
         loadCompleteRef.current=true;
         trafficDirtyRef.current=false;// loaded data is not a user edit — don't auto-resave it
-      }catch(e){console.warn("Firestore load failed, using defaults:",e);iscisLoadedRef.current=true;stationsLoadedRef.current=true;estimatesLoadedRef.current=true;trafficLoadedRef.current=true;
-        console.error("⚠ SAVES BLOCKED — Firestore load failed. Default/seed data will NOT overwrite your database. Refresh to retry.")}
+      }catch(e){console.warn("Firestore load failed:",e);
+        // A failure in a late/optional collection (tags, settings, OOH maps)
+        // must NOT permanently block saves when the core data already loaded —
+        // that was silently dropping every edit. Only block if core load failed.
+        if(iscisLoadedRef.current&&stationsLoadedRef.current&&estimatesLoadedRef.current){loadCompleteRef.current=true;console.warn("Core data loaded — saves ENABLED despite partial load failure")}
+        else{console.error("⚠ SAVES BLOCKED — core Firestore load failed. Refresh to retry.")}
+        iscisLoadedRef.current=true;stationsLoadedRef.current=true;estimatesLoadedRef.current=true;trafficLoadedRef.current=true;}
       setDbLoaded(true);
       // ── AUTO-RECOVER CREATIVE FILES ──────────────────────
       // Scan Firebase Storage for every ISCI missing a fileUrl and re-link.
@@ -7040,6 +7045,7 @@ Rules:
     ];
     const oohIsciPg=()=>{
       const[showOohInactive,setShowOohInactive]=useState(false);
+      const[showOohBulk,setShowOohBulk]=useState(false);
       const allOoh=iscis.filter(i=>i.suffix==="O");
       const oohIscis=showOohInactive?allOoh:allOoh.filter(i=>i.active);
       const inactiveOoh=allOoh.filter(i=>!i.active);
@@ -7059,9 +7065,41 @@ Rules:
           <div><PageHead title="OOH ISCI Registry" pgKey="ooh" sub={allOoh.filter(i=>i.active).length+" active · "+inactiveOoh.length+" inactive · "+allOoh.filter(i=>i.fileUrl).length+" with creative"}/></div>
           <div style={{display:"flex",gap:4}}>
             <Btn primary onClick={()=>setModal({t:"newIsci",defaultMedia:"OOH"})}>+ Register OOH ISCI</Btn>
+            <Btn onClick={()=>setShowOohBulk(v=>!v)} color={showOohBulk?"#E85A7A":"#9b7bb0"}>📁 Bulk Creative</Btn>
             <Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=allOoh.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active OOH ISCIs have files");return}notify("Scanning "+missing.length+" OOH ISCIs...");let found=0;const updates={};const exts=["jpg","png","pdf","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);return updated});notify(found+" files recovered!");log("OOH Creative Recovery",found+" files")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn>
           </div>
         </div>
+        {showOohBulk&&<Cd style={{padding:12}}>
+          <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>📁 Bulk OOH Creative Upload</div>
+          <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>Drag & drop or click. Name each file with the OOH ISCI code (e.g., <b style={{color:"#E8DFF0"}}>DENPL26BS001O.pdf</b>). Matches exact, prefix, and partial codes.</div>
+          <DropZone multiple accept="*/*" style={{marginBottom:8}} onFiles={(fileList)=>{
+            const files=Array.from(fileList);if(!files.length){notify("No files selected");return}
+            if(!storage){notify("ERROR: Storage not loaded.");return}
+            let matched=0,notFound=0,failed=0;const updates={};const total=files.length;
+            const uploadNext=(fi)=>{
+              if(fi>=total){setUploadTracker(null);if(Object.keys(updates).length>0){setIscis(function(prev){return prev.map(function(x,j){return updates[j]?Object.assign({},x,{fileUrl:updates[j]}):x})})}log("Bulk OOH Creative",matched+" uploaded, "+notFound+" no match, "+failed+" failed");notify(matched+" linked"+(notFound?" | "+notFound+" not matched":"")+(failed?" | "+failed+" failed":""));return}
+              const file=files[fi];const baseUpper=file.name.replace(/\.[^.]+$/,"").trim().toUpperCase();
+              let idx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper===i.code.toUpperCase());
+              if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&(baseUpper.startsWith(i.code.toUpperCase()+" ")||baseUpper.startsWith(i.code.toUpperCase()+"-")||baseUpper.startsWith(i.code.toUpperCase()+"_")));
+              if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper.includes(i.code.toUpperCase()));
+              if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&i.code.toUpperCase().includes(baseUpper));
+              if(idx===-1){notFound++;setUploadTracker({label:file.name+" — no OOH ISCI match",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});uploadNext(fi+1);return}
+              const ext=file.name.split(".").pop();
+              const ref=storage.ref("creative/"+iscis[idx].code+"."+ext);
+              const meta={customMetadata:{originalName:file.name,isciCode:iscis[idx].code,title:iscis[idx].title||"",brand:iscis[idx].brand||""}};
+              const task=ref.put(file,meta);
+              task.on("state_changed",
+                snap=>{const p=Math.round((snap.bytesTransferred/snap.totalBytes)*100);setUploadTracker({label:"Uploading "+file.name+" ("+iscis[idx].code+")",current:fi+1,total:total,pct:Math.round(((fi+p/100)/total)*100)})},
+                err=>{failed++;console.warn("Upload failed:",file.name,err);setUploadTracker({label:file.name+" — FAILED",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});uploadNext(fi+1)},
+                async()=>{const url=await ref.getDownloadURL();updates[idx]=url;matched++;uploadNext(fi+1)}
+              );
+            };
+            setUploadTracker({label:"Starting bulk upload...",current:0,total:total,pct:0});uploadNext(0);
+          }}>
+            <div style={{fontSize:24}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Drag & drop or click to select OOH creative files</div><div style={{fontSize:12,color:"#64748b"}}>.jpg, .png, .pdf, .psd, .ai, .eps — multiple allowed</div>
+          </DropZone>
+          <div style={{fontSize:12,color:"#94a3b8"}}>OOH ISCIs with creative: <b style={{color:"#5BC4A0"}}>{allOoh.filter(i=>i.fileUrl).length}</b> / {allOoh.length}</div>
+        </Cd>}
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
           <input placeholder="Search OOH ISCIs..." value={oohIsciFilter} onChange={e=>setOohIsciFilter(e.target.value)} style={{width:200,padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
           <Sel label="" options={[{v:"",l:"All Brands"},{v:"Wettermark Keith",l:"Wettermark Keith"},{v:"Postman Law",l:"Postman Law"}]} value={oohBrandFilter} onChange={setOohBrandFilter}/>
