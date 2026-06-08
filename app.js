@@ -7072,29 +7072,38 @@ Rules:
         {showOohBulk&&<Cd style={{padding:12}}>
           <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>📁 Bulk OOH Creative Upload</div>
           <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>Drag & drop or click. Name each file with the OOH ISCI code (e.g., <b style={{color:"#E8DFF0"}}>DENPL26BS001O.pdf</b>). Matches exact, prefix, and partial codes.</div>
-          <DropZone multiple accept="*/*" style={{marginBottom:8}} onFiles={(fileList)=>{
+          <DropZone multiple accept="*/*" style={{marginBottom:8}} onFiles={async(fileList)=>{
             const files=Array.from(fileList);if(!files.length){notify("No files selected");return}
-            if(!storage){notify("ERROR: Storage not loaded.");return}
+            const toB64=(f)=>new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(r.error||new Error("read failed"));r.onload=()=>res(String(r.result).split(",")[1]||"");r.readAsDataURL(f)});
             let matched=0,notFound=0,failed=0,lastErr="";const updates={};const total=files.length;
-            const uploadNext=(fi)=>{
-              if(fi>=total){setUploadTracker(null);if(Object.keys(updates).length>0){setIscis(function(prev){return prev.map(function(x,j){return updates[j]?Object.assign({},x,{fileUrl:updates[j]}):x})})}log("Bulk OOH Creative",matched+" uploaded, "+notFound+" no match, "+failed+" failed");notify(matched+" linked"+(notFound?" | "+notFound+" not matched":"")+(failed?" | "+failed+" failed: "+lastErr:""));return}
+            for(let fi=0;fi<total;fi++){
               const file=files[fi];const baseUpper=file.name.replace(/\.[^.]+$/,"").trim().toUpperCase();
               let idx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper===i.code.toUpperCase());
               if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&(baseUpper.startsWith(i.code.toUpperCase()+" ")||baseUpper.startsWith(i.code.toUpperCase()+"-")||baseUpper.startsWith(i.code.toUpperCase()+"_")));
               if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper.includes(i.code.toUpperCase()));
               if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&i.code.toUpperCase().includes(baseUpper));
-              if(idx===-1){notFound++;setUploadTracker({label:file.name+" — no OOH ISCI match",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});uploadNext(fi+1);return}
-              const ext=file.name.split(".").pop();
-              const ref=storage.ref("creative/"+iscis[idx].code+"."+ext);
-              const meta={customMetadata:{originalName:file.name,isciCode:iscis[idx].code,title:iscis[idx].title||"",brand:iscis[idx].brand||""}};
-              const task=ref.put(file,meta);
-              task.on("state_changed",
-                snap=>{const p=Math.round((snap.bytesTransferred/snap.totalBytes)*100);setUploadTracker({label:"Uploading "+file.name+" ("+iscis[idx].code+")",current:fi+1,total:total,pct:Math.round(((fi+p/100)/total)*100)})},
-                err=>{failed++;lastErr=(err&&err.message)||String(err);notify("Upload failed ("+file.name+"): "+lastErr);console.warn("Upload failed:",file.name,err);setUploadTracker({label:file.name+" — FAILED",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});uploadNext(fi+1)},
-                ()=>{ref.getDownloadURL().then(url=>{updates[idx]=url;matched++;uploadNext(fi+1)}).catch(e2=>{failed++;lastErr="link: "+((e2&&e2.message)||String(e2));notify("Linked file but URL failed ("+iscis[idx].code+"): "+lastErr);uploadNext(fi+1)})}
-              );
-            };
-            setUploadTracker({label:"Starting bulk upload...",current:0,total:total,pct:0});uploadNext(0);
+              if(idx===-1){notFound++;setUploadTracker({label:file.name+" — no OOH ISCI match",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});continue}
+              const ext=file.name.split(".").pop();const code=iscis[idx].code;
+              setUploadTracker({label:"Uploading "+file.name+" ("+code+")",current:fi+1,total:total,pct:Math.round((fi/total)*100)});
+              try{
+                let url="";
+                if(file.size<=4*1024*1024){
+                  const dataB64=await toB64(file);
+                  const r=await fetch("/api/storage",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"upload",bucket:"creative",path:code+"."+ext,dataB64,contentType:file.type||"application/octet-stream"})});
+                  const j=await r.json().catch(()=>({}));
+                  if(!r.ok)throw new Error(j.error||j.detail||("HTTP "+r.status));
+                  url=j.url;
+                }else{
+                  if(!storage)throw new Error("Storage not loaded (large file)");
+                  url=await new Promise((res,rej)=>{const ref=storage.ref("creative/"+code+"."+ext);const t=ref.put(file,{customMetadata:{isciCode:code}});t.on("state_changed",s=>{setUploadTracker({label:"Uploading "+file.name+" ("+code+")",current:fi+1,total:total,pct:Math.round(((fi+s.bytesTransferred/s.totalBytes)/total)*100)})},e=>rej(e),()=>ref.getDownloadURL().then(res).catch(rej))});
+                }
+                updates[idx]=url;matched++;
+              }catch(e){failed++;lastErr=(e&&e.message)||String(e);notify("Upload failed ("+file.name+"): "+lastErr)}
+            }
+            setUploadTracker(null);
+            if(Object.keys(updates).length>0){setIscis(prev=>prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x))}
+            log("Bulk OOH Creative",matched+" uploaded, "+notFound+" no match, "+failed+" failed");
+            notify(matched+" linked"+(notFound?" | "+notFound+" not matched":"")+(failed?" | "+failed+" failed: "+lastErr:""));
           }}>
             <div style={{fontSize:24}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Drag & drop or click to select OOH creative files</div><div style={{fontSize:12,color:"#64748b"}}>.jpg, .png, .pdf, .psd, .ai, .eps — multiple allowed</div>
           </DropZone>
