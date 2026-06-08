@@ -7088,14 +7088,16 @@ Rules:
               try{
                 let url="";
                 if(file.size<=4*1024*1024){
+                  // Use the 'ooh' bucket (proven by PoP photos) — 'creative' may
+                  // not exist. Server-side upload bypasses CORS/RLS.
                   const dataB64=await toB64(file);
-                  const r=await fetch("/api/storage",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"upload",bucket:"creative",path:code+"."+ext,dataB64,contentType:file.type||"application/octet-stream"})});
+                  const r=await fetch("/api/storage",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"upload",bucket:"ooh",path:"photos/creative/"+code+"."+ext,dataB64,contentType:file.type||"application/octet-stream"})});
                   const j=await r.json().catch(()=>({}));
                   if(!r.ok)throw new Error(j.error||j.detail||("HTTP "+r.status));
                   url=j.url;
                 }else{
                   if(!storage)throw new Error("Storage not loaded (large file)");
-                  url=await new Promise((res,rej)=>{const ref=storage.ref("creative/"+code+"."+ext);const t=ref.put(file,{customMetadata:{isciCode:code}});t.on("state_changed",s=>{setUploadTracker({label:"Uploading "+file.name+" ("+code+")",current:fi+1,total:total,pct:Math.round(((fi+s.bytesTransferred/s.totalBytes)/total)*100)})},e=>rej(e),()=>ref.getDownloadURL().then(res).catch(rej))});
+                  url=await new Promise((res,rej)=>{const ref=storage.ref("ooh-photos/creative/"+code+"."+ext);const t=ref.put(file,{customMetadata:{isciCode:code}});t.on("state_changed",s=>{setUploadTracker({label:"Uploading "+file.name+" ("+code+")",current:fi+1,total:total,pct:Math.round(((fi+s.bytesTransferred/s.totalBytes)/total)*100)})},e=>rej(e),()=>ref.getDownloadURL().then(res).catch(rej))});
                 }
                 updates[idx]=url;matched++;
               }catch(e){failed++;lastErr=(e&&e.message)||String(e);notify("Upload failed ("+file.name+"): "+lastErr)}
