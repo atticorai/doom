@@ -12,6 +12,9 @@ try{console.log("%c⚡ DOOM build: "+__APP_VERSION__,"background:#1e1233;color:#
 // (title, comments, notes, loc, contact email, file URL) carries markup like
 // <img src=x onerror=...>. Use everywhere data flows into raw HTML strings.
 const escHtml=(v)=>String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+// Supabase public URLs open inline; ?download forces a file download (the
+// <a download> attr is ignored cross-origin). Firebase URLs already download.
+const dlUrl=(u)=>!u?u:(/supabase\.co/.test(u)?u+(u.includes("?")?"&":"?")+"download":u);
 
 // Server-side auth verification. On successful login, /api/auth may return a
 // Firebase Auth custom token (when FIREBASE_ADMIN_KEY is set on the server) —
@@ -1361,7 +1364,7 @@ const App=()=>{
           <div style={{position:"absolute",top:-20,right:-20,width:120,height:120,background:"rgba(255,255,255,.08)",borderRadius:"50%"}}/>
           <div style={{position:"relative",zIndex:1}}>
             <div style={{fontSize:22,fontWeight:800,letterSpacing:.5}}>Traffic Instructions</div>
-            <div style={{fontSize:14,opacity:.85,marginTop:4}}>{brand?.name||""} · Atticor Media Services</div>
+            <div style={{fontSize:14,opacity:.85,marginTop:4}}>{brand?.name||""} · Atticor</div>
           </div>
         </div>
         <div style={{padding:"24px 28px"}}>
@@ -1566,7 +1569,7 @@ const App=()=>{
       if(color)pdf.setTextColor(color[0],color[1],color[2]);else pdf.setTextColor(0,0,0);
       pdf.text(S(value),mx+32,y);y+=4;
     };
-    hdr("Agency","Atticor Media");hdr("Client",brandLabel,bc);
+    hdr("Agency","Atticor");hdr("Client",brandLabel,bc);
     hdr("Market",marketLabel);hdr("Buyer",buyerLabel,[217,119,6]);
     hdr("Estimate",trafficRec.est);hdr("Media",trafficRec.media,[37,99,235]);
     hdr("Month",trafficRec.month,bc);hdr("Flight",trafficRec.flight);
@@ -1668,7 +1671,7 @@ const App=()=>{
     pdf.text("POSTMAN LAW",pw/2,y,{align:"center"});y+=4;
     pdf.setFontSize(8);setC(colors.gray);pdf.text("DIGITAL VIDEO TRAFFIC INSTRUCTIONS",pw/2,y,{align:"center"});y+=6;
     // Info grid — two columns
-    var info=[["Agency","Atticor Media",null,"Buyer",S(opts.buyer),colors.red],["Client","Postman Law",colors.red,"Media","Digital Video",colors.blue],["Market",S(opts.market),null,"Flight",S(opts.flight),colors.green],["Vendor","ESPN / GKBPS",colors.amber,"Version","V"+S(opts.version),null],["Estimate",S(opts.estimate),null,"Month",S(opts.month),colors.green],["GKBPS Contacts","jmondo@goodkarmabrands.com; mmetroka@goodkarmabrands.com",colors.blue,"Buyer Email","jessica.flynn@atticor.ai",colors.blue]];
+    var info=[["Agency","Atticor",null,"Buyer",S(opts.buyer),colors.red],["Client","Postman Law",colors.red,"Media","Digital Video",colors.blue],["Market",S(opts.market),null,"Flight",S(opts.flight),colors.green],["Vendor","ESPN / GKBPS",colors.amber,"Version","V"+S(opts.version),null],["Estimate",S(opts.estimate),null,"Month",S(opts.month),colors.green],["GKBPS Contacts","jmondo@goodkarmabrands.com; mmetroka@goodkarmabrands.com",colors.blue,"Buyer Email","jessica.flynn@atticor.ai",colors.blue]];
     pdf.setFontSize(7.5);
     info.forEach(function(row){
       checkPage(4);
@@ -2002,7 +2005,7 @@ const App=()=>{
       </div>
       <Cd><div style={{overflowX:"auto",maxHeight:"calc(100vh - 320px)"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><STH tbl="isci" col="code">ISCI</STH><STH tbl="isci" col="title">Title</STH><STH tbl="isci" col="media">Media</STH><STH tbl="isci" col="dma">DMA</STH><STH tbl="isci" col="dur">Dur</STH><STH tbl="isci" col="category">Category</STH>{showValueProp&&<STH tbl="isci" col="valueProp">Value Prop</STH>}<STH tbl="isci" col="vo">VO</STH><STH tbl="isci" col="status">Status</STH><TH w="60">Actions</TH></tr></thead>
         <tbody>{fl.slice(0,250).map((i,idx)=>{const gi=iscis.findIndex(x=>x.code===i.code&&x.dma===i.dma&&x.media===i.media);return<tr key={i.code+i.dma+i.media} style={{opacity:i.active?1:.45}}>
-          <TD m b><span title="Preview / download creative" style={{cursor:"pointer",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"creativeView",isci:i})}>{i.code}</span>{isIsciSent(i.code)&&<span title="Locked — sent in traffic" style={{marginLeft:3,fontSize:13,color:"#E85A7A"}}>🔒</span>}{i.fileUrl&&<a href={i.fileUrl} target="_blank" rel="noopener" download title="Download creative" style={{marginLeft:3,fontSize:13,color:"#5BC4A0",textDecoration:"none"}}>📁</a>}</TD><TD>{i.title}</TD><TD><B l={i.media} c={mc(i.media)}/></TD><TD>{i.dma}</TD><TD>{i.media==="Tagline"?"—":i.media==="OOH"?(OOH_TYPE_MAP[i.dur]||i.dur):i.media==="Display"?(DISPLAY_TYPE_MAP[i.dur]||i.dur):i.dur?`:${i.dur}`:""}</TD>
+          <TD m b><span title="Preview / download creative" style={{cursor:"pointer",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"creativeView",isci:i})}>{i.code}</span>{isIsciSent(i.code)&&<span title="Locked — sent in traffic" style={{marginLeft:3,fontSize:13,color:"#E85A7A"}}>🔒</span>}{i.fileUrl&&<a href={dlUrl(i.fileUrl)} target="_blank" rel="noopener" download title="Download creative" style={{marginLeft:3,fontSize:13,color:"#5BC4A0",textDecoration:"none"}}>📁</a>}</TD><TD>{i.title}</TD><TD><B l={i.media} c={mc(i.media)}/></TD><TD>{i.dma}</TD><TD>{i.media==="Tagline"?"—":i.media==="OOH"?(OOH_TYPE_MAP[i.dur]||i.dur):i.media==="Display"?(DISPLAY_TYPE_MAP[i.dur]||i.dur):i.dur?`:${i.dur}`:""}</TD>
           <TD><select value={i.category||i.caseType||""} onChange={e=>{const v=e.target.value;if(v==="__add__"){const n=prompt("New category:");if(!n||!n.trim())return;const t=n.trim();const nextCF=(p=>({...p,[i.brand]:{...(p[i.brand]||{categories:[],valueProps:[],vos:[]}),categories:[...(p[i.brand]?.categories||[]).filter(x=>x!==t),t]}}))(customFields);setCustomFields(nextCF);saveToDb("customTags",nextCF);setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,category:t,caseType:t}:x);return nx})}else setIscis(p=>{const nx=p.map((x,j)=>j===gi?{...x,category:v,caseType:v}:x);return nx})}} style={{fontSize:11,padding:"1px 2px",borderRadius:3,border:"1px solid #4a3565",background:i.category||i.caseType?"#dbeafe":"#2d1f42",color:"#4a3565",fontWeight:600,maxWidth:100}}>
             <option value="">—</option>{(customFields[i.brand]?.categories||[]).map(t=><option key={t} value={t}>{t}</option>)}<option value="__add__">＋</option>
           </select></TD>
@@ -2627,7 +2630,7 @@ const App=()=>{
       w.document.write("<html><head><title>"+escHtml(mediaLabel)+" Traffic - "+escHtml(est.market)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px;font-size:12px;background:#fff;color:#1e1233}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.blu{color:#4AC8E8}.amb{color:#D4A040}.url{font-size:9px;word-break:break-all;color:#4AC8E8;font-family:monospace}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}.section{margin-top:16px;padding-top:8px;border-top:2px solid #E8DFF0;font-size:13px;font-weight:700}@media print{body{margin:20px}}</style></head><body>");
       w.document.write('<div style="text-align:center;margin-bottom:20px"><img src="'+escHtml(brand.logo)+'" style="height:48px;margin-bottom:8px"/><h2 style="margin:0;letter-spacing:2px">'+escHtml(est.brand.toUpperCase())+'</h2><div style="font-size:11px;color:#555;margin-top:4px">'+escHtml(mediaLabel.toUpperCase())+' TRAFFIC INSTRUCTIONS</div></div>');
       var hd=function(l,v,c){return '<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>'};
-      w.document.write(hd("Agency","Atticor Media"));w.document.write(hd("Client","Postman Law","red"));
+      w.document.write(hd("Agency","Atticor"));w.document.write(hd("Client","Postman Law","red"));
       w.document.write(hd("Market",est.market));w.document.write(hd("Vendor",vLabel+(isDigital?" / GKBPS":""),"amb"));
       w.document.write(hd("Buyer",est.buyer+(isDigital?" — jessica.flynn@atticor.ai":""),"red"));w.document.write(hd("Media",mediaLabel,"blu"));
       w.document.write(hd("Broadcast Month",workMonth,"grn"));w.document.write(hd("Flight Dates",flightDates,"grn"));
@@ -2932,7 +2935,7 @@ const App=()=>{
             ppdf.text("PANDORA / SIRIUSXM STREAMING AUDIO TRAFFIC",ppw/2,py,{align:"center"});py+=7;
             ppdf.setFontSize(8);ppdf.setTextColor(0,0,0);
             var phdr=function(l,v){ppdf.setFont("helvetica","bold");ppdf.setTextColor(100,100,100);ppdf.text(l+":",pmx,py);ppdf.setFont("helvetica","normal");ppdf.setTextColor(0,0,0);ppdf.text(v,pmx+30,py);py+=3.8};
-            phdr("Agency","Atticor Media");phdr("Client","Postman Law");phdr("Buyer",est.buyer);
+            phdr("Agency","Atticor");phdr("Client","Postman Law");phdr("Buyer",est.buyer);
             phdr("Month",workMonth);phdr("Flight",flightDates);phdr("Version","V"+version);
             if(comments)phdr("Comments",comments);
             py+=3;
@@ -3020,7 +3023,7 @@ const App=()=>{
             var ph3="<html><head><style>body{font-family:Arial,sans-serif;margin:30px;font-size:12px;background:#fff;color:#1e1233}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.section{margin-top:16px;padding-top:8px;border-top:2px solid #E8DFF0;font-size:13px;font-weight:700}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}</style></head><body>";
             var hd4=function(l,v){return '<div class="h"><b>'+l+':</b> '+v+'</div>'};
             ph3+='<div style="text-align:center;margin-bottom:20px"><img src="'+brand.logo+'" style="height:48px;margin-bottom:8px"/><h2 style="margin:0;letter-spacing:2px">POSTMAN LAW</h2><div style="font-size:11px;color:#555">STREAMING AUDIO TRAFFIC INSTRUCTIONS</div></div>';
-            ph3+=hd4("Agency","Atticor Media")+hd4("Client","Postman Law")+hd4("Market",est.market)+hd4("Vendor",vendorMode)+hd4("Buyer",est.buyer)+hd4("Media","Streaming Audio")+hd4("Month",workMonth)+hd4("Flight",flightDates)+hd4("Estimate",est.num)+hd4("Version","V"+version);
+            ph3+=hd4("Agency","Atticor")+hd4("Client","Postman Law")+hd4("Market",est.market)+hd4("Vendor",vendorMode)+hd4("Buyer",est.buyer)+hd4("Media","Streaming Audio")+hd4("Month",workMonth)+hd4("Flight",flightDates)+hd4("Estimate",est.num)+hd4("Version","V"+version);
             ph3+='<div class="section">AUDIO ROTATION</div><table><thead><tr><th>ISCI</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Schedule</th><th>Flight</th><th>File</th><th>Companion</th></tr></thead><tbody>';
             sel.forEach(function(r){var file=r.isci.fileUrl?'<a href="'+r.isci.fileUrl+'">DL</a>':"TBD";var comp=r.companionUrl?'<a href="'+r.companionUrl+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td>"+(r.pct||"")+"%</td><td>"+r.sched+"</td><td>"+r.flight+"</td><td>"+file+"</td><td>"+comp+"</td></tr>"});
             ph3+="</tbody></table>";
@@ -3044,7 +3047,7 @@ const App=()=>{
           var staTag2=isDigital?"ESPN_GKBPS":vendorMode;
           var tok3=reserveToken(ak(est),staTag2);
           var confirmUrl3=confirmBase2+"?confirm="+encodeURIComponent(est.num)+"&sta="+encodeURIComponent(staTag2)+"&tok="+encodeURIComponent(tok3);
-          emailBody2+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmUrl3+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Atticor Media';
+          emailBody2+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmUrl3+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Atticor';
           var subj2="Postman Law - "+mediaLabel+" Traffic Instructions - "+workMonth+" V"+version+" - "+est.market+" - "+vendorLabel2;
           var recipients2=isDigital?["jmondo@goodkarmabrands.com","mmetroka@goodkarmabrands.com","jessica.flynn@atticor.ai"]:["jake.jaffe@siriusxm.com","josh.mustachi@siriusxm.com","jessica.flynn@atticor.ai"];
           try{
@@ -3066,7 +3069,7 @@ const App=()=>{
           var ph="<html><head><style>body{font-family:Arial,sans-serif;margin:30px;font-size:12px;background:#fff;color:#1e1233}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}</style></head><body>";
           var hd=function(l,v){return'<div class="h"><b>'+l+':</b> '+v+'</div>'};
           ph+='<div style="text-align:center;margin-bottom:20px"><img src="'+brand.logo+'" style="height:48px;margin-bottom:8px"/><h2 style="margin:0;letter-spacing:2px">'+est.brand.toUpperCase()+'</h2><div style="font-size:11px;color:#555">STREAMING AUDIO TRAFFIC INSTRUCTIONS</div></div>';
-          ph+=hd("Agency","Atticor Media")+hd("Client",est.brand)+hd("Market",est.market||"")+hd("Buyer",est.buyer)+hd("Month",workMonth)+hd("Flight",flightDates)+hd("Estimate",est.num)+hd("Version","V"+version);
+          ph+=hd("Agency","Atticor")+hd("Client",est.brand)+hd("Market",est.market||"")+hd("Buyer",est.buyer)+hd("Month",workMonth)+hd("Flight",flightDates)+hd("Estimate",est.num)+hd("Version","V"+version);
           ph+='<table><thead><tr><th>ISCI</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Schedule</th><th>Flight</th><th>File</th></tr></thead><tbody>';
           sel.forEach(function(r){var file=r.isci.fileUrl?'<a href="'+r.isci.fileUrl+'">DL</a>':"TBD";ph+="<tr><td style='font-family:monospace;font-weight:700'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td>"+(r.pct||"")+"%</td><td>"+r.sched+"</td><td>"+(r.flight||flightDates)+"</td><td>"+file+"</td></tr>"});
           ph+="</tbody></table></body></html>";
@@ -3080,7 +3083,7 @@ const App=()=>{
           var confirmBase=window.location.href.split("?")[0].split("#")[0];
           var tokGen=reserveToken(ak(est),"Generic");
           var confirmUrl=confirmBase+"?confirm="+encodeURIComponent(est.num)+"&sta=Generic&tok="+encodeURIComponent(tokGen);
-          emailBody+='Please confirm receipt:<br><a href="'+confirmUrl+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Media';
+          emailBody+='Please confirm receipt:<br><a href="'+confirmUrl+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor';
           var subj="Atticor | "+est.brand+" Streaming Audio Traffic | "+workMonth+" V"+version+" | "+(est.market||"");
           try{
             var resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:rcpts.join(","),cc:[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj,message:emailBody,pdfBase64:pdfB64,pdfName:pdfName})});
@@ -4063,7 +4066,7 @@ const App=()=>{
           w.document.write("<html><head><title>OOH Traffic - PL "+escHtml(mktLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
           w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">POSTMAN LAW</h2></div>');
           const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
-          w.document.write(hd("Agency","Atticor Media"));w.document.write(hd("Client","Postman Law"));
+          w.document.write(hd("Agency","Atticor"));w.document.write(hd("Client","Postman Law"));
           w.document.write(hd("Market",mktLabel));w.document.write(hd("Vendor",vLabel,"amb"));
           w.document.write(hd("Buyer","Ken Lazar","red"));w.document.write(hd("Media","OOH","red"));
           w.document.write(hd("Broadcast Month",workMonth,"grn"));
@@ -4433,10 +4436,10 @@ const App=()=>{
     const buildHtml=()=>{
       let x='<html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;margin:30px;color:#1e1233}h2{margin:0}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:12px;text-align:left}th{background:#f5f5f5}.h b{display:inline-block;width:160px}.sig{margin-top:28px}</style></head><body>';
       x+='<div style="text-align:center;margin-bottom:16px"><h2>'+escHtml(brand.toUpperCase())+'</h2><div style="letter-spacing:2px;font-size:12px;color:#7c3aed">SOCIAL / DISPLAY TRAFFIC</div></div>';
-      x+='<div class="h"><b>Agency:</b> Atticor Media</div><div class="h"><b>Client:</b> '+escHtml(brand)+'</div><div class="h"><b>Media:</b> Social / Display</div><div class="h"><b>Markets:</b> All Markets</div><div class="h"><b>Broadcast Month:</b> '+escHtml(month||"")+'</div><div class="h"><b>Flight Dates:</b> '+escHtml(flight||"TBD")+'</div><div class="h"><b>Version:</b> '+escHtml(version)+'</div>';
+      x+='<div class="h"><b>Agency:</b> Atticor</div><div class="h"><b>Client:</b> '+escHtml(brand)+'</div><div class="h"><b>Media:</b> Social / Display</div><div class="h"><b>Markets:</b> All Markets</div><div class="h"><b>Broadcast Month:</b> '+escHtml(month||"")+'</div><div class="h"><b>Flight Dates:</b> '+escHtml(flight||"TBD")+'</div><div class="h"><b>Version:</b> '+escHtml(version)+'</div>';
       if(sponsor)x+='<div class="h"><b>Sponsorship / Notes:</b> '+escHtml(sponsor)+'</div>';
       x+='<table><thead><tr><th>ISCI</th><th>Title</th><th>Size</th><th>Creative File</th></tr></thead><tbody>';
-      chosen.forEach(i=>{x+='<tr><td style="font-family:monospace;font-weight:700">'+escHtml(i.code)+'</td><td>'+escHtml(i.title||"")+'</td><td>'+escHtml(szOf(i))+'</td><td>'+(i.fileUrl?'<a href="'+escHtml(i.fileUrl)+'">Download</a>':'—')+'</td></tr>'});
+      chosen.forEach(i=>{x+='<tr><td style="font-family:monospace;font-weight:700">'+escHtml(i.code)+'</td><td>'+escHtml(i.title||"")+'</td><td>'+escHtml(szOf(i))+'</td><td>'+(i.fileUrl?'<a href="'+escHtml(dlUrl(i.fileUrl))+'">Download</a>':'—')+'</td></tr>'});
       x+='</tbody></table><div class="sig"><div><b>Accepted by:</b> _______________   <b>Date:</b> __________</div><div style="font-size:11px;margin-top:6px">Please confirm receipt within 24 hours.</div></div></body></html>';
       return x;
     };
@@ -4455,7 +4458,7 @@ const App=()=>{
       const subj=brand+" — Social/Display Traffic — "+(month||"")+" V"+version;
       let body="Hello,<br><br>Please find the attached social/display traffic instructions for "+brand+" (all markets).<br><br><b>Broadcast Month:</b> "+(month||"")+"<br><b>Flight Dates:</b> "+(flight||"TBD")+"<br>";
       if(sponsor)body+="<b>Sponsorship/Notes:</b> "+sponsor+"<br>";
-      body+="<br><b>Creative:</b><br>"+chosen.map(i=>i.code+(i.title?" — "+i.title:"")+(szOf(i)?" ("+szOf(i)+")":"")+(i.fileUrl?' — <a href="'+i.fileUrl+'">file</a>':"")).join("<br>")+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
+      body+="<br><b>Creative:</b><br>"+chosen.map(i=>i.code+(i.title?" — "+i.title:"")+(szOf(i)?" ("+szOf(i)+")":"")+(i.fileUrl?' — <a href="'+dlUrl(i.fileUrl)+'">file</a>':"")).join("<br>")+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
       notify("Sending to "+recipient.trim()+"...");
       try{const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipient.trim(),cc:"emm.caban@atticor.ai",subject:subj,message:body,pdfBase64:pdfB64,pdfName:"Social_"+brand.replace(/\s/g,"")+"_"+(month||"").replace(/\s/g,"")+"_v"+version+".pdf"})});
         if(!r.ok)throw new Error("send "+r.status);
@@ -4738,7 +4741,7 @@ const App=()=>{
         <label style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Creative File</label>
         {ef.fileUrl?<div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"rgba(22,163,98,.15)",border:"1px solid #bbf7d0",borderRadius:6}}>
           <span style={{fontSize:13,color:"#5BC4A0",fontWeight:700}}>✓ File uploaded</span>
-          <a href={ef.fileUrl} target="_blank" rel="noopener" download style={{fontSize:14,color:"#4AC8E8",fontWeight:600}}>Download</a>
+          <a href={dlUrl(ef.fileUrl)} target="_blank" rel="noopener" download style={{fontSize:14,color:"#4AC8E8",fontWeight:600}}>Download</a>
           <button onClick={()=>eu("fileUrl","")} style={{marginLeft:"auto",fontSize:14,padding:"2px 6px",borderRadius:4,border:"1px solid #fca5a5",background:"rgba(220,38,38,.15)",color:"#E85A7A",cursor:"pointer",fontWeight:600}}>Remove</button>
         </div>:
         <div style={{border:"2px dashed #C4A0C8",borderRadius:8,padding:12,textAlign:"center",background:"#162032"}}>
@@ -5258,7 +5261,7 @@ ${fullText.substring(0,3000)}`}]
     // Build draft
     const openDraft=(est)=>{
       const brand=BRANDS.find(b=>b.name===est.brand);
-      const agency=brand?.agency||"Atticor Media";
+      const agency=brand?.agency||"Atticor";
       const cm=CALENDAR.find(c=>c.month===workMonth)||CALENDAR[1];
       const flight=cm?fDs(cm.bcStart)+" - "+fDs(cm.bcEnd):"";
       const linked=getEstStations(est);
@@ -7665,7 +7668,7 @@ Rules:
       return {
         id:(h.ts||"")+"_"+(h.market||""),
         client:h.brand||"Wettermark Keith",
-        agency:"Atticor Media",
+        agency:"Atticor",
         market:h.market||"",
         buyer:h.buyer||"",
         estimate:h.est||"",
@@ -9750,7 +9753,7 @@ Rules:
         <div style={{position:"relative",zIndex:1}}>
           <div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,.7)",textTransform:"uppercase",letterSpacing:3,marginBottom:4}}>OOH Media Report</div>
           <div style={{fontSize:32,fontWeight:800,color:"#fff"}}>{brandName}</div>
-          <div style={{fontSize:14,color:"rgba(255,255,255,.8)",marginTop:4}}>Prepared by Atticor Media Services · {new Date().toLocaleDateString("en-US",{month:"long",year:"numeric"})}</div>
+          <div style={{fontSize:14,color:"rgba(255,255,255,.8)",marginTop:4}}>Prepared by Atticor · {new Date().toLocaleDateString("en-US",{month:"long",year:"numeric"})}</div>
         </div>
       </div>
       {/* KPI Bar */}
@@ -10596,7 +10599,7 @@ Rules:
           </div>
         )}
         <div style={{display:"flex",gap:6,marginTop:14,justifyContent:"flex-end",alignItems:"center"}}>
-          {url&&<a href={url} download target="_blank" rel="noopener" style={{padding:"6px 14px",borderRadius:6,background:"#4AC8E8",color:"#fff",textDecoration:"none",fontSize:13,fontWeight:700}}>📥 Download</a>}
+          {url&&<a href={dlUrl(url)} download target="_blank" rel="noopener" style={{padding:"6px 14px",borderRadius:6,background:"#4AC8E8",color:"#fff",textDecoration:"none",fontSize:13,fontWeight:700}}>📥 Download</a>}
           <Btn onClick={()=>setModal({t:"editIsci",isci:i,idx:gi})}>✎ Edit Metadata</Btn>
           <Btn onClick={()=>setModal(null)}>Close</Btn>
         </div>
