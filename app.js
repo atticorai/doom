@@ -1902,7 +1902,7 @@ const App=()=>{
     const isciBrandCounts={"Postman Law":iscis.filter(i=>i.brand==="Postman Law"&&i.suffix!=="O"&&i.active).length,"Wettermark Keith":iscis.filter(i=>i.brand==="Wettermark Keith"&&i.suffix!=="O"&&i.active).length};
     const fl=(()=>{const filtered=iscis.filter(i=>i.suffix!=="O"&&i.brand===isciBrand&&(sf.media?i.media===sf.media:true)&&(sf.dma?i.dma===sf.dma:true)&&(isciSearch?`${i.code} ${i.title} ${i.category||""} ${i.valueProp||""} ${i.vo||""}`.toLowerCase().includes(isciSearch.toLowerCase()):true)&&(showOff?true:i.active));return sortRows("isci",filtered,{code:r=>r.code,title:r=>r.title,media:r=>r.media,brand:r=>r.brand,dma:r=>r.dma,dur:r=>parseInt(r.dur)||0,category:r=>r.category||r.caseType||"",valueProp:r=>r.valueProp||"",vo:r=>r.vo||"",status:r=>r.active?"1":"0"})})();
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
+      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setModal({t:"socialTraffic"})} color="#9b7bb0">📱 Social Traffic</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
       {showTagMgr&&<Cd style={{padding:14,marginTop:8}}>
         <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:8}}>🏷 Manage Categories, Value Props & VOs</div>
         {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
@@ -4408,6 +4408,92 @@ const App=()=>{
       </div>}
       <div style={{height:8}}/>
       <Btn primary disabled={!f2.title||(isTag?!f2.dur:(isCampaign?false:!f2.dmas.length))} onClick={()=>{const bn=brandName;const ni=isTag?[{code:f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt,title:f2.title,media:"Tagline",brand:bn,dma:"",dur:durField,suffix:suf,tagUse:f2.tagUse||"audio",active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):isCampaign?[{code:f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:"",dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):f2.dmas.filter(d=>!alreadyRegistered.includes(d)).map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify(isTag?"That tagline is already registered":isCampaign?"That campaign creative is already registered":"All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(isTag?("Tagline registered — "+ni[0].code):isCampaign?("Campaign creative registered — "+ni[0].code):(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":"")));setModal(null)}}>{isTag?"Register Tagline":isCampaign?"Register Campaign Creative":("Register "+f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length+" ISCI"+(f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":"")+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""))}</Btn>
+    </Mod>;
+  };
+
+  // ── SOCIAL / DISPLAY CAMPAIGN TRAFFIC ──────────────────
+  // Brand-wide social/display creatives (radio sponsorships etc.). Always
+  // saves to the Traffic Library — on Generate OR Send — under media
+  // "Social/Display" so it groups into its own section.
+  const SocialTrafficMod=()=>{
+    const[brand,setBrand]=useState("Postman Law");
+    const[sel,setSel]=useState({});
+    const[flight,setFlight]=useState("");
+    const[sponsor,setSponsor]=useState("");
+    const[recipient,setRecipient]=useState("");
+    const[month,setMonth]=useState(workMonth);
+    const[version,setVersion]=useState("1");
+    const[busy,setBusy]=useState(false);
+    const recIdRef=React.useRef(null);
+    const pool=iscis.filter(i=>i.suffix==="B"&&i.brand===brand&&i.active).sort((a,b)=>a.code.localeCompare(b.code));
+    const chosen=pool.filter(i=>sel[i.code]);
+    const buyer=brand==="Postman Law"?"Lynn Cortelezzi":"Amy Coffey";
+    const szOf=(i)=>(typeof DISPLAY_TYPE_MAP!=="undefined"&&DISPLAY_TYPE_MAP[i.dur])||i.dur||"";
+    const buildHtml=()=>{
+      let x='<html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;margin:30px;color:#1e1233}h2{margin:0}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:12px;text-align:left}th{background:#f5f5f5}.h b{display:inline-block;width:160px}.sig{margin-top:28px}</style></head><body>';
+      x+='<div style="text-align:center;margin-bottom:16px"><h2>'+escHtml(brand.toUpperCase())+'</h2><div style="letter-spacing:2px;font-size:12px;color:#7c3aed">SOCIAL / DISPLAY TRAFFIC</div></div>';
+      x+='<div class="h"><b>Agency:</b> Atticor Media</div><div class="h"><b>Client:</b> '+escHtml(brand)+'</div><div class="h"><b>Media:</b> Social / Display</div><div class="h"><b>Markets:</b> All Markets</div><div class="h"><b>Broadcast Month:</b> '+escHtml(month||"")+'</div><div class="h"><b>Flight Dates:</b> '+escHtml(flight||"TBD")+'</div><div class="h"><b>Version:</b> '+escHtml(version)+'</div>';
+      if(sponsor)x+='<div class="h"><b>Sponsorship / Notes:</b> '+escHtml(sponsor)+'</div>';
+      x+='<table><thead><tr><th>ISCI</th><th>Title</th><th>Size</th><th>Creative File</th></tr></thead><tbody>';
+      chosen.forEach(i=>{x+='<tr><td style="font-family:monospace;font-weight:700">'+escHtml(i.code)+'</td><td>'+escHtml(i.title||"")+'</td><td>'+escHtml(szOf(i))+'</td><td>'+(i.fileUrl?'<a href="'+escHtml(i.fileUrl)+'">Download</a>':'—')+'</td></tr>'});
+      x+='</tbody></table><div class="sig"><div><b>Accepted by:</b> _______________   <b>Date:</b> __________</div><div style="font-size:11px;margin-top:6px">Please confirm receipt within 24 hours.</div></div></body></html>';
+      return x;
+    };
+    const saveRec=(status)=>{
+      const base={est:"SOCIAL-"+(brand==="Postman Law"?"PL":"WK"),brand,market:"All Markets",media:"Social/Display",buyer,month,flight,version,comments:sponsor||"Social/Display campaign",iscis:chosen.map(i=>({code:i.code,title:i.title||"",dur:i.dur||"",pct:"",sched:flight||""})),stations:recipient.trim()?[recipient.trim()]:[],isOoh:false,status};
+      if(recIdRef.current){setTrafficHistory(p=>p.map(h=>h._id===recIdRef.current?{...h,...base}:h))}
+      else{const _id=Date.now();recIdRef.current=_id;setTrafficHistory(p=>[{ts:new Date().toISOString(),_id,...base},...p])}
+    };
+    const print=()=>{if(!chosen.length){notify("Select at least one creative");return}const w=window.open("","","width=850,height=950");w.document.write(buildHtml());w.document.close();w.print();saveRec("print_only");log("Social Traffic Generated",brand+" "+chosen.length+" creatives");notify("Saved to Traffic Library — "+chosen.length+" creatives")};
+    const send=async()=>{
+      if(!chosen.length){notify("Select at least one creative");return}
+      if(!recipient.trim()){notify("Enter a recipient email");return}
+      setBusy(true);
+      const html=buildHtml();let pdfB64="";
+      try{const uri=await generatePdfBase64(html);pdfB64=uri.split(",")[1]||""}catch(e){console.warn("PDF gen failed",e)}
+      const subj=brand+" — Social/Display Traffic — "+(month||"")+" V"+version;
+      let body="Hello,<br><br>Please find the attached social/display traffic instructions for "+brand+" (all markets).<br><br><b>Broadcast Month:</b> "+(month||"")+"<br><b>Flight Dates:</b> "+(flight||"TBD")+"<br>";
+      if(sponsor)body+="<b>Sponsorship/Notes:</b> "+sponsor+"<br>";
+      body+="<br><b>Creative:</b><br>"+chosen.map(i=>i.code+(i.title?" — "+i.title:"")+(szOf(i)?" ("+szOf(i)+")":"")+(i.fileUrl?' — <a href="'+i.fileUrl+'">file</a>':"")).join("<br>")+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
+      notify("Sending to "+recipient.trim()+"...");
+      try{const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipient.trim(),cc:"emm.caban@atticor.ai",subject:subj,message:body,pdfBase64:pdfB64,pdfName:"Social_"+brand.replace(/\s/g,"")+"_"+(month||"").replace(/\s/g,"")+"_v"+version+".pdf"})});
+        if(!r.ok)throw new Error("send "+r.status);
+        saveRec("sent");
+        log("Social Traffic Sent",brand+" "+chosen.length+" creatives → "+recipient.trim());
+        notify("Sent — "+chosen.length+" creatives to "+recipient.trim());
+        setModal(null);
+      }catch(e){notify("Failed: "+(e.message||e))}
+      setBusy(false);
+    };
+    return<Mod title="Social / Display Traffic" onClose={()=>setModal(null)} wide>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
+        <Sel label="Brand" options={BRANDS.map(b=>({v:b.name,l:b.name}))} value={brand} onChange={v=>{setBrand(v);setSel({})}}/>
+        <Inp label="Recipient email" value={recipient} onChange={e=>setRecipient(e.target.value)} placeholder="station@example.com"/>
+      </div>
+      <div style={{height:6}}/>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:7}}>
+        <Inp label="Flight Dates" value={flight} onChange={e=>setFlight(e.target.value)} placeholder="e.g., 6/1 - 6/30"/>
+        <Sel label="Month" options={CALENDAR.map(c=>({v:c.month,l:c.month}))} value={month} onChange={setMonth}/>
+        <Inp label="Version" value={version} onChange={e=>setVersion(e.target.value)}/>
+      </div>
+      <div style={{height:6}}/>
+      <Inp label="Sponsorship / Notes" value={sponsor} onChange={e=>setSponsor(e.target.value)} placeholder="e.g., WK Radio Sponsorship — Instagram + Stories"/>
+      <div style={{height:8}}/>
+      <div style={{fontSize:13,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase",marginBottom:4}}>Campaign Creatives ({chosen.length} selected)</div>
+      {pool.length===0?<div style={{fontSize:13,color:"#9B8EAD"}}>No Display creatives registered for {brand}. Register them first (Media: Display).</div>:
+      <div style={{maxHeight:240,overflowY:"auto",border:"1px solid #4a3565",borderRadius:8}}>
+        {pool.map(i=>{const on=!!sel[i.code];return<label key={i.code} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderBottom:"1px solid #2d1f42",cursor:"pointer",background:on?"rgba(74,200,232,.08)":"transparent"}}>
+          <input type="checkbox" checked={on} onChange={()=>setSel(p=>({...p,[i.code]:!p[i.code]}))}/>
+          <span style={{fontFamily:"monospace",fontWeight:700,color:"#C4A0C8",fontSize:13}}>{i.code}</span>
+          <span style={{fontSize:13,color:"#E8DFF0"}}>{i.title}</span>
+          <span style={{marginLeft:"auto",fontSize:12,color:"#9B8EAD"}}>{szOf(i)}{i.dma?" · "+i.dma:" · all mkts"}{i.fileUrl?" · 📁":" · no file"}</span>
+        </label>})}
+      </div>}
+      <div style={{height:10}}/>
+      <div style={{display:"flex",gap:6}}>
+        <Btn onClick={print} disabled={!chosen.length}>🖨 Generate & Save</Btn>
+        <Btn primary color="#9b7bb0" onClick={send} disabled={busy||!chosen.length||!recipient.trim()}>{busy?"Sending…":"📧 Send"}</Btn>
+      </div>
     </Mod>;
   };
 
@@ -9742,6 +9828,7 @@ Rules:
     {externalChange&&<div style={{position:"fixed",top:syncError?37:0,left:0,right:0,zIndex:9998,background:"#D4A040",color:"#1e1233",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ Updated in another session: {externalChange.map(COL_LABEL).join(", ")}. Reload before editing so you don't overwrite it. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #1e1233",background:"transparent",color:"#1e1233",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setExternalChange(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #1e1233",background:"transparent",color:"#1e1233",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
     <OohHub/>
     {(modal==="newIsci"||modal?.t==="newIsci")&&<NewIsciMod defaultMedia={modal?.defaultMedia||null}/>}
+    {modal?.t==="socialTraffic"&&<SocialTrafficMod/>}
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
     {modal?.type==="oohPhoto"&&<OohPhotoModal modal={modal}/>}
     {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#2d1f42",color:"#E8DFF0",padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.3)",zIndex:9999,border:"1px solid #4a3565"}}>{toast}</div>}
@@ -10461,6 +10548,7 @@ Rules:
       </AnimatePresence>
     </div>
     {(modal==="newIsci"||modal?.t==="newIsci")&&<NewIsciMod defaultMedia={modal?.defaultMedia||null}/>}
+    {modal?.t==="socialTraffic"&&<SocialTrafficMod/>}
     {modal?.t==="buildRot"&&<RotBuilder est={modal.est} pool={modal.pool} workMonth={workMonth} _revise={modal._revise}/>}
     {modal?.t==="buildStream"&&<StreamBuilder est={modal.est} pool={modal.pool} workMonth={workMonth}/>}
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
