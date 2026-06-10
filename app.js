@@ -2068,6 +2068,7 @@ const App=()=>{
         <span style={{fontSize:13,color:"#9B8EAD"}}>Working Month:</span>
         <select value={workMonth} onChange={e=>setWorkMonth(e.target.value)} style={{padding:"4px 8px",borderRadius:5,border:"2px solid #4AC8E8",fontSize:13,fontWeight:700,color:"#4AC8E8",background:"rgba(37,99,235,.15)"}}>{CALENDAR.map(c=><option key={c.month}>{c.month}</option>)}</select>
         {(()=>{const cm=CALENDAR.find(c=>c.month===workMonth);return cm?<span style={{fontSize:13,color:"#9B8EAD"}}>Flight: {fD(cm.bcStart)} – {fD(cm.bcEnd)} · Rotation due: {fD(cm.rotDue)}</span>:null})()}
+        <div style={{marginLeft:"auto"}}><Btn small color="#9b7bb0" onClick={()=>setModal({t:"socialTraffic"})}>📱 Social / Display Traffic</Btn></div>
       </div>
       <BrandTabs value={tb} onChange={setTb} counts={trafBrandCounts}/>
       <div style={{display:"flex",gap:5,alignItems:"center"}}>
