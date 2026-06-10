@@ -4448,7 +4448,7 @@ const App=()=>{
       if(recIdRef.current){setTrafficHistory(p=>p.map(h=>h._id===recIdRef.current?{...h,...base}:h))}
       else{const _id=Date.now();recIdRef.current=_id;setTrafficHistory(p=>[{ts:new Date().toISOString(),_id,...base},...p])}
     };
-    const print=()=>{if(!chosen.length){notify("Select at least one creative");return}const w=window.open("","","width=850,height=950");w.document.write(buildHtml());w.document.close();w.print();saveRec("print_only");log("Social Traffic Generated",brand+" "+chosen.length+" creatives");notify("Saved to Traffic Library — "+chosen.length+" creatives")};
+    const print=()=>{if(!chosen.length){notify("Select at least one creative");return}saveRec("print_only");log("Social Traffic Generated",brand+" "+chosen.length+" creatives");notify("Saved to Traffic Library — "+chosen.length+" creatives");const w=window.open("","","width=850,height=950");if(w){w.document.write(buildHtml());w.document.close();w.print()}else{notify("Saved. Pop-up blocked — print it from the Traffic Library.")}};
     const send=async()=>{
       if(!chosen.length){notify("Select at least one creative");return}
       if(!recipient.trim()){notify("Enter a recipient email");return}
