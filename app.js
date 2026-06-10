@@ -1122,7 +1122,7 @@ const App=()=>{
       const remTok=tokensByKey[akFromHistory(r.h)]?.[r.call]||"";
       const confirmUrl=baseUrl+"?confirm="+encodeURIComponent(r.h.est||"")+"&sta="+encodeURIComponent(r.call)+"&tok="+encodeURIComponent(remTok);
       const isciObjs=(r.h.iscis||[]).map(ic=>{const full=iscis.find(i=>i.code===ic.code);return full?{code:ic.code,title:ic.title,fileUrl:full.fileUrl}:null}).filter(Boolean);
-      const creativeLinks=isciObjs.filter(i=>i.fileUrl).length>0?"<br><br><b>Creative Files:</b><br>"+isciObjs.filter(i=>i.fileUrl).map(i=>'<a href="'+i.fileUrl+'">'+i.code+" — "+i.title+'</a>').join("<br>"):"";
+      const creativeLinks=isciObjs.filter(i=>i.fileUrl).length>0?"<br><br><b>Creative Files:</b><br>"+isciObjs.filter(i=>i.fileUrl).map(i=>'<a href="'+dlUrl(i.fileUrl)+'">'+i.code+" — "+i.title+'</a>').join("<br>"):"";
       const body="Hello,<br><br>This is a reminder that you have not yet confirmed receipt of traffic instructions for <b>"+(r.h.est||"")+" — "+r.h.brand+", "+mktName+", "+r.h.media+"</b>.<br><br><b>Broadcast Month:</b> "+(r.h.month||"")+"<br><b>Flight Dates:</b> "+(r.h.flight||"")+"<br><b>Version:</b> "+r.h.version+"<br><b>Station:</b> "+r.call+creativeLinks+"<br><br>The traffic sheet is attached for your reference.<br><br>Please confirm receipt by clicking the link below:<br><a href=\""+confirmUrl+"\">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor";
       let pdfB64="";try{const sheetHtml=bldHtml(r.h);const pdfUri=await generatePdfBase64(sheetHtml,r.h);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
       const pdfName="Traffic_"+r.h.brand.replace(/\s/g,"")+"_"+mktName.replace(/\s/g,"")+"_"+r.h.media+"_"+(r.h.month||"").replace(/\s/g,"")+"_v"+r.h.version+".pdf";
@@ -2247,7 +2247,7 @@ const App=()=>{
       const filesWithUrls2=sel.filter(r=>r.isci.fileUrl);
       if(filesWithUrls2.length>0){
         h+='<div style="margin-top:12px;padding:8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0369a1;margin-bottom:4px">Creative Files</div>';
-        filesWithUrls2.forEach(r=>{h+='<div style="font-size:11px;margin:2px 0"><a href="'+r.isci.fileUrl+'" style="color:#4AC8E8;text-decoration:underline;font-family:monospace;font-weight:600">'+r.isci.code+'</a> — '+r.isci.title+'</div>'});
+        filesWithUrls2.forEach(r=>{h+='<div style="font-size:11px;margin:2px 0"><a href="'+dlUrl(r.isci.fileUrl)+'" style="color:#4AC8E8;text-decoration:underline;font-family:monospace;font-weight:600">'+r.isci.code+'</a> — '+r.isci.title+'</div>'});
         h+='</div>';
       }
       h+='<div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">';
@@ -2442,7 +2442,7 @@ const App=()=>{
           const pdfName="Traffic_"+est.brand.replace(/\s/g,"")+"_"+est.market+"_"+est.media+"_"+(curMonth?.month||"").replace(/\s/g,"")+"_v"+version+".pdf";
           const filesWithUrls=sel.filter(r=>r.isci.fileUrl);
           const creativeLinks=filesWithUrls.length>0?
-            "<br><br><b>Creative Files:</b><br>"+filesWithUrls.map(r=>'<a href="'+r.isci.fileUrl+'">'+r.isci.code+" — "+r.isci.title+'</a>').join("<br>"):"";
+            "<br><br><b>Creative Files:</b><br>"+filesWithUrls.map(r=>'<a href="'+dlUrl(r.isci.fileUrl)+'">'+r.isci.code+" — "+r.isci.title+'</a>').join("<br>"):"";
           const baseUrl=window.location.href.split("?")[0].split("#")[0];
           // ── GROUP BY OWNERSHIP+MARKET — one email per ownership group within same market ──
           const ownershipGroups={};
@@ -2654,7 +2654,7 @@ const App=()=>{
             w.document.write('<tr style="background:'+bgColor+'"><td colspan="7" style="font-weight:700;font-size:11px;padding:6px 8px;border-bottom:2px solid '+borderColor+';color:'+textColor+'">'+dmaName+' ('+d+')</td></tr>');
             w.document.write('<tr style="background:'+bgColor+'"><td colspan="7" style="padding:3px 8px;font-size:9px;font-family:monospace;color:#4AC8E8;word-break:break-all">Click-Through URL: <a href="'+sectionUrl+'" style="color:#4AC8E8">'+sectionUrl+'</a></td></tr>');
             videoSel.filter(function(r){return r.isci.dma===d}).sort(function(a,b){return(parseInt(b.isci.dur)||0)-(parseInt(a.isci.dur)||0)}).forEach(function(r){
-              var fileLink=r.isci.fileUrl?'<a href="'+escHtml(r.isci.fileUrl)+'" style="color:#4AC8E8;font-size:9px">Download</a>':"TBD";
+              var fileLink=r.isci.fileUrl?'<a href="'+escHtml(dlUrl(r.isci.fileUrl))+'" style="color:#4AC8E8;font-size:9px">Download</a>':"TBD";
               w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+escHtml(r.isci.code)+"</td><td>"+escHtml(r.isci.title)+"</td><td>:"+escHtml(r.isci.dur)+"</td><td style='text-align:center;font-weight:700'>"+escHtml(r.pct||"")+"%</td><td>"+escHtml(r.sched)+"</td><td>"+escHtml(r.flight)+"</td><td>"+fileLink+"</td></tr>");
             });
           });
@@ -2687,7 +2687,7 @@ const App=()=>{
             displayDmas.forEach(function(d){
               var r=items.find(function(x){return x.isci.dma===d});
               if(!r)return;
-              var fileLink=r.isci.fileUrl?'<a href="'+escHtml(r.isci.fileUrl)+'" style="color:#4AC8E8;font-size:9px">Download</a>':"TBD";
+              var fileLink=r.isci.fileUrl?'<a href="'+escHtml(dlUrl(r.isci.fileUrl))+'" style="color:#4AC8E8;font-size:9px">Download</a>':"TBD";
               w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+escHtml(r.isci.code)+"</td><td>"+escHtml(r.isci.title)+"</td><td>"+escHtml(sz)+"</td><td>"+fileLink+"</td></tr>");
             });
           });
@@ -3025,11 +3025,11 @@ const App=()=>{
             ph3+='<div style="text-align:center;margin-bottom:20px"><img src="'+brand.logo+'" style="height:48px;margin-bottom:8px"/><h2 style="margin:0;letter-spacing:2px">POSTMAN LAW</h2><div style="font-size:11px;color:#555">STREAMING AUDIO TRAFFIC INSTRUCTIONS</div></div>';
             ph3+=hd4("Agency","Atticor")+hd4("Client","Postman Law")+hd4("Market",est.market)+hd4("Vendor",vendorMode)+hd4("Buyer",est.buyer)+hd4("Media","Streaming Audio")+hd4("Month",workMonth)+hd4("Flight",flightDates)+hd4("Estimate",est.num)+hd4("Version","V"+version);
             ph3+='<div class="section">AUDIO ROTATION</div><table><thead><tr><th>ISCI</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Schedule</th><th>Flight</th><th>File</th><th>Companion</th></tr></thead><tbody>';
-            sel.forEach(function(r){var file=r.isci.fileUrl?'<a href="'+r.isci.fileUrl+'">DL</a>':"TBD";var comp=r.companionUrl?'<a href="'+r.companionUrl+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td>"+(r.pct||"")+"%</td><td>"+r.sched+"</td><td>"+r.flight+"</td><td>"+file+"</td><td>"+comp+"</td></tr>"});
+            sel.forEach(function(r){var file=r.isci.fileUrl?'<a href="'+dlUrl(r.isci.fileUrl)+'">DL</a>':"TBD";var comp=r.companionUrl?'<a href="'+dlUrl(r.companionUrl)+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td>"+(r.pct||"")+"%</td><td>"+r.sched+"</td><td>"+r.flight+"</td><td>"+file+"</td><td>"+comp+"</td></tr>"});
             ph3+="</tbody></table>";
             var dc5=Object.entries(DM).find(function(e){return e[1].toLowerCase()===est.market.toLowerCase()});var dcCode5=dc5?dc5[0]:"";
             var dispIscis5=iscis.filter(function(i){return i.suffix==="B"&&i.brand===est.brand&&i.dma===dcCode5&&i.active});
-            if(dispIscis5.length>0){ph3+='<div class="section">DISPLAY BANNERS</div><table><thead><tr><th>ISCI</th><th>Title</th><th>File</th><th>Click-Through URL</th></tr></thead><tbody>';dispIscis5.forEach(function(d){var fc=d.fileUrl?'<a href="'+d.fileUrl+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+d.code+"</td><td>"+d.title+"</td><td>"+fc+"</td><td style='font-size:9px'>"+buildUtm("Display",d.code,dcCode5)+"</td></tr>"});ph3+="</tbody></table>"}
+            if(dispIscis5.length>0){ph3+='<div class="section">DISPLAY BANNERS</div><table><thead><tr><th>ISCI</th><th>Title</th><th>File</th><th>Click-Through URL</th></tr></thead><tbody>';dispIscis5.forEach(function(d){var fc=d.fileUrl?'<a href="'+dlUrl(d.fileUrl)+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+d.code+"</td><td>"+d.title+"</td><td>"+fc+"</td><td style='font-size:9px'>"+buildUtm("Display",d.code,dcCode5)+"</td></tr>"});ph3+="</tbody></table>"}
             ph3+='<div class="sig"><div>Accepted by:</div><div>Date:</div></div><div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></body></html>';
             try{var pdfUri5=await generatePdfBase64(ph3);pdfB64=pdfUri5.split(",")[1]||""}catch(pe2){notify("PDF generation failed");return}
           }
@@ -3039,10 +3039,10 @@ const App=()=>{
           var emailBody2="Hello,<br><br>Please find the attached "+mediaLabel+" traffic instructions for Postman Law — "+est.market+" — "+workMonth+" V"+version+".<br><br>";
           if(emailNote.trim())emailBody2+="<b>Note:</b> "+emailNote.trim()+"<br><br>";
           emailBody2+="<b>Broadcast Month:</b> "+workMonth+"<br><b>Flight Dates:</b> "+flightDates+"<br><b>Estimate:</b> "+est.num+"<br><b>Vendor:</b> "+vendorLabel2+"<br><br>";
-          if(allWithFiles2.length>0){emailBody2+="<b>Creative Files:</b><br>";allWithFiles2.forEach(function(r){emailBody2+='<a href="'+r.isci.fileUrl+'">'+r.isci.code+" — "+r.isci.title+"</a><br>"});emailBody2+="<br>"}
+          if(allWithFiles2.length>0){emailBody2+="<b>Creative Files:</b><br>";allWithFiles2.forEach(function(r){emailBody2+='<a href="'+dlUrl(r.isci.fileUrl)+'">'+r.isci.code+" — "+r.isci.title+"</a><br>"});emailBody2+="<br>"}
           if(!isDigital){var dc6=Object.entries(DM).find(function(e){return e[1].toLowerCase()===est.market.toLowerCase()});var dcCode6=dc6?dc6[0]:"";
             var dispFiles2=iscis.filter(function(i){return i.suffix==="B"&&i.brand===est.brand&&i.dma===dcCode6&&i.active&&i.fileUrl});
-            if(dispFiles2.length>0){emailBody2+="<b>Display Banner Files:</b><br>";dispFiles2.forEach(function(d){emailBody2+='<a href="'+d.fileUrl+'">'+d.code+" — "+d.title+"</a><br>"});emailBody2+="<br>"}}
+            if(dispFiles2.length>0){emailBody2+="<b>Display Banner Files:</b><br>";dispFiles2.forEach(function(d){emailBody2+='<a href="'+dlUrl(d.fileUrl)+'">'+d.code+" — "+d.title+"</a><br>"});emailBody2+="<br>"}}
           var confirmBase2=window.location.href.split("?")[0].split("#")[0];
           var staTag2=isDigital?"ESPN_GKBPS":vendorMode;
           var tok3=reserveToken(ak(est),staTag2);
@@ -3071,7 +3071,7 @@ const App=()=>{
           ph+='<div style="text-align:center;margin-bottom:20px"><img src="'+brand.logo+'" style="height:48px;margin-bottom:8px"/><h2 style="margin:0;letter-spacing:2px">'+est.brand.toUpperCase()+'</h2><div style="font-size:11px;color:#555">STREAMING AUDIO TRAFFIC INSTRUCTIONS</div></div>';
           ph+=hd("Agency","Atticor")+hd("Client",est.brand)+hd("Market",est.market||"")+hd("Buyer",est.buyer)+hd("Month",workMonth)+hd("Flight",flightDates)+hd("Estimate",est.num)+hd("Version","V"+version);
           ph+='<table><thead><tr><th>ISCI</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Schedule</th><th>Flight</th><th>File</th></tr></thead><tbody>';
-          sel.forEach(function(r){var file=r.isci.fileUrl?'<a href="'+r.isci.fileUrl+'">DL</a>':"TBD";ph+="<tr><td style='font-family:monospace;font-weight:700'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td>"+(r.pct||"")+"%</td><td>"+r.sched+"</td><td>"+(r.flight||flightDates)+"</td><td>"+file+"</td></tr>"});
+          sel.forEach(function(r){var file=r.isci.fileUrl?'<a href="'+dlUrl(r.isci.fileUrl)+'">DL</a>':"TBD";ph+="<tr><td style='font-family:monospace;font-weight:700'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td>"+(r.pct||"")+"%</td><td>"+r.sched+"</td><td>"+(r.flight||flightDates)+"</td><td>"+file+"</td></tr>"});
           ph+="</tbody></table></body></html>";
           var streamRec={est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,iscis:sel.map(function(r){return{code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct,sched:r.sched}})};
           try{var pdfUri=await generatePdfBase64(ph,streamRec);pdfB64=pdfUri.split(",")[1]||""}catch(pe){notify("PDF generation failed");return}
@@ -3079,7 +3079,7 @@ const App=()=>{
           if(emailNote.trim())emailBody+="<b>Note:</b> "+emailNote.trim()+"<br><br>";
           emailBody+="<b>Broadcast Month:</b> "+workMonth+"<br><b>Flight Dates:</b> "+flightDates+"<br><b>Estimate:</b> "+est.num+"<br><br>";
           var filesWithUrls=sel.filter(function(r){return r.isci.fileUrl});
-          if(filesWithUrls.length>0){emailBody+="<b>Creative Files:</b><br>";filesWithUrls.forEach(function(r){emailBody+='<a href="'+r.isci.fileUrl+'">'+r.isci.code+" - "+r.isci.title+"</a><br>"});emailBody+="<br>"}
+          if(filesWithUrls.length>0){emailBody+="<b>Creative Files:</b><br>";filesWithUrls.forEach(function(r){emailBody+='<a href="'+dlUrl(r.isci.fileUrl)+'">'+r.isci.code+" - "+r.isci.title+"</a><br>"});emailBody+="<br>"}
           var confirmBase=window.location.href.split("?")[0].split("#")[0];
           var tokGen=reserveToken(ak(est),"Generic");
           var confirmUrl=confirmBase+"?confirm="+encodeURIComponent(est.num)+"&sta=Generic&tok="+encodeURIComponent(tokGen);
@@ -6050,7 +6050,7 @@ ${fullText.substring(0,3000)}`}]
       const filesWithUrls=(h.iscis||[]).map(r=>{const full=iscis.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:r.title||full.title||"",url:full.fileUrl}:null}).filter(Boolean);
       if(filesWithUrls.length>0){
         x+='<div style="margin-top:14px;padding:8px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0369a1;letter-spacing:.5px;margin-bottom:5px">Creative Files — Click to Download</div>';
-        filesWithUrls.forEach(r=>{x+='<div style="font-size:11px;margin:2px 0"><a href="'+escHtml(r.url)+'" rel="noopener noreferrer" style="color:#0369a1;text-decoration:underline;font-family:monospace;font-weight:600">'+escHtml(r.code)+'</a> — '+escHtml(r.title)+'</div>'});
+        filesWithUrls.forEach(r=>{x+='<div style="font-size:11px;margin:2px 0"><a href="'+escHtml(dlUrl(r.url))+'" rel="noopener noreferrer" style="color:#0369a1;text-decoration:underline;font-family:monospace;font-weight:600">'+escHtml(r.code)+'</a> — '+escHtml(r.title)+'</div>'});
         x+='</div>';
       }
       x+='<div class="sig"><div style="display:flex;justify-content:space-between"><div><b>Accepted by:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div class="note">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></div>';
@@ -6202,7 +6202,7 @@ ${fullText.substring(0,3000)}`}]
                           var emailBody="Hello,<br><br>Please find the attached Digital Video traffic instructions for "+(h.brand||"")+" — "+(h.market||"")+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br>";
                           if(resendNote.trim())emailBody+="<b>Note:</b> "+resendNote.trim()+"<br><br>";
                           emailBody+="<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><br>";
-                          if(allWithFiles.length>0){emailBody+="<b>Creative Files:</b><br>";allWithFiles.forEach(function(r){var full=iscis.find(function(i){return i.code===r.code});if(full&&full.fileUrl)emailBody+='<a href="'+full.fileUrl+'">'+r.code+" — "+r.title+"</a><br>"});emailBody+="<br>"}
+                          if(allWithFiles.length>0){emailBody+="<b>Creative Files:</b><br>";allWithFiles.forEach(function(r){var full=iscis.find(function(i){return i.code===r.code});if(full&&full.fileUrl)emailBody+='<a href="'+dlUrl(full.fileUrl)+'">'+r.code+" — "+r.title+"</a><br>"});emailBody+="<br>"}
                           var confirmBase2=window.location.href.split("?")[0].split("#")[0];
                           var espnTok=reserveToken(akFromHistory(h),"ESPN_GKBPS");
                           var confirmUrl3=confirmBase2+"?confirm="+encodeURIComponent(h.est||"")+"&sta=ESPN_GKBPS&tok="+encodeURIComponent(espnTok);
@@ -6240,7 +6240,7 @@ ${fullText.substring(0,3000)}`}]
                           });
                           setConfirmations(function(p){var u={};u[resendKey]=Object.assign({},p[resendKey]||{},resendTokens);try{db.collection("appData").doc("confirmations").set({data:JSON.stringify(Object.assign({},p,u)),ts:Date.now()})}catch(e){console.warn("Failed to save confirmations:",e)}return Object.assign({},p,u)});
                           var isciObjs=(h.iscis||[]).map(function(ic){var full=iscis.find(function(i){return i.code===ic.code});return full?{code:ic.code,title:ic.title,fileUrl:full.fileUrl}:null}).filter(Boolean);
-                          var creativeLinks2=isciObjs.filter(function(i){return i.fileUrl}).length>0?"<br><br><b>Creative Files:</b><br>"+isciObjs.filter(function(i){return i.fileUrl}).map(function(i){return'<a href="'+i.fileUrl+'">'+i.code+" — "+i.title+"</a>"}).join("<br>"):"";
+                          var creativeLinks2=isciObjs.filter(function(i){return i.fileUrl}).length>0?"<br><br><b>Creative Files:</b><br>"+isciObjs.filter(function(i){return i.fileUrl}).map(function(i){return'<a href="'+dlUrl(i.fileUrl)+'">'+i.code+" — "+i.title+"</a>"}).join("<br>"):"";
                           for(var gi=0;gi<grpKeys.length;gi++){
                             var grpStas=ownerGroups[grpKeys[gi]];
                             var grpEmails=[...new Set(grpStas.flatMap(function(s){return parseEmails2(s.contact)}))].join(",");
@@ -6414,7 +6414,7 @@ ${fullText.substring(0,3000)}`}]
           html+='<li><b>'+m.market+'</b><ul>';
           m.items.forEach(it=>{
             const fname=it.code+(it.title?" - "+it.title:"")+s.ext;
-            html+='<li>'+(it.url?'<a href="'+it.url+'">'+fname+'</a>':fname)+'</li>';
+            html+='<li>'+(it.url?'<a href="'+dlUrl(it.url)+'">'+fname+'</a>':fname)+'</li>';
           });
           html+='</ul></li>';
         });
@@ -6422,7 +6422,7 @@ ${fullText.substring(0,3000)}`}]
       }else if(s.perMarket[0]){
         s.perMarket[0].items.forEach(it=>{
           const fname=it.code+(it.title?" - "+it.title:"")+s.ext;
-          html+='<li>'+(it.url?'<a href="'+it.url+'">'+fname+'</a>':fname)+'</li>';
+          html+='<li>'+(it.url?'<a href="'+dlUrl(it.url)+'">'+fname+'</a>':fname)+'</li>';
         });
       }
       html+='</ul>';
@@ -7477,7 +7477,7 @@ Rules:
       const filesWithUrls=iscis.map(r=>{const full=reg.find(i=>i.code===r.code);return full&&full.fileUrl?{code:r.code,title:r.title||full.title||"",url:full.fileUrl}:null}).filter(Boolean);
       if(filesWithUrls.length>0){
         x+='<div style="margin-top:14px;padding:8px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0369a1;letter-spacing:.5px;margin-bottom:5px">Creative Files — Click to Download</div>';
-        filesWithUrls.forEach(r=>{x+='<div style="font-size:11px;margin:2px 0"><a href="'+escHtml(r.url)+'" target="_blank" rel="noopener noreferrer" style="color:#0369a1;text-decoration:underline;font-family:monospace;font-weight:600">'+escHtml(r.code)+'</a> — '+escHtml(r.title||"")+'</div>'});
+        filesWithUrls.forEach(r=>{x+='<div style="font-size:11px;margin:2px 0"><a href="'+escHtml(dlUrl(r.url))+'" target="_blank" rel="noopener noreferrer" style="color:#0369a1;text-decoration:underline;font-family:monospace;font-weight:600">'+escHtml(r.code)+'</a> — '+escHtml(r.title||"")+'</div>'});
         x+='</div>';
       }
       x+='<div class="sig"><div style="display:flex;justify-content:space-between"><div><b>Originally accepted:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div class="note">Note: This is an archived legacy instruction. It is no longer actionable.</div></div>';
