@@ -4317,6 +4317,7 @@ const App=()=>{
     const isDisplay=f2.media==="Display";
     const isTag=f2.media==="Tagline";
     const isPT=isOoh&&f2.oohType==="PT";
+    const isCampaign=isDisplay&&!!f2.noMkt;
     const suf=SUFFIXES[f2.media]||"T";const bD=f2.brand==="PL"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
     const durField=isOoh?f2.oohType:isDisplay?f2.displayType:f2.dur;
     const brandName=f2.brand==="PL"?"Postman Law":"Wettermark Keith";
@@ -4328,7 +4329,7 @@ const App=()=>{
     const allSeqs=brandIscis.map(i=>{const m=i.code.match(/([0-9]{3})[TRDSOBG]?$/);return m?parseInt(m[1]):0});
     const nxt=existingSeq||String(Math.max(0,...allSeqs)+1).padStart(3,"0");
     const yr=new Date().getFullYear().toString().slice(2);
-    const prev=isTag?[f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt]:f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf);
+    const prev=isTag?[f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt]:isCampaign?[f2.brand+yr+durField.padStart(2,"0")+nxt+suf]:f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf);
     const alreadyRegistered=isTag?[]:(normInput?f2.dmas.filter(d=>existingWithTitle.some(i=>i.dma===d)):[]);
     const dupeWarnings=prev.filter(code=>iscis.some(i=>i.code===code));
     return<Mod title="Register ISCI (Uniform)" onClose={()=>setModal(null)} wide>
@@ -4336,7 +4337,7 @@ const App=()=>{
         <div style={{fontSize:13,fontWeight:600,color:"#0369a1"}}>AUTO-GENERATED</div>
         <div style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#1e1233"}}>{prev.length?prev.join(", "):("[DMA]"+f2.brand+yr+durField.padStart(2,"0")+nxt+suf)}</div>
         {isOoh&&<div style={{fontSize:14,color:"#0369a1",marginTop:3}}>Format: [DMA][Brand][Year][BoardType][Seq]O</div>}
-        {isDisplay&&<div style={{fontSize:14,color:"#ec4899",marginTop:3}}>Format: [DMA][Brand][Year][BannerSize][Seq]B — e.g., CHIPL26MR001B</div>}
+        {isDisplay&&<div style={{fontSize:14,color:"#ec4899",marginTop:3}}>{f2.noMkt?"Format: [Brand][Year][Size][Seq]B — brand-wide campaign, no market. e.g., PL26PR001B":"Format: [DMA][Brand][Year][BannerSize][Seq]B — e.g., CHIPL26MR001B"}</div>}
         {isTag&&<div style={{fontSize:14,color:"#C4A0C8",marginTop:3}}>Format: [Brand][Year]TG[Duration][Seq] — brand-wide, no market. e.g., PL26TG05001</div>}
         {existingSeq&&<div style={{fontSize:12,color:"#5BC4A0",marginTop:3,fontWeight:600}}>✓ Title match found — reusing sequence #{existingSeq} ({existingWithTitle.map(i=>i.dma).join(", ")} already registered)</div>}
         {alreadyRegistered.length>0&&<div style={{fontSize:12,color:"#D4A040",marginTop:3,fontWeight:600}}>⚠ {alreadyRegistered.join(", ")} already has this title — will be skipped</div>}
@@ -4348,6 +4349,9 @@ const App=()=>{
       {isOoh?<Sel label="Board Type" options={OOH_TYPES.map(t=>({v:t.code,l:t.code+" — "+t.name}))} value={f2.oohType} onChange={v=>u2("oohType",v)}/>:
       isDisplay?<Sel label="Banner Size" options={DISPLAY_TYPES.map(t=>({v:t.code,l:t.code+" — "+t.name}))} value={f2.displayType} onChange={v=>u2("displayType",v)}/>:
       <Inp label={isTag?"Recording length (sec)":"Duration (sec)"} value={f2.dur} onChange={e=>u2("dur",e.target.value)}/>}
+      {isDisplay&&<React.Fragment><div style={{height:8}}/>
+      <label style={{display:"flex",alignItems:"center",gap:8,fontSize:13,fontWeight:600,color:"#9B8EAD",cursor:"pointer"}}><input type="checkbox" checked={!!f2.noMkt} onChange={e=>u2("noMkt",e.target.checked)}/> Brand-wide campaign (no market)</label>
+      </React.Fragment>}
       {isOoh&&OOH_SPECS[f2.oohType]&&(()=>{const sp=OOH_SPECS[f2.oohType];return<div style={{marginTop:8,padding:"8px 10px",borderRadius:8,border:"1px solid #4a3565",background:"#162032"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:4}}>
           <span style={{fontSize:13,fontWeight:800,color:"#D4A040"}}>📐 {sp.name} specs{sp.frames.length>1?" — "+sp.frames.length+" frame sizes":""}</span>
@@ -4367,7 +4371,7 @@ const App=()=>{
       <div style={{display:"flex",gap:6}}>{["audio","visual"].map(t=>{const s=(f2.tagUse||"audio")===t;return<button key={t} onClick={()=>u2("tagUse",t)} style={{flex:1,padding:"7px 0",borderRadius:6,border:s?"2px solid #4AC8E8":"1px solid #4a3565",background:s?"#4AC8E81a":"#162032",color:s?"#4AC8E8":"#9B8EAD",fontSize:14,fontWeight:700,cursor:"pointer"}}>{t==="audio"?"🎙 Audio (radio)":"📺 Visual (TV)"}</button>})}</div>
       <div style={{fontSize:12,color:"#9B8EAD",marginTop:3}}>Visual taglines become selectable in TV rotation building.</div>
       </React.Fragment>}
-      {!isTag&&<React.Fragment><div style={{height:5}}/>
+      {!isTag&&!isCampaign&&<React.Fragment><div style={{height:5}}/>
       <div style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase",marginBottom:3}}>DMAs</div>
       <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{bD.map(d=>{const s=f2.dmas.includes(d);return<button key={d} onClick={()=>u2("dmas",s?f2.dmas.filter(x=>x!==d):[...f2.dmas,d])} style={{padding:"4px 9px",borderRadius:5,border:s?"2px solid #4AC8E8":"1px solid #d1d5db",background:s?"#4AC8E80c":"#fff",color:s?"#4AC8E8":"#64748b",fontSize:14,fontWeight:600,cursor:"pointer"}}>{d} — {DM[d]}</button>})}<Btn small onClick={()=>u2("dmas",bD)}>All</Btn></div></React.Fragment>}
       <div style={{height:8}}/>
@@ -4403,7 +4407,7 @@ const App=()=>{
         </div>}
       </div>}
       <div style={{height:8}}/>
-      <Btn primary disabled={!f2.title||(isTag?!f2.dur:!f2.dmas.length)} onClick={()=>{const bn=brandName;const ni=isTag?[{code:f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt,title:f2.title,media:"Tagline",brand:bn,dma:"",dur:durField,suffix:suf,tagUse:f2.tagUse||"audio",active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):f2.dmas.filter(d=>!alreadyRegistered.includes(d)).map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify(isTag?"That tagline is already registered":"All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(isTag?("Tagline registered — "+ni[0].code):(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":"")));setModal(null)}}>{isTag?"Register Tagline":("Register "+f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length+" ISCI"+(f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":"")+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""))}</Btn>
+      <Btn primary disabled={!f2.title||(isTag?!f2.dur:(isCampaign?false:!f2.dmas.length))} onClick={()=>{const bn=brandName;const ni=isTag?[{code:f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt,title:f2.title,media:"Tagline",brand:bn,dma:"",dur:durField,suffix:suf,tagUse:f2.tagUse||"audio",active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):isCampaign?[{code:f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:"",dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null}].filter(x=>!iscis.some(i=>i.code===x.code)):f2.dmas.filter(d=>!alreadyRegistered.includes(d)).map(d=>({code:d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf,title:f2.title,media:f2.media,brand:bn,dma:d,dur:durField,suffix:suf,active:true,fileUrl:f2.fileUrl||"",category:autoCase(f2.title),caseType:autoCase(f2.title),valueProp:"",vo:"",sentAt:null,sentInEst:null})).filter(x=>!iscis.some(i=>i.code===x.code));if(!ni.length){notify(isTag?"That tagline is already registered":isCampaign?"That campaign creative is already registered":"All selected DMAs already have this ISCI");return}setIscis(prev=>{const updated=[...prev,...ni];return updated});log("Registered",ni.map(x=>x.code).join(", "));notify(isTag?("Tagline registered — "+ni[0].code):isCampaign?("Campaign creative registered — "+ni[0].code):(ni.length+" ISCIs registered"+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":"")));setModal(null)}}>{isTag?"Register Tagline":isCampaign?"Register Campaign Creative":("Register "+f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length+" ISCI"+(f2.dmas.filter(d=>!alreadyRegistered.includes(d)).length!==1?"s":"")+(alreadyRegistered.length?" ("+alreadyRegistered.length+" skipped)":""))}</Btn>
     </Mod>;
   };
 
