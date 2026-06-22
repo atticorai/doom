@@ -371,7 +371,7 @@ const CALENDAR=D_C.map(r=>({month:r[0],rotDue:r[1],bcStart:r[2],bcEnd:r[3]}));
 // Center default so it auto-advances by the calendar instead of sitting on the
 // already-airing month.
 const nextTrafficMonth=()=>{const t=new Date();t.setHours(0,0,0,0);const c=CALENDAR.find(c=>new Date(c.bcStart+"T00:00:00")>t);return c?c.month:(CALENDAR[CALENDAR.length-1]||{}).month||"December"};
-const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const mk=r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17],design:r[18]||"",vendorRef:r[19]||""});const base=D_P.map(mk);const extra=(typeof D_P_NEW!=="undefined"?D_P_NEW:[]).map(mk);return[...base,...extra]})();
+const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const mk=r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17],design:(r[18]?(Array.isArray(r[18])?r[18].filter(Boolean):[r[18]]):[]),vendorRef:r[19]||""});const base=D_P.map(mk);const extra=(typeof D_P_NEW!=="undefined"?D_P_NEW:[]).map(mk);return[...base,...extra]})();
 const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City"};
 // Reverse map: full name → code (case-insensitive lookup for market normalization)
 const DM_REV=Object.fromEntries(Object.entries(DM).flatMap(([c,n])=>[[n,c],[n.toLowerCase(),c],[c,c],[c.toLowerCase(),c]]));
@@ -417,6 +417,9 @@ const OOH_SPECS={
 };
 // Map raw physical media type strings to canonical category for filtering/badges
 const mediaCategory=(t)=>{const s=(t||"").toLowerCase();if(s.includes("digital"))return"Digital";if(s.includes("poster"))return"Poster";if(s.includes("bulletin"))return"Bulletin";if(s.includes("wall")||s.includes("hotspot")||s.includes("overpass"))return"Other";return"Other"};
+// Creative rotation size per board type: full bulletins run 2 creatives;
+// static posters and juniors run 3.
+const creativeSlots=(type)=>{const t=(type||"").toLowerCase();return(t.includes("bulletin")&&!t.includes("junior"))?2:3};
 const MEDIA_CAT_COLORS={Poster:{fg:"#F4C242",bg:"rgba(244,194,66,.15)",border:"#F4C242"},Bulletin:{fg:"#4AC8E8",bg:"rgba(74,200,232,.15)",border:"#4AC8E8"},Digital:{fg:"#C084FC",bg:"rgba(192,132,252,.15)",border:"#C084FC"},Other:{fg:"#94a3b8",bg:"rgba(148,163,184,.15)",border:"#94a3b8"}};
 const MediaBadge=({type,size="sm"})=>{const cat=mediaCategory(type);const c=MEDIA_CAT_COLORS[cat];const pad=size==="sm"?"1px 6px":"2px 8px";const fs=size==="sm"?10:11;return React.createElement("span",{style:{display:"inline-block",padding:pad,borderRadius:3,fontSize:fs,fontWeight:700,color:c.fg,background:c.bg,border:"1px solid "+c.border,letterSpacing:.3,textTransform:"uppercase"}},cat)};
 // Stable, deterministic color for any creative title. Same input → same color, always.
@@ -903,7 +906,7 @@ const App=()=>{
         if(docs.customTags?.data){const d=JSON.parse(docs.customTags.data);if(d["Postman Law"]?.categories||d["Wettermark Keith"]?.categories)setCustomFields(d);else if(Object.keys(d).length){const migrated={};Object.entries(d).forEach(([brand,tags])=>{if(Array.isArray(tags)){migrated[brand]={categories:tags.filter(t=>["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),valueProps:tags.filter(t=>!["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),vos:[]}}else{migrated[brand]=tags}});setCustomFields(migrated)}}
         if(docs.settings?.data){try{const s=JSON.parse(docs.settings.data);if(typeof s.campaignIcsUrl==="string")setCampaignIcsUrl(s.campaignIcsUrl)}catch(_e){}}
         try{if(docs.wkOohIscis?.data){const d=JSON.parse(docs.wkOohIscis.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>d[p.boardId]!==undefined?{...p,isci:d[p.boardId]}:p))}}catch(_e){console.warn("wkOohIscis load skipped",_e)}
-        try{if(docs.wkOohDesigns?.data){const d=JSON.parse(docs.wkOohDesigns.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>d[p.boardId]!==undefined?{...p,design:d[p.boardId]}:p))}}catch(_e){console.warn("wkOohDesigns load skipped",_e)}
+        try{if(docs.wkOohDesigns?.data){const d=JSON.parse(docs.wkOohDesigns.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>{if(d[p.boardId]===undefined)return p;const v=d[p.boardId];return{...p,design:Array.isArray(v)?v.filter(Boolean):(v?[v]:[])}}))}}catch(_e){console.warn("wkOohDesigns load skipped",_e)}
         try{if(docs.plOohIscis?.data){const d=JSON.parse(docs.plOohIscis.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isci:d[p.unit]}:p))}}catch(_e){console.warn("plOohIscis load skipped",_e)}
         try{if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}}catch(_e){console.warn("oohPhotos load skipped",_e)}
         console.log("Supabase: loaded",Object.keys(docs).length,"collections");
@@ -1083,7 +1086,7 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohContracts).length>0)saveToDb("oohContracts",oohContracts)},[oohContracts,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("customTags",customFields)},[customFields,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(pops.filter(p=>p.isci).map(p=>[p.boardId,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("wkOohIscis",isciMap)},[pops,dbLoaded]);
-  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const designMap=Object.fromEntries(pops.filter(p=>p.design).map(p=>[p.boardId,p.design]));if(Object.keys(designMap).length>0)saveToDb("wkOohDesigns",designMap)},[pops,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const designMap=Object.fromEntries(pops.filter(p=>Array.isArray(p.design)&&p.design.length).map(p=>[p.boardId,p.design]));if(Object.keys(designMap).length>0)saveToDb("wkOohDesigns",designMap)},[pops,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(plPanels.filter(p=>p.isci).map(p=>[p.unit,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("plOohIscis",isciMap)},[plPanels,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohPhotos).length>0)saveToDb("oohPhotos",oohPhotos)},[oohPhotos,dbLoaded]);
 
@@ -3465,9 +3468,10 @@ const App=()=>{
     const saveEdit=(boardId)=>{setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,isci:editVal}:p));setEditId(null);log("OOH Assign",`${boardId} → ${editVal||"(cleared)"}`);notify(`${boardId} updated`)};
     const cancelEdit=()=>{setEditId(null);setEditVal("")};
     const isciTitle=(code)=>{if(!code)return"";const m=iscis.find(i=>i.code===code);return m?m.title:""};
-    // Per-board creative ("2026 Design") — your own naming convention, editable per market/per board.
-    const startDEdit=(boardId,cur)=>{setDEditId(boardId);setDEditVal(cur||"")};
-    const saveDEdit=(boardId)=>{const v=dEditVal.trim();setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,design:v}:p));setDEditId(null);log("OOH Creative",`${boardId} → ${v||"(cleared)"}`);notify(`${boardId} creative ${v?"set":"cleared"}`)};
+    // Per-board creative rotation — your own naming. Bulletins run 2, posters/juniors run 3.
+    const startDEdit=(board)=>{const n=creativeSlots(board.type);const cur=Array.isArray(board.design)?board.design:[];setDEditId(board.boardId);setDEditVal(Array.from({length:n},(_,k)=>cur[k]||""))};
+    const setDSlot=(k,v)=>setDEditVal(prev=>{const a=Array.isArray(prev)?[...prev]:[];a[k]=v;return a});
+    const saveDEdit=(boardId)=>{const v=(Array.isArray(dEditVal)?dEditVal:[]).map(s=>(s||"").trim()).filter(Boolean);setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,design:v}:p));setDEditId(null);log("OOH Creative",`${boardId} → ${v.join(" / ")||"(cleared)"}`);notify(`${boardId} creative ${v.length?"set":"cleared"}`)};
     const cancelDEdit=()=>{setDEditId(null);setDEditVal("")};
 
     const dmaColors={BRM:"#D4A040",MTG:"#ec4899",GAD:"#059669",CHA:"#4AC8E8",HSV:"#f97316",KNX:"#6366f1",DHN:"#84cc16",NSH:"#06b6d4"};
@@ -3540,22 +3544,24 @@ const App=()=>{
                 </div>
               }
             </div>
-            {/* Per-board creative ("2026 Design") — your own naming convention */}
-            <div style={{marginTop:5,padding:"4px 6px",borderRadius:4,background:p.design?"#2a1f3e":"#1e1233",border:`1px solid ${p.design?"#9b7bb0":"#4a3565"}`}}>
-              <div style={{fontSize:10,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase",letterSpacing:.5,marginBottom:2,display:"flex",justifyContent:"space-between"}}><span>🎨 Creative</span>{p.vendorRef&&<span style={{color:"#6B5E80",fontWeight:500,textTransform:"none"}} title="Lamar's 2026 Design reference">Lamar: {p.vendorRef}</span>}</div>
+            {/* Per-board creative rotation — bulletins 2, posters/juniors 3 */}
+            {(()=>{const slots=creativeSlots(p.type);const dl=Array.isArray(p.design)?p.design:[];return<div style={{marginTop:5,padding:"4px 6px",borderRadius:4,background:dl.length?"#2a1f3e":"#1e1233",border:`1px solid ${dl.length?"#9b7bb0":"#4a3565"}`}}>
+              <div style={{fontSize:10,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase",letterSpacing:.5,marginBottom:2,display:"flex",justifyContent:"space-between"}}><span>🎨 Creative · {dl.length}/{slots}</span>{p.vendorRef&&<span style={{color:"#6B5E80",fontWeight:500,textTransform:"none"}} title="Lamar's 2026 Design reference">Lamar: {p.vendorRef}</span>}</div>
               {dEditId===p.boardId?
-                <div style={{display:"flex",gap:3,alignItems:"center"}}>
-                  <input value={dEditVal} onChange={e=>setDEditVal(e.target.value)} style={{flex:1,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:13,background:"#1e1233",color:"#E8DFF0"}} placeholder="Your creative name…" autoFocus onKeyDown={e=>{if(e.key==="Enter")saveDEdit(p.boardId);if(e.key==="Escape")cancelDEdit()}}/>
-                  <button onClick={()=>saveDEdit(p.boardId)} style={{padding:"2px 6px",background:"#9b7bb0",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✓</button>
-                  <button onClick={cancelDEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
+                <div style={{display:"flex",flexDirection:"column",gap:3}}>
+                  {Array.from({length:slots}).map((_,k)=><input key={k} value={(dEditVal&&dEditVal[k])||""} onChange={e=>setDSlot(k,e.target.value)} style={{padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:13,background:"#1e1233",color:"#E8DFF0"}} placeholder={`Creative ${k+1} of ${slots}…`} autoFocus={k===0} onKeyDown={e=>{if(e.key==="Enter")saveDEdit(p.boardId);if(e.key==="Escape")cancelDEdit()}}/>)}
+                  <div style={{display:"flex",gap:3,justifyContent:"flex-end"}}>
+                    <button onClick={()=>saveDEdit(p.boardId)} style={{padding:"2px 8px",background:"#9b7bb0",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✓ Save</button>
+                    <button onClick={cancelDEdit} style={{padding:"2px 8px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
+                  </div>
                 </div>:
-                <div onClick={()=>startDEdit(p.boardId,p.design)} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  {p.design?<div style={{fontSize:13,fontWeight:700,color:"#C4A0C8"}}>{p.design}</div>
-                  :<div style={{fontSize:13,color:"#9b7bb0",fontStyle:"italic"}}>No creative — click to add</div>}
-                  <span style={{fontSize:13,color:"#9B8EAD"}}>✎</span>
+                <div onClick={()=>startDEdit(p)} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",gap:4}}>
+                  {dl.length?<div style={{display:"flex",flexWrap:"wrap",gap:3}}>{dl.map((c,k)=><span key={k} style={{fontSize:12,fontWeight:700,color:"#fff",background:creativeColor(c),padding:"1px 6px",borderRadius:8}}>{c}</span>)}</div>
+                  :<div style={{fontSize:13,color:"#9b7bb0",fontStyle:"italic"}}>No creative — click to add {slots}</div>}
+                  <span style={{fontSize:13,color:"#9B8EAD",flexShrink:0}}>✎</span>
                 </div>
               }
-            </div>
+            </div>})()}
           </div>
         </div>;
       })}
@@ -3565,12 +3571,12 @@ const App=()=>{
       {photoPanel&&<PhotoModal p={photoPanel} onClose={()=>setPhotoPanel(null)}/>}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
         <div><PageHead title="Wettermark Keith — OOH Postings" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>{pops.length} boards · {[...new Set(pops.map(p=>p.dma))].length} DMAs · 2026 Lamar renewal · {totalImpr.toLocaleString()} weekly impressions · {pops.filter(p=>p.design).length} with creative</p>
+          <p style={{fontSize:13,color:"#9B8EAD"}}>{pops.length} boards · {[...new Set(pops.map(p=>p.dma))].length} DMAs · 2026 Lamar renewal · {totalImpr.toLocaleString()} weekly impressions · {pops.filter(p=>Array.isArray(p.design)&&p.design.length).length} with creative</p>
         </div>
         <div style={{display:"flex",gap:4}}>
           <Btn small onClick={()=>{
             const headers=["Board ID","Panel","DMA","Submarket","Vendor","Type","Size","Location","Zip","Impressions/Wk","Install Date","Facing","ISCI","ISCI Title","Creative","Lamar Ref","Contract","TAB#","Latitude","Longitude"];
-            const rows=fl.map(p=>{const co=WK_COORDS[p.boardId];const zip=typeof WK_ZIPS!=='undefined'?(WK_ZIPS[p.submarket]||""):"";return[p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),p.design||"",p.vendorRef||"",p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
+            const rows=fl.map(p=>{const co=WK_COORDS[p.boardId];const zip=typeof WK_ZIPS!=='undefined'?(WK_ZIPS[p.submarket]||""):"";return[p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),(Array.isArray(p.design)?p.design.join(" | "):""),p.vendorRef||"",p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
             exportCsv("WK_OOH_"+(om||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
@@ -3618,26 +3624,37 @@ const App=()=>{
           </div>
         </div>
         {(()=>{
-          const pins=fl.map(p=>{const co=WK_COORDS[p.boardId];const t=isciTitle(p.isci);return{id:p.boardId,lat:co?co[0]:0,lng:co?co[1]:0,location:p.location,vendor:p.vendor,size:p.size,impressions:p.impressions,market:p.dma,isci:p.isci||"",creative:t,closeImg:p.closeImg}});
-          const clusters=oohMapMode==="creative"?findClusters(pins,oohClusterRadius):{};
-          const pinsWithStatus=pins.map(p=>{let st=p.isci?"ISCI: "+p.isci:"Untagged";if(p.creative)st+=" · "+p.creative;if(clusters[p.id])st+=" · ⚠ "+clusters[p.id]+" neighbor"+(clusters[p.id]>1?"s":"")+" w/ same creative";return{...p,status:st}});
-          return<><OohMap pins={pinsWithStatus} colorFn={p=>oohMapMode==="creative"?creativeColor(p.creative):(dmaColors[p.market]||"#D4A040")} height={420}/>
+          const pins=fl.map(p=>{const co=WK_COORDS[p.boardId];const cr=(Array.isArray(p.design)&&p.design.length)?p.design:(isciTitle(p.isci)?[isciTitle(p.isci)]:[]);return{id:p.boardId,panel:p.panel,lat:co?co[0]:0,lng:co?co[1]:0,location:p.location,vendor:p.vendor,size:p.size,impressions:p.impressions,market:p.dma,isci:p.isci||"",creatives:cr,creative:cr[0]||"",closeImg:p.closeImg}});
+          // Conflict = two boards within the radius that SHARE at least one creative (highway stretch / mall bunching)
+          const conflicts=[];const clustered=new Set();
+          if(oohMapMode==="creative"){const cp=pins.filter(p=>p.creatives.length&&p.lat&&p.lng);for(let a=0;a<cp.length;a++)for(let b=a+1;b<cp.length;b++){const shared=cp[a].creatives.filter(c=>cp[b].creatives.includes(c));if(!shared.length)continue;const d=milesBetween(cp[a].lat,cp[a].lng,cp[b].lat,cp[b].lng);if(d<=oohClusterRadius){conflicts.push({shared,a:cp[a],b:cp[b],d});clustered.add(cp[a].id);clustered.add(cp[b].id)}}conflicts.sort((x,y)=>x.d-y.d)}
+          const pinsWithStatus=pins.map(p=>{let st=p.creatives.length?("🎨 "+p.creatives.join(" / ")):(p.isci?"ISCI: "+p.isci:"No creative");if(clustered.has(p.id))st+=" · ⚠ shares creative within "+oohClusterRadius+" mi";return{...p,status:st}});
+          return<><OohMap pins={pinsWithStatus} colorFn={p=>oohMapMode==="creative"?(p.creative?creativeColor(p.creative):"#475569"):(dmaColors[p.market]||"#D4A040")} height={420}/>
           {oohMapMode==="market"?
             <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>{Object.entries(dmaColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{k}</div>)}</div>
             :
-            (()=>{const titles=[...new Set(pins.map(p=>p.creative).filter(Boolean))].sort();const untaggedCnt=pins.filter(p=>!p.creative).length;const clusterCnt=Object.keys(clusters).length;return<div style={{marginTop:6}}>
-              {clusterCnt>0&&<div style={{textAlign:"center",fontSize:13,color:"#F4C242",fontWeight:600,marginBottom:6,padding:"4px 8px",background:"rgba(244,194,66,.1)",border:"1px solid rgba(244,194,66,.3)",borderRadius:4}}>⚠ {clusterCnt} board{clusterCnt!==1?"s":""} within {oohClusterRadius} mi of another running the same creative</div>}
+            (()=>{const titles=[...new Set(pins.flatMap(p=>p.creatives))].sort();const untaggedCnt=pins.filter(p=>!p.creatives.length).length;return<div style={{marginTop:6}}>
+              {clustered.size>0?<div style={{textAlign:"center",fontSize:13,color:"#F4C242",fontWeight:600,marginBottom:6,padding:"4px 8px",background:"rgba(244,194,66,.1)",border:"1px solid rgba(244,194,66,.3)",borderRadius:4}}>⚠ {clustered.size} board{clustered.size!==1?"s":""} within {oohClusterRadius} mi of another running the SAME creative — spread them out</div>:titles.length>0&&<div style={{textAlign:"center",fontSize:13,color:"#5BC4A0",fontWeight:600,marginBottom:6}}>✓ No same-creative boards within {oohClusterRadius} mi — clean spread</div>}
               {titles.length===0?
-                <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No ISCIs tagged yet — all boards untagged. Tag boards via the traffic flow to see them colored by creative.</div>
+                <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No creative assigned yet — name your creatives per board (🎨 on each card/row; bulletins 2, posters/juniors 3) to see them colored and check for bunching.</div>
                 :
                 <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-                  {titles.map(t=>{const cnt=pins.filter(p=>p.creative===t).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #4a3565"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
-                  {untaggedCnt>0&&<div style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:"#475569",border:"1px solid #4a3565"}}/><span style={{color:"#94a3b8"}}>untagged ({untaggedCnt})</span></div>}
+                  {titles.map(t=>{const cnt=pins.filter(p=>p.creatives.includes(t)).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #4a3565"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
+                  {untaggedCnt>0&&<div style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:"#475569",border:"1px solid #4a3565"}}/><span style={{color:"#94a3b8"}}>no creative ({untaggedCnt})</span></div>}
                 </div>
               }
+              {conflicts.length>0&&<div style={{marginTop:8,border:"1px solid rgba(244,194,66,.3)",borderRadius:6,overflow:"hidden"}}>
+                <div style={{padding:"5px 10px",background:"rgba(244,194,66,.12)",fontSize:12,fontWeight:700,color:"#F4C242"}}>⚠ {conflicts.length} same-creative pair{conflicts.length!==1?"s":""} within {oohClusterRadius} mi — possible highway/mall bunching</div>
+                <div style={{maxHeight:170,overflowY:"auto"}}>{conflicts.map((c,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 10px",borderTop:"1px solid #2d1f42",fontSize:12}}>
+                  <span style={{width:9,height:9,borderRadius:5,background:creativeColor(c.shared[0]),flexShrink:0}}/>
+                  <span style={{fontWeight:700,color:"#C4A0C8",minWidth:120}}>{c.shared.join(", ")}</span>
+                  <span style={{color:"#9B8EAD",flex:1}}><b>{c.a.panel}</b> ({c.a.market}) ↔ <b>{c.b.panel}</b> ({c.b.market})</span>
+                  <span style={{fontWeight:700,color:c.d<=1?"#E85A7A":"#D4A040",flexShrink:0}}>{c.d.toFixed(1)} mi</span>
+                </div>)}</div>
+              </div>}
             </div>})()
           }
-          <div style={{fontSize:14,color:"#9B8EAD",marginTop:4,textAlign:"center"}}>{pins.filter(p=>p.lat&&p.lng).length} of {fl.length} boards have coordinates</div>
+          <div style={{fontSize:14,color:"#9B8EAD",marginTop:4,textAlign:"center"}}>{pins.filter(p=>p.lat&&p.lng).length} of {fl.length} boards have coordinates{pins.filter(p=>p.creatives.length&&!(p.lat&&p.lng)).length>0?" · "+pins.filter(p=>p.creatives.length&&!(p.lat&&p.lng)).length+" with creative still need coordinates":""}</div>
           </>;
         })()}
        </div></Cd>:
@@ -3645,7 +3662,7 @@ const App=()=>{
           <div style={{fontSize:14,fontWeight:700}}>📋 WK OOH Reference — Board × Vendor × Contract × Status</div>
           <Btn small onClick={()=>{
             const headers=["#","Board ID","Panel","DMA","Submarket","Vendor","Type","Size","Location","City","Zip","Impressions/Wk","Install Date","Facing","ISCI","ISCI Title","Creative","Lamar Ref","Contract","TAB#","Latitude","Longitude"];
-            const rows=fl.map((p,i)=>{const co=WK_COORDS[p.boardId];const zip=WK_ZIPS[p.submarket]||"";return[i+1,p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,p.submarket,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),p.design||"",p.vendorRef||"",p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
+            const rows=fl.map((p,i)=>{const co=WK_COORDS[p.boardId];const zip=WK_ZIPS[p.submarket]||"";return[i+1,p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,p.submarket,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),(Array.isArray(p.design)?p.design.join(" | "):""),p.vendorRef||"",p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
             exportCsv("WK_OOH_Reference_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }}>📥 Export CSV</Btn>
         </div>
@@ -3742,7 +3759,7 @@ const App=()=>{
           </tr></thead>
             <tbody>{oLines.map((l,i)=>{const bd=usePanelMode?vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel):null;return<tr key={i}>
               <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={oPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></TD>
-              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{const v=e.target.value;upL(i,"panel",v);const b=vendorPanels.find(p=>p.panel===v);if(b&&b.design&&!l.isci)upL(i,"isci",b.design)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.dma} - {p.sub} - {p.type}{p.design?" · 🎨"+p.design:""}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
+              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{const v=e.target.value;upL(i,"panel",v);const b=vendorPanels.find(p=>p.panel===v);if(b&&Array.isArray(b.design)&&b.design.length&&!l.isci)upL(i,"isci",b.design.join(" / "))}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.dma} - {p.sub} - {p.type}{(Array.isArray(p.design)&&p.design.length)?" · 🎨"+p.design.join("/"):""}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
               {usePanelMode&&<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
               {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">All</option>{dmas.map(d=><option key={d} value={d}>{d}</option>)}</select></TD>}
               {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1e1233",color:"#E8DFF0"}}/></TD>}
@@ -3753,7 +3770,7 @@ const App=()=>{
           </table>
           <div style={{display:"flex",gap:6,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
             <Btn small onClick={addLine}>+ Add Line</Btn>
-            {usePanelMode&&<Btn small onClick={()=>{const used=oLines.map(l=>l.panel).filter(Boolean);const unassigned=vendorPanels.filter(p=>!used.includes(p.panel));if(!unassigned.length){notify("All panels already added");return}const nl=unassigned.map(p=>({flight:oPostDates||"",panel:p.panel,isci:"",units:"",notes:""}));setOLines(p=>[...p,...nl]);notify(unassigned.length+" panels added")}} color="#4AC8E8">+ Add All {trafficVendor||""} Panels</Btn>}
+            {usePanelMode&&<Btn small onClick={()=>{const used=oLines.map(l=>l.panel).filter(Boolean);const unassigned=vendorPanels.filter(p=>!used.includes(p.panel));if(!unassigned.length){notify("All panels already added");return}const nl=unassigned.map(p=>({flight:oPostDates||"",panel:p.panel,isci:(Array.isArray(p.design)&&p.design.length)?p.design.join(" / "):"",units:"",notes:""}));setOLines(p=>[...p,...nl]);notify(unassigned.length+" panels added (creative pre-filled where set)")}} color="#4AC8E8">+ Add All {trafficVendor||""} Panels</Btn>}
             <Btn small primary color="#D4A040" onClick={printOoh} disabled={!oLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
             <span style={{marginLeft:"auto",fontSize:12,color:"#94a3b8"}}>{usePanelMode?totalPanels+" panels":""+oLines.filter(l=>l.isci).length+" creatives | "+totalUnits+" units"}{trafficVendor?" | "+trafficVendor:""}</span>
           </div>
@@ -3857,13 +3874,13 @@ const App=()=>{
               </span>
             }</TD>
             <TD>{dEditId===p.boardId?
-              <div style={{display:"flex",gap:2,alignItems:"center"}}>
-                <input value={dEditVal} onChange={e=>setDEditVal(e.target.value)} style={{width:130,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:13}} placeholder="Creative name…" autoFocus onKeyDown={e=>{if(e.key==="Enter")saveDEdit(p.boardId);if(e.key==="Escape")cancelDEdit()}}/>
-                <button onClick={()=>saveDEdit(p.boardId)} style={{padding:"1px 4px",background:"#9b7bb0",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✓</button>
-                <button onClick={cancelDEdit} style={{padding:"1px 4px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✕</button>
+              <div style={{display:"flex",flexDirection:"column",gap:2,alignItems:"stretch"}}>
+                {Array.from({length:creativeSlots(p.type)}).map((_,k)=><input key={k} value={(dEditVal&&dEditVal[k])||""} onChange={e=>setDSlot(k,e.target.value)} style={{width:140,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:13}} placeholder={`Creative ${k+1}…`} autoFocus={k===0} onKeyDown={e=>{if(e.key==="Enter")saveDEdit(p.boardId);if(e.key==="Escape")cancelDEdit()}}/>)}
+                <div style={{display:"flex",gap:2}}><button onClick={()=>saveDEdit(p.boardId)} style={{padding:"1px 6px",background:"#9b7bb0",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✓</button>
+                <button onClick={cancelDEdit} style={{padding:"1px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✕</button></div>
               </div>:
-              <span onClick={()=>startDEdit(p.boardId,p.design)} style={{cursor:"pointer",fontSize:13,color:p.design?"#C4A0C8":"#9b7bb0",fontWeight:p.design?700:400}} title={p.vendorRef?("Lamar: "+p.vendorRef):""}>
-                {p.design||(p.vendorRef?<span style={{fontStyle:"italic",color:"#6B5E80"}}>+ add</span>:"—")} <span style={{fontSize:14,color:"#9B8EAD"}}>✎</span>
+              <span onClick={()=>startDEdit(p)} style={{cursor:"pointer",fontSize:13}} title={p.vendorRef?("Lamar: "+p.vendorRef):""}>
+                {(Array.isArray(p.design)&&p.design.length)?<span style={{display:"inline-flex",flexWrap:"wrap",gap:2}}>{p.design.map((c,k)=><span key={k} style={{color:"#fff",background:creativeColor(c),padding:"0 5px",borderRadius:7,fontWeight:700,fontSize:11}}>{c}</span>)}</span>:<span style={{color:"#9b7bb0",fontStyle:"italic"}}>+ add {creativeSlots(p.type)}</span>} <span style={{fontSize:14,color:"#9B8EAD"}}>✎</span>
               </span>
             }</TD>
             <TD><button onClick={()=>setPhotoPanel(p)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,padding:0}} title="View Photos">📷</button></TD>
