@@ -371,8 +371,8 @@ const CALENDAR=D_C.map(r=>({month:r[0],rotDue:r[1],bcStart:r[2],bcEnd:r[3]}));
 // Center default so it auto-advances by the calendar instead of sitting on the
 // already-airing month.
 const nextTrafficMonth=()=>{const t=new Date();t.setHours(0,0,0,0);const c=CALENDAR.find(c=>new Date(c.bcStart+"T00:00:00")>t);return c?c.month:(CALENDAR[CALENDAR.length-1]||{}).month||"December"};
-const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const base=D_P.map(r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17]}));const extra=(typeof D_P_NEW!=="undefined"?D_P_NEW:[]).map(r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17]}));return[...base,...extra]})();
-const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",PAN:"Panama City"};
+const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const mk=r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17],design:r[18]||"",vendorRef:r[19]||""});const base=D_P.map(mk);const extra=(typeof D_P_NEW!=="undefined"?D_P_NEW:[]).map(mk);return[...base,...extra]})();
+const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City"};
 // Reverse map: full name → code (case-insensitive lookup for market normalization)
 const DM_REV=Object.fromEntries(Object.entries(DM).flatMap(([c,n])=>[[n,c],[n.toLowerCase(),c],[c,c],[c.toLowerCase(),c]]));
 // Normalize any market value (code or full name) to its 3-letter code
@@ -903,6 +903,7 @@ const App=()=>{
         if(docs.customTags?.data){const d=JSON.parse(docs.customTags.data);if(d["Postman Law"]?.categories||d["Wettermark Keith"]?.categories)setCustomFields(d);else if(Object.keys(d).length){const migrated={};Object.entries(d).forEach(([brand,tags])=>{if(Array.isArray(tags)){migrated[brand]={categories:tags.filter(t=>["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),valueProps:tags.filter(t=>!["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),vos:[]}}else{migrated[brand]=tags}});setCustomFields(migrated)}}
         if(docs.settings?.data){try{const s=JSON.parse(docs.settings.data);if(typeof s.campaignIcsUrl==="string")setCampaignIcsUrl(s.campaignIcsUrl)}catch(_e){}}
         try{if(docs.wkOohIscis?.data){const d=JSON.parse(docs.wkOohIscis.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>d[p.boardId]!==undefined?{...p,isci:d[p.boardId]}:p))}}catch(_e){console.warn("wkOohIscis load skipped",_e)}
+        try{if(docs.wkOohDesigns?.data){const d=JSON.parse(docs.wkOohDesigns.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>d[p.boardId]!==undefined?{...p,design:d[p.boardId]}:p))}}catch(_e){console.warn("wkOohDesigns load skipped",_e)}
         try{if(docs.plOohIscis?.data){const d=JSON.parse(docs.plOohIscis.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isci:d[p.unit]}:p))}}catch(_e){console.warn("plOohIscis load skipped",_e)}
         try{if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}}catch(_e){console.warn("oohPhotos load skipped",_e)}
         console.log("Supabase: loaded",Object.keys(docs).length,"collections");
@@ -1082,6 +1083,7 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohContracts).length>0)saveToDb("oohContracts",oohContracts)},[oohContracts,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("customTags",customFields)},[customFields,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(pops.filter(p=>p.isci).map(p=>[p.boardId,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("wkOohIscis",isciMap)},[pops,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const designMap=Object.fromEntries(pops.filter(p=>p.design).map(p=>[p.boardId,p.design]));if(Object.keys(designMap).length>0)saveToDb("wkOohDesigns",designMap)},[pops,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(plPanels.filter(p=>p.isci).map(p=>[p.unit,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("plOohIscis",isciMap)},[plPanels,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohPhotos).length>0)saveToDb("oohPhotos",oohPhotos)},[oohPhotos,dbLoaded]);
 
@@ -1248,6 +1250,7 @@ const App=()=>{
   // OOH WK page state (lifted to prevent remount on photo upload)
   const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");const[oohMapMode,setOohMapMode]=useState("market");const[oohClusterRadius,setOohClusterRadius]=useState(3);
   const[oohEditId,setOohEditId]=useState(null);const[oohEditVal,setOohEditVal]=useState("");
+  const[oohDesignEditId,setOohDesignEditId]=useState(null);const[oohDesignEditVal,setOohDesignEditVal]=useState("");
   const[oohPhotoPanel,setOohPhotoPanel]=useState(null);
   const[oohLines,setOohLines]=useState([{flight:"",isci:"",units:"",notes:""}]);
   const[oohPostDates,setOohPostDates]=useState("");const[oohVersion,setOohVersion]=useState("");const[oohComments,setOohComments]=useState("");
@@ -3443,6 +3446,7 @@ const App=()=>{
   const OohPg=()=>{
     const om=oohOm,setOm=setOohOm,ov=oohOv,setOv=setOohOv,oVend=oohOVend,setOVend=setOohOVend,viewMode=oohViewMode,setViewMode=setOohViewMode,trafficMode=oohTrafficMode,setTrafficMode=setOohTrafficMode;
     const editId=oohEditId,setEditId=setOohEditId,editVal=oohEditVal,setEditVal=setOohEditVal;
+    const dEditId=oohDesignEditId,setDEditId=setOohDesignEditId,dEditVal=oohDesignEditVal,setDEditVal=setOohDesignEditVal;
     const photoPanel=oohPhotoPanel,setPhotoPanel=setOohPhotoPanel;
     const oLines=oohLines,setOLines=setOohLines;
     const oPostDates=oohPostDates,setOPostDates=setOohPostDates;
@@ -3461,8 +3465,12 @@ const App=()=>{
     const saveEdit=(boardId)=>{setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,isci:editVal}:p));setEditId(null);log("OOH Assign",`${boardId} → ${editVal||"(cleared)"}`);notify(`${boardId} updated`)};
     const cancelEdit=()=>{setEditId(null);setEditVal("")};
     const isciTitle=(code)=>{if(!code)return"";const m=iscis.find(i=>i.code===code);return m?m.title:""};
+    // Per-board creative ("2026 Design") — your own naming convention, editable per market/per board.
+    const startDEdit=(boardId,cur)=>{setDEditId(boardId);setDEditVal(cur||"")};
+    const saveDEdit=(boardId)=>{const v=dEditVal.trim();setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,design:v}:p));setDEditId(null);log("OOH Creative",`${boardId} → ${v||"(cleared)"}`);notify(`${boardId} creative ${v?"set":"cleared"}`)};
+    const cancelDEdit=()=>{setDEditId(null);setDEditVal("")};
 
-    const dmaColors={BRM:"#D4A040",MTG:"#E85A7A",GAD:"#059669",CHA:"#4AC8E8"};
+    const dmaColors={BRM:"#D4A040",MTG:"#ec4899",GAD:"#059669",CHA:"#4AC8E8",HSV:"#f97316",KNX:"#6366f1",DHN:"#84cc16",NSH:"#06b6d4"};
 
     const PhotoModal=({p,onClose})=>{
       const close=POP_IMGS[p.closeImg];const dist=POP_IMGS[p.distImg];
@@ -3532,6 +3540,22 @@ const App=()=>{
                 </div>
               }
             </div>
+            {/* Per-board creative ("2026 Design") — your own naming convention */}
+            <div style={{marginTop:5,padding:"4px 6px",borderRadius:4,background:p.design?"#2a1f3e":"#1e1233",border:`1px solid ${p.design?"#9b7bb0":"#4a3565"}`}}>
+              <div style={{fontSize:10,fontWeight:700,color:"#9B8EAD",textTransform:"uppercase",letterSpacing:.5,marginBottom:2,display:"flex",justifyContent:"space-between"}}><span>🎨 Creative</span>{p.vendorRef&&<span style={{color:"#6B5E80",fontWeight:500,textTransform:"none"}} title="Lamar's 2026 Design reference">Lamar: {p.vendorRef}</span>}</div>
+              {dEditId===p.boardId?
+                <div style={{display:"flex",gap:3,alignItems:"center"}}>
+                  <input value={dEditVal} onChange={e=>setDEditVal(e.target.value)} style={{flex:1,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:13,background:"#1e1233",color:"#E8DFF0"}} placeholder="Your creative name…" autoFocus onKeyDown={e=>{if(e.key==="Enter")saveDEdit(p.boardId);if(e.key==="Escape")cancelDEdit()}}/>
+                  <button onClick={()=>saveDEdit(p.boardId)} style={{padding:"2px 6px",background:"#9b7bb0",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✓</button>
+                  <button onClick={cancelDEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
+                </div>:
+                <div onClick={()=>startDEdit(p.boardId,p.design)} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  {p.design?<div style={{fontSize:13,fontWeight:700,color:"#C4A0C8"}}>{p.design}</div>
+                  :<div style={{fontSize:13,color:"#9b7bb0",fontStyle:"italic"}}>No creative — click to add</div>}
+                  <span style={{fontSize:13,color:"#9B8EAD"}}>✎</span>
+                </div>
+              }
+            </div>
           </div>
         </div>;
       })}
@@ -3541,12 +3565,12 @@ const App=()=>{
       {photoPanel&&<PhotoModal p={photoPanel} onClose={()=>setPhotoPanel(null)}/>}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
         <div><PageHead title="Wettermark Keith — OOH Postings" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>{pops.length} Lamar panels · Contract 5030974 / 5060911 · {totalImpr.toLocaleString()} weekly impressions</p>
+          <p style={{fontSize:13,color:"#9B8EAD"}}>{pops.length} boards · {[...new Set(pops.map(p=>p.dma))].length} DMAs · 2026 Lamar renewal · {totalImpr.toLocaleString()} weekly impressions · {pops.filter(p=>p.design).length} with creative</p>
         </div>
         <div style={{display:"flex",gap:4}}>
           <Btn small onClick={()=>{
-            const headers=["Board ID","Panel","DMA","Submarket","Vendor","Type","Size","Location","Zip","Impressions/Wk","Install Date","Facing","ISCI","ISCI Title","Contract","TAB#","Latitude","Longitude"];
-            const rows=fl.map(p=>{const co=WK_COORDS[p.boardId];const zip=typeof WK_ZIPS!=='undefined'?(WK_ZIPS[p.submarket]||""):"";return[p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
+            const headers=["Board ID","Panel","DMA","Submarket","Vendor","Type","Size","Location","Zip","Impressions/Wk","Install Date","Facing","ISCI","ISCI Title","Creative","Lamar Ref","Contract","TAB#","Latitude","Longitude"];
+            const rows=fl.map(p=>{const co=WK_COORDS[p.boardId];const zip=typeof WK_ZIPS!=='undefined'?(WK_ZIPS[p.submarket]||""):"";return[p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),p.design||"",p.vendorRef||"",p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
             exportCsv("WK_OOH_"+(om||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
@@ -3620,8 +3644,8 @@ const App=()=>{
        viewMode==="ref"?<Cd><div style={{padding:10}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
           <div style={{fontSize:14,fontWeight:700}}>📋 WK OOH Reference — Board × Vendor × Contract × Status</div>
           <Btn small onClick={()=>{
-            const headers=["#","Board ID","Panel","DMA","Submarket","Vendor","Type","Size","Location","City","Zip","Impressions/Wk","Install Date","Facing","ISCI","ISCI Title","Contract","TAB#","Latitude","Longitude"];
-            const rows=fl.map((p,i)=>{const co=WK_COORDS[p.boardId];const zip=WK_ZIPS[p.submarket]||"";return[i+1,p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,p.submarket,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
+            const headers=["#","Board ID","Panel","DMA","Submarket","Vendor","Type","Size","Location","City","Zip","Impressions/Wk","Install Date","Facing","ISCI","ISCI Title","Creative","Lamar Ref","Contract","TAB#","Latitude","Longitude"];
+            const rows=fl.map((p,i)=>{const co=WK_COORDS[p.boardId];const zip=WK_ZIPS[p.submarket]||"";return[i+1,p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,p.submarket,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),p.design||"",p.vendorRef||"",p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
             exportCsv("WK_OOH_Reference_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }}>📥 Export CSV</Btn>
         </div>
@@ -3645,7 +3669,7 @@ const App=()=>{
         const dmaLabel=om||dmas.join("/");
         const trafficVendor=oVend||"";
         const vendorBoards=pops.filter(p=>(om?p.dma===om:true)&&(trafficVendor?p.vendor===trafficVendor:true));
-        const vendorPanels=vendorBoards.filter(p=>oohTypeF?mediaCategory(p.type)===oohTypeF:true).map(p=>({id:p.boardId,panel:p.panel,dma:p.dma,sub:p.submarket,loc:p.location,type:p.type,size:p.size,impr:p.impressions,tab:p.tab})).sort((a,b)=>a.dma.localeCompare(b.dma)||a.panel.localeCompare(b.panel));
+        const vendorPanels=vendorBoards.filter(p=>oohTypeF?mediaCategory(p.type)===oohTypeF:true).map(p=>({id:p.boardId,panel:p.panel,dma:p.dma,sub:p.submarket,loc:p.location,type:p.type,size:p.size,impr:p.impressions,tab:p.tab,design:p.design})).sort((a,b)=>a.dma.localeCompare(b.dma)||a.panel.localeCompare(b.panel));
         const totalUnits=oLines.reduce((a,l)=>a+(parseInt(l.units)||0),0);
         const totalPanels=oLines.filter(l=>l.panel).length;
         const usePanelMode=trafficMode==="panels";
@@ -3718,7 +3742,7 @@ const App=()=>{
           </tr></thead>
             <tbody>{oLines.map((l,i)=>{const bd=usePanelMode?vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel):null;return<tr key={i}>
               <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={oPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></TD>
-              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.dma} - {p.sub} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
+              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{const v=e.target.value;upL(i,"panel",v);const b=vendorPanels.find(p=>p.panel===v);if(b&&b.design&&!l.isci)upL(i,"isci",b.design)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.dma} - {p.sub} - {p.type}{p.design?" · 🎨"+p.design:""}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
               {usePanelMode&&<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
               {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">All</option>{dmas.map(d=><option key={d} value={d}>{d}</option>)}</select></TD>}
               {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1e1233",color:"#E8DFF0"}}/></TD>}
@@ -3809,7 +3833,7 @@ const App=()=>{
           </div>
         </Cd>;
        })():
-      <Cd><div style={{overflowX:"auto",maxHeight:480}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Panel</TH><TH>Market</TH><TH>DMA</TH><TH>Location</TH><TH>Impr/Wk</TH><TH>Installed</TH><TH>Dir</TH><TH>Contract</TH><TH>Status</TH><TH>ISCI</TH><TH>📷</TH></tr></thead>
+      <Cd><div style={{overflowX:"auto",maxHeight:480}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Panel</TH><TH>Market</TH><TH>DMA</TH><TH>Location</TH><TH>Impr/Wk</TH><TH>Installed</TH><TH>Dir</TH><TH>Contract</TH><TH>Status</TH><TH>ISCI</TH><TH>Creative</TH><TH>📷</TH></tr></thead>
         <tbody>{fl.map((p,i)=>
           <tr key={p.boardId}>
             <TD b>{i+1}</TD>
@@ -3830,6 +3854,16 @@ const App=()=>{
               </div>:
               <span onClick={()=>startEdit(p.boardId,p.isci)} style={{cursor:"pointer",fontFamily:"monospace",fontSize:14,color:p.isci?"#5BC4A0":"#D4A040",fontWeight:p.isci?700:400}}>
                 {p.isci||"—"} <span style={{fontSize:14,color:"#9B8EAD"}}>✎</span>
+              </span>
+            }</TD>
+            <TD>{dEditId===p.boardId?
+              <div style={{display:"flex",gap:2,alignItems:"center"}}>
+                <input value={dEditVal} onChange={e=>setDEditVal(e.target.value)} style={{width:130,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:13}} placeholder="Creative name…" autoFocus onKeyDown={e=>{if(e.key==="Enter")saveDEdit(p.boardId);if(e.key==="Escape")cancelDEdit()}}/>
+                <button onClick={()=>saveDEdit(p.boardId)} style={{padding:"1px 4px",background:"#9b7bb0",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✓</button>
+                <button onClick={cancelDEdit} style={{padding:"1px 4px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✕</button>
+              </div>:
+              <span onClick={()=>startDEdit(p.boardId,p.design)} style={{cursor:"pointer",fontSize:13,color:p.design?"#C4A0C8":"#9b7bb0",fontWeight:p.design?700:400}} title={p.vendorRef?("Lamar: "+p.vendorRef):""}>
+                {p.design||(p.vendorRef?<span style={{fontStyle:"italic",color:"#6B5E80"}}>+ add</span>:"—")} <span style={{fontSize:14,color:"#9B8EAD"}}>✎</span>
               </span>
             }</TD>
             <TD><button onClick={()=>setPhotoPanel(p)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,padding:0}} title="View Photos">📷</button></TD>
