@@ -371,8 +371,17 @@ const CALENDAR=D_C.map(r=>({month:r[0],rotDue:r[1],bcStart:r[2],bcEnd:r[3]}));
 // Center default so it auto-advances by the calendar instead of sitting on the
 // already-airing month.
 const nextTrafficMonth=()=>{const t=new Date();t.setHours(0,0,0,0);const c=CALENDAR.find(c=>new Date(c.bcStart+"T00:00:00")>t);return c?c.month:(CALENDAR[CALENDAR.length-1]||{}).month||"December"};
-const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const base=D_P.map(r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17]}));const extra=(typeof D_P_NEW!=="undefined"?D_P_NEW:[]).map(r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17]}));return[...base,...extra]})();
-const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",PAN:"Panama City"};
+const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const mk=r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17],design:(r[18]?(Array.isArray(r[18])?r[18].filter(Boolean):[r[18]]):[]),vendorRef:r[19]||""});const base=D_P.map(mk);const extra=(typeof D_P_NEW!=="undefined"?D_P_NEW:[]).map(mk);return[...base,...extra]})();
+const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City"};
+// Market rolls up by FULL NAME everywhere in the app (traffic library, history,
+// metrics, AI planner) — the prefix lives ONLY in the ISCI code. Gadsden (GAD)
+// is not its own market; it falls under Birmingham.
+const DMA_MARKET={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",GAD:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City"};
+const oohMarket=(dma)=>DMA_MARKET[dma]||DM[dma]||dma;
+// The ISCI market prefix is the board's REAL market — GAD is never a prefix
+// (Gadsden rolls into Birmingham → BRM). Extend this map if more areas roll up.
+const OOH_PREFIX_ROLLUP={GAD:"BRM"};
+const oohPrefix=(dma)=>OOH_PREFIX_ROLLUP[dma]||dma;
 // Reverse map: full name → code (case-insensitive lookup for market normalization)
 const DM_REV=Object.fromEntries(Object.entries(DM).flatMap(([c,n])=>[[n,c],[n.toLowerCase(),c],[c,c],[c.toLowerCase(),c]]));
 // Normalize any market value (code or full name) to its 3-letter code
@@ -417,12 +426,76 @@ const OOH_SPECS={
 };
 // Map raw physical media type strings to canonical category for filtering/badges
 const mediaCategory=(t)=>{const s=(t||"").toLowerCase();if(s.includes("digital"))return"Digital";if(s.includes("poster"))return"Poster";if(s.includes("bulletin"))return"Bulletin";if(s.includes("wall")||s.includes("hotspot")||s.includes("overpass"))return"Other";return"Other"};
+// ── OOH BOARD CLASSES ────────────────────────────────────────────
+// Each physical board format gets its own creative treatment: how many
+// creatives it carries, whether it rotates (digital loop / rotary vinyl
+// that moves locations on the change cycle), and a spec line for the UI.
+const BOARD_CLASSES={
+  bulletin:{key:"bulletin",label:"Bulletin",icon:"▭",color:"#4AC8E8",slots:2,rotates:false,unit:"creative",spec:"Permanent bulletin — 2-creative rotation"},
+  junior:  {key:"junior",  label:"Junior",  icon:"▫",color:"#5BC4A0",slots:3,rotates:false,unit:"creative",spec:"Junior bulletin / poster — 3-creative rotation"},
+  static:  {key:"static",  label:"Static Poster",icon:"▢",color:"#F4C242",slots:3,rotates:false,unit:"creative",spec:"Static poster — 3-creative rotation"},
+  rotary:  {key:"rotary",  label:"Rotary",  icon:"⟳",color:"#E85A7A",slots:3,rotates:true, unit:"position",spec:"Rotary — vinyl rotates locations each change cycle"},
+  digital: {key:"digital", label:"Digital", icon:"◆",color:"#C084FC",slots:3,rotates:true, unit:"frame",   spec:"Digital — looping creative rotation"},
+};
+const boardClass=(type,size)=>{const s=((type||"")+" "+(size||"")).toLowerCase();
+  if(s.includes("digital"))return BOARD_CLASSES.digital;
+  if(s.includes("rotary")||s.includes("rotation"))return BOARD_CLASSES.rotary;
+  if(s.includes("junior"))return BOARD_CLASSES.junior;
+  if(s.includes("poster"))return BOARD_CLASSES.static;
+  if(s.includes("bulletin")||s.includes("preempt"))return BOARD_CLASSES.bulletin;
+  return BOARD_CLASSES.static;};
+const creativeSlots=(type,size)=>boardClass(type,size).slots;
+// WK OOH creative catalog (real artwork, from Jessica's set). Bulletins and
+// posters carry DIFFERENT creatives, so the per-board dropdown is filtered to
+// the board's pool. Picked from a dropdown — no free text. Per-board display
+// name is generated to the convention "WK <Class> - <Size> <Market> · <Concept>".
+const WK_OOH_CREATIVES={
+  bulletin:["Case Cause Shield","It's Personal CK"],
+  poster:["Case Cause CK Blue","Case Cause CK Gold","It's Personal CK"]
+};
+// Bulletins (incl. digital bulletins) draw the bulletin pool; posters/juniors/rotary draw the poster pool.
+const creativePoolKey=(type,size)=>{const k=boardClass(type,size).key;return(k==="bulletin"||k==="digital")?"bulletin":"poster"};
+const fullCreativeName=(board,concept)=>concept?`WK ${boardClass(board.type,board.size).label} - ${oohPrefix(board.dma)} - ${oohNormSize(board.size)} - ${concept}`:"";
+// ── Creative-file matching (so TIFFs upload without renaming) ──
+// Normalise a board/file size to a comparable form: 10'6x22'9 → 10.6x22.9, 14'x48' → 14x48.
+const oohNormSize=(s)=>String(s||"").toLowerCase().replace(/["”\s]/g,"").split("x").map(t=>t.replace(/['’]/g,".").replace(/[^0-9.]/g,"").replace(/\.+$/,"").replace(/^\.+/,"")).filter(Boolean).join("x");
+const OOH_MKT2DMA={birmingham:"BRM",biringham:"BRM",bham:"BRM",montgomery:"MTG",huntsville:"HSV",decatur:"HSV",florence:"HSV",madison:"HSV",cullman:"HSV",athens:"HSV",knoxville:"KNX",dothan:"DHN",enterprise:"DHN",nashville:"NSH",gadsden:"GAD",anniston:"GAD",centre:"GAD",tuscaloosa:"BRM"};
+// Parse a creative filename → {dma, size, concept}. Handles the clean convention
+// ("WK Static Poster - 10.6x22.9 - BRM - Case Cause - CK Blue") and the messy
+// source names ("WK_Birmingham_Cause_14x48", "WK_Birmingham_Cause_Gold_10.6x22.9").
+const parseOohCreativeFile=(name)=>{
+  const base=String(name||"").replace(/\.[^.]+$/,"");const L=base.toLowerCase();
+  let dma=null;for(const k in OOH_MKT2DMA){if(L.includes(k)){dma=OOH_MKT2DMA[k];break}}
+  if(!dma){const m=base.toUpperCase().match(/\b(BRM|GAD|MTG|HSV|KNX|DHN|NSH)\b/);if(m)dma=m[1]}
+  let concept=null;
+  if(/cause/.test(L))concept=/blue/.test(L)?"Case Cause CK Blue":/gold/.test(L)?"Case Cause CK Gold":"Case Cause Shield";
+  else if(/personal/.test(L))concept="It's Personal CK";
+  const sm=base.match(/\d+\.?\d*\s*['’]?\s*\d*\s*[xX]\s*\d+\.?\d*\s*['’]?\s*\d*/);
+  const size=sm?oohNormSize(sm[0]):null;
+  return{dma,concept,size};
+};
+// Find the ISCI index a creative file belongs to (by market+size+creative). -1 if none.
+const matchOohCreativeFile=(name,iscis)=>{
+  const{dma,concept,size}=parseOohCreativeFile(name);
+  if(!dma||!concept||!size)return -1;
+  return iscis.findIndex(i=>i.suffix==="O"&&oohPrefix(i.dma)===oohPrefix(dma)&&oohNormSize(i.dur)===size&&String(i.title||"").split(" - ").pop().trim()===concept);
+};
+// The convention filename the VENDOR should receive (you never rename your source).
+const oohVendorFileName=(board)=>`WK ${boardClass(board.type,board.size).label} - ${oohPrefix(board.dma)} - ${oohNormSize(board.size)} - ${(Array.isArray(board.design)?board.design[0]:board.design)||""}`;
+// Download link that forces the vendor's copy to the convention name (Supabase ?download=).
+const oohVendorDl=(u,name)=>{if(!u)return u;const ext=(String(u).split("?")[0].match(/\.([a-z0-9]+)$/i)||[,""])[1];const fn=encodeURIComponent(name+(ext?"."+ext:""));return/supabase\.co/.test(u)?u+(u.includes("?")?"&":"?")+"download="+fn:dlUrl(u)};
 const MEDIA_CAT_COLORS={Poster:{fg:"#F4C242",bg:"rgba(244,194,66,.15)",border:"#F4C242"},Bulletin:{fg:"#4AC8E8",bg:"rgba(74,200,232,.15)",border:"#4AC8E8"},Digital:{fg:"#C084FC",bg:"rgba(192,132,252,.15)",border:"#C084FC"},Other:{fg:"#94a3b8",bg:"rgba(148,163,184,.15)",border:"#94a3b8"}};
 const MediaBadge=({type,size="sm"})=>{const cat=mediaCategory(type);const c=MEDIA_CAT_COLORS[cat];const pad=size==="sm"?"1px 6px":"2px 8px";const fs=size==="sm"?10:11;return React.createElement("span",{style:{display:"inline-block",padding:pad,borderRadius:3,fontSize:fs,fontWeight:700,color:c.fg,background:c.bg,border:"1px solid "+c.border,letterSpacing:.3,textTransform:"uppercase"}},cat)};
 // Stable, deterministic color for any creative title. Same input → same color, always.
 // Used to color boards by what creative is running on them (independent of market prefix in ISCI code).
 const CREATIVE_PALETTE=["#4AC8E8","#F4C242","#9B7BB0","#5BC4A0","#E85A7A","#F08C3B","#6B8AFD","#EF6C9C","#A0D468","#C084FC","#FFA552","#4DD0E1","#FF7F50","#26A69A","#AB47BC","#FFCA28","#42A5F5","#66BB6A","#EC407A","#7E57C2"];
-const creativeColor=(title)=>{if(!title||!title.trim())return"#475569";let h=0;const s=title.trim().toLowerCase();for(let i=0;i<s.length;i++)h=((h<<5)-h+s.charCodeAt(i))|0;return CREATIVE_PALETTE[Math.abs(h)%CREATIVE_PALETTE.length]};
+// Fixed, maximally-distinct colours for the known WK creatives (the hash put them
+// all in the same blue range). It's Personal CK is split Bulletin vs Poster.
+const OOH_FIXED_COLORS={"Case Cause Shield":"#DC2626","It's Personal CK (Bulletin)":"#7C3AED","Case Cause CK Blue":"#2563EB","Case Cause CK Gold":"#D4A040","It's Personal CK (Poster)":"#16A34A","It's Personal CK":"#16A34A"};
+const creativeColor=(title)=>{if(!title||!title.trim())return"#475569";if(OOH_FIXED_COLORS[title.trim()])return OOH_FIXED_COLORS[title.trim()];let h=0;const s=title.trim().toLowerCase();for(let i=0;i<s.length;i++)h=((h<<5)-h+s.charCodeAt(i))|0;return CREATIVE_PALETTE[Math.abs(h)%CREATIVE_PALETTE.length]};
+// Map a board's creative concept to its display identity, splitting the shared
+// "It's Personal CK" by board format so all 5 placements read distinctly.
+const oohCreativeId=(concept,type,size)=>concept==="It's Personal CK"?concept+" ("+(creativePoolKey(type,size)==="bulletin"?"Bulletin":"Poster")+")":concept;
 // Haversine miles between two lat/lng pairs
 const milesBetween=(la1,ln1,la2,ln2)=>{const R=3959;const r=Math.PI/180;const dLa=(la2-la1)*r;const dLn=(ln2-ln1)*r;const a=Math.sin(dLa/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLn/2)**2;return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))};
 // For each pin with a creative title, count how many other pins within `radius` miles run the SAME title
@@ -535,6 +608,9 @@ const DropZone=({onFiles,accept,multiple,children,style:sx,disabled})=>{const[ov
 const WK_ZIPS={"Anniston":"36201","Benton":"37307","Birmingham":"35203","Bonny Oaks / Tyner":"37421","Brainerd / Midtown":"37411","Chattanooga":"37402","Childersburg":"35044","Cleveland":"37311","Decatur":"37322","Downtown Chatt":"37402","Dunlap":"37327","East Brainerd":"37421","East Ridge":"37412","Fort Oglethorpe":"30742","Gadsden":"35901","Greenville":"36037","Hixson":"37343","Hwy 58/Harrison":"37341","Jasper":"35501","Lafayette":"30728","Lakesite":"37379","Lookout Valley":"37350","Middle Valley":"37343","Montgomery":"36104","N. Shore/N. Chatt":"37405","Ooltewah":"37363","Pell City":"35125","Red Bank":"37415","Ringgold":"30736","Riverside/Amnicola":"37406","Rossville":"30741","Sale Creek":"37373","Selma":"36701","Signal Mtn/Mtn Creek":"37377","South Pittsburg":"37380","St. Elmo":"37409","Talladega":"35160","Trenton":"30752","Whitwell":"37397","Huntsville":"35801","Athens":"35611","Priceville":"35603","Cullman":"35055","Madison":"35758","Haleyville":"35565","Muscle Shoals":"35661","Falkville":"35622","Sheffield":"35660","Tuscumbia":"35674","Florence":"35630","Hartselle":"35640","Russellville":"35653","Guntersville":"35976","Dothan":"36301","Enterprise":"36330","Tuscaloosa":"35401","Knoxville":"37902"};
 const PL_ZIPS={"Chicago":"60601","Minneapolis":"55401","Cincinnati":"45202","Denver":"80202","Countryside":"60525","Bridgeview":"60455","Cicero":"60804","Berwyn":"60402","Summit":"60501","Melrose Park":"60160","Bellwood":"60104","Harvey":"60426","Blue Island":"60406","Calumet City":"60409","Schiller Park":"60176","Franklin Park":"60131","Broadview":"60155","Maywood":"60153","Stickney":"60402","Bedford Park":"60499","Lyons":"60534"};
 const WK_COORDS={"CHA-RGN-4010":[35.177601,-84.914373],"CHA-RGN-6005":[35.016692,-85.162505],"CHA-RGN-7494":[35.223438,-84.883059],"CHA-RGN-8531":[35.088734,-85.187028],"CHA-RGN-9346":[34.971694,-85.268766],"CHA-RGN-9348":[35.113019,-85.265048],"CHA-RGN-9354":[35.373917,-85.113959],"CHA-RGN-9454":[35.039466,-85.150667],"CHA-RGN-9683":[34.928278,-85.155382],"CHA-RGN-2410":[35.1735,-84.9312],"CHA-RGN-89244":[35.0825,-85.222],"CHA-RGN-85364":[35.098,-85.209],"CHA-RGN-84022":[35.0365,-85.254],"CHA-RGN-85019":[35.162,-84.878],"CHA-RGN-89201":[35.1715,-84.871],"CHA-RGN-85026":[35.167,-84.874],"CHA-RGN-2472":[35.168,-84.862],"CHA-RGN-89192":[35.218,-84.884],"CHA-RGN-2401":[35.16,-84.877],"CHA-RGN-89188":[35.17,-84.873],"CHA-RGN-7489":[35.174,-84.875],"CHA-RGN-89194":[35.156,-84.876],"CHA-RGN-2343":[35.523,-84.648],"CHA-RGN-83242":[35.055,-85.295],"CHA-RGN-85547":[35.025,-85.312],"CHA-RGN-83165":[35.021,-85.305],"CHA-RGN-89234":[35.0185,-85.29],"CHA-RGN-2213":[35.047,-85.293],"CHA-RGN-84004":[35.045,-85.318],"CHA-RGN-85407":[35.054,-85.313],"CHA-RGN-84064":[35.0435,-85.297],"CHA-RGN-83169":[35.026,-85.302],"CHA-RGN-89210":[35.373,-85.393],"CHA-RGN-9371":[35.019,-85.156],"CHA-RGN-83084":[34.993,-85.212],"CHA-RGN-85097":[34.951,-85.258],"CHA-RGN-85393":[35.131,-85.258],"CHA-RGN-2182":[35.134,-85.236],"CHA-RGN-9369":[35.121,-85.264],"CHA-RGN-81075":[35.11,-85.298],"CHA-RGN-84254":[35.115,-85.148],"CHA-RGN-2480":[34.721,-85.29],"CHA-RGN-2271":[35.154,-85.247],"CHA-RGN-82080":[35.018,-85.378],"CHA-RGN-89150":[35.158,-85.212],"CHA-RGN-81113":[35.072,-85.322],"CHA-RGN-89175":[35.082,-85.063],"CHA-RGN-81072":[35.11,-85.303],"CHA-RGN-81221":[35.118,-85.3],"CHA-RGN-2461":[34.916,-85.108],"CHA-RGN-2397":[34.921,-85.113],"CHA-RGN-89080":[35.075,-85.267],"CHA-RGN-89179":[34.978,-85.285],"CHA-RGN-2234":[34.974,-85.279],"CHA-RGN-85554":[35.107,-85.345],"CHA-RGN-85413":[35.012,-85.703],"CHA-RGN-82094":[35.001,-85.321],"CHA-RGN-85514":[34.874,-85.512],"CHA-RGN-89226":[35.197,-85.526],"MTG-LMR-75756":[32.3682,-86.2488],"MTG-LMR-75766":[32.3974,-86.2627],"MTG-LMR-76262":[32.3345,-86.2062],"MTG-LMR-76305":[32.4073,-87.0214],"MTG-LMR-76325":[31.831,-86.6178],"MTG-LMR-76347":[32.3471,-86.2688],"MTG-LMR-76807":[32.369,-86.241],"MTG-LMR-76013":[32.3625,-86.3135],"BRM-LMR-5410":[33.8313,-87.2775],"BRM-LMR-2935":[33.5205,-86.8985],"BRM-LMR-4405":[33.5215,-86.8504],"BRM-LMR-2081":[33.502,-86.948],"BRM-LMR-13230":[33.4635,-86.8738],"BRM-LMR-2003":[33.4954,-86.812],"BRM-LMR-1965":[33.3905,-86.8115],"BRM-LMR-3005":[33.453,-86.842],"BRM-LMR-5051":[33.4685,-86.826],"BRM-LMR-3163":[33.4488,-86.806],"BRM-LMR-3227":[33.4823,-86.8302],"BRM-LMR-4673":[33.508,-86.806],"BRM-LMR-617":[33.5215,-86.794],"BRM-LMR-296":[33.5398,-86.7613],"BRM-LMR-3971":[33.6198,-86.711],"BRM-LMR-4941":[33.572,-86.736],"BRM-LMR-3021":[33.565,-86.738],"BRM-LMR-3662":[33.629,-86.752],"BRM-LMR-2821":[33.6045,-86.715],"BRM-LMR-4703":[33.5605,-86.835],"BRM-LMR-2981":[33.556,-86.832],"BRM-LMR-2485":[33.5175,-86.7735],"BRM-LMR-1417":[33.5285,-86.6855],"BRM-LMR-4613":[33.48,-86.7505],"BRM-LMR-10809":[33.5862,-86.2868],"BRM-LMR-10911":[33.448,-86.108],"BRM-LMR-10921":[33.431,-86.107],"BRM-LMR-11092":[33.281,-86.325],"GAD-LMR-4032":[33.996,-86.007],"BRM-LMR-4097":[33.574,-85.829],"BRM-LMR-94151":[33.559,-85.875],"HSV-LMR-TBD1":[34.734583,-86.60035],"HSV-LMR-TBD2":[34.723651,-86.594404],"HSV-LMR-TBD3":[34.737494,-86.580799],"HSV-LMR-TBD4":[34.742165,-86.598492],"HSV-LMR-TBD5":[34.728058,-86.600206],"HSV-LMR-TBD6":[34.721959,-86.585939],"HSV-LMR-118":[34.788096,-86.980735],"HSV-LMR-251":[34.734897,-86.584752],"HSV-LMR-254":[34.722013,-86.583422],"HSV-LMR-266":[34.739683,-86.600905],"HSV-LMR-276":[34.739575,-86.580156],"HSV-LMR-289":[34.725608,-86.596436],"HSV-LMR-575":[34.619616,-86.988202],"HSV-LMR-1072":[34.511482,-86.965699],"HSV-LMR-1113":[34.534125,-86.950488],"HSV-LMR-1262":[34.184014,-86.836708],"HSV-LMR-4021":[34.700387,-86.734107],"HSV-LMR-4060":[34.726756,-86.584539],"HSV-LMR-9011":[34.236382,-87.617844],"HSV-LMR-10003":[34.741251,-86.583779],"HSV-LMR-10102":[34.750937,-87.681125],"HSV-LMR-10781":[34.722237,-86.592418],"HSV-LMR-10837":[34.717794,-86.594116],"HSV-LMR-10953":[34.71843,-86.592761],"HSV-LMR-10984":[34.734471,-86.590155],"HSV-LMR-13403":[34.726505,-86.594815],"HSV-LMR-14845":[34.723409,-86.573],"HSV-LMR-20004":[34.734841,-86.582826],"HSV-LMR-20022":[34.348334,-86.287026],"HSV-LMR-20090":[34.358302,-86.912216],"HSV-LMR-20125":[34.779686,-87.6944],"HSV-LMR-30018":[34.176508,-86.838062],"HSV-LMR-30025":[34.185086,-86.83532],"HSV-LMR-30137":[34.723071,-87.716537],"HSV-LMR-40021":[34.794264,-87.684168],"HSV-LMR-41006":[34.166129,-86.830313],"HSV-LMR-51268":[34.617191,-86.98886],"HSV-LMR-51493":[34.610563,-86.986431],"HSV-LMR-60008":[34.455836,-86.936534],"HSV-LMR-60034":[34.500846,-87.736201],"HSV-LMR-70275":[34.746641,-87.674618],"HSV-LMR-71005":[34.732938,-86.574165],"HSV-LMR-80702":[34.696282,-86.75672],"HSV-LMR-87011":[34.714226,-86.748014],"HSV-LMR-87090":[34.593627,-86.996887],"HSV-LMR-90052":[34.718689,-86.582277],"HSV-LMR-90209":[34.739162,-86.588435],"HSV-LMR-90222":[34.717306,-86.589651],"HSV-LMR-90917":[34.745284,-86.585227],"HSV-LMR-90932":[34.744532,-86.575277],"HSV-LMR-91013":[34.715744,-86.579478],"HSV-LMR-91076":[34.735851,-86.584991],"DHN-LMR-4012":[31.323705,-85.851071],"DHN-LMR-4033":[31.211547,-85.392457],"DHN-LMR-4036":[31.221812,-85.376886],"DHN-LMR-4045":[31.234476,-85.397598],"DHN-LMR-4050":[31.223218,-85.40014],"DHN-LMR-4076":[31.343079,-85.844184],"DHN-LMR-4078":[31.217153,-85.386332],"DHN-LMR-4080":[31.226469,-85.400915],"DHN-LMR-4088":[31.231075,-85.389319],"DHN-LMR-4108":[31.231559,-85.389589],"DHN-LMR-4110":[31.208217,-85.395775],"DHN-LMR-4129":[31.208784,-85.377627],"DHN-LMR-4131":[31.342062,-85.84535],"DHN-LMR-4148":[31.217425,-85.403762],"DHN-LMR-4149":[31.23454,-85.377092],"DHN-LMR-4157":[31.21077,-85.39092],"DHN-LMR-4174":[31.210276,-85.382682],"DHN-LMR-77733":[31.231175,-85.401648],"DHN-LMR-77745":[31.329958,-85.853806],"DHN-LMR-91282":[31.323652,-85.844127],"BRM-LMR-TBD1":[33.207494,-87.577846],"BRM-LMR-TBD2":[33.210979,-87.562302],"BRM-LMR-TBD3":[33.200835,-87.574849],"BRM-LMR-TBD4":[33.224654,-87.564704],"BRM-LMR-TBD5":[33.207943,-87.568673],"BRM-LMR-TBD6":[33.19843,-87.577459],"BRM-LMR-12887":[33.204943,-87.566551],"KNX-LMR-TBD1":[35.952503,-83.929093],"KNX-LMR-TBD2":[35.94773,-83.916767],"KNX-LMR-TBD3":[35.952468,-83.908537],"KNX-LMR-TBD4":[35.971389,-83.933574],"KNX-LMR-TBD5":[35.95274,-83.915631],"KNX-LMR-TBD6":[35.952027,-83.931731],"KNX-LMR-TBD7":[35.973665,-83.918569],"KNX-LMR-TBD8":[35.95978,-83.912161],"KNX-LMR-TBD9":[35.969825,-83.929988],"KNX-LMR-TBD10":[35.948508,-83.922768],"KNX-LMR-TBD11":[35.958307,-83.921689],"KNX-LMR-TBD12":[35.967472,-83.915499],"KNX-LMR-TBD13":[35.975125,-83.932747],"KNX-LMR-TBD14":[35.957679,-83.925521],"KNX-LMR-TBD15":[35.97145,-83.92824],"KNX-LMR-TBD16":[35.951306,-83.922242],"KNX-LMR-TBD17":[35.958256,-83.927344],"KNX-LMR-TBD18":[35.953094,-83.908002],"KNX-LMR-TBD19":[35.958894,-83.90986],"KNX-LMR-TBD20":[35.96211,-83.934182],"KNX-LMR-TBD21":[35.975578,-83.910619],"KNX-LMR-TBD22":[35.97467,-83.907909],"KNX-LMR-TBD23":[35.971061,-83.930711],"KNX-LMR-TBD24":[35.960169,-83.929288],"KNX-LMR-TBD25":[35.957631,-83.933941],"KNX-LMR-TBD26":[35.956969,-83.906141],"KNX-LMR-TBD27":[35.953556,-83.912178],"KNX-LMR-10542":[35.95925,-83.92301],"KNX-LMR-11981":[35.97432,-83.905837],"KNX-LMR-94090":[35.962273,-83.914148],"KNX-LMR-96135":[35.950244,-83.926799],"BRM-LMR-TBD-P1":[33.514759,-86.822397],"BRM-LMR-TBD-P2":[33.505752,-86.820463],"BRM-LMR-TBD-P3":[33.528995,-86.820354],"BRM-LMR-TBD-P4":[33.513923,-86.803028],"BRM-LMR-TBD-P5":[33.520145,-86.792865],"BRM-LMR-TBD-P6":[33.518171,-86.813534],"BRM-LMR-TBD-P7":[33.523129,-86.821732],"BRM-LMR-TBD-P8":[33.53468,-86.815441],"BRM-LMR-TBD-P9":[33.514124,-86.803105],"BRM-LMR-TBD-P10":[33.504691,-86.803977],"BRM-LMR-TBD-P11":[33.532599,-86.816848],"BRM-LMR-TBD-P12":[33.536474,-86.809251],"BRM-LMR-TBD-P13":[33.529579,-86.811638],"BRM-LMR-TBD-P14":[33.514705,-86.819624],"BRM-LMR-TBD-P15":[33.498905,-86.822249],"BRM-LMR-TBD-P16":[33.538183,-86.809028],"BRM-LMR-TBD-P17":[33.517083,-86.79439],"BRM-LMR-TBD-P18":[33.52282,-86.791332],"BRM-LMR-TBD-BP1":[33.512901,-86.821767],"BRM-LMR-TBD-BP2":[33.535431,-86.823968],"BRM-LMR-TBD-BP3":[33.530274,-86.806583],"BRM-LMR-TBD-BP4":[33.537916,-86.792644],"BRM-LMR-TBD-BP5":[33.525012,-86.828918],"BRM-LMR-TBD-BP6":[33.499532,-86.811451],"BRM-LMR-TBD-BP7":[33.531387,-86.827154],"BRM-LMR-TBD-BP8":[33.515617,-86.826959],"BRM-LMR-TBD-BP9":[33.510992,-86.830173],"BRM-LMR-TBD-BP10":[33.511788,-86.809464],"BRM-LMR-TBD-B1":[33.506632,-86.798911],"BRM-LMR-TBD-B2":[33.500816,-86.821943],"BRM-LMR-TBD-B3":[33.508903,-86.814237],"BRM-LMR-TBD-B4":[33.529152,-86.816248],"BRM-LMR-TBD-B5":[33.5264,-86.793512],"BRM-LMR-TBD-B6":[33.503837,-86.795843],"BRM-LMR-TBD-B7":[33.522587,-86.800511],"BRM-LMR-TBD-B8":[33.522921,-86.814068],"BRM-LMR-TBD-B9":[33.502459,-86.824654],"BRM-LMR-TBD-B10":[33.505565,-86.823294],"BRM-LMR-TBD-BB1":[33.50442,-86.822097],"BRM-LMR-TBD-BB2":[33.521039,-86.799577],"BRM-LMR-TBD-BB3":[33.530519,-86.796555],"BRM-LMR-TBD-BB4":[33.503289,-86.797506],"BRM-LMR-TBD-BB5":[33.506038,-86.827504],"GAD-LMR-TBD-P1":[34.005809,-86.003172],"GAD-LMR-TBD-P2":[33.996207,-86.017947],"GAD-LMR-TBD-P3":[34.010264,-85.993705],"GAD-LMR-TBD-B1":[34.010276,-86.010037],"GAD-LMR-TBD-B2":[34.009139,-86.022893],"GAD-LMR-TBD-B3":[34.029483,-85.989679],"BRM-LMR-5701":[33.527466,-86.814457],"BRM-LMR-8381":[33.516359,-86.817943],"BRM-LMR-8561":[33.524773,-86.804265],"BRM-LMR-8808":[33.511026,-86.795431],"BRM-LMR-8815":[33.527429,-86.821656],"BRM-LMR-8861":[33.530971,-86.803428],"BRM-LMR-9063":[33.508589,-86.818545],"BRM-LMR-9207":[33.52866,-86.827195],"BRM-LMR-9243":[33.516113,-86.791848],"BRM-LMR-10031":[33.508849,-86.810274],"BRM-LMR-10137":[33.534888,-86.795416],"BRM-LMR-10985":[33.530128,-86.80907],"BRM-LMR-11297":[33.535793,-86.820127],"BRM-LMR-12922":[33.533863,-86.814027],"BRM-LMR-12954":[33.524929,-86.80596],"BRM-LMR-13008":[33.509892,-86.80327],"BRM-LMR-13034":[33.522771,-86.790908],"BRM-LMR-13102":[33.525271,-86.812798],"BRM-LMR-13128":[33.513793,-86.794901],"BRM-LMR-13251":[33.512415,-86.803718],"BRM-LMR-40173":[34.275073,-86.190214],"BRM-LMR-50021":[33.573931,-86.2802],"BRM-LMR-60109":[34.254166,-86.203197],"BRM-LMR-78527":[33.524887,-86.800679],"BRM-LMR-90001":[33.533251,-86.821151],"GAD-LMR-3331":[33.67422,-85.837879],"GAD-LMR-4183":[34.010296,-86.022107],"GAD-LMR-4244":[33.66107,-85.851648],"GAD-LMR-7000":[33.652221,-85.824808],"GAD-LMR-50008":[34.024202,-86.019906],"GAD-LMR-50011":[34.025695,-86.008835],"GAD-LMR-60001":[33.648012,-85.821757],"GAD-LMR-60045":[34.161657,-85.679279],"GAD-LMR-60067":[34.153341,-85.673208],"GAD-LMR-60069":[33.665068,-85.821098],"GAD-LMR-93175":[34.025057,-86.018589],"GAD-LMR-93455":[33.640625,-85.847494],"GAD-LMR-93515":[33.5991,-86.19818],"KNX-LMR-10872":[36.042395,-83.901745],"KNX-LMR-20711":[35.979043,-83.858765],"KNX-LMR-7342":[35.95329,-83.910843],"KNX-LMR-11912":[35.990947,-83.840032],"KNX-LMR-11721":[35.918473,-83.899916],"KNX-LMR-13072":[35.900604,-83.908593],"KNX-LMR-9563":[35.94777,-83.957957],"KNX-LMR-96030":[35.968636,-84.01882],"KNX-LMR-60243":[36.010644,-83.948686],"KNX-LMR-112":[35.953697,-83.971771]};
+// Merge approximate coordinates for 2026-renewal new boards (loaded from data-ooh-coords-new.js)
+try{if(typeof WK_COORDS_NEW!=="undefined")Object.assign(WK_COORDS,WK_COORDS_NEW)}catch(_e){}
+const isApproxCoord=(id)=>{try{return typeof OOH_APPROX!=="undefined"&&OOH_APPROX.has(id)}catch(_e){return false}};
 
 // ── PL OOH PoP CONFIRMATIONS (from Wilkins PoP PPTXs) ──
 const PL_POPS={"2084":{popDate:"2/5/2026",contract:"2026-41440"},"7061O":{popDate:"2/6/2026",contract:"2026-41440"},"1640":{popDate:"2/4/2026",contract:"2026-41440"},"2015":{popDate:"2/18/2026",contract:"2026-41440"},"1398":{popDate:"12/15/2025",contract:"2025-40749"},"IM009":{popDate:"12/11/2025",contract:"2025-40749"},"IM010":{popDate:"12/11/2025",contract:"2025-40749"},"1569":{popDate:"12/11/2025",contract:"2025-40749"},"1512O":{popDate:"12/11/2025",contract:"2025-40749"},"1565O":{popDate:"12/11/2025",contract:"2025-40749"},"8313RO":{popDate:"12/2/2025",contract:"2025-40749"},"8520KO":{popDate:"12/2/2025",contract:"2025-40749"},"1282":{popDate:"12/11/2025",contract:"2025-40749"},"1070":{popDate:"12/11/2025",contract:"2025-40749"},"1636":{popDate:"12/11/2025",contract:"2025-40749"},"1084":{popDate:"12/11/2025",contract:"2025-40749"},"1304":{popDate:"12/11/2025",contract:"2025-40749"},"156A":{popDate:"2/6/2026",contract:"2026-41665"},"410A":{popDate:"11/12/2025",contract:"2025-37862"}};
@@ -903,6 +979,8 @@ const App=()=>{
         if(docs.customTags?.data){const d=JSON.parse(docs.customTags.data);if(d["Postman Law"]?.categories||d["Wettermark Keith"]?.categories)setCustomFields(d);else if(Object.keys(d).length){const migrated={};Object.entries(d).forEach(([brand,tags])=>{if(Array.isArray(tags)){migrated[brand]={categories:tags.filter(t=>["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),valueProps:tags.filter(t=>!["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),vos:[]}}else{migrated[brand]=tags}});setCustomFields(migrated)}}
         if(docs.settings?.data){try{const s=JSON.parse(docs.settings.data);if(typeof s.campaignIcsUrl==="string")setCampaignIcsUrl(s.campaignIcsUrl)}catch(_e){}}
         try{if(docs.wkOohIscis?.data){const d=JSON.parse(docs.wkOohIscis.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>d[p.boardId]!==undefined?{...p,isci:d[p.boardId]}:p))}}catch(_e){console.warn("wkOohIscis load skipped",_e)}
+        try{if(docs.wkOohDesigns?.data){const d=JSON.parse(docs.wkOohDesigns.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>{if(d[p.boardId]===undefined)return p;const v=d[p.boardId];return{...p,design:Array.isArray(v)?v.filter(Boolean):(v?[v]:[])}}))}}catch(_e){console.warn("wkOohDesigns load skipped",_e)}
+        try{if(docs.wkOohCreativeList?.data){const d=JSON.parse(docs.wkOohCreativeList.data);if(d&&typeof d==="object"&&!Array.isArray(d))setOohCreatives({bulletin:[...new Set([...WK_OOH_CREATIVES.bulletin,...(d.bulletin||[])])],poster:[...new Set([...WK_OOH_CREATIVES.poster,...(d.poster||[])])]})}}catch(_e){console.warn("wkOohCreativeList load skipped",_e)}
         try{if(docs.plOohIscis?.data){const d=JSON.parse(docs.plOohIscis.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isci:d[p.unit]}:p))}}catch(_e){console.warn("plOohIscis load skipped",_e)}
         try{if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}}catch(_e){console.warn("oohPhotos load skipped",_e)}
         console.log("Supabase: loaded",Object.keys(docs).length,"collections");
@@ -1082,6 +1160,8 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohContracts).length>0)saveToDb("oohContracts",oohContracts)},[oohContracts,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("customTags",customFields)},[customFields,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(pops.filter(p=>p.isci).map(p=>[p.boardId,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("wkOohIscis",isciMap)},[pops,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const designMap=Object.fromEntries(pops.filter(p=>Array.isArray(p.design)&&p.design.length).map(p=>[p.boardId,p.design]));if(Object.keys(designMap).length>0)saveToDb("wkOohDesigns",designMap)},[pops,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("wkOohCreativeList",oohCreatives)},[oohCreatives,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(plPanels.filter(p=>p.isci).map(p=>[p.unit,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("plOohIscis",isciMap)},[plPanels,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohPhotos).length>0)saveToDb("oohPhotos",oohPhotos)},[oohPhotos,dbLoaded]);
 
@@ -1248,6 +1328,8 @@ const App=()=>{
   // OOH WK page state (lifted to prevent remount on photo upload)
   const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");const[oohMapMode,setOohMapMode]=useState("market");const[oohClusterRadius,setOohClusterRadius]=useState(3);
   const[oohEditId,setOohEditId]=useState(null);const[oohEditVal,setOohEditVal]=useState("");
+  const[oohDesignEditId,setOohDesignEditId]=useState(null);const[oohDesignEditVal,setOohDesignEditVal]=useState("");
+  const[oohCreatives,setOohCreatives]=useState(WK_OOH_CREATIVES);
   const[oohPhotoPanel,setOohPhotoPanel]=useState(null);
   const[oohLines,setOohLines]=useState([{flight:"",isci:"",units:"",notes:""}]);
   const[oohPostDates,setOohPostDates]=useState("");const[oohVersion,setOohVersion]=useState("");const[oohComments,setOohComments]=useState("");
@@ -3443,6 +3525,7 @@ const App=()=>{
   const OohPg=()=>{
     const om=oohOm,setOm=setOohOm,ov=oohOv,setOv=setOohOv,oVend=oohOVend,setOVend=setOohOVend,viewMode=oohViewMode,setViewMode=setOohViewMode,trafficMode=oohTrafficMode,setTrafficMode=setOohTrafficMode;
     const editId=oohEditId,setEditId=setOohEditId,editVal=oohEditVal,setEditVal=setOohEditVal;
+    const dEditId=oohDesignEditId,setDEditId=setOohDesignEditId,dEditVal=oohDesignEditVal,setDEditVal=setOohDesignEditVal;
     const photoPanel=oohPhotoPanel,setPhotoPanel=setOohPhotoPanel;
     const oLines=oohLines,setOLines=setOohLines;
     const oPostDates=oohPostDates,setOPostDates=setOohPostDates;
@@ -3450,10 +3533,12 @@ const App=()=>{
     const oComments=oohComments,setOComments=setOohComments;
     const editContract=oohEditContract,setEditContract=setOohEditContract;
     const editDates=oohEditDates,setEditDates=setOohEditDates;
-    const dmas=[...new Set(pops.map(p=>p.dma))].sort();
+    const markets=[...new Set(pops.map(p=>oohMarket(p.dma)))].sort();
+    const dmas=markets; // markets read by full name (Birmingham, Montgomery…); GAD folds into Birmingham
     const subs=[...new Set(pops.map(p=>p.submarket))].sort();
     const vendors=[...new Set(pops.map(p=>p.vendor))].sort();
-    const fl=pops.filter(p=>(om?p.dma===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true));
+    const marketColor=(mkt)=>{const b=pops.find(p=>oohMarket(p.dma)===mkt);return b?(dmaColors[b.dma]||"#64748b"):"#64748b"};
+    const fl=pops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true));
     const tagged=fl.filter(p=>p.isci).length;
     const totalImpr=fl.reduce((a,p)=>a+p.impressions,0);
 
@@ -3461,8 +3546,130 @@ const App=()=>{
     const saveEdit=(boardId)=>{setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,isci:editVal}:p));setEditId(null);log("OOH Assign",`${boardId} → ${editVal||"(cleared)"}`);notify(`${boardId} updated`)};
     const cancelEdit=()=>{setEditId(null);setEditVal("")};
     const isciTitle=(code)=>{if(!code)return"";const m=iscis.find(i=>i.code===code);return m?m.title:""};
+    // Per-board creative rotation — picked from the board's catalog pool (no free text).
+    const poolFor=(board)=>oohCreatives[creativePoolKey(board.type,board.size)]||[];
+    const addCreativeConcept=(board)=>{const key=creativePoolKey(board.type,board.size);const name=(typeof window!=="undefined"&&window.prompt)?window.prompt("New "+key+" creative name:"):"";const v=(name||"").trim();if(!v)return"";setOohCreatives(prev=>{const cur=prev[key]||[];return cur.includes(v)?prev:{...prev,[key]:[...cur,v]}});return v};
+    // Auto-name: assign ONE creative per board, rotated/spread so neighbouring
+    // boards (within RADIUS mi) differ — uses coordinates to avoid bunching the
+    // same creative on a highway stretch or mall area.
+    const autoNameSpread=(scope)=>{
+      const RADIUS=5;
+      const targets=scope.filter(p=>!String(p.panel).includes("TBD"));
+      const withco=[],without=[];
+      targets.forEach(p=>{(WK_COORDS[p.boardId]?withco:without).push(p)});
+      withco.sort((a,b)=>{const A=WK_COORDS[a.boardId],B=WK_COORDS[b.boardId];return A[0]-B[0]||A[1]-B[1]});
+      const assigned={};const gcount={};
+      const place=(p)=>{const key=creativePoolKey(p.type,p.size);const pool=oohCreatives[key]||[];if(!pool.length)return;
+        const co=WK_COORDS[p.boardId];const near={};const pMkt=oohMarket(p.dma);
+        // Spread WITHIN the board's own market only — a Birmingham board near the
+        // Huntsville line must not be balanced against Huntsville's boards.
+        if(co){for(const q of withco){if(q===p)continue;if(oohMarket(q.dma)!==pMkt)continue;const c=assigned[q.boardId];if(!c)continue;const qc=WK_COORDS[q.boardId];if(milesBetween(co[0],co[1],qc[0],qc[1])<=RADIUS)near[c]=(near[c]||0)+1}}
+        const gkey=key+"|"+pMkt;const gc=gcount[gkey]||(gcount[gkey]={});
+        const chosen=pool.map((c,idx)=>({c,idx,n:near[c]||0,g:gc[c]||0})).sort((a,b)=>a.n-b.n||a.g-b.g||a.idx-b.idx)[0].c;
+        assigned[p.boardId]=chosen;gc[chosen]=(gc[chosen]||0)+1};
+      withco.forEach(place);without.forEach(place);
+      const n=Object.keys(assigned).length;if(!n){notify("No boards to name");return}
+      // ── Auto-ISCI: one ISCI per (market · size · creative), titled to convention ──
+      const tcOf=(type,size)=>({bulletin:"SB",static:"SP",junior:"JP",rotary:"SB",digital:"DB"})[boardClass(type,size).key]||"SP";
+      const seqMap={};iscis.forEach(i=>{const m=/^([A-Z]{3})WK26([A-Z]{2})(\d+)O$/.exec(i.code||"");if(m)seqMap[m[1]+m[2]]=Math.max(seqMap[m[1]+m[2]]||0,parseInt(m[3]))});
+      // Title uses the FULL market name (Birmingham) — never a prefix; the prefix
+      // lives only in the code, and GAD rolls to BRM (oohPrefix).
+      const titleOf=(p,concept)=>`WK ${boardClass(p.type,p.size).label} - ${oohPrefix(p.dma)} - ${oohNormSize(p.size)} - ${concept}`;
+      const newIscis=[];const boardIsci={};const seen={};
+      targets.forEach(p=>{const concept=assigned[p.boardId];if(!concept)return;const title=titleOf(p,concept);const pre=oohPrefix(p.dma);
+        let code=seen[title]||(iscis.find(i=>i.suffix==="O"&&i.brand==="Wettermark Keith"&&i.title===title)||{}).code;
+        if(!code){const tc=tcOf(p.type,p.size);const k=pre+tc;const seq=(seqMap[k]||0)+1;seqMap[k]=seq;code=pre+"WK26"+tc+String(seq).padStart(3,"0")+"O";
+          newIscis.push({code,title,media:"OOH",brand:"Wettermark Keith",dma:pre,dur:p.size,suffix:"O",active:true,category:"OOH",caseType:"OOH",valueProp:"",vo:"",fileUrl:"",sentAt:null,sentInEst:null})}
+        seen[title]=code;boardIsci[p.boardId]=code});
+      if(newIscis.length)setIscis(prev=>[...prev,...newIscis]);
+      setPops(prev=>prev.map(p=>assigned[p.boardId]!==undefined?{...p,design:[assigned[p.boardId]],isci:boardIsci[p.boardId]||p.isci}:p));
+      const dist2={};Object.values(assigned).forEach(c=>dist2[c]=(dist2[c]||0)+1);const dist=Object.entries(dist2).map(([c,v])=>c+":"+v).join(", ");
+      log("OOH Auto-name",n+" boards · "+newIscis.length+" ISCIs · "+dist);notify("Named "+n+" boards + "+newIscis.length+" ISCIs (spread by location) · "+dist)};
 
-    const dmaColors={BRM:"#D4A040",MTG:"#E85A7A",GAD:"#059669",CHA:"#4AC8E8"};
+    // Printable / sendable creative MAP — a REAL Leaflet street map (same as
+    // on-screen), coloured by creative, with bunching warnings and a
+    // per-creative board breakdown. Vendor-ready.
+    const printCreativeMap=()=>{
+      const scope=fl.filter(p=>(Array.isArray(p.design)&&p.design.length));
+      if(!scope.length){notify("Assign creatives first (🪄 Auto-name)");return}
+      const mktLabel=om?(DM[om]||om):"All Markets";
+      const pins=scope.map(p=>{const co=WK_COORDS[p.boardId];const cid=oohCreativeId(p.design[0],p.type,p.size);return{panel:String(p.panel),sub:p.submarket||"",loc:p.location||"",size:p.size||"",dma:oohMarket(p.dma),creative:cid,color:creativeColor(cid),lat:co?co[0]:null,lng:co?co[1]:null,approx:isApproxCoord(p.boardId)}});
+      const titles=[...new Set(pins.map(p=>p.creative))].sort();
+      const conf=[];const cp=pins.filter(p=>p.lat&&p.lng&&!p.approx);
+      for(let a=0;a<cp.length;a++)for(let b=a+1;b<cp.length;b++){if(cp[a].creative!==cp[b].creative)continue;const d=milesBetween(cp[a].lat,cp[a].lng,cp[b].lat,cp[b].lng);if(d<=oohClusterRadius)conf.push({c:cp[a].creative,a:cp[a],b:cp[b],d})}
+      conf.sort((x,y)=>x.d-y.d);
+      const mapPins=pins.filter(p=>p.lat&&p.lng).map(p=>({lat:p.lat,lng:p.lng,c:p.color,a:p.approx,t:escHtml(p.panel+" · "+p.creative+" · "+p.loc)}));
+      const legend=titles.map(t=>`<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0;font-size:12px"><span style="width:12px;height:12px;border-radius:6px;background:${creativeColor(t)};border:1px solid #333"></span><b>${escHtml(t)}</b> (${pins.filter(p=>p.creative===t).length})</span>`).join("");
+      const w=window.open("","","width=980,height=860");
+      w.document.write('<html><head><title>WK OOH Creative Map — '+escHtml(mktLabel)+'</title>');
+      w.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>');
+      w.document.write('<style>body{font-family:Arial,sans-serif;margin:24px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.sub{color:#555;font-weight:bold;margin-bottom:12px}#map{height:460px;border:1px solid #ccc;border-radius:8px}.box{border:1px solid #ccc;border-radius:8px;padding:10px 12px;margin-top:12px}table{width:100%;border-collapse:collapse;margin-top:6px}th,td{border:1px solid #ddd;padding:4px 8px;font-size:11px;text-align:left}th{background:#f4f4f4}.warn{color:#b45309;font-weight:bold}.ok{color:#15803d;font-weight:bold}.sw{display:inline-block;width:10px;height:10px;border-radius:5px;margin-right:5px;vertical-align:middle}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{body{margin:12px}.box{page-break-inside:avoid}.dl{display:none}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<div style="text-align:center;margin-bottom:6px"><h2>WETTERMARK KEITH</h2><div style="font-weight:bold;color:#555">OOH CREATIVE DISTRIBUTION MAP</div></div>');
+      w.document.write('<div class="sub">Market: '+escHtml(mktLabel)+' &nbsp;·&nbsp; '+pins.length+' boards &nbsp;·&nbsp; '+titles.length+' creatives &nbsp;·&nbsp; spacing check: '+oohClusterRadius+' mi &nbsp;·&nbsp; '+new Date().toLocaleDateString()+'</div>');
+      w.document.write('<div style="margin-bottom:8px">'+legend+'</div>');
+      w.document.write('<div id="map"></div>');
+      w.document.write('<div class="box">'+(conf.length?'<div class="warn">⚠ '+conf.length+' same-creative pair'+(conf.length!==1?'s':'')+' within '+oohClusterRadius+' mi — review spacing:</div>':'<div class="ok">✓ No same-creative boards within '+oohClusterRadius+' mi — clean spread.</div>'));
+      if(conf.length){w.document.write('<table><tr><th>Creative</th><th>Board A</th><th>Board B</th><th>Apart</th></tr>');conf.slice(0,80).forEach(c=>w.document.write('<tr><td><span class="sw" style="background:'+creativeColor(c.c)+'"></span>'+escHtml(c.c)+'</td><td>'+escHtml(c.a.panel+" — "+c.a.sub)+'</td><td>'+escHtml(c.b.panel+" — "+c.b.sub)+'</td><td>'+c.d.toFixed(1)+' mi</td></tr>'));w.document.write('</table>')}
+      w.document.write('</div>');
+      titles.forEach(t=>{const bs=pins.filter(p=>p.creative===t).sort((a,b)=>(a.sub||"").localeCompare(b.sub||"")||a.panel.localeCompare(b.panel));
+        w.document.write('<div class="box"><div style="font-weight:bold;font-size:13px"><span class="sw" style="background:'+creativeColor(t)+'"></span>'+escHtml(t)+' — '+bs.length+' boards</div><table><tr><th>Unit</th><th>Market</th><th>Submarket</th><th>Size</th><th>Location</th></tr>');
+        bs.forEach(p=>w.document.write('<tr><td><b>'+escHtml(p.panel)+'</b></td><td>'+escHtml(p.dma)+'</td><td>'+escHtml(p.sub)+'</td><td>'+escHtml(p.size)+'</td><td>'+escHtml(p.loc)+'</td></tr>'));
+        w.document.write('</table></div>')});
+      w.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"><\/script>');
+      w.document.write('<script>var P='+JSON.stringify(mapPins)+';(function go(){if(typeof L==="undefined")return setTimeout(go,60);var map=L.map("map",{zoomControl:true,attributionControl:false});L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18}).addTo(map);var b=[];P.forEach(function(p){L.circleMarker([p.lat,p.lng],{radius:6,color:"#222",weight:1,fillColor:p.c,fillOpacity:.9,dashArray:p.a?"2 2":null}).bindTooltip(p.t).addTo(map);b.push([p.lat,p.lng])});if(b.length)map.fitBounds(b,{padding:[24,24]});setTimeout(function(){window.focus();window.print()},1600)})();<\/script>');
+      w.document.write('</body></html>');w.document.close();
+      log("OOH Creative Map",mktLabel+" · "+pins.length+" boards");
+    };
+
+    // Reusable VENDOR TRAFFIC SHEET — one click, every board in view, grouped by
+    // market → submarket, with creative + ISCI + size + location. Renewal-ready.
+    const printVendorTrafficSheet=()=>{
+      const scope=fl.filter(p=>!String(p.panel).includes("TBD"));
+      if(!scope.length){notify("No boards in view to traffic");return}
+      const iTitle=(c)=>{if(!c)return"";const m=iscis.find(i=>i.code===c);return m?m.title:""};
+      const vendorName=oVend||[...new Set(scope.map(p=>p.vendor))][0]||"Lamar";
+      const contact=[...new Set(scope.map(p=>p.contact).filter(Boolean))][0]||"";
+      const mktLabel=om||"All WK Markets";
+      const dmasIn=[...new Set(scope.map(p=>oohMarket(p.dma)))].sort();
+      const w=window.open("","","width=1000,height=820");
+      w.document.write('<html><head><title>WK OOH Traffic — '+escHtml(mktLabel)+' — '+escHtml(vendorName)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}.sub{margin-top:8px;font-size:12px;font-weight:bold;color:#444;border-bottom:2px solid #999}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:8px;font-size:11px;font-weight:bold}@media print{body{margin:14px}.dl{display:none}table{page-break-inside:auto}tr{page-break-inside:avoid}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<div style="text-align:center;margin-bottom:12px"><h2>WETTERMARK KEITH</h2><div class="tag">PERSONAL INJURY LAWYERS — OOH TRAFFIC INSTRUCTIONS</div></div>');
+      const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v||"")+'</span></div>');
+      hd("Agency","WK Advertising Solutions");hd("Client","Wettermark Keith");
+      hd("Vendor",vendorName,"amb");if(contact)hd("Vendor Contact",contact);
+      hd("Contracts",[...new Set(scope.map(p=>p.contract).filter(Boolean))].join(", "));
+      hd("Market(s)",dmasIn.join(", "));
+      hd("Buyer","Amy Coffey","red");hd("Media","OOH — Out of Home","red");
+      hd("Broadcast Month",workMonth,"grn");
+      const fmtD=d=>{if(!d)return"";const dt=new Date(d+"T00:00:00");return (dt.getMonth()+1)+"/"+dt.getDate()+"/"+String(dt.getFullYear()).slice(2)};
+      const renewTerm=[...new Set([...new Set(scope.map(p=>p.contract).filter(Boolean))].map(c=>{const cc=oohContracts[c];return cc&&cc.startDate&&cc.endDate?fmtD(cc.startDate)+" – "+fmtD(cc.endDate):""}).filter(Boolean))].join(" · ");
+      hd("Renewal Term",(renewTerm||"TBD")+" · 13 broadcast periods","grn");
+      if(oPostDates)hd("Post Notes",oPostDates);if(oVersion)hd("Version / Notes",oVersion);if(oComments)hd("Comments",oComments);
+      const fileMap={};iscis.forEach(i=>{if(i.fileUrl)fileMap[i.code]=i.fileUrl});
+      let grand=0;
+      dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>oohMarket(p.dma)===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
+        w.document.write('<div class="mkt"'+(di>0?' style="page-break-before:always"':'')+'>'+escHtml(d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
+        w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location Description</th><th style="width:110px">Media/Style</th><th style="width:80px">H x W</th><th style="width:70px">Impr/Wk</th><th style="width:160px">Creative</th><th style="width:120px">ISCI</th><th style="width:80px">Renewal Date</th></tr>');
+        bds.forEach(p=>{const cr=(Array.isArray(p.design)&&p.design.length)?p.design.map(c=>fullCreativeName(p,c)).join(" / "):"—";const fu=fileMap[p.isci];
+          const crCell=fu?('<a href="'+escHtml(oohVendorDl(fu,oohVendorFileName(p)))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(cr)+'</a>'):('<b>'+escHtml(cr)+'</b>');
+          w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.panel))+'</td><td>'+escHtml(p.location||"")+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(p.size||"")+'</td><td style="text-align:right">'+(p.impressions?Number(p.impressions).toLocaleString():"")+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(p.isci||"—")+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||oPostDates||"")+'</td></tr>')});
+        w.document.write('</table>')});
+      w.document.write('<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+grand+'</div>');
+      w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
+      w.document.write('<div class="nt">Note: Please return signed Traffic Instructions or confirm receipt by email within 24 hours.</div>');
+      w.document.write('</body></html>');w.document.close();
+      const isciLines=scope.map(p=>({code:p.isci||p.panel,title:(Array.isArray(p.design)?p.design.join(" / "):""),dur:p.size||"",pct:"",sched:oPostDates||"",bookend:"",units:""}));
+      setTrafficHistory(prev=>[{ts:new Date().toISOString(),est:"OOH-"+mktLabel+"-"+vendorName,brand:"Wettermark Keith",market:mktLabel,media:"OOH",buyer:"Amy Coffey",month:workMonth,flight:oPostDates,version:oVersion,comments:(oComments||"")+" | Vendor: "+vendorName,iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:grand,vendor:vendorName},...prev]);
+      log("OOH Vendor Sheet",mktLabel+" · "+vendorName+" · "+grand+" boards");notify("Vendor traffic sheet — "+grand+" boards");
+    };
+    const startDEdit=(board)=>{const n=creativeSlots(board.type,board.size);const cur=Array.isArray(board.design)?board.design:[];setDEditId(board.boardId);setDEditVal(Array.from({length:n},(_,k)=>cur[k]||""))};
+    const setDSlot=(k,v)=>setDEditVal(prev=>{const a=Array.isArray(prev)?[...prev]:[];a[k]=v;return a});
+    const saveDEdit=(boardId)=>{const v=(Array.isArray(dEditVal)?dEditVal:[]).map(s=>(s||"").trim()).filter(Boolean);setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,design:v}:p));setDEditId(null);log("OOH Creative",`${boardId} → ${v.join(" / ")||"(cleared)"}`);notify(`${boardId} creative ${v.length?"set":"cleared"}`)};
+    const cancelDEdit=()=>{setDEditId(null);setDEditVal("")};
+
+    const dmaColors={BRM:"#D4A040",MTG:"#ec4899",GAD:"#059669",CHA:"#4AC8E8",HSV:"#f97316",KNX:"#6366f1",DHN:"#84cc16",NSH:"#06b6d4"};
 
     const PhotoModal=({p,onClose})=>{
       const close=POP_IMGS[p.closeImg];const dist=POP_IMGS[p.distImg];
@@ -3505,7 +3712,7 @@ const App=()=>{
               <div>
                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
                   <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#2d1f42"}}>Panel {p.panel}</span>
-                  <B l={DM[p.dma]||p.dma} c={c}/>
+                  <B l={oohMarket(p.dma)} c={c}/>
                   <B l={p.facing} c="#6366f1"/>
                 </div>
                 <div style={{fontSize:14,color:"#9B8EAD",marginTop:2,display:"flex",alignItems:"center",gap:6}}><MediaBadge type={p.type}/>{p.type} · {p.size} · {p.submarket}</div>
@@ -3532,6 +3739,34 @@ const App=()=>{
                 </div>
               }
             </div>
+            {/* Per-board creative rotation — class-specific (bulletin 2 · poster/junior 3 · rotary/digital rotation) */}
+            {(()=>{const bc=boardClass(p.type,p.size);const slots=bc.slots;const dl=Array.isArray(p.design)?p.design:[];const uc=bc.unit.charAt(0).toUpperCase()+bc.unit.slice(1);return<div style={{marginTop:5,padding:"5px 7px",borderRadius:5,background:dl.length?"#2a1f3e":"#1e1233",border:`1px solid ${dl.length?"#9b7bb0":"#4a3565"}`,borderLeft:`3px solid ${bc.color}`}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                <span style={{fontSize:11,fontWeight:800,color:bc.color,display:"flex",alignItems:"center",gap:4}}>{bc.icon} {bc.label}{bc.rotates&&<span style={{fontSize:9,fontWeight:700,color:"#fff",background:bc.color,padding:"0 5px",borderRadius:7}}>ROTATES</span>}</span>
+                <span style={{fontSize:11,fontWeight:700,color:dl.length>=slots?"#5BC4A0":"#D4A040"}}>{dl.length}/{slots} {bc.unit}{slots>1?"s":""}</span>
+              </div>
+              <div style={{fontSize:10,color:"#6B5E80",marginBottom:3}}>{bc.spec} · {p.size}{p.vendorRef?<span style={{marginLeft:4}} title="Lamar's 2026 Design reference">· Lamar: {p.vendorRef}</span>:""}</div>
+              {dEditId===p.boardId?(()=>{const picked=(dEditVal||[]).filter(Boolean);const dup=picked.length!==new Set(picked).size;return
+                <div style={{display:"flex",flexDirection:"column",gap:3}}>
+                  {Array.from({length:slots}).map((_,k)=><div key={k} style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:10,fontWeight:700,color:bc.color,minWidth:54}}>{bc.rotates?(bc.unit==="position"?"Pos "+(k+1):"Frame "+(k+1)):"Creative "+(k+1)}</span>
+                    <select value={(dEditVal&&dEditVal[k])||""} onChange={e=>{if(e.target.value==="__new__"){const v=addCreativeConcept(p);if(v)setDSlot(k,v)}else setDSlot(k,e.target.value)}} style={{flex:1,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}} autoFocus={k===0}>
+                      <option value="">— pick creative —</option>
+                      {poolFor(p).map(c=><option key={c} value={c}>{c}</option>)}
+                      <option value="__new__">➕ Add new creative…</option>
+                    </select></div>)}
+                  {dup&&<div style={{fontSize:10,color:"#E85A7A",fontWeight:700}}>⚠ Same creative picked twice — that's a wasted rotation slot.</div>}
+                  <div style={{display:"flex",gap:3,justifyContent:"flex-end"}}>
+                    <button onClick={()=>saveDEdit(p.boardId)} style={{padding:"2px 8px",background:"#9b7bb0",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✓ Save</button>
+                    <button onClick={cancelDEdit} style={{padding:"2px 8px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
+                  </div>
+                </div>;})():
+                <div onClick={()=>startDEdit(p)} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",gap:4}}>
+                  {dl.length?<div style={{display:"flex",flexWrap:"wrap",gap:3,alignItems:"center"}}>{dl.map((c,k)=><React.Fragment key={k}>{bc.rotates&&k>0&&<span style={{fontSize:11,color:bc.color}}>→</span>}<span style={{fontSize:12,fontWeight:700,color:"#fff",background:creativeColor(c),padding:"1px 6px",borderRadius:8}}>{c}</span></React.Fragment>)}{(new Set(dl).size!==dl.length)&&<span style={{fontSize:10,color:"#E85A7A",fontWeight:700}} title="Same creative more than once">⚠ dup</span>}</div>
+                  :<div style={{fontSize:13,color:"#9b7bb0",fontStyle:"italic"}}>Click to add {slots} {bc.unit}{slots>1?"s":""}</div>}
+                  <span style={{fontSize:13,color:"#9B8EAD",flexShrink:0}}>✎</span>
+                </div>
+              }
+            </div>})()}
           </div>
         </div>;
       })}
@@ -3541,14 +3776,16 @@ const App=()=>{
       {photoPanel&&<PhotoModal p={photoPanel} onClose={()=>setPhotoPanel(null)}/>}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
         <div><PageHead title="Wettermark Keith — OOH Postings" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>{pops.length} Lamar panels · Contract 5030974 / 5060911 · {totalImpr.toLocaleString()} weekly impressions</p>
+          <p style={{fontSize:13,color:"#9B8EAD"}}>{pops.length} boards · {markets.length} markets · 2026 Lamar renewal · {totalImpr.toLocaleString()} weekly impressions · {pops.filter(p=>Array.isArray(p.design)&&p.design.length).length} with creative</p>
         </div>
         <div style={{display:"flex",gap:4}}>
           <Btn small onClick={()=>{
-            const headers=["Board ID","Panel","DMA","Submarket","Vendor","Type","Size","Location","Zip","Impressions/Wk","Install Date","Facing","ISCI","ISCI Title","Contract","TAB#","Latitude","Longitude"];
-            const rows=fl.map(p=>{const co=WK_COORDS[p.boardId];const zip=typeof WK_ZIPS!=='undefined'?(WK_ZIPS[p.submarket]||""):"";return[p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
+            const headers=["Board ID","Panel","DMA","Submarket","Vendor","Type","Size","Location","Zip","Impressions/Wk","Install Date","Facing","ISCI","ISCI Title","Creative","Lamar Ref","Contract","TAB#","Latitude","Longitude"];
+            const rows=fl.map(p=>{const co=WK_COORDS[p.boardId];const zip=typeof WK_ZIPS!=='undefined'?(WK_ZIPS[p.submarket]||""):"";return[p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),(Array.isArray(p.design)?p.design.map(c=>fullCreativeName(p,c)).join(" | "):""),p.vendorRef||"",p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
             exportCsv("WK_OOH_"+(om||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
+          <Btn small color="#9b7bb0" onClick={()=>{const scope=fl.filter(p=>!String(p.panel).includes("TBD"));const lbl=(om||ov||oVend)?`the ${scope.length} filtered boards`:`all ${scope.length} boards`;if(window.confirm(`Auto-name + ISCI ${lbl}?\n\n• Assigns ONE creative per board (bulletins from 2, posters/juniors from 3), spread by location so neighbours differ.\n• Generates an ISCI per market·size·creative, titled to your convention (WK <Type> - <Size> - <Market> - <Creative>).\n\nThis OVERWRITES current creative + ISCI assignments in view.`))autoNameSpread(fl)}}>🪄 Auto-name + ISCI</Btn>
+          <Btn small color="#D4A040" onClick={printVendorTrafficSheet}>📄 Vendor Sheet</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
           <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>📍 Map</Btn>
@@ -3558,14 +3795,14 @@ const App=()=>{
         </div>
       </div>
       <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-        <Sel label="DMA" options={dmas} value={om} onChange={setOm} placeholder="All DMAs"/>
+        <Sel label="Market" options={dmas} value={om} onChange={setOm} placeholder="All Markets"/>
         <Sel label="Sub-Market" options={subs} value={ov} onChange={setOv} placeholder="All Markets"/>
         <Sel label="Vendor" options={vendors} value={oVend} onChange={setOVend} placeholder="All Vendors"/>
         {(om||ov||oVend)&&<Btn small onClick={()=>{setOm("");setOv("");setOVend("")}}>Clear</Btn>}
       </div>
       {/* DMA stats */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
-        {dmas.map(d=>{const all=pops.filter(p=>p.dma===d);const p=all.filter(x=>x.isci).length;const impr=all.reduce((a,x)=>a+x.impressions,0);const c=dmaColors[d]||"#64748b";
+        {dmas.map(d=>{const all=pops.filter(p=>oohMarket(p.dma)===d);const p=all.filter(x=>x.isci).length;const impr=all.reduce((a,x)=>a+x.impressions,0);const c=marketColor(d);
           return<div key={d} onClick={()=>setOm(om===d?"":d)} style={{padding:"10px 12px",borderRadius:9,border:om===d?`2px solid ${c}`:"1px solid #E8DFF0",background:om===d?c+"0a":"#fff",cursor:"pointer"}}>
             <div style={{fontSize:13,fontWeight:700,color:c,textTransform:"uppercase",letterSpacing:1}}>{d}</div>
             <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{all.length}</div>
@@ -3580,12 +3817,21 @@ const App=()=>{
           <div style={{fontSize:13,color:"#9B8EAD"}}>{fl.length} active{tagged?" · "+tagged+" ISCI tagged":""}</div>
         </div>
       </div>
+      {/* Board mix by format class — informational, drives the per-board creative requirements */}
+      {(()=>{const groups={};fl.forEach(p=>{const bc=boardClass(p.type,p.size);(groups[bc.key]=groups[bc.key]||{bc,boards:[]}).boards.push(p)});const order=["bulletin","static","junior","rotary","digital"];const entries=order.filter(k=>groups[k]).map(k=>groups[k]);if(!entries.length)return null;
+        return<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{entries.map(({bc,boards})=>{const need=boards.length;const done=boards.filter(p=>Array.isArray(p.design)&&p.design.length).length;const pct=need?Math.round(done/need*100):0;const poolN=(oohCreatives[creativePoolKey(boards[0].type,boards[0].size)]||[]).length;return<div key={bc.key} title={bc.spec} style={{flex:"1 1 150px",minWidth:150,padding:"7px 10px",borderRadius:8,background:"#1e1233",border:`1px solid #4a3565`,borderLeft:`3px solid ${bc.color}`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:12,fontWeight:800,color:bc.color,display:"flex",alignItems:"center",gap:4}}>{bc.icon} {bc.label}{bc.rotates&&<span style={{fontSize:8,fontWeight:700,color:"#fff",background:bc.color,padding:"0 4px",borderRadius:6}}>ROT</span>}</span><span style={{fontSize:16,fontWeight:800,color:"#F0E8F8"}}>{boards.length}</span></div>
+          <div style={{fontSize:10,color:"#6B5E80",margin:"2px 0 4px"}}>1 of {poolN} creatives each · spread by location</div>
+          <div style={{height:5,borderRadius:3,background:"#2d1f42",overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:pct===100?"#5BC4A0":bc.color}}/></div>
+          <div style={{fontSize:10,color:pct===100?"#5BC4A0":"#9B8EAD",marginTop:2,fontWeight:600}}>{done}/{need} boards named · {pct}%</div>
+        </div>})}</div>;})()}
 
       {viewMode==="cards"?<CardGrid/>:
        viewMode==="map"?<Cd><div style={{padding:10}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:6}}>
           <div style={{fontSize:14,fontWeight:700}}>📍 WK OOH Board Locations</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <Btn small color="#9b7bb0" onClick={printCreativeMap}>🗺 Download Creative Map</Btn>
             {oohMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={oohClusterRadius} onChange={e=>setOohClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#4AC8E8",minWidth:30}}>{oohClusterRadius} mi</span></div>}
             <div style={{display:"flex",gap:0,border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}>
               <button onClick={()=>setOohMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:oohMapMode==="market"?"rgba(212,160,64,.2)":"transparent",color:oohMapMode==="market"?"#D4A040":"#94a3b8"}}>📍 By Market</button>
@@ -3594,40 +3840,61 @@ const App=()=>{
           </div>
         </div>
         {(()=>{
-          const pins=fl.map(p=>{const co=WK_COORDS[p.boardId];const t=isciTitle(p.isci);return{id:p.boardId,lat:co?co[0]:0,lng:co?co[1]:0,location:p.location,vendor:p.vendor,size:p.size,impressions:p.impressions,market:p.dma,isci:p.isci||"",creative:t,closeImg:p.closeImg}});
-          const clusters=oohMapMode==="creative"?findClusters(pins,oohClusterRadius):{};
-          const pinsWithStatus=pins.map(p=>{let st=p.isci?"ISCI: "+p.isci:"Untagged";if(p.creative)st+=" · "+p.creative;if(clusters[p.id])st+=" · ⚠ "+clusters[p.id]+" neighbor"+(clusters[p.id]>1?"s":"")+" w/ same creative";return{...p,status:st}});
-          return<><OohMap pins={pinsWithStatus} colorFn={p=>oohMapMode==="creative"?creativeColor(p.creative):(dmaColors[p.market]||"#D4A040")} height={420}/>
+          const pins=fl.map(p=>{const co=WK_COORDS[p.boardId];const cr=((Array.isArray(p.design)&&p.design.length)?p.design:(isciTitle(p.isci)?[isciTitle(p.isci)]:[])).map(c=>oohCreativeId(c,p.type,p.size));return{id:p.boardId,panel:p.panel,lat:co?co[0]:0,lng:co?co[1]:0,approx:isApproxCoord(p.boardId),location:p.location,vendor:p.vendor,size:p.size,impressions:p.impressions,market:oohMarket(p.dma),isci:p.isci||"",creatives:cr,creative:cr[0]||"",closeImg:p.closeImg}});
+          // Conflict = two boards within the radius that SHARE at least one creative (highway stretch / mall bunching).
+          // Confirmed = both boards have surveyed coordinates; approx pairs are listed separately to verify.
+          const conflicts=[];const approxConflicts=[];const clustered=new Set();
+          if(oohMapMode==="creative"){const cp=pins.filter(p=>p.creatives.length&&p.lat&&p.lng);for(let a=0;a<cp.length;a++)for(let b=a+1;b<cp.length;b++){const shared=cp[a].creatives.filter(c=>cp[b].creatives.includes(c));if(!shared.length)continue;const d=milesBetween(cp[a].lat,cp[a].lng,cp[b].lat,cp[b].lng);if(d<=oohClusterRadius){const rec={shared,a:cp[a],b:cp[b],d};if(cp[a].approx||cp[b].approx){approxConflicts.push(rec)}else{conflicts.push(rec);clustered.add(cp[a].id);clustered.add(cp[b].id)}}}conflicts.sort((x,y)=>x.d-y.d);approxConflicts.sort((x,y)=>x.d-y.d)}
+          const pinsWithStatus=pins.map(p=>{let st=p.creatives.length?("🎨 "+p.creatives.join(" / ")):(p.isci?"ISCI: "+p.isci:"No creative");if(clustered.has(p.id))st+=" · ⚠ shares creative within "+oohClusterRadius+" mi";return{...p,status:st}});
+          return<><OohMap pins={pinsWithStatus} colorFn={p=>oohMapMode==="creative"?(p.creative?creativeColor(p.creative):"#475569"):(marketColor(p.market)||"#D4A040")} height={420}/>
           {oohMapMode==="market"?
-            <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>{Object.entries(dmaColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{k}</div>)}</div>
+            <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>{markets.map(m=><div key={m} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:marketColor(m)}}/>{m}</div>)}</div>
             :
-            (()=>{const titles=[...new Set(pins.map(p=>p.creative).filter(Boolean))].sort();const untaggedCnt=pins.filter(p=>!p.creative).length;const clusterCnt=Object.keys(clusters).length;return<div style={{marginTop:6}}>
-              {clusterCnt>0&&<div style={{textAlign:"center",fontSize:13,color:"#F4C242",fontWeight:600,marginBottom:6,padding:"4px 8px",background:"rgba(244,194,66,.1)",border:"1px solid rgba(244,194,66,.3)",borderRadius:4}}>⚠ {clusterCnt} board{clusterCnt!==1?"s":""} within {oohClusterRadius} mi of another running the same creative</div>}
+            (()=>{const titles=[...new Set(pins.flatMap(p=>p.creatives))].sort();const untaggedCnt=pins.filter(p=>!p.creatives.length).length;return<div style={{marginTop:6}}>
+              {clustered.size>0?<div style={{textAlign:"center",fontSize:13,color:"#F4C242",fontWeight:600,marginBottom:6,padding:"4px 8px",background:"rgba(244,194,66,.1)",border:"1px solid rgba(244,194,66,.3)",borderRadius:4}}>⚠ {clustered.size} board{clustered.size!==1?"s":""} within {oohClusterRadius} mi of another running the SAME creative — spread them out</div>:titles.length>0&&<div style={{textAlign:"center",fontSize:13,color:"#5BC4A0",fontWeight:600,marginBottom:6}}>✓ No same-creative boards within {oohClusterRadius} mi — clean spread</div>}
               {titles.length===0?
-                <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No ISCIs tagged yet — all boards untagged. Tag boards via the traffic flow to see them colored by creative.</div>
+                <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No creative assigned yet — name your creatives per board (🎨 on each card/row; bulletins 2, posters/juniors 3) to see them colored and check for bunching.</div>
                 :
                 <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-                  {titles.map(t=>{const cnt=pins.filter(p=>p.creative===t).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #4a3565"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
-                  {untaggedCnt>0&&<div style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:"#475569",border:"1px solid #4a3565"}}/><span style={{color:"#94a3b8"}}>untagged ({untaggedCnt})</span></div>}
+                  {titles.map(t=>{const cnt=pins.filter(p=>p.creatives.includes(t)).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #4a3565"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
+                  {untaggedCnt>0&&<div style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:"#475569",border:"1px solid #4a3565"}}/><span style={{color:"#94a3b8"}}>no creative ({untaggedCnt})</span></div>}
                 </div>
               }
+              {conflicts.length>0&&<div style={{marginTop:8,border:"1px solid rgba(244,194,66,.3)",borderRadius:6,overflow:"hidden"}}>
+                <div style={{padding:"5px 10px",background:"rgba(244,194,66,.12)",fontSize:12,fontWeight:700,color:"#F4C242"}}>⚠ {conflicts.length} same-creative pair{conflicts.length!==1?"s":""} within {oohClusterRadius} mi — possible highway/mall bunching</div>
+                <div style={{maxHeight:170,overflowY:"auto"}}>{conflicts.map((c,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 10px",borderTop:"1px solid #2d1f42",fontSize:12}}>
+                  <span style={{width:9,height:9,borderRadius:5,background:creativeColor(c.shared[0]),flexShrink:0}}/>
+                  <span style={{fontWeight:700,color:"#C4A0C8",minWidth:120}}>{c.shared.join(", ")}</span>
+                  <span style={{color:"#9B8EAD",flex:1}}><b>{c.a.panel}</b> ({c.a.market}) ↔ <b>{c.b.panel}</b> ({c.b.market})</span>
+                  <span style={{fontWeight:700,color:c.d<=1?"#E85A7A":"#D4A040",flexShrink:0}}>{c.d.toFixed(1)} mi</span>
+                </div>)}</div>
+              </div>}
+              {approxConflicts.length>0&&<div style={{marginTop:6,border:"1px dashed #4a3565",borderRadius:6,overflow:"hidden"}}>
+                <div style={{padding:"5px 10px",background:"rgba(155,123,176,.1)",fontSize:11,fontWeight:700,color:"#9B8EAD"}}>~ {approxConflicts.length} possible pair{approxConflicts.length!==1?"s":""} involving approx-located boards — <b>verify the exact spot</b> before trusting</div>
+                <div style={{maxHeight:120,overflowY:"auto"}}>{approxConflicts.slice(0,40).map((c,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"3px 10px",borderTop:"1px solid #2d1f42",fontSize:11,opacity:.8}}>
+                  <span style={{width:8,height:8,borderRadius:4,background:creativeColor(c.shared[0]),flexShrink:0}}/>
+                  <span style={{fontWeight:700,color:"#C4A0C8",minWidth:110}}>{c.shared.join(", ")}</span>
+                  <span style={{color:"#9B8EAD",flex:1}}><b>{c.a.panel}</b>{c.a.approx?"~":""} ↔ <b>{c.b.panel}</b>{c.b.approx?"~":""} ({c.a.market})</span>
+                  <span style={{fontWeight:700,color:"#9B8EAD",flexShrink:0}}>~{c.d.toFixed(1)} mi</span>
+                </div>)}</div>
+              </div>}
             </div>})()
           }
-          <div style={{fontSize:14,color:"#9B8EAD",marginTop:4,textAlign:"center"}}>{pins.filter(p=>p.lat&&p.lng).length} of {fl.length} boards have coordinates</div>
+          <div style={{fontSize:14,color:"#9B8EAD",marginTop:4,textAlign:"center"}}>{pins.filter(p=>p.lat&&p.lng).length} of {fl.length} boards mapped{pins.filter(p=>p.approx).length>0?" · "+pins.filter(p=>p.approx).length+" placed approximately (★ refine when you can)":""}{pins.filter(p=>p.creatives.length&&!(p.lat&&p.lng)).length>0?" · "+pins.filter(p=>p.creatives.length&&!(p.lat&&p.lng)).length+" still need coordinates":""}</div>
           </>;
         })()}
        </div></Cd>:
        viewMode==="ref"?<Cd><div style={{padding:10}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
           <div style={{fontSize:14,fontWeight:700}}>📋 WK OOH Reference — Board × Vendor × Contract × Status</div>
           <Btn small onClick={()=>{
-            const headers=["#","Board ID","Panel","DMA","Submarket","Vendor","Type","Size","Location","City","Zip","Impressions/Wk","Install Date","Facing","ISCI","ISCI Title","Contract","TAB#","Latitude","Longitude"];
-            const rows=fl.map((p,i)=>{const co=WK_COORDS[p.boardId];const zip=WK_ZIPS[p.submarket]||"";return[i+1,p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,p.submarket,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
+            const headers=["#","Board ID","Panel","DMA","Submarket","Vendor","Type","Size","Location","City","Zip","Impressions/Wk","Install Date","Facing","ISCI","ISCI Title","Creative","Lamar Ref","Contract","TAB#","Latitude","Longitude"];
+            const rows=fl.map((p,i)=>{const co=WK_COORDS[p.boardId];const zip=WK_ZIPS[p.submarket]||"";return[i+1,p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,p.submarket,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),(Array.isArray(p.design)?p.design.map(c=>fullCreativeName(p,c)).join(" | "):""),p.vendorRef||"",p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
             exportCsv("WK_OOH_Reference_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }}>📥 Export CSV</Btn>
         </div>
         <div style={{overflowX:"auto",maxHeight:500}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Board ID</TH><TH>Panel</TH><TH>DMA</TH><TH>Vendor</TH><TH>Type</TH><TH>Size</TH><TH>Location</TH><TH>Impr/Wk</TH><TH>Installed</TH><TH>ISCI</TH><TH>Contract</TH><TH>TAB#</TH><TH>Coords</TH></tr></thead>
           <tbody>{fl.map((p,i)=>{const co=WK_COORDS[p.boardId];return<tr key={p.boardId}>
-            <TD b>{i+1}</TD><TD m b style={{fontSize:14}}>{p.boardId}</TD><TD m>{p.panel}</TD><TD><B l={DM[p.dma]||p.dma} c={dmaColors[p.dma]||"#D4A040"}/></TD>
+            <TD b>{i+1}</TD><TD m b style={{fontSize:14}}>{p.boardId}</TD><TD m>{p.panel}</TD><TD><B l={oohMarket(p.dma)} c={dmaColors[p.dma]||"#D4A040"}/></TD>
             <TD><span style={{fontSize:14,fontWeight:600}}>{p.vendor}</span></TD><TD><span style={{fontSize:13,display:"flex",alignItems:"center",gap:6}}><MediaBadge type={p.type}/>{p.type}</span></TD><TD>{p.size}</TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:180,display:"inline-block"}}>{p.location}</span></TD>
             <TD b>{p.impressions.toLocaleString()}</TD><TD>{p.installDate}</TD>
@@ -3644,8 +3911,8 @@ const App=()=>{
         const delL=(i)=>setOLines(p=>p.filter((_,j)=>j!==i));
         const dmaLabel=om||dmas.join("/");
         const trafficVendor=oVend||"";
-        const vendorBoards=pops.filter(p=>(om?p.dma===om:true)&&(trafficVendor?p.vendor===trafficVendor:true));
-        const vendorPanels=vendorBoards.filter(p=>oohTypeF?mediaCategory(p.type)===oohTypeF:true).map(p=>({id:p.boardId,panel:p.panel,dma:p.dma,sub:p.submarket,loc:p.location,type:p.type,size:p.size,impr:p.impressions,tab:p.tab})).sort((a,b)=>a.dma.localeCompare(b.dma)||a.panel.localeCompare(b.panel));
+        const vendorBoards=pops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(trafficVendor?p.vendor===trafficVendor:true));
+        const vendorPanels=vendorBoards.filter(p=>oohTypeF?mediaCategory(p.type)===oohTypeF:true).map(p=>({id:p.boardId,panel:p.panel,dma:p.dma,sub:p.submarket,loc:p.location,type:p.type,size:p.size,impr:p.impressions,tab:p.tab,design:p.design})).sort((a,b)=>a.dma.localeCompare(b.dma)||a.panel.localeCompare(b.panel));
         const totalUnits=oLines.reduce((a,l)=>a+(parseInt(l.units)||0),0);
         const totalPanels=oLines.filter(l=>l.panel).length;
         const usePanelMode=trafficMode==="panels";
@@ -3718,7 +3985,7 @@ const App=()=>{
           </tr></thead>
             <tbody>{oLines.map((l,i)=>{const bd=usePanelMode?vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel):null;return<tr key={i}>
               <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={oPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></TD>
-              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.dma} - {p.sub} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
+              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{const v=e.target.value;upL(i,"panel",v);const b=vendorPanels.find(p=>p.panel===v);if(b&&Array.isArray(b.design)&&b.design.length&&!l.isci)upL(i,"isci",b.design.map(c=>fullCreativeName(b,c)).join(" / "))}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.dma} - {p.sub} - {p.type}{(Array.isArray(p.design)&&p.design.length)?" · 🎨"+p.design.join("/"):""}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
               {usePanelMode&&<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
               {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">All</option>{dmas.map(d=><option key={d} value={d}>{d}</option>)}</select></TD>}
               {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1e1233",color:"#E8DFF0"}}/></TD>}
@@ -3729,7 +3996,7 @@ const App=()=>{
           </table>
           <div style={{display:"flex",gap:6,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
             <Btn small onClick={addLine}>+ Add Line</Btn>
-            {usePanelMode&&<Btn small onClick={()=>{const used=oLines.map(l=>l.panel).filter(Boolean);const unassigned=vendorPanels.filter(p=>!used.includes(p.panel));if(!unassigned.length){notify("All panels already added");return}const nl=unassigned.map(p=>({flight:oPostDates||"",panel:p.panel,isci:"",units:"",notes:""}));setOLines(p=>[...p,...nl]);notify(unassigned.length+" panels added")}} color="#4AC8E8">+ Add All {trafficVendor||""} Panels</Btn>}
+            {usePanelMode&&<Btn small onClick={()=>{const used=oLines.map(l=>l.panel).filter(Boolean);const unassigned=vendorPanels.filter(p=>!used.includes(p.panel));if(!unassigned.length){notify("All panels already added");return}const nl=unassigned.map(p=>({flight:oPostDates||"",panel:p.panel,isci:(Array.isArray(p.design)&&p.design.length)?p.design.map(c=>fullCreativeName(p,c)).join(" / "):"",units:"",notes:""}));setOLines(p=>[...p,...nl]);notify(unassigned.length+" panels added (creative pre-filled where set)")}} color="#4AC8E8">+ Add All {trafficVendor||""} Panels</Btn>}
             <Btn small primary color="#D4A040" onClick={printOoh} disabled={!oLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
             <span style={{marginLeft:"auto",fontSize:12,color:"#94a3b8"}}>{usePanelMode?totalPanels+" panels":""+oLines.filter(l=>l.isci).length+" creatives | "+totalUnits+" units"}{trafficVendor?" | "+trafficVendor:""}</span>
           </div>
@@ -3809,13 +4076,13 @@ const App=()=>{
           </div>
         </Cd>;
        })():
-      <Cd><div style={{overflowX:"auto",maxHeight:480}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Panel</TH><TH>Market</TH><TH>DMA</TH><TH>Location</TH><TH>Impr/Wk</TH><TH>Installed</TH><TH>Dir</TH><TH>Contract</TH><TH>Status</TH><TH>ISCI</TH><TH>📷</TH></tr></thead>
+      <Cd><div style={{overflowX:"auto",maxHeight:480}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Panel</TH><TH>Market</TH><TH>DMA</TH><TH>Location</TH><TH>Impr/Wk</TH><TH>Installed</TH><TH>Dir</TH><TH>Contract</TH><TH>Status</TH><TH>ISCI</TH><TH>Creative</TH><TH>📷</TH></tr></thead>
         <tbody>{fl.map((p,i)=>
           <tr key={p.boardId}>
             <TD b>{i+1}</TD>
             <TD m b>{p.panel}</TD>
             <TD>{p.submarket}</TD>
-            <TD><B l={DM[p.dma]||p.dma} c={dmaColors[p.dma]||"#D4A040"}/></TD>
+            <TD><B l={oohMarket(p.dma)} c={dmaColors[p.dma]||"#D4A040"}/></TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:200,display:"inline-block"}}>{p.location}</span></TD>
             <TD b>{p.impressions.toLocaleString()}</TD>
             <TD>{p.installDate}</TD>
@@ -3832,6 +4099,16 @@ const App=()=>{
                 {p.isci||"—"} <span style={{fontSize:14,color:"#9B8EAD"}}>✎</span>
               </span>
             }</TD>
+            <TD>{dEditId===p.boardId?
+              <div style={{display:"flex",flexDirection:"column",gap:2,alignItems:"stretch"}}>
+                {Array.from({length:creativeSlots(p.type,p.size)}).map((_,k)=><select key={k} value={(dEditVal&&dEditVal[k])||""} onChange={e=>{if(e.target.value==="__new__"){const v=addCreativeConcept(p);if(v)setDSlot(k,v)}else setDSlot(k,e.target.value)}} style={{width:160,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12}} autoFocus={k===0}><option value="">— pick creative {k+1} —</option>{poolFor(p).map(c=><option key={c} value={c}>{c}</option>)}<option value="__new__">➕ Add new…</option></select>)}
+                <div style={{display:"flex",gap:2}}><button onClick={()=>saveDEdit(p.boardId)} style={{padding:"1px 6px",background:"#9b7bb0",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✓</button>
+                <button onClick={cancelDEdit} style={{padding:"1px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✕</button></div>
+              </div>:
+              <span onClick={()=>startDEdit(p)} style={{cursor:"pointer",fontSize:13}} title={p.vendorRef?("Lamar: "+p.vendorRef):""}>
+                {(Array.isArray(p.design)&&p.design.length)?<span style={{display:"inline-flex",flexWrap:"wrap",gap:2,alignItems:"center"}}>{p.design.map((c,k)=><React.Fragment key={k}>{boardClass(p.type,p.size).rotates&&k>0&&<span style={{fontSize:10,color:boardClass(p.type,p.size).color}}>→</span>}<span style={{color:"#fff",background:creativeColor(c),padding:"0 5px",borderRadius:7,fontWeight:700,fontSize:11}}>{c}</span></React.Fragment>)}</span>:<span style={{color:"#9b7bb0",fontStyle:"italic"}}>+ add {creativeSlots(p.type,p.size)} <span style={{color:boardClass(p.type,p.size).color}}>{boardClass(p.type,p.size).icon}</span></span>} <span style={{fontSize:14,color:"#9B8EAD"}}>✎</span>
+              </span>
+            }</TD>
             <TD><button onClick={()=>setPhotoPanel(p)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,padding:0}} title="View Photos">📷</button></TD>
           </tr>
         )}</tbody>
@@ -3840,6 +4117,16 @@ const App=()=>{
   };
 
   // ── POSTMAN LAW OOH MEDIA PLAN PAGE ────────────────────
+  // TODO (annual renewal — port from WK OOH / OohPg when PL renews, ~once a year):
+  //   The WK OOH renewal toolkit should be replicated here for Postman Law:
+  //   1. Class-aware per-board creative DROPDOWN (creativeSlots/boardClass; PL pool TBD)
+  //   2. 🪄 Auto-name + ISCI — one creative per board, spread by location (autoNameSpread),
+  //      ISCI per market·size·creative titled to convention ({DMA}PL26{TYPE}{seq}O)
+  //   3. By-Creative bunching map + 🗺 Download Creative Map (printCreativeMap)
+  //   4. 📄 Vendor Sheet — flat per market, 1 page/market, convention download links (printVendorTrafficSheet)
+  //   5. Creative file matcher (matchOohCreativeFile / oohVendorDl) — no renaming
+  //   PL specifics to confirm at port time: creative pool/names, vendor (Wilkins), ISCI brand "PL".
+  //   PL OOH data lives in plPanels (PL_PANELS), keyed by .unit (not .boardId).
   const PlOohPg=()=>{
     const mktF=plMktF,setMktF=setPlMktF,planF=plPlanF,setPlanF=setPlPlanF,vendF=plVendF,setVendF=setPlVendF;const viewMode=oohViewMode;const setViewMode=setOohViewMode;
     const plEditId=plOohEditId,setPlEditId=setPlOohEditId,plEditVal=plOohEditVal,setPlEditVal=setPlOohEditVal;
@@ -7165,7 +7452,7 @@ Rules:
         </div>
         {showOohBulk&&<Cd style={{padding:12}}>
           <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>📁 Bulk OOH Creative Upload</div>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>Drag & drop or click. Name each file with the OOH ISCI code (e.g., <b style={{color:"#E8DFF0"}}>DENPL26BS001O.pdf</b>). Matches exact, prefix, and partial codes.</div>
+          <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>Drag & drop or click — <b style={{color:"#E8DFF0"}}>no renaming needed</b>. Matches by ISCI code <i>or</i> by WK creative convention: market + size + creative (e.g. <b style={{color:"#E8DFF0"}}>WK_Birmingham_Cause_14x48</b> or <b style={{color:"#E8DFF0"}}>WK Static Poster - 10.6x22.9 - BRM - Case Cause - CK Blue</b>). Run <b style={{color:"#D4A040"}}>🪄 Auto-name</b> first so the ISCIs exist.</div>
           <DropZone multiple accept="*/*" style={{marginBottom:8}} onFiles={async(fileList)=>{
             const files=Array.from(fileList);if(!files.length){notify("No files selected");return}
             const toB64=(f)=>new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(r.error||new Error("read failed"));r.onload=()=>res(String(r.result).split(",")[1]||"");r.readAsDataURL(f)});
@@ -7176,7 +7463,10 @@ Rules:
               if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&(baseUpper.startsWith(i.code.toUpperCase()+" ")||baseUpper.startsWith(i.code.toUpperCase()+"-")||baseUpper.startsWith(i.code.toUpperCase()+"_")));
               if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper.includes(i.code.toUpperCase()));
               if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&i.code.toUpperCase().includes(baseUpper));
-              if(idx===-1){notFound++;setUploadTracker({label:file.name+" — no OOH ISCI match",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});continue}
+              // Fallback: match by WK creative convention (market + size + creative), so
+              // files keep their own names (e.g. WK_Birmingham_Cause_14x48).
+              if(idx===-1)idx=matchOohCreativeFile(file.name,iscis);
+              if(idx===-1){notFound++;setUploadTracker({label:file.name+" — no match (run 🪄 Auto-name first?)",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});continue}
               const ext=file.name.split(".").pop();const code=iscis[idx].code;
               setUploadTracker({label:"Uploading "+file.name+" ("+code+")",current:fi+1,total:total,pct:Math.round((fi/total)*100)});
               try{
@@ -9737,7 +10027,7 @@ Rules:
     const totalImpr=isWK?POSTINGS.reduce((a,p)=>a+p.impressions,0):PL_PANELS.reduce((a,p)=>a+(p.impressions||0)*(p.numUnits||1),0);
     const markets=isWK?[...new Set(POSTINGS.map(p=>p.dma))].sort():[...new Set(PL_PANELS.map(p=>p.market))].sort();
     const totalBoards=isWK?POSTINGS.length:PL_PANELS.length;
-    const mapPins=isWK?POSTINGS.map(p=>{const co=WK_COORDS[p.boardId];return{id:p.boardId,lat:co?co[0]:0,lng:co?co[1]:0,location:p.location,vendor:p.vendor,size:p.size,impressions:p.impressions,market:p.dma,closeImg:p.closeImg}})
+    const mapPins=isWK?POSTINGS.map(p=>{const co=WK_COORDS[p.boardId];return{id:p.boardId,lat:co?co[0]:0,lng:co?co[1]:0,location:p.location,vendor:p.vendor,size:p.size,impressions:p.impressions,market:oohMarket(p.dma),closeImg:p.closeImg}})
       :PL_PANELS.map(p=>({id:p.unit,lat:p.lat,lng:p.lng,location:p.location,vendor:p.vendor,size:p.size,impressions:(p.impressions||0)*(p.numUnits||1),market:p.market}));
     const dmaColors={BRM:"#D4A040",CHA:"#4AC8E8",GAD:"#5BC4A0",MTG:"#E85A7A",HSV:"#9b7bb0",KNX:"#4AC8E8",DHN:"#D4A040"};
     const mktColors={CHI:"#E85A7A",CIN:"#4AC8E8",DEN:"#5BC4A0",MSP:"#9b7bb0"};
