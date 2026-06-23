@@ -3650,17 +3650,11 @@ const App=()=>{
       hd("Renewal Term",(renewTerm||"TBD")+" · 13 broadcast periods","grn");
       if(oPostDates)hd("Post Notes",oPostDates);if(oVersion)hd("Version / Notes",oVersion);if(oComments)hd("Comments",oComments);
       const fileMap={};iscis.forEach(i=>{if(i.fileUrl)fileMap[i.code]=i.fileUrl});
-      // Fallback link-by-name: a board links through its own ISCI code first, but if
-      // that code lost its file (board→ISCI assignment drift), fall back to the OOH
-      // ISCI whose TITLE equals the board's market+size+creative name. Creative is
-      // market-specific, so this stays inside the right market — a Birmingham board
-      // only matches a Birmingham file, never another market's.
-      const titleFileMap={};iscis.forEach(i=>{if(i.suffix==="O"&&i.fileUrl){const t=String(i.title||"").trim();if(t&&!titleFileMap[t])titleFileMap[t]=i.fileUrl}});
       let grand=0;
       dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>oohMarket(p.dma)===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
         w.document.write('<div class="mkt"'+(di>0?' style="page-break-before:always"':'')+'>'+escHtml(d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
         w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location Description</th><th style="width:110px">Media/Style</th><th style="width:80px">H x W</th><th style="width:70px">Impr/Wk</th><th style="width:160px">Creative</th><th style="width:120px">ISCI</th><th style="width:80px">Renewal Date</th></tr>');
-        bds.forEach(p=>{const cr=(Array.isArray(p.design)&&p.design.length)?p.design.map(c=>fullCreativeName(p,c)).join(" / "):"—";const _vn=oohVendorFileName(p);const fu=fileMap[p.isci]||titleFileMap[_vn];
+        bds.forEach(p=>{const cr=(Array.isArray(p.design)&&p.design.length)?p.design.map(c=>fullCreativeName(p,c)).join(" / "):"—";const fu=fileMap[p.isci];
           const crCell=fu?('<a href="'+escHtml(oohVendorDl(fu,oohVendorFileName(p)))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(cr)+'</a>'):('<b>'+escHtml(cr)+'</b>');
           w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.panel))+'</td><td>'+escHtml(p.location||"")+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(p.size||"")+'</td><td style="text-align:right">'+(p.impressions?Number(p.impressions).toLocaleString():"")+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(p.isci||"—")+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||oPostDates||"")+'</td></tr>')});
         w.document.write('</table>')});
@@ -7474,20 +7468,12 @@ Rules:
               // Fallback: match by WK creative convention (market + size + creative), so
               // files keep their own names (e.g. WK_Birmingham_Cause_14x48).
               if(idx===-1)idx=matchOohCreativeFile(file.name,iscis);
-              // Concept-level linking: the TIFF names carry the creative but NOT the
-              // size/market, so one artwork can't be pinned to a single board. Instead
-              // link it to EVERY OOH ISCI of that concept — upload one "It's Personal"
-              // file and every It's Personal board lights up. A handful of artworks
-              // then cover all 193 boards. Exact code/convention match (if any) leads.
-              const _pc=parseOohCreativeFile(file.name);
-              let targetIdxs=[];
-              if(idx>-1)targetIdxs.push(idx);
-              if(_pc&&_pc.concept){iscis.forEach((it,j)=>{if(it.suffix==="O"&&String(it.title||"").split(" - ").pop().trim()===_pc.concept&&targetIdxs.indexOf(j)===-1)targetIdxs.push(j)})}
-              if(!targetIdxs.length){notFound++;setUploadTracker({label:file.name+" — no creative recognized (name it for the artwork, e.g. ...Shield / ...Blue / ...Personal)",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});continue}
-              const primary=targetIdxs[0];
-              const ext=file.name.split(".").pop();const code=iscis[primary].code;
-              // Save to Supabase under the convention NAME (primary ISCI title), so stored = title = download name.
-              const fname=String(iscis[primary].title||code).replace(/[\/\\]/g,"-").trim()||code;
+              // ONE file → ONE ISCI. Creative is market+size specific, so each file
+              // links only to its own board. No concept fan-out, no interlinking.
+              if(idx===-1){notFound++;setUploadTracker({label:file.name+" — no matching board (name needs market + size + creative)",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});continue}
+              const ext=file.name.split(".").pop();const code=iscis[idx].code;
+              // Save to Supabase under the convention NAME (ISCI title), so stored = title = download name.
+              const fname=String(iscis[idx].title||code).replace(/[\/\\]/g,"-").trim()||code;
               try{
                 let url="";
                 if(file.size<=3*1024*1024){
@@ -7503,19 +7489,18 @@ Rules:
                   if(!storage)throw new Error("Storage not loaded (large file)");
                   url=await new Promise((res,rej)=>{const ref=storage.ref("ooh-photos/creative/"+fname+"."+ext);const t=ref.put(file,{customMetadata:{isciCode:code}});t.on("state_changed",s=>{setUploadTracker({label:"Uploading "+file.name+" ("+code+")",current:fi+1,total:total,pct:Math.round(((fi+s.bytesTransferred/s.totalBytes)/total)*100)})},e=>rej(e),()=>ref.getDownloadURL().then(res).catch(rej))});
                 }
-                targetIdxs.forEach(t=>{updates[t]=url});matched++;
+                updates[idx]=url;matched++;
                 // Persist after EACH file (not just at the end) so an interrupted
                 // run — refresh, tab sleep, 413, mid-loop error — never loses the
-                // files already uploaded. targetIdxs are original array positions,
-                // which setIscis preserves (uploads never reorder/resize the array).
-                setIscis(prev=>prev.map((x,j)=>targetIdxs.indexOf(j)>-1?{...x,fileUrl:url}:x));
+                // files already uploaded. idx is the original array position, which
+                // setIscis preserves (uploads never reorder/resize the array).
+                setIscis(prev=>prev.map((x,j)=>j===idx?{...x,fileUrl:url}:x));
               }catch(e){failed++;lastErr=(e&&e.message)||String(e);notify("Upload failed ("+file.name+"): "+lastErr)}
             }
             setUploadTracker(null);
             if(Object.keys(updates).length>0){setIscis(prev=>prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x))}
-            const lit=Object.keys(updates).length;
-            log("Bulk OOH Creative",matched+" files → "+lit+" boards linked, "+notFound+" no match, "+failed+" failed");
-            notify(matched+" file(s) → "+lit+" board(s) linked"+(notFound?" | "+notFound+" not recognized":"")+(failed?" | "+failed+" failed: "+lastErr:""));
+            log("Bulk OOH Creative",matched+" linked, "+notFound+" no match, "+failed+" failed");
+            notify(matched+" file(s) linked"+(notFound?" | "+notFound+" no matching board":"")+(failed?" | "+failed+" failed: "+lastErr:""));
           }}>
             <div style={{fontSize:24}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Drag & drop or click to select OOH creative files</div><div style={{fontSize:12,color:"#64748b"}}>.jpg, .png, .pdf, .psd, .ai, .eps — multiple allowed</div>
           </DropZone>
