@@ -480,7 +480,9 @@ const parseOohCreativeFile=(name)=>{
 const matchOohCreativeFile=(name,iscis)=>{
   const{dma,concept,size}=parseOohCreativeFile(name);
   if(!dma||!concept||!size)return -1;
-  return iscis.findIndex(i=>i.suffix==="O"&&oohPrefix(i.dma)===oohPrefix(dma)&&oohNormSize(i.dur)===size&&String(i.title||"").split(" - ").pop().trim()===concept);
+  // Read the ISCI's market/size/creative from its TITLE (the dur field holds the
+  // type code like "SB"/"SP" for OOH, NOT the size). Title = "WK <type> - <PFX> - <size> - <creative>".
+  return iscis.findIndex(i=>{if(i.suffix!=="O")return false;const segs=String(i.title||"").split(" - ");if(segs.length<4)return false;const iPfx=segs[1].trim();const iSize=oohNormSize(segs[2]);const iConcept=segs.slice(3).join(" - ").trim();return oohPrefix(iPfx)===oohPrefix(dma)&&iSize===size&&iConcept===concept});
 };
 // The convention filename the VENDOR should receive (you never rename your source).
 const oohVendorFileName=(board)=>`WK ${boardClass(board.type,board.size).label} - ${oohPrefix(board.dma)} - ${oohNormSize(board.size)} - ${(Array.isArray(board.design)?board.design[0]:board.design)||""}`;
@@ -7465,8 +7467,13 @@ Rules:
               if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&(baseUpper.startsWith(i.code.toUpperCase()+" ")||baseUpper.startsWith(i.code.toUpperCase()+"-")||baseUpper.startsWith(i.code.toUpperCase()+"_")));
               if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper.includes(i.code.toUpperCase()));
               if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&i.code.toUpperCase().includes(baseUpper));
+              // Direct title match: files named by the convention ARE the ISCI title
+              // (e.g. "WK Bulletin - BRM - 9x48 - Case Cause Shield"). Match the file
+              // name to the title exactly — the market prefix in the name keeps it
+              // one-to-one and market-specific. This is the main path for renamed files.
+              if(idx===-1){const _fb=file.name.replace(/\.[^.]+$/,"").replace(/\s+/g," ").trim().toLowerCase();idx=iscis.findIndex(i=>i.suffix==="O"&&String(i.title||"").replace(/\s+/g," ").trim().toLowerCase()===_fb)}
               // Fallback: match by WK creative convention (market + size + creative), so
-              // files keep their own names (e.g. WK_Birmingham_Cause_14x48).
+              // files keep their own messy names (e.g. WK_Birmingham_Cause_14x48).
               if(idx===-1)idx=matchOohCreativeFile(file.name,iscis);
               // ONE file → ONE ISCI. Creative is market+size specific, so each file
               // links only to its own board. No concept fan-out, no interlinking.
