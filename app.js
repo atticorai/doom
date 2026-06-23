@@ -3504,6 +3504,27 @@ const App=()=>{
     // Per-board creative rotation — picked from the board's catalog pool (no free text).
     const poolFor=(board)=>oohCreatives[creativePoolKey(board.type,board.size)]||[];
     const addCreativeConcept=(board)=>{const key=creativePoolKey(board.type,board.size);const name=(typeof window!=="undefined"&&window.prompt)?window.prompt("New "+key+" creative name:"):"";const v=(name||"").trim();if(!v)return"";setOohCreatives(prev=>{const cur=prev[key]||[];return cur.includes(v)?prev:{...prev,[key]:[...cur,v]}});return v};
+    // Auto-name: assign ONE creative per board, rotated/spread so neighbouring
+    // boards (within RADIUS mi) differ — uses coordinates to avoid bunching the
+    // same creative on a highway stretch or mall area.
+    const autoNameSpread=(scope)=>{
+      const RADIUS=5;
+      const targets=scope.filter(p=>!String(p.panel).includes("TBD"));
+      const withco=[],without=[];
+      targets.forEach(p=>{(WK_COORDS[p.boardId]?withco:without).push(p)});
+      withco.sort((a,b)=>{const A=WK_COORDS[a.boardId],B=WK_COORDS[b.boardId];return A[0]-B[0]||A[1]-B[1]});
+      const assigned={};const gcount={};
+      const place=(p)=>{const key=creativePoolKey(p.type,p.size);const pool=oohCreatives[key]||[];if(!pool.length)return;
+        const co=WK_COORDS[p.boardId];const near={};
+        if(co){for(const q of withco){if(q===p)continue;const c=assigned[q.boardId];if(!c)continue;const qc=WK_COORDS[q.boardId];if(milesBetween(co[0],co[1],qc[0],qc[1])<=RADIUS)near[c]=(near[c]||0)+1}}
+        const gc=gcount[key]||(gcount[key]={});
+        const chosen=pool.map((c,idx)=>({c,idx,n:near[c]||0,g:gc[c]||0})).sort((a,b)=>a.n-b.n||a.g-b.g||a.idx-b.idx)[0].c;
+        assigned[p.boardId]=chosen;gc[chosen]=(gc[chosen]||0)+1};
+      withco.forEach(place);without.forEach(place);
+      const n=Object.keys(assigned).length;if(!n){notify("No boards to name");return}
+      setPops(prev=>prev.map(p=>assigned[p.boardId]!==undefined?{...p,design:[assigned[p.boardId]]}:p));
+      const dist=Object.entries(gcount).flatMap(([k,m])=>Object.entries(m).map(([c,v])=>c+":"+v)).join(", ");
+      log("OOH Auto-name",n+" boards · "+dist);notify("Named "+n+" boards (spread by location) · "+dist)};
     const startDEdit=(board)=>{const n=creativeSlots(board.type,board.size);const cur=Array.isArray(board.design)?board.design:[];setDEditId(board.boardId);setDEditVal(Array.from({length:n},(_,k)=>cur[k]||""))};
     const setDSlot=(k,v)=>setDEditVal(prev=>{const a=Array.isArray(prev)?[...prev]:[];a[k]=v;return a});
     const saveDEdit=(boardId)=>{const v=(Array.isArray(dEditVal)?dEditVal:[]).map(s=>(s||"").trim()).filter(Boolean);setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,design:v}:p));setDEditId(null);log("OOH Creative",`${boardId} → ${v.join(" / ")||"(cleared)"}`);notify(`${boardId} creative ${v.length?"set":"cleared"}`)};
@@ -3624,6 +3645,7 @@ const App=()=>{
             const rows=fl.map(p=>{const co=WK_COORDS[p.boardId];const zip=typeof WK_ZIPS!=='undefined'?(WK_ZIPS[p.submarket]||""):"";return[p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),(Array.isArray(p.design)?p.design.map(c=>fullCreativeName(p,c)).join(" | "):""),p.vendorRef||"",p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
             exportCsv("WK_OOH_"+(om||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
+          <Btn small color="#9b7bb0" onClick={()=>{const scope=fl.filter(p=>!String(p.panel).includes("TBD"));const lbl=(om||ov||oVend)?`the ${scope.length} filtered boards`:`all ${scope.length} boards`;if(window.confirm(`Auto-name ${lbl}?\n\nAssigns ONE creative per board (bulletins from the 2 bulletin creatives, posters from the 3 poster creatives), spread by location so neighbours differ. This OVERWRITES current creative assignments in view.`))autoNameSpread(fl)}}>🪄 Auto-name</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
           <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>📍 Map</Btn>
@@ -3657,11 +3679,11 @@ const App=()=>{
       </div>
       {/* Board mix by format class — informational, drives the per-board creative requirements */}
       {(()=>{const groups={};fl.forEach(p=>{const bc=boardClass(p.type,p.size);(groups[bc.key]=groups[bc.key]||{bc,boards:[]}).boards.push(p)});const order=["bulletin","static","junior","rotary","digital"];const entries=order.filter(k=>groups[k]).map(k=>groups[k]);if(!entries.length)return null;
-        return<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{entries.map(({bc,boards})=>{const need=boards.length*bc.slots;const done=boards.reduce((a,p)=>a+Math.min((Array.isArray(p.design)?p.design.length:0),bc.slots),0);const pct=need?Math.round(done/need*100):0;return<div key={bc.key} title={bc.spec} style={{flex:"1 1 150px",minWidth:150,padding:"7px 10px",borderRadius:8,background:"#1e1233",border:`1px solid #4a3565`,borderLeft:`3px solid ${bc.color}`}}>
+        return<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{entries.map(({bc,boards})=>{const need=boards.length;const done=boards.filter(p=>Array.isArray(p.design)&&p.design.length).length;const pct=need?Math.round(done/need*100):0;const poolN=(oohCreatives[creativePoolKey(boards[0].type,boards[0].size)]||[]).length;return<div key={bc.key} title={bc.spec} style={{flex:"1 1 150px",minWidth:150,padding:"7px 10px",borderRadius:8,background:"#1e1233",border:`1px solid #4a3565`,borderLeft:`3px solid ${bc.color}`}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:12,fontWeight:800,color:bc.color,display:"flex",alignItems:"center",gap:4}}>{bc.icon} {bc.label}{bc.rotates&&<span style={{fontSize:8,fontWeight:700,color:"#fff",background:bc.color,padding:"0 4px",borderRadius:6}}>ROT</span>}</span><span style={{fontSize:16,fontWeight:800,color:"#F0E8F8"}}>{boards.length}</span></div>
-          <div style={{fontSize:10,color:"#6B5E80",margin:"2px 0 4px"}}>{bc.slots} {bc.unit}{bc.slots>1?"s":""} each · {need} creatives needed</div>
+          <div style={{fontSize:10,color:"#6B5E80",margin:"2px 0 4px"}}>1 of {poolN} creatives each · spread by location</div>
           <div style={{height:5,borderRadius:3,background:"#2d1f42",overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:pct===100?"#5BC4A0":bc.color}}/></div>
-          <div style={{fontSize:10,color:pct===100?"#5BC4A0":"#9B8EAD",marginTop:2,fontWeight:600}}>{done}/{need} named · {pct}%</div>
+          <div style={{fontSize:10,color:pct===100?"#5BC4A0":"#9B8EAD",marginTop:2,fontWeight:600}}>{done}/{need} boards named · {pct}%</div>
         </div>})}</div>;})()}
 
       {viewMode==="cards"?<CardGrid/>:
