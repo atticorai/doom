@@ -4093,6 +4093,16 @@ const App=()=>{
   };
 
   // ── POSTMAN LAW OOH MEDIA PLAN PAGE ────────────────────
+  // TODO (annual renewal — port from WK OOH / OohPg when PL renews, ~once a year):
+  //   The WK OOH renewal toolkit should be replicated here for Postman Law:
+  //   1. Class-aware per-board creative DROPDOWN (creativeSlots/boardClass; PL pool TBD)
+  //   2. 🪄 Auto-name + ISCI — one creative per board, spread by location (autoNameSpread),
+  //      ISCI per market·size·creative titled to convention ({DMA}PL26{TYPE}{seq}O)
+  //   3. By-Creative bunching map + 🗺 Download Creative Map (printCreativeMap)
+  //   4. 📄 Vendor Sheet — flat per market, 1 page/market, convention download links (printVendorTrafficSheet)
+  //   5. Creative file matcher (matchOohCreativeFile / oohVendorDl) — no renaming
+  //   PL specifics to confirm at port time: creative pool/names, vendor (Wilkins), ISCI brand "PL".
+  //   PL OOH data lives in plPanels (PL_PANELS), keyed by .unit (not .boardId).
   const PlOohPg=()=>{
     const mktF=plMktF,setMktF=setPlMktF,planF=plPlanF,setPlanF=setPlPlanF,vendF=plVendF,setVendF=setPlVendF;const viewMode=oohViewMode;const setViewMode=setOohViewMode;
     const plEditId=plOohEditId,setPlEditId=setPlOohEditId,plEditVal=plOohEditVal,setPlEditVal=setPlOohEditVal;
