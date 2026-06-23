@@ -436,11 +436,16 @@ const boardClass=(type,size)=>{const s=((type||"")+" "+(size||"")).toLowerCase()
   if(s.includes("bulletin")||s.includes("preempt"))return BOARD_CLASSES.bulletin;
   return BOARD_CLASSES.static;};
 const creativeSlots=(type,size)=>boardClass(type,size).slots;
-// WK OOH creative catalog (the artwork concepts). Picked from a dropdown — no
-// free text. Seeded from the 2026 renewal; the real names drop in here when
-// the zip screenshots come. The per-board display name is generated to the
-// convention: "WK <Class> - <Size> <Market> · <Concept>".
-const WK_OOH_CONCEPTS=["It's Personal — No Image","It's Personal — Chris","Southern Justice — Chris","Brand / Logo"];
+// WK OOH creative catalog (real artwork, from Jessica's set). Bulletins and
+// posters carry DIFFERENT creatives, so the per-board dropdown is filtered to
+// the board's pool. Picked from a dropdown — no free text. Per-board display
+// name is generated to the convention "WK <Class> - <Size> <Market> · <Concept>".
+const WK_OOH_CREATIVES={
+  bulletin:["Case Cause Shield","It's Personal CK"],
+  poster:["Case Cause CK Blue","Case Cause CK Gold","It's Personal CK"]
+};
+// Bulletins (incl. digital bulletins) draw the bulletin pool; posters/juniors/rotary draw the poster pool.
+const creativePoolKey=(type,size)=>{const k=boardClass(type,size).key;return(k==="bulletin"||k==="digital")?"bulletin":"poster"};
 const fullCreativeName=(board,concept)=>concept?`WK ${boardClass(board.type,board.size).label} - ${board.size} ${board.dma} · ${concept}`:"";
 const MEDIA_CAT_COLORS={Poster:{fg:"#F4C242",bg:"rgba(244,194,66,.15)",border:"#F4C242"},Bulletin:{fg:"#4AC8E8",bg:"rgba(74,200,232,.15)",border:"#4AC8E8"},Digital:{fg:"#C084FC",bg:"rgba(192,132,252,.15)",border:"#C084FC"},Other:{fg:"#94a3b8",bg:"rgba(148,163,184,.15)",border:"#94a3b8"}};
 const MediaBadge=({type,size="sm"})=>{const cat=mediaCategory(type);const c=MEDIA_CAT_COLORS[cat];const pad=size==="sm"?"1px 6px":"2px 8px";const fs=size==="sm"?10:11;return React.createElement("span",{style:{display:"inline-block",padding:pad,borderRadius:3,fontSize:fs,fontWeight:700,color:c.fg,background:c.bg,border:"1px solid "+c.border,letterSpacing:.3,textTransform:"uppercase"}},cat)};
@@ -932,7 +937,7 @@ const App=()=>{
         if(docs.settings?.data){try{const s=JSON.parse(docs.settings.data);if(typeof s.campaignIcsUrl==="string")setCampaignIcsUrl(s.campaignIcsUrl)}catch(_e){}}
         try{if(docs.wkOohIscis?.data){const d=JSON.parse(docs.wkOohIscis.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>d[p.boardId]!==undefined?{...p,isci:d[p.boardId]}:p))}}catch(_e){console.warn("wkOohIscis load skipped",_e)}
         try{if(docs.wkOohDesigns?.data){const d=JSON.parse(docs.wkOohDesigns.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>{if(d[p.boardId]===undefined)return p;const v=d[p.boardId];return{...p,design:Array.isArray(v)?v.filter(Boolean):(v?[v]:[])}}))}}catch(_e){console.warn("wkOohDesigns load skipped",_e)}
-        try{if(docs.wkOohCreativeList?.data){const d=JSON.parse(docs.wkOohCreativeList.data);if(Array.isArray(d)&&d.length)setOohCreatives([...new Set([...WK_OOH_CONCEPTS,...d])])}}catch(_e){console.warn("wkOohCreativeList load skipped",_e)}
+        try{if(docs.wkOohCreativeList?.data){const d=JSON.parse(docs.wkOohCreativeList.data);if(d&&typeof d==="object"&&!Array.isArray(d))setOohCreatives({bulletin:[...new Set([...WK_OOH_CREATIVES.bulletin,...(d.bulletin||[])])],poster:[...new Set([...WK_OOH_CREATIVES.poster,...(d.poster||[])])]})}}catch(_e){console.warn("wkOohCreativeList load skipped",_e)}
         try{if(docs.plOohIscis?.data){const d=JSON.parse(docs.plOohIscis.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isci:d[p.unit]}:p))}}catch(_e){console.warn("plOohIscis load skipped",_e)}
         try{if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}}catch(_e){console.warn("oohPhotos load skipped",_e)}
         console.log("Supabase: loaded",Object.keys(docs).length,"collections");
@@ -1281,7 +1286,7 @@ const App=()=>{
   const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");const[oohMapMode,setOohMapMode]=useState("market");const[oohClusterRadius,setOohClusterRadius]=useState(3);
   const[oohEditId,setOohEditId]=useState(null);const[oohEditVal,setOohEditVal]=useState("");
   const[oohDesignEditId,setOohDesignEditId]=useState(null);const[oohDesignEditVal,setOohDesignEditVal]=useState("");
-  const[oohCreatives,setOohCreatives]=useState(WK_OOH_CONCEPTS);
+  const[oohCreatives,setOohCreatives]=useState(WK_OOH_CREATIVES);
   const[oohPhotoPanel,setOohPhotoPanel]=useState(null);
   const[oohLines,setOohLines]=useState([{flight:"",isci:"",units:"",notes:""}]);
   const[oohPostDates,setOohPostDates]=useState("");const[oohVersion,setOohVersion]=useState("");const[oohComments,setOohComments]=useState("");
@@ -3496,9 +3501,9 @@ const App=()=>{
     const saveEdit=(boardId)=>{setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,isci:editVal}:p));setEditId(null);log("OOH Assign",`${boardId} → ${editVal||"(cleared)"}`);notify(`${boardId} updated`)};
     const cancelEdit=()=>{setEditId(null);setEditVal("")};
     const isciTitle=(code)=>{if(!code)return"";const m=iscis.find(i=>i.code===code);return m?m.title:""};
-    // Per-board creative rotation — picked from the catalog (no free text).
-    const creativeList=oohCreatives;
-    const addCreativeConcept=()=>{const name=(typeof window!=="undefined"&&window.prompt)?window.prompt("New creative name (artwork concept):"):"";const v=(name||"").trim();if(!v)return"";if(!creativeList.includes(v))setOohCreatives(prev=>[...prev,v]);return v};
+    // Per-board creative rotation — picked from the board's catalog pool (no free text).
+    const poolFor=(board)=>oohCreatives[creativePoolKey(board.type,board.size)]||[];
+    const addCreativeConcept=(board)=>{const key=creativePoolKey(board.type,board.size);const name=(typeof window!=="undefined"&&window.prompt)?window.prompt("New "+key+" creative name:"):"";const v=(name||"").trim();if(!v)return"";setOohCreatives(prev=>{const cur=prev[key]||[];return cur.includes(v)?prev:{...prev,[key]:[...cur,v]}});return v};
     const startDEdit=(board)=>{const n=creativeSlots(board.type,board.size);const cur=Array.isArray(board.design)?board.design:[];setDEditId(board.boardId);setDEditVal(Array.from({length:n},(_,k)=>cur[k]||""))};
     const setDSlot=(k,v)=>setDEditVal(prev=>{const a=Array.isArray(prev)?[...prev]:[];a[k]=v;return a});
     const saveDEdit=(boardId)=>{const v=(Array.isArray(dEditVal)?dEditVal:[]).map(s=>(s||"").trim()).filter(Boolean);setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,design:v}:p));setDEditId(null);log("OOH Creative",`${boardId} → ${v.join(" / ")||"(cleared)"}`);notify(`${boardId} creative ${v.length?"set":"cleared"}`)};
@@ -3584,9 +3589,9 @@ const App=()=>{
               {dEditId===p.boardId?(()=>{const picked=(dEditVal||[]).filter(Boolean);const dup=picked.length!==new Set(picked).size;return
                 <div style={{display:"flex",flexDirection:"column",gap:3}}>
                   {Array.from({length:slots}).map((_,k)=><div key={k} style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:10,fontWeight:700,color:bc.color,minWidth:54}}>{bc.rotates?(bc.unit==="position"?"Pos "+(k+1):"Frame "+(k+1)):"Creative "+(k+1)}</span>
-                    <select value={(dEditVal&&dEditVal[k])||""} onChange={e=>{if(e.target.value==="__new__"){const v=addCreativeConcept();if(v)setDSlot(k,v)}else setDSlot(k,e.target.value)}} style={{flex:1,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}} autoFocus={k===0}>
+                    <select value={(dEditVal&&dEditVal[k])||""} onChange={e=>{if(e.target.value==="__new__"){const v=addCreativeConcept(p);if(v)setDSlot(k,v)}else setDSlot(k,e.target.value)}} style={{flex:1,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}} autoFocus={k===0}>
                       <option value="">— pick creative —</option>
-                      {creativeList.map(c=><option key={c} value={c}>{c}</option>)}
+                      {poolFor(p).map(c=><option key={c} value={c}>{c}</option>)}
                       <option value="__new__">➕ Add new creative…</option>
                     </select></div>)}
                   {dup&&<div style={{fontSize:10,color:"#E85A7A",fontWeight:700}}>⚠ Same creative picked twice — that's a wasted rotation slot.</div>}
@@ -3933,7 +3938,7 @@ const App=()=>{
             }</TD>
             <TD>{dEditId===p.boardId?
               <div style={{display:"flex",flexDirection:"column",gap:2,alignItems:"stretch"}}>
-                {Array.from({length:creativeSlots(p.type,p.size)}).map((_,k)=><select key={k} value={(dEditVal&&dEditVal[k])||""} onChange={e=>{if(e.target.value==="__new__"){const v=addCreativeConcept();if(v)setDSlot(k,v)}else setDSlot(k,e.target.value)}} style={{width:160,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12}} autoFocus={k===0}><option value="">— pick creative {k+1} —</option>{creativeList.map(c=><option key={c} value={c}>{c}</option>)}<option value="__new__">➕ Add new…</option></select>)}
+                {Array.from({length:creativeSlots(p.type,p.size)}).map((_,k)=><select key={k} value={(dEditVal&&dEditVal[k])||""} onChange={e=>{if(e.target.value==="__new__"){const v=addCreativeConcept(p);if(v)setDSlot(k,v)}else setDSlot(k,e.target.value)}} style={{width:160,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12}} autoFocus={k===0}><option value="">— pick creative {k+1} —</option>{poolFor(p).map(c=><option key={c} value={c}>{c}</option>)}<option value="__new__">➕ Add new…</option></select>)}
                 <div style={{display:"flex",gap:2}}><button onClick={()=>saveDEdit(p.boardId)} style={{padding:"1px 6px",background:"#9b7bb0",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✓</button>
                 <button onClick={cancelDEdit} style={{padding:"1px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✕</button></div>
               </div>:
