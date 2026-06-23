@@ -3536,6 +3536,42 @@ const App=()=>{
       setPops(prev=>prev.map(p=>assigned[p.boardId]!==undefined?{...p,design:[assigned[p.boardId]],isci:boardIsci[p.boardId]||p.isci}:p));
       const dist=Object.entries(gcount).flatMap(([k,m])=>Object.entries(m).map(([c,v])=>c+":"+v)).join(", ");
       log("OOH Auto-name",n+" boards · "+newIscis.length+" ISCIs · "+dist);notify("Named "+n+" boards + "+newIscis.length+" ISCIs (spread by location) · "+dist)};
+
+    // Printable / sendable creative MAP — a REAL Leaflet street map (same as
+    // on-screen), coloured by creative, with bunching warnings and a
+    // per-creative board breakdown. Vendor-ready.
+    const printCreativeMap=()=>{
+      const scope=fl.filter(p=>(Array.isArray(p.design)&&p.design.length));
+      if(!scope.length){notify("Assign creatives first (🪄 Auto-name)");return}
+      const mktLabel=om?(DM[om]||om):"All Markets";
+      const pins=scope.map(p=>{const co=WK_COORDS[p.boardId];return{panel:String(p.panel),sub:p.submarket||"",loc:p.location||"",size:p.size||"",dma:p.dma,creative:p.design[0],color:creativeColor(p.design[0]),lat:co?co[0]:null,lng:co?co[1]:null,approx:isApproxCoord(p.boardId)}});
+      const titles=[...new Set(pins.map(p=>p.creative))].sort();
+      const conf=[];const cp=pins.filter(p=>p.lat&&p.lng&&!p.approx);
+      for(let a=0;a<cp.length;a++)for(let b=a+1;b<cp.length;b++){if(cp[a].creative!==cp[b].creative)continue;const d=milesBetween(cp[a].lat,cp[a].lng,cp[b].lat,cp[b].lng);if(d<=oohClusterRadius)conf.push({c:cp[a].creative,a:cp[a],b:cp[b],d})}
+      conf.sort((x,y)=>x.d-y.d);
+      const mapPins=pins.filter(p=>p.lat&&p.lng).map(p=>({lat:p.lat,lng:p.lng,c:p.color,a:p.approx,t:escHtml(p.panel+" · "+p.creative+" · "+p.loc)}));
+      const legend=titles.map(t=>`<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0;font-size:12px"><span style="width:12px;height:12px;border-radius:6px;background:${creativeColor(t)};border:1px solid #333"></span><b>${escHtml(t)}</b> (${pins.filter(p=>p.creative===t).length})</span>`).join("");
+      const w=window.open("","","width=980,height=860");
+      w.document.write('<html><head><title>WK OOH Creative Map — '+escHtml(mktLabel)+'</title>');
+      w.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>');
+      w.document.write('<style>body{font-family:Arial,sans-serif;margin:24px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.sub{color:#555;font-weight:bold;margin-bottom:12px}#map{height:460px;border:1px solid #ccc;border-radius:8px}.box{border:1px solid #ccc;border-radius:8px;padding:10px 12px;margin-top:12px}table{width:100%;border-collapse:collapse;margin-top:6px}th,td{border:1px solid #ddd;padding:4px 8px;font-size:11px;text-align:left}th{background:#f4f4f4}.warn{color:#b45309;font-weight:bold}.ok{color:#15803d;font-weight:bold}.sw{display:inline-block;width:10px;height:10px;border-radius:5px;margin-right:5px;vertical-align:middle}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{body{margin:12px}.box{page-break-inside:avoid}.dl{display:none}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<div style="text-align:center;margin-bottom:6px"><h2>WETTERMARK KEITH</h2><div style="font-weight:bold;color:#555">OOH CREATIVE DISTRIBUTION MAP</div></div>');
+      w.document.write('<div class="sub">Market: '+escHtml(mktLabel)+' &nbsp;·&nbsp; '+pins.length+' boards &nbsp;·&nbsp; '+titles.length+' creatives &nbsp;·&nbsp; spacing check: '+oohClusterRadius+' mi &nbsp;·&nbsp; '+new Date().toLocaleDateString()+'</div>');
+      w.document.write('<div style="margin-bottom:8px">'+legend+'</div>');
+      w.document.write('<div id="map"></div>');
+      w.document.write('<div class="box">'+(conf.length?'<div class="warn">⚠ '+conf.length+' same-creative pair'+(conf.length!==1?'s':'')+' within '+oohClusterRadius+' mi — review spacing:</div>':'<div class="ok">✓ No same-creative boards within '+oohClusterRadius+' mi — clean spread.</div>'));
+      if(conf.length){w.document.write('<table><tr><th>Creative</th><th>Board A</th><th>Board B</th><th>Apart</th></tr>');conf.slice(0,80).forEach(c=>w.document.write('<tr><td><span class="sw" style="background:'+creativeColor(c.c)+'"></span>'+escHtml(c.c)+'</td><td>'+escHtml(c.a.panel+" — "+c.a.sub)+'</td><td>'+escHtml(c.b.panel+" — "+c.b.sub)+'</td><td>'+c.d.toFixed(1)+' mi</td></tr>'));w.document.write('</table>')}
+      w.document.write('</div>');
+      titles.forEach(t=>{const bs=pins.filter(p=>p.creative===t).sort((a,b)=>(a.sub||"").localeCompare(b.sub||"")||a.panel.localeCompare(b.panel));
+        w.document.write('<div class="box"><div style="font-weight:bold;font-size:13px"><span class="sw" style="background:'+creativeColor(t)+'"></span>'+escHtml(t)+' — '+bs.length+' boards</div><table><tr><th>Unit</th><th>Market</th><th>Submarket</th><th>Size</th><th>Location</th></tr>');
+        bs.forEach(p=>w.document.write('<tr><td><b>'+escHtml(p.panel)+'</b></td><td>'+escHtml(p.dma)+'</td><td>'+escHtml(p.sub)+'</td><td>'+escHtml(p.size)+'</td><td>'+escHtml(p.loc)+'</td></tr>'));
+        w.document.write('</table></div>')});
+      w.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"><\/script>');
+      w.document.write('<script>var P='+JSON.stringify(mapPins)+';(function go(){if(typeof L==="undefined")return setTimeout(go,60);var map=L.map("map",{zoomControl:true,attributionControl:false});L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18}).addTo(map);var b=[];P.forEach(function(p){L.circleMarker([p.lat,p.lng],{radius:6,color:"#222",weight:1,fillColor:p.c,fillOpacity:.9,dashArray:p.a?"2 2":null}).bindTooltip(p.t).addTo(map);b.push([p.lat,p.lng])});if(b.length)map.fitBounds(b,{padding:[24,24]});setTimeout(function(){window.focus();window.print()},1600)})();<\/script>');
+      w.document.write('</body></html>');w.document.close();
+      log("OOH Creative Map",mktLabel+" · "+pins.length+" boards");
+    };
     const startDEdit=(board)=>{const n=creativeSlots(board.type,board.size);const cur=Array.isArray(board.design)?board.design:[];setDEditId(board.boardId);setDEditVal(Array.from({length:n},(_,k)=>cur[k]||""))};
     const setDSlot=(k,v)=>setDEditVal(prev=>{const a=Array.isArray(prev)?[...prev]:[];a[k]=v;return a});
     const saveDEdit=(boardId)=>{const v=(Array.isArray(dEditVal)?dEditVal:[]).map(s=>(s||"").trim()).filter(Boolean);setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,design:v}:p));setDEditId(null);log("OOH Creative",`${boardId} → ${v.join(" / ")||"(cleared)"}`);notify(`${boardId} creative ${v.length?"set":"cleared"}`)};
@@ -3702,6 +3738,7 @@ const App=()=>{
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:6}}>
           <div style={{fontSize:14,fontWeight:700}}>📍 WK OOH Board Locations</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <Btn small color="#9b7bb0" onClick={printCreativeMap}>🗺 Download Creative Map</Btn>
             {oohMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={oohClusterRadius} onChange={e=>setOohClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#4AC8E8",minWidth:30}}>{oohClusterRadius} mi</span></div>}
             <div style={{display:"flex",gap:0,border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}>
               <button onClick={()=>setOohMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:oohMapMode==="market"?"rgba(212,160,64,.2)":"transparent",color:oohMapMode==="market"?"#D4A040":"#94a3b8"}}>📍 By Market</button>
