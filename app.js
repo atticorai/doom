@@ -447,6 +447,30 @@ const WK_OOH_CREATIVES={
 // Bulletins (incl. digital bulletins) draw the bulletin pool; posters/juniors/rotary draw the poster pool.
 const creativePoolKey=(type,size)=>{const k=boardClass(type,size).key;return(k==="bulletin"||k==="digital")?"bulletin":"poster"};
 const fullCreativeName=(board,concept)=>concept?`WK ${boardClass(board.type,board.size).label} - ${board.size} ${board.dma} · ${concept}`:"";
+// ── Creative-file matching (so TIFFs upload without renaming) ──
+// Normalise a board/file size to a comparable form: 10'6x22'9 → 10.6x22.9, 14'x48' → 14x48.
+const oohNormSize=(s)=>String(s||"").toLowerCase().replace(/["”\s]/g,"").split("x").map(t=>t.replace(/['’]/g,".").replace(/[^0-9.]/g,"").replace(/\.+$/,"").replace(/^\.+/,"")).filter(Boolean).join("x");
+const OOH_MKT2DMA={birmingham:"BRM",biringham:"BRM",bham:"BRM",montgomery:"MTG",huntsville:"HSV",decatur:"HSV",florence:"HSV",madison:"HSV",cullman:"HSV",athens:"HSV",knoxville:"KNX",dothan:"DHN",enterprise:"DHN",nashville:"NSH",gadsden:"GAD",anniston:"GAD",centre:"GAD",tuscaloosa:"BRM"};
+// Parse a creative filename → {dma, size, concept}. Handles the clean convention
+// ("WK Static Poster - 10.6x22.9 - BRM - Case Cause - CK Blue") and the messy
+// source names ("WK_Birmingham_Cause_14x48", "WK_Birmingham_Cause_Gold_10.6x22.9").
+const parseOohCreativeFile=(name)=>{
+  const base=String(name||"").replace(/\.[^.]+$/,"");const L=base.toLowerCase();
+  let dma=null;for(const k in OOH_MKT2DMA){if(L.includes(k)){dma=OOH_MKT2DMA[k];break}}
+  if(!dma){const m=base.toUpperCase().match(/\b(BRM|GAD|MTG|HSV|KNX|DHN|NSH)\b/);if(m)dma=m[1]}
+  let concept=null;
+  if(/cause/.test(L))concept=/blue/.test(L)?"Case Cause CK Blue":/gold/.test(L)?"Case Cause CK Gold":"Case Cause Shield";
+  else if(/personal/.test(L))concept="It's Personal CK";
+  const sm=base.match(/\d+\.?\d*\s*['’]?\s*\d*\s*[xX]\s*\d+\.?\d*\s*['’]?\s*\d*/);
+  const size=sm?oohNormSize(sm[0]):null;
+  return{dma,concept,size};
+};
+// Find the ISCI index a creative file belongs to (by market+size+creative). -1 if none.
+const matchOohCreativeFile=(name,iscis)=>{
+  const{dma,concept,size}=parseOohCreativeFile(name);
+  if(!dma||!concept||!size)return -1;
+  return iscis.findIndex(i=>i.suffix==="O"&&i.dma===dma&&oohNormSize(i.dur)===size&&String(i.title||"").split(" - ").pop().trim()===concept);
+};
 const MEDIA_CAT_COLORS={Poster:{fg:"#F4C242",bg:"rgba(244,194,66,.15)",border:"#F4C242"},Bulletin:{fg:"#4AC8E8",bg:"rgba(74,200,232,.15)",border:"#4AC8E8"},Digital:{fg:"#C084FC",bg:"rgba(192,132,252,.15)",border:"#C084FC"},Other:{fg:"#94a3b8",bg:"rgba(148,163,184,.15)",border:"#94a3b8"}};
 const MediaBadge=({type,size="sm"})=>{const cat=mediaCategory(type);const c=MEDIA_CAT_COLORS[cat];const pad=size==="sm"?"1px 6px":"2px 8px";const fs=size==="sm"?10:11;return React.createElement("span",{style:{display:"inline-block",padding:pad,borderRadius:3,fontSize:fs,fontWeight:700,color:c.fg,background:c.bg,border:"1px solid "+c.border,letterSpacing:.3,textTransform:"uppercase"}},cat)};
 // Stable, deterministic color for any creative title. Same input → same color, always.
@@ -7349,7 +7373,7 @@ Rules:
         </div>
         {showOohBulk&&<Cd style={{padding:12}}>
           <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>📁 Bulk OOH Creative Upload</div>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>Drag & drop or click. Name each file with the OOH ISCI code (e.g., <b style={{color:"#E8DFF0"}}>DENPL26BS001O.pdf</b>). Matches exact, prefix, and partial codes.</div>
+          <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>Drag & drop or click — <b style={{color:"#E8DFF0"}}>no renaming needed</b>. Matches by ISCI code <i>or</i> by WK creative convention: market + size + creative (e.g. <b style={{color:"#E8DFF0"}}>WK_Birmingham_Cause_14x48</b> or <b style={{color:"#E8DFF0"}}>WK Static Poster - 10.6x22.9 - BRM - Case Cause - CK Blue</b>). Run <b style={{color:"#D4A040"}}>🪄 Auto-name</b> first so the ISCIs exist.</div>
           <DropZone multiple accept="*/*" style={{marginBottom:8}} onFiles={async(fileList)=>{
             const files=Array.from(fileList);if(!files.length){notify("No files selected");return}
             const toB64=(f)=>new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(r.error||new Error("read failed"));r.onload=()=>res(String(r.result).split(",")[1]||"");r.readAsDataURL(f)});
@@ -7360,7 +7384,10 @@ Rules:
               if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&(baseUpper.startsWith(i.code.toUpperCase()+" ")||baseUpper.startsWith(i.code.toUpperCase()+"-")||baseUpper.startsWith(i.code.toUpperCase()+"_")));
               if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper.includes(i.code.toUpperCase()));
               if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&i.code.toUpperCase().includes(baseUpper));
-              if(idx===-1){notFound++;setUploadTracker({label:file.name+" — no OOH ISCI match",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});continue}
+              // Fallback: match by WK creative convention (market + size + creative), so
+              // files keep their own names (e.g. WK_Birmingham_Cause_14x48).
+              if(idx===-1)idx=matchOohCreativeFile(file.name,iscis);
+              if(idx===-1){notFound++;setUploadTracker({label:file.name+" — no match (run 🪄 Auto-name first?)",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});continue}
               const ext=file.name.split(".").pop();const code=iscis[idx].code;
               setUploadTracker({label:"Uploading "+file.name+" ("+code+")",current:fi+1,total:total,pct:Math.round((fi/total)*100)});
               try{
