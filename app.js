@@ -471,6 +471,10 @@ const matchOohCreativeFile=(name,iscis)=>{
   if(!dma||!concept||!size)return -1;
   return iscis.findIndex(i=>i.suffix==="O"&&i.dma===dma&&oohNormSize(i.dur)===size&&String(i.title||"").split(" - ").pop().trim()===concept);
 };
+// The convention filename the VENDOR should receive (you never rename your source).
+const oohVendorFileName=(board)=>`WK ${boardClass(board.type,board.size).label} - ${oohNormSize(board.size)} - ${board.dma} - ${(Array.isArray(board.design)?board.design[0]:board.design)||""}`;
+// Download link that forces the vendor's copy to the convention name (Supabase ?download=).
+const oohVendorDl=(u,name)=>{if(!u)return u;const ext=(String(u).split("?")[0].match(/\.([a-z0-9]+)$/i)||[,""])[1];const fn=encodeURIComponent(name+(ext?"."+ext:""));return/supabase\.co/.test(u)?u+(u.includes("?")?"&":"?")+"download="+fn:dlUrl(u)};
 const MEDIA_CAT_COLORS={Poster:{fg:"#F4C242",bg:"rgba(244,194,66,.15)",border:"#F4C242"},Bulletin:{fg:"#4AC8E8",bg:"rgba(74,200,232,.15)",border:"#4AC8E8"},Digital:{fg:"#C084FC",bg:"rgba(192,132,252,.15)",border:"#C084FC"},Other:{fg:"#94a3b8",bg:"rgba(148,163,184,.15)",border:"#94a3b8"}};
 const MediaBadge=({type,size="sm"})=>{const cat=mediaCategory(type);const c=MEDIA_CAT_COLORS[cat];const pad=size==="sm"?"1px 6px":"2px 8px";const fs=size==="sm"?10:11;return React.createElement("span",{style:{display:"inline-block",padding:pad,borderRadius:3,fontSize:fs,fontWeight:700,color:c.fg,background:c.bg,border:"1px solid "+c.border,letterSpacing:.3,textTransform:"uppercase"}},cat)};
 // Stable, deterministic color for any creative title. Same input → same color, always.
@@ -3625,7 +3629,7 @@ const App=()=>{
         w.document.write('<div class="mkt"'+(di>0?' style="page-break-before:always"':'')+'>'+escHtml(DM[d]||d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
         w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location Description</th><th style="width:110px">Media/Style</th><th style="width:80px">H x W</th><th style="width:70px">Impr/Wk</th><th style="width:160px">Creative</th><th style="width:120px">ISCI</th><th style="width:80px">Flight</th></tr>');
         bds.forEach(p=>{const cr=(Array.isArray(p.design)&&p.design.length)?p.design.join(" / "):"—";const fu=fileMap[p.isci];
-          const crCell=fu?('<a href="'+escHtml(dlUrl(fu))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(cr)+'</a>'):('<b>'+escHtml(cr)+'</b>');
+          const crCell=fu?('<a href="'+escHtml(oohVendorDl(fu,oohVendorFileName(p)))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(cr)+'</a>'):('<b>'+escHtml(cr)+'</b>');
           w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.panel))+'</td><td>'+escHtml(p.location||"")+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(p.size||"")+'</td><td style="text-align:right">'+(p.impressions?Number(p.impressions).toLocaleString():"")+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(p.isci||"—")+'</td><td>'+escHtml(oPostDates||"")+'</td></tr>')});
         w.document.write('</table>')});
       w.document.write('<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+grand+'</div>');
