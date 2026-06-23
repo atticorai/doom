@@ -7486,6 +7486,11 @@ Rules:
                   url=await new Promise((res,rej)=>{const ref=storage.ref("ooh-photos/creative/"+fname+"."+ext);const t=ref.put(file,{customMetadata:{isciCode:code}});t.on("state_changed",s=>{setUploadTracker({label:"Uploading "+file.name+" ("+code+")",current:fi+1,total:total,pct:Math.round(((fi+s.bytesTransferred/s.totalBytes)/total)*100)})},e=>rej(e),()=>ref.getDownloadURL().then(res).catch(rej))});
                 }
                 updates[idx]=url;matched++;
+                // Persist after EACH file (not just at the end) so an interrupted
+                // run — refresh, tab sleep, 413, mid-loop error — never loses the
+                // files already uploaded. idx is the original array position, which
+                // setIscis preserves (uploads never reorder/resize the array).
+                setIscis(prev=>prev.map((x,j)=>j===idx?{...x,fileUrl:url}:x));
               }catch(e){failed++;lastErr=(e&&e.message)||String(e);notify("Upload failed ("+file.name+"): "+lastErr)}
             }
             setUploadTracker(null);
