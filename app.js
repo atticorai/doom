@@ -373,6 +373,11 @@ const CALENDAR=D_C.map(r=>({month:r[0],rotDue:r[1],bcStart:r[2],bcEnd:r[3]}));
 const nextTrafficMonth=()=>{const t=new Date();t.setHours(0,0,0,0);const c=CALENDAR.find(c=>new Date(c.bcStart+"T00:00:00")>t);return c?c.month:(CALENDAR[CALENDAR.length-1]||{}).month||"December"};
 const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const mk=r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17],design:(r[18]?(Array.isArray(r[18])?r[18].filter(Boolean):[r[18]]):[]),vendorRef:r[19]||""});const base=D_P.map(mk);const extra=(typeof D_P_NEW!=="undefined"?D_P_NEW:[]).map(mk);return[...base,...extra]})();
 const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City"};
+// Market rolls up by FULL NAME everywhere in the app (traffic library, history,
+// metrics, AI planner) — the prefix lives ONLY in the ISCI code. Gadsden (GAD)
+// is not its own market; it falls under Birmingham.
+const DMA_MARKET={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",GAD:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City"};
+const oohMarket=(dma)=>DMA_MARKET[dma]||DM[dma]||dma;
 // Reverse map: full name → code (case-insensitive lookup for market normalization)
 const DM_REV=Object.fromEntries(Object.entries(DM).flatMap(([c,n])=>[[n,c],[n.toLowerCase(),c],[c,c],[c.toLowerCase(),c]]));
 // Normalize any market value (code or full name) to its 3-letter code
@@ -3518,10 +3523,12 @@ const App=()=>{
     const oComments=oohComments,setOComments=setOohComments;
     const editContract=oohEditContract,setEditContract=setOohEditContract;
     const editDates=oohEditDates,setEditDates=setOohEditDates;
-    const dmas=[...new Set(pops.map(p=>p.dma))].sort();
+    const markets=[...new Set(pops.map(p=>oohMarket(p.dma)))].sort();
+    const dmas=markets; // markets read by full name (Birmingham, Montgomery…); GAD folds into Birmingham
     const subs=[...new Set(pops.map(p=>p.submarket))].sort();
     const vendors=[...new Set(pops.map(p=>p.vendor))].sort();
-    const fl=pops.filter(p=>(om?p.dma===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true));
+    const marketColor=(mkt)=>{const b=pops.find(p=>oohMarket(p.dma)===mkt);return b?(dmaColors[b.dma]||"#64748b"):"#64748b"};
+    const fl=pops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true));
     const tagged=fl.filter(p=>p.isci).length;
     const totalImpr=fl.reduce((a,p)=>a+p.impressions,0);
 
@@ -3543,9 +3550,11 @@ const App=()=>{
       withco.sort((a,b)=>{const A=WK_COORDS[a.boardId],B=WK_COORDS[b.boardId];return A[0]-B[0]||A[1]-B[1]});
       const assigned={};const gcount={};
       const place=(p)=>{const key=creativePoolKey(p.type,p.size);const pool=oohCreatives[key]||[];if(!pool.length)return;
-        const co=WK_COORDS[p.boardId];const near={};
-        if(co){for(const q of withco){if(q===p)continue;const c=assigned[q.boardId];if(!c)continue;const qc=WK_COORDS[q.boardId];if(milesBetween(co[0],co[1],qc[0],qc[1])<=RADIUS)near[c]=(near[c]||0)+1}}
-        const gc=gcount[key]||(gcount[key]={});
+        const co=WK_COORDS[p.boardId];const near={};const pMkt=oohMarket(p.dma);
+        // Spread WITHIN the board's own market only — a Birmingham board near the
+        // Huntsville line must not be balanced against Huntsville's boards.
+        if(co){for(const q of withco){if(q===p)continue;if(oohMarket(q.dma)!==pMkt)continue;const c=assigned[q.boardId];if(!c)continue;const qc=WK_COORDS[q.boardId];if(milesBetween(co[0],co[1],qc[0],qc[1])<=RADIUS)near[c]=(near[c]||0)+1}}
+        const gkey=key+"|"+pMkt;const gc=gcount[gkey]||(gcount[gkey]={});
         const chosen=pool.map((c,idx)=>({c,idx,n:near[c]||0,g:gc[c]||0})).sort((a,b)=>a.n-b.n||a.g-b.g||a.idx-b.idx)[0].c;
         assigned[p.boardId]=chosen;gc[chosen]=(gc[chosen]||0)+1};
       withco.forEach(place);without.forEach(place);
@@ -3562,7 +3571,7 @@ const App=()=>{
         seen[title]=code;boardIsci[p.boardId]=code});
       if(newIscis.length)setIscis(prev=>[...prev,...newIscis]);
       setPops(prev=>prev.map(p=>assigned[p.boardId]!==undefined?{...p,design:[assigned[p.boardId]],isci:boardIsci[p.boardId]||p.isci}:p));
-      const dist=Object.entries(gcount).flatMap(([k,m])=>Object.entries(m).map(([c,v])=>c+":"+v)).join(", ");
+      const dist2={};Object.values(assigned).forEach(c=>dist2[c]=(dist2[c]||0)+1);const dist=Object.entries(dist2).map(([c,v])=>c+":"+v).join(", ");
       log("OOH Auto-name",n+" boards · "+newIscis.length+" ISCIs · "+dist);notify("Named "+n+" boards + "+newIscis.length+" ISCIs (spread by location) · "+dist)};
 
     // Printable / sendable creative MAP — a REAL Leaflet street map (same as
@@ -3572,7 +3581,7 @@ const App=()=>{
       const scope=fl.filter(p=>(Array.isArray(p.design)&&p.design.length));
       if(!scope.length){notify("Assign creatives first (🪄 Auto-name)");return}
       const mktLabel=om?(DM[om]||om):"All Markets";
-      const pins=scope.map(p=>{const co=WK_COORDS[p.boardId];return{panel:String(p.panel),sub:p.submarket||"",loc:p.location||"",size:p.size||"",dma:p.dma,creative:p.design[0],color:creativeColor(p.design[0]),lat:co?co[0]:null,lng:co?co[1]:null,approx:isApproxCoord(p.boardId)}});
+      const pins=scope.map(p=>{const co=WK_COORDS[p.boardId];return{panel:String(p.panel),sub:p.submarket||"",loc:p.location||"",size:p.size||"",dma:oohMarket(p.dma),creative:p.design[0],color:creativeColor(p.design[0]),lat:co?co[0]:null,lng:co?co[1]:null,approx:isApproxCoord(p.boardId)}});
       const titles=[...new Set(pins.map(p=>p.creative))].sort();
       const conf=[];const cp=pins.filter(p=>p.lat&&p.lng&&!p.approx);
       for(let a=0;a<cp.length;a++)for(let b=a+1;b<cp.length;b++){if(cp[a].creative!==cp[b].creative)continue;const d=milesBetween(cp[a].lat,cp[a].lng,cp[b].lat,cp[b].lng);if(d<=oohClusterRadius)conf.push({c:cp[a].creative,a:cp[a],b:cp[b],d})}
@@ -3609,8 +3618,8 @@ const App=()=>{
       const iTitle=(c)=>{if(!c)return"";const m=iscis.find(i=>i.code===c);return m?m.title:""};
       const vendorName=oVend||[...new Set(scope.map(p=>p.vendor))][0]||"Lamar";
       const contact=[...new Set(scope.map(p=>p.contact).filter(Boolean))][0]||"";
-      const mktLabel=om?(DM[om]||om):"All WK Markets";
-      const dmasIn=[...new Set(scope.map(p=>p.dma))].sort();
+      const mktLabel=om||"All WK Markets";
+      const dmasIn=[...new Set(scope.map(p=>oohMarket(p.dma)))].sort();
       const w=window.open("","","width=1000,height=820");
       w.document.write('<html><head><title>WK OOH Traffic — '+escHtml(mktLabel)+' — '+escHtml(vendorName)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}.sub{margin-top:8px;font-size:12px;font-weight:bold;color:#444;border-bottom:2px solid #999}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:8px;font-size:11px;font-weight:bold}@media print{body{margin:14px}.dl{display:none}table{page-break-inside:auto}tr{page-break-inside:avoid}}</style></head><body>');
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
@@ -3619,14 +3628,14 @@ const App=()=>{
       hd("Agency","WK Advertising Solutions");hd("Client","Wettermark Keith");
       hd("Vendor",vendorName,"amb");if(contact)hd("Vendor Contact",contact);
       hd("Contracts",[...new Set(scope.map(p=>p.contract).filter(Boolean))].join(", "));
-      hd("Market(s)",dmasIn.map(d=>DM[d]||d).join(", "));
+      hd("Market(s)",dmasIn.join(", "));
       hd("Buyer","Amy Coffey","red");hd("Media","OOH — Out of Home","red");
       hd("Broadcast Month",workMonth,"grn");hd("Post / Flight Dates",oPostDates||"TBD","grn");
       if(oVersion)hd("Version / Notes",oVersion);if(oComments)hd("Comments",oComments);
       const fileMap={};iscis.forEach(i=>{if(i.fileUrl)fileMap[i.code]=i.fileUrl});
       let grand=0;
-      dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>p.dma===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
-        w.document.write('<div class="mkt"'+(di>0?' style="page-break-before:always"':'')+'>'+escHtml(DM[d]||d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
+      dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>oohMarket(p.dma)===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
+        w.document.write('<div class="mkt"'+(di>0?' style="page-break-before:always"':'')+'>'+escHtml(d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
         w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location Description</th><th style="width:110px">Media/Style</th><th style="width:80px">H x W</th><th style="width:70px">Impr/Wk</th><th style="width:160px">Creative</th><th style="width:120px">ISCI</th><th style="width:80px">Flight</th></tr>');
         bds.forEach(p=>{const cr=(Array.isArray(p.design)&&p.design.length)?p.design.join(" / "):"—";const fu=fileMap[p.isci];
           const crCell=fu?('<a href="'+escHtml(oohVendorDl(fu,oohVendorFileName(p)))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(cr)+'</a>'):('<b>'+escHtml(cr)+'</b>');
@@ -3688,7 +3697,7 @@ const App=()=>{
               <div>
                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
                   <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#2d1f42"}}>Panel {p.panel}</span>
-                  <B l={DM[p.dma]||p.dma} c={c}/>
+                  <B l={oohMarket(p.dma)} c={c}/>
                   <B l={p.facing} c="#6366f1"/>
                 </div>
                 <div style={{fontSize:14,color:"#9B8EAD",marginTop:2,display:"flex",alignItems:"center",gap:6}}><MediaBadge type={p.type}/>{p.type} · {p.size} · {p.submarket}</div>
@@ -3752,7 +3761,7 @@ const App=()=>{
       {photoPanel&&<PhotoModal p={photoPanel} onClose={()=>setPhotoPanel(null)}/>}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
         <div><PageHead title="Wettermark Keith — OOH Postings" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>{pops.length} boards · {[...new Set(pops.map(p=>p.dma))].length} DMAs · 2026 Lamar renewal · {totalImpr.toLocaleString()} weekly impressions · {pops.filter(p=>Array.isArray(p.design)&&p.design.length).length} with creative</p>
+          <p style={{fontSize:13,color:"#9B8EAD"}}>{pops.length} boards · {markets.length} markets · 2026 Lamar renewal · {totalImpr.toLocaleString()} weekly impressions · {pops.filter(p=>Array.isArray(p.design)&&p.design.length).length} with creative</p>
         </div>
         <div style={{display:"flex",gap:4}}>
           <Btn small onClick={()=>{
@@ -3771,14 +3780,14 @@ const App=()=>{
         </div>
       </div>
       <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-        <Sel label="DMA" options={dmas} value={om} onChange={setOm} placeholder="All DMAs"/>
+        <Sel label="Market" options={dmas} value={om} onChange={setOm} placeholder="All Markets"/>
         <Sel label="Sub-Market" options={subs} value={ov} onChange={setOv} placeholder="All Markets"/>
         <Sel label="Vendor" options={vendors} value={oVend} onChange={setOVend} placeholder="All Vendors"/>
         {(om||ov||oVend)&&<Btn small onClick={()=>{setOm("");setOv("");setOVend("")}}>Clear</Btn>}
       </div>
       {/* DMA stats */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
-        {dmas.map(d=>{const all=pops.filter(p=>p.dma===d);const p=all.filter(x=>x.isci).length;const impr=all.reduce((a,x)=>a+x.impressions,0);const c=dmaColors[d]||"#64748b";
+        {dmas.map(d=>{const all=pops.filter(p=>oohMarket(p.dma)===d);const p=all.filter(x=>x.isci).length;const impr=all.reduce((a,x)=>a+x.impressions,0);const c=marketColor(d);
           return<div key={d} onClick={()=>setOm(om===d?"":d)} style={{padding:"10px 12px",borderRadius:9,border:om===d?`2px solid ${c}`:"1px solid #E8DFF0",background:om===d?c+"0a":"#fff",cursor:"pointer"}}>
             <div style={{fontSize:13,fontWeight:700,color:c,textTransform:"uppercase",letterSpacing:1}}>{d}</div>
             <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{all.length}</div>
@@ -3816,15 +3825,15 @@ const App=()=>{
           </div>
         </div>
         {(()=>{
-          const pins=fl.map(p=>{const co=WK_COORDS[p.boardId];const cr=(Array.isArray(p.design)&&p.design.length)?p.design:(isciTitle(p.isci)?[isciTitle(p.isci)]:[]);return{id:p.boardId,panel:p.panel,lat:co?co[0]:0,lng:co?co[1]:0,approx:isApproxCoord(p.boardId),location:p.location,vendor:p.vendor,size:p.size,impressions:p.impressions,market:p.dma,isci:p.isci||"",creatives:cr,creative:cr[0]||"",closeImg:p.closeImg}});
+          const pins=fl.map(p=>{const co=WK_COORDS[p.boardId];const cr=(Array.isArray(p.design)&&p.design.length)?p.design:(isciTitle(p.isci)?[isciTitle(p.isci)]:[]);return{id:p.boardId,panel:p.panel,lat:co?co[0]:0,lng:co?co[1]:0,approx:isApproxCoord(p.boardId),location:p.location,vendor:p.vendor,size:p.size,impressions:p.impressions,market:oohMarket(p.dma),isci:p.isci||"",creatives:cr,creative:cr[0]||"",closeImg:p.closeImg}});
           // Conflict = two boards within the radius that SHARE at least one creative (highway stretch / mall bunching).
           // Confirmed = both boards have surveyed coordinates; approx pairs are listed separately to verify.
           const conflicts=[];const approxConflicts=[];const clustered=new Set();
           if(oohMapMode==="creative"){const cp=pins.filter(p=>p.creatives.length&&p.lat&&p.lng);for(let a=0;a<cp.length;a++)for(let b=a+1;b<cp.length;b++){const shared=cp[a].creatives.filter(c=>cp[b].creatives.includes(c));if(!shared.length)continue;const d=milesBetween(cp[a].lat,cp[a].lng,cp[b].lat,cp[b].lng);if(d<=oohClusterRadius){const rec={shared,a:cp[a],b:cp[b],d};if(cp[a].approx||cp[b].approx){approxConflicts.push(rec)}else{conflicts.push(rec);clustered.add(cp[a].id);clustered.add(cp[b].id)}}}conflicts.sort((x,y)=>x.d-y.d);approxConflicts.sort((x,y)=>x.d-y.d)}
           const pinsWithStatus=pins.map(p=>{let st=p.creatives.length?("🎨 "+p.creatives.join(" / ")):(p.isci?"ISCI: "+p.isci:"No creative");if(clustered.has(p.id))st+=" · ⚠ shares creative within "+oohClusterRadius+" mi";return{...p,status:st}});
-          return<><OohMap pins={pinsWithStatus} colorFn={p=>oohMapMode==="creative"?(p.creative?creativeColor(p.creative):"#475569"):(dmaColors[p.market]||"#D4A040")} height={420}/>
+          return<><OohMap pins={pinsWithStatus} colorFn={p=>oohMapMode==="creative"?(p.creative?creativeColor(p.creative):"#475569"):(marketColor(p.market)||"#D4A040")} height={420}/>
           {oohMapMode==="market"?
-            <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>{Object.entries(dmaColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{k}</div>)}</div>
+            <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>{markets.map(m=><div key={m} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:marketColor(m)}}/>{m}</div>)}</div>
             :
             (()=>{const titles=[...new Set(pins.flatMap(p=>p.creatives))].sort();const untaggedCnt=pins.filter(p=>!p.creatives.length).length;return<div style={{marginTop:6}}>
               {clustered.size>0?<div style={{textAlign:"center",fontSize:13,color:"#F4C242",fontWeight:600,marginBottom:6,padding:"4px 8px",background:"rgba(244,194,66,.1)",border:"1px solid rgba(244,194,66,.3)",borderRadius:4}}>⚠ {clustered.size} board{clustered.size!==1?"s":""} within {oohClusterRadius} mi of another running the SAME creative — spread them out</div>:titles.length>0&&<div style={{textAlign:"center",fontSize:13,color:"#5BC4A0",fontWeight:600,marginBottom:6}}>✓ No same-creative boards within {oohClusterRadius} mi — clean spread</div>}
@@ -3870,7 +3879,7 @@ const App=()=>{
         </div>
         <div style={{overflowX:"auto",maxHeight:500}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Board ID</TH><TH>Panel</TH><TH>DMA</TH><TH>Vendor</TH><TH>Type</TH><TH>Size</TH><TH>Location</TH><TH>Impr/Wk</TH><TH>Installed</TH><TH>ISCI</TH><TH>Contract</TH><TH>TAB#</TH><TH>Coords</TH></tr></thead>
           <tbody>{fl.map((p,i)=>{const co=WK_COORDS[p.boardId];return<tr key={p.boardId}>
-            <TD b>{i+1}</TD><TD m b style={{fontSize:14}}>{p.boardId}</TD><TD m>{p.panel}</TD><TD><B l={DM[p.dma]||p.dma} c={dmaColors[p.dma]||"#D4A040"}/></TD>
+            <TD b>{i+1}</TD><TD m b style={{fontSize:14}}>{p.boardId}</TD><TD m>{p.panel}</TD><TD><B l={oohMarket(p.dma)} c={dmaColors[p.dma]||"#D4A040"}/></TD>
             <TD><span style={{fontSize:14,fontWeight:600}}>{p.vendor}</span></TD><TD><span style={{fontSize:13,display:"flex",alignItems:"center",gap:6}}><MediaBadge type={p.type}/>{p.type}</span></TD><TD>{p.size}</TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:180,display:"inline-block"}}>{p.location}</span></TD>
             <TD b>{p.impressions.toLocaleString()}</TD><TD>{p.installDate}</TD>
@@ -3887,7 +3896,7 @@ const App=()=>{
         const delL=(i)=>setOLines(p=>p.filter((_,j)=>j!==i));
         const dmaLabel=om||dmas.join("/");
         const trafficVendor=oVend||"";
-        const vendorBoards=pops.filter(p=>(om?p.dma===om:true)&&(trafficVendor?p.vendor===trafficVendor:true));
+        const vendorBoards=pops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(trafficVendor?p.vendor===trafficVendor:true));
         const vendorPanels=vendorBoards.filter(p=>oohTypeF?mediaCategory(p.type)===oohTypeF:true).map(p=>({id:p.boardId,panel:p.panel,dma:p.dma,sub:p.submarket,loc:p.location,type:p.type,size:p.size,impr:p.impressions,tab:p.tab,design:p.design})).sort((a,b)=>a.dma.localeCompare(b.dma)||a.panel.localeCompare(b.panel));
         const totalUnits=oLines.reduce((a,l)=>a+(parseInt(l.units)||0),0);
         const totalPanels=oLines.filter(l=>l.panel).length;
@@ -4058,7 +4067,7 @@ const App=()=>{
             <TD b>{i+1}</TD>
             <TD m b>{p.panel}</TD>
             <TD>{p.submarket}</TD>
-            <TD><B l={DM[p.dma]||p.dma} c={dmaColors[p.dma]||"#D4A040"}/></TD>
+            <TD><B l={oohMarket(p.dma)} c={dmaColors[p.dma]||"#D4A040"}/></TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:200,display:"inline-block"}}>{p.location}</span></TD>
             <TD b>{p.impressions.toLocaleString()}</TD>
             <TD>{p.installDate}</TD>
@@ -10003,7 +10012,7 @@ Rules:
     const totalImpr=isWK?POSTINGS.reduce((a,p)=>a+p.impressions,0):PL_PANELS.reduce((a,p)=>a+(p.impressions||0)*(p.numUnits||1),0);
     const markets=isWK?[...new Set(POSTINGS.map(p=>p.dma))].sort():[...new Set(PL_PANELS.map(p=>p.market))].sort();
     const totalBoards=isWK?POSTINGS.length:PL_PANELS.length;
-    const mapPins=isWK?POSTINGS.map(p=>{const co=WK_COORDS[p.boardId];return{id:p.boardId,lat:co?co[0]:0,lng:co?co[1]:0,location:p.location,vendor:p.vendor,size:p.size,impressions:p.impressions,market:p.dma,closeImg:p.closeImg}})
+    const mapPins=isWK?POSTINGS.map(p=>{const co=WK_COORDS[p.boardId];return{id:p.boardId,lat:co?co[0]:0,lng:co?co[1]:0,location:p.location,vendor:p.vendor,size:p.size,impressions:p.impressions,market:oohMarket(p.dma),closeImg:p.closeImg}})
       :PL_PANELS.map(p=>({id:p.unit,lat:p.lat,lng:p.lng,location:p.location,vendor:p.vendor,size:p.size,impressions:(p.impressions||0)*(p.numUnits||1),market:p.market}));
     const dmaColors={BRM:"#D4A040",CHA:"#4AC8E8",GAD:"#5BC4A0",MTG:"#E85A7A",HSV:"#9b7bb0",KNX:"#4AC8E8",DHN:"#D4A040"};
     const mktColors={CHI:"#E85A7A",CIN:"#4AC8E8",DEN:"#5BC4A0",MSP:"#9b7bb0"};
