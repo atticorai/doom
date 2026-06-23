@@ -7472,9 +7472,10 @@ Rules:
               const fname=String(iscis[idx].title||code).replace(/[\/\\]/g,"-").trim()||code;
               try{
                 let url="";
-                if(file.size<=4*1024*1024){
-                  // Use the 'ooh' bucket (proven by PoP photos) — 'creative' may
-                  // not exist. Server-side upload bypasses CORS/RLS.
+                if(file.size<=3*1024*1024){
+                  // Small files inline (≤3MB → base64 stays under Vercel's 4.5MB
+                  // request cap). Bigger files take the signed-URL path below,
+                  // which PUTs straight to Supabase and bypasses the 4.5MB cap.
                   const dataB64=await toB64(file);
                   const r=await fetch("/api/storage",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"upload",bucket:"ooh",path:"photos/creative/"+fname+"."+ext,dataB64,contentType:file.type||"application/octet-stream"})});
                   const j=await r.json().catch(()=>({}));
