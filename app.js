@@ -489,7 +489,13 @@ const MediaBadge=({type,size="sm"})=>{const cat=mediaCategory(type);const c=MEDI
 // Stable, deterministic color for any creative title. Same input → same color, always.
 // Used to color boards by what creative is running on them (independent of market prefix in ISCI code).
 const CREATIVE_PALETTE=["#4AC8E8","#F4C242","#9B7BB0","#5BC4A0","#E85A7A","#F08C3B","#6B8AFD","#EF6C9C","#A0D468","#C084FC","#FFA552","#4DD0E1","#FF7F50","#26A69A","#AB47BC","#FFCA28","#42A5F5","#66BB6A","#EC407A","#7E57C2"];
-const creativeColor=(title)=>{if(!title||!title.trim())return"#475569";let h=0;const s=title.trim().toLowerCase();for(let i=0;i<s.length;i++)h=((h<<5)-h+s.charCodeAt(i))|0;return CREATIVE_PALETTE[Math.abs(h)%CREATIVE_PALETTE.length]};
+// Fixed, maximally-distinct colours for the known WK creatives (the hash put them
+// all in the same blue range). It's Personal CK is split Bulletin vs Poster.
+const OOH_FIXED_COLORS={"Case Cause Shield":"#DC2626","It's Personal CK (Bulletin)":"#7C3AED","Case Cause CK Blue":"#2563EB","Case Cause CK Gold":"#D4A040","It's Personal CK (Poster)":"#16A34A","It's Personal CK":"#16A34A"};
+const creativeColor=(title)=>{if(!title||!title.trim())return"#475569";if(OOH_FIXED_COLORS[title.trim()])return OOH_FIXED_COLORS[title.trim()];let h=0;const s=title.trim().toLowerCase();for(let i=0;i<s.length;i++)h=((h<<5)-h+s.charCodeAt(i))|0;return CREATIVE_PALETTE[Math.abs(h)%CREATIVE_PALETTE.length]};
+// Map a board's creative concept to its display identity, splitting the shared
+// "It's Personal CK" by board format so all 5 placements read distinctly.
+const oohCreativeId=(concept,type,size)=>concept==="It's Personal CK"?concept+" ("+(creativePoolKey(type,size)==="bulletin"?"Bulletin":"Poster")+")":concept;
 // Haversine miles between two lat/lng pairs
 const milesBetween=(la1,ln1,la2,ln2)=>{const R=3959;const r=Math.PI/180;const dLa=(la2-la1)*r;const dLn=(ln2-ln1)*r;const a=Math.sin(dLa/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLn/2)**2;return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))};
 // For each pin with a creative title, count how many other pins within `radius` miles run the SAME title
@@ -3587,7 +3593,7 @@ const App=()=>{
       const scope=fl.filter(p=>(Array.isArray(p.design)&&p.design.length));
       if(!scope.length){notify("Assign creatives first (🪄 Auto-name)");return}
       const mktLabel=om?(DM[om]||om):"All Markets";
-      const pins=scope.map(p=>{const co=WK_COORDS[p.boardId];return{panel:String(p.panel),sub:p.submarket||"",loc:p.location||"",size:p.size||"",dma:oohMarket(p.dma),creative:p.design[0],color:creativeColor(p.design[0]),lat:co?co[0]:null,lng:co?co[1]:null,approx:isApproxCoord(p.boardId)}});
+      const pins=scope.map(p=>{const co=WK_COORDS[p.boardId];const cid=oohCreativeId(p.design[0],p.type,p.size);return{panel:String(p.panel),sub:p.submarket||"",loc:p.location||"",size:p.size||"",dma:oohMarket(p.dma),creative:cid,color:creativeColor(cid),lat:co?co[0]:null,lng:co?co[1]:null,approx:isApproxCoord(p.boardId)}});
       const titles=[...new Set(pins.map(p=>p.creative))].sort();
       const conf=[];const cp=pins.filter(p=>p.lat&&p.lng&&!p.approx);
       for(let a=0;a<cp.length;a++)for(let b=a+1;b<cp.length;b++){if(cp[a].creative!==cp[b].creative)continue;const d=milesBetween(cp[a].lat,cp[a].lng,cp[b].lat,cp[b].lng);if(d<=oohClusterRadius)conf.push({c:cp[a].creative,a:cp[a],b:cp[b],d})}
@@ -3831,7 +3837,7 @@ const App=()=>{
           </div>
         </div>
         {(()=>{
-          const pins=fl.map(p=>{const co=WK_COORDS[p.boardId];const cr=(Array.isArray(p.design)&&p.design.length)?p.design:(isciTitle(p.isci)?[isciTitle(p.isci)]:[]);return{id:p.boardId,panel:p.panel,lat:co?co[0]:0,lng:co?co[1]:0,approx:isApproxCoord(p.boardId),location:p.location,vendor:p.vendor,size:p.size,impressions:p.impressions,market:oohMarket(p.dma),isci:p.isci||"",creatives:cr,creative:cr[0]||"",closeImg:p.closeImg}});
+          const pins=fl.map(p=>{const co=WK_COORDS[p.boardId];const cr=((Array.isArray(p.design)&&p.design.length)?p.design:(isciTitle(p.isci)?[isciTitle(p.isci)]:[])).map(c=>oohCreativeId(c,p.type,p.size));return{id:p.boardId,panel:p.panel,lat:co?co[0]:0,lng:co?co[1]:0,approx:isApproxCoord(p.boardId),location:p.location,vendor:p.vendor,size:p.size,impressions:p.impressions,market:oohMarket(p.dma),isci:p.isci||"",creatives:cr,creative:cr[0]||"",closeImg:p.closeImg}});
           // Conflict = two boards within the radius that SHARE at least one creative (highway stretch / mall bunching).
           // Confirmed = both boards have surveyed coordinates; approx pairs are listed separately to verify.
           const conflicts=[];const approxConflicts=[];const clustered=new Set();
