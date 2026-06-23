@@ -7468,20 +7468,21 @@ Rules:
               if(idx===-1)idx=matchOohCreativeFile(file.name,iscis);
               if(idx===-1){notFound++;setUploadTracker({label:file.name+" — no match (run 🪄 Auto-name first?)",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});continue}
               const ext=file.name.split(".").pop();const code=iscis[idx].code;
-              setUploadTracker({label:"Uploading "+file.name+" ("+code+")",current:fi+1,total:total,pct:Math.round((fi/total)*100)});
+              // Save to Supabase under the convention NAME (ISCI title), so stored = title = download name.
+              const fname=String(iscis[idx].title||code).replace(/[\/\\]/g,"-").trim()||code;
               try{
                 let url="";
                 if(file.size<=4*1024*1024){
                   // Use the 'ooh' bucket (proven by PoP photos) — 'creative' may
                   // not exist. Server-side upload bypasses CORS/RLS.
                   const dataB64=await toB64(file);
-                  const r=await fetch("/api/storage",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"upload",bucket:"ooh",path:"photos/creative/"+code+"."+ext,dataB64,contentType:file.type||"application/octet-stream"})});
+                  const r=await fetch("/api/storage",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"upload",bucket:"ooh",path:"photos/creative/"+fname+"."+ext,dataB64,contentType:file.type||"application/octet-stream"})});
                   const j=await r.json().catch(()=>({}));
                   if(!r.ok)throw new Error(j.error||j.detail||("HTTP "+r.status));
                   url=j.url;
                 }else{
                   if(!storage)throw new Error("Storage not loaded (large file)");
-                  url=await new Promise((res,rej)=>{const ref=storage.ref("ooh-photos/creative/"+code+"."+ext);const t=ref.put(file,{customMetadata:{isciCode:code}});t.on("state_changed",s=>{setUploadTracker({label:"Uploading "+file.name+" ("+code+")",current:fi+1,total:total,pct:Math.round(((fi+s.bytesTransferred/s.totalBytes)/total)*100)})},e=>rej(e),()=>ref.getDownloadURL().then(res).catch(rej))});
+                  url=await new Promise((res,rej)=>{const ref=storage.ref("ooh-photos/creative/"+fname+"."+ext);const t=ref.put(file,{customMetadata:{isciCode:code}});t.on("state_changed",s=>{setUploadTracker({label:"Uploading "+file.name+" ("+code+")",current:fi+1,total:total,pct:Math.round(((fi+s.bytesTransferred/s.totalBytes)/total)*100)})},e=>rej(e),()=>ref.getDownloadURL().then(res).catch(rej))});
                 }
                 updates[idx]=url;matched++;
               }catch(e){failed++;lastErr=(e&&e.message)||String(e);notify("Upload failed ("+file.name+"): "+lastErr)}
