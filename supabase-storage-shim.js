@@ -100,6 +100,13 @@
         contentType: file.type || 'application/octet-stream',
       });
     }).then(function (resp) {
+      // The file is already in storage (a prior run uploaded it but lost the
+      // link). No signed URL to PUT to — just adopt the existing public URL.
+      if (resp && resp.alreadyUploaded && !resp.uploadUrl) {
+        refInfo._cachedUrl = resp.publicUrl;
+        emitProgress(file.size, file.size);
+        return Promise.resolve().then(emitComplete);
+      }
       return new Promise(function (res, rej) {
         var xhr = new XMLHttpRequest();
         xhr.open('PUT', resp.uploadUrl, true);
