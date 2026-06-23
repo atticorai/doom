@@ -378,6 +378,10 @@ const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Bir
 // is not its own market; it falls under Birmingham.
 const DMA_MARKET={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",GAD:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City"};
 const oohMarket=(dma)=>DMA_MARKET[dma]||DM[dma]||dma;
+// The ISCI market prefix is the board's REAL market — GAD is never a prefix
+// (Gadsden rolls into Birmingham → BRM). Extend this map if more areas roll up.
+const OOH_PREFIX_ROLLUP={GAD:"BRM"};
+const oohPrefix=(dma)=>OOH_PREFIX_ROLLUP[dma]||dma;
 // Reverse map: full name → code (case-insensitive lookup for market normalization)
 const DM_REV=Object.fromEntries(Object.entries(DM).flatMap(([c,n])=>[[n,c],[n.toLowerCase(),c],[c,c],[c.toLowerCase(),c]]));
 // Normalize any market value (code or full name) to its 3-letter code
@@ -451,7 +455,7 @@ const WK_OOH_CREATIVES={
 };
 // Bulletins (incl. digital bulletins) draw the bulletin pool; posters/juniors/rotary draw the poster pool.
 const creativePoolKey=(type,size)=>{const k=boardClass(type,size).key;return(k==="bulletin"||k==="digital")?"bulletin":"poster"};
-const fullCreativeName=(board,concept)=>concept?`WK ${boardClass(board.type,board.size).label} - ${board.size} ${board.dma} · ${concept}`:"";
+const fullCreativeName=(board,concept)=>concept?`WK ${boardClass(board.type,board.size).label} - ${oohPrefix(board.dma)} - ${oohNormSize(board.size)} - ${concept}`:"";
 // ── Creative-file matching (so TIFFs upload without renaming) ──
 // Normalise a board/file size to a comparable form: 10'6x22'9 → 10.6x22.9, 14'x48' → 14x48.
 const oohNormSize=(s)=>String(s||"").toLowerCase().replace(/["”\s]/g,"").split("x").map(t=>t.replace(/['’]/g,".").replace(/[^0-9.]/g,"").replace(/\.+$/,"").replace(/^\.+/,"")).filter(Boolean).join("x");
@@ -474,10 +478,10 @@ const parseOohCreativeFile=(name)=>{
 const matchOohCreativeFile=(name,iscis)=>{
   const{dma,concept,size}=parseOohCreativeFile(name);
   if(!dma||!concept||!size)return -1;
-  return iscis.findIndex(i=>i.suffix==="O"&&i.dma===dma&&oohNormSize(i.dur)===size&&String(i.title||"").split(" - ").pop().trim()===concept);
+  return iscis.findIndex(i=>i.suffix==="O"&&oohPrefix(i.dma)===oohPrefix(dma)&&oohNormSize(i.dur)===size&&String(i.title||"").split(" - ").pop().trim()===concept);
 };
 // The convention filename the VENDOR should receive (you never rename your source).
-const oohVendorFileName=(board)=>`WK ${boardClass(board.type,board.size).label} - ${oohNormSize(board.size)} - ${board.dma} - ${(Array.isArray(board.design)?board.design[0]:board.design)||""}`;
+const oohVendorFileName=(board)=>`WK ${boardClass(board.type,board.size).label} - ${oohPrefix(board.dma)} - ${oohNormSize(board.size)} - ${(Array.isArray(board.design)?board.design[0]:board.design)||""}`;
 // Download link that forces the vendor's copy to the convention name (Supabase ?download=).
 const oohVendorDl=(u,name)=>{if(!u)return u;const ext=(String(u).split("?")[0].match(/\.([a-z0-9]+)$/i)||[,""])[1];const fn=encodeURIComponent(name+(ext?"."+ext:""));return/supabase\.co/.test(u)?u+(u.includes("?")?"&":"?")+"download="+fn:dlUrl(u)};
 const MEDIA_CAT_COLORS={Poster:{fg:"#F4C242",bg:"rgba(244,194,66,.15)",border:"#F4C242"},Bulletin:{fg:"#4AC8E8",bg:"rgba(74,200,232,.15)",border:"#4AC8E8"},Digital:{fg:"#C084FC",bg:"rgba(192,132,252,.15)",border:"#C084FC"},Other:{fg:"#94a3b8",bg:"rgba(148,163,184,.15)",border:"#94a3b8"}};
@@ -3562,12 +3566,14 @@ const App=()=>{
       // ── Auto-ISCI: one ISCI per (market · size · creative), titled to convention ──
       const tcOf=(type,size)=>({bulletin:"SB",static:"SP",junior:"JP",rotary:"SB",digital:"DB"})[boardClass(type,size).key]||"SP";
       const seqMap={};iscis.forEach(i=>{const m=/^([A-Z]{3})WK26([A-Z]{2})(\d+)O$/.exec(i.code||"");if(m)seqMap[m[1]+m[2]]=Math.max(seqMap[m[1]+m[2]]||0,parseInt(m[3]))});
-      const titleOf=(p,concept)=>`WK ${boardClass(p.type,p.size).label} - ${p.size} - ${p.dma} - ${concept}`;
+      // Title uses the FULL market name (Birmingham) — never a prefix; the prefix
+      // lives only in the code, and GAD rolls to BRM (oohPrefix).
+      const titleOf=(p,concept)=>`WK ${boardClass(p.type,p.size).label} - ${oohPrefix(p.dma)} - ${oohNormSize(p.size)} - ${concept}`;
       const newIscis=[];const boardIsci={};const seen={};
-      targets.forEach(p=>{const concept=assigned[p.boardId];if(!concept)return;const title=titleOf(p,concept);
+      targets.forEach(p=>{const concept=assigned[p.boardId];if(!concept)return;const title=titleOf(p,concept);const pre=oohPrefix(p.dma);
         let code=seen[title]||(iscis.find(i=>i.suffix==="O"&&i.brand==="Wettermark Keith"&&i.title===title)||{}).code;
-        if(!code){const tc=tcOf(p.type,p.size);const k=p.dma+tc;const seq=(seqMap[k]||0)+1;seqMap[k]=seq;code=p.dma+"WK26"+tc+String(seq).padStart(3,"0")+"O";
-          newIscis.push({code,title,media:"OOH",brand:"Wettermark Keith",dma:p.dma,dur:p.size,suffix:"O",active:true,category:"OOH",caseType:"OOH",valueProp:"",vo:"",fileUrl:"",sentAt:null,sentInEst:null})}
+        if(!code){const tc=tcOf(p.type,p.size);const k=pre+tc;const seq=(seqMap[k]||0)+1;seqMap[k]=seq;code=pre+"WK26"+tc+String(seq).padStart(3,"0")+"O";
+          newIscis.push({code,title,media:"OOH",brand:"Wettermark Keith",dma:pre,dur:p.size,suffix:"O",active:true,category:"OOH",caseType:"OOH",valueProp:"",vo:"",fileUrl:"",sentAt:null,sentInEst:null})}
         seen[title]=code;boardIsci[p.boardId]=code});
       if(newIscis.length)setIscis(prev=>[...prev,...newIscis]);
       setPops(prev=>prev.map(p=>assigned[p.boardId]!==undefined?{...p,design:[assigned[p.boardId]],isci:boardIsci[p.boardId]||p.isci}:p));
@@ -3637,7 +3643,7 @@ const App=()=>{
       dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>oohMarket(p.dma)===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
         w.document.write('<div class="mkt"'+(di>0?' style="page-break-before:always"':'')+'>'+escHtml(d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
         w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location Description</th><th style="width:110px">Media/Style</th><th style="width:80px">H x W</th><th style="width:70px">Impr/Wk</th><th style="width:160px">Creative</th><th style="width:120px">ISCI</th><th style="width:80px">Flight</th></tr>');
-        bds.forEach(p=>{const cr=(Array.isArray(p.design)&&p.design.length)?p.design.join(" / "):"—";const fu=fileMap[p.isci];
+        bds.forEach(p=>{const cr=(Array.isArray(p.design)&&p.design.length)?p.design.map(c=>fullCreativeName(p,c)).join(" / "):"—";const fu=fileMap[p.isci];
           const crCell=fu?('<a href="'+escHtml(oohVendorDl(fu,oohVendorFileName(p)))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(cr)+'</a>'):('<b>'+escHtml(cr)+'</b>');
           w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.panel))+'</td><td>'+escHtml(p.location||"")+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(p.size||"")+'</td><td style="text-align:right">'+(p.impressions?Number(p.impressions).toLocaleString():"")+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(p.isci||"—")+'</td><td>'+escHtml(oPostDates||"")+'</td></tr>')});
         w.document.write('</table>')});
