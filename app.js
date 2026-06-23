@@ -3650,16 +3650,17 @@ const App=()=>{
       hd("Renewal Term",(renewTerm||"TBD")+" · 13 broadcast periods","grn");
       if(oPostDates)hd("Post Notes",oPostDates);if(oVersion)hd("Version / Notes",oVersion);if(oComments)hd("Comments",oComments);
       const fileMap={};iscis.forEach(i=>{if(i.fileUrl)fileMap[i.code]=i.fileUrl});
-      // Fallback link-by-creative: a board links through its own ISCI code first,
-      // but if that one code lost its file (board→ISCI assignment drift), fall back
-      // to ANY OOH ISCI of the same creative that has a file. Every creative in the
-      // registry shows a file, so every board gets a link regardless of code drift.
-      const conceptFileMap={};iscis.forEach(i=>{if(i.suffix==="O"&&i.fileUrl){const c=String(i.title||"").split(" - ").pop().trim();if(c&&!conceptFileMap[c])conceptFileMap[c]=i.fileUrl}});
+      // Fallback link-by-name: a board links through its own ISCI code first, but if
+      // that code lost its file (board→ISCI assignment drift), fall back to the OOH
+      // ISCI whose TITLE equals the board's market+size+creative name. Creative is
+      // market-specific, so this stays inside the right market — a Birmingham board
+      // only matches a Birmingham file, never another market's.
+      const titleFileMap={};iscis.forEach(i=>{if(i.suffix==="O"&&i.fileUrl){const t=String(i.title||"").trim();if(t&&!titleFileMap[t])titleFileMap[t]=i.fileUrl}});
       let grand=0;
       dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>oohMarket(p.dma)===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
         w.document.write('<div class="mkt"'+(di>0?' style="page-break-before:always"':'')+'>'+escHtml(d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
         w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location Description</th><th style="width:110px">Media/Style</th><th style="width:80px">H x W</th><th style="width:70px">Impr/Wk</th><th style="width:160px">Creative</th><th style="width:120px">ISCI</th><th style="width:80px">Renewal Date</th></tr>');
-        bds.forEach(p=>{const cr=(Array.isArray(p.design)&&p.design.length)?p.design.map(c=>fullCreativeName(p,c)).join(" / "):"—";const _bc=(Array.isArray(p.design)&&p.design.length)?String(p.design[0]).trim():"";const fu=fileMap[p.isci]||conceptFileMap[_bc];
+        bds.forEach(p=>{const cr=(Array.isArray(p.design)&&p.design.length)?p.design.map(c=>fullCreativeName(p,c)).join(" / "):"—";const _vn=oohVendorFileName(p);const fu=fileMap[p.isci]||titleFileMap[_vn];
           const crCell=fu?('<a href="'+escHtml(oohVendorDl(fu,oohVendorFileName(p)))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(cr)+'</a>'):('<b>'+escHtml(cr)+'</b>');
           w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.panel))+'</td><td>'+escHtml(p.location||"")+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(p.size||"")+'</td><td style="text-align:right">'+(p.impressions?Number(p.impressions).toLocaleString():"")+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(p.isci||"—")+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||oPostDates||"")+'</td></tr>')});
         w.document.write('</table>')});
