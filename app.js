@@ -3522,9 +3522,20 @@ const App=()=>{
         assigned[p.boardId]=chosen;gc[chosen]=(gc[chosen]||0)+1};
       withco.forEach(place);without.forEach(place);
       const n=Object.keys(assigned).length;if(!n){notify("No boards to name");return}
-      setPops(prev=>prev.map(p=>assigned[p.boardId]!==undefined?{...p,design:[assigned[p.boardId]]}:p));
+      // ── Auto-ISCI: one ISCI per (market · size · creative), titled to convention ──
+      const tcOf=(type,size)=>({bulletin:"SB",static:"SP",junior:"JP",rotary:"SB",digital:"DB"})[boardClass(type,size).key]||"SP";
+      const seqMap={};iscis.forEach(i=>{const m=/^([A-Z]{3})WK26([A-Z]{2})(\d+)O$/.exec(i.code||"");if(m)seqMap[m[1]+m[2]]=Math.max(seqMap[m[1]+m[2]]||0,parseInt(m[3]))});
+      const titleOf=(p,concept)=>`WK ${boardClass(p.type,p.size).label} - ${p.size} - ${p.dma} - ${concept}`;
+      const newIscis=[];const boardIsci={};const seen={};
+      targets.forEach(p=>{const concept=assigned[p.boardId];if(!concept)return;const title=titleOf(p,concept);
+        let code=seen[title]||(iscis.find(i=>i.suffix==="O"&&i.brand==="Wettermark Keith"&&i.title===title)||{}).code;
+        if(!code){const tc=tcOf(p.type,p.size);const k=p.dma+tc;const seq=(seqMap[k]||0)+1;seqMap[k]=seq;code=p.dma+"WK26"+tc+String(seq).padStart(3,"0")+"O";
+          newIscis.push({code,title,media:"OOH",brand:"Wettermark Keith",dma:p.dma,dur:p.size,suffix:"O",active:true,category:"OOH",caseType:"OOH",valueProp:"",vo:"",fileUrl:"",sentAt:null,sentInEst:null})}
+        seen[title]=code;boardIsci[p.boardId]=code});
+      if(newIscis.length)setIscis(prev=>[...prev,...newIscis]);
+      setPops(prev=>prev.map(p=>assigned[p.boardId]!==undefined?{...p,design:[assigned[p.boardId]],isci:boardIsci[p.boardId]||p.isci}:p));
       const dist=Object.entries(gcount).flatMap(([k,m])=>Object.entries(m).map(([c,v])=>c+":"+v)).join(", ");
-      log("OOH Auto-name",n+" boards · "+dist);notify("Named "+n+" boards (spread by location) · "+dist)};
+      log("OOH Auto-name",n+" boards · "+newIscis.length+" ISCIs · "+dist);notify("Named "+n+" boards + "+newIscis.length+" ISCIs (spread by location) · "+dist)};
     const startDEdit=(board)=>{const n=creativeSlots(board.type,board.size);const cur=Array.isArray(board.design)?board.design:[];setDEditId(board.boardId);setDEditVal(Array.from({length:n},(_,k)=>cur[k]||""))};
     const setDSlot=(k,v)=>setDEditVal(prev=>{const a=Array.isArray(prev)?[...prev]:[];a[k]=v;return a});
     const saveDEdit=(boardId)=>{const v=(Array.isArray(dEditVal)?dEditVal:[]).map(s=>(s||"").trim()).filter(Boolean);setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,design:v}:p));setDEditId(null);log("OOH Creative",`${boardId} → ${v.join(" / ")||"(cleared)"}`);notify(`${boardId} creative ${v.length?"set":"cleared"}`)};
@@ -3645,7 +3656,7 @@ const App=()=>{
             const rows=fl.map(p=>{const co=WK_COORDS[p.boardId];const zip=typeof WK_ZIPS!=='undefined'?(WK_ZIPS[p.submarket]||""):"";return[p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),(Array.isArray(p.design)?p.design.map(c=>fullCreativeName(p,c)).join(" | "):""),p.vendorRef||"",p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
             exportCsv("WK_OOH_"+(om||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
-          <Btn small color="#9b7bb0" onClick={()=>{const scope=fl.filter(p=>!String(p.panel).includes("TBD"));const lbl=(om||ov||oVend)?`the ${scope.length} filtered boards`:`all ${scope.length} boards`;if(window.confirm(`Auto-name ${lbl}?\n\nAssigns ONE creative per board (bulletins from the 2 bulletin creatives, posters from the 3 poster creatives), spread by location so neighbours differ. This OVERWRITES current creative assignments in view.`))autoNameSpread(fl)}}>🪄 Auto-name</Btn>
+          <Btn small color="#9b7bb0" onClick={()=>{const scope=fl.filter(p=>!String(p.panel).includes("TBD"));const lbl=(om||ov||oVend)?`the ${scope.length} filtered boards`:`all ${scope.length} boards`;if(window.confirm(`Auto-name + ISCI ${lbl}?\n\n• Assigns ONE creative per board (bulletins from 2, posters/juniors from 3), spread by location so neighbours differ.\n• Generates an ISCI per market·size·creative, titled to your convention (WK <Type> - <Size> - <Market> - <Creative>).\n\nThis OVERWRITES current creative + ISCI assignments in view.`))autoNameSpread(fl)}}>🪄 Auto-name + ISCI</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
           <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>📍 Map</Btn>
