@@ -3596,6 +3596,48 @@ const App=()=>{
       w.document.write('</body></html>');w.document.close();
       log("OOH Creative Map",mktLabel+" · "+pins.length+" boards");
     };
+
+    // Reusable VENDOR TRAFFIC SHEET — one click, every board in view, grouped by
+    // market → submarket, with creative + ISCI + size + location. Renewal-ready.
+    const printVendorTrafficSheet=()=>{
+      const scope=fl.filter(p=>!String(p.panel).includes("TBD"));
+      if(!scope.length){notify("No boards in view to traffic");return}
+      const iTitle=(c)=>{if(!c)return"";const m=iscis.find(i=>i.code===c);return m?m.title:""};
+      const vendorName=oVend||[...new Set(scope.map(p=>p.vendor))][0]||"Lamar";
+      const contact=[...new Set(scope.map(p=>p.contact).filter(Boolean))][0]||"";
+      const mktLabel=om?(DM[om]||om):"All WK Markets";
+      const dmasIn=[...new Set(scope.map(p=>p.dma))].sort();
+      const w=window.open("","","width=1000,height=820");
+      w.document.write('<html><head><title>WK OOH Traffic — '+escHtml(mktLabel)+' — '+escHtml(vendorName)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}.sub{margin-top:8px;font-size:12px;font-weight:bold;color:#444;border-bottom:2px solid #999}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:8px;font-size:11px;font-weight:bold}@media print{body{margin:14px}.dl{display:none}table{page-break-inside:auto}tr{page-break-inside:avoid}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<div style="text-align:center;margin-bottom:12px"><h2>WETTERMARK KEITH</h2><div class="tag">PERSONAL INJURY LAWYERS — OOH TRAFFIC INSTRUCTIONS</div></div>');
+      const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v||"")+'</span></div>');
+      hd("Agency","WK Advertising Solutions");hd("Client","Wettermark Keith");
+      hd("Vendor",vendorName,"amb");if(contact)hd("Vendor Contact",contact);
+      hd("Contracts",[...new Set(scope.map(p=>p.contract).filter(Boolean))].join(", "));
+      hd("Market(s)",dmasIn.map(d=>DM[d]||d).join(", "));
+      hd("Buyer","Amy Coffey","red");hd("Media","OOH — Out of Home","red");
+      hd("Broadcast Month",workMonth,"grn");hd("Post / Flight Dates",oPostDates||"TBD","grn");
+      if(oVersion)hd("Version / Notes",oVersion);if(oComments)hd("Comments",oComments);
+      let grand=0;
+      dmasIn.forEach(d=>{const bds=scope.filter(p=>p.dma===d);grand+=bds.length;
+        w.document.write('<div class="mkt">'+escHtml(DM[d]||d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
+        const subs=[...new Set(bds.map(p=>p.submarket||""))].sort();
+        subs.forEach(sub=>{const sb=bds.filter(p=>(p.submarket||"")===sub).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));
+          w.document.write('<div class="sub">'+escHtml(sub||"—")+' ('+sb.length+')</div>');
+          w.document.write('<table><tr><th style="width:64px">Unit #</th><th>Location</th><th style="width:120px">Type / Size</th><th style="width:150px">Creative</th><th style="width:120px">ISCI</th><th style="width:90px">Flight</th></tr>');
+          sb.forEach(p=>{const cr=(Array.isArray(p.design)&&p.design.length)?p.design.join(" / "):"—";
+            w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.panel))+'</td><td>'+escHtml(p.location||"")+'</td><td>'+escHtml((p.type||"")+" · "+(p.size||""))+'</td><td><b>'+escHtml(cr)+'</b></td><td style="font-family:monospace">'+escHtml(p.isci||"—")+'</td><td>'+escHtml(oPostDates||"")+'</td></tr>')});
+          w.document.write('</table>')});
+      });
+      w.document.write('<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+grand+'</div>');
+      w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
+      w.document.write('<div class="nt">Note: Please return signed Traffic Instructions or confirm receipt by email within 24 hours.</div>');
+      w.document.write('</body></html>');w.document.close();
+      const isciLines=scope.map(p=>({code:p.isci||p.panel,title:(Array.isArray(p.design)?p.design.join(" / "):""),dur:p.size||"",pct:"",sched:oPostDates||"",bookend:"",units:""}));
+      setTrafficHistory(prev=>[{ts:new Date().toISOString(),est:"OOH-"+mktLabel+"-"+vendorName,brand:"Wettermark Keith",market:mktLabel,media:"OOH",buyer:"Amy Coffey",month:workMonth,flight:oPostDates,version:oVersion,comments:(oComments||"")+" | Vendor: "+vendorName,iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:grand,vendor:vendorName},...prev]);
+      log("OOH Vendor Sheet",mktLabel+" · "+vendorName+" · "+grand+" boards");notify("Vendor traffic sheet — "+grand+" boards");
+    };
     const startDEdit=(board)=>{const n=creativeSlots(board.type,board.size);const cur=Array.isArray(board.design)?board.design:[];setDEditId(board.boardId);setDEditVal(Array.from({length:n},(_,k)=>cur[k]||""))};
     const setDSlot=(k,v)=>setDEditVal(prev=>{const a=Array.isArray(prev)?[...prev]:[];a[k]=v;return a});
     const saveDEdit=(boardId)=>{const v=(Array.isArray(dEditVal)?dEditVal:[]).map(s=>(s||"").trim()).filter(Boolean);setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,design:v}:p));setDEditId(null);log("OOH Creative",`${boardId} → ${v.join(" / ")||"(cleared)"}`);notify(`${boardId} creative ${v.length?"set":"cleared"}`)};
@@ -3717,6 +3759,7 @@ const App=()=>{
             exportCsv("WK_OOH_"+(om||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
           <Btn small color="#9b7bb0" onClick={()=>{const scope=fl.filter(p=>!String(p.panel).includes("TBD"));const lbl=(om||ov||oVend)?`the ${scope.length} filtered boards`:`all ${scope.length} boards`;if(window.confirm(`Auto-name + ISCI ${lbl}?\n\n• Assigns ONE creative per board (bulletins from 2, posters/juniors from 3), spread by location so neighbours differ.\n• Generates an ISCI per market·size·creative, titled to your convention (WK <Type> - <Size> - <Market> - <Creative>).\n\nThis OVERWRITES current creative + ISCI assignments in view.`))autoNameSpread(fl)}}>🪄 Auto-name + ISCI</Btn>
+          <Btn small color="#D4A040" onClick={printVendorTrafficSheet}>📄 Vendor Sheet</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
           <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>📍 Map</Btn>
