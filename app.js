@@ -1018,7 +1018,11 @@ const App=()=>{
         if(docs.confirmations?.data){const d=JSON.parse(docs.confirmations.data);setConfirmations(d)}
         if(docs.oohRemindersSent?.data){const d=JSON.parse(docs.oohRemindersSent.data);setOohRemindersSent(d)}
         if(docs.confirmRemindersSent?.data){const d=JSON.parse(docs.confirmRemindersSent.data);setConfirmRemindersSent(d)}
-        if(docs.oohContracts?.data){const d=JSON.parse(docs.oohContracts.data);if(Object.keys(d).length)setOohContracts(prev=>{const merged={...prev};Object.entries(d).forEach(([k,v])=>{merged[k]={...(prev[k]||{}),...v}});return merged})}
+        if(docs.oohContracts?.data){const d=JSON.parse(docs.oohContracts.data);if(Object.keys(d).length)setOohContracts(prev=>{const merged={...prev};Object.entries(d).forEach(([k,v])=>{merged[k]={...(prev[k]||{}),...v}});
+          // The 7 WK Lamar contract terms are reconciled to the EXECUTED contract PDFs.
+          // Seed wins for their dates so stale Firestore values can't shadow the fix.
+          ["5570867","5570997","5571005","5570957","5570939","5570967","5571406"].forEach(k=>{if(merged[k]&&OOH_CONTRACTS_INIT[k])merged[k]={...merged[k],startDate:OOH_CONTRACTS_INIT[k].startDate,endDate:OOH_CONTRACTS_INIT[k].endDate}});
+          return merged})}
         if(docs.oohCreativeFiles?.data){try{const d=JSON.parse(docs.oohCreativeFiles.data);if(Array.isArray(d)&&d.length)setOohCreativeFiles(d)}catch(_e){}}
         if(docs.customTags?.data){const d=JSON.parse(docs.customTags.data);if(d["Postman Law"]?.categories||d["Wettermark Keith"]?.categories)setCustomFields(d);else if(Object.keys(d).length){const migrated={};Object.entries(d).forEach(([brand,tags])=>{if(Array.isArray(tags)){migrated[brand]={categories:tags.filter(t=>["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),valueProps:tags.filter(t=>!["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),vos:[]}}else{migrated[brand]=tags}});setCustomFields(migrated)}}
         if(docs.settings?.data){try{const s=JSON.parse(docs.settings.data);if(typeof s.campaignIcsUrl==="string")setCampaignIcsUrl(s.campaignIcsUrl)}catch(_e){}}
