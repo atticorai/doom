@@ -3685,7 +3685,12 @@ const App=()=>{
       const vendorName=oVend||[...new Set(scope.map(p=>p.vendor))][0]||"Lamar";
       const contact=[...new Set(scope.map(p=>p.contact).filter(Boolean))][0]||"";
       const mktLabel=om||"All WK Markets";
-      const dmasIn=[...new Set(scope.map(p=>oohMarket(p.dma)))].sort();
+      // Display-only market grouping: Tuscaloosa rolls into Birmingham everywhere
+      // in the app (BRM prefix/ISCIs/creative unchanged), but on the vendor sheet it
+      // gets its own section — mirroring Lamar's contract, which breaks it out. Keyed
+      // off the Tuscaloosa contract (5570957) so nothing in the data has to move.
+      const sheetMarket=(p)=>String(p.contract)==="5570957"?"Tuscaloosa":oohMarket(p.dma);
+      const dmasIn=[...new Set(scope.map(p=>sheetMarket(p)))].sort();
       const w=window.open("","","width=1000,height=820");
       w.document.write('<html><head><title>WK OOH Traffic — '+escHtml(mktLabel)+' — '+escHtml(vendorName)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}.sub{margin-top:8px;font-size:12px;font-weight:bold;color:#444;border-bottom:2px solid #999}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:8px;font-size:11px;font-weight:bold}@media print{body{margin:14px}.dl{display:none}table{page-break-inside:auto}tr{page-break-inside:avoid}}</style></head><body>');
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
@@ -3715,7 +3720,7 @@ const App=()=>{
         if(!pool.length)return fileMap[p.isci]||"";
         return pool.map(f=>({f,off:Math.abs(f.w-bd[0])+Math.abs(f.h-bd[1])})).sort((a,b)=>a.off-b.off)[0].f.u;};
       let grand=0;
-      dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>oohMarket(p.dma)===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
+      dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>sheetMarket(p)===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
         w.document.write('<div class="mkt"'+(di>0?' style="page-break-before:always"':'')+'>'+escHtml(d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
         w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location Description</th><th style="width:110px">Media/Style</th><th style="width:80px">H x W</th><th style="width:70px">Impr/Wk</th><th style="width:160px">Creative</th><th style="width:120px">ISCI</th><th style="width:80px">Renewal Date</th></tr>');
         const tbdSeen=new Set();
