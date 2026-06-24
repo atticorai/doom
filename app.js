@@ -386,6 +386,10 @@ const oohPrefix=(dma)=>OOH_PREFIX_ROLLUP[dma]||dma;
 // though they bill on the Birmingham contract. Used for creative naming + file matching.
 const OOH_TRAFFIC_DMA={"40173":"HSV","60109":"HSV"};
 const oohTrafficDma=(b)=>(b&&OOH_TRAFFIC_DMA[String(b.panel)])||(b&&b.dma);
+// Non-money "bonus" boards: real fixed panels (location/size/ISCI kept) that aren't
+// in any executed contract — inherited or $0 added-value, NOT TBD/rotary. Per the
+// buyer they stay on the vendor sheet and rotate the creative pool like rotaries.
+const OOH_BONUS_ROTATE=new Set(["12912","40456"]);
 // OOH ISCI renumber (creative+size → same number across markets; legacy-safe).
 // Migrates already-saved fileUrls + board→ISCI assignments to the new codes.
 const OOH_RENUMBER={"NSHWK26DB002O":"NSHWK26DB001O","NSHWK26DB003O":"NSHWK26DB002O","NSHWK26DB004O":"NSHWK26DB003O","NSHWK26DB001O":"NSHWK26DB004O","MTGWK26JP005O":"MTGWK26JP001O","DHNWK26JP001O":"DHNWK26JP004O","BRMWK26JP002O":"BRMWK26JP005O","BRMWK26JP009O":"BRMWK26JP006O","HSVWK26JP003O":"HSVWK26JP007O","BRMWK26JP006O":"BRMWK26JP008O","BRMWK26JP011O":"BRMWK26JP009O","BRMWK26JP001O":"BRMWK26JP010O","HSVWK26JP002O":"HSVWK26JP010O","HSVWK26JP001O":"HSVWK26JP011O","HSVWK26JP005O":"HSVWK26JP012O","HSVWK26JP004O":"HSVWK26JP013O","BRMWK26JP010O":"BRMWK26JP014O","MTGWK26JP003O":"MTGWK26JP014O","BRMWK26JP004O":"BRMWK26JP015O","BRMWK26JP008O":"BRMWK26JP016O","BRMWK26JP003O":"BRMWK26JP017O","BRMWK26JP005O":"BRMWK26JP018O","BRMWK26JP007O":"BRMWK26JP019O","MTGWK26JP004O":"MTGWK26JP020O","MTGWK26JP001O":"MTGWK26JP021O","NSHWK26SB004O":"NSHWK26SB001O","NSHWK26SB003O":"NSHWK26SB002O","DHNWK26SB004O":"DHNWK26SB003O","DHNWK26SB003O":"DHNWK26SB004O","BRMWK26SB007O":"BRMWK26SB005O","HSVWK26SB003O":"HSVWK26SB005O","KNXWK26SB003O":"KNXWK26SB005O","DHNWK26SB001O":"DHNWK26SB005O","BRMWK26SB003O":"BRMWK26SB006O","MTGWK26SB005O":"MTGWK26SB006O","HSVWK26SB001O":"HSVWK26SB006O","KNXWK26SB004O":"KNXWK26SB006O","DHNWK26SB002O":"DHNWK26SB006O","HSVWK26SB011O":"HSVWK26SB007O","HSVWK26SB007O":"HSVWK26SB008O","KNXWK26SB005O":"KNXWK26SB009O","MTGWK26SB006O":"MTGWK26SB010O","HSVWK26SB002O":"HSVWK26SB011O","HSVWK26SB006O":"HSVWK26SB012O","BRMWK26SB006O":"BRMWK26SB013O","HSVWK26SB005O":"HSVWK26SB013O","DHNWK26SB005O":"DHNWK26SB014O","HSVWK26SB012O":"HSVWK26SB015O","HSVWK26SB004O":"HSVWK26SB016O","HSVWK26SB013O":"HSVWK26SB017O","MTGWK26SB002O":"MTGWK26SB018O","MTGWK26SB001O":"MTGWK26SB019O","HSVWK26SB010O":"HSVWK26SB020O","MTGWK26SB007O":"MTGWK26SB021O","BRMWK26SB002O":"BRMWK26SB022O","MTGWK26SB004O":"MTGWK26SB022O","HSVWK26SB009O":"HSVWK26SB022O","KNXWK26SB001O":"KNXWK26SB022O","NSHWK26SB002O":"NSHWK26SB022O","BRMWK26SB001O":"BRMWK26SB023O","MTGWK26SB003O":"MTGWK26SB023O","HSVWK26SB008O":"HSVWK26SB023O","KNXWK26SB002O":"KNXWK26SB023O","NSHWK26SB001O":"NSHWK26SB023O","BRMWK26SB004O":"BRMWK26SB024O","HSVWK26SB014O":"HSVWK26SB025O","HSVWK26SB015O":"HSVWK26SB026O","BRMWK26SB005O":"BRMWK26SB027O","BRMWK26SP010O":"BRMWK26SP009O","MTGWK26SP008O":"MTGWK26SP009O","HSVWK26SP001O":"HSVWK26SP009O","MTGWK26SP009O":"MTGWK26SP010O","HSVWK26SP002O":"HSVWK26SP010O","BRMWK26SP009O":"BRMWK26SP011O","MTGWK26SP010O":"MTGWK26SP011O","HSVWK26SP003O":"HSVWK26SP011O"};
@@ -3706,18 +3710,21 @@ const App=()=>{
         w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location Description</th><th style="width:110px">Media/Style</th><th style="width:80px">H x W</th><th style="width:70px">Impr/Wk</th><th style="width:160px">Creative</th><th style="width:120px">ISCI</th><th style="width:80px">Renewal Date</th></tr>');
         const tbdSeen=new Set();
         bds.forEach(p=>{
-          const _rot=String(p.panel).includes("TBD");
-          // Rotary/bonus/preempt boards: per the buyer, we DON'T enumerate counts.
-          // One line per media type per market — panel reads "TBD", flagged by type,
-          // and the ROTATION carries the meaning: posters (incl. digital posters) get
-          // all 3 creatives at 33/33/34, bulletins/digital BB get 2 at 50/50. Dedup so
-          // the same type isn't repeated. Each creative is its own download link.
-          if(_rot){
+          const _tbd=String(p.panel).includes("TBD");
+          // Bonus boards: real fixed panels (off-contract / $0 added-value, NOT TBD).
+          // They keep their panel/location/size/ISCI but rotate the creative pool.
+          const _bonus=!_tbd&&(typeof OOH_BONUS_ROTATE!=="undefined"&&OOH_BONUS_ROTATE.has(String(p.panel)));
+          const _rot=_tbd||_bonus;  // both rotate the creative pool + get highlighted
+          // TBD rotary/preempt lines: per the buyer, we DON'T enumerate counts — one line
+          // per media type per market (panel reads "TBD"). Dedup so a type isn't repeated.
+          if(_tbd){
             const _tkey=(/digital/i.test(p.type||"")?"D":"S")+(/poster/i.test(p.type||"")?"P":/junior/i.test(p.type||"")?"J":"B");
             if(tbdSeen.has(_tkey))return;
             tbdSeen.add(_tkey);
           }
-          const creatives=(Array.isArray(p.design)&&p.design.length)?p.design:(_rot?(/poster/i.test(p.type||"")?WK_OOH_CREATIVES.poster:WK_OOH_CREATIVES.bulletin):[]);
+          // Rotation carries the meaning: posters (incl. digital posters) rotate all 3
+          // creatives at 33/33/34, bulletins/digital BB rotate 2 at 50/50. Each is a link.
+          const creatives=_rot?(/poster/i.test(p.type||"")?WK_OOH_CREATIVES.poster:WK_OOH_CREATIVES.bulletin):((Array.isArray(p.design)&&p.design.length)?p.design:[]);
           const _n=creatives.length;
           const crCell=_n?creatives.map((concept,ci)=>{
             const pct=_n>1?(ci<_n-1?Math.floor(100/_n):100-Math.floor(100/_n)*(_n-1)):null;
@@ -3726,9 +3733,9 @@ const App=()=>{
             return lk+(pct!=null?' <b style="color:#b8860b">('+pct+'%)</b>':'');
           }).join('<br>'):'—';
           const _boaz=["40173","60109"].includes(String(p.panel));
-          const _panelCell=(_rot?'TBD':escHtml(String(p.panel)))+(_rot?' <b style="color:#7c3aed">↻ ROTARY</b>':'');
-          const _loc=_rot?'<b style="color:#7c3aed">Rotating bonus/preempt — Lamar selects locations, moves every 4 weeks</b>':(escHtml(p.location||"")+(_boaz?' <b style="color:#b8860b">◄ Boaz — traffic as Huntsville</b>':''));
-          w.document.write('<tr'+((_boaz||_rot)?' style="background:#fff3bf"':'')+'><td style="font-family:monospace;font-weight:700">'+_panelCell+'</td><td>'+_loc+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(_rot?"—":(p.size||""))+'</td><td style="text-align:right">'+(_rot?"":(p.impressions?Number(p.impressions).toLocaleString():""))+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(_rot?"—":(p.isci||"—"))+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||oPostDates||"")+'</td></tr>')});
+          const _panelCell=(_tbd?'TBD':escHtml(String(p.panel)))+(_tbd?' <b style="color:#7c3aed">↻ ROTARY</b>':(_bonus?' <b style="color:#7c3aed">★ BONUS</b>':''));
+          const _loc=_tbd?'<b style="color:#7c3aed">Rotating bonus/preempt — Lamar selects locations, moves every 4 weeks</b>':(escHtml(p.location||"")+(_bonus?' <b style="color:#7c3aed">★ Bonus board (no charge) — rotate creative</b>':'')+(_boaz?' <b style="color:#b8860b">◄ Boaz — traffic as Huntsville</b>':''));
+          w.document.write('<tr'+((_boaz||_rot)?' style="background:#fff3bf"':'')+'><td style="font-family:monospace;font-weight:700">'+_panelCell+'</td><td>'+_loc+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(_tbd?"—":(p.size||""))+'</td><td style="text-align:right">'+(_tbd?"":(p.impressions?Number(p.impressions).toLocaleString():""))+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(_tbd?"—":(p.isci||"—"))+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||oPostDates||"")+'</td></tr>')});
         w.document.write('</table>')});
       w.document.write('<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+grand+'</div>');
       w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
