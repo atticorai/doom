@@ -3662,7 +3662,10 @@ const App=()=>{
     const printVendorTrafficSheet=()=>{
       // Nashville is held (separate Aug contract) — skip it on the all-markets sheet,
       // but still allow generating it on its own by selecting Nashville in the filter.
-      const scope=fl.filter(p=>!String(p.panel).includes("TBD")&&(om||oohMarket(p.dma)!=="Nashville"));
+      // Include TBD/rotary/bonus boards — they get a line with the full rotating
+      // creative pool + rotational %. Only Nashville (held, separate Aug contract)
+      // is dropped on the all-markets sheet (selectable on its own via the filter).
+      const scope=fl.filter(p=>(om||oohMarket(p.dma)!=="Nashville"));
       if(!scope.length){notify("No boards in view to traffic");return}
       const iTitle=(c)=>{if(!c)return"";const m=iscis.find(i=>i.code===c);return m?m.title:""};
       const vendorName=oVend||[...new Set(scope.map(p=>p.vendor))][0]||"Lamar";
@@ -3692,7 +3695,7 @@ const App=()=>{
       // Link each board to its NEAREST standalone uploaded file (market-locked, same
       // creative, closest size) from the file registry — all 73 are there, none merged.
       const _files=(oohCreativeFiles||[]).filter(f=>f&&f.u&&f.w&&f.h);
-      const nearestFile=(p)=>{const bd=oohDims(p.size);if(!bd)return fileMap[p.isci]||"";const bp=oohPrefix(oohTrafficDma(p));const bc=(Array.isArray(p.design)&&p.design.length)?String(p.design[0]).trim():"";
+      const nearestFile=(p,concept)=>{let bd=oohDims(p.size);if(!bd){bd=/poster/i.test(p.type||"")?[10.6,22.9]:/junior/i.test(p.type||"")?[12,24]:[14,48];}const bp=oohPrefix(oohTrafficDma(p));const bc=String(concept||((Array.isArray(p.design)&&p.design.length)?p.design[0]:"")).trim();
         let pool=_files.filter(f=>oohPrefix(f.dma)===bp&&f.c===bc);
         if(!pool.length)pool=_files.filter(f=>oohPrefix(f.dma)===bp&&((/Case Cause/.test(f.c||"")||f.fam==="cause")===(/Case Cause/.test(bc))));
         if(!pool.length)return fileMap[p.isci]||"";
@@ -3701,10 +3704,21 @@ const App=()=>{
       dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>oohMarket(p.dma)===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
         w.document.write('<div class="mkt"'+(di>0?' style="page-break-before:always"':'')+'>'+escHtml(d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
         w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location Description</th><th style="width:110px">Media/Style</th><th style="width:80px">H x W</th><th style="width:70px">Impr/Wk</th><th style="width:160px">Creative</th><th style="width:120px">ISCI</th><th style="width:80px">Renewal Date</th></tr>');
-        bds.forEach(p=>{const cr=(Array.isArray(p.design)&&p.design.length)?p.design.map(c=>fullCreativeName(p,c)).join(" / "):"—";const fu=nearestFile(p);
-          const crCell=fu?('<a href="'+escHtml(oohVendorDl(fu,oohVendorFileName(p)))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(cr)+'</a>'):('<b>'+escHtml(cr)+'</b>');
+        bds.forEach(p=>{
+          const _rot=String(p.panel).includes("TBD");
+          // Rotaries/bonus boards have no assigned creative — they rotate the full pool:
+          // posters get 3 (33/33/34), bulletins get 2 (50/50). Each creative is its own link.
+          const creatives=(Array.isArray(p.design)&&p.design.length)?p.design:(_rot?(/poster/i.test(p.type||"")?WK_OOH_CREATIVES.poster:WK_OOH_CREATIVES.bulletin):[]);
+          const _n=creatives.length;
+          const crCell=_n?creatives.map((concept,ci)=>{
+            const pct=_n>1?(ci<_n-1?Math.floor(100/_n):100-Math.floor(100/_n)*(_n-1)):null;
+            const nm=fullCreativeName(p,concept);const fu=nearestFile(p,concept);
+            const lk=fu?('<a href="'+escHtml(oohVendorDl(fu,nm))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(nm)+'</a>'):('<b>'+escHtml(nm)+'</b>');
+            return lk+(pct!=null?' <b style="color:#b8860b">('+pct+'%)</b>':'');
+          }).join('<br>'):'—';
           const _boaz=["40173","60109"].includes(String(p.panel));
-          w.document.write('<tr'+(_boaz?' style="background:#fff3bf"':'')+'><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.panel))+'</td><td>'+escHtml(p.location||"")+(_boaz?' <b style="color:#b8860b">◄ Boaz — traffic as Huntsville</b>':'')+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(p.size||"")+'</td><td style="text-align:right">'+(p.impressions?Number(p.impressions).toLocaleString():"")+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(p.isci||"—")+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||oPostDates||"")+'</td></tr>')});
+          const _panelCell=escHtml(String(p.panel))+(_rot?' <b style="color:#7c3aed">↻ ROTARY</b>':'');
+          w.document.write('<tr'+((_boaz||_rot)?' style="background:#fff3bf"':'')+'><td style="font-family:monospace;font-weight:700">'+_panelCell+'</td><td>'+escHtml(p.location||"")+(_boaz?' <b style="color:#b8860b">◄ Boaz — traffic as Huntsville</b>':'')+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(p.size||"")+'</td><td style="text-align:right">'+(p.impressions?Number(p.impressions).toLocaleString():"")+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(p.isci||"—")+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||oPostDates||"")+'</td></tr>')});
         w.document.write('</table>')});
       w.document.write('<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+grand+'</div>');
       w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
