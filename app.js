@@ -3704,10 +3704,19 @@ const App=()=>{
       dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>oohMarket(p.dma)===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
         w.document.write('<div class="mkt"'+(di>0?' style="page-break-before:always"':'')+'>'+escHtml(d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
         w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location Description</th><th style="width:110px">Media/Style</th><th style="width:80px">H x W</th><th style="width:70px">Impr/Wk</th><th style="width:160px">Creative</th><th style="width:120px">ISCI</th><th style="width:80px">Renewal Date</th></tr>');
+        const tbdSeen=new Set();
         bds.forEach(p=>{
           const _rot=String(p.panel).includes("TBD");
-          // Rotaries/bonus boards have no assigned creative — they rotate the full pool:
-          // posters get 3 (33/33/34), bulletins get 2 (50/50). Each creative is its own link.
+          // Rotary/bonus/preempt boards: per the buyer, we DON'T enumerate counts.
+          // One line per media type per market — panel reads "TBD", flagged by type,
+          // and the ROTATION carries the meaning: posters (incl. digital posters) get
+          // all 3 creatives at 33/33/34, bulletins/digital BB get 2 at 50/50. Dedup so
+          // the same type isn't repeated. Each creative is its own download link.
+          if(_rot){
+            const _tkey=(/digital/i.test(p.type||"")?"D":"S")+(/poster/i.test(p.type||"")?"P":/junior/i.test(p.type||"")?"J":"B");
+            if(tbdSeen.has(_tkey))return;
+            tbdSeen.add(_tkey);
+          }
           const creatives=(Array.isArray(p.design)&&p.design.length)?p.design:(_rot?(/poster/i.test(p.type||"")?WK_OOH_CREATIVES.poster:WK_OOH_CREATIVES.bulletin):[]);
           const _n=creatives.length;
           const crCell=_n?creatives.map((concept,ci)=>{
@@ -3717,11 +3726,13 @@ const App=()=>{
             return lk+(pct!=null?' <b style="color:#b8860b">('+pct+'%)</b>':'');
           }).join('<br>'):'—';
           const _boaz=["40173","60109"].includes(String(p.panel));
-          const _panelCell=escHtml(String(p.panel))+(_rot?' <b style="color:#7c3aed">↻ ROTARY</b>':'');
-          w.document.write('<tr'+((_boaz||_rot)?' style="background:#fff3bf"':'')+'><td style="font-family:monospace;font-weight:700">'+_panelCell+'</td><td>'+escHtml(p.location||"")+(_boaz?' <b style="color:#b8860b">◄ Boaz — traffic as Huntsville</b>':'')+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(p.size||"")+'</td><td style="text-align:right">'+(p.impressions?Number(p.impressions).toLocaleString():"")+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(p.isci||"—")+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||oPostDates||"")+'</td></tr>')});
+          const _panelCell=(_rot?'TBD':escHtml(String(p.panel)))+(_rot?' <b style="color:#7c3aed">↻ ROTARY</b>':'');
+          const _loc=_rot?'<b style="color:#7c3aed">Rotating bonus/preempt — Lamar selects locations, moves every 4 weeks</b>':(escHtml(p.location||"")+(_boaz?' <b style="color:#b8860b">◄ Boaz — traffic as Huntsville</b>':''));
+          w.document.write('<tr'+((_boaz||_rot)?' style="background:#fff3bf"':'')+'><td style="font-family:monospace;font-weight:700">'+_panelCell+'</td><td>'+_loc+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(_rot?"—":(p.size||""))+'</td><td style="text-align:right">'+(_rot?"":(p.impressions?Number(p.impressions).toLocaleString():""))+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(_rot?"—":(p.isci||"—"))+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||oPostDates||"")+'</td></tr>')});
         w.document.write('</table>')});
       w.document.write('<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+grand+'</div>');
       w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
+      w.document.write('<div class="nt">↻ TBD / ROTARY lines: rotating bonus & preempt panels — Lamar selects and rotates locations every 4 weeks. Rotate the creatives shown at the percentages indicated (posters 33/33/34, bulletins/digital 50/50). Per contract, $0 bonus guaranteed digitals (posters/bulletins) are provided throughout the term to cover any dropped bonus static posters.</div>');
       w.document.write('<div class="nt">Note: Please return signed Traffic Instructions or confirm receipt by email within 24 hours.</div>');
       w.document.write('</body></html>');w.document.close();
       const isciLines=scope.map(p=>({code:p.isci||p.panel,title:(Array.isArray(p.design)?p.design.join(" / "):""),dur:p.size||"",pct:"",sched:oPostDates||"",bookend:"",units:""}));
