@@ -3743,14 +3743,14 @@ const App=()=>{
           // up. Creative + ISCI columns read "Keep current creative", no link, no code.
           const _keep=(typeof OOH_KEEP_CURRENT!=="undefined"&&OOH_KEEP_CURRENT.has(String(p.panel)));
           const _panelCell=(_tbd?'TBD':escHtml(String(p.panel)))+(_tbd?' <b style="color:#7c3aed">↻ ROTARY</b>':(_bonus?' <b style="color:#7c3aed">★ BONUS</b>':''));
-          const _loc=_tbd?'<b style="color:#7c3aed">Rotating bonus/preempt — Lamar selects locations, moves every 4 weeks</b>':(escHtml(p.location||"")+(_bonus?' <b style="color:#7c3aed">★ Bonus board (no charge) — rotate creative</b>':'')+(_boaz?' <b style="color:#b8860b">◄ Boaz — traffic as Huntsville</b>':'')+(_keep?' <b style="color:#15803d">★ Perm glitter-disc — already installed</b>':''));
+          const _loc=_tbd?'<b style="color:#7c3aed">Rotates — Lamar selects</b>':(escHtml(p.location||"")+(_bonus?' <b style="color:#7c3aed">★ Bonus (no charge)</b>':'')+(_boaz?' <b style="color:#b8860b">◄ Boaz — traffic as Huntsville</b>':'')+(_keep?' <b style="color:#15803d">★ Perm glitter-disc — already installed</b>':''));
           const _crCellOut=_keep?'<b style="color:#15803d">KEEP CURRENT CREATIVE</b><br><span style="color:#555;font-size:9px">Perm glitter-disc — already up, do not retraffic</span>':crCell;
           const _isciOut=_keep?'<b style="color:#15803d">Keep current</b>':escHtml(_tbd?"—":(p.isci||"—"));
           w.document.write('<tr'+((_boaz||_rot||_keep)?' style="background:#fff3bf"':'')+'><td style="font-family:monospace;font-weight:700">'+_panelCell+'</td><td>'+_loc+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(_tbd?"—":(p.size||""))+'</td><td style="text-align:right">'+(_tbd?"":(p.impressions?Number(p.impressions).toLocaleString():""))+'</td><td>'+_crCellOut+'</td><td style="font-family:monospace">'+_isciOut+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||oPostDates||"")+'</td></tr>')});
         w.document.write('</table>')});
       w.document.write('<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+grand+'</div>');
       w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
-      w.document.write('<div class="nt">↻ TBD / ROTARY lines: rotating bonus & preempt panels — Lamar selects and rotates locations every 4 weeks. Rotate the creatives shown at the percentages indicated (posters 33/33/34, bulletins/digital 50/50). Per contract, $0 bonus guaranteed digitals (posters/bulletins) are provided throughout the term to cover any dropped bonus static posters.</div>');
+      w.document.write('<div class="nt">↻ TBD lines rotate the creatives shown at the % indicated.</div>');
       w.document.write('<div class="nt">Note: Please return signed Traffic Instructions or confirm receipt by email within 24 hours.</div>');
       w.document.write('</body></html>');w.document.close();
       const isciLines=scope.map(p=>({code:p.isci||p.panel,title:(Array.isArray(p.design)?p.design.join(" / "):""),dur:p.size||"",pct:"",sched:oPostDates||"",bookend:"",units:""}));
