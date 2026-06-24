@@ -3676,11 +3676,21 @@ const App=()=>{
       hd("Renewal Term",(renewTerm||"TBD")+" · 13 broadcast periods","grn");
       if(oPostDates)hd("Post Notes",oPostDates);if(oVersion)hd("Version / Notes",oVersion);if(oComments)hd("Comments",oComments);
       const fileMap={};iscis.forEach(i=>{if(i.fileUrl)fileMap[i.code]=i.fileUrl});
+      // Link each board to the NEAREST real uploaded creative of its own market+creative.
+      // Files store under sibling ISCIs (73 files → ~50 ISCIs) and many boards share one
+      // creative, so an exact per-ISCI lookup leaves most boards unlinked. Only use real
+      // /ooh/ uploads — ignore stale ghost links (old /creative/*.jpg) so nothing's dead.
+      const realFiles=[];iscis.forEach(i=>{if(i.suffix!=="O"||!i.fileUrl||!/\/ooh\//.test(String(i.fileUrl)))return;const segs=String(i.title||"").split(" - ");if(segs.length<4)return;const dd=oohDims(segs[2]);if(dd)realFiles.push({url:i.fileUrl,dma:i.dma,concept:segs.slice(3).join(" - ").trim(),d:dd});});
+      const nearestFile=(p)=>{const bd=oohDims(p.size);if(!bd)return fileMap[p.isci]||"";const bp=oohPrefix(p.dma);const bc=(Array.isArray(p.design)&&p.design.length)?String(p.design[0]).trim():"";
+        let pool=realFiles.filter(f=>oohPrefix(f.dma)===bp&&f.concept===bc);
+        if(!pool.length)pool=realFiles.filter(f=>oohPrefix(f.dma)===bp&&(/Case Cause/.test(f.concept))===(/Case Cause/.test(bc)));
+        if(!pool.length)return fileMap[p.isci]||"";
+        return pool.map(f=>({f,off:Math.abs(f.d[0]-bd[0])+Math.abs(f.d[1]-bd[1])})).sort((a,b)=>a.off-b.off)[0].f.url;};
       let grand=0;
       dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>oohMarket(p.dma)===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
         w.document.write('<div class="mkt"'+(di>0?' style="page-break-before:always"':'')+'>'+escHtml(d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
         w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location Description</th><th style="width:110px">Media/Style</th><th style="width:80px">H x W</th><th style="width:70px">Impr/Wk</th><th style="width:160px">Creative</th><th style="width:120px">ISCI</th><th style="width:80px">Renewal Date</th></tr>');
-        bds.forEach(p=>{const cr=(Array.isArray(p.design)&&p.design.length)?p.design.map(c=>fullCreativeName(p,c)).join(" / "):"—";const fu=fileMap[p.isci];
+        bds.forEach(p=>{const cr=(Array.isArray(p.design)&&p.design.length)?p.design.map(c=>fullCreativeName(p,c)).join(" / "):"—";const fu=nearestFile(p);
           const crCell=fu?('<a href="'+escHtml(oohVendorDl(fu,oohVendorFileName(p)))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(cr)+'</a>'):('<b>'+escHtml(cr)+'</b>');
           w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.panel))+'</td><td>'+escHtml(p.location||"")+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(p.size||"")+'</td><td style="text-align:right">'+(p.impressions?Number(p.impressions).toLocaleString():"")+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(p.isci||"—")+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||oPostDates||"")+'</td></tr>')});
         w.document.write('</table>')});
