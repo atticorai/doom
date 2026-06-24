@@ -3656,7 +3656,9 @@ const App=()=>{
     // Reusable VENDOR TRAFFIC SHEET — one click, every board in view, grouped by
     // market → submarket, with creative + ISCI + size + location. Renewal-ready.
     const printVendorTrafficSheet=()=>{
-      const scope=fl.filter(p=>!String(p.panel).includes("TBD"));
+      // Nashville is held (separate Aug contract) — skip it on the all-markets sheet,
+      // but still allow generating it on its own by selecting Nashville in the filter.
+      const scope=fl.filter(p=>!String(p.panel).includes("TBD")&&(om||oohMarket(p.dma)!=="Nashville"));
       if(!scope.length){notify("No boards in view to traffic");return}
       const iTitle=(c)=>{if(!c)return"";const m=iscis.find(i=>i.code===c);return m?m.title:""};
       const vendorName=oVend||[...new Set(scope.map(p=>p.vendor))][0]||"Lamar";
