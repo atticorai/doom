@@ -463,29 +463,42 @@ const fullCreativeName=(board,concept)=>concept?`WK ${boardClass(board.type,boar
 // Normalise a board/file size to a comparable form: 10'6x22'9 → 10.6x22.9, 14'x48' → 14x48.
 const oohNormSize=(s)=>String(s||"").toLowerCase().replace(/["”\s]/g,"").split("x").map(t=>t.replace(/['’]/g,".").replace(/[^0-9.]/g,"").replace(/\.+$/,"").replace(/^\.+/,"")).filter(Boolean).join("x");
 const OOH_MKT2DMA={birmingham:"BRM",biringham:"BRM",bham:"BRM",montgomery:"MTG",huntsville:"HSV",decatur:"HSV",florence:"HSV",madison:"HSV",cullman:"HSV",athens:"HSV",knoxville:"KNX",dothan:"DHN",enterprise:"DHN",nashville:"NSH",gadsden:"GAD",anniston:"GAD",centre:"GAD",tuscaloosa:"BRM"};
-// Parse a creative filename → {dma, size, concept}. Handles the clean convention
+const oohDims=(s)=>{const p=oohNormSize(s).split("x").map(parseFloat);return (p.length===2&&p.every(n=>!isNaN(n)))?p:null};
+// Parse a creative filename → {dma, concept, fam, size}. Handles the clean convention
 // ("WK Static Poster - 10.6x22.9 - BRM - Case Cause - CK Blue") and the messy
 // source names ("WK_Birmingham_Cause_14x48", "WK_Birmingham_Cause_Gold_10.6x22.9").
 const parseOohCreativeFile=(name)=>{
   const base=String(name||"").replace(/\.[^.]+$/,"");const L=base.toLowerCase();
   let dma=null;for(const k in OOH_MKT2DMA){if(L.includes(k)){dma=OOH_MKT2DMA[k];break}}
   if(!dma){const m=base.toUpperCase().match(/\b(BRM|GAD|MTG|HSV|KNX|DHN|NSH)\b/);if(m)dma=m[1]}
-  let concept=null;
-  if(/blue/.test(L))concept="Case Cause CK Blue";
-  else if(/gold/.test(L))concept="Case Cause CK Gold";
-  else if(/shield/.test(L)||/cause/.test(L))concept="Case Cause Shield";
-  else if(/personal/.test(L))concept="It's Personal CK";
+  let concept=null,fam=null;
+  if(/personal/.test(L)){concept="It's Personal CK";fam="personal";}
+  else if(/gold/.test(L)){concept="Case Cause CK Gold";fam="cause";}
+  else if(/blue/.test(L)){concept="Case Cause CK Blue";fam="cause";}
+  else if(/shield/.test(L)){concept="Case Cause Shield";fam="cause";}
+  else if(/cause/.test(L)){fam="cause";}// "Cause" with no colour — closest size picks Shield/Blue/Gold
   const sm=base.match(/\d+\.?\d*\s*['’]?\s*\d*\s*[xX]\s*\d+\.?\d*\s*['’]?\s*\d*/);
   const size=sm?oohNormSize(sm[0]):null;
-  return{dma,concept,size};
+  return{dma,concept,fam,size};
 };
-// Find the ISCI index a creative file belongs to (by market+size+creative). -1 if none.
+// Find the ISCI a creative file belongs to: same market + same creative, CLOSEST size.
+// "A poster off by 5 is still that poster." Designer sizes are sloppy, so we don't
+// demand an exact size — just the nearest board of the same market+creative. Returns
+// -1 if there's no creative-match in that market, or the nearest board is >8" off in
+// either dimension (wrong board type — those drop to the manual assign-by-dropdown).
 const matchOohCreativeFile=(name,iscis)=>{
-  const{dma,concept,size}=parseOohCreativeFile(name);
-  if(!dma||!concept||!size)return -1;
-  // Read the ISCI's market/size/creative from its TITLE (the dur field holds the
-  // type code like "SB"/"SP" for OOH, NOT the size). Title = "WK <type> - <PFX> - <size> - <creative>".
-  return iscis.findIndex(i=>{if(i.suffix!=="O")return false;const segs=String(i.title||"").split(" - ");if(segs.length<4)return false;const iPfx=segs[1].trim();const iSize=oohNormSize(segs[2]);const iConcept=segs.slice(3).join(" - ").trim();return oohPrefix(iPfx)===oohPrefix(dma)&&iSize===size&&iConcept===concept});
+  const{dma,concept,fam,size}=parseOohCreativeFile(name);
+  if(!dma||!size)return -1;
+  const fd=oohDims(size);if(!fd)return -1;
+  const conceptOf=t=>String(t||"").split(" - ").pop().trim();
+  const sizeSeg=t=>{const s=String(t||"").split(" - ");return s.length>=4?s[2]:""};
+  const cand=[];
+  iscis.forEach((i,idx)=>{if(i.suffix!=="O"||oohPrefix(i.dma)!==oohPrefix(dma))return;const d=oohDims(sizeSeg(i.title));if(!d)return;const c=conceptOf(i.title);
+    if(concept){if(c!==concept)return;}else if(fam==="cause"){if(!/Case Cause/.test(c))return;}else return;
+    cand.push({idx,off:Math.abs(d[0]-fd[0])+Math.abs(d[1]-fd[1])});});
+  if(!cand.length)return -1;
+  cand.sort((a,b)=>a.off-b.off);
+  return cand[0].off<=8?cand[0].idx:-1;
 };
 // The convention filename the VENDOR should receive (you never rename your source).
 const oohVendorFileName=(board)=>`WK ${boardClass(board.type,board.size).label} - ${oohPrefix(board.dma)} - ${oohNormSize(board.size)} - ${(Array.isArray(board.design)?board.design[0]:board.design)||""}`;
