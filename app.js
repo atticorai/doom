@@ -382,6 +382,10 @@ const oohMarket=(dma)=>DMA_MARKET[dma]||DM[dma]||dma;
 // (Gadsden rolls into Birmingham → BRM). Extend this map if more areas roll up.
 const OOH_PREFIX_ROLLUP={GAD:"BRM"};
 const oohPrefix=(dma)=>OOH_PREFIX_ROLLUP[dma]||dma;
+// Boaz boards sit on the Huntsville line — traffic them with HSV creative/ISCI even
+// though they bill on the Birmingham contract. Used for creative naming + file matching.
+const OOH_TRAFFIC_DMA={"40173":"HSV","60109":"HSV"};
+const oohTrafficDma=(b)=>(b&&OOH_TRAFFIC_DMA[String(b.panel)])||(b&&b.dma);
 // OOH ISCI renumber (creative+size → same number across markets; legacy-safe).
 // Migrates already-saved fileUrls + board→ISCI assignments to the new codes.
 const OOH_RENUMBER={"NSHWK26DB002O":"NSHWK26DB001O","NSHWK26DB003O":"NSHWK26DB002O","NSHWK26DB004O":"NSHWK26DB003O","NSHWK26DB001O":"NSHWK26DB004O","MTGWK26JP005O":"MTGWK26JP001O","DHNWK26JP001O":"DHNWK26JP004O","BRMWK26JP002O":"BRMWK26JP005O","BRMWK26JP009O":"BRMWK26JP006O","HSVWK26JP003O":"HSVWK26JP007O","BRMWK26JP006O":"BRMWK26JP008O","BRMWK26JP011O":"BRMWK26JP009O","BRMWK26JP001O":"BRMWK26JP010O","HSVWK26JP002O":"HSVWK26JP010O","HSVWK26JP001O":"HSVWK26JP011O","HSVWK26JP005O":"HSVWK26JP012O","HSVWK26JP004O":"HSVWK26JP013O","BRMWK26JP010O":"BRMWK26JP014O","MTGWK26JP003O":"MTGWK26JP014O","BRMWK26JP004O":"BRMWK26JP015O","BRMWK26JP008O":"BRMWK26JP016O","BRMWK26JP003O":"BRMWK26JP017O","BRMWK26JP005O":"BRMWK26JP018O","BRMWK26JP007O":"BRMWK26JP019O","MTGWK26JP004O":"MTGWK26JP020O","MTGWK26JP001O":"MTGWK26JP021O","NSHWK26SB004O":"NSHWK26SB001O","NSHWK26SB003O":"NSHWK26SB002O","DHNWK26SB004O":"DHNWK26SB003O","DHNWK26SB003O":"DHNWK26SB004O","BRMWK26SB007O":"BRMWK26SB005O","HSVWK26SB003O":"HSVWK26SB005O","KNXWK26SB003O":"KNXWK26SB005O","DHNWK26SB001O":"DHNWK26SB005O","BRMWK26SB003O":"BRMWK26SB006O","MTGWK26SB005O":"MTGWK26SB006O","HSVWK26SB001O":"HSVWK26SB006O","KNXWK26SB004O":"KNXWK26SB006O","DHNWK26SB002O":"DHNWK26SB006O","HSVWK26SB011O":"HSVWK26SB007O","HSVWK26SB007O":"HSVWK26SB008O","KNXWK26SB005O":"KNXWK26SB009O","MTGWK26SB006O":"MTGWK26SB010O","HSVWK26SB002O":"HSVWK26SB011O","HSVWK26SB006O":"HSVWK26SB012O","BRMWK26SB006O":"BRMWK26SB013O","HSVWK26SB005O":"HSVWK26SB013O","DHNWK26SB005O":"DHNWK26SB014O","HSVWK26SB012O":"HSVWK26SB015O","HSVWK26SB004O":"HSVWK26SB016O","HSVWK26SB013O":"HSVWK26SB017O","MTGWK26SB002O":"MTGWK26SB018O","MTGWK26SB001O":"MTGWK26SB019O","HSVWK26SB010O":"HSVWK26SB020O","MTGWK26SB007O":"MTGWK26SB021O","BRMWK26SB002O":"BRMWK26SB022O","MTGWK26SB004O":"MTGWK26SB022O","HSVWK26SB009O":"HSVWK26SB022O","KNXWK26SB001O":"KNXWK26SB022O","NSHWK26SB002O":"NSHWK26SB022O","BRMWK26SB001O":"BRMWK26SB023O","MTGWK26SB003O":"MTGWK26SB023O","HSVWK26SB008O":"HSVWK26SB023O","KNXWK26SB002O":"KNXWK26SB023O","NSHWK26SB001O":"NSHWK26SB023O","BRMWK26SB004O":"BRMWK26SB024O","HSVWK26SB014O":"HSVWK26SB025O","HSVWK26SB015O":"HSVWK26SB026O","BRMWK26SB005O":"BRMWK26SB027O","BRMWK26SP010O":"BRMWK26SP009O","MTGWK26SP008O":"MTGWK26SP009O","HSVWK26SP001O":"HSVWK26SP009O","MTGWK26SP009O":"MTGWK26SP010O","HSVWK26SP002O":"HSVWK26SP010O","BRMWK26SP009O":"BRMWK26SP011O","MTGWK26SP010O":"MTGWK26SP011O","HSVWK26SP003O":"HSVWK26SP011O"};
@@ -458,7 +462,7 @@ const WK_OOH_CREATIVES={
 };
 // Bulletins (incl. digital bulletins) draw the bulletin pool; posters/juniors/rotary draw the poster pool.
 const creativePoolKey=(type,size)=>{const k=boardClass(type,size).key;return(k==="bulletin"||k==="digital")?"bulletin":"poster"};
-const fullCreativeName=(board,concept)=>concept?`WK ${boardClass(board.type,board.size).label} - ${oohPrefix(board.dma)} - ${oohNormSize(board.size)} - ${concept}`:"";
+const fullCreativeName=(board,concept)=>concept?`WK ${boardClass(board.type,board.size).label} - ${oohPrefix(oohTrafficDma(board))} - ${oohNormSize(board.size)} - ${concept}`:"";
 // ── Creative-file matching (so TIFFs upload without renaming) ──
 // Normalise a board/file size to a comparable form: 10'6x22'9 → 10.6x22.9, 14'x48' → 14x48.
 const oohNormSize=(s)=>String(s||"").toLowerCase().replace(/["”\s]/g,"").split("x").map(t=>t.replace(/['’]/g,".").replace(/[^0-9.]/g,"").replace(/\.+$/,"").replace(/^\.+/,"")).filter(Boolean).join("x");
@@ -3688,7 +3692,7 @@ const App=()=>{
       // Link each board to its NEAREST standalone uploaded file (market-locked, same
       // creative, closest size) from the file registry — all 73 are there, none merged.
       const _files=(oohCreativeFiles||[]).filter(f=>f&&f.u&&f.w&&f.h);
-      const nearestFile=(p)=>{const bd=oohDims(p.size);if(!bd)return fileMap[p.isci]||"";const bp=oohPrefix(p.dma);const bc=(Array.isArray(p.design)&&p.design.length)?String(p.design[0]).trim():"";
+      const nearestFile=(p)=>{const bd=oohDims(p.size);if(!bd)return fileMap[p.isci]||"";const bp=oohPrefix(oohTrafficDma(p));const bc=(Array.isArray(p.design)&&p.design.length)?String(p.design[0]).trim():"";
         let pool=_files.filter(f=>oohPrefix(f.dma)===bp&&f.c===bc);
         if(!pool.length)pool=_files.filter(f=>oohPrefix(f.dma)===bp&&((/Case Cause/.test(f.c||"")||f.fam==="cause")===(/Case Cause/.test(bc))));
         if(!pool.length)return fileMap[p.isci]||"";
