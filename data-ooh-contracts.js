@@ -2,13 +2,16 @@
 // WK Lamar contracts updated to 2026 RENEWAL (RENEWAL_WETTERMARK_MARKETS).
 const OOH_CONTRACTS_INIT={
   // ── Wettermark Keith · Lamar 2026 renewal ──
-  "5570867":{num:"5570867",vendor:"Lamar Advertising",brand:"Wettermark Keith",dmas:["BRM","GAD"],startDate:"2026-06-22",endDate:"2027-06-21",notes:"Birmingham/Gadsden renewal · Production 5571209"},
-  "5570997":{num:"5570997",vendor:"Lamar Advertising",brand:"Wettermark Keith",dmas:["MTG"],startDate:"2026-06-22",endDate:"2027-06-21",notes:"Montgomery renewal · Production 5576975"},
-  "5571005":{num:"5571005",vendor:"Lamar Advertising",brand:"Wettermark Keith",dmas:["HSV"],startDate:"2026-06-22",endDate:"2027-06-21",notes:"North AL (Huntsville/Decatur/Shoals) renewal · Production 5576933"},
-  "5570957":{num:"5570957",vendor:"Lamar Advertising",brand:"Wettermark Keith",dmas:["BRM"],startDate:"2026-06-22",endDate:"2027-06-21",notes:"Tuscaloosa renewal · Production 5571216"},
-  "5570939":{num:"5570939",vendor:"Lamar Advertising",brand:"Wettermark Keith",dmas:["KNX"],startDate:"2026-06-29",endDate:"2027-06-28",notes:"Knoxville renewal · Production 5571244"},
-  "5570967":{num:"5570967",vendor:"Lamar Advertising",brand:"Wettermark Keith",dmas:["DHN"],startDate:"2026-06-29",endDate:"2027-06-28",notes:"Dothan renewal · Production 5571226"},
-  "5571406":{num:"5571406",vendor:"Lamar Advertising",brand:"Wettermark Keith",dmas:["NSH"],startDate:"2026-08-03",endDate:"2027-08-02",notes:"Nashville — NEW market · Production 5577048"},
+  // Dates/terms below are reconciled against the EXECUTED Lamar contract PDFs
+  // (signed 5/28–5/29/26) — the source of truth the buyer trusts over the vendor
+  // Excel. Panel counts + total space cost from those PDFs noted for verification.
+  "5570867":{num:"5570867",vendor:"Lamar Advertising",brand:"Wettermark Keith",dmas:["BRM","GAD"],startDate:"2026-06-22",endDate:"2027-06-20",panels:80,total:638951,notes:"Birmingham/Gadsden RENEWAL · Production 5571209 · ✓ Executed 5/28/26 · 80 panels · $638,951"},
+  "5570997":{num:"5570997",vendor:"Lamar Advertising",brand:"Wettermark Keith",dmas:["MTG"],startDate:"2026-06-22",endDate:"2027-06-20",panels:32,total:221377,notes:"Montgomery RENEWAL · Production 5576975 · ✓ Executed 5/28/26 · 32 panels · $221,377"},
+  "5571005":{num:"5571005",vendor:"Lamar Advertising",brand:"Wettermark Keith",dmas:["HSV"],startDate:"2026-06-22",endDate:"2027-06-20",panels:53,total:416902,notes:"North AL (Huntsville/Decatur/Shoals) NEW · Production 5576933 · ✓ Executed 5/28/26 · 53 panels · $416,902"},
+  "5570957":{num:"5570957",vendor:"Lamar Advertising",brand:"Wettermark Keith",dmas:["BRM"],startDate:"2026-06-22",endDate:"2027-06-20",panels:7,total:59943,notes:"Tuscaloosa/Northport RENEWAL (rolls into Birmingham market) · Production 5571216 · ✓ Executed 5/28/26 · 7 panels · $59,943"},
+  "5570939":{num:"5570939",vendor:"Lamar Advertising",brand:"Wettermark Keith",dmas:["KNX"],startDate:"2026-06-29",endDate:"2027-06-27",panels:19,total:297422,notes:"Knoxville RENEWAL · Production 5571244 · ✓ Executed 5/28/26 · 19 panels · $297,422"},
+  "5570967":{num:"5570967",vendor:"Lamar Advertising",brand:"Wettermark Keith",dmas:["DHN"],startDate:"2026-06-29",endDate:"2027-06-27",panels:20,total:80080,notes:"Dothan RENEWAL · Production 5571226 · ✓ Executed 5/28/26 · 20 panels · $80,080"},
+  "5571406":{num:"5571406",vendor:"Lamar Advertising",brand:"Wettermark Keith",dmas:["NSH"],startDate:"2026-07-06",endDate:"2027-07-04",panels:68,total:763879,notes:"Nashville — NEW market · Production 5577048 · ✓ Executed 5/29/26 · 68 panels · $763,879 · TBD posters post 8/3/26–7/4/27"},
   // ── Wettermark Keith · Reagan Outdoor (non-Lamar, separate) ──
   "7620250269":{num:"7620250269",vendor:"Reagan Outdoor",brand:"Wettermark Keith",dmas:["CHA"],startDate:"2026-01-05",endDate:"2026-03-15",notes:"CHA Poster - Benton / Hwy 411"},
   "Reagan-Chatt":{num:"Reagan-Chatt",vendor:"Reagan Outdoor",brand:"Wettermark Keith",dmas:["CHA"],startDate:"2026-01-05",endDate:"2026-03-15",notes:"CHA Bulletins - contract # TBD"},
