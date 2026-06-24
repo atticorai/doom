@@ -7437,6 +7437,10 @@ Rules:
     const oohIsciPg=()=>{
       const[showOohInactive,setShowOohInactive]=useState(false);
       const[showOohBulk,setShowOohBulk]=useState(false);
+      const[oohUnassigned,setOohUnassigned]=useState([]);// files that didn't auto-match — assign by dropdown
+      const _toB64=(f)=>new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(r.error||new Error("read failed"));r.onload=()=>res(String(r.result).split(",")[1]||"");r.readAsDataURL(f)});
+      const doOohUpload=async(file,isci)=>{const ext=file.name.split(".").pop();const code=isci.code;const fname=String(isci.title||code).replace(/[\/\\]/g,"-").trim()||code;let url="";if(file.size<=3*1024*1024){const dataB64=await _toB64(file);const r=await fetch("/api/storage",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"upload",bucket:"ooh",path:"photos/creative/"+fname+"."+ext,dataB64,contentType:file.type||"application/octet-stream"})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||j.detail||("HTTP "+r.status));url=j.url}else{if(!storage)throw new Error("Storage not loaded (large file)");url=await new Promise((res,rej)=>{const ref=storage.ref("ooh-photos/creative/"+fname+"."+ext);const t=ref.put(file,{customMetadata:{isciCode:code}});t.on("state_changed",s=>{setUploadTracker({label:"Uploading "+file.name+" ("+code+")",pct:Math.round(s.bytesTransferred/s.totalBytes*100)})},e=>rej(e),()=>ref.getDownloadURL().then(res).catch(rej))})}return url};
+      const assignOohFile=async(u,isciCode)=>{if(!isciCode)return;const gi=iscis.findIndex(i=>i.code===isciCode&&i.suffix==="O");if(gi===-1){notify("ISCI not found");return}setUploadTracker({label:"Uploading "+u.file.name+" → "+isciCode,pct:0});try{const url=await doOohUpload(u.file,iscis[gi]);setIscis(prev=>prev.map((x,j)=>j===gi?{...x,fileUrl:url}:x));setOohUnassigned(prev=>prev.filter(x=>x.file!==u.file));notify("Linked "+isciCode);log("OOH Creative Assigned",u.file.name+" → "+isciCode)}catch(e){notify("Upload failed: "+((e&&e.message)||e))}setUploadTracker(null)};
       const allOoh=iscis.filter(i=>i.suffix==="O");
       const oohIscis=showOohInactive?allOoh:allOoh.filter(i=>i.active);
       const inactiveOoh=allOoh.filter(i=>!i.active);
@@ -7466,7 +7470,7 @@ Rules:
           <DropZone multiple accept="*/*" style={{marginBottom:8}} onFiles={async(fileList)=>{
             const files=Array.from(fileList);if(!files.length){notify("No files selected");return}
             const toB64=(f)=>new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(r.error||new Error("read failed"));r.onload=()=>res(String(r.result).split(",")[1]||"");r.readAsDataURL(f)});
-            let matched=0,notFound=0,failed=0,lastErr="";const updates={};const total=files.length;
+            let matched=0,notFound=0,failed=0,lastErr="";const updates={};const total=files.length;const unmatched=[];
             for(let fi=0;fi<total;fi++){
               const file=files[fi];const baseUpper=file.name.replace(/\.[^.]+$/,"").trim().toUpperCase();
               let idx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper===i.code.toUpperCase());
@@ -7483,7 +7487,7 @@ Rules:
               if(idx===-1)idx=matchOohCreativeFile(file.name,iscis);
               // ONE file → ONE ISCI. Creative is market+size specific, so each file
               // links only to its own board. No concept fan-out, no interlinking.
-              if(idx===-1){notFound++;setUploadTracker({label:file.name+" — no matching board (name needs market + size + creative)",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});continue}
+              if(idx===-1){notFound++;unmatched.push({file});setUploadTracker({label:file.name+" — no auto-match (assign below)",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});continue}
               const ext=file.name.split(".").pop();const code=iscis[idx].code;
               // Save to Supabase under the convention NAME (ISCI title), so stored = title = download name.
               const fname=String(iscis[idx].title||code).replace(/[\/\\]/g,"-").trim()||code;
@@ -7512,11 +7516,27 @@ Rules:
             }
             setUploadTracker(null);
             if(Object.keys(updates).length>0){setIscis(prev=>prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x))}
-            log("Bulk OOH Creative",matched+" linked, "+notFound+" no match, "+failed+" failed");
-            notify(matched+" file(s) linked"+(notFound?" | "+notFound+" no matching board":"")+(failed?" | "+failed+" failed: "+lastErr:""));
+            setOohUnassigned(unmatched);
+            log("Bulk OOH Creative",matched+" linked, "+notFound+" to assign, "+failed+" failed");
+            notify(matched+" file(s) linked"+(notFound?" | "+notFound+" to assign below ↓":"")+(failed?" | "+failed+" failed: "+lastErr:""));
           }}>
             <div style={{fontSize:24}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Drag & drop or click to select OOH creative files</div><div style={{fontSize:12,color:"#64748b"}}>.jpg, .png, .pdf, .psd, .ai, .eps — multiple allowed</div>
           </DropZone>
+          {oohUnassigned.length>0&&<div style={{marginTop:10,border:"1px solid #E85A7A",borderRadius:6,padding:10,background:"#2d1f42"}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#E85A7A",marginBottom:2}}>⚠ {oohUnassigned.length} file(s) didn't auto-match — pick the ISCI for each. It uploads the moment you choose.</div>
+            <div style={{fontSize:11,color:"#9B8EAD",marginBottom:8}}>Their names don't carry market+size+creative, so just assign them by hand. Open each file to see the artwork if you're unsure.</div>
+            <div style={{maxHeight:340,overflowY:"auto",display:"flex",flexDirection:"column",gap:5}}>
+              {oohUnassigned.map((u,k)=><div key={k} style={{display:"flex",gap:6,alignItems:"center",fontSize:12}}>
+                <span style={{flex:"0 0 38%",color:"#E8DFF0",fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={u.file.name}>{u.file.name}</span>
+                <span style={{color:"#6B5E80"}}>→</span>
+                <select defaultValue="" onChange={e=>{if(e.target.value)assignOohFile(u,e.target.value)}} style={{flex:1,padding:"4px 6px",borderRadius:4,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:12}}>
+                  <option value="">— pick ISCI / board —</option>
+                  {allOoh.slice().sort((a,b)=>a.code.localeCompare(b.code)).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?"  ✓has file":""}</option>)}
+                </select>
+              </div>)}
+            </div>
+            <div style={{display:"flex",gap:6,marginTop:8}}><Btn small color="#E85A7A" onClick={()=>setOohUnassigned([])}>Clear list</Btn></div>
+          </div>}
           <div style={{fontSize:12,color:"#94a3b8"}}>OOH ISCIs with creative: <b style={{color:"#5BC4A0"}}>{allOoh.filter(i=>i.fileUrl).length}</b> / {allOoh.length}</div>
         </Cd>}
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
