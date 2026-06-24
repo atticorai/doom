@@ -492,13 +492,18 @@ const matchOohCreativeFile=(name,iscis)=>{
   const fd=oohDims(size);if(!fd)return -1;
   const conceptOf=t=>String(t||"").split(" - ").pop().trim();
   const sizeSeg=t=>{const s=String(t||"").split(" - ");return s.length>=4?s[2]:""};
-  const cand=[];
-  iscis.forEach((i,idx)=>{if(i.suffix!=="O"||oohPrefix(i.dma)!==oohPrefix(dma))return;const d=oohDims(sizeSeg(i.title));if(!d)return;const c=conceptOf(i.title);
-    if(concept){if(c!==concept)return;}else if(fam==="cause"){if(!/Case Cause/.test(c))return;}else return;
-    cand.push({idx,off:Math.abs(d[0]-fd[0])+Math.abs(d[1]-fd[1])});});
-  if(!cand.length)return -1;
-  cand.sort((a,b)=>a.off-b.off);
-  return cand[0].off<=8?cand[0].idx:-1;
+  const inMkt=[];
+  iscis.forEach((i,idx)=>{if(i.suffix!=="O"||oohPrefix(i.dma)!==oohPrefix(dma))return;const d=oohDims(sizeSeg(i.title));if(!d)return;inMkt.push({idx,off:Math.abs(d[0]-fd[0])+Math.abs(d[1]-fd[1]),c:conceptOf(i.title)});});
+  if(!inMkt.length)return -1;
+  // Prefer same creative; if that creative isn't in this market, fall back to closest
+  // size of any creative (no-colour "Cause" or a stray file). Never leave it unplaced —
+  // closest always wins, no dropdown. Questionable matches get flagged in the report.
+  let pool=inMkt;
+  if(concept)pool=inMkt.filter(x=>x.c===concept);
+  else if(fam==="cause")pool=inMkt.filter(x=>/Case Cause/.test(x.c));
+  if(!pool.length)pool=inMkt;
+  pool.sort((a,b)=>a.off-b.off);
+  return pool[0].idx;
 };
 // The convention filename the VENDOR should receive (you never rename your source).
 const oohVendorFileName=(board)=>`WK ${boardClass(board.type,board.size).label} - ${oohPrefix(board.dma)} - ${oohNormSize(board.size)} - ${(Array.isArray(board.design)?board.design[0]:board.design)||""}`;
