@@ -805,6 +805,7 @@ const App=()=>{
   const[campaignEvents,setCampaignEvents]=useState([]);
   const[alertsDismissed,setAlertsDismissed]=useState([]);
   const[oohContracts,setOohContracts]=useState(OOH_CONTRACTS_INIT);
+  const[oohCreativeFiles,setOohCreativeFiles]=useState([]);// every uploaded OOH creative as a STANDALONE file: {n,u,dma,c,fam,w,h}
   const[oohPhotos,setOohPhotos]=useState({});
   const[dbLoaded,setDbLoaded]=useState(false);
   const[deletedIsciKeys,setDeletedIsciKeys]=useState(new Set());
@@ -1004,6 +1005,7 @@ const App=()=>{
         if(docs.oohRemindersSent?.data){const d=JSON.parse(docs.oohRemindersSent.data);setOohRemindersSent(d)}
         if(docs.confirmRemindersSent?.data){const d=JSON.parse(docs.confirmRemindersSent.data);setConfirmRemindersSent(d)}
         if(docs.oohContracts?.data){const d=JSON.parse(docs.oohContracts.data);if(Object.keys(d).length)setOohContracts(prev=>{const merged={...prev};Object.entries(d).forEach(([k,v])=>{merged[k]={...(prev[k]||{}),...v}});return merged})}
+        if(docs.oohCreativeFiles?.data){try{const d=JSON.parse(docs.oohCreativeFiles.data);if(Array.isArray(d)&&d.length)setOohCreativeFiles(d)}catch(_e){}}
         if(docs.customTags?.data){const d=JSON.parse(docs.customTags.data);if(d["Postman Law"]?.categories||d["Wettermark Keith"]?.categories)setCustomFields(d);else if(Object.keys(d).length){const migrated={};Object.entries(d).forEach(([brand,tags])=>{if(Array.isArray(tags)){migrated[brand]={categories:tags.filter(t=>["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),valueProps:tags.filter(t=>!["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),vos:[]}}else{migrated[brand]=tags}});setCustomFields(migrated)}}
         if(docs.settings?.data){try{const s=JSON.parse(docs.settings.data);if(typeof s.campaignIcsUrl==="string")setCampaignIcsUrl(s.campaignIcsUrl)}catch(_e){}}
         try{if(docs.wkOohIscis?.data){const d=JSON.parse(docs.wkOohIscis.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>{if(d[p.boardId]===undefined)return p;const _ic=d[p.boardId];return{...p,isci:OOH_RENUMBER[_ic]||_ic}}))}}catch(_e){console.warn("wkOohIscis load skipped",_e)}
@@ -1186,6 +1188,7 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohRemindersSent).length>0)saveToDb("oohRemindersSent",oohRemindersSent)},[oohRemindersSent,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(confirmRemindersSent).length>0)saveToDb("confirmRemindersSent",confirmRemindersSent)},[confirmRemindersSent,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohContracts).length>0)saveToDb("oohContracts",oohContracts)},[oohContracts,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(oohCreativeFiles.length>0)saveToDb("oohCreativeFiles",oohCreativeFiles)},[oohCreativeFiles,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("customTags",customFields)},[customFields,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(pops.filter(p=>p.isci).map(p=>[p.boardId,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("wkOohIscis",isciMap)},[pops,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const designMap=Object.fromEntries(pops.filter(p=>Array.isArray(p.design)&&p.design.length).map(p=>[p.boardId,p.design]));if(Object.keys(designMap).length>0)saveToDb("wkOohDesigns",designMap)},[pops,dbLoaded]);
@@ -3680,12 +3683,14 @@ const App=()=>{
       // Files store under sibling ISCIs (73 files → ~50 ISCIs) and many boards share one
       // creative, so an exact per-ISCI lookup leaves most boards unlinked. Only use real
       // /ooh/ uploads — ignore stale ghost links (old /creative/*.jpg) so nothing's dead.
-      const realFiles=[];iscis.forEach(i=>{if(i.suffix!=="O"||!i.fileUrl||!/\/ooh\//.test(String(i.fileUrl)))return;const segs=String(i.title||"").split(" - ");if(segs.length<4)return;const dd=oohDims(segs[2]);if(dd)realFiles.push({url:i.fileUrl,dma:i.dma,concept:segs.slice(3).join(" - ").trim(),d:dd});});
+      // Link each board to its NEAREST standalone uploaded file (market-locked, same
+      // creative, closest size) from the file registry — all 73 are there, none merged.
+      const _files=(oohCreativeFiles||[]).filter(f=>f&&f.u&&f.w&&f.h);
       const nearestFile=(p)=>{const bd=oohDims(p.size);if(!bd)return fileMap[p.isci]||"";const bp=oohPrefix(p.dma);const bc=(Array.isArray(p.design)&&p.design.length)?String(p.design[0]).trim():"";
-        let pool=realFiles.filter(f=>oohPrefix(f.dma)===bp&&f.concept===bc);
-        if(!pool.length)pool=realFiles.filter(f=>oohPrefix(f.dma)===bp&&(/Case Cause/.test(f.concept))===(/Case Cause/.test(bc)));
+        let pool=_files.filter(f=>oohPrefix(f.dma)===bp&&f.c===bc);
+        if(!pool.length)pool=_files.filter(f=>oohPrefix(f.dma)===bp&&((/Case Cause/.test(f.c||"")||f.fam==="cause")===(/Case Cause/.test(bc))));
         if(!pool.length)return fileMap[p.isci]||"";
-        return pool.map(f=>({f,off:Math.abs(f.d[0]-bd[0])+Math.abs(f.d[1]-bd[1])})).sort((a,b)=>a.off-b.off)[0].f.url;};
+        return pool.map(f=>({f,off:Math.abs(f.w-bd[0])+Math.abs(f.h-bd[1])})).sort((a,b)=>a.off-b.off)[0].f.u;};
       let grand=0;
       dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>oohMarket(p.dma)===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
         w.document.write('<div class="mkt"'+(di>0?' style="page-break-before:always"':'')+'>'+escHtml(d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
@@ -7498,7 +7503,7 @@ Rules:
           <DropZone multiple accept="*/*" style={{marginBottom:8}} onFiles={async(fileList)=>{
             const files=Array.from(fileList);if(!files.length){notify("No files selected");return}
             const toB64=(f)=>new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(r.error||new Error("read failed"));r.onload=()=>res(String(r.result).split(",")[1]||"");r.readAsDataURL(f)});
-            let matched=0,notFound=0,failed=0,lastErr="";const updates={};const total=files.length;const unmatched=[];
+            let matched=0,notFound=0,failed=0,lastErr="";const updates={};const total=files.length;const unmatched=[];const regAdd=[];
             for(let fi=0;fi<total;fi++){
               const file=files[fi];const baseUpper=file.name.replace(/\.[^.]+$/,"").trim().toUpperCase();
               let idx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper===i.code.toUpperCase());
@@ -7515,16 +7520,15 @@ Rules:
               if(idx===-1)idx=matchOohCreativeFile(file.name,iscis);
               // ONE file → ONE ISCI. Creative is market+size specific, so each file
               // links only to its own board. No concept fan-out, no interlinking.
-              if(idx===-1){notFound++;unmatched.push({file});setUploadTracker({label:file.name+" — no auto-match (assign below)",current:fi+1,total:total,pct:Math.round(((fi+1)/total)*100)});continue}
-              const ext=file.name.split(".").pop();const code=iscis[idx].code;
-              // Save to Supabase under the convention NAME (ISCI title), so stored = title = download name.
-              const fname=String(iscis[idx].title||code).replace(/[\/\\]/g,"-").trim()||code;
+              const ext=file.name.split(".").pop();const code=idx>-1?iscis[idx].code:"";
+              // Store under the FILE'S OWN name so every file is a STANDALONE object —
+              // two files never overwrite each other. The board→creative link is resolved
+              // later from the file registry (oohCreativeFiles), not the storage filename.
+              const fname=String(file.name.replace(/\.[^.]+$/,"")).replace(/[\/\\]/g,"-").trim()||("ooh-creative-"+fi);
+              setUploadTracker({label:"Uploading "+file.name,current:fi+1,total:total,pct:Math.round((fi/total)*100)});
               try{
                 let url="";
                 if(file.size<=3*1024*1024){
-                  // Small files inline (≤3MB → base64 stays under Vercel's 4.5MB
-                  // request cap). Bigger files take the signed-URL path below,
-                  // which PUTs straight to Supabase and bypasses the 4.5MB cap.
                   const dataB64=await toB64(file);
                   const r=await fetch("/api/storage",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"upload",bucket:"ooh",path:"photos/creative/"+fname+"."+ext,dataB64,contentType:file.type||"application/octet-stream"})});
                   const j=await r.json().catch(()=>({}));
@@ -7532,21 +7536,22 @@ Rules:
                   url=j.url;
                 }else{
                   if(!storage)throw new Error("Storage not loaded (large file)");
-                  url=await new Promise((res,rej)=>{const ref=storage.ref("ooh-photos/creative/"+fname+"."+ext);const t=ref.put(file,{customMetadata:{isciCode:code}});t.on("state_changed",s=>{setUploadTracker({label:"Uploading "+file.name+" ("+code+")",current:fi+1,total:total,pct:Math.round(((fi+s.bytesTransferred/s.totalBytes)/total)*100)})},e=>rej(e),()=>ref.getDownloadURL().then(res).catch(rej))});
+                  url=await new Promise((res,rej)=>{const ref=storage.ref("ooh-photos/creative/"+fname+"."+ext);const t=ref.put(file,{customMetadata:{isciCode:code}});t.on("state_changed",s=>{setUploadTracker({label:"Uploading "+file.name,current:fi+1,total:total,pct:Math.round(((fi+s.bytesTransferred/s.totalBytes)/total)*100)})},e=>rej(e),()=>ref.getDownloadURL().then(res).catch(rej))});
                 }
-                updates[idx]=url;matched++;
-                // Persist after EACH file (not just at the end) so an interrupted
-                // run — refresh, tab sleep, 413, mid-loop error — never loses the
-                // files already uploaded. idx is the original array position, which
-                // setIscis preserves (uploads never reorder/resize the array).
-                setIscis(prev=>prev.map((x,j)=>j===idx?{...x,fileUrl:url}:x));
+                // Register this STANDALONE file with its parsed market/creative/size.
+                const _pc=parseOohCreativeFile(file.name);const _d=_pc&&_pc.size?oohDims(_pc.size):null;
+                regAdd.push({n:file.name,u:url,dma:(_pc&&_pc.dma)||(idx>-1?iscis[idx].dma:""),c:(_pc&&_pc.concept)||"",fam:(_pc&&_pc.fam)||"",w:_d?_d[0]:null,h:_d?_d[1]:null});
+                matched++;
+                if(idx>-1){updates[idx]=url;setIscis(prev=>prev.map((x,j)=>j===idx?{...x,fileUrl:url}:x))}
               }catch(e){failed++;lastErr=(e&&e.message)||String(e);notify("Upload failed ("+file.name+"): "+lastErr)}
             }
             setUploadTracker(null);
             if(Object.keys(updates).length>0){setIscis(prev=>prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j]}:x))}
+            // Merge the standalone files into the registry (dedupe by filename — re-upload overwrites cleanly).
+            if(regAdd.length){setOohCreativeFiles(prev=>{const m=new Map((prev||[]).map(x=>[x.n,x]));regAdd.forEach(x=>m.set(x.n,x));return[...m.values()]})}
             setOohUnassigned(unmatched);
-            log("Bulk OOH Creative",matched+" linked, "+notFound+" to assign, "+failed+" failed");
-            notify(matched+" file(s) linked"+(notFound?" | "+notFound+" to assign below ↓":"")+(failed?" | "+failed+" failed: "+lastErr:""));
+            log("Bulk OOH Creative",matched+" files stored standalone, "+failed+" failed");
+            notify(matched+" file(s) uploaded — all standalone"+(failed?" | "+failed+" failed: "+lastErr:""));
           }}>
             <div style={{fontSize:24}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Drag & drop or click to select OOH creative files</div><div style={{fontSize:12,color:"#64748b"}}>.jpg, .png, .pdf, .psd, .ai, .eps — multiple allowed</div>
           </DropZone>
