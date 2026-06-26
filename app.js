@@ -396,6 +396,10 @@ const OOH_BONUS_ROTATE=new Set([]);
 // up, so the sheet says "Keep current creative" in the Creative + ISCI columns
 // instead of an ISCI code and a download link.
 const OOH_KEEP_CURRENT=new Set(["8815","12912"]);
+// Revision boards — the panels corrected after Lamar's resend (creative re-linked
+// by size / creative flipped to break oversaturation). The "Revision Sheet" button
+// exports ONLY these so you can send Lamar just the fixes without re-sending all 200+.
+const OOH_RESEND_PANELS=new Set(["7508","7529","7538","7548","11831","40173","60069","78656","2501","60109"]);
 // OOH ISCI renumber (creative+size → same number across markets; legacy-safe).
 // Migrates already-saved fileUrls + board→ISCI assignments to the new codes.
 const OOH_RENUMBER={"NSHWK26DB002O":"NSHWK26DB001O","NSHWK26DB003O":"NSHWK26DB002O","NSHWK26DB004O":"NSHWK26DB003O","NSHWK26DB001O":"NSHWK26DB004O","MTGWK26JP005O":"MTGWK26JP001O","DHNWK26JP001O":"DHNWK26JP004O","BRMWK26JP002O":"BRMWK26JP005O","BRMWK26JP009O":"BRMWK26JP006O","HSVWK26JP003O":"HSVWK26JP007O","BRMWK26JP006O":"BRMWK26JP008O","BRMWK26JP011O":"BRMWK26JP009O","BRMWK26JP001O":"BRMWK26JP010O","HSVWK26JP002O":"HSVWK26JP010O","HSVWK26JP001O":"HSVWK26JP011O","HSVWK26JP005O":"HSVWK26JP012O","HSVWK26JP004O":"HSVWK26JP013O","BRMWK26JP010O":"BRMWK26JP014O","MTGWK26JP003O":"MTGWK26JP014O","BRMWK26JP004O":"BRMWK26JP015O","BRMWK26JP008O":"BRMWK26JP016O","BRMWK26JP003O":"BRMWK26JP017O","BRMWK26JP005O":"BRMWK26JP018O","BRMWK26JP007O":"BRMWK26JP019O","MTGWK26JP004O":"MTGWK26JP020O","MTGWK26JP001O":"MTGWK26JP021O","NSHWK26SB004O":"NSHWK26SB001O","NSHWK26SB003O":"NSHWK26SB002O","DHNWK26SB004O":"DHNWK26SB003O","DHNWK26SB003O":"DHNWK26SB004O","BRMWK26SB007O":"BRMWK26SB005O","HSVWK26SB003O":"HSVWK26SB005O","KNXWK26SB003O":"KNXWK26SB005O","DHNWK26SB001O":"DHNWK26SB005O","BRMWK26SB003O":"BRMWK26SB006O","MTGWK26SB005O":"MTGWK26SB006O","HSVWK26SB001O":"HSVWK26SB006O","KNXWK26SB004O":"KNXWK26SB006O","DHNWK26SB002O":"DHNWK26SB006O","HSVWK26SB011O":"HSVWK26SB007O","HSVWK26SB007O":"HSVWK26SB008O","KNXWK26SB005O":"KNXWK26SB009O","MTGWK26SB006O":"MTGWK26SB010O","HSVWK26SB002O":"HSVWK26SB011O","HSVWK26SB006O":"HSVWK26SB012O","BRMWK26SB006O":"BRMWK26SB013O","HSVWK26SB005O":"HSVWK26SB013O","DHNWK26SB005O":"DHNWK26SB014O","HSVWK26SB012O":"HSVWK26SB015O","HSVWK26SB004O":"HSVWK26SB016O","HSVWK26SB013O":"HSVWK26SB017O","MTGWK26SB002O":"MTGWK26SB018O","MTGWK26SB001O":"MTGWK26SB019O","HSVWK26SB010O":"HSVWK26SB020O","MTGWK26SB007O":"MTGWK26SB021O","BRMWK26SB002O":"BRMWK26SB022O","MTGWK26SB004O":"MTGWK26SB022O","HSVWK26SB009O":"HSVWK26SB022O","KNXWK26SB001O":"KNXWK26SB022O","NSHWK26SB002O":"NSHWK26SB022O","BRMWK26SB001O":"BRMWK26SB023O","MTGWK26SB003O":"MTGWK26SB023O","HSVWK26SB008O":"HSVWK26SB023O","KNXWK26SB002O":"KNXWK26SB023O","NSHWK26SB001O":"NSHWK26SB023O","BRMWK26SB004O":"BRMWK26SB024O","HSVWK26SB014O":"HSVWK26SB025O","HSVWK26SB015O":"HSVWK26SB026O","BRMWK26SB005O":"BRMWK26SB027O","BRMWK26SP010O":"BRMWK26SP009O","MTGWK26SP008O":"MTGWK26SP009O","HSVWK26SP001O":"HSVWK26SP009O","MTGWK26SP009O":"MTGWK26SP010O","HSVWK26SP002O":"HSVWK26SP010O","BRMWK26SP009O":"BRMWK26SP011O","MTGWK26SP010O":"MTGWK26SP011O","HSVWK26SP003O":"HSVWK26SP011O"};
@@ -3673,18 +3677,21 @@ const App=()=>{
 
     // Reusable VENDOR TRAFFIC SHEET — one click, every board in view, grouped by
     // market → submarket, with creative + ISCI + size + location. Renewal-ready.
-    const printVendorTrafficSheet=()=>{
+    const printVendorTrafficSheet=(opts)=>{
+      opts=opts||{};const resendOnly=!!opts.resendOnly;
       // Nashville is held (separate Aug contract) — skip it on the all-markets sheet,
       // but still allow generating it on its own by selecting Nashville in the filter.
       // Include TBD/rotary/bonus boards — they get a line with the full rotating
       // creative pool + rotational %. Only Nashville (held, separate Aug contract)
       // is dropped on the all-markets sheet (selectable on its own via the filter).
-      const scope=fl.filter(p=>(om||oohMarket(p.dma)!=="Nashville"));
-      if(!scope.length){notify("No boards in view to traffic");return}
+      // resendOnly → just the corrected revision boards (own button), so the original
+      // all-markets sheet flow is never touched.
+      const scope=fl.filter(p=>(resendOnly?OOH_RESEND_PANELS.has(String(p.panel)):true)&&(om||oohMarket(p.dma)!=="Nashville"));
+      if(!scope.length){notify(resendOnly?"No revision boards in current market filter — clear the filter":"No boards in view to traffic");return}
       const iTitle=(c)=>{if(!c)return"";const m=iscis.find(i=>i.code===c);return m?m.title:""};
       const vendorName=oVend||[...new Set(scope.map(p=>p.vendor))][0]||"Lamar";
       const contact=[...new Set(scope.map(p=>p.contact).filter(Boolean))][0]||"";
-      const mktLabel=om||"All WK Markets";
+      const mktLabel=resendOnly?"Revision Boards":(om||"All WK Markets");
       // Display-only market grouping: Tuscaloosa rolls into Birmingham everywhere
       // in the app (BRM prefix/ISCIs/creative unchanged), but on the vendor sheet it
       // gets its own section — mirroring Lamar's contract, which breaks it out. Keyed
@@ -3694,7 +3701,7 @@ const App=()=>{
       const w=window.open("","","width=1000,height=820");
       w.document.write('<html><head><title>WK OOH Traffic — '+escHtml(mktLabel)+' — '+escHtml(vendorName)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}.sub{margin-top:8px;font-size:12px;font-weight:bold;color:#444;border-bottom:2px solid #999}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:8px;font-size:11px;font-weight:bold}@media print{body{margin:14px}.dl{display:none}table{page-break-inside:auto}tr{page-break-inside:avoid}}</style></head><body>');
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
-      w.document.write('<div style="text-align:center;margin-bottom:12px"><h2>WETTERMARK KEITH</h2><div class="tag">PERSONAL INJURY LAWYERS — OOH TRAFFIC INSTRUCTIONS</div></div>');
+      w.document.write('<div style="text-align:center;margin-bottom:12px"><h2>WETTERMARK KEITH</h2><div class="tag">PERSONAL INJURY LAWYERS — OOH TRAFFIC INSTRUCTIONS'+(resendOnly?' · <span style="color:#b00">REVISION — CORRECTED CREATIVE ONLY</span>':'')+'</div></div>');
       const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v||"")+'</span></div>');
       hd("Agency","WK Advertising Solutions");hd("Client","Wettermark Keith");
       hd("Vendor",vendorName,"amb");if(contact)hd("Vendor Contact",contact);
@@ -3913,7 +3920,8 @@ const App=()=>{
             exportCsv("WK_OOH_"+(om||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
           <Btn small color="#9b7bb0" onClick={()=>{const scope=fl.filter(p=>!String(p.panel).includes("TBD"));const lbl=(om||ov||oVend)?`the ${scope.length} filtered boards`:`all ${scope.length} boards`;if(window.confirm(`Auto-name + ISCI ${lbl}?\n\n• Assigns ONE creative per board (bulletins from 2, posters/juniors from 3), spread by location so neighbours differ.\n• Generates an ISCI per market·size·creative, titled to your convention (WK <Type> - <Size> - <Market> - <Creative>).\n\nThis OVERWRITES current creative + ISCI assignments in view.`))autoNameSpread(fl)}}>🪄 Auto-name + ISCI</Btn>
-          <Btn small color="#D4A040" onClick={printVendorTrafficSheet}>📄 Vendor Sheet</Btn>
+          <Btn small color="#D4A040" onClick={()=>printVendorTrafficSheet()}>📄 Vendor Sheet</Btn>
+          <Btn small color="#E85A7A" onClick={()=>printVendorTrafficSheet({resendOnly:true})}>📄 Revision Sheet</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
           <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>📍 Map</Btn>
