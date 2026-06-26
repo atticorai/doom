@@ -12,3 +12,6 @@ snapshots/
 confirmations-legacy.json
 .env
 .env.local
+
+# Generated vendor creative-resend spec sheets (one-off deliverables)
+WK_Creative_Resend_Spec_*.pdf
