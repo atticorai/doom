@@ -3721,33 +3721,21 @@ const App=()=>{
       // Link each board to its NEAREST standalone uploaded file (market-locked, same
       // creative, closest size) from the file registry — all 73 are there, none merged.
       const _files=(oohCreativeFiles||[]).filter(f=>f&&f.u&&f.w&&f.h);
-      // Vendor (Lamar) flagged these specific panels: the linked art was the wrong size
-      // class (junior boards got 10.6x22.9 poster art). ONLY these get the strict size-
-      // class check — every other board keeps its existing closest-size match untouched.
-      // For a flagged board we match within its own class (junior↔junior, bulletin↔bulletin);
-      // if no correctly-classed art exists yet, we link nothing and the row flags "ART
-      // NEEDED" until the correct-spec file is uploaded (then it links automatically).
-      const _specStrict=new Set(["7508","7529","7538","7548","11831","40173","60069","78656"]);
-      // Size class by the LONGER dimension: junior poster (<=13"), static poster (~22.9"),
-      // junior bulletin (24-34"), full bulletin (>34"). Keeps a 12x25 junior bulletin off a
-      // 10.6x22.9 poster while still letting it take the 12x25 file.
-      const _szClass=(w,h)=>{const mx=Math.max(w||0,h||0);return mx<=13?"jp":mx<=23.5?"sp":mx<=34?"jb":"bl";};
-      const nearestFile=(p,concept)=>{let bd=oohDims(p.size);if(!bd){bd=/poster/i.test(p.type||"")?[10.6,22.9]:/junior/i.test(p.type||"")?[12,24]:[14,48];}const bp=oohPrefix(oohTrafficDma(p));const bc=String(concept||((Array.isArray(p.design)&&p.design.length)?p.design[0]:"")).trim();
-        if(_specStrict.has(String(p.panel))){
-          // SIZE-FIRST within the creative family. The colour label (Gold/Blue) only exists
-          // at poster size, but the family art (Case Cause / It's Personal) is ALREADY in the
-          // registry at the board's real size. Don't lock onto the lone colour file and grab a
-          // poster — match family + same size class, closest size, using the uploaded art.
-          const fam=_files.filter(f=>oohPrefix(f.dma)===bp&&((/Case Cause/.test(f.c||"")||f.fam==="cause")===(/Case Cause/.test(bc))));
-          const bcl=bd?_szClass(bd[0],bd[1]):null;
-          const same=bcl?fam.filter(f=>_szClass(f.w,f.h)===bcl):fam;
-          if(!same.length)return "";
-          return same.map(f=>({f,off:Math.abs(f.w-bd[0])+Math.abs(f.h-bd[1])})).sort((a,b)=>a.off-b.off)[0].f.u;
-        }
-        let pool=_files.filter(f=>oohPrefix(f.dma)===bp&&f.c===bc);
-        if(!pool.length)pool=_files.filter(f=>oohPrefix(f.dma)===bp&&((/Case Cause/.test(f.c||"")||f.fam==="cause")===(/Case Cause/.test(bc))));
-        if(!pool.length)return fileMap[p.isci]||"";
-        return pool.map(f=>({f,off:Math.abs(f.w-bd[0])+Math.abs(f.h-bd[1])})).sort((a,b)=>a.off-b.off)[0].f.u;};
+      // ONE global rule — the whole kickback was WRONG SIZES, so size wins, every board,
+      // every market. Match within the creative FAMILY (Case Cause vs It's Personal) by the
+      // CLOSEST SIZE; the exact colour (Gold/Blue/Shield) is only a tie-breaker. The bug was
+      // the matcher locking onto the colour label first — and the only Gold/Blue file is the
+      // 10.6x22.9 poster, so junior boards got stamped with poster art. Closest-size-first
+      // can never do that: a 12x12 board takes the 12x12 file; a poster keeps its colour file.
+      const nearestFile=(p,concept)=>{
+        let bd=oohDims(p.size);if(!bd){bd=/poster/i.test(p.type||"")?[10.6,22.9]:/junior/i.test(p.type||"")?[12,24]:[14,48];}
+        const bp=oohPrefix(oohTrafficDma(p));
+        const bc=String(concept||((Array.isArray(p.design)&&p.design.length)?p.design[0]:"")).trim();
+        const isCause=/Case Cause/.test(bc);
+        const fam=_files.filter(f=>oohPrefix(f.dma)===bp&&((/Case Cause/.test(f.c||"")||f.fam==="cause")===isCause));
+        if(!fam.length)return fileMap[p.isci]||"";
+        return fam.map(f=>({f,off:Math.abs(f.w-bd[0])+Math.abs(f.h-bd[1]),exact:(f.c===bc?0:1)})).sort((a,b)=>a.off-b.off||a.exact-b.exact)[0].f.u;
+      };
       let grand=0;
       dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>sheetMarket(p)===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
         w.document.write('<div class="mkt"'+(di>0?' style="page-break-before:always"':'')+'>'+escHtml(d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
@@ -3773,7 +3761,7 @@ const App=()=>{
           const crCell=_n?creatives.map((concept,ci)=>{
             const pct=_n>1?(ci<_n-1?Math.floor(100/_n):100-Math.floor(100/_n)*(_n-1)):null;
             const nm=fullCreativeName(p,concept);const fu=nearestFile(p,concept);
-            const _need=!fu&&_specStrict.has(String(p.panel));
+            const _need=!fu;
             const lk=fu?('<a href="'+escHtml(oohVendorDl(fu,nm))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(nm)+'</a>'):('<b>'+escHtml(nm)+'</b>'+(_need?' <b style="color:#b00">⚠ ART NEEDED @ '+escHtml(oohNormSize(p.size)||"spec")+'</b>':''));
             return lk+(pct!=null?' <b style="color:#b8860b">('+pct+'%)</b>':'');
           }).join('<br>'):'—';
