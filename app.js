@@ -3714,10 +3714,20 @@ const App=()=>{
       // Link each board to its NEAREST standalone uploaded file (market-locked, same
       // creative, closest size) from the file registry — all 73 are there, none merged.
       const _files=(oohCreativeFiles||[]).filter(f=>f&&f.u&&f.w&&f.h);
+      // Vendor (Lamar) flagged these specific panels: the linked art was the wrong size
+      // class (junior boards got 10.6x22.9 poster art). ONLY these get the strict size-
+      // class check — every other board keeps its existing closest-size match untouched.
+      // For a flagged board we match within its own class (junior↔junior, bulletin↔bulletin);
+      // if no correctly-classed art exists yet, we link nothing and the row flags "ART
+      // NEEDED" until the correct-spec file is uploaded (then it links automatically).
+      const _specStrict=new Set(["7508","7529","7538","7548","11831","40173","60069","78656"]);
+      const _clsKey=(s)=>{s=String(s||"").toLowerCase();return /digital/.test(s)?"digital":/junior/.test(s)?"junior":/poster/.test(s)?"static":/bulletin|preempt/.test(s)?"bulletin":"static";};
+      const _fileCls=(f)=>{const L=String(f.n||"").toLowerCase();if(/junior/.test(L))return"junior";if(/digital/.test(L))return"digital";if(/static|poster/.test(L))return"static";if(/bulletin|preempt/.test(L))return"bulletin";const mx=Math.max(f.w,f.h),mn=Math.min(f.w,f.h);return(mn<=7||mx<=13)?"junior":(mx<=24&&mn<=12)?"static":"bulletin";};
       const nearestFile=(p,concept)=>{let bd=oohDims(p.size);if(!bd){bd=/poster/i.test(p.type||"")?[10.6,22.9]:/junior/i.test(p.type||"")?[12,24]:[14,48];}const bp=oohPrefix(oohTrafficDma(p));const bc=String(concept||((Array.isArray(p.design)&&p.design.length)?p.design[0]:"")).trim();
         let pool=_files.filter(f=>oohPrefix(f.dma)===bp&&f.c===bc);
         if(!pool.length)pool=_files.filter(f=>oohPrefix(f.dma)===bp&&((/Case Cause/.test(f.c||"")||f.fam==="cause")===(/Case Cause/.test(bc))));
         if(!pool.length)return fileMap[p.isci]||"";
+        if(_specStrict.has(String(p.panel))){const bcls=_clsKey((p.type||"")+" "+(p.size||""));const same=pool.filter(f=>_fileCls(f)===bcls);if(!same.length)return "";pool=same;}
         return pool.map(f=>({f,off:Math.abs(f.w-bd[0])+Math.abs(f.h-bd[1])})).sort((a,b)=>a.off-b.off)[0].f.u;};
       let grand=0;
       dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>sheetMarket(p)===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
@@ -3744,7 +3754,8 @@ const App=()=>{
           const crCell=_n?creatives.map((concept,ci)=>{
             const pct=_n>1?(ci<_n-1?Math.floor(100/_n):100-Math.floor(100/_n)*(_n-1)):null;
             const nm=fullCreativeName(p,concept);const fu=nearestFile(p,concept);
-            const lk=fu?('<a href="'+escHtml(oohVendorDl(fu,nm))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(nm)+'</a>'):('<b>'+escHtml(nm)+'</b>');
+            const _need=!fu&&_specStrict.has(String(p.panel));
+            const lk=fu?('<a href="'+escHtml(oohVendorDl(fu,nm))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(nm)+'</a>'):('<b>'+escHtml(nm)+'</b>'+(_need?' <b style="color:#b00">⚠ ART NEEDED @ '+escHtml(oohNormSize(p.size)||"spec")+'</b>':''));
             return lk+(pct!=null?' <b style="color:#b8860b">('+pct+'%)</b>':'');
           }).join('<br>'):'—';
           const _boaz=["40173","60109"].includes(String(p.panel));
