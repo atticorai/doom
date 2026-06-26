@@ -3721,13 +3721,25 @@ const App=()=>{
       // if no correctly-classed art exists yet, we link nothing and the row flags "ART
       // NEEDED" until the correct-spec file is uploaded (then it links automatically).
       const _specStrict=new Set(["7508","7529","7538","7548","11831","40173","60069","78656"]);
-      const _clsKey=(s)=>{s=String(s||"").toLowerCase();return /digital/.test(s)?"digital":/junior/.test(s)?"junior":/poster/.test(s)?"static":/bulletin|preempt/.test(s)?"bulletin":"static";};
-      const _fileCls=(f)=>{const L=String(f.n||"").toLowerCase();if(/junior/.test(L))return"junior";if(/digital/.test(L))return"digital";if(/static|poster/.test(L))return"static";if(/bulletin|preempt/.test(L))return"bulletin";const mx=Math.max(f.w,f.h),mn=Math.min(f.w,f.h);return(mn<=7||mx<=13)?"junior":(mx<=24&&mn<=12)?"static":"bulletin";};
+      // Size class by the LONGER dimension: junior poster (<=13"), static poster (~22.9"),
+      // junior bulletin (24-34"), full bulletin (>34"). Keeps a 12x25 junior bulletin off a
+      // 10.6x22.9 poster while still letting it take the 12x25 file.
+      const _szClass=(w,h)=>{const mx=Math.max(w||0,h||0);return mx<=13?"jp":mx<=23.5?"sp":mx<=34?"jb":"bl";};
       const nearestFile=(p,concept)=>{let bd=oohDims(p.size);if(!bd){bd=/poster/i.test(p.type||"")?[10.6,22.9]:/junior/i.test(p.type||"")?[12,24]:[14,48];}const bp=oohPrefix(oohTrafficDma(p));const bc=String(concept||((Array.isArray(p.design)&&p.design.length)?p.design[0]:"")).trim();
+        if(_specStrict.has(String(p.panel))){
+          // SIZE-FIRST within the creative family. The colour label (Gold/Blue) only exists
+          // at poster size, but the family art (Case Cause / It's Personal) is ALREADY in the
+          // registry at the board's real size. Don't lock onto the lone colour file and grab a
+          // poster — match family + same size class, closest size, using the uploaded art.
+          const fam=_files.filter(f=>oohPrefix(f.dma)===bp&&((/Case Cause/.test(f.c||"")||f.fam==="cause")===(/Case Cause/.test(bc))));
+          const bcl=bd?_szClass(bd[0],bd[1]):null;
+          const same=bcl?fam.filter(f=>_szClass(f.w,f.h)===bcl):fam;
+          if(!same.length)return "";
+          return same.map(f=>({f,off:Math.abs(f.w-bd[0])+Math.abs(f.h-bd[1])})).sort((a,b)=>a.off-b.off)[0].f.u;
+        }
         let pool=_files.filter(f=>oohPrefix(f.dma)===bp&&f.c===bc);
         if(!pool.length)pool=_files.filter(f=>oohPrefix(f.dma)===bp&&((/Case Cause/.test(f.c||"")||f.fam==="cause")===(/Case Cause/.test(bc))));
         if(!pool.length)return fileMap[p.isci]||"";
-        if(_specStrict.has(String(p.panel))){const bcls=_clsKey((p.type||"")+" "+(p.size||""));const same=pool.filter(f=>_fileCls(f)===bcls);if(!same.length)return "";pool=same;}
         return pool.map(f=>({f,off:Math.abs(f.w-bd[0])+Math.abs(f.h-bd[1])})).sort((a,b)=>a.off-b.off)[0].f.u;};
       let grand=0;
       dmasIn.forEach((d,di)=>{const bds=scope.filter(p=>sheetMarket(p)===d).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
