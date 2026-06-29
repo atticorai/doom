@@ -1211,6 +1211,12 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(confirmRemindersSent).length>0)saveToDb("confirmRemindersSent",confirmRemindersSent)},[confirmRemindersSent,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohContracts).length>0)saveToDb("oohContracts",oohContracts)},[oohContracts,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(oohCreativeFiles.length>0)saveToDb("oohCreativeFiles",oohCreativeFiles)},[oohCreativeFiles,dbLoaded]);
+  // RELINK every OOH ISCI to its correct creative file from the uploaded registry — the
+  // literal ISCI→file link (sets fileUrl), using the same SIZE-first / exact-creative
+  // tie-break rule the vendor sheet uses. So the ISCI Registry, the sheets, and the files
+  // all agree, and re-matched creative (size fixes, flips) flows onto the ISCIs too.
+  // Idempotent: only writes when a link actually changes, so no save loop.
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const _f=(oohCreativeFiles||[]).filter(f=>f&&f.u&&f.w&&f.h);if(!_f.length)return;setIscis(prev=>{let ch=false;const nx=prev.map(i=>{if(i.suffix!=="O")return i;const bd=oohDims(i.dur);if(!bd)return i;const bp=oohPrefix(i.dma);const bc=String(i.title||"").split(" - ").pop().trim();const isCause=/Case Cause/.test(bc);const fam=_f.filter(f=>oohPrefix(f.dma)===bp&&((/Case Cause/.test(f.c||"")||f.fam==="cause")===isCause));if(!fam.length)return i;const u=fam.map(f=>({f,off:Math.abs(f.w-bd[0])+Math.abs(f.h-bd[1]),exact:(f.c===bc?0:1)})).sort((a,b)=>a.off-b.off||a.exact-b.exact)[0].f.u;if(u&&u!==i.fileUrl){ch=true;return{...i,fileUrl:u}}return i});return ch?nx:prev})},[oohCreativeFiles,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("customTags",customFields)},[customFields,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(pops.filter(p=>p.isci).map(p=>[p.boardId,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("wkOohIscis",isciMap)},[pops,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const designMap=Object.fromEntries(pops.filter(p=>Array.isArray(p.design)&&p.design.length).map(p=>[p.boardId,p.design]));if(Object.keys(designMap).length>0)saveToDb("wkOohDesigns",designMap)},[pops,dbLoaded]);
