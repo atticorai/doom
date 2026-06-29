@@ -1807,7 +1807,9 @@ const App=()=>{
     var checkPage=function(need){if(y+need>ph-12){pdf.addPage();y=12}};
     var ln=function(x1,y1,x2,y2,c,w2){setD(c||colors.gray);pdf.setLineWidth(w2||0.3);pdf.line(x1,y1,x2,y2)};
     // Header with logo
-    try{var logoImg=new Image();logoImg.src=LOGO_PL;pdf.addImage(logoImg,"PNG",pw/2-15,y-2,30,12);y+=14}catch(e){y+=2}
+    // LOGO_PL is a JPEG data-URI — pass the string + correct format directly
+    // (an unloaded <img> has no pixel data yet, and "PNG" mislabels a JPEG).
+    try{pdf.addImage(LOGO_PL,"JPEG",pw/2-15,y-2,30,12);y+=14}catch(e){y+=2}
     pdf.setFont("helvetica","bold");pdf.setFontSize(16);setC(colors.black);
     pdf.text("POSTMAN LAW",pw/2,y,{align:"center"});y+=4;
     pdf.setFontSize(8);setC(colors.gray);pdf.text("DIGITAL VIDEO TRAFFIC INSTRUCTIONS",pw/2,y,{align:"center"});y+=6;
@@ -7708,8 +7710,11 @@ Rules:
       </div>
       <div style={{flex:1,overflowY:"auto",padding:16}}>
         {subRoute==="wk"&&OohPg()}
-        {subRoute==="pl"&&PlOohPg()}
-        {subRoute==="isci"&&oohIsciPg()}
+        {/* PlOohPg/oohIsciPg own local hooks — render as components so each keeps
+            its own hook scope. Bare-calling them conditionally changed OohHub's
+            hook count between routes (Rules of Hooks violation → white-screen). */}
+        {subRoute==="pl"&&<PlOohPg/>}
+        {subRoute==="isci"&&React.createElement(oohIsciPg)}
         {subRoute==="import"&&<UploadPg/>}
         {!["wk","pl","isci","import"].includes(subRoute)&&OohPg()}
       </div>
@@ -11203,4 +11208,26 @@ Rules:
     </div>}
   </div>;
 };
-ReactDOM.createRoot(document.getElementById('R')).render(<App/>);
+// App-wide safety net. Without this, any render-time throw anywhere in the
+// tree (a null deref, a bad hook, a CDN module that didn't load) white-screens
+// the whole app with no recovery path. The boundary catches it and shows a
+// styled fallback with the error + a reload, so a single broken view degrades
+// gracefully instead of nuking everything.
+class ErrorBoundary extends React.Component{
+  constructor(p){super(p);this.state={err:null};}
+  static getDerivedStateFromError(err){return{err};}
+  componentDidCatch(err,info){console.error("App crashed:",err,info);}
+  render(){
+    if(!this.state.err)return this.props.children;
+    return <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",color:"#E8DFF0",fontFamily:"'DM Sans',sans-serif",padding:24}}>
+      <div style={{maxWidth:520,textAlign:"center",background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid rgba(196,160,200,.15)",borderRadius:16,padding:"32px 28px",boxShadow:"0 24px 80px rgba(20,12,40,.6)"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🔱</div>
+        <h2 style={{margin:"0 0 8px",fontFamily:"'Cormorant Garamond',serif",fontSize:26,color:"#F0E8F8"}}>Well, this is awkward.</h2>
+        <p style={{margin:"0 0 16px",color:"#C4A0C8",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",fontSize:16}}>Something broke. Not my fault, obviously. Give it a reload.</p>
+        <pre style={{textAlign:"left",whiteSpace:"pre-wrap",wordBreak:"break-word",background:"rgba(20,12,40,.5)",border:"1px solid rgba(232,90,122,.3)",borderRadius:8,padding:"10px 12px",fontSize:11,color:"#E85A7A",maxHeight:160,overflow:"auto"}}>{String(this.state.err&&(this.state.err.stack||this.state.err.message||this.state.err))}</pre>
+        <button onClick={()=>{try{window.location.reload()}catch(e){}}} style={{marginTop:16,padding:"12px 24px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#9b7bb0,#C4A0C8)",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",letterSpacing:1,boxShadow:"0 4px 16px rgba(155,123,176,.3)"}}>Reload</button>
+      </div>
+    </div>;
+  }
+}
+ReactDOM.createRoot(document.getElementById('R')).render(<ErrorBoundary><App/></ErrorBoundary>);
