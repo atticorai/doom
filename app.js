@@ -551,6 +551,28 @@ const BOOKENDS=["","Bookend :15 A","Bookend :15 B","Bookend :15 C","Bookend :15 
 const mc=m=>({TV:"#4AC8E8",Radio:"#9b7bb0",Digital:"#059669","Streaming Audio":"#4AC8E8",Cable:"#6366f1",OOH:"#D4A040",Display:"#ec4899",Tagline:"#C4A0C8"})[m]||"#64748b";
 const fD=d=>d?new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}):"—";
 const fDs=d=>d?new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"numeric",day:"numeric"}):"";
+// Sort key (ISO string) for a traffic row by its flight START date so
+// instruction sheets/PDFs list creative in flight order (earliest first).
+// Falls back to the record's default flight, and anchors the year off the
+// broadcast month so Dec/Jan straddles still order correctly. Rows with no
+// parseable flight sort last.
+const flightStartIso=(rowFlight,defaultFlight,month)=>{
+  const f=(rowFlight||defaultFlight||"").split(/\s*[-–—]\s*/)[0];
+  const m=f&&String(f).trim().match(/(\d{1,2})\/(\d{1,2})/);
+  if(!m)return "9999-99-99";
+  const cm=CALENDAR.find(c=>c.month===month);
+  const bcS=cm?cm.bcStart:"";const bcE=cm?cm.bcEnd:"";
+  const mo=+m[1];
+  const yr=(bcS&&(+bcS.slice(5,7))<=mo)?bcS.slice(0,4):(bcE?bcE.slice(0,4):(bcS?bcS.slice(0,4):String(new Date().getFullYear())));
+  return yr+"-"+String(mo).padStart(2,"0")+"-"+String(+m[2]).padStart(2,"0");
+};
+// Comparator: flight start ascending, then duration high→low (keeps the
+// :30/:15/:10/:05 ordering within each flight window).
+const flightThenDur=(defaultFlight,month)=>(a,b)=>{
+  const ka=flightStartIso(a.flight,defaultFlight,month),kb=flightStartIso(b.flight,defaultFlight,month);
+  if(ka!==kb)return ka<kb?-1:1;
+  return (parseInt(b.dur)||0)-(parseInt(a.dur)||0);
+};
 
 // ── MEG PERSONALITY ──────────────────────────────────
 const DOOM={
@@ -1741,7 +1763,7 @@ const App=()=>{
       pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(0,0,0);
       const rowBg=tint(sc,0.55);
       const LH=3.6;const rowPad=1.4;
-      items.sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0)).forEach((r,ri)=>{
+      items.sort(flightThenDur(trafficRec.flight,trafficRec.month)).forEach((r,ri)=>{
         // Measure how many lines the title will wrap into, so row height
         // = (lines × line-height) + padding. Prevents the next row from
         // being drawn on top of a 2-line title.
@@ -10429,7 +10451,7 @@ Rules:
               (h.iscis||[]).forEach(r=>{const s=r.sched||"All Week";if(!grouped[s])grouped[s]=[];grouped[s].push(r)});
               const validBk=b=>typeof b==="string"&&b&&b!=="true"&&b!=="false";
               const renderGroup=(s,bg)=>{
-                const items=(grouped[s]||[]).slice().sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0));
+                const items=(grouped[s]||[]).slice().sort(flightThenDur(h.flight,h.month));
                 x+='<tr><td colspan="5" style="padding:5px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid rgba(0,0,0,.1);background:'+bg+'">'+s+'</td></tr>';
                 items.forEach(r=>{
                   const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";
