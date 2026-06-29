@@ -571,7 +571,10 @@ const flightStartIso=(rowFlight,defaultFlight,month)=>{
 const flightThenDur=(defaultFlight,month)=>(a,b)=>{
   const ka=flightStartIso(a.flight,defaultFlight,month),kb=flightStartIso(b.flight,defaultFlight,month);
   if(ka!==kb)return ka<kb?-1:1;
-  return (parseInt(b.dur)||0)-(parseInt(a.dur)||0);
+  // Works for both row shapes: sheet/PDF rows carry .dur, builder rows carry .isci.dur
+  const da=parseInt(a.dur!=null?a.dur:(a.isci&&a.isci.dur))||0;
+  const db=parseInt(b.dur!=null?b.dur:(b.isci&&b.isci.dur))||0;
+  return db-da;
 };
 
 // ── MEG PERSONALITY ──────────────────────────────────
@@ -6481,13 +6484,13 @@ ${fullText.substring(0,3000)}`}]
       if(hasSchedTypes){
         // Group by schedule type like Traffic Center does
         const grouped={};(h.iscis||[]).forEach(r=>{const s=r.sched||"All Week";if(!grouped[s])grouped[s]=[];grouped[s].push(r)});
-        SCHED_ORDER_LIB.forEach(s=>{if(!grouped[s])return;const bg=SCHED_COLORS_LIB[s]||"#2d1f42";const items=grouped[s].sort((a,b)=>(parseInt(b.dur)||0)-(parseInt(a.dur)||0));
+        SCHED_ORDER_LIB.forEach(s=>{if(!grouped[s])return;const bg=SCHED_COLORS_LIB[s]||"#2d1f42";const items=grouped[s].slice().sort(flightThenDur(h.flight,h.month));
           x+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+escHtml(s)+'</td></tr>';
           items.forEach(r=>{const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk2(r.bookend)?r.bookend:s;
             x+='<tr style="background:'+bg+'44"><td>'+escHtml(r.flight||h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+escHtml(r.code)+' - '+escHtml(r.title)+'</td><td>:'+escHtml(r.dur)+'</td><td style="font-weight:600">'+escHtml(pct)+'</td><td style="font-size:10px;color:#555">'+escHtml(note)+'</td></tr>';
           });
         });
-        Object.keys(grouped).filter(s=>!SCHED_ORDER_LIB.includes(s)).forEach(s=>{const bg="#F0E8F8";const items=grouped[s];
+        Object.keys(grouped).filter(s=>!SCHED_ORDER_LIB.includes(s)).forEach(s=>{const bg="#F0E8F8";const items=grouped[s].slice().sort(flightThenDur(h.flight,h.month));
           x+='<tr><td colspan="5" class="grp" style="background:'+bg+'">'+escHtml(s)+'</td></tr>';
           items.forEach(r=>{const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk2(r.bookend)?r.bookend:s;
             x+='<tr style="background:'+bg+'44"><td>'+escHtml(r.flight||h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+escHtml(r.code)+' - '+escHtml(r.title)+'</td><td>:'+escHtml(r.dur)+'</td><td style="font-weight:600">'+escHtml(pct)+'</td><td style="font-size:10px;color:#555">'+escHtml(note)+'</td></tr>';
@@ -6495,7 +6498,7 @@ ${fullText.substring(0,3000)}`}]
         });
       } else {
         // Simple flat list (PL style or imported without schedules)
-        (h.iscis||[]).forEach(r=>{const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk2(r.bookend)?r.bookend:"";
+        (h.iscis||[]).slice().sort(flightThenDur(h.flight,h.month)).forEach(r=>{const pct=r.pct?(parseFloat(r.pct)%1===0?parseInt(r.pct)+"%":r.pct+"%"):"";const note=validBk2(r.bookend)?r.bookend:"";
           x+='<tr><td>'+escHtml(r.flight||h.flight||"")+'</td><td style="font-family:monospace;font-weight:600">'+escHtml(r.code)+' - '+escHtml(r.title)+'</td><td>:'+escHtml(r.dur)+'</td><td style="font-weight:600">'+escHtml(pct)+'</td><td style="font-size:10px;color:#555">'+escHtml(note)+'</td></tr>';
         });
       }
