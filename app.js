@@ -3718,6 +3718,8 @@ const App=()=>{
       const fmtD=d=>{if(!d)return"";const dt=new Date(d+"T00:00:00");return (dt.getMonth()+1)+"/"+dt.getDate()+"/"+String(dt.getFullYear()).slice(2)};
       const renewTerm=[...new Set([...new Set(scope.map(p=>p.contract).filter(Boolean))].map(c=>{const cc=oohContracts[c];return cc&&cc.startDate&&cc.endDate?fmtD(cc.startDate)+" – "+fmtD(cc.endDate):""}).filter(Boolean))].join(" · ");
       hd("Renewal Term",(renewTerm||"TBD")+" · 13 broadcast periods","grn");
+      const _revCount=scope.filter(p=>typeof OOH_RESEND_PANELS!=="undefined"&&OOH_RESEND_PANELS.has(String(p.panel))).length;
+      if(_revCount&&!resendOnly)w.document.write('<div class="h"><b>Revisions:</b> <span style="color:#9b1c5e;font-weight:bold">'+_revCount+' panel(s) corrected this round — flagged ✎ REVISED below</span></div>');
       if(oPostDates)hd("Post Notes",oPostDates);if(oVersion)hd("Version / Notes",oVersion);if(oComments)hd("Comments",oComments);
       const fileMap={};iscis.forEach(i=>{if(i.fileUrl)fileMap[i.code]=i.fileUrl});
       // Link each board to the NEAREST real uploaded creative of its own market+creative.
@@ -3775,11 +3777,14 @@ const App=()=>{
           // Perm glitter-disc boards: already posted — instruct the vendor to keep what's
           // up. Creative + ISCI columns read "Keep current creative", no link, no code.
           const _keep=(typeof OOH_KEEP_CURRENT!=="undefined"&&OOH_KEEP_CURRENT.has(String(p.panel)));
-          const _panelCell=(_tbd?'TBD':escHtml(String(p.panel)))+(_tbd?' <b style="color:#7c3aed">↻ ROTARY</b>':(_bonus?' <b style="color:#7c3aed">★ BONUS</b>':''));
+          // Revision boards flagged inline on the FULL sheet (meshed) so Lamar gets one
+          // complete traffic sheet with the corrected panels called out — not a separate doc.
+          const _rev=(typeof OOH_RESEND_PANELS!=="undefined"&&OOH_RESEND_PANELS.has(String(p.panel)));
+          const _panelCell=(_tbd?'TBD':escHtml(String(p.panel)))+(_tbd?' <b style="color:#7c3aed">↻ ROTARY</b>':(_bonus?' <b style="color:#7c3aed">★ BONUS</b>':''))+(_rev&&!resendOnly?' <b style="color:#9b1c5e">✎ REVISED</b>':'');
           const _loc=_tbd?'<b style="color:#7c3aed">Rotates — Lamar selects</b>':(escHtml(p.location||"")+(_bonus?' <b style="color:#7c3aed">★ Bonus (no charge)</b>':'')+(_boaz?' <b style="color:#1d4ed8">◄ Boaz — traffic as Huntsville</b>':'')+(_keep?' <b style="color:#15803d">★ Perm glitter-disc — already installed</b>':''));
           // Distinct row tint per category so the vendor can scan: Boaz = blue,
           // glitter-disc = green, TBD/rotary/bonus = amber.
-          const _bg=_boaz?'#dbeafe':(_keep?'#dcfce7':(_rot?'#fff3bf':''));
+          const _bg=_boaz?'#dbeafe':(_keep?'#dcfce7':(_rot?'#fff3bf':(_rev&&!resendOnly?'#fce7f3':'')));
           const _crCellOut=_keep?'<b style="color:#15803d">KEEP CURRENT CREATIVE</b><br><span style="color:#555;font-size:9px">Perm glitter-disc — already up, do not retraffic</span>':crCell;
           const _isciOut=_keep?'<b style="color:#15803d">Keep current</b>':escHtml(_tbd?"—":(p.isci||"—"));
           w.document.write('<tr'+(_bg?' style="background:'+_bg+'"':'')+'><td style="font-family:monospace;font-weight:700">'+_panelCell+'</td><td>'+_loc+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(_tbd?"—":(p.size||""))+'</td><td style="text-align:right">'+(_tbd?"":(p.impressions?Number(p.impressions).toLocaleString():""))+'</td><td>'+_crCellOut+'</td><td style="font-family:monospace">'+_isciOut+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||oPostDates||"")+'</td></tr>')});
