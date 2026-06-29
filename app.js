@@ -577,6 +577,16 @@ const flightThenDur=(defaultFlight,month)=>(a,b)=>{
   return db-da;
 };
 
+// Parse a contact string into valid emails, accepting ANY common separator —
+// comma, semicolon, whitespace, or newline. Critical: a contact typed/pasted
+// as "a@x.com, b@y.com" must NOT be read as one invalid address and dropped,
+// which is how recipients silently went missing. One shared parser so the
+// send paths, the resend paths, and the contact-health audit never disagree.
+const splitEmails=(contact)=>{
+  if(!contact)return[];
+  return String(contact).split(/[,;\s]+/).map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+};
+
 // ── MEG PERSONALITY ──────────────────────────────────
 const DOOM={
   loading:["I'm a damsel… I'm in distress… I can handle this. Give me a second.","People always do stupid things. Like refreshing too early.","Patience is a virtue. Not one of mine, but still.","Working on it. Not that you'd appreciate the effort.","Rearranging your mess. You're welcome.","This would go faster if someone hadn't made 47 rotations.","Hold on, Wonderboy. Almost there.","I didn't sign up for this. And yet, here I am.","One second. Some of us actually do the work around here.","I've seen hydras easier to manage than your traffic sheets.","You'd think after all this, things would just… work.","Loading your questionable choices.","Don't rush me. I've dealt with worse than you.","Ugh, fine. One moment.","Reloading your chaos. Try to look grateful."],
@@ -1265,7 +1275,7 @@ const App=()=>{
         if(confirmRemindersSent[rKey])return;
         const sta=stations.find(s=>s.call===call);
         if(!sta)return;
-        const emails=(sta.contact||"").split(";").map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+        const emails=splitEmails(sta.contact);
         if(!emails.length)return;
         toRemind.push({h,call,sta,emails,rKey});
       });
@@ -1586,7 +1596,7 @@ const App=()=>{
                       // firing — server path handles it.
                       const stObj=stations.find(s=>s.call===sta);
                       if(stObj){
-                        const existing=(stObj.contact||"").split(";").map(e=>e.trim()).filter(Boolean);
+                        const existing=splitEmails(stObj.contact);
                         if(!existing.includes(portalAddEmail.trim())){
                           const updated=[...existing,portalAddEmail.trim()].join("; ");
                           setStations(prev=>prev.map(s=>s.call===sta?{...s,contact:updated}:s));
@@ -2588,7 +2598,7 @@ const App=()=>{
           if(!allValid||sel.length===0)return;
           notify(DOOM.anchor);
           const isciRec=sel.map(r=>({code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct,sched:r.sched,bookend:r.bookend}));
-          const parseEmails=(contact)=>{if(!contact)return[];return contact.split(";").map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))};
+          const parseEmails=splitEmails;
           const sendList=linkedSta.filter(s=>sendStations.includes(s.call));
           const sendable=sendList.filter(s=>parseEmails(s.contact).length>0);
           const skipped=sendList.filter(s=>parseEmails(s.contact).length===0);
@@ -5700,7 +5710,7 @@ ${fullText.substring(0,3000)}`}]
       notify(doomPick(DOOM.send)+" "+sent+" sent"+(failed?" ("+failed+" failed)":""));
     };
     // Parse all emails from stations
-    const parseEmails=(contact)=>{if(!contact)return[];return contact.split(";").map(e=>e.trim()).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))};
+    const parseEmails=splitEmails;
     const allContacts=stations.map(s=>({call:s.call,market:s.market,media:s.media,brand:s.brand,ownership:s.ownership,buyer:s.buyer,emails:parseEmails(s.contact),raw:s.contact||"",missing:!s.contact||!s.contact.includes("@"),truncated:s.contact&&s.contact.length>5&&!s.contact.match(/@[a-z0-9.-]+\.[a-z]{2,}$/i)}));
     const missingCount=allContacts.filter(c=>c.missing).length;
     const truncatedCount=allContacts.filter(c=>c.truncated&&!c.missing).length;
@@ -6676,7 +6686,7 @@ ${fullText.substring(0,3000)}`}]
                           log("Traffic Sent",h.market+" "+h.media+" "+h.month);
                           setTrafficHistory(p=>p.map((r,ri)=>ri===gIdx?{...r,status:"sent",statusNote:"Sent "+new Date().toLocaleDateString()}:r));
                         }else{
-                          var parseEmails2=function(c){if(!c)return[];return c.split(";").map(function(e2){return e2.trim()}).filter(function(e2){return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e2)})};
+                          var parseEmails2=splitEmails;
                           // ALWAYS look up stations by market — never trust what's stored on the record
                           var mkt=normMkt(h.market)||h.market;
                           var staList=[];
@@ -10590,7 +10600,7 @@ Rules:
                 const pEntries=Object.entries(pGroups);
                 let pTotal=0;
                 const groupCards=pEntries.map(([gName,gs],gi)=>{
-                  const emails=[...new Set([...gs.flatMap(s=>(s.contact||"").split(/[,;]\s*/)),...(buyerEmail?[buyerEmail]:[])].map(e=>e.trim()))].filter(Boolean);
+                  const emails=[...new Set([...gs.flatMap(s=>splitEmails(s.contact)),...(buyerEmail?[buyerEmail]:[])].map(e=>e.trim()))].filter(Boolean);
                   pTotal+=emails.length;
                   const buyerTag=buyerEmail?' <span style="background:#D4A040;color:#1e1233;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:700">+ '+escHtml(h.buyer||"buyer")+'</span>':'';
                   return '<div class="card"><div style="font-weight:700;color:#1e1233;margin-bottom:6px">✉ Email '+(gi+1)+' — '+escHtml(gName)+' ('+gs.length+' station'+(gs.length>1?"s":"")+')'+buyerTag+'</div><div><b>To:</b> '+(emails.length?escHtml(emails.join(", ")):'<span style="color:#b91c1c">(no emails — this group would be skipped)</span>')+'</div><div style="margin-top:4px;color:#6b7280;font-size:12px">Stations: '+gs.map(s=>escHtml(s.call)).join(", ")+'</div></div>';
@@ -10650,7 +10660,7 @@ Rules:
                 linkedStations.forEach(s=>{const g=s.ownership||s.call;(groups[g]=groups[g]||[]).push(s)});
                 let sent=0,failed=0;const noEmail=[];
                 for(const[gName,gStations]of Object.entries(groups)){
-                  const emails=[...new Set([...gStations.flatMap(s=>(s.contact||"").split(/[,;]\s*/)),...(buyerEmail?[buyerEmail]:[])].map(e=>e.trim()))].filter(Boolean);
+                  const emails=[...new Set([...gStations.flatMap(s=>splitEmails(s.contact)),...(buyerEmail?[buyerEmail]:[])].map(e=>e.trim()))].filter(Boolean);
                   if(!emails.length){noEmail.push(gName);continue}
                   const confirmLinks=gStations.map(s=>{const url=confirmBase+"?confirm="+encodeURIComponent(cleanEst)+"&sta="+encodeURIComponent(s.call)+"&tok="+encodeURIComponent(tokens[s.call].token);return'<a href="'+url+'" style="display:inline-block;padding:6px 16px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:4px 2px">Confirm '+s.call+'</a>'}).join(" ");
                   const emailBody=bodyPrefix+"<b>Station(s):</b> "+gStations.map(s=>s.call).join(", ")+"<br><br>Please confirm receipt of this traffic within 24 hours:<br>"+confirmLinks+"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
@@ -11131,7 +11141,7 @@ Rules:
       const brandObj=BRANDS.find(b=>b.name===e.brand);
       const cm=CALENDAR.find(c=>c.month===airing?.month)||CALENDAR[1];
       const flight=airing?.flight||"";
-      const parseEmails=(contact)=>{if(!contact)return[];return contact.split(";").map(em=>em.trim()).filter(em=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))};
+      const parseEmails=splitEmails;
       const sendToStation=async(s)=>{
         const emails=parseEmails(s.contact);if(!emails.length){notify("No email for "+s.call);return}
         const token=conf[s.call]?.token||genToken();
