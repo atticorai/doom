@@ -4934,7 +4934,14 @@ const App=()=>{
   // Edit Traffic modal — real function component so its useState
   // hooks don't violate rules-of-hooks (the inline IIFE version
   // blanked the screen when invoked from the Megara Library book).
-  const EditTrafficModal=({editIdx,onClose})=>{
+  // Stable identity: App re-renders constantly (autosave, polling, toasts).
+  // If this modal were redefined each App render it would remount and WIPE
+  // the user's in-progress edits (the "dates won't save" bug). We create the
+  // component once in a ref and feed it fresh App data through _etmLive.
+  const _etmLive=React.useRef({});_etmLive.current={trafficHistory,setTrafficHistory,iscis,log,notify};
+  const _etmRef=React.useRef(null);
+  if(!_etmRef.current)_etmRef.current=({editIdx,onClose})=>{
+    const{trafficHistory,setTrafficHistory,iscis,log,notify}=_etmLive.current;
     const eh=trafficHistory[editIdx];
     const SCHED_OPTS=["M-F Schedule","Weekend Schedule","M-F Bookend","Weekend Bookend","All Week","Holiday Only"];
     const[editIscis,setEditIscis]=useState(()=>JSON.parse(JSON.stringify(eh?.iscis||[])));
@@ -5012,11 +5019,15 @@ const App=()=>{
     const _cm=CALENDAR.find(c=>c.month===editMeta.month);
     const bcStart=_cm?_cm.bcStart:"";
     const bcEnd=_cm?_cm.bcEnd:"";
+    // Year fallback for parsing "M/D" halves even when the record's month does
+    // NOT match a calendar row (older/odd/combined records). Without this an
+    // empty bcStart produced invalid ISO like "-03-30", so the date picker
+    // showed blank and "wouldn't accept" the value.
+    const _fbYear=(bcStart||bcEnd||"").slice(0,4)||String(new Date().getFullYear());
     const _parseHalf=(half,fallbackIso)=>{
-      if(!half||!fallbackIso)return fallbackIso||"";
-      const m=String(half).trim().match(/^(\d{1,2})\/(\d{1,2})$/);
-      if(!m)return fallbackIso;
-      const yr=fallbackIso.slice(0,4);
+      const m=half&&String(half).trim().match(/^(\d{1,2})\/(\d{1,2})$/);
+      if(!m)return fallbackIso||"";
+      const yr=(fallbackIso&&fallbackIso.slice(0,4))||_fbYear;
       return yr+"-"+String(m[1]).padStart(2,"0")+"-"+String(m[2]).padStart(2,"0");
     };
     // Each row may carry its own flight string ("M/D - M/D"). If absent, fall
@@ -5096,6 +5107,7 @@ const App=()=>{
       </div>
     </Mod>;
   };
+  const EditTrafficModal=_etmRef.current;
 
   const EditIsciMod=({isci,idx})=>{
     const locked=isIsciSent(isci.code);
