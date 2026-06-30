@@ -545,6 +545,17 @@ const oohVendorFileName=(board)=>`WK ${boardClass(board.type,board.size).label} 
 // Download link that forces the vendor's copy to the convention name (Supabase ?download=).
 const oohVendorDl=(u,name)=>{if(!u)return u;const ext=(String(u).split("?")[0].match(/\.([a-z0-9]+)$/i)||[,""])[1];const fn=encodeURIComponent(name+(ext?"."+ext:""));return/supabase\.co/.test(u)?u+(u.includes("?")?"&":"?")+"download="+fn:dlUrl(u)};
 const MEDIA_CAT_COLORS={Poster:{fg:"#F4C242",bg:"rgba(244,194,66,.15)",border:"#F4C242"},Bulletin:{fg:"#4AC8E8",bg:"rgba(74,200,232,.15)",border:"#4AC8E8"},Digital:{fg:"#C084FC",bg:"rgba(192,132,252,.15)",border:"#C084FC"},Other:{fg:"#94a3b8",bg:"rgba(148,163,184,.15)",border:"#94a3b8"}};
+// Granular OOH board-type label for filtering — keeps Digital Bulletin and Digital
+// Poster SEPARATE (mediaCategory lumps both into "Digital"), so a buyer can isolate
+// e.g. Nashville Digital Bulletins vs Posters. Order matters: junior, then poster,
+// then bulletin, so "Digital Poster"/"Junior Bulletin" land in the right bucket.
+const oohBoardType=(type,size)=>{const s=((type||"")+" "+(size||"")).toLowerCase();const dig=s.includes("digital");
+  if(s.includes("junior"))return"Junior";
+  if(s.includes("poster"))return dig?"Digital Poster":"Poster";
+  if(s.includes("bulletin")||s.includes("preempt"))return dig?"Digital Bulletin":"Bulletin";
+  if(dig)return"Digital";
+  return"Other"};
+const OOH_BTYPE_COLORS={"Digital Bulletin":{fg:"#C084FC",bg:"rgba(192,132,252,.15)",border:"#C084FC"},"Digital Poster":{fg:"#E879F9",bg:"rgba(232,121,249,.15)",border:"#E879F9"},"Bulletin":{fg:"#4AC8E8",bg:"rgba(74,200,232,.15)",border:"#4AC8E8"},"Poster":{fg:"#F4C242",bg:"rgba(244,194,66,.15)",border:"#F4C242"},"Junior":{fg:"#5BC4A0",bg:"rgba(91,196,160,.15)",border:"#5BC4A0"},"Digital":{fg:"#C084FC",bg:"rgba(192,132,252,.15)",border:"#C084FC"},"Other":{fg:"#94a3b8",bg:"rgba(148,163,184,.15)",border:"#94a3b8"}};
 const MediaBadge=({type,size="sm"})=>{const cat=mediaCategory(type);const c=MEDIA_CAT_COLORS[cat];const pad=size==="sm"?"1px 6px":"2px 8px";const fs=size==="sm"?10:11;return React.createElement("span",{style:{display:"inline-block",padding:pad,borderRadius:3,fontSize:fs,fontWeight:700,color:c.fg,background:c.bg,border:"1px solid "+c.border,letterSpacing:.3,textTransform:"uppercase"}},cat)};
 // Stable, deterministic color for any creative title. Same input → same color, always.
 // Used to color boards by what creative is running on them (independent of market prefix in ISCI code).
@@ -3636,7 +3647,7 @@ const App=()=>{
 
   // ── OOH POSTINGS PAGE ────────────────────────────────
   const OohPg=()=>{
-    const om=oohOm,setOm=setOohOm,ov=oohOv,setOv=setOohOv,oVend=oohOVend,setOVend=setOohOVend,viewMode=oohViewMode,setViewMode=setOohViewMode,trafficMode=oohTrafficMode,setTrafficMode=setOohTrafficMode;
+    const om=oohOm,setOm=setOohOm,ov=oohOv,setOv=setOohOv,oVend=oohOVend,setOVend=setOohOVend,viewMode=oohViewMode,setViewMode=setOohViewMode,trafficMode=oohTrafficMode,setTrafficMode=setOohTrafficMode,typeF=oohTypeF,setTypeF=setOohTypeF;
     const editId=oohEditId,setEditId=setOohEditId,editVal=oohEditVal,setEditVal=setOohEditVal;
     const dEditId=oohDesignEditId,setDEditId=setOohDesignEditId,dEditVal=oohDesignEditVal,setDEditVal=setOohDesignEditVal;
     const photoPanel=oohPhotoPanel,setPhotoPanel=setOohPhotoPanel;
@@ -3651,7 +3662,8 @@ const App=()=>{
     const subs=[...new Set(pops.map(p=>p.submarket))].sort();
     const vendors=[...new Set(pops.map(p=>p.vendor))].sort();
     const marketColor=(mkt)=>{const b=pops.find(p=>oohMarket(p.dma)===mkt);return b?(dmaColors[b.dma]||"#64748b"):"#64748b"};
-    const fl=pops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true));
+    const btypes=[...new Set(pops.map(p=>oohBoardType(p.type,p.size)))].sort();
+    const fl=pops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true)&&(typeF?oohBoardType(p.type,p.size)===typeF:true));
     const tagged=fl.filter(p=>p.isci).length;
     const totalImpr=fl.reduce((a,p)=>a+p.impressions,0);
 
@@ -3987,7 +3999,13 @@ const App=()=>{
         <Sel label="Market" options={dmas} value={om} onChange={setOm} placeholder="All Markets"/>
         <Sel label="Sub-Market" options={subs} value={ov} onChange={setOv} placeholder="All Markets"/>
         <Sel label="Vendor" options={vendors} value={oVend} onChange={setOVend} placeholder="All Vendors"/>
-        {(om||ov||oVend)&&<Btn small onClick={()=>{setOm("");setOv("");setOVend("")}}>Clear</Btn>}
+        <Sel label="Type" options={btypes} value={typeF} onChange={setTypeF} placeholder="All Types"/>
+        {(om||ov||oVend||typeF)&&<Btn small onClick={()=>{setOm("");setOv("");setOVend("");setTypeF("")}}>Clear</Btn>}
+      </div>
+      {/* Board-type chips — quick toggle, affects Cards / Table / Map / Reference / Traffic */}
+      <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
+        <span style={{fontSize:11,color:"#9B8EAD",fontWeight:700}}>Board type:</span>
+        {btypes.map(bt=>{const col=OOH_BTYPE_COLORS[bt]||OOH_BTYPE_COLORS.Other;const cnt=pops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true)&&oohBoardType(p.type,p.size)===bt).length;return<button key={bt} onClick={()=>setTypeF(typeF===bt?"":bt)} style={{padding:"3px 9px",borderRadius:5,border:typeF===bt?"2px solid "+col.border:"1px solid #4a3565",background:typeF===bt?col.bg:"transparent",color:typeF===bt?col.fg:"#9B8EAD",fontSize:11,fontWeight:700,cursor:"pointer"}}>{bt} ({cnt})</button>})}
       </div>
       {/* DMA stats */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
@@ -4101,7 +4119,7 @@ const App=()=>{
         const dmaLabel=om||dmas.join("/");
         const trafficVendor=oVend||"";
         const vendorBoards=pops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(trafficVendor?p.vendor===trafficVendor:true));
-        const vendorPanels=vendorBoards.filter(p=>oohTypeF?mediaCategory(p.type)===oohTypeF:true).map(p=>({id:p.boardId,panel:p.panel,dma:p.dma,sub:p.submarket,loc:p.location,type:p.type,size:p.size,impr:p.impressions,tab:p.tab,design:p.design})).sort((a,b)=>a.dma.localeCompare(b.dma)||a.panel.localeCompare(b.panel));
+        const vendorPanels=vendorBoards.filter(p=>oohTypeF?oohBoardType(p.type,p.size)===oohTypeF:true).map(p=>({id:p.boardId,panel:p.panel,dma:p.dma,sub:p.submarket,loc:p.location,type:p.type,size:p.size,impr:p.impressions,tab:p.tab,design:p.design})).sort((a,b)=>a.dma.localeCompare(b.dma)||a.panel.localeCompare(b.panel));
         const totalUnits=oLines.reduce((a,l)=>a+(parseInt(l.units)||0),0);
         const totalPanels=oLines.filter(l=>l.panel).length;
         const usePanelMode=trafficMode==="panels";
@@ -4150,7 +4168,7 @@ const App=()=>{
             <button onClick={()=>setTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:trafficMode==="panels"?"2px solid #4AC8E8":"1px solid #4a3565",background:trafficMode==="panels"?"rgba(37,99,235,.15)":"transparent",color:trafficMode==="panels"?"#60a5fa":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
             <div style={{marginLeft:"auto",display:"flex",gap:3,alignItems:"center"}}>
               <span style={{fontSize:11,color:"#94a3b8"}}>Type:</span>
-              {(()=>{const cats=[...new Set(vendorBoards.map(p=>mediaCategory(p.type)))].sort();return cats.map(c=>{const col=MEDIA_CAT_COLORS[c];const matches=vendorBoards.filter(p=>mediaCategory(p.type)===c).length;return<button key={c} onClick={()=>setOohTypeF&&setOohTypeF(oohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:oohTypeF===c?"2px solid "+col.border:"1px solid #4a3565",background:oohTypeF===c?col.bg:"transparent",color:oohTypeF===c?col.fg:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
+              {(()=>{const cats=[...new Set(vendorBoards.map(p=>oohBoardType(p.type,p.size)))].sort();return cats.map(c=>{const col=OOH_BTYPE_COLORS[c]||OOH_BTYPE_COLORS.Other;const matches=vendorBoards.filter(p=>oohBoardType(p.type,p.size)===c).length;return<button key={c} onClick={()=>setOohTypeF&&setOohTypeF(oohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:oohTypeF===c?"2px solid "+col.border:"1px solid #4a3565",background:oohTypeF===c?col.bg:"transparent",color:oohTypeF===c?col.fg:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
