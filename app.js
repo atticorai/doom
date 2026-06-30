@@ -3693,7 +3693,7 @@ const App=()=>{
     const totalImpr=fl.reduce((a,p)=>a+p.impressions,0);
 
     const startEdit=(boardId,curIsci)=>{setEditId(boardId);setEditVal(curIsci)};
-    const saveEdit=(boardId)=>{setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,isci:editVal}:p));setEditId(null);log("OOH Assign",`${boardId} → ${editVal||"(cleared)"}`);notify(`${boardId} updated`)};
+    const saveEdit=(boardId,val)=>{const v=val!==undefined?val:editVal;setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,isci:v}:p));setEditId(null);log("OOH Assign",`${boardId} → ${v||"(cleared)"}`);notify(`${boardId} updated`)};
     const cancelEdit=()=>{setEditId(null);setEditVal("")};
     const isciTitle=(code)=>{if(!code)return"";const m=iscis.find(i=>i.code===code);return m?m.title:""};
     // Per-board creative rotation — picked from the board's catalog pool (no free text).
@@ -3958,7 +3958,7 @@ const App=()=>{
             <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:p.isci?"#1f3530":"#fffbeb",border:`1px solid ${p.isci?"#bbf7d0":"#fde68a"}`}}>
               {editId===p.boardId?
                 <div style={{display:"flex",gap:3,alignItems:"center"}}>
-                  {(()=>{const opts=iscis.filter(i=>i.suffix==="O"&&i.dma===p.dma&&i.active).sort((a,b)=>a.code.localeCompare(b.code));return<select value={editVal} onChange={e=>setEditVal(e.target.value)} autoFocus style={{flex:1,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:13,background:"#1e1233",color:"#E8DFF0"}} onKeyDown={e=>{if(e.key==="Escape")cancelEdit()}}><option value="">{opts.length?("— pick "+(p.dma||"")+" ISCI —"):("No "+(p.dma||"")+" ISCIs registered yet")}</option>{opts.map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}</option>)}</select>})()}
+                  {(()=>{const opts=iscis.filter(i=>i.suffix==="O"&&i.dma===p.dma&&i.active).sort((a,b)=>a.code.localeCompare(b.code));return<select value={editVal} onChange={e=>{setEditVal(e.target.value);saveEdit(p.boardId,e.target.value)}} autoFocus style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:13,background:"#1e1233",color:"#E8DFF0"}} onKeyDown={e=>{if(e.key==="Escape")cancelEdit()}}><option value="">{opts.length?("— pick "+(p.dma||"")+" ISCI —"):("No "+(p.dma||"")+" ISCIs registered yet")}</option>{opts.map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}</option>)}</select>})()}
                   <button onClick={()=>saveEdit(p.boardId)} style={{padding:"2px 6px",background:"#5BC4A0",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✓</button>
                   <button onClick={cancelEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
                 </div>:
