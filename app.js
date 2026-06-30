@@ -1101,6 +1101,24 @@ const App=()=>{
         console.log("Supabase: loaded",Object.keys(docs).length,"collections");
         loadCompleteRef.current=true;
         trafficDirtyRef.current=false;// loaded data is not a user edit — don't auto-resave it
+        // ── ONE-TIME PURGE: Nashville OOH launched with placeholder creative ──
+        // NSH boards shipped with creative + ISCI pre-assigned in the seed, which
+        // also got saved into the wkOohIscis/wkOohDesigns Firestore overlays. The
+        // overlays win over the (now-cleared) seed on every load, so clearing the
+        // seed alone wasn't enough. Strip NSH from the overlays ONCE and record a
+        // flag — the market starts with zero creative, but anything assigned
+        // afterward still persists normally (the purge never runs again).
+        try{
+          if(!docs.nshOohPurgeV1?.data){
+            setPops(prev=>prev.map(p=>p.dma==="NSH"?{...p,isci:"",design:[]}:p));
+            const stripNsh=(raw)=>{let o={};try{o=raw?JSON.parse(raw):{}}catch(_e){o={}}let n=0;Object.keys(o).forEach(k=>{if(String(k).startsWith("NSH-")){delete o[k];n++}});return{o,n}};
+            let cleared=0;
+            if(docs.wkOohIscis?.data){const{o,n}=stripNsh(docs.wkOohIscis.data);cleared+=n;saveToDb("wkOohIscis",o).catch(()=>{})}
+            if(docs.wkOohDesigns?.data){const{o,n}=stripNsh(docs.wkOohDesigns.data);cleared+=n;saveToDb("wkOohDesigns",o).catch(()=>{})}
+            saveToDb("nshOohPurgeV1",{done:true,ts:Date.now()}).catch(()=>{});
+            console.log("NSH OOH creative purge: cleared "+cleared+" board overlay entries");
+          }
+        }catch(e){console.warn("NSH OOH purge skipped",e)}
       }catch(e){console.warn("Firestore load failed:",e);
         // A failure in a late/optional collection (tags, settings, OOH maps)
         // must NOT permanently block saves when the core data already loaded —
