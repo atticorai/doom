@@ -204,7 +204,7 @@ const D_P_NEW = [
   ["NSH-LMR-80182","Nashville","NSH","Lamar","Digital Bulletin","14'x48'","I-65 (N LOOP) S/S .3 MILE W/O I-24 F/W",0,"2026-08-03","","Wettermark Keith","Greg Benefield","80182","","5571406","","","","",""],
   ["NSH-LMR-82702","Nashville","NSH","Lamar","Digital Bulletin","14'x48'","I-24 S/S .2 MILE W/O JAMES ROBERTSON PKWY EXIT 48 F/W",0,"2026-08-03","","Wettermark Keith","Greg Benefield","82702","","5571406","","","","",""],
   ["NSH-LMR-84001","Nashville","NSH","Lamar","Digital Poster","14'x28'","WEST END AVE N/S 650' E/O 31ST AVE F/E",0,"2026-08-03","","Wettermark Keith","Greg Benefield","84001","","5571406","","","","",""],
-  ["NSH-LMR-8","Nashville","NSH","Lamar","Bulletin","TBD","Digital Bulletins",0,"2026-08-03","","Wettermark Keith","Greg Benefield","8","","5571406","","","","",""],
-  ["NSH-LMR-1","Nashville","NSH","Lamar","Bulletin","TBD","Digital Poster",0,"2026-08-03","","Wettermark Keith","Greg Benefield","1","","5571406","","","","",""],
-  ["NSH-LMR-3","Nashville","NSH","Lamar","Bulletin","TBD","Bonus Digital Bulletins",0,"2026-08-03","","Wettermark Keith","Greg Benefield","3","","5571406","","","","",""],
+  ["NSH-LMR-BONUS-1","Nashville","NSH","Lamar","Digital Bulletin","TBD","Bonus Digital Bulletin (added value, $0, preemptible) — TBD location",0,"2026-08-03","","Wettermark Keith","Greg Benefield","BONUS 1","","5571406","","","","",""],
+  ["NSH-LMR-BONUS-2","Nashville","NSH","Lamar","Digital Bulletin","TBD","Bonus Digital Bulletin (added value, $0, preemptible) — TBD location",0,"2026-08-03","","Wettermark Keith","Greg Benefield","BONUS 2","","5571406","","","","",""],
+  ["NSH-LMR-BONUS-3","Nashville","NSH","Lamar","Digital Bulletin","TBD","Bonus Digital Bulletin (added value, $0, preemptible) — TBD location",0,"2026-08-03","","Wettermark Keith","Greg Benefield","BONUS 3","","5571406","","","","",""],
 ];
