@@ -3769,14 +3769,12 @@ const App=()=>{
     // market → submarket, with creative + ISCI + size + location. Renewal-ready.
     const printVendorTrafficSheet=(opts)=>{
       opts=opts||{};const resendOnly=!!opts.resendOnly;
-      // Nashville is held (separate Aug contract) — skip it on the all-markets sheet,
-      // but still allow generating it on its own by selecting Nashville in the filter.
       // Include TBD/rotary/bonus boards — they get a line with the full rotating
-      // creative pool + rotational %. Only Nashville (held, separate Aug contract)
-      // is dropped on the all-markets sheet (selectable on its own via the filter).
+      // creative pool + rotational %. Nashville (contract 5571406) is now live and
+      // included like every other market.
       // resendOnly → just the corrected revision boards (own button), so the original
       // all-markets sheet flow is never touched.
-      const scope=fl.filter(p=>(resendOnly?OOH_RESEND_PANELS.has(String(p.panel)):true)&&(om||oohMarket(p.dma)!=="Nashville"));
+      const scope=fl.filter(p=>(resendOnly?OOH_RESEND_PANELS.has(String(p.panel)):true));
       if(!scope.length){notify(resendOnly?"No revision boards in current market filter — clear the filter":"No boards in view to traffic");return}
       const iTitle=(c)=>{if(!c)return"";const m=iscis.find(i=>i.code===c);return m?m.title:""};
       const vendorName=oVend||[...new Set(scope.map(p=>p.vendor))][0]||"Lamar";
