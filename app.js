@@ -4184,12 +4184,15 @@ const App=()=>{
           w.document.write(hd("Broadcast Month",workMonth,"grn"));
           w.document.write(hd("Post Dates",oPostDates||"TBD","grn"));w.document.write(hd("Version/ Links",oVersion||""));
           if(oComments)w.document.write(hd("Comments",oComments));
+          // Link each line's creative to its uploaded ISCI artwork (match by ISCI code,
+          // else by title) so the vendor gets clickable creative files in the sheet.
+          const _lnk=(s)=>{const t=String(s||"").trim();if(!t)return"";const code=t.split(" - ")[0].trim();let m=iscis.find(i=>i.code===code);if(!m){const low=t.toLowerCase();m=iscis.find(i=>i.title&&(low.includes(i.title.toLowerCase())||i.title.toLowerCase().includes(low)))}return(m&&m.fileUrl)?'<a href="'+escHtml(oohVendorDl(m.fileUrl,m.title||code))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(t)+'</a>':escHtml(t)};
           if(hasPanel){
             w.document.write("<table><thead><tr><th>Flight Dates</th><th>Unit #</th><th>DMA</th><th>Location</th><th>ISCI / Creative</th><th>Notes</th></tr></thead><tbody>");
-            oLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel);w.document.write("<tr><td><b>"+escHtml(l.flight||oPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+escHtml(l.panel||"")+"</td><td>"+escHtml(bd?bd.dma:"")+"</td><td style='font-size:10px'>"+escHtml(bd?bd.loc:"")+"</td><td>"+escHtml(l.isci)+"</td><td>"+escHtml(l.notes||"")+"</td></tr>")});
+            oLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel);w.document.write("<tr><td><b>"+escHtml(l.flight||oPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+escHtml(l.panel||"")+"</td><td>"+escHtml(bd?bd.dma:"")+"</td><td style='font-size:10px'>"+escHtml(bd?bd.loc:"")+"</td><td>"+_lnk(l.isci)+"</td><td>"+escHtml(l.notes||"")+"</td></tr>")});
           }else{
             w.document.write("<table><thead><tr><th>Flight Dates</th><th>ISCI Codes &amp; Title</th><th>Market</th><th>Rot %</th><th>Unit Amounts</th><th>Notes</th></tr></thead><tbody>");
-            oLines.filter(l=>l.isci).forEach(l=>{w.document.write("<tr><td><b>"+escHtml(l.flight||oPostDates||"")+"</b></td><td>"+escHtml(l.isci)+"</td><td>"+escHtml(l.market||dmaLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?escHtml(l.pct)+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+escHtml(l.units||"")+"</td><td>"+escHtml(l.notes||"")+"</td></tr>")});
+            oLines.filter(l=>l.isci).forEach(l=>{w.document.write("<tr><td><b>"+escHtml(l.flight||oPostDates||"")+"</b></td><td>"+_lnk(l.isci)+"</td><td>"+escHtml(l.market||dmaLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?escHtml(l.pct)+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+escHtml(l.units||"")+"</td><td>"+escHtml(l.notes||"")+"</td></tr>")});
           }
           w.document.write("</tbody></table>");
           if(hasPanel)w.document.write('<div style="margin-top:6px;font-size:11px"><b>Total Panels:</b> '+totalPanels+"</div>");
