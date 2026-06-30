@@ -1473,7 +1473,7 @@ const App=()=>{
   const[estBrand,setEstBrand]=useState("Postman Law");
   const[staBrand,setStaBrand]=useState("Postman Law");
   // OOH WK page state (lifted to prevent remount on photo upload)
-  const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");const[oohMapMode,setOohMapMode]=useState("market");const[oohClusterRadius,setOohClusterRadius]=useState(3);
+  const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");const[oohMapMode,setOohMapMode]=useState("market");const[oohClusterRadius,setOohClusterRadius]=useState(3);const[oohReportDate,setOohReportDate]=useState("");
   const[oohEditId,setOohEditId]=useState(null);const[oohEditVal,setOohEditVal]=useState("");
   const[oohDesignEditId,setOohDesignEditId]=useState(null);const[oohDesignEditVal,setOohDesignEditVal]=useState("");const[oohDesignEditPct,setOohDesignEditPct]=useState([]);
   const[oohCreatives,setOohCreatives]=useState(WK_OOH_CREATIVES);
@@ -3743,13 +3743,15 @@ const App=()=>{
       const scope=fl.filter(p=>(Array.isArray(p.design)&&p.design.length));
       if(!scope.length){notify("Assign creatives first (🪄 Auto-name)");return}
       const mktLabel=om?(DM[om]||om):"All Markets";
-      const pins=scope.map(p=>{const co=WK_COORDS[p.boardId];const cid=oohCreativeId(p.design[0],p.type,p.size);return{panel:String(p.panel),sub:p.submarket||"",loc:p.location||"",size:p.size||"",dma:oohMarket(p.dma),creative:cid,color:creativeColor(cid),lat:co?co[0]:null,lng:co?co[1]:null,approx:isApproxCoord(p.boardId)}});
-      const titles=[...new Set(pins.map(p=>p.creative))].sort();
+      const cids=scope.map(p=>oohCreativeId(p.design[0],p.type,p.size));
+      const titles=[...new Set(cids)].sort();
+      const crColor=(t)=>{const i=titles.indexOf(t);return i>=0?CREATIVE_PALETTE[i%CREATIVE_PALETTE.length]:creativeColor(t)};
+      const pins=scope.map((p,pi)=>{const co=WK_COORDS[p.boardId];const cid=cids[pi];return{panel:String(p.panel),sub:p.submarket||"",loc:p.location||"",size:p.size||"",dma:oohMarket(p.dma),creative:cid,color:crColor(cid),lat:co?co[0]:null,lng:co?co[1]:null,approx:isApproxCoord(p.boardId)}});
       const conf=[];const cp=pins.filter(p=>p.lat&&p.lng&&!p.approx);
       for(let a=0;a<cp.length;a++)for(let b=a+1;b<cp.length;b++){if(cp[a].creative!==cp[b].creative)continue;const d=milesBetween(cp[a].lat,cp[a].lng,cp[b].lat,cp[b].lng);if(d<=oohClusterRadius)conf.push({c:cp[a].creative,a:cp[a],b:cp[b],d})}
       conf.sort((x,y)=>x.d-y.d);
       const mapPins=pins.filter(p=>p.lat&&p.lng).map(p=>({lat:p.lat,lng:p.lng,c:p.color,a:p.approx,t:escHtml(p.panel+" · "+p.creative+" · "+p.loc)}));
-      const legend=titles.map(t=>`<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0;font-size:12px"><span style="width:12px;height:12px;border-radius:6px;background:${creativeColor(t)};border:1px solid #333"></span><b>${escHtml(t)}</b> (${pins.filter(p=>p.creative===t).length})</span>`).join("");
+      const legend=titles.map(t=>`<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0;font-size:12px"><span style="width:12px;height:12px;border-radius:6px;background:${crColor(t)};border:1px solid #333"></span><b>${escHtml(t)}</b> (${pins.filter(p=>p.creative===t).length})</span>`).join("");
       const w=window.open("","","width=980,height=860");
       w.document.write('<html><head><title>WK OOH Creative Map — '+escHtml(mktLabel)+'</title>');
       w.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>');
@@ -3760,10 +3762,10 @@ const App=()=>{
       w.document.write('<div style="margin-bottom:8px">'+legend+'</div>');
       w.document.write('<div id="map"></div>');
       w.document.write('<div class="box">'+(conf.length?'<div class="warn">⚠ '+conf.length+' same-creative pair'+(conf.length!==1?'s':'')+' within '+oohClusterRadius+' mi — review spacing:</div>':'<div class="ok">✓ No same-creative boards within '+oohClusterRadius+' mi — clean spread.</div>'));
-      if(conf.length){w.document.write('<table><tr><th>Creative</th><th>Board A</th><th>Board B</th><th>Apart</th></tr>');conf.slice(0,80).forEach(c=>w.document.write('<tr><td><span class="sw" style="background:'+creativeColor(c.c)+'"></span>'+escHtml(c.c)+'</td><td>'+escHtml(c.a.panel+" — "+c.a.sub)+'</td><td>'+escHtml(c.b.panel+" — "+c.b.sub)+'</td><td>'+c.d.toFixed(1)+' mi</td></tr>'));w.document.write('</table>')}
+      if(conf.length){w.document.write('<table><tr><th>Creative</th><th>Board A</th><th>Board B</th><th>Apart</th></tr>');conf.slice(0,80).forEach(c=>w.document.write('<tr><td><span class="sw" style="background:'+crColor(c.c)+'"></span>'+escHtml(c.c)+'</td><td>'+escHtml(c.a.panel+" — "+c.a.sub)+'</td><td>'+escHtml(c.b.panel+" — "+c.b.sub)+'</td><td>'+c.d.toFixed(1)+' mi</td></tr>'));w.document.write('</table>')}
       w.document.write('</div>');
       titles.forEach(t=>{const bs=pins.filter(p=>p.creative===t).sort((a,b)=>(a.sub||"").localeCompare(b.sub||"")||a.panel.localeCompare(b.panel));
-        w.document.write('<div class="box"><div style="font-weight:bold;font-size:13px"><span class="sw" style="background:'+creativeColor(t)+'"></span>'+escHtml(t)+' — '+bs.length+' boards</div><table><tr><th>Unit</th><th>Market</th><th>Submarket</th><th>Size</th><th>Location</th></tr>');
+        w.document.write('<div class="box"><div style="font-weight:bold;font-size:13px"><span class="sw" style="background:'+crColor(t)+'"></span>'+escHtml(t)+' — '+bs.length+' boards</div><table><tr><th>Unit</th><th>Market</th><th>Submarket</th><th>Size</th><th>Location</th></tr>');
         bs.forEach(p=>w.document.write('<tr><td><b>'+escHtml(p.panel)+'</b></td><td>'+escHtml(p.dma)+'</td><td>'+escHtml(p.sub)+'</td><td>'+escHtml(p.size)+'</td><td>'+escHtml(p.loc)+'</td></tr>'));
         w.document.write('</table></div>')});
       w.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"><\/script>');
@@ -3886,6 +3888,43 @@ const App=()=>{
       const isciLines=scope.map(p=>({code:p.isci||p.panel,title:(Array.isArray(p.design)?p.design.join(" / "):""),dur:p.size||"",pct:"",sched:oPostDates||"",bookend:"",units:""}));
       setTrafficHistory(prev=>[{ts:new Date().toISOString(),est:"OOH-"+mktLabel+"-"+vendorName,brand:"Wettermark Keith",market:mktLabel,media:"OOH",buyer:"Amy Coffey",month:workMonth,flight:oPostDates,version:oVersion,comments:(oComments||"")+" | Vendor: "+vendorName,iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:grand,vendor:vendorName},...prev]);
       log("OOH Vendor Sheet",mktLabel+" · "+vendorName+" · "+grand+" boards");notify("Vendor traffic sheet — "+grand+" boards");
+    };
+    // CARD TRAFFIC REPORT — read-only. Pulls each board's ALREADY-ASSIGNED creative
+    // (design concepts or ISCI), filtered by start date + current filters, into the
+    // same traffic PDF with clickable creative links. Never writes to any board.
+    const printCardTrafficReport=()=>{
+      const scope=fl.filter(p=>!oohReportDate||p.installDate===oohReportDate);
+      if(!scope.length){notify("No boards match that date + filters");return}
+      const fmtD=d=>{if(!d)return"";const dt=new Date(d+"T00:00:00");return (dt.getMonth()+1)+"/"+dt.getDate()+"/"+String(dt.getFullYear()).slice(2)};
+      const dateLabel=oohReportDate?fmtD(oohReportDate):"All start dates";
+      const vendorName=oVend||[...new Set(scope.map(p=>p.vendor))][0]||"Lamar";
+      const mktLabel=om||"All WK Markets";
+      const boardCreative=(p)=>{
+        if(Array.isArray(p.design)&&p.design.length){const pcts=designPcts(p.design,p.designPct);return p.design.map((c,k)=>{const m=iscis.find(i=>i.suffix==="O"&&i.dma===p.dma&&i.title&&String(i.title).toLowerCase().includes(String(c).toLowerCase()));return{label:String(c)+(pcts.length>1?" ("+pcts[k]+"%)":""),f:(m&&m.fileUrl)?{url:m.fileUrl,name:m.title||c}:null}})}
+        if(p.isci){const m=iscis.find(i=>i.code===p.isci);return[{label:(m?m.title:p.isci),f:(m&&m.fileUrl)?{url:m.fileUrl,name:m.title||p.isci}:null}]}
+        return [];
+      };
+      const w=window.open("","","width=1000,height=820");
+      w.document.write('<html><head><title>WK OOH Traffic — '+escHtml(mktLabel)+' — '+escHtml(dateLabel)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}@media print{body{margin:14px}.dl{display:none}tr{page-break-inside:avoid}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<div style="text-align:center;margin-bottom:12px"><h2>WETTERMARK KEITH</h2><div class="tag">PERSONAL INJURY LAWYERS — OOH TRAFFIC INSTRUCTIONS</div></div>');
+      const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v||"")+'</span></div>');
+      hd("Agency","WK Advertising Solutions");hd("Client","Wettermark Keith");hd("Vendor",vendorName,"amb");
+      hd("Market(s)",[...new Set(scope.map(p=>oohMarket(p.dma)))].sort().join(", "));
+      hd("Buyer","Amy Coffey","red");hd("Media","OOH — Out of Home","red");hd("Broadcast Month",workMonth,"grn");
+      hd("Post / Start Date",dateLabel,"grn");
+      const mkts=[...new Set(scope.map(p=>oohMarket(p.dma)))].sort();let grand=0;
+      mkts.forEach((mk,mi)=>{const bds=scope.filter(p=>oohMarket(p.dma)===mk).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
+        w.document.write('<div class="mkt"'+(mi>0?' style="page-break-before:always"':'')+'>'+escHtml(mk)+' — '+bds.length+' boards · '+escHtml(dateLabel)+'</div>');
+        w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location</th><th style="width:110px">Media/Style</th><th style="width:64px">H x W</th><th style="width:170px">Creative</th><th style="width:120px">ISCI</th><th style="width:74px">Start Date</th></tr>');
+        bds.forEach(p=>{const crs=boardCreative(p);
+          const crCell=crs.length?crs.map(c=>c.f?('<a href="'+escHtml(oohVendorDl(c.f.url,c.f.name))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(c.label)+'</a>'):('<b>'+escHtml(c.label)+'</b> <span style="color:#b00">⚠ no art uploaded</span>')).join('<br>'):'<span style="color:#b00">⚠ no creative assigned</span>';
+          w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.panel))+'</td><td>'+escHtml(p.location||"")+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(p.size||"")+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(p.isci||"—")+'</td><td>'+escHtml(fmtD(p.installDate))+'</td></tr>')});
+        w.document.write('</table>')});
+      w.document.write('<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+grand+'</div>');
+      w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
+      w.document.write('</body></html>');w.document.close();
+      log("OOH Card Traffic Report",mktLabel+" · "+dateLabel+" · "+grand+" boards");notify("Traffic report — "+grand+" boards");
     };
     const startDEdit=(board)=>{const bc=boardClass(board.type,board.size);const cur=Array.isArray(board.design)?board.design:[];setDEditId(board.boardId);
       if(bc.rotates){const rows=cur.length?[...cur]:["",""];const pct=(Array.isArray(board.designPct)&&board.designPct.length===rows.length)?[...board.designPct]:evenSplit(rows.length);setDEditVal(rows);setDEditPct(pct)}
@@ -4055,6 +4094,13 @@ const App=()=>{
         <span style={{fontSize:11,color:"#9B8EAD",fontWeight:700}}>Board type:</span>
         {btypes.map(bt=>{const col=OOH_BTYPE_COLORS[bt]||OOH_BTYPE_COLORS.Other;const cnt=pops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true)&&oohBoardType(p.type,p.size)===bt).length;return<button key={bt} onClick={()=>setTypeF(typeF===bt?"":bt)} style={{padding:"3px 9px",borderRadius:5,border:typeF===bt?"2px solid "+col.border:"1px solid #4a3565",background:typeF===bt?col.bg:"transparent",color:typeF===bt?col.fg:"#9B8EAD",fontSize:11,fontWeight:700,cursor:"pointer"}}>{bt} ({cnt})</button>})}
       </div>
+      {/* Pull a creative traffic report by start date — read-only PDF, clickable creative */}
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+        <span style={{fontSize:11,color:"#9B8EAD",fontWeight:700}}>Traffic report — start date:</span>
+        <input type="date" value={oohReportDate} onChange={e=>setOohReportDate(e.target.value)} style={{padding:"3px 6px",borderRadius:5,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:12}}/>
+        {oohReportDate&&<button onClick={()=>setOohReportDate("")} style={{padding:"2px 7px",borderRadius:5,border:"1px solid #4a3565",background:"transparent",color:"#9B8EAD",fontSize:11,cursor:"pointer"}}>clear</button>}
+        {(()=>{const n=fl.filter(p=>!oohReportDate||p.installDate===oohReportDate).length;return <button onClick={printCardTrafficReport} style={{padding:"4px 12px",borderRadius:6,border:"none",background:"#9b7bb0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>📄 Pull Traffic Report ({n})</button>})()}
+      </div>
       {/* DMA stats */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
         {dmas.map(d=>{const all=pops.filter(p=>oohMarket(p.dma)===d);const p=all.filter(x=>x.isci).length;const impr=all.reduce((a,x)=>a+x.impressions,0);const c=marketColor(d);
@@ -4101,7 +4147,12 @@ const App=()=>{
           const conflicts=[];const approxConflicts=[];const clustered=new Set();
           if(oohMapMode==="creative"){const cp=pins.filter(p=>p.creatives.length&&p.lat&&p.lng);for(let a=0;a<cp.length;a++)for(let b=a+1;b<cp.length;b++){const shared=cp[a].creatives.filter(c=>cp[b].creatives.includes(c));if(!shared.length)continue;const d=milesBetween(cp[a].lat,cp[a].lng,cp[b].lat,cp[b].lng);if(d<=oohClusterRadius){const rec={shared,a:cp[a],b:cp[b],d};if(cp[a].approx||cp[b].approx){approxConflicts.push(rec)}else{conflicts.push(rec);clustered.add(cp[a].id);clustered.add(cp[b].id)}}}conflicts.sort((x,y)=>x.d-y.d);approxConflicts.sort((x,y)=>x.d-y.d)}
           const pinsWithStatus=pins.map(p=>{let st=p.creatives.length?("🎨 "+p.creatives.join(" / ")):(p.isci?"ISCI: "+p.isci:"No creative");if(clustered.has(p.id))st+=" · ⚠ shares creative within "+oohClusterRadius+" mi";return{...p,status:st}});
-          return<><OohMap pins={pinsWithStatus} colorFn={p=>oohMapMode==="creative"?(p.creative?creativeColor(p.creative):"#475569"):(marketColor(p.market)||"#D4A040")} height={420}/>
+          // Distinct color per creative BY INDEX (hash-based creativeColor collides —
+          // two different creatives could land on the same swatch). Same list drives
+          // the map pins, legend, and conflict rows so colors always agree.
+          const crTitles=[...new Set(pins.flatMap(p=>p.creatives))].sort();
+          const crColor=(t)=>{const i=crTitles.indexOf(t);return i>=0?CREATIVE_PALETTE[i%CREATIVE_PALETTE.length]:"#475569"};
+          return<><OohMap pins={oohMapMode==="creative"?pinsWithStatus.filter(p=>p.creatives.length):pinsWithStatus} colorFn={p=>oohMapMode==="creative"?(p.creative?crColor(p.creative):"#475569"):(marketColor(p.market)||"#D4A040")} height={420}/>
           {oohMapMode==="market"?
             <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>{markets.map(m=><div key={m} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:marketColor(m)}}/>{m}</div>)}</div>
             :
@@ -4111,14 +4162,14 @@ const App=()=>{
                 <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No creative assigned yet — name your creatives per board (🎨 on each card/row; bulletins 2, posters/juniors 3) to see them colored and check for bunching.</div>
                 :
                 <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-                  {titles.map(t=>{const cnt=pins.filter(p=>p.creatives.includes(t)).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #4a3565"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
+                  {titles.map(t=>{const cnt=pins.filter(p=>p.creatives.includes(t)).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:crColor(t),border:"1px solid #4a3565"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
                   {untaggedCnt>0&&<div style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:"#475569",border:"1px solid #4a3565"}}/><span style={{color:"#94a3b8"}}>no creative ({untaggedCnt})</span></div>}
                 </div>
               }
               {conflicts.length>0&&<div style={{marginTop:8,border:"1px solid rgba(244,194,66,.3)",borderRadius:6,overflow:"hidden"}}>
                 <div style={{padding:"5px 10px",background:"rgba(244,194,66,.12)",fontSize:12,fontWeight:700,color:"#F4C242"}}>⚠ {conflicts.length} same-creative pair{conflicts.length!==1?"s":""} within {oohClusterRadius} mi — possible highway/mall bunching</div>
                 <div style={{maxHeight:170,overflowY:"auto"}}>{conflicts.map((c,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 10px",borderTop:"1px solid #2d1f42",fontSize:12}}>
-                  <span style={{width:9,height:9,borderRadius:5,background:creativeColor(c.shared[0]),flexShrink:0}}/>
+                  <span style={{width:9,height:9,borderRadius:5,background:crColor(c.shared[0]),flexShrink:0}}/>
                   <span style={{fontWeight:700,color:"#C4A0C8",minWidth:120}}>{c.shared.join(", ")}</span>
                   <span style={{color:"#9B8EAD",flex:1}}><b>{c.a.panel}</b> ({c.a.market}) ↔ <b>{c.b.panel}</b> ({c.b.market})</span>
                   <span style={{fontWeight:700,color:c.d<=1?"#E85A7A":"#D4A040",flexShrink:0}}>{c.d.toFixed(1)} mi</span>
@@ -4127,7 +4178,7 @@ const App=()=>{
               {approxConflicts.length>0&&<div style={{marginTop:6,border:"1px dashed #4a3565",borderRadius:6,overflow:"hidden"}}>
                 <div style={{padding:"5px 10px",background:"rgba(155,123,176,.1)",fontSize:11,fontWeight:700,color:"#9B8EAD"}}>~ {approxConflicts.length} possible pair{approxConflicts.length!==1?"s":""} involving approx-located boards — <b>verify the exact spot</b> before trusting</div>
                 <div style={{maxHeight:120,overflowY:"auto"}}>{approxConflicts.slice(0,40).map((c,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"3px 10px",borderTop:"1px solid #2d1f42",fontSize:11,opacity:.8}}>
-                  <span style={{width:8,height:8,borderRadius:4,background:creativeColor(c.shared[0]),flexShrink:0}}/>
+                  <span style={{width:8,height:8,borderRadius:4,background:crColor(c.shared[0]),flexShrink:0}}/>
                   <span style={{fontWeight:700,color:"#C4A0C8",minWidth:110}}>{c.shared.join(", ")}</span>
                   <span style={{color:"#9B8EAD",flex:1}}><b>{c.a.panel}</b>{c.a.approx?"~":""} ↔ <b>{c.b.panel}</b>{c.b.approx?"~":""} ({c.a.market})</span>
                   <span style={{fontWeight:700,color:"#9B8EAD",flexShrink:0}}>~{c.d.toFixed(1)} mi</span>
