@@ -4873,9 +4873,18 @@ const App=()=>{
     const existingWithTitle=normInput?brandIscis.filter(i=>normTitle(i.title)===normInput):[];
     const existingSeq=existingWithTitle.length>0?(()=>{const m=existingWithTitle[0].code.match(/([0-9]{3})[TRDSOBG]?$/);return m?m[1]:null})():null;
     const allSeqs=brandIscis.map(i=>{const m=i.code.match(/([0-9]{3})[TRDSOBG]?$/);return m?parseInt(m[1]):0});
-    const nxt=existingSeq||String(Math.max(0,...allSeqs)+1).padStart(3,"0");
     const yr=new Date().getFullYear().toString().slice(2);
-    const prev=isTag?[f2.brand+yr+"TG"+durField.padStart(2,"0")+nxt]:isCampaign?[f2.brand+yr+durField.padStart(2,"0")+nxt+suf]:f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0")+nxt+suf);
+    const mkCodes=(seq)=>{const ss=String(seq).padStart(3,"0");return isTag?[f2.brand+yr+"TG"+durField.padStart(2,"0")+ss]:isCampaign?[f2.brand+yr+durField.padStart(2,"0")+ss+suf]:f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0")+ss+suf)};
+    // Sequence #: reuse an existing title's number; otherwise continue in chronological
+    // order from the highest number ALREADY on a code with this same prefix (not just
+    // dur-matched ones), then advance past anything still taken — so a new registration
+    // never stalls on a duplicate.
+    const seqPrefixes=isTag?[f2.brand+yr+"TG"+durField.padStart(2,"0")]:isCampaign?[f2.brand+yr+durField.padStart(2,"0")]:f2.dmas.map(d=>d+f2.brand+yr+durField.padStart(2,"0"));
+    const prefixMax=Math.max(0,...iscis.map(i=>{for(const pre of seqPrefixes){if(pre&&i.code.startsWith(pre)){const m=i.code.slice(pre.length).match(/^([0-9]{3})/);if(m)return parseInt(m[1],10)}}return 0}));
+    let seqN=existingSeq?parseInt(existingSeq,10):Math.max(prefixMax,Math.max(0,...allSeqs))+1;
+    if(!existingSeq){let g=0;while(g++<999&&mkCodes(seqN).some(code=>iscis.some(i=>i.code===code)))seqN++;}
+    const nxt=String(seqN).padStart(3,"0");
+    const prev=mkCodes(seqN);
     const alreadyRegistered=isTag?[]:(normInput?f2.dmas.filter(d=>existingWithTitle.some(i=>i.dma===d)):[]);
     const dupeWarnings=prev.filter(code=>iscis.some(i=>i.code===code));
     return<Mod title="Register ISCI (Uniform)" onClose={()=>setModal(null)} wide>
