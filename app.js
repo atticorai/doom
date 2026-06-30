@@ -556,6 +556,11 @@ const oohBoardType=(type,size)=>{const s=((type||"")+" "+(size||"")).toLowerCase
   if(dig)return"Digital";
   return"Other"};
 const OOH_BTYPE_COLORS={"Digital Bulletin":{fg:"#C084FC",bg:"rgba(192,132,252,.15)",border:"#C084FC"},"Digital Poster":{fg:"#E879F9",bg:"rgba(232,121,249,.15)",border:"#E879F9"},"Bulletin":{fg:"#4AC8E8",bg:"rgba(74,200,232,.15)",border:"#4AC8E8"},"Poster":{fg:"#F4C242",bg:"rgba(244,194,66,.15)",border:"#F4C242"},"Junior":{fg:"#5BC4A0",bg:"rgba(91,196,160,.15)",border:"#5BC4A0"},"Digital":{fg:"#C084FC",bg:"rgba(192,132,252,.15)",border:"#C084FC"},"Other":{fg:"#94a3b8",bg:"rgba(148,163,184,.15)",border:"#94a3b8"}};
+// Rotation %: split 100 across n creatives as evenly as possible (remainder on last).
+const evenSplit=(n)=>{if(!n||n<1)return[];const b=Math.floor(100/n);const a=Array(n).fill(b);a[n-1]+=100-b*n;return a};
+// The pcts to DISPLAY for a board: use saved per-creative % if present & aligned,
+// otherwise auto-calculate an even split from the number of creatives assigned.
+const designPcts=(design,designPct)=>{const d=Array.isArray(design)?design:[];if(Array.isArray(designPct)&&designPct.length===d.length&&designPct.every(x=>typeof x==="number"))return designPct.slice();return evenSplit(d.length)};
 const MediaBadge=({type,size="sm"})=>{const cat=mediaCategory(type);const c=MEDIA_CAT_COLORS[cat];const pad=size==="sm"?"1px 6px":"2px 8px";const fs=size==="sm"?10:11;return React.createElement("span",{style:{display:"inline-block",padding:pad,borderRadius:3,fontSize:fs,fontWeight:700,color:c.fg,background:c.bg,border:"1px solid "+c.border,letterSpacing:.3,textTransform:"uppercase"}},cat)};
 // Stable, deterministic color for any creative title. Same input → same color, always.
 // Used to color boards by what creative is running on them (independent of market prefix in ISCI code).
@@ -1095,6 +1100,7 @@ const App=()=>{
         if(docs.settings?.data){try{const s=JSON.parse(docs.settings.data);if(typeof s.campaignIcsUrl==="string")setCampaignIcsUrl(s.campaignIcsUrl)}catch(_e){}}
         try{if(docs.wkOohIscis?.data){const d=JSON.parse(docs.wkOohIscis.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>{if(d[p.boardId]===undefined)return p;const _ic=d[p.boardId];const _m=OOH_RENUMBER[_ic]||_ic;return{...p,isci:/^[A-Z]{3}WK26[A-Z]{2}\d+O$/.test(_m)?_m:p.isci}}))}}catch(_e){console.warn("wkOohIscis load skipped",_e)}
         try{if(docs.wkOohDesigns?.data){const d=JSON.parse(docs.wkOohDesigns.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>{if(d[p.boardId]===undefined)return p;const v=d[p.boardId];return{...p,design:Array.isArray(v)?v.filter(Boolean):(v?[v]:[])}}))}}catch(_e){console.warn("wkOohDesigns load skipped",_e)}
+        try{if(docs.wkOohDesignPct?.data){const d=JSON.parse(docs.wkOohDesignPct.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>{if(d[p.boardId]===undefined)return p;const v=d[p.boardId];return{...p,designPct:Array.isArray(v)?v:[]}}))}}catch(_e){console.warn("wkOohDesignPct load skipped",_e)}
         try{if(docs.wkOohCreativeList?.data){const d=JSON.parse(docs.wkOohCreativeList.data);if(d&&typeof d==="object"&&!Array.isArray(d))setOohCreatives({bulletin:[...new Set([...WK_OOH_CREATIVES.bulletin,...(d.bulletin||[])])],poster:[...new Set([...WK_OOH_CREATIVES.poster,...(d.poster||[])])]})}}catch(_e){console.warn("wkOohCreativeList load skipped",_e)}
         try{if(docs.plOohIscis?.data){const d=JSON.parse(docs.plOohIscis.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isci:d[p.unit]}:p))}}catch(_e){console.warn("plOohIscis load skipped",_e)}
         try{if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}}catch(_e){console.warn("oohPhotos load skipped",_e)}
@@ -1301,6 +1307,7 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("customTags",customFields)},[customFields,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(pops.filter(p=>p.isci).map(p=>[p.boardId,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("wkOohIscis",isciMap)},[pops,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const designMap=Object.fromEntries(pops.filter(p=>Array.isArray(p.design)&&p.design.length).map(p=>[p.boardId,p.design]));if(Object.keys(designMap).length>0)saveToDb("wkOohDesigns",designMap)},[pops,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const pctMap=Object.fromEntries(pops.filter(p=>Array.isArray(p.designPct)&&p.designPct.length).map(p=>[p.boardId,p.designPct]));if(Object.keys(pctMap).length>0)saveToDb("wkOohDesignPct",pctMap)},[pops,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("wkOohCreativeList",oohCreatives)},[oohCreatives,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(plPanels.filter(p=>p.isci).map(p=>[p.unit,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("plOohIscis",isciMap)},[plPanels,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohPhotos).length>0)saveToDb("oohPhotos",oohPhotos)},[oohPhotos,dbLoaded]);
@@ -1468,7 +1475,7 @@ const App=()=>{
   // OOH WK page state (lifted to prevent remount on photo upload)
   const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");const[oohMapMode,setOohMapMode]=useState("market");const[oohClusterRadius,setOohClusterRadius]=useState(3);
   const[oohEditId,setOohEditId]=useState(null);const[oohEditVal,setOohEditVal]=useState("");
-  const[oohDesignEditId,setOohDesignEditId]=useState(null);const[oohDesignEditVal,setOohDesignEditVal]=useState("");
+  const[oohDesignEditId,setOohDesignEditId]=useState(null);const[oohDesignEditVal,setOohDesignEditVal]=useState("");const[oohDesignEditPct,setOohDesignEditPct]=useState([]);
   const[oohCreatives,setOohCreatives]=useState(WK_OOH_CREATIVES);
   const[oohPhotoPanel,setOohPhotoPanel]=useState(null);
   const[oohLines,setOohLines]=useState([{flight:"",isci:"",units:"",notes:""}]);
@@ -2223,7 +2230,7 @@ const App=()=>{
       <div style={{display:"flex",gap:3}}>{MEDIA.filter(m=>m!=="OOH").map(m=>{const count=iscis.filter(i=>i.media===m&&i.brand===isciBrand&&i.active&&i.suffix!=="O").length;return<button key={m} onClick={()=>setF("media",sf.media===m?"":m)} style={{flex:1,padding:"4px",borderRadius:6,border:sf.media===m?`2px solid ${mc(m)}`:"1px solid #E8DFF0",background:sf.media===m?mc(m)+"18":"#fff",cursor:"pointer",textAlign:"center",opacity:count?1:0.5}}><div style={{fontSize:14,fontWeight:700,color:mc(m)}}>{m}</div><div style={{fontSize:13,fontWeight:800}}>{count}</div></button>})}</div>
       <div style={{display:"flex",gap:5,alignItems:"end",flexWrap:"wrap"}}>
         <input placeholder="Search..." value={isciSearch} onChange={e=>setIsciSearch(e.target.value)} style={{width:180,padding:"6px 9px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
-        <Sel options={DL.filter(d=>(isciBrand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"]).includes(d.code)).map(d=>({v:d.code,l:`${d.code} - ${d.name}`}))} value={sf.dma} onChange={v=>setF("dma",v)} placeholder="All DMAs"/>
+        <Sel options={DL.filter(d=>(isciBrand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG","NSH"]).includes(d.code)).map(d=>({v:d.code,l:`${d.code} - ${d.name}`}))} value={sf.dma} onChange={v=>setF("dma",v)} placeholder="All DMAs"/>
         <label style={{fontSize:14,display:"flex",alignItems:"center",gap:3,cursor:"pointer"}}><input type="checkbox" checked={showOff} onChange={e=>setShowOff(e.target.checked)}/> Inactive</label>
         {(sf.media||sf.dma||isciSearch)&&<Btn small onClick={()=>{setSf({brand:"",media:"",dma:"",search:"",estGroup:""});setIsciSearch("")}}>Clear</Btn>}
       </div>
@@ -3667,7 +3674,7 @@ const App=()=>{
   const OohPg=()=>{
     const om=oohOm,setOm=setOohOm,ov=oohOv,setOv=setOohOv,oVend=oohOVend,setOVend=setOohOVend,viewMode=oohViewMode,setViewMode=setOohViewMode,trafficMode=oohTrafficMode,setTrafficMode=setOohTrafficMode,typeF=oohTypeF,setTypeF=setOohTypeF;
     const editId=oohEditId,setEditId=setOohEditId,editVal=oohEditVal,setEditVal=setOohEditVal;
-    const dEditId=oohDesignEditId,setDEditId=setOohDesignEditId,dEditVal=oohDesignEditVal,setDEditVal=setOohDesignEditVal;
+    const dEditId=oohDesignEditId,setDEditId=setOohDesignEditId,dEditVal=oohDesignEditVal,setDEditVal=setOohDesignEditVal,dEditPct=oohDesignEditPct,setDEditPct=setOohDesignEditPct;
     const photoPanel=oohPhotoPanel,setPhotoPanel=setOohPhotoPanel;
     const oLines=oohLines,setOLines=setOohLines;
     const oPostDates=oohPostDates,setOPostDates=setOohPostDates;
@@ -3880,10 +3887,17 @@ const App=()=>{
       setTrafficHistory(prev=>[{ts:new Date().toISOString(),est:"OOH-"+mktLabel+"-"+vendorName,brand:"Wettermark Keith",market:mktLabel,media:"OOH",buyer:"Amy Coffey",month:workMonth,flight:oPostDates,version:oVersion,comments:(oComments||"")+" | Vendor: "+vendorName,iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:grand,vendor:vendorName},...prev]);
       log("OOH Vendor Sheet",mktLabel+" · "+vendorName+" · "+grand+" boards");notify("Vendor traffic sheet — "+grand+" boards");
     };
-    const startDEdit=(board)=>{const n=creativeSlots(board.type,board.size);const cur=Array.isArray(board.design)?board.design:[];setDEditId(board.boardId);setDEditVal(Array.from({length:n},(_,k)=>cur[k]||""))};
+    const startDEdit=(board)=>{const bc=boardClass(board.type,board.size);const cur=Array.isArray(board.design)?board.design:[];setDEditId(board.boardId);
+      if(bc.rotates){const rows=cur.length?[...cur]:["",""];const pct=(Array.isArray(board.designPct)&&board.designPct.length===rows.length)?[...board.designPct]:evenSplit(rows.length);setDEditVal(rows);setDEditPct(pct)}
+      else{setDEditVal(Array.from({length:bc.slots},(_,k)=>cur[k]||""));setDEditPct([])}};
     const setDSlot=(k,v)=>setDEditVal(prev=>{const a=Array.isArray(prev)?[...prev]:[];a[k]=v;return a});
-    const saveDEdit=(boardId)=>{const v=(Array.isArray(dEditVal)?dEditVal:[]).map(s=>(s||"").trim()).filter(Boolean);setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,design:v}:p));setDEditId(null);log("OOH Creative",`${boardId} → ${v.join(" / ")||"(cleared)"}`);notify(`${boardId} creative ${v.length?"set":"cleared"}`)};
-    const cancelDEdit=()=>{setDEditId(null);setDEditVal("")};
+    const setDPct=(k,v)=>setDEditPct(prev=>{const a=Array.isArray(prev)?[...prev]:[];a[k]=Math.max(0,Math.min(100,parseInt(v,10)||0));return a});
+    // Add / remove a rotation entry, then re-even the split (auto-calc by count).
+    const addDRow=()=>{const a=[...(Array.isArray(dEditVal)?dEditVal:[]),""];setDEditVal(a);setDEditPct(evenSplit(a.length))};
+    const removeDRow=(k)=>{const a=(Array.isArray(dEditVal)?dEditVal:[]).filter((_,i)=>i!==k);setDEditVal(a);setDEditPct(evenSplit(a.length))};
+    const evenSplitNow=()=>setDEditPct(evenSplit((Array.isArray(dEditVal)?dEditVal:[]).filter(Boolean).length||((Array.isArray(dEditVal)?dEditVal:[]).length)));
+    const saveDEdit=(boardId)=>{const bd=pops.find(p=>p.boardId===boardId);const rot=!!(bd&&boardClass(bd.type,bd.size).rotates);const raw=Array.isArray(dEditVal)?dEditVal:[];const pairs=raw.map((c,i)=>[(c||"").trim(),(dEditPct&&dEditPct[i])||0]).filter(x=>x[0]);const v=pairs.map(x=>x[0]);const pct=rot?pairs.map(x=>x[1]):[];setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,design:v,designPct:pct}:p));setDEditId(null);log("OOH Creative",`${boardId} → ${(rot?pairs.map(x=>x[0]+" "+x[1]+"%"):v).join(" / ")||"(cleared)"}`);notify(`${boardId} creative ${v.length?"set":"cleared"}`)};
+    const cancelDEdit=()=>{setDEditId(null);setDEditVal("");setDEditPct([])};
 
     const dmaColors={BRM:"#D4A040",MTG:"#ec4899",GAD:"#059669",CHA:"#4AC8E8",HSV:"#f97316",KNX:"#6366f1",DHN:"#84cc16",NSH:"#06b6d4"};
 
@@ -3962,9 +3976,27 @@ const App=()=>{
                 <span style={{fontSize:11,fontWeight:700,color:dl.length>=slots?"#5BC4A0":"#D4A040"}}>{dl.length}/{slots} {bc.unit}{slots>1?"s":""}</span>
               </div>
               <div style={{fontSize:10,color:"#6B5E80",marginBottom:3}}>{bc.spec} · {p.size}{p.vendorRef?<span style={{marginLeft:4}} title="Lamar's 2026 Design reference">· Lamar: {p.vendorRef}</span>:""}</div>
-              {dEditId===p.boardId?(()=>{const picked=(dEditVal||[]).filter(Boolean);const dup=picked.length!==new Set(picked).size;return
+              {dEditId===p.boardId?(()=>{const picked=(dEditVal||[]).filter(Boolean);const dup=picked.length!==new Set(picked).size;const sum=(dEditPct||[]).reduce((a,b)=>a+(b||0),0);return
                 <div style={{display:"flex",flexDirection:"column",gap:3}}>
-                  {Array.from({length:slots}).map((_,k)=><div key={k} style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:10,fontWeight:700,color:bc.color,minWidth:54}}>{bc.rotates?(bc.unit==="position"?"Pos "+(k+1):"Frame "+(k+1)):"Creative "+(k+1)}</span>
+                  {bc.rotates?<React.Fragment>
+                    {(dEditVal||[]).map((cv,k)=><div key={k} style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:10,fontWeight:700,color:bc.color,minWidth:34}}>{(bc.unit==="position"?"Pos ":"#")+(k+1)}</span>
+                      <select value={cv||""} onChange={e=>{if(e.target.value==="__new__"){const v=addCreativeConcept(p);if(v)setDSlot(k,v)}else setDSlot(k,e.target.value)}} style={{flex:1,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}>
+                        <option value="">— pick creative —</option>
+                        {poolFor(p).map(c=><option key={c} value={c}>{c}</option>)}
+                        <option value="__new__">➕ Add new creative…</option>
+                      </select>
+                      <input type="number" min="0" max="100" value={(dEditPct&&dEditPct[k]!=null)?dEditPct[k]:""} onChange={e=>setDPct(k,e.target.value)} style={{width:46,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0",textAlign:"right"}}/>
+                      <span style={{fontSize:11,color:"#9B8EAD"}}>%</span>
+                      <button onClick={()=>removeDRow(k)} title="Remove creative" style={{padding:"0 5px",background:"none",border:"none",color:"#E85A7A",fontSize:14,cursor:"pointer"}}>✕</button>
+                    </div>)}
+                    <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                      <button onClick={addDRow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#4AC8E8",border:"1px solid #4a3565",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>➕ Add creative</button>
+                      <button onClick={evenSplitNow} title="Split 100% evenly across the creatives" style={{padding:"2px 8px",background:"#2a1f3e",color:"#5BC4A0",border:"1px solid #4a3565",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>⚖ Even split</button>
+                      <span style={{fontSize:11,fontWeight:800,color:sum===100?"#5BC4A0":"#E85A7A",marginLeft:"auto"}}>Total {sum}%</span>
+                    </div>
+                    {sum!==100&&picked.length>0&&<div style={{fontSize:10,color:"#E85A7A",fontWeight:700}}>⚠ Rotation should total 100% (currently {sum}%) — use Even split to auto-balance.</div>}
+                  </React.Fragment>:
+                  Array.from({length:slots}).map((_,k)=><div key={k} style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:10,fontWeight:700,color:bc.color,minWidth:54}}>{"Creative "+(k+1)}</span>
                     <select value={(dEditVal&&dEditVal[k])||""} onChange={e=>{if(e.target.value==="__new__"){const v=addCreativeConcept(p);if(v)setDSlot(k,v)}else setDSlot(k,e.target.value)}} style={{flex:1,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}} autoFocus={k===0}>
                       <option value="">— pick creative —</option>
                       {poolFor(p).map(c=><option key={c} value={c}>{c}</option>)}
@@ -3977,7 +4009,7 @@ const App=()=>{
                   </div>
                 </div>;})():
                 <div onClick={()=>startDEdit(p)} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",gap:4}}>
-                  {dl.length?<div style={{display:"flex",flexWrap:"wrap",gap:3,alignItems:"center"}}>{dl.map((c,k)=><React.Fragment key={k}>{bc.rotates&&k>0&&<span style={{fontSize:11,color:bc.color}}>→</span>}<span style={{fontSize:12,fontWeight:700,color:"#fff",background:creativeColor(c),padding:"1px 6px",borderRadius:8}}>{c}</span></React.Fragment>)}{(new Set(dl).size!==dl.length)&&<span style={{fontSize:10,color:"#E85A7A",fontWeight:700}} title="Same creative more than once">⚠ dup</span>}</div>
+                  {dl.length?(()=>{const pcts=bc.rotates?designPcts(dl,p.designPct):null;return <div style={{display:"flex",flexWrap:"wrap",gap:3,alignItems:"center"}}>{dl.map((c,k)=><React.Fragment key={k}>{bc.rotates&&k>0&&<span style={{fontSize:11,color:bc.color}}>→</span>}<span style={{fontSize:12,fontWeight:700,color:"#fff",background:creativeColor(c),padding:"1px 6px",borderRadius:8}}>{c}{pcts?" · "+pcts[k]+"%":""}</span></React.Fragment>)}{(new Set(dl).size!==dl.length)&&<span style={{fontSize:10,color:"#E85A7A",fontWeight:700}} title="Same creative more than once">⚠ dup</span>}</div>;})()
                   :<div style={{fontSize:13,color:"#9b7bb0",fontStyle:"italic"}}>Click to add {slots} {bc.unit}{slots>1?"s":""}</div>}
                   <span style={{fontSize:13,color:"#9B8EAD",flexShrink:0}}>✎</span>
                 </div>
@@ -4832,7 +4864,7 @@ const App=()=>{
     const isTag=f2.media==="Tagline";
     const isPT=isOoh&&f2.oohType==="PT";
     const isCampaign=isDisplay&&!!f2.noMkt;
-    const suf=SUFFIXES[f2.media]||"T";const bD=f2.brand==="PL"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
+    const suf=SUFFIXES[f2.media]||"T";const bD=f2.brand==="PL"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG","NSH"];
     const durField=isOoh?f2.oohType:isDisplay?f2.displayType:f2.dur;
     const brandName=f2.brand==="PL"?"Postman Law":"Wettermark Keith";
     const normTitle=function(t){var s=(t||"").toLowerCase().trim();Object.values(DM).forEach(function(n){s=s.split(n.toLowerCase()).join("")});Object.keys(DM).forEach(function(c){s=s.split(c.toLowerCase()).join("")});return s.replace(/[-–—,_\s]+/g," ").trim()};
