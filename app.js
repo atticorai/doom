@@ -3958,7 +3958,7 @@ const App=()=>{
             <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:p.isci?"#1f3530":"#fffbeb",border:`1px solid ${p.isci?"#bbf7d0":"#fde68a"}`}}>
               {editId===p.boardId?
                 <div style={{display:"flex",gap:3,alignItems:"center"}}>
-                  <input value={editVal} onChange={e=>setEditVal(e.target.value)} style={{flex:1,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:14,fontFamily:"monospace"}} placeholder="ISCI code..." autoFocus onKeyDown={e=>{if(e.key==="Enter")saveEdit(p.boardId);if(e.key==="Escape")cancelEdit()}}/>
+                  {(()=>{const opts=iscis.filter(i=>i.suffix==="O"&&i.dma===p.dma&&i.active).sort((a,b)=>a.code.localeCompare(b.code));return<select value={editVal} onChange={e=>setEditVal(e.target.value)} autoFocus style={{flex:1,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:13,background:"#1e1233",color:"#E8DFF0"}} onKeyDown={e=>{if(e.key==="Escape")cancelEdit()}}><option value="">{opts.length?("— pick "+(p.dma||"")+" ISCI —"):("No "+(p.dma||"")+" ISCIs registered yet")}</option>{opts.map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}</option>)}</select>})()}
                   <button onClick={()=>saveEdit(p.boardId)} style={{padding:"2px 6px",background:"#5BC4A0",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✓</button>
                   <button onClick={cancelEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
                 </div>:
@@ -10433,7 +10433,11 @@ Rules:
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
     {syncError&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ A save just failed ({COL_LABEL(syncError.col)}) — your last change may NOT have been saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setSyncError(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
     {externalChange&&<div style={{position:"fixed",top:syncError?37:0,left:0,right:0,zIndex:9998,background:"#D4A040",color:"#1e1233",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ Updated in another session: {externalChange.map(COL_LABEL).join(", ")}. Reload before editing so you don't overwrite it. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #1e1233",background:"transparent",color:"#1e1233",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setExternalChange(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #1e1233",background:"transparent",color:"#1e1233",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
-    <OohHub/>
+    {/* Call as a function, NOT <OohHub/>: OohHub is defined inside App, so a new
+        identity each render made <OohHub/> remount the whole hub on every
+        keystroke (inputs lost focus after one char). It has no hooks of its own,
+        so inlining its output keeps the tree position stable. */}
+    {OohHub()}
     {(modal==="newIsci"||modal?.t==="newIsci")&&<NewIsciMod defaultMedia={modal?.defaultMedia||null}/>}
     {modal?.t==="socialTraffic"&&<SocialTrafficMod/>}
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
