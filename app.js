@@ -3876,7 +3876,7 @@ const App=()=>{
           const _bg=_boaz?'#dbeafe':(_keep?'#dcfce7':(_rot?'#fff3bf':(_rev&&!resendOnly?'#fce7f3':'')));
           const _crCellOut=_keep?'<b style="color:#15803d">KEEP CURRENT CREATIVE</b><br><span style="color:#555;font-size:9px">Perm glitter-disc — already up, do not retraffic</span>':crCell;
           const _isciOut=_keep?'<b style="color:#15803d">Keep current</b>':escHtml(_tbd?"—":(p.isci||"—"));
-          w.document.write('<tr'+(_bg?' style="background:'+_bg+'"':'')+'><td style="font-family:monospace;font-weight:700">'+_panelCell+'</td><td>'+_loc+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(_tbd?"—":(p.size||""))+'</td><td style="text-align:right">'+(_tbd?"":(p.impressions?Number(p.impressions).toLocaleString():""))+'</td><td>'+_crCellOut+'</td><td style="font-family:monospace">'+_isciOut+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||oPostDates||"")+'</td></tr>')});
+          w.document.write('<tr'+(_bg?' style="background:'+_bg+'"':'')+'><td style="font-family:monospace;font-weight:700">'+_panelCell+'</td><td>'+_loc+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(_tbd?"—":(p.size||""))+'</td><td style="text-align:right">'+(_tbd?"":(p.impressions?Number(p.impressions).toLocaleString():""))+'</td><td>'+_crCellOut+'</td><td style="font-family:monospace">'+_isciOut+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||(p.installDate?fmtD(p.installDate):"")||oPostDates||"")+'</td></tr>')});
         w.document.write('</table>')});
       w.document.write('<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+grand+'</div>');
       w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
