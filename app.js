@@ -3740,10 +3740,13 @@ const App=()=>{
     // on-screen), coloured by creative, with bunching warnings and a
     // per-creative board breakdown. Vendor-ready.
     const printCreativeMap=()=>{
-      const scope=fl.filter(p=>(Array.isArray(p.design)&&p.design.length));
-      if(!scope.length){notify("Assign creatives first (🪄 Auto-name)");return}
+      // Count a board as "has creative" if it has design concepts OR an assigned ISCI
+      // (Nashville carries creative via ISCI, with design cleared).
+      const _crOf=(p)=>(Array.isArray(p.design)&&p.design.length)?p.design[0]:(isciTitle(p.isci)||p.isci||"");
+      const scope=fl.filter(p=>_crOf(p));
+      if(!scope.length){notify("Assign a creative or ISCI to the boards first");return}
       const mktLabel=om?(DM[om]||om):"All Markets";
-      const cids=scope.map(p=>oohCreativeId(p.design[0],p.type,p.size));
+      const cids=scope.map(p=>oohCreativeId(_crOf(p),p.type,p.size));
       const titles=[...new Set(cids)].sort();
       const crColor=(t)=>{const i=titles.indexOf(t);return i>=0?CREATIVE_PALETTE[i%CREATIVE_PALETTE.length]:creativeColor(t)};
       const pins=scope.map((p,pi)=>{const co=WK_COORDS[p.boardId];const cid=cids[pi];return{panel:String(p.panel),sub:p.submarket||"",loc:p.location||"",size:p.size||"",dma:oohMarket(p.dma),creative:cid,color:crColor(cid),lat:co?co[0]:null,lng:co?co[1]:null,approx:isApproxCoord(p.boardId)}});
