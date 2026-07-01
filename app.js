@@ -722,6 +722,8 @@ const WK_COORDS={"CHA-RGN-4010":[35.177601,-84.914373],"CHA-RGN-6005":[35.016692
 // Merge approximate coordinates for 2026-renewal new boards (loaded from data-ooh-coords-new.js)
 try{if(typeof WK_COORDS_NEW!=="undefined")Object.assign(WK_COORDS,WK_COORDS_NEW)}catch(_e){}
 const isApproxCoord=(id)=>{try{return typeof OOH_APPROX!=="undefined"&&OOH_APPROX.has(id)}catch(_e){return false}};
+// Boards the vendor contract marks Illum=No (unlit / "dark") — grayed out in the UI.
+const isDarkBoard=(id)=>{try{return typeof OOH_DARK!=="undefined"&&OOH_DARK.has(id)}catch(_e){return false}};
 
 // ── PL OOH PoP CONFIRMATIONS (from Wilkins PoP PPTXs) ──
 const PL_POPS={"2084":{popDate:"2/5/2026",contract:"2026-41440"},"7061O":{popDate:"2/6/2026",contract:"2026-41440"},"1640":{popDate:"2/4/2026",contract:"2026-41440"},"2015":{popDate:"2/18/2026",contract:"2026-41440"},"1398":{popDate:"12/15/2025",contract:"2025-40749"},"IM009":{popDate:"12/11/2025",contract:"2025-40749"},"IM010":{popDate:"12/11/2025",contract:"2025-40749"},"1569":{popDate:"12/11/2025",contract:"2025-40749"},"1512O":{popDate:"12/11/2025",contract:"2025-40749"},"1565O":{popDate:"12/11/2025",contract:"2025-40749"},"8313RO":{popDate:"12/2/2025",contract:"2025-40749"},"8520KO":{popDate:"12/2/2025",contract:"2025-40749"},"1282":{popDate:"12/11/2025",contract:"2025-40749"},"1070":{popDate:"12/11/2025",contract:"2025-40749"},"1636":{popDate:"12/11/2025",contract:"2025-40749"},"1084":{popDate:"12/11/2025",contract:"2025-40749"},"1304":{popDate:"12/11/2025",contract:"2025-40749"},"156A":{popDate:"2/6/2026",contract:"2026-41665"},"410A":{popDate:"11/12/2025",contract:"2025-37862"}};
@@ -3969,7 +3971,9 @@ const App=()=>{
       {fl.map((p,i)=>{const c=dmaColors[p.dma]||"#64748b";const closeImg=POP_IMGS[p.closeImg];const uploadedPhotos=oohPhotos[p.boardId]||[];const hasAnyPhoto=closeImg||uploadedPhotos.length>0;
         const allPhotosForCard=[...(closeImg?[{url:closeImg,label:"Close-up",hardcoded:true}]:[]),...(POP_IMGS[p.distImg]?[{url:POP_IMGS[p.distImg],label:"Distance",hardcoded:true}]:[]),...uploadedPhotos];
         const heroImg=uploadedPhotos.length>0?uploadedPhotos[uploadedPhotos.length-1].url:closeImg;
-        return<div key={p.boardId} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:"#F0E8F8",borderLeft:`4px solid ${c}`}}>
+        const dark=isDarkBoard(p.boardId);
+        return<div key={p.boardId} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:dark?"#e5e7eb":"#F0E8F8",borderLeft:`4px solid ${dark?"#6b7280":c}`,filter:dark?"grayscale(1)":"none",opacity:dark?0.72:1,position:"relative"}}>
+          {dark&&<div style={{position:"absolute",top:6,left:6,zIndex:2,background:"#374151",color:"#e5e7eb",padding:"1px 7px",borderRadius:10,fontSize:10,fontWeight:800,letterSpacing:.5}}>🌑 DARK · UNLIT</div>}
           {hasAnyPhoto?<div style={{position:"relative",cursor:"pointer",height:120,overflow:"hidden"}} onClick={()=>setModal({type:"oohPhoto",id:p.boardId,photos:allPhotosForCard,startIdx:0})}>
             <img src={heroImg} style={{width:"100%",height:"100%",objectFit:"cover"}} alt={p.panel}/>
             <div style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.7)",color:"#fff",padding:"2px 8px",borderRadius:12,fontSize:13}}>📷 {allPhotosForCard.length} photo{allPhotosForCard.length>1?"s":""}</div>
