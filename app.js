@@ -724,6 +724,8 @@ try{if(typeof WK_COORDS_NEW!=="undefined")Object.assign(WK_COORDS,WK_COORDS_NEW)
 const isApproxCoord=(id)=>{try{return typeof OOH_APPROX!=="undefined"&&OOH_APPROX.has(id)}catch(_e){return false}};
 // Boards the vendor contract marks Illum=No (unlit / "dark") — grayed out in the UI.
 const isDarkBoard=(id)=>{try{return typeof OOH_DARK!=="undefined"&&OOH_DARK.has(id)}catch(_e){return false}};
+// Prior-year OOH buys archived by CONTRACT id — hidden from active hub views, kept for reference.
+const isArchivedContract=(c)=>{try{return typeof OOH_ARCHIVE!=="undefined"&&OOH_ARCHIVE.has(String(c))}catch(_e){return false}};
 
 // ── PL OOH PoP CONFIRMATIONS (from Wilkins PoP PPTXs) ──
 const PL_POPS={"2084":{popDate:"2/5/2026",contract:"2026-41440"},"7061O":{popDate:"2/6/2026",contract:"2026-41440"},"1640":{popDate:"2/4/2026",contract:"2026-41440"},"2015":{popDate:"2/18/2026",contract:"2026-41440"},"1398":{popDate:"12/15/2025",contract:"2025-40749"},"IM009":{popDate:"12/11/2025",contract:"2025-40749"},"IM010":{popDate:"12/11/2025",contract:"2025-40749"},"1569":{popDate:"12/11/2025",contract:"2025-40749"},"1512O":{popDate:"12/11/2025",contract:"2025-40749"},"1565O":{popDate:"12/11/2025",contract:"2025-40749"},"8313RO":{popDate:"12/2/2025",contract:"2025-40749"},"8520KO":{popDate:"12/2/2025",contract:"2025-40749"},"1282":{popDate:"12/11/2025",contract:"2025-40749"},"1070":{popDate:"12/11/2025",contract:"2025-40749"},"1636":{popDate:"12/11/2025",contract:"2025-40749"},"1084":{popDate:"12/11/2025",contract:"2025-40749"},"1304":{popDate:"12/11/2025",contract:"2025-40749"},"156A":{popDate:"2/6/2026",contract:"2026-41665"},"410A":{popDate:"11/12/2025",contract:"2025-37862"}};
@@ -3684,13 +3686,16 @@ const App=()=>{
     const oComments=oohComments,setOComments=setOohComments;
     const editContract=oohEditContract,setEditContract=setOohEditContract;
     const editDates=oohEditDates,setEditDates=setOohEditDates;
-    const markets=[...new Set(pops.map(p=>oohMarket(p.dma)))].sort();
+    // Active boards only — archived (prior-year) buys are excluded from every working view.
+    const activePops=pops.filter(p=>!isArchivedContract(p.contract));
+    const archivedPops=pops.filter(p=>isArchivedContract(p.contract));
+    const markets=[...new Set(activePops.map(p=>oohMarket(p.dma)))].sort();
     const dmas=markets; // markets read by full name (Birmingham, Montgomery…); GAD folds into Birmingham
-    const subs=[...new Set(pops.map(p=>p.submarket))].sort();
-    const vendors=[...new Set(pops.map(p=>p.vendor))].sort();
-    const marketColor=(mkt)=>{const b=pops.find(p=>oohMarket(p.dma)===mkt);return b?(dmaColors[b.dma]||"#64748b"):"#64748b"};
-    const btypes=[...new Set(pops.map(p=>oohBoardType(p.type,p.size)))].sort();
-    const fl=pops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true)&&(typeF?oohBoardType(p.type,p.size)===typeF:true));
+    const subs=[...new Set(activePops.map(p=>p.submarket))].sort();
+    const vendors=[...new Set(activePops.map(p=>p.vendor))].sort();
+    const marketColor=(mkt)=>{const b=activePops.find(p=>oohMarket(p.dma)===mkt);return b?(dmaColors[b.dma]||"#64748b"):"#64748b"};
+    const btypes=[...new Set(activePops.map(p=>oohBoardType(p.type,p.size)))].sort();
+    const fl=activePops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true)&&(typeF?oohBoardType(p.type,p.size)===typeF:true));
     const tagged=fl.filter(p=>p.isci).length;
     const totalImpr=fl.reduce((a,p)=>a+p.impressions,0);
 
@@ -4070,7 +4075,7 @@ const App=()=>{
       {photoPanel&&<PhotoModal p={photoPanel} onClose={()=>setPhotoPanel(null)}/>}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
         <div><PageHead title="Wettermark Keith — OOH Postings" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>{pops.length} boards · {markets.length} markets · 2026 Lamar renewal · {totalImpr.toLocaleString()} weekly impressions · {pops.filter(p=>Array.isArray(p.design)&&p.design.length).length} with creative</p>
+          <p style={{fontSize:13,color:"#9B8EAD"}}>{activePops.length} boards · {markets.length} markets · 2026 Lamar renewal · {totalImpr.toLocaleString()} weekly impressions · {pops.filter(p=>Array.isArray(p.design)&&p.design.length).length} with creative</p>
         </div>
         <div style={{display:"flex",gap:4}}>
           <Btn small onClick={()=>{
@@ -4087,6 +4092,7 @@ const App=()=>{
           <Btn small onClick={()=>setViewMode("ref")} primary={viewMode==="ref"}>📋 Reference</Btn>
           <Btn small onClick={()=>setViewMode("traffic")} primary={viewMode==="traffic"} color="#D4A040">📡 Traffic</Btn>
           <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"} color="#9b7bb0">📑 Contracts</Btn>
+          {archivedPops.length>0&&<Btn small onClick={()=>setViewMode("archive")} primary={viewMode==="archive"} color="#6b7280">🗄 Archive ({archivedPops.length})</Btn>}
         </div>
       </div>
       <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
@@ -4110,7 +4116,7 @@ const App=()=>{
       </div>
       {/* DMA stats */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
-        {dmas.map(d=>{const all=pops.filter(p=>oohMarket(p.dma)===d);const p=all.filter(x=>x.isci).length;const impr=all.reduce((a,x)=>a+x.impressions,0);const c=marketColor(d);
+        {dmas.map(d=>{const all=activePops.filter(p=>oohMarket(p.dma)===d);const p=all.filter(x=>x.isci).length;const impr=all.reduce((a,x)=>a+x.impressions,0);const c=marketColor(d);
           return<div key={d} onClick={()=>setOm(om===d?"":d)} style={{padding:"10px 12px",borderRadius:9,border:om===d?`2px solid ${c}`:"1px solid #E8DFF0",background:om===d?c+"0a":"#fff",cursor:"pointer"}}>
             <div style={{fontSize:13,fontWeight:700,color:c,textTransform:"uppercase",letterSpacing:1}}>{d}</div>
             <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{all.length}</div>
@@ -4120,7 +4126,7 @@ const App=()=>{
         })}
         <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #4a3565",background:"linear-gradient(135deg,#fffbeb,#fef3c7)"}}>
           <div style={{fontSize:13,fontWeight:700,color:"#D4A040",textTransform:"uppercase",letterSpacing:1}}>ALL DMAs</div>
-          <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{pops.length}</div>
+          <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{activePops.length}</div>
           <div style={{fontSize:14,color:"#D4A040",fontWeight:600}}>{totalImpr.toLocaleString()} wkly</div>
           <div style={{fontSize:13,color:"#9B8EAD"}}>{fl.length} active{tagged?" · "+tagged+" ISCI tagged":""}</div>
         </div>
@@ -4224,7 +4230,7 @@ const App=()=>{
         const delL=(i)=>setOLines(p=>p.filter((_,j)=>j!==i));
         const dmaLabel=om||dmas.join("/");
         const trafficVendor=oVend||"";
-        const vendorBoards=pops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(trafficVendor?p.vendor===trafficVendor:true));
+        const vendorBoards=activePops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(trafficVendor?p.vendor===trafficVendor:true));
         const vendorPanels=vendorBoards.filter(p=>oohTypeF?oohBoardType(p.type,p.size)===oohTypeF:true).map(p=>({id:p.boardId,panel:p.panel,dma:p.dma,sub:p.submarket,loc:p.location,type:p.type,size:p.size,impr:p.impressions,tab:p.tab,design:p.design,isci:p.isci})).sort((a,b)=>a.dma.localeCompare(b.dma)||a.panel.localeCompare(b.panel));
         const totalUnits=oLines.reduce((a,l)=>a+(parseInt(l.units)||0),0);
         const totalPanels=oLines.filter(l=>l.panel).length;
@@ -4318,6 +4324,18 @@ const App=()=>{
           </div>
         </Cd>;
        })():
+      viewMode==="archive"?<Cd><div style={{padding:12}}>
+        <div style={{fontSize:14,fontWeight:800,marginBottom:2}}>🗄 OOH Archive — Wettermark Keith</div>
+        <div style={{fontSize:11,color:"#9B8EAD",marginBottom:10}}>Prior-year buys, kept for reference. Hidden from all active views, counts, maps, and trafficking.</div>
+        {(()=>{const byMkt={};archivedPops.forEach(p=>{const m=oohMarket(p.dma);(byMkt[m]=byMkt[m]||[]).push(p)});return Object.entries(byMkt).sort((a,b)=>a[0].localeCompare(b[0])).map(([mkt,boards])=>{const byC={};boards.forEach(p=>{(byC[p.contract]=byC[p.contract]||[]).push(p)});return<div key={mkt} style={{marginBottom:14}}>
+          <div style={{fontSize:13,fontWeight:800,color:"#D4A040",padding:"5px 9px",background:"#2d1f42",borderRadius:5}}>{mkt} — {boards.length} archived boards</div>
+          {Object.entries(byC).map(([c,bds])=><div key={c} style={{marginTop:6,filter:"grayscale(.5)",opacity:.85}}>
+            <div style={{fontSize:12,fontWeight:700,color:"#9B8EAD",margin:"4px 0 3px"}}>{bds[0].vendor} · contract {c} · {bds.length} boards</div>
+            <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH w="70">Panel</TH><TH>Location</TH><TH w="100">Type</TH><TH w="70">Size</TH></tr></thead>
+            <tbody>{bds.slice().sort((a,b)=>String(a.panel).localeCompare(String(b.panel))).map((p,i)=><tr key={i}><TD m b>{p.panel}</TD><TD>{p.location}</TD><TD>{p.type}</TD><TD>{p.size}</TD></tr>)}</tbody></table>
+          </div>)}
+        </div>})})()}
+      </div></Cd>:
       viewMode==="contracts"?(()=>{
         const uniqueContracts=[...new Set(pops.map(p=>p.contract).filter(Boolean))];
         const startContractEdit=(cNum)=>{const c=oohContracts[cNum]||{};setEditContract(cNum);setEditDates({startDate:c.startDate||"",endDate:c.endDate||"",notes:c.notes||"",manualStatus:c.manualStatus||""})};
