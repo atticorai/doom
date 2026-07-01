@@ -292,4 +292,5 @@ const D_P_NEW = [
   ["NSH-LMR-80201-F2","Nashville","NSH","Lamar","Digital Bulletin","12'x42'","I-40 (S LOOP) S/S .4 MILE E/O I-65 EXIT 210 F/W · flight 2",724857,"2026-08-03","","Wettermark Keith","Greg Benefield","80201","30878465","5571406","","","","",""],
   ["NSH-LMR-80532-F2","Nashville","NSH","Lamar","Digital Bulletin","14'x48'","I-65 E/S .6 MILE N/O HARDING PLACE EXIT 76 F/S · flight 2",477818,"2026-09-21","","Wettermark Keith","Greg Benefield","80532","50670242","5571406","","","","",""],
   ["NSH-LMR-81500-F2","Nashville","NSH","Lamar","Digital Bulletin","14'x48'","I-40 S/S .5 MILE W/O I-440 EXIT 206 F/W · flight 2",267384,"2026-08-03","","Wettermark Keith","Greg Benefield","81500","30746334","5571406","","","","",""],
+  ["HSV-LMR-5003-F2","Huntsville","HSV","Lamar","Junior Bulletin","12'x25'","HWY 231 EL 800 FT S/O 12TH AVENUE FS · flight 2",52418,"2027-06-03","","Wettermark Keith","Greg Benefield","5003","","5571005","HSVWK26JP013O","","","Case Cause",""],
 ];
