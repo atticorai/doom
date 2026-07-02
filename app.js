@@ -4562,12 +4562,12 @@ const App=()=>{
     };
     const mkts=[...new Set(plPanels.map(p=>p.market))].sort();
     const plVendors=[...new Set(plPanels.map(p=>p.vendor))].sort();
-    // Only the current plan (2026) shows by default. Everything that isn't current —
-    // prior-cycle "inherited" flights and "expired" boards — is archived out of the
-    // default view (kept for the historical record) and revealed only when the Plan
-    // filter is set to that archived plan.
-    const plArchived=p=>p.plan!=="2026";
-    const fl=plPanels.filter(p=>(mktF?p.market===mktF:true)&&(vendF?p.vendor===vendF:true)&&(planF?p.plan===planF:p.plan==="2026"));
+    // The buy = current 2026 boards + inherited boards carried over from the prior cycle
+    // (they're still part of the annual buy, just on earlier flights). Both show by default,
+    // with inherited badged. Only genuinely dead boards (plan "expired" — contract ran out)
+    // are archived out of the default view and revealed via the Plan filter.
+    const plArchived=p=>p.plan==="expired";
+    const fl=plPanels.filter(p=>(mktF?p.market===mktF:true)&&(vendF?p.vendor===vendF:true)&&(planF?p.plan===planF:p.plan!=="expired"));
     const totalImpr=fl.reduce((a,p)=>a+(p.impressions*p.numUnits),0);
     const posted=fl.filter(p=>p.status==="posted").length;
     const upcoming=fl.filter(p=>p.status==="upcoming").length;
@@ -4690,7 +4690,7 @@ const App=()=>{
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
         <div><PageHead title="Postman Law — OOH Media Plan" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>2026 All Markets · {plPanels.filter(p=>p.plan==="2026").length} current placements across {mkts.length} DMAs · {plPanels.filter(p=>p.plan==="2026"&&p.isci).length}/{plPanels.filter(p=>p.plan==="2026").length} ISCI assigned{(()=>{const a=plPanels.filter(p=>p.plan!=="2026").length;return a?" · "+a+" archived":""})()}</p>
+          <p style={{fontSize:13,color:"#9B8EAD"}}>2026 All Markets · {plPanels.filter(p=>p.plan!=="expired").length} placements across {mkts.length} DMAs · {plPanels.filter(p=>p.plan!=="expired"&&p.isci).length}/{plPanels.filter(p=>p.plan!=="expired").length} ISCI assigned{(()=>{const a=plPanels.filter(p=>p.plan==="expired").length;return a?" · "+a+" archived":""})()}</p>
         </div>
         <div style={{display:"flex",gap:4}}>
           <Btn small onClick={()=>{
@@ -4716,7 +4716,7 @@ const App=()=>{
       </div>
       {/* Market stat cards */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
-        {mkts.map(m=>{const allM=plPanels.filter(p=>p.market===m);const all=allM.filter(p=>p.plan==="2026");const arch=allM.length-all.length;const impr=all.reduce((a,p)=>a+(p.impressions*p.numUnits),0);const u=new Set(all.map(p=>p.unit)).size;const p2026=all.filter(x=>x.plan==="2026").length;const pops=all.filter(x=>PL_POPS[x.unit]).length;const isciCount=all.filter(x=>x.isci).length;
+        {mkts.map(m=>{const allM=plPanels.filter(p=>p.market===m);const all=allM.filter(p=>p.plan!=="expired");const arch=allM.length-all.length;const impr=all.reduce((a,p)=>a+(p.impressions*p.numUnits),0);const u=new Set(all.map(p=>p.unit)).size;const p2026=all.filter(x=>x.plan==="2026").length;const pops=all.filter(x=>PL_POPS[x.unit]).length;const isciCount=all.filter(x=>x.isci).length;
           const c=mktColors[m]||"#64748b";
           return<div key={m} onClick={()=>setMktF(mktF===m?"":m)} style={{padding:"10px 12px",borderRadius:9,border:mktF===m?`2px solid ${c}`:"1px solid #E8DFF0",background:mktF===m?c+"0a":"#fff",cursor:"pointer"}}>
             <div style={{fontSize:13,fontWeight:700,color:c,textTransform:"uppercase",letterSpacing:1}}>{mktNames[m]}</div>
@@ -4728,7 +4728,7 @@ const App=()=>{
         })}
         <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #4a3565",background:"linear-gradient(135deg,#faf5ff,#F0E8F8)"}}>
           <div style={{fontSize:13,fontWeight:700,color:"#9b7bb0",textTransform:"uppercase",letterSpacing:1}}>ALL MARKETS</div>
-          <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{plPanels.filter(p=>p.plan==="2026").length}{(()=>{const a=plPanels.filter(p=>p.plan!=="2026").length;return a>0?<span style={{fontSize:12,fontWeight:600,color:"#9B8EAD"}}> +{a} arch</span>:null})()}</div>
+          <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{plPanels.filter(p=>p.plan!=="expired").length}{(()=>{const a=plPanels.filter(p=>p.plan==="expired").length;return a>0?<span style={{fontSize:12,fontWeight:600,color:"#9B8EAD"}}> +{a} arch</span>:null})()}</div>
           <div style={{fontSize:14,color:"#9b7bb0",fontWeight:600}}>{totalImpr.toLocaleString()} wkly</div>
           <div style={{fontSize:13,color:"#9B8EAD"}}>{posted} posted · {upcoming} upcoming</div>
         </div>
