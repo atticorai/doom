@@ -18,6 +18,9 @@ const OOH_CONTRACTS_INIT={
   // ── Postman Law · Wilkins ──
   "2025-37862":{num:"2025-37862",vendor:"Wilkins Media",brand:"Postman Law",dmas:["CHI"],startDate:"2025-10-01",endDate:"2026-03-31",notes:"CHI Q4 2025 inherited boards"},
   "2025-40749":{num:"2025-40749",vendor:"Wilkins Media",brand:"Postman Law",dmas:["CHI","CIN","DEN","MSP"],startDate:"2025-12-01",endDate:"2026-05-31",notes:"Multi-market Q1 2026 buy"},
-  "2026-41440":{num:"2026-41440",vendor:"Wilkins Media",brand:"Postman Law",dmas:["CHI","CIN","DEN","MSP"],startDate:"2026-01-15",endDate:"2026-07-15",notes:"2026 extension / new boards"},
-  "2026-41356":{num:"2026-41356",vendor:"Wilkins Media",brand:"Postman Law",dmas:["DEN"],startDate:"2026-06-22",endDate:"2026-12-06",notes:"DEN Transit Shelters + Gas Pump Toppers"}
+  "2026-41440":{num:"2026-41440",vendor:"Wilkins Media",brand:"Postman Law",dmas:["CHI"],startDate:"2026-02-02",endDate:"2026-12-27",notes:"CHI 2026 annual buy (13 bulletins) — signed 1/14/26"},
+  "2026-41356":{num:"2026-41356",vendor:"Wilkins Media",brand:"Postman Law",dmas:["DEN"],startDate:"2026-06-22",endDate:"2026-12-06",notes:"DEN Transit Shelters + Gas Pump Toppers"},
+  "2026-41357":{num:"2026-41357",vendor:"Wilkins Media",brand:"Postman Law",dmas:["MSP"],startDate:"2026-03-30",endDate:"2026-12-27",notes:"MSP 2026 annual buy (10 boards) — signed 1/7/26. Note: 127O & 166O keep current creative from 3/30; new vinyl 6/1"},
+  "CIN-2026-Wilkins":{num:"CIN-2026-Wilkins",vendor:"Wilkins Media",brand:"Postman Law",dmas:["CIN"],startDate:"2026-02-02",endDate:"2026-12-27",notes:"CIN 2026 annual: 25 rotary posters + 6 remnant bulletins + 2 bonus digital posters. 21 prior-cycle boards expire Jan–May 2026 (archived)"},
+  "VIEWC-2026-PL":{num:"VIEWC-2026-PL",vendor:"View Chicago",brand:"Postman Law",dmas:["CHI"],startDate:"2026-01-05",endDate:"2027-01-03",notes:"CHI View Chicago: 3 train overpass + 1 wall + 11 HotSpot (15 units) — signed 11/14/25"}
 };
