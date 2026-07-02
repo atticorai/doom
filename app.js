@@ -3707,7 +3707,10 @@ const App=()=>{
     const cancelEdit=()=>{setEditId(null);setEditVal("")};
     const isciTitle=(code)=>{if(!code)return"";const m=iscis.find(i=>i.code===code);return m?m.title:""};
     // Per-board creative rotation — picked from the board's catalog pool (no free text).
-    const poolFor=(board)=>oohCreatives[creativePoolKey(board.type,board.size)]||[];
+    // Show the board's own creative pool FIRST, then every other creative — so a
+    // bulletin isn't locked to bulletin art; you can link posters (or any BRM
+    // creative) onto any board. Deduped, own-pool prioritized for convenience.
+    const poolFor=(board)=>{const own=creativePoolKey(board.type,board.size);const b=oohCreatives.bulletin||[];const p=oohCreatives.poster||[];const ordered=own==="poster"?[...p,...b]:[...b,...p];return [...new Set(ordered)]};
     const addCreativeConcept=(board)=>{const key=creativePoolKey(board.type,board.size);const name=(typeof window!=="undefined"&&window.prompt)?window.prompt("New "+key+" creative name:"):"";const v=(name||"").trim();if(!v)return"";setOohCreatives(prev=>{const cur=prev[key]||[];return cur.includes(v)?prev:{...prev,[key]:[...cur,v]}});return v};
     // Auto-name: assign ONE creative per board, rotated/spread so neighbouring
     // boards (within RADIUS mi) differ — uses coordinates to avoid bunching the
