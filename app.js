@@ -3916,7 +3916,13 @@ const App=()=>{
       const vendorName=oVend||[...new Set(scope.map(p=>p.vendor))][0]||"Lamar";
       const mktLabel=om||"All WK Markets";
       const boardCreative=(p)=>{
-        if(Array.isArray(p.design)&&p.design.length){const pcts=designPcts(p.design,p.designPct);return p.design.map((c,k)=>{const m=iscis.find(i=>i.suffix==="O"&&i.dma===p.dma&&i.title&&String(i.title).toLowerCase().includes(String(c).toLowerCase()));return{label:String(c)+(pcts.length>1?" ("+pcts[k]+"%)":""),f:(m&&m.fileUrl)?{url:m.fileUrl,name:m.title||c}:null}})}
+        if(Array.isArray(p.design)&&p.design.length){const pcts=designPcts(p.design,p.designPct);const single=p.design.length===1;return p.design.map((c,k)=>{
+          // Resolve the creative's art. Prefer the board's stored ISCI code (exact) so a
+          // title-format quirk (apostrophes/spacing in a size like 10'6x36) can't break the
+          // link; fall back to matching an OOH ISCI whose title contains the concept name.
+          let m=(single&&p.isci)?iscis.find(i=>i.code===p.isci):null;
+          if(!m||!m.fileUrl){const mm=iscis.find(i=>i.suffix==="O"&&i.dma===p.dma&&i.title&&String(i.title).toLowerCase().includes(String(c).toLowerCase()));if(mm&&(mm.fileUrl||!m))m=mm}
+          return{label:String(c)+(pcts.length>1?" ("+pcts[k]+"%)":""),f:(m&&m.fileUrl)?{url:m.fileUrl,name:m.title||c}:null}})}
         if(p.isci){const m=iscis.find(i=>i.code===p.isci);return[{label:(m?m.title:p.isci),f:(m&&m.fileUrl)?{url:m.fileUrl,name:m.title||p.isci}:null}]}
         return [];
       };
