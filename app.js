@@ -1106,7 +1106,8 @@ const App=()=>{
         try{if(docs.wkOohDesigns?.data){const d=JSON.parse(docs.wkOohDesigns.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>{if(d[p.boardId]===undefined)return p;const v=d[p.boardId];return{...p,design:Array.isArray(v)?v.filter(Boolean):(v?[v]:[])}}))}}catch(_e){console.warn("wkOohDesigns load skipped",_e)}
         try{if(docs.wkOohDesignPct?.data){const d=JSON.parse(docs.wkOohDesignPct.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>{if(d[p.boardId]===undefined)return p;const v=d[p.boardId];return{...p,designPct:Array.isArray(v)?v:[]}}))}}catch(_e){console.warn("wkOohDesignPct load skipped",_e)}
         try{if(docs.wkOohCreativeList?.data){const d=JSON.parse(docs.wkOohCreativeList.data);if(d&&typeof d==="object"&&!Array.isArray(d))setOohCreatives({bulletin:[...new Set([...WK_OOH_CREATIVES.bulletin,...(d.bulletin||[])])],poster:[...new Set([...WK_OOH_CREATIVES.poster,...(d.poster||[])])]})}}catch(_e){console.warn("wkOohCreativeList load skipped",_e)}
-        try{if(docs.plOohIscis?.data){const d=JSON.parse(docs.plOohIscis.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isci:d[p.unit]}:p))}}catch(_e){console.warn("plOohIscis load skipped",_e)}
+        try{if(docs.plOohIscis?.data){const d=JSON.parse(docs.plOohIscis.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>{if(d[p.unit]===undefined)return p;const v=d[p.unit];const list=Array.isArray(v)?v.filter(Boolean):(v?[v]:[]);return{...p,isciList:list,isci:list[0]||""}}))}}catch(_e){console.warn("plOohIscis load skipped",_e)}
+        try{if(docs.plOohIsciPct?.data){const d=JSON.parse(docs.plOohIsciPct.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isciPct:Array.isArray(d[p.unit])?d[p.unit]:[]}:p))}}catch(_e){console.warn("plOohIsciPct load skipped",_e)}
         try{if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}}catch(_e){console.warn("oohPhotos load skipped",_e)}
         console.log("Supabase: loaded",Object.keys(docs).length,"collections");
         loadCompleteRef.current=true;
@@ -1313,7 +1314,8 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const designMap=Object.fromEntries(pops.filter(p=>Array.isArray(p.design)&&p.design.length).map(p=>[p.boardId,p.design]));if(Object.keys(designMap).length>0)saveToDb("wkOohDesigns",designMap)},[pops,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const pctMap=Object.fromEntries(pops.filter(p=>Array.isArray(p.designPct)&&p.designPct.length).map(p=>[p.boardId,p.designPct]));if(Object.keys(pctMap).length>0)saveToDb("wkOohDesignPct",pctMap)},[pops,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("wkOohCreativeList",oohCreatives)},[oohCreatives,dbLoaded]);
-  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(plPanels.filter(p=>p.isci).map(p=>[p.unit,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("plOohIscis",isciMap)},[plPanels,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(plPanels.filter(p=>(p.isciList&&p.isciList.length)||p.isci).map(p=>[p.unit,(p.isciList&&p.isciList.length)?p.isciList:p.isci]));if(Object.keys(isciMap).length>0)saveToDb("plOohIscis",isciMap)},[plPanels,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const m=Object.fromEntries(plPanels.filter(p=>p.isciPct&&p.isciPct.length).map(p=>[p.unit,p.isciPct]));if(Object.keys(m).length>0)saveToDb("plOohIsciPct",m)},[plPanels,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohPhotos).length>0)saveToDb("oohPhotos",oohPhotos)},[oohPhotos,dbLoaded]);
 
   // ── CONFIRMATION REMINDERS (manual trigger) ──────────────────
@@ -1492,6 +1494,7 @@ const App=()=>{
   const[plMktF,setPlMktF]=useState("");const[plPlanF,setPlPlanF]=useState("");const[plVendF,setPlVendF]=useState("");
   const[plMapMode,setPlMapMode]=useState("market");const[plClusterRadius,setPlClusterRadius]=useState(3);
   const[plOohEditId,setPlOohEditId]=useState(null);const[plOohEditVal,setPlOohEditVal]=useState("");
+  const[plOohEditList,setPlOohEditList]=useState([]);const[plOohEditPct,setPlOohEditPct]=useState([]);
   const[plOohLines,setPlOohLines]=useState([{flight:"",isci:"",units:"",faces:[],notes:""}]);
   const[plOohPostDates,setPlOohPostDates]=useState("");const[plOohVersion,setPlOohVersion]=useState("");const[plOohComments,setPlOohComments]=useState("");const[plOohTrafficMode,setPlOohTrafficMode]=useState("units");const[plOohTypeF,setPlOohTypeF]=useState("");
   const[plCalMktF,setPlCalMktF]=useState("");const[plCalTypeF,setPlCalTypeF]=useState("");const[plShowPast,setPlShowPast]=useState(false);
@@ -4503,22 +4506,36 @@ const App=()=>{
     const plEditDates=plOohEditDates,setPlEditDates=setPlOohEditDates;
     const viewChiFaces=plPanels.filter(p=>p.vendor==="View Chicago"&&(mktF?p.market==="CHI":true)).map(p=>p.unit).sort();
     // Faces are computed inline when building traffic lines instead of useEffect
-    const startPlEdit=(unit,cur)=>{setPlEditId(unit);setPlEditVal(cur||"")};
-    const savePlEdit=(unit)=>{setPlPanels(prev=>prev.map(p=>p.unit===unit?{...p,isci:plEditVal}:p));setPlEditId(null);log("PL OOH Assign",`${unit} → ${plEditVal||"(cleared)"}`);notify(`${unit} ISCI updated`)};
-    const cancelPlEdit=()=>{setPlEditId(null);setPlEditVal("")};
+    const plEditList=plOohEditList,setPlEditList=setPlOohEditList,plEditPct=plOohEditPct,setPlEditPct=setPlOohEditPct;
+    // Digital boards rotate multiple creatives (like WK); static boards carry one.
+    const plRotates=(p)=>/digital/i.test(p.media||"");
+    const plDesignPcts=(list,pct)=>(Array.isArray(pct)&&pct.length===list.length&&pct.every(x=>typeof x==="number"))?pct.slice():evenSplit(list.length);
+    const startPlEdit=(unit,cur)=>{const p=plPanels.find(x=>x.unit===unit);setPlEditId(unit);
+      if(p&&plRotates(p)){const list=(p.isciList&&p.isciList.length)?[...p.isciList]:(p.isci?[p.isci]:["",""]);setPlEditList(list);setPlEditPct((p.isciPct&&p.isciPct.length===list.length)?[...p.isciPct]:evenSplit(list.length))}
+      else setPlEditVal(cur||"")};
+    const cancelPlEdit=()=>{setPlEditId(null);setPlEditVal("");setPlEditList([]);setPlEditPct([])};
     const plIsciTitle=(code)=>{if(!code)return"";const m=iscis.find(i=>i.code===code);return m?m.title:""};
     // PL OOH ISCIs available to assign on a card — the market's OOH ISCIs first, else all PL OOH.
     const plOohIscisFor=(mkt)=>{const inMkt=iscis.filter(i=>i.suffix==="O"&&i.brand==="Postman Law"&&i.active&&i.dma===mkt);return inMkt.length?inMkt:iscis.filter(i=>i.suffix==="O"&&i.brand==="Postman Law"&&i.active)};
-    // Save an ISCI directly on a card (dropdown pick) — mirrors WK's save-on-pick.
-    const setPlIsci=(unit,v)=>{setPlPanels(prev=>prev.map(p=>p.unit===unit?{...p,isci:v}:p));setPlEditId(null);log("PL OOH Assign",unit+" → "+(v||"(cleared)"));notify(unit+" ISCI "+(v?"set":"cleared"))};
+    // Single assign (static board) — save-on-pick, mirrors WK.
+    const setPlIsci=(unit,v)=>{setPlPanels(prev=>prev.map(p=>p.unit===unit?{...p,isci:v,isciList:v?[v]:[],isciPct:[]}:p));setPlEditId(null);log("PL OOH Assign",unit+" → "+(v||"(cleared)"));notify(unit+" ISCI "+(v?"set":"cleared"))};
+    // Rotation editor (digital board) — add/remove creatives, auto-even the % split.
+    const plSetRow=(k,v)=>setPlEditList(prev=>{const a=Array.isArray(prev)?[...prev]:[];a[k]=v;return a});
+    const plSetPct=(k,v)=>setPlEditPct(prev=>{const a=Array.isArray(prev)?[...prev]:[];a[k]=Math.max(0,Math.min(100,parseInt(v,10)||0));return a});
+    const plAddRow=()=>{const a=[...(Array.isArray(plEditList)?plEditList:[]),""];setPlEditList(a);setPlEditPct(evenSplit(a.length))};
+    const plRemoveRow=(k)=>{const a=(Array.isArray(plEditList)?plEditList:[]).filter((_,i)=>i!==k);setPlEditList(a);setPlEditPct(evenSplit(a.length))};
+    const plEvenSplitNow=()=>setPlEditPct(evenSplit((Array.isArray(plEditList)?plEditList:[]).filter(Boolean).length||(Array.isArray(plEditList)?plEditList:[]).length));
+    const savePlRotation=(unit)=>{const pairs=(Array.isArray(plEditList)?plEditList:[]).map((c,i)=>[(c||"").trim(),(plEditPct&&plEditPct[i])||0]).filter(x=>x[0]);const list=pairs.map(x=>x[0]);const pct=pairs.map(x=>x[1]);setPlPanels(prev=>prev.map(p=>p.unit===unit?{...p,isciList:list,isci:list[0]||"",isciPct:pct}:p));setPlEditId(null);log("PL OOH Rotation",unit+" → "+(pairs.map(x=>x[0]+" "+x[1]+"%").join(" / ")||"(cleared)"));notify(unit+" creative "+(list.length?"set":"cleared"))};
     // CARD TRAFFIC REPORT (PL) — read-only. Pulls each board's assigned ISCI creative into a
     // traffic PDF with clickable download links, resolved strictly by ISCI code (never breaks).
     const printPlCardReport=()=>{
-      const scope=fl.filter(p=>p.isci);
+      const scope=fl.filter(p=>p.isci||(p.isciList&&p.isciList.length));
       if(!scope.length){notify("No boards have an ISCI/creative assigned yet");return}
       const fmtFl=f=>String(f||"").split("(")[0].trim();
       const mktLabel=mktF||"All PL Markets";
-      const boardCreative=(p)=>{const m=iscis.find(i=>i.code===p.isci);return{code:p.isci,title:m?m.title:"",f:(m&&m.fileUrl)?{url:m.fileUrl,name:m.title||p.isci}:null}};
+      // A board may carry one creative, or several rotating (digital) with percentages —
+      // each resolved to its art by exact ISCI code so the download link can't break.
+      const boardCreative=(p)=>{const list=(p.isciList&&p.isciList.length)?p.isciList:(p.isci?[p.isci]:[]);const rot=plRotates(p)&&list.length>1;const pcts=rot?plDesignPcts(list,p.isciPct):null;return list.map((code,k)=>{const m=iscis.find(i=>i.code===code);return{code,title:m?m.title:code,pct:pcts?pcts[k]:null,f:(m&&m.fileUrl)?{url:m.fileUrl,name:m.title||code}:null}})};
       const w=window.open("","","width=1000,height=820");
       w.document.write('<html><head><title>PL OOH Traffic — '+escHtml(mktLabel)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}@media print{body{margin:14px}.dl{display:none}tr{page-break-inside:avoid}}</style></head><body>');
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
@@ -4532,9 +4549,10 @@ const App=()=>{
       mktsIn.forEach((mk,mi)=>{const bds=scope.filter(p=>p.market===mk).sort((a,b)=>String(a.vendor).localeCompare(String(b.vendor))||String(a.unit).localeCompare(String(b.unit)));grand+=bds.length;
         w.document.write('<div class="mkt"'+(mi>0?' style="page-break-before:always"':'')+'>'+escHtml(mk)+' — '+bds.length+' boards</div>');
         w.document.write('<table><tr><th style="width:64px">Unit #</th><th>Location</th><th style="width:120px">Media / Size</th><th style="width:170px">Creative</th><th style="width:130px">ISCI</th><th style="width:74px">Flight</th></tr>');
-        bds.forEach(p=>{const cr=boardCreative(p);
-          const crCell=cr.f?('<a href="'+escHtml(oohVendorDl(cr.f.url,cr.f.name))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(cr.title||cr.code)+'</a>'):(p.isci?('<b>'+escHtml(cr.title||cr.code)+'</b> <span style="color:#b00">⚠ no art uploaded</span>'):'<span style="color:#b00">⚠ no creative assigned</span>');
-          w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.unit))+'</td><td>'+escHtml(p.location||"")+'</td><td>'+escHtml((p.media||"")+" · "+(p.size||""))+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(p.isci||"—")+'</td><td>'+escHtml(fmtFl(p.flight))+'</td></tr>')});
+        bds.forEach(p=>{const crs=boardCreative(p);
+          const crCell=crs.length?crs.map(c=>{const pctTag=c.pct!=null?' <b style="color:#b8860b">('+c.pct+'%)</b>':'';return c.f?('<a href="'+escHtml(oohVendorDl(c.f.url,c.f.name))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(c.title||c.code)+'</a>'+pctTag):('<b>'+escHtml(c.title||c.code)+'</b>'+pctTag+' <span style="color:#b00">⚠ no art uploaded</span>')}).join('<br>'):'<span style="color:#b00">⚠ no creative assigned</span>';
+          const isciCol=(((p.isciList&&p.isciList.length)?p.isciList:(p.isci?[p.isci]:[])).map(c=>escHtml(c)).join("<br>"))||"—";
+          w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.unit))+'</td><td>'+escHtml(p.location||"")+'</td><td>'+escHtml((p.media||"")+" · "+(p.size||""))+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+isciCol+'</td><td>'+escHtml(fmtFl(p.flight))+'</td></tr>')});
         w.document.write('</table>')});
       w.document.write('<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+grand+'</div>');
       w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
@@ -4621,22 +4639,48 @@ const App=()=>{
                 <OohPhotoUpload id={p.unit}/>
               </div>}
             </div>}
-            <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:p.isci?"#1f3530":"#fffbeb",border:`1px solid ${p.isci?"#bbf7d0":"#fde68a"}`}}>
+            {(()=>{const dl=(p.isciList&&p.isciList.length)?p.isciList:(p.isci?[p.isci]:[]);const rot=plRotates(p);const has=dl.length>0;return <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:has?"#1f3530":"#fffbeb",border:`1px solid ${has?"#bbf7d0":"#fde68a"}`}}>
               {plEditId===p.unit?
-                <div style={{display:"flex",gap:3,alignItems:"center"}} onClick={e=>e.stopPropagation()}>
-                  <select value={p.isci||""} autoFocus onChange={e=>setPlIsci(p.unit,e.target.value)} onBlur={cancelPlEdit} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:13,background:"#fff"}}>
-                    <option value="">— select ISCI —</option>
-                    {plOohIscisFor(p.market).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?" 🎬":""}</option>)}
-                  </select>
-                  <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
-                </div>:
+                (rot?
+                  <div onClick={e=>e.stopPropagation()}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#9b7bb0",marginBottom:3}}>↻ Rotation — digital board</div>
+                    {(plEditList||[]).map((code,k)=><div key={k} style={{display:"flex",gap:3,alignItems:"center",marginBottom:2}}>
+                      <select value={code||""} onChange={e=>plSetRow(k,e.target.value)} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:12,background:"#fff"}}>
+                        <option value="">— select ISCI —</option>
+                        {plOohIscisFor(p.market).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?" 🎬":""}</option>)}
+                      </select>
+                      <input type="number" value={(plEditPct&&plEditPct[k])||0} onChange={e=>plSetPct(k,e.target.value)} style={{width:42,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center"}}/><span style={{fontSize:11,color:"#9B8EAD"}}>%</span>
+                      <button onClick={()=>plRemoveRow(k)} style={{padding:"1px 5px",background:"#3a1f35",color:"#E85A7A",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✕</button>
+                    </div>)}
+                    <div style={{display:"flex",gap:3,marginTop:3}}>
+                      <button onClick={plAddRow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#4AC8E8",border:"1px solid #4a3565",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>+ Add</button>
+                      <button onClick={plEvenSplitNow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#5BC4A0",border:"1px solid #4a3565",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>⚖ Even</button>
+                      <button onClick={()=>savePlRotation(p.unit)} style={{marginLeft:"auto",padding:"2px 8px",background:"#5BC4A0",color:"#fff",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✓ Save</button>
+                      <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✕</button>
+                    </div>
+                  </div>
+                :
+                  <div style={{display:"flex",gap:3,alignItems:"center"}} onClick={e=>e.stopPropagation()}>
+                    <select value={p.isci||""} autoFocus onChange={e=>setPlIsci(p.unit,e.target.value)} onBlur={cancelPlEdit} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:13,background:"#fff"}}>
+                      <option value="">— select ISCI —</option>
+                      {plOohIscisFor(p.market).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?" 🎬":""}</option>)}
+                    </select>
+                    <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
+                  </div>)
+                :
                 <div onClick={(e)=>{e.stopPropagation();startPlEdit(p.unit,p.isci)}} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  {p.isci?<div><div style={{fontSize:14,fontWeight:700,fontFamily:"monospace",color:"#5BC4A0"}}>{p.isci}</div><div style={{fontSize:13,color:"#9B8EAD"}}>{plIsciTitle(p.isci)}</div>{(()=>{const m=iscis.find(i=>i.code===p.isci);return m&&m.fileUrl?<a href={dlUrl(m.fileUrl)} target="_blank" rel="noopener" download onClick={e=>e.stopPropagation()} style={{fontSize:12,color:"#4AC8E8",fontWeight:600,textDecoration:"none"}}>📁 Download creative</a>:(p.isci?<span style={{fontSize:12,color:"#D4A040"}}>⚠ no art uploaded</span>:null)})()}</div>
-                  :<div style={{fontSize:14,color:"#D4A040",fontStyle:"italic"}}>No ISCI — click to assign</div>}
-                  <span style={{fontSize:13,color:"#9B8EAD"}}>✎</span>
+                  {has?<div style={{flex:1,minWidth:0}}>{rot&&dl.length>1&&<div style={{fontSize:11,fontWeight:700,color:"#9b7bb0"}}>↻ Rotation</div>}
+                    {(()=>{const pcts=rot?plDesignPcts(dl,p.isciPct):null;return dl.map((code,k)=>{const m=iscis.find(i=>i.code===code);return<div key={k} style={{marginTop:k?2:0}}>
+                      <div style={{fontSize:13,fontWeight:700,fontFamily:"monospace",color:"#5BC4A0"}}>{code}{pcts&&dl.length>1?<span style={{color:"#9b7bb0"}}> · {pcts[k]}%</span>:null}</div>
+                      <div style={{fontSize:12,color:"#9B8EAD"}}>{m?m.title:""}</div>
+                      {m&&m.fileUrl?<a href={dlUrl(m.fileUrl)} target="_blank" rel="noopener" download onClick={e=>e.stopPropagation()} style={{fontSize:12,color:"#4AC8E8",fontWeight:600,textDecoration:"none"}}>📁 Download</a>:<span style={{fontSize:12,color:"#D4A040"}}>⚠ no art</span>}
+                    </div>})})()}
+                  </div>
+                  :<div style={{fontSize:14,color:"#D4A040",fontStyle:"italic"}}>No creative — click to assign{rot?" (rotates)":""}</div>}
+                  <span style={{fontSize:13,color:"#9B8EAD",marginLeft:4}}>✎</span>
                 </div>
               }
-            </div>
+            </div>;})()}
           </div>
         </div>;
       })}

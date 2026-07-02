@@ -30,9 +30,9 @@ const D_PL=[
 ["CHI","Villa Park","Bulletin","9063CO","North Avenue E/O Villa Street S/L F/E","E","14' x 48'","1/12/26 - 6/28/26",6,240973,"Yes",41.905363,-87.968202,"upcoming","inherited",1],
 ["CHI","Harvey","Bulletin","9141CO","Interstate 57 N/O 147th Street E/L F/N","N","14' x 48'","1/19/26 - 5/10/26",4,318829,"Yes",41.625352,-87.676991,"upcoming","inherited",1],
 ["CHI","Harvey","Bulletin","9142CO","Interstate 57 N/O 147th Street E/L F/S","S","14' x 48'","1/26/26 - 6/14/26",5,352743,"Yes",41.625328,-87.677007,"upcoming","inherited",1],
-["MSP","Minneapolis","Digital Bulletin","156A","I-35W N/O East Hennepin Ave N/L F/N","N","14' x 48'","3/30 - 9/13",6,275103,"Y",44.99177,-93.23732,"upcoming","2026",1,"MSPPL26SB004O"],
+["MSP","Minneapolis","Digital Bulletin","156A","I-35W N/O East Hennepin Ave N/L F/N","N","14' x 48'","3/30 - 9/13",6,275103,"Y",44.99177,-93.23732,"upcoming","2026",1,["MSPPL26SB003O","MSPPL26SB004O"]],
 ["MSP","Minneapolis","Bulletin","92890","I-35E WS 0.4mi N/O Maryland Av F/N - 2","N","14' x 48'","10/5 - 12/27",3,432374,"Y",44.983,-93.08956,"upcoming","2026",1,"MSPPL26SB003O"],
-["MSP","Minneapolis","Digital Bulletin","410A","I-169 S/O 36th Avenue North W/L F/N","N","14' x 48'","10/5 - 12/27",3,162118,"Y",45.0196,-93.40141,"upcoming","2026",1,"MSPPL26SB003O"],
+["MSP","Minneapolis","Digital Bulletin","410A","I-169 S/O 36th Avenue North W/L F/N","N","14' x 48'","10/5 - 12/27",3,162118,"Y",45.0196,-93.40141,"upcoming","2026",1,["MSPPL26SB003O","MSPPL26SB004O"]],
 ["MSP","Minneapolis","Bulletin","127O","Glenwood Ave. W/O 12th Street N/L F/W","W","14' x 48'","3/30 - 9/13",6,27169,"Y",44.97914,-93.28257,"upcoming","2026",1,"MSPPL26SB003O"],
 ["MSP","Minneapolis","Bulletin","166O","I-94 N/O Dowling Avenue E/L F/S","S","14' x 48'","3/30 - 7/19",4,475911,"Y",45.024871,-93.284012,"upcoming","2026",1,"MSPPL26SB004O"],
 ["MSP","Minneapolis","Bulletin","112O","I-94 W/O Cleveland Avenue N/L F/E","E","14' x 48'","6/1 - 8/23",3,617287,"Y",44.95529,-93.18862,"upcoming","2026",1,"MSPPL26SB004O"],
@@ -102,6 +102,9 @@ const PL_PANELS=D_PL.map(r=>{
   else if(/Transit Shelter|Gas Pump/.test(media))vendor="Wilkins Media";
   else if(mkt==="CIN")vendor="Lamar";
   else vendor="Wilkins Media";
-  return{market:r[0],city:r[1],media:r[2],unit:r[3],location:r[4],facing:r[5],size:r[6],flight:r[7],cycles:r[8],impressions:r[9],illuminated:r[10],lat:r[11],lng:r[12],status:r[13],plan:r[14],numUnits:r[15],vendor,isci:r[16]||""};
+  // r[16] holds the creative: a single ISCI code (string) or an array of codes for
+  // rotation (digital boards). r[17] optionally holds the rotation percentages.
+  const _ic=r[16];const isciList=Array.isArray(_ic)?_ic.filter(Boolean):(_ic?[_ic]:[]);
+  return{market:r[0],city:r[1],media:r[2],unit:r[3],location:r[4],facing:r[5],size:r[6],flight:r[7],cycles:r[8],impressions:r[9],illuminated:r[10],lat:r[11],lng:r[12],status:r[13],plan:r[14],numUnits:r[15],vendor,isci:isciList[0]||"",isciList,isciPct:Array.isArray(r[17])?r[17]:[]};
 });
 
