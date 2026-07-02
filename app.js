@@ -4507,8 +4507,9 @@ const App=()=>{
     const viewChiFaces=plPanels.filter(p=>p.vendor==="View Chicago"&&(mktF?p.market==="CHI":true)).map(p=>p.unit).sort();
     // Faces are computed inline when building traffic lines instead of useEffect
     const plEditList=plOohEditList,setPlEditList=setPlOohEditList,plEditPct=plOohEditPct,setPlEditPct=setPlOohEditPct;
-    // Digital boards rotate multiple creatives (like WK); static boards carry one.
-    const plRotates=(p)=>/digital/i.test(p.media||"");
+    // Rotating programs carry multiple creatives (like WK): digital boards, rotary poster
+    // programs, and remnant programs all rotate their creative pool. Fixed single boards carry one.
+    const plRotates=(p)=>/digital|rotary|remnant|program/i.test(p.media||"");
     const plDesignPcts=(list,pct)=>(Array.isArray(pct)&&pct.length===list.length&&pct.every(x=>typeof x==="number"))?pct.slice():evenSplit(list.length);
     const startPlEdit=(unit,cur)=>{const p=plPanels.find(x=>x.unit===unit);setPlEditId(unit);
       if(p&&plRotates(p)){const list=(p.isciList&&p.isciList.length)?[...p.isciList]:(p.isci?[p.isci]:["",""]);setPlEditList(list);setPlEditPct((p.isciPct&&p.isciPct.length===list.length)?[...p.isciPct]:evenSplit(list.length))}
