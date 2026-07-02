@@ -4507,6 +4507,40 @@ const App=()=>{
     const savePlEdit=(unit)=>{setPlPanels(prev=>prev.map(p=>p.unit===unit?{...p,isci:plEditVal}:p));setPlEditId(null);log("PL OOH Assign",`${unit} → ${plEditVal||"(cleared)"}`);notify(`${unit} ISCI updated`)};
     const cancelPlEdit=()=>{setPlEditId(null);setPlEditVal("")};
     const plIsciTitle=(code)=>{if(!code)return"";const m=iscis.find(i=>i.code===code);return m?m.title:""};
+    // PL OOH ISCIs available to assign on a card — the market's OOH ISCIs first, else all PL OOH.
+    const plOohIscisFor=(mkt)=>{const inMkt=iscis.filter(i=>i.suffix==="O"&&i.brand==="Postman Law"&&i.active&&i.dma===mkt);return inMkt.length?inMkt:iscis.filter(i=>i.suffix==="O"&&i.brand==="Postman Law"&&i.active)};
+    // Save an ISCI directly on a card (dropdown pick) — mirrors WK's save-on-pick.
+    const setPlIsci=(unit,v)=>{setPlPanels(prev=>prev.map(p=>p.unit===unit?{...p,isci:v}:p));setPlEditId(null);log("PL OOH Assign",unit+" → "+(v||"(cleared)"));notify(unit+" ISCI "+(v?"set":"cleared"))};
+    // CARD TRAFFIC REPORT (PL) — read-only. Pulls each board's assigned ISCI creative into a
+    // traffic PDF with clickable download links, resolved strictly by ISCI code (never breaks).
+    const printPlCardReport=()=>{
+      const scope=fl.filter(p=>p.isci&&p.plan!=="expired");
+      if(!scope.length){notify("No boards have an ISCI/creative assigned yet");return}
+      const fmtFl=f=>String(f||"").split("(")[0].trim();
+      const mktLabel=mktF||"All PL Markets";
+      const boardCreative=(p)=>{const m=iscis.find(i=>i.code===p.isci);return{code:p.isci,title:m?m.title:"",f:(m&&m.fileUrl)?{url:m.fileUrl,name:m.title||p.isci}:null}};
+      const w=window.open("","","width=1000,height=820");
+      w.document.write('<html><head><title>PL OOH Traffic — '+escHtml(mktLabel)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}@media print{body{margin:14px}.dl{display:none}tr{page-break-inside:avoid}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<div style="text-align:center;margin-bottom:12px"><h2>POSTMAN LAW</h2><div class="tag">OUT-OF-HOME TRAFFIC INSTRUCTIONS</div></div>');
+      const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v||"")+'</span></div>');
+      hd("Agency","Atticor");hd("Client","Postman Law");
+      hd("Market(s)",[...new Set(scope.map(p=>p.market))].sort().join(", "));
+      hd("Vendor(s)",[...new Set(scope.map(p=>p.vendor))].sort().join(", "),"amb");
+      hd("Buyer","Ken Lazar","red");hd("Media","OOH — Out of Home","red");hd("Broadcast Month",workMonth,"grn");
+      const mktsIn=[...new Set(scope.map(p=>p.market))].sort();let grand=0;
+      mktsIn.forEach((mk,mi)=>{const bds=scope.filter(p=>p.market===mk).sort((a,b)=>String(a.vendor).localeCompare(String(b.vendor))||String(a.unit).localeCompare(String(b.unit)));grand+=bds.length;
+        w.document.write('<div class="mkt"'+(mi>0?' style="page-break-before:always"':'')+'>'+escHtml(mk)+' — '+bds.length+' boards</div>');
+        w.document.write('<table><tr><th style="width:64px">Unit #</th><th>Location</th><th style="width:120px">Media / Size</th><th style="width:170px">Creative</th><th style="width:130px">ISCI</th><th style="width:74px">Flight</th></tr>');
+        bds.forEach(p=>{const cr=boardCreative(p);
+          const crCell=cr.f?('<a href="'+escHtml(oohVendorDl(cr.f.url,cr.f.name))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(cr.title||cr.code)+'</a>'):(p.isci?('<b>'+escHtml(cr.title||cr.code)+'</b> <span style="color:#b00">⚠ no art uploaded</span>'):'<span style="color:#b00">⚠ no creative assigned</span>');
+          w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.unit))+'</td><td>'+escHtml(p.location||"")+'</td><td>'+escHtml((p.media||"")+" · "+(p.size||""))+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(p.isci||"—")+'</td><td>'+escHtml(fmtFl(p.flight))+'</td></tr>')});
+        w.document.write('</table>')});
+      w.document.write('<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+grand+'</div>');
+      w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
+      w.document.write('</body></html>');w.document.close();
+      log("PL OOH Card Traffic Report",mktLabel+" · "+grand+" boards");notify("PL traffic report — "+grand+" boards");
+    };
     const mkts=[...new Set(plPanels.map(p=>p.market))].sort();
     const plVendors=[...new Set(plPanels.map(p=>p.vendor))].sort();
     // Expired/archived boards (e.g. CIN 2025 boards phasing out in early 2026) are kept
@@ -4586,13 +4620,15 @@ const App=()=>{
             </div>}
             <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:p.isci?"#1f3530":"#fffbeb",border:`1px solid ${p.isci?"#bbf7d0":"#fde68a"}`}}>
               {plEditId===p.unit?
-                <div style={{display:"flex",gap:3,alignItems:"center"}}>
-                  <input value={plEditVal} onChange={e=>setPlEditVal(e.target.value)} style={{flex:1,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:14,fontFamily:"monospace"}} placeholder="ISCI code..." autoFocus onKeyDown={e=>{if(e.key==="Enter")savePlEdit(p.unit);if(e.key==="Escape")cancelPlEdit()}}/>
-                  <button onClick={()=>savePlEdit(p.unit)} style={{padding:"2px 6px",background:"#5BC4A0",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✓</button>
+                <div style={{display:"flex",gap:3,alignItems:"center"}} onClick={e=>e.stopPropagation()}>
+                  <select value={p.isci||""} autoFocus onChange={e=>setPlIsci(p.unit,e.target.value)} onBlur={cancelPlEdit} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:13,background:"#fff"}}>
+                    <option value="">— select ISCI —</option>
+                    {plOohIscisFor(p.market).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?" 🎬":""}</option>)}
+                  </select>
                   <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
                 </div>:
-                <div onClick={()=>startPlEdit(p.unit,p.isci)} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  {p.isci?<div><div style={{fontSize:14,fontWeight:700,fontFamily:"monospace",color:"#5BC4A0"}}>{p.isci}</div><div style={{fontSize:13,color:"#9B8EAD"}}>{plIsciTitle(p.isci)}</div></div>
+                <div onClick={(e)=>{e.stopPropagation();startPlEdit(p.unit,p.isci)}} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  {p.isci?<div><div style={{fontSize:14,fontWeight:700,fontFamily:"monospace",color:"#5BC4A0"}}>{p.isci}</div><div style={{fontSize:13,color:"#9B8EAD"}}>{plIsciTitle(p.isci)}</div>{(()=>{const m=iscis.find(i=>i.code===p.isci);return m&&m.fileUrl?<a href={dlUrl(m.fileUrl)} target="_blank" rel="noopener" download onClick={e=>e.stopPropagation()} style={{fontSize:12,color:"#4AC8E8",fontWeight:600,textDecoration:"none"}}>📁 Download creative</a>:(p.isci?<span style={{fontSize:12,color:"#D4A040"}}>⚠ no art uploaded</span>:null)})()}</div>
                   :<div style={{fontSize:14,color:"#D4A040",fontStyle:"italic"}}>No ISCI — click to assign</div>}
                   <span style={{fontSize:13,color:"#9B8EAD"}}>✎</span>
                 </div>
@@ -4614,6 +4650,7 @@ const App=()=>{
             const rows=fl.map(p=>{const pop=PL_POPS[p.unit];const zip=typeof PL_ZIPS!=='undefined'?(PL_ZIPS[p.submarket]||PL_ZIPS[p.market]||""):"";return[p.market,p.unit,p.vendor,p.media,p.size,p.location,zip,p.flight.split('(')[0].trim(),p.cycles||"",p.status,p.isci||"",plIsciTitle(p.isci),pop?pop.popDate:"",pop?pop.contract:"",p.impressions*p.numUnits,p.facing||"",p.lat||"",p.lng||"",p.plan]});
             exportCsv("PL_OOH_"+(mktF||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
+          <Btn small onClick={printPlCardReport} color="#4AC8E8">🖨 Traffic Report</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
           <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>📍 Map</Btn>
