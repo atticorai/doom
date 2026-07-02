@@ -1478,6 +1478,9 @@ const App=()=>{
   const[staBrand,setStaBrand]=useState("Postman Law");
   // OOH WK page state (lifted to prevent remount on photo upload)
   const[oohOm,setOohOm]=useState("");const[oohOv,setOohOv]=useState("");const[oohOVend,setOohOVend]=useState("");const[oohViewMode,setOohViewMode]=useState("cards");const[oohTrafficMode,setOohTrafficMode]=useState("units");const[oohTypeF,setOohTypeF]=useState("");const[oohMapMode,setOohMapMode]=useState("market");const[oohClusterRadius,setOohClusterRadius]=useState(3);const[oohReportDate,setOohReportDate]=useState("");
+  // OOH ISCI Registry state — lifted to App so the registry page (oohIsciPg) keeps
+  // its filters/scroll and never remounts on an App re-render (was resetting on every touch).
+  const[showOohInactive,setShowOohInactive]=useState(false);const[showOohBulk,setShowOohBulk]=useState(false);const[oohUnassigned,setOohUnassigned]=useState([]);const[oohIsciFilter,setOohIsciFilter]=useState("");const[oohBrandFilter,setOohBrandFilter]=useState("");const[oohDmaFilter,setOohDmaFilter]=useState("");
   const[oohEditId,setOohEditId]=useState(null);const[oohEditVal,setOohEditVal]=useState("");
   const[oohDesignEditId,setOohDesignEditId]=useState(null);const[oohDesignEditVal,setOohDesignEditVal]=useState("");const[oohDesignEditPct,setOohDesignEditPct]=useState([]);
   const[oohCreatives,setOohCreatives]=useState(WK_OOH_CREATIVES);
@@ -7780,18 +7783,14 @@ Rules:
       {id:"import",l:"Import / Upload",e:"📤"}
     ];
     const oohIsciPg=()=>{
-      const[showOohInactive,setShowOohInactive]=useState(false);
-      const[showOohBulk,setShowOohBulk]=useState(false);
-      const[oohUnassigned,setOohUnassigned]=useState([]);// files that didn't auto-match — assign by dropdown
+      // hooks (showOohInactive/showOohBulk/oohUnassigned/oohIsciFilter/oohBrandFilter/
+      // oohDmaFilter) live at App level so this page never remounts / loses filter+scroll.
       const _toB64=(f)=>new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(r.error||new Error("read failed"));r.onload=()=>res(String(r.result).split(",")[1]||"");r.readAsDataURL(f)});
       const doOohUpload=async(file,isci)=>{const ext=file.name.split(".").pop();const code=isci.code;const fname=String(isci.title||code).replace(/[\/\\]/g,"-").trim()||code;let url="";if(file.size<=3*1024*1024){const dataB64=await _toB64(file);const r=await fetch("/api/storage",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"upload",bucket:"ooh",path:"photos/creative/"+fname+"."+ext,dataB64,contentType:file.type||"application/octet-stream"})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||j.detail||("HTTP "+r.status));url=j.url}else{if(!storage)throw new Error("Storage not loaded (large file)");url=await new Promise((res,rej)=>{const ref=storage.ref("ooh-photos/creative/"+fname+"."+ext);const t=ref.put(file,{customMetadata:{isciCode:code}});t.on("state_changed",s=>{setUploadTracker({label:"Uploading "+file.name+" ("+code+")",pct:Math.round(s.bytesTransferred/s.totalBytes*100)})},e=>rej(e),()=>ref.getDownloadURL().then(res).catch(rej))})}return url};
       const assignOohFile=async(u,isciCode)=>{if(!isciCode)return;const gi=iscis.findIndex(i=>i.code===isciCode&&i.suffix==="O");if(gi===-1){notify("ISCI not found");return}setUploadTracker({label:"Uploading "+u.file.name+" → "+isciCode,pct:0});try{const url=await doOohUpload(u.file,iscis[gi]);setIscis(prev=>prev.map((x,j)=>j===gi?{...x,fileUrl:url}:x));setOohUnassigned(prev=>prev.filter(x=>x.file!==u.file));notify("Linked "+isciCode);log("OOH Creative Assigned",u.file.name+" → "+isciCode)}catch(e){notify("Upload failed: "+((e&&e.message)||e))}setUploadTracker(null)};
       const allOoh=iscis.filter(i=>i.suffix==="O");
       const oohIscis=showOohInactive?allOoh:allOoh.filter(i=>i.active);
       const inactiveOoh=allOoh.filter(i=>!i.active);
-      const[oohIsciFilter,setOohIsciFilter]=useState("");
-      const[oohBrandFilter,setOohBrandFilter]=useState("");
-      const[oohDmaFilter,setOohDmaFilter]=useState("");
       const filtered=oohIscis.filter(i=>{
         if(oohBrandFilter&&i.brand!==oohBrandFilter)return false;
         if(oohDmaFilter&&i.dma!==oohDmaFilter)return false;
@@ -7932,7 +7931,7 @@ Rules:
             its own hook scope. Bare-calling them conditionally changed OohHub's
             hook count between routes (Rules of Hooks violation → white-screen). */}
         {subRoute==="pl"&&<PlOohPg/>}
-        {subRoute==="isci"&&React.createElement(oohIsciPg)}
+        {subRoute==="isci"&&oohIsciPg()}
         {subRoute==="import"&&<UploadPg/>}
         {!["wk","pl","isci","import"].includes(subRoute)&&OohPg()}
       </div>
