@@ -3935,15 +3935,31 @@ const App=()=>{
       hd("Market(s)",[...new Set(scope.map(p=>oohMarket(p.dma)))].sort().join(", "));
       hd("Buyer","Amy Coffey","red");hd("Media","OOH — Out of Home","red");hd("Broadcast Month",workMonth,"grn");
       hd("Post / Start Date",dateLabel,"grn");
-      const mkts=[...new Set(scope.map(p=>oohMarket(p.dma)))].sort();let grand=0;
-      mkts.forEach((mk,mi)=>{const bds=scope.filter(p=>oohMarket(p.dma)===mk).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=bds.length;
-        w.document.write('<div class="mkt"'+(mi>0?' style="page-break-before:always"':'')+'>'+escHtml(mk)+' — '+bds.length+' boards · '+escHtml(dateLabel)+'</div>');
+      const mkts=[...new Set(scope.map(p=>oohMarket(p.dma)))].sort();let grand=0;let hasPosters=false;
+      // Resolve one clickable creative for a concept — code-first, title fallback (mirrors boardCreative).
+      const resolveArt=(concept,code)=>{let m=code?iscis.find(i=>i.code===code):null;if(!m||!m.fileUrl){const mm=iscis.find(i=>i.suffix==="O"&&i.title&&String(i.title).toLowerCase().includes(String(concept).toLowerCase()));if(mm&&(mm.fileUrl||!m))m=mm}return m};
+      const linkCell=(label,m)=>m&&m.fileUrl?('<a href="'+escHtml(oohVendorDl(m.fileUrl,m.title||label))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(label)+'</a>'):('<b>'+escHtml(label)+'</b> <span style="color:#b00">⚠ no art uploaded</span>');
+      mkts.forEach((mk,mi)=>{const all=scope.filter(p=>oohMarket(p.dma)===mk);const posters=all.filter(p=>/poster/i.test(p.type||""));const bds=all.filter(p=>!/poster/i.test(p.type||"")).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=all.length;
+        w.document.write('<div class="mkt"'+(mi>0?' style="page-break-before:always"':'')+'>'+escHtml(mk)+' — '+all.length+' boards · '+escHtml(dateLabel)+'</div>');
         w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location</th><th style="width:110px">Media/Style</th><th style="width:64px">H x W</th><th style="width:170px">Creative</th><th style="width:120px">ISCI</th><th style="width:74px">Start Date</th></tr>');
         bds.forEach(p=>{const crs=boardCreative(p);
           const crCell=crs.length?crs.map(c=>c.f?('<a href="'+escHtml(oohVendorDl(c.f.url,c.f.name))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(c.label)+'</a>'):('<b>'+escHtml(c.label)+'</b> <span style="color:#b00">⚠ no art uploaded</span>')).join('<br>'):'<span style="color:#b00">⚠ no creative assigned</span>';
           w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.panel))+'</td><td>'+escHtml(p.location||"")+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(p.size||"")+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+escHtml(p.isci||"—")+'</td><td>'+escHtml(fmtD(p.installDate))+'</td></tr>')});
+        // POSTER RULE: collapse every poster face in this market into ONE rotary line —
+        // the distinct poster creatives, each clickable, at an even split. Per buyer the
+        // faces aren't called out individually; they're spread evenly across all posters.
+        if(posters.length){hasPosters=true;
+          const concepts=[];posters.forEach(p=>{const c=(Array.isArray(p.design)&&p.design.length)?p.design[0]:(isciTitle(p.isci)||p.isci||"");if(!c)return;let e=concepts.find(x=>x.c===c);if(!e){e={c,code:p.isci||""};concepts.push(e)}if(!e.code&&p.isci)e.code=p.isci});
+          const pcts=evenSplit(concepts.length);
+          const spec=[...new Set(posters.map(p=>p.size))].filter(s=>s&&s!=="SP").join(", ")||"Poster";
+          const crCell=concepts.length?concepts.map((e,i)=>{const m=resolveArt(e.c,e.code);return linkCell(e.c,m)+' <b style="color:#b8860b">('+pcts[i]+'%)</b>'}).join('<br>'):'<span style="color:#b00">⚠ no creative assigned</span>';
+          const isciCell=concepts.map(e=>{const m=resolveArt(e.c,e.code);return escHtml((m&&m.code)||e.code||"—")}).join('<br>')||"—";
+          const startD=[...new Set(posters.map(p=>p.installDate).filter(Boolean))];const sd=startD.length===1?fmtD(startD[0]):dateLabel;
+          w.document.write('<tr style="background:#fff3bf"><td style="font-family:monospace;font-weight:700">POSTERS <b style="color:#7c3aed">↻ ROTARY</b><br><span style="font-size:9px;color:#7c3aed">'+posters.length+' faces</span></td><td><b style="color:#7c3aed">Rotates across all poster faces — spread evenly</b></td><td>'+escHtml([...new Set(posters.map(p=>p.type))].join(", "))+'</td><td>'+escHtml(spec)+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+isciCell+'</td><td>'+escHtml(sd)+'</td></tr>');
+        }
         w.document.write('</table>')});
       w.document.write('<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+grand+'</div>');
+      if(hasPosters)w.document.write('<div style="margin-top:6px;font-size:12.5px;color:#7c3aed;font-weight:bold">↻ Posters: please spread the poster creative as evenly as possible across all faces. (Rule can be switched to a full per-panel call-out if needed.)</div>');
       w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
       w.document.write('</body></html>');w.document.close();
       log("OOH Card Traffic Report",mktLabel+" · "+dateLabel+" · "+grand+" boards");notify("Traffic report — "+grand+" boards");
