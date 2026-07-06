@@ -97,11 +97,10 @@ const D_PL=[
 ];
 const PL_PANELS=D_PL.map(r=>{
   const media=r[2],unit=r[3],mkt=r[0];
-  let vendor="Lamar";
+  // Postman Law OOH is all Wilkins Media — except the View Chicago specialty units
+  // (train overpass / wall / hotspot) in the Chicago market.
+  let vendor="Wilkins Media";
   if(/Train Overpass|Wall|HotSpot/.test(media))vendor="View Chicago";
-  else if(/Transit Shelter|Gas Pump/.test(media))vendor="Wilkins Media";
-  else if(mkt==="CIN")vendor="Lamar";
-  else vendor="Wilkins Media";
   // r[16] holds the creative: a single ISCI code (string) or an array of codes for
   // rotation (digital boards). r[17] optionally holds the rotation percentages.
   const _ic=r[16];const isciList=Array.isArray(_ic)?_ic.filter(Boolean):(_ic?[_ic]:[]);
