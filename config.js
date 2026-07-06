@@ -21,11 +21,13 @@ const ESTIMATES=(()=>{const CABLE_NUMS=new Set(["2605","2613","2621","2629"]);re
 const STATIONS=D_S.map(r=>({market:r[0],call:r[1],media:r[2],ownership:r[3],contact:r[4],brand:r[5],buyer:r[6]}));
 const CALENDAR=D_C.map(r=>({month:r[0],rotDue:r[1],bcStart:r[2],bcEnd:r[3]}));
 const POSTINGS=D_P.map(r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:r[3],type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17]}));
-const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery"};
+const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",ABQ:"Albuquerque",KGB:"King/Bull",LAS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YUM:"Yuma"};
 const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
 const BRANDS=[
   {code:"PL",name:"Postman Law",agency:"Blackacre Services",logo:LOGO_PL,color:"#9b7bb0",colorBg:"#F0E8F8",gradientFrom:"#a855f7",gradientTo:"#9b7bb0",markets:["CHI","CIN","DEN","MSP"],airingKey:"est"},
-  {code:"WK",name:"Wettermark Keith",agency:"WK Advertising Solutions",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",gradientFrom:"#818cf8",gradientTo:"#6366f1",markets:["BRM","HSV","KNX","CHA","MTG","DHN"],airingKey:"est|market"}
+  {code:"WK",name:"Wettermark Keith",agency:"WK Advertising Solutions",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",gradientFrom:"#818cf8",gradientTo:"#6366f1",markets:["BRM","HSV","KNX","CHA","MTG","DHN"],airingKey:"est|market"},
+  // Lerner & Rowe — OOH-only for now (contract-level buys, no board/ISCI detail yet).
+  {code:"LR",name:"Lerner & Rowe",agency:"Atticor Media",logo:"",color:"#2FBF71",colorBg:"#e9fbf1",gradientFrom:"#34d399",gradientTo:"#2FBF71",markets:["ABQ","CHI","KGB","LAS","PHX","RNO","SEA","TUC","YUM"],airingKey:"est"}
 ];
 // Brand helpers — use these instead of hardcoded ternaries
 const getBrand=(v)=>BRANDS.find(b=>b.name===v||b.code===v)||BRANDS[0];

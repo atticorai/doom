@@ -389,11 +389,11 @@ const CALENDAR=D_C.map(r=>({month:r[0],rotDue:r[1],bcStart:r[2],bcEnd:r[3]}));
 // already-airing month.
 const nextTrafficMonth=()=>{const t=new Date();t.setHours(0,0,0,0);const c=CALENDAR.find(c=>new Date(c.bcStart+"T00:00:00")>t);return c?c.month:(CALENDAR[CALENDAR.length-1]||{}).month||"December"};
 const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const mk=r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17],design:(r[18]?(Array.isArray(r[18])?r[18].filter(Boolean):[r[18]]):[]),vendorRef:r[19]||""});const base=D_P.map(mk);const extra=(typeof D_P_NEW!=="undefined"?D_P_NEW:[]).map(mk);return[...base,...extra]})();
-const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City"};
+const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KGB:"King/Bull",LAS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YUM:"Yuma"};
 // Market rolls up by FULL NAME everywhere in the app (traffic library, history,
 // metrics, AI planner) — the prefix lives ONLY in the ISCI code. Gadsden (GAD)
 // is not its own market; it falls under Birmingham.
-const DMA_MARKET={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",GAD:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City"};
+const DMA_MARKET={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",GAD:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KGB:"King/Bull",LAS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YUM:"Yuma"};
 const oohMarket=(dma)=>DMA_MARKET[dma]||DM[dma]||dma;
 // The ISCI market prefix is the board's REAL market — GAD is never a prefix
 // (Gadsden rolls into Birmingham → BRM). Extend this map if more areas roll up.
@@ -894,7 +894,7 @@ const App=()=>{
   const[campaignIcsUrl,setCampaignIcsUrl]=useState("");
   const[campaignEvents,setCampaignEvents]=useState([]);
   const[alertsDismissed,setAlertsDismissed]=useState([]);
-  const[oohContracts,setOohContracts]=useState(OOH_CONTRACTS_INIT);
+  const[oohContracts,setOohContracts]=useState({...OOH_CONTRACTS_INIT,...(typeof LR_CONTRACTS!=="undefined"?LR_CONTRACTS:{})});
   const[oohCreativeFiles,setOohCreativeFiles]=useState([]);// every uploaded OOH creative as a STANDALONE file: {n,u,dma,c,fam,w,h}
   const[oohPhotos,setOohPhotos]=useState({});
   const[dbLoaded,setDbLoaded]=useState(false);
@@ -1499,6 +1499,10 @@ const App=()=>{
   const[plOohPostDates,setPlOohPostDates]=useState("");const[plOohVersion,setPlOohVersion]=useState("");const[plOohComments,setPlOohComments]=useState("");const[plOohTrafficMode,setPlOohTrafficMode]=useState("units");const[plOohTypeF,setPlOohTypeF]=useState("");
   const[plCalMktF,setPlCalMktF]=useState("");const[plCalTypeF,setPlCalTypeF]=useState("");const[plShowPast,setPlShowPast]=useState(false);
   const[plOohEditContract,setPlOohEditContract]=useState(null);const[plOohEditDates,setPlOohEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
+  // Lerner & Rowe OOH (contract-level) — filters + contract editor, hoisted to App
+  // level so the <LrOohPg/> instance keeps them across App re-renders.
+  const[lrMktF,setLrMktF]=useState("");const[lrVendF,setLrVendF]=useState("");const[lrStatusF,setLrStatusF]=useState("");const[lrQ,setLrQ]=useState("");
+  const[lrOohEditContract,setLrOohEditContract]=useState(null);const[lrOohEditDates,setLrOohEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
   const[isciBulkText,setIsciBulkText]=useState("");
   const[isciSearch,setIsciSearch]=useState("");
   const[customFields,setCustomFields]=useState({
@@ -7894,12 +7898,117 @@ Rules:
     </div>;
   };
 
+  // ── LERNER & ROWE OOH (contract-level) ────────────────
+  // Contracts-only view (no board/ISCI detail yet). Reads L&R contracts from
+  // oohContracts, groups by market → vendor, reuses contractStatus for the
+  // active/expiring/expired badges. Filter + edit state lives at App level
+  // (lr* hooks) so this instance survives App re-renders.
+  const LrOohPg=()=>{
+    const BRAND="Lerner & Rowe";const brandColor=getBrandColor("LR");
+    const mktF=lrMktF,setMktF=setLrMktF,vendF=lrVendF,setVendF=setLrVendF,statusF=lrStatusF,setStatusF=setLrStatusF,q=lrQ,setQ=setLrQ;
+    const editId=lrOohEditContract,setEditId=setLrOohEditContract,editDates=lrOohEditDates,setEditDates=setLrOohEditDates;
+    const all=Object.entries(oohContracts).filter(([k,c])=>c&&c.brand===BRAND).map(([k,c])=>({key:k,...c}));
+    const markets=[...new Set(all.map(c=>(c.dmas&&c.dmas[0])||"").filter(Boolean))].sort((a,b)=>(DM[a]||a).localeCompare(DM[b]||b));
+    const vendors=[...new Set(all.map(c=>c.vendor).filter(Boolean))].sort();
+    const money=n=>"$"+Number(n||0).toLocaleString();
+    const fmtDate=d=>d?new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"—";
+    const filtered=all.filter(c=>{
+      if(mktF&&((c.dmas&&c.dmas[0])||"")!==mktF)return false;
+      if(vendF&&c.vendor!==vendF)return false;
+      if(statusF&&contractStatus(c).status!==statusF)return false;
+      if(q){const s=q.toLowerCase();if(!((c.num||"").toLowerCase().includes(s)||(c.vendor||"").toLowerCase().includes(s)||(c.mediaType||"").toLowerCase().includes(s)||(c.subMarket||"").toLowerCase().includes(s)))return false}
+      return true;
+    });
+    const totalUnits=filtered.reduce((a,c)=>a+(Number(c.qty)||0),0);
+    const totalMonthly=filtered.reduce((a,c)=>a+(Number(c.monthly)||0),0);
+    const expiringSoon=filtered.filter(c=>{const s=contractStatus(c).status;return s==="expiring"||s==="expiring-soon"}).length;
+    const expired=filtered.filter(c=>contractStatus(c).status==="expired").length;
+    const byMkt={};filtered.forEach(c=>{const m=(c.dmas&&c.dmas[0])||"—";(byMkt[m]=byMkt[m]||[]).push(c)});
+    const startEdit=(c)=>{setEditId(c.key);setEditDates({startDate:c.startDate||"",endDate:c.endDate||"",notes:c.notes||"",manualStatus:c.manualStatus||""})};
+    const saveEdit=()=>{const num=(oohContracts[editId]||{}).num||editId;setOohContracts(prev=>({...prev,[editId]:{...prev[editId],...editDates}}));setEditId(null);log("Contract Edit",num+" (L&R) updated");notify("Contract "+num+" updated")};
+    return<div style={{display:"flex",flexDirection:"column",gap:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+        <PageHead title="Lerner & Rowe — OOH" pgKey="ooh" sub={all.length+" contracts · "+markets.length+" markets · contract-level (board detail TBD)"}/>
+        <span style={{fontSize:12,fontWeight:800,padding:"4px 10px",borderRadius:20,background:brandColor+"20",color:brandColor,border:`1px solid ${brandColor}45`,letterSpacing:.5}}>LERNER & ROWE</span>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10}}>
+        <StatC label="Contracts" value={filtered.length} color={brandColor}/>
+        <StatC label="Markets" value={Object.keys(byMkt).length} color="#4AC8E8"/>
+        <StatC label="Total Units" value={totalUnits.toLocaleString()} sub="faces / boards / shelters" color="#C4A0C8"/>
+        <StatC label="Monthly (listed)" value={money(totalMonthly)} sub="sum of sheet 'Monthly' col" color="#D4A040"/>
+        <StatC label="Expiring ≤60d" value={expiringSoon} color={expiringSoon?"#ea580c":"#5BC4A0"}/>
+        <StatC label="Expired" value={expired} color={expired?"#E85A7A":"#5BC4A0"}/>
+      </div>
+      <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+        <input placeholder="Search contract # / vendor / media..." value={q} onChange={e=>setQ(e.target.value)} style={{width:240,padding:"6px 9px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
+        <Sel label="" options={[{v:"",l:"All Markets"},...markets.map(m=>({v:m,l:(DM[m]||m)+" ("+m+")"}))]} value={mktF} onChange={setMktF}/>
+        <Sel label="" options={[{v:"",l:"All Vendors"},...vendors.map(v=>({v,l:v}))]} value={vendF} onChange={setVendF}/>
+        <Sel label="" options={[{v:"",l:"All Statuses"},{v:"active",l:"Active"},{v:"expiring",l:"Expiring (≤30d)"},{v:"expiring-soon",l:"Expiring (≤60d)"},{v:"expired",l:"Expired"},{v:"upcoming",l:"Not Started"},{v:"renewal",l:"Pending Renewal"}]} value={statusF} onChange={setStatusF}/>
+        {(q||mktF||vendF||statusF)&&<Btn small onClick={()=>{setQ("");setMktF("");setVendF("");setStatusF("")}}>Clear</Btn>}
+        <span style={{fontSize:12,color:"#6B5E80",marginLeft:"auto"}}>{filtered.length} shown</span>
+      </div>
+      {Object.keys(byMkt).sort((a,b)=>(DM[a]||a).localeCompare(DM[b]||b)).map(m=>{const list=byMkt[m];
+        return<Cd key={m} style={{padding:12}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+            <span style={{fontSize:16,fontWeight:800,color:"#F0E8F8"}}>{DM[m]||m}</span>
+            <span style={{fontSize:12,fontWeight:700,padding:"1px 8px",borderRadius:10,background:brandColor+"18",color:brandColor}}>{m}</span>
+            <span style={{fontSize:12,color:"#9B8EAD"}}>{list.length} contract{list.length!==1?"s":""}</span>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
+            {list.slice().sort((a,b)=>String(a.vendor).localeCompare(String(b.vendor))||String(a.num).localeCompare(String(b.num))).map(c=>{const cs=contractStatus(c);
+              return<div key={c.key} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#1e1233"}}>
+                <div style={{padding:"9px 12px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#1e1233"}}>{c.num}</span>
+                      <span style={{fontSize:12,padding:"1px 7px",borderRadius:10,fontWeight:700,background:cs.color+"22",color:cs.color}}>{cs.label}</span>
+                    </div>
+                    <button onClick={()=>editId===c.key?setEditId(null):startEdit(c)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#3a2a4a"}}>✎</button>
+                  </div>
+                  <div style={{fontSize:12,color:"#3a2a4a",marginTop:2,fontWeight:600}}>{c.vendor}{c.subMarket?" · "+c.subMarket:""}</div>
+                </div>
+                {editId===c.key?<div style={{padding:12,display:"flex",flexDirection:"column",gap:6}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                    <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Start</label><input type="date" value={editDates.startDate} onChange={e=>setEditDates(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+brandColor,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}/></div>
+                    <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>End</label><input type="date" value={editDates.endDate} onChange={e=>setEditDates(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+brandColor,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}/></div>
+                  </div>
+                  <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Override Status</label><select value={editDates.manualStatus} onChange={e=>setEditDates(p=>({...p,manualStatus:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+brandColor,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}><option value="">Auto (from dates)</option><option value="active">Active</option><option value="renewal">Pending Renewal</option><option value="expired">Expired</option></select></div>
+                  <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Notes</label><input value={editDates.notes} onChange={e=>setEditDates(p=>({...p,notes:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+brandColor,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}} placeholder="Renewal / notes..."/></div>
+                  <div style={{display:"flex",gap:4}}><Btn small primary color={brandColor} onClick={saveEdit}>Save</Btn><Btn small onClick={()=>setEditId(null)}>Cancel</Btn></div>
+                </div>:
+                <div style={{padding:"9px 12px"}}>
+                  <div style={{display:"flex",gap:14,marginBottom:7}}>
+                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Start</div><div style={{fontSize:12,fontWeight:600,color:"#C4A0C8"}}>{fmtDate(c.startDate)}</div></div>
+                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>End</div><div style={{fontSize:12,fontWeight:600,color:cs.color}}>{c.endDate?fmtDate(c.endDate):(c.manualStatus==="active"?"Ongoing (UFN)":"—")}</div></div>
+                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:12,fontWeight:700,color:cs.color}}>{cs.daysLeft!==undefined?cs.daysLeft:"—"}</div></div>
+                  </div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",fontSize:12}}>
+                    {c.category&&<B l={c.category} c="#4AC8E8"/>}
+                    {c.mediaType&&<span style={{color:"#C4A0C8"}}>{c.mediaType}</span>}
+                  </div>
+                  <div style={{display:"flex",gap:14,fontSize:12,color:"#9B8EAD",marginTop:6}}>
+                    {c.qty!=null&&<span><strong style={{color:"#E8DFF0"}}>{Number(c.qty).toLocaleString()}</strong> units</span>}
+                    {c.monthly!=null&&<span><strong style={{color:"#D4A040"}}>{money(c.monthly)}</strong> / mo</span>}
+                  </div>
+                  {c.link&&<div style={{marginTop:6}}><a href={c.link} target="_blank" rel="noopener noreferrer" style={{fontSize:12,fontWeight:700,color:"#4AC8E8"}}>📄 Contract PDF ↗</a><span style={{fontSize:11,color:"#6B5E80",marginLeft:6}}>panel list + locations</span></div>}
+                  {c.notes&&<div style={{fontSize:12,color:"#9B8EAD",marginTop:5,fontStyle:"italic"}}>📝 {c.notes}</div>}
+                </div>}
+              </div>;
+            })}
+          </div>
+        </Cd>;
+      })}
+      {filtered.length===0&&<Cd style={{padding:30}}><div style={{textAlign:"center",color:"#9B8EAD",fontSize:14,fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div></Cd>}
+    </div>;
+  };
+
   // ── OOH HUB (sub-app) ──────────────────────────────────
   const OohHub=()=>{
     const subRoute=routeHash.replace(/^ooh\/?/,'') || 'wk';
     const oohNav=[
       {id:"wk",l:"WK OOH",e:"🛣"},
       {id:"pl",l:"PL OOH",e:"📋"},
+      {id:"lr",l:"L&R OOH",e:"🟢"},
       {id:"isci",l:"OOH ISCI Registry",e:"◈"},
       {id:"import",l:"Import / Upload",e:"📤"}
     ];
@@ -8006,7 +8115,7 @@ Rules:
         </Cd>}
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
           <input placeholder="Search OOH ISCIs..." value={oohIsciFilter} onChange={e=>setOohIsciFilter(e.target.value)} style={{width:200,padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
-          <Sel label="" options={[{v:"",l:"All Brands"},{v:"Wettermark Keith",l:"Wettermark Keith"},{v:"Postman Law",l:"Postman Law"}]} value={oohBrandFilter} onChange={setOohBrandFilter}/>
+          <Sel label="" options={[{v:"",l:"All Brands"},{v:"Wettermark Keith",l:"Wettermark Keith"},{v:"Postman Law",l:"Postman Law"},{v:"Lerner & Rowe",l:"Lerner & Rowe"}]} value={oohBrandFilter} onChange={setOohBrandFilter}/>
           <Sel label="" options={[{v:"",l:"All DMAs"},...oohDmas.map(d=>({v:d,l:(DM[d]||d)+" ("+d+")"}))] } value={oohDmaFilter} onChange={setOohDmaFilter}/>
           <label style={{fontSize:12,display:"flex",alignItems:"center",gap:3,cursor:"pointer",color:"#9B8EAD"}}><input type="checkbox" checked={showOohInactive} onChange={e=>setShowOohInactive(e.target.checked)}/> Show inactive</label>
           {(oohIsciFilter||oohBrandFilter||oohDmaFilter)&&<Btn small onClick={()=>{setOohIsciFilter("");setOohBrandFilter("");setOohDmaFilter("")}}>Clear</Btn>}
@@ -8052,9 +8161,10 @@ Rules:
             its own hook scope. Bare-calling them conditionally changed OohHub's
             hook count between routes (Rules of Hooks violation → white-screen). */}
         {subRoute==="pl"&&<PlOohPg/>}
+        {subRoute==="lr"&&<LrOohPg/>}
         {subRoute==="isci"&&oohIsciPg()}
         {subRoute==="import"&&<UploadPg/>}
-        {!["wk","pl","isci","import"].includes(subRoute)&&OohPg()}
+        {!["wk","pl","lr","isci","import"].includes(subRoute)&&OohPg()}
       </div>
     </div>;
   };
