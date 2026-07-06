@@ -727,6 +727,10 @@ const isDarkBoard=(id)=>{try{return typeof OOH_DARK!=="undefined"&&OOH_DARK.has(
 // Prior-year OOH buys archived by CONTRACT id — hidden from active hub views, kept for reference.
 const isArchivedContract=(c)=>{try{return typeof OOH_ARCHIVE!=="undefined"&&OOH_ARCHIVE.has(String(c))}catch(_e){return false}};
 
+// ── Lerner & Rowe OOH — proof-of-posting + creative calendar (none yet;
+//    boards come from executed contracts, PoP/creative data added as it arrives) ──
+const LR_POPS={};
+const LR_CREATIVE_CAL=[];
 // ── PL OOH PoP CONFIRMATIONS (from Wilkins PoP PPTXs) ──
 const PL_POPS={"2084":{popDate:"2/5/2026",contract:"2026-41440"},"7061O":{popDate:"2/6/2026",contract:"2026-41440"},"1640":{popDate:"2/4/2026",contract:"2026-41440"},"2015":{popDate:"2/18/2026",contract:"2026-41440"},"1398":{popDate:"12/15/2025",contract:"2025-40749"},"IM009":{popDate:"12/11/2025",contract:"2025-40749"},"IM010":{popDate:"12/11/2025",contract:"2025-40749"},"1569":{popDate:"12/11/2025",contract:"2025-40749"},"1512O":{popDate:"12/11/2025",contract:"2025-40749"},"1565O":{popDate:"12/11/2025",contract:"2025-40749"},"8313RO":{popDate:"12/2/2025",contract:"2025-40749"},"8520KO":{popDate:"12/2/2025",contract:"2025-40749"},"1282":{popDate:"12/11/2025",contract:"2025-40749"},"1070":{popDate:"12/11/2025",contract:"2025-40749"},"1636":{popDate:"12/11/2025",contract:"2025-40749"},"1084":{popDate:"12/11/2025",contract:"2025-40749"},"1304":{popDate:"12/11/2025",contract:"2025-40749"},"156A":{popDate:"2/6/2026",contract:"2026-41665"},"410A":{popDate:"11/12/2025",contract:"2025-37862"}};
 // ── OOH CONTRACT STATUS TRACKING ──
@@ -1108,6 +1112,8 @@ const App=()=>{
         try{if(docs.wkOohCreativeList?.data){const d=JSON.parse(docs.wkOohCreativeList.data);if(d&&typeof d==="object"&&!Array.isArray(d))setOohCreatives({bulletin:[...new Set([...WK_OOH_CREATIVES.bulletin,...(d.bulletin||[])])],poster:[...new Set([...WK_OOH_CREATIVES.poster,...(d.poster||[])])]})}}catch(_e){console.warn("wkOohCreativeList load skipped",_e)}
         try{if(docs.plOohIscis?.data){const d=JSON.parse(docs.plOohIscis.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>{if(d[p.unit]===undefined)return p;const v=d[p.unit];const list=Array.isArray(v)?v.filter(Boolean):(v?[v]:[]);return{...p,isciList:list,isci:list[0]||""}}))}}catch(_e){console.warn("plOohIscis load skipped",_e)}
         try{if(docs.plOohIsciPct?.data){const d=JSON.parse(docs.plOohIsciPct.data);if(Object.keys(d).length)setPlPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isciPct:Array.isArray(d[p.unit])?d[p.unit]:[]}:p))}}catch(_e){console.warn("plOohIsciPct load skipped",_e)}
+        try{if(docs.lrOohIscis?.data){const d=JSON.parse(docs.lrOohIscis.data);if(Object.keys(d).length)setLrPanels(prev=>prev.map(p=>{if(d[p.unit]===undefined)return p;const v=d[p.unit];const list=Array.isArray(v)?v.filter(Boolean):(v?[v]:[]);return{...p,isciList:list,isci:list[0]||""}}))}}catch(_e){console.warn("lrOohIscis load skipped",_e)}
+        try{if(docs.lrOohIsciPct?.data){const d=JSON.parse(docs.lrOohIsciPct.data);if(Object.keys(d).length)setLrPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isciPct:Array.isArray(d[p.unit])?d[p.unit]:[]}:p))}}catch(_e){console.warn("lrOohIsciPct load skipped",_e)}
         try{if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}}catch(_e){console.warn("oohPhotos load skipped",_e)}
         console.log("Supabase: loaded",Object.keys(docs).length,"collections");
         loadCompleteRef.current=true;
@@ -1316,6 +1322,8 @@ const App=()=>{
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("wkOohCreativeList",oohCreatives)},[oohCreatives,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(plPanels.filter(p=>(p.isciList&&p.isciList.length)||p.isci).map(p=>[p.unit,(p.isciList&&p.isciList.length)?p.isciList:p.isci]));if(Object.keys(isciMap).length>0)saveToDb("plOohIscis",isciMap)},[plPanels,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const m=Object.fromEntries(plPanels.filter(p=>p.isciPct&&p.isciPct.length).map(p=>[p.unit,p.isciPct]));if(Object.keys(m).length>0)saveToDb("plOohIsciPct",m)},[plPanels,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(lrPanels.filter(p=>(p.isciList&&p.isciList.length)||p.isci).map(p=>[p.unit,(p.isciList&&p.isciList.length)?p.isciList:p.isci]));if(Object.keys(isciMap).length>0)saveToDb("lrOohIscis",isciMap)},[lrPanels,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const m=Object.fromEntries(lrPanels.filter(p=>p.isciPct&&p.isciPct.length).map(p=>[p.unit,p.isciPct]));if(Object.keys(m).length>0)saveToDb("lrOohIsciPct",m)},[lrPanels,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohPhotos).length>0)saveToDb("oohPhotos",oohPhotos)},[oohPhotos,dbLoaded]);
 
   // ── CONFIRMATION REMINDERS (manual trigger) ──────────────────
@@ -1499,9 +1507,18 @@ const App=()=>{
   const[plOohPostDates,setPlOohPostDates]=useState("");const[plOohVersion,setPlOohVersion]=useState("");const[plOohComments,setPlOohComments]=useState("");const[plOohTrafficMode,setPlOohTrafficMode]=useState("units");const[plOohTypeF,setPlOohTypeF]=useState("");
   const[plCalMktF,setPlCalMktF]=useState("");const[plCalTypeF,setPlCalTypeF]=useState("");const[plShowPast,setPlShowPast]=useState(false);
   const[plOohEditContract,setPlOohEditContract]=useState(null);const[plOohEditDates,setPlOohEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
-  // Lerner & Rowe OOH (contract-level) — filters + contract editor, hoisted to App
-  // level so the <LrOohPg/> instance keeps them across App re-renders.
-  const[lrMktF,setLrMktF]=useState("");const[lrVendF,setLrVendF]=useState("");const[lrStatusF,setLrStatusF]=useState("");const[lrQ,setLrQ]=useState("");
+  // Lerner & Rowe OOH — full board page (clone of the PL OOH engine). All filter
+  // and editor state is hoisted to App level so the <LrBoardsPg/> instance keeps
+  // it across App re-renders, exactly like the PL page does with its pl* hooks.
+  const[lrPanels,setLrPanels]=useState(typeof LR_PANELS!=="undefined"?LR_PANELS:[]);
+  const[lrMktF,setLrMktF]=useState("");const[lrPlanF,setLrPlanF]=useState("");const[lrVendF,setLrVendF]=useState("");
+  const[lrViewMode,setLrViewMode]=useState("cards");
+  const[lrMapMode,setLrMapMode]=useState("market");const[lrClusterRadius,setLrClusterRadius]=useState(3);
+  const[lrOohEditId,setLrOohEditId]=useState(null);const[lrOohEditVal,setLrOohEditVal]=useState("");
+  const[lrOohEditList,setLrOohEditList]=useState([]);const[lrOohEditPct,setLrOohEditPct]=useState([]);
+  const[lrOohLines,setLrOohLines]=useState([{flight:"",isci:"",units:"",panel:"",faces:[],notes:""}]);
+  const[lrOohPostDates,setLrOohPostDates]=useState("");const[lrOohVersion,setLrOohVersion]=useState("");const[lrOohComments,setLrOohComments]=useState("");const[lrOohTrafficMode,setLrOohTrafficMode]=useState("units");const[lrOohTypeF,setLrOohTypeF]=useState("");
+  const[lrCalMktF,setLrCalMktF]=useState("");const[lrCalTypeF,setLrCalTypeF]=useState("");const[lrShowPast,setLrShowPast]=useState(false);
   const[lrOohEditContract,setLrOohEditContract]=useState(null);const[lrOohEditDates,setLrOohEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
   const[isciBulkText,setIsciBulkText]=useState("");
   const[isciSearch,setIsciSearch]=useState("");
@@ -7898,107 +7915,567 @@ Rules:
     </div>;
   };
 
-  // ── LERNER & ROWE OOH (contract-level) ────────────────
-  // Contracts-only view (no board/ISCI detail yet). Reads L&R contracts from
-  // oohContracts, groups by market → vendor, reuses contractStatus for the
-  // active/expiring/expired badges. Filter + edit state lives at App level
-  // (lr* hooks) so this instance survives App re-renders.
-  const LrOohPg=()=>{
-    const BRAND="Lerner & Rowe";const brandColor=getBrandColor("LR");
-    const mktF=lrMktF,setMktF=setLrMktF,vendF=lrVendF,setVendF=setLrVendF,statusF=lrStatusF,setStatusF=setLrStatusF,q=lrQ,setQ=setLrQ;
-    const editId=lrOohEditContract,setEditId=setLrOohEditContract,editDates=lrOohEditDates,setEditDates=setLrOohEditDates;
-    const all=Object.entries(oohContracts).filter(([k,c])=>c&&c.brand===BRAND).map(([k,c])=>({key:k,...c}));
-    const markets=[...new Set(all.map(c=>(c.dmas&&c.dmas[0])||"").filter(Boolean))].sort((a,b)=>(DM[a]||a).localeCompare(DM[b]||b));
-    const vendors=[...new Set(all.map(c=>c.vendor).filter(Boolean))].sort();
-    const money=n=>"$"+Number(n||0).toLocaleString();
-    const fmtDate=d=>d?new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"—";
-    const filtered=all.filter(c=>{
-      if(mktF&&((c.dmas&&c.dmas[0])||"")!==mktF)return false;
-      if(vendF&&c.vendor!==vendF)return false;
-      if(statusF&&contractStatus(c).status!==statusF)return false;
-      if(q){const s=q.toLowerCase();if(!((c.num||"").toLowerCase().includes(s)||(c.vendor||"").toLowerCase().includes(s)||(c.mediaType||"").toLowerCase().includes(s)||(c.subMarket||"").toLowerCase().includes(s)))return false}
-      return true;
-    });
-    const totalUnits=filtered.reduce((a,c)=>a+(Number(c.qty)||0),0);
-    const totalMonthly=filtered.reduce((a,c)=>a+(Number(c.monthly)||0),0);
-    const expiringSoon=filtered.filter(c=>{const s=contractStatus(c).status;return s==="expiring"||s==="expiring-soon"}).length;
-    const expired=filtered.filter(c=>contractStatus(c).status==="expired").length;
-    const byMkt={};filtered.forEach(c=>{const m=(c.dmas&&c.dmas[0])||"—";(byMkt[m]=byMkt[m]||[]).push(c)});
-    const startEdit=(c)=>{setEditId(c.key);setEditDates({startDate:c.startDate||"",endDate:c.endDate||"",notes:c.notes||"",manualStatus:c.manualStatus||""})};
-    const saveEdit=()=>{const num=(oohContracts[editId]||{}).num||editId;setOohContracts(prev=>({...prev,[editId]:{...prev[editId],...editDates}}));setEditId(null);log("Contract Edit",num+" (L&R) updated");notify("Contract "+num+" updated")};
-    return<div style={{display:"flex",flexDirection:"column",gap:12}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
-        <PageHead title="Lerner & Rowe — OOH" pgKey="ooh" sub={all.length+" contracts · "+markets.length+" markets · contract-level (board detail TBD)"}/>
-        <span style={{fontSize:12,fontWeight:800,padding:"4px 10px",borderRadius:20,background:brandColor+"20",color:brandColor,border:`1px solid ${brandColor}45`,letterSpacing:.5}}>LERNER & ROWE</span>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10}}>
-        <StatC label="Contracts" value={filtered.length} color={brandColor}/>
-        <StatC label="Markets" value={Object.keys(byMkt).length} color="#4AC8E8"/>
-        <StatC label="Total Units" value={totalUnits.toLocaleString()} sub="faces / boards / shelters" color="#C4A0C8"/>
-        <StatC label="Monthly (listed)" value={money(totalMonthly)} sub="sum of sheet 'Monthly' col" color="#D4A040"/>
-        <StatC label="Expiring ≤60d" value={expiringSoon} color={expiringSoon?"#ea580c":"#5BC4A0"}/>
-        <StatC label="Expired" value={expired} color={expired?"#E85A7A":"#5BC4A0"}/>
-      </div>
-      <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-        <input placeholder="Search contract # / vendor / media..." value={q} onChange={e=>setQ(e.target.value)} style={{width:240,padding:"6px 9px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
-        <Sel label="" options={[{v:"",l:"All Markets"},...markets.map(m=>({v:m,l:(DM[m]||m)+" ("+m+")"}))]} value={mktF} onChange={setMktF}/>
-        <Sel label="" options={[{v:"",l:"All Vendors"},...vendors.map(v=>({v,l:v}))]} value={vendF} onChange={setVendF}/>
-        <Sel label="" options={[{v:"",l:"All Statuses"},{v:"active",l:"Active"},{v:"expiring",l:"Expiring (≤30d)"},{v:"expiring-soon",l:"Expiring (≤60d)"},{v:"expired",l:"Expired"},{v:"upcoming",l:"Not Started"},{v:"renewal",l:"Pending Renewal"}]} value={statusF} onChange={setStatusF}/>
-        {(q||mktF||vendF||statusF)&&<Btn small onClick={()=>{setQ("");setMktF("");setVendF("");setStatusF("")}}>Clear</Btn>}
-        <span style={{fontSize:12,color:"#6B5E80",marginLeft:"auto"}}>{filtered.length} shown</span>
-      </div>
-      {Object.keys(byMkt).sort((a,b)=>(DM[a]||a).localeCompare(DM[b]||b)).map(m=>{const list=byMkt[m];
-        return<Cd key={m} style={{padding:12}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-            <span style={{fontSize:16,fontWeight:800,color:"#F0E8F8"}}>{DM[m]||m}</span>
-            <span style={{fontSize:12,fontWeight:700,padding:"1px 8px",borderRadius:10,background:brandColor+"18",color:brandColor}}>{m}</span>
-            <span style={{fontSize:12,color:"#9B8EAD"}}>{list.length} contract{list.length!==1?"s":""}</span>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
-            {list.slice().sort((a,b)=>String(a.vendor).localeCompare(String(b.vendor))||String(a.num).localeCompare(String(b.num))).map(c=>{const cs=contractStatus(c);
-              return<div key={c.key} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#1e1233"}}>
-                <div style={{padding:"9px 12px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#1e1233"}}>{c.num}</span>
-                      <span style={{fontSize:12,padding:"1px 7px",borderRadius:10,fontWeight:700,background:cs.color+"22",color:cs.color}}>{cs.label}</span>
-                    </div>
-                    <button onClick={()=>editId===c.key?setEditId(null):startEdit(c)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#3a2a4a"}}>✎</button>
-                  </div>
-                  <div style={{fontSize:12,color:"#3a2a4a",marginTop:2,fontWeight:600}}>{c.vendor}{c.subMarket?" · "+c.subMarket:""}</div>
+  // ── LERNER & ROWE OOH — full board page (clone of the PL OOH engine,
+  //    brand-scoped to Lerner & Rowe: cards / map+heat / table / reference /
+  //    traffic sheet / creative calendar / contracts). PL page left untouched.
+  const LrBoardsPg=()=>{
+    const mktF=lrMktF,setMktF=setLrMktF,planF=lrPlanF,setPlanF=setLrPlanF,vendF=lrVendF,setVendF=setLrVendF;const viewMode=lrViewMode;const setViewMode=setLrViewMode;
+    const plEditId=lrOohEditId,setPlEditId=setLrOohEditId,plEditVal=lrOohEditVal,setPlEditVal=setLrOohEditVal;
+    const plOLines=lrOohLines,setPlOLines=setLrOohLines;
+    const plOPostDates=lrOohPostDates,setPlOPostDates=setLrOohPostDates;
+    const plOVersion=lrOohVersion,setPlOVersion=setLrOohVersion;
+    const plOComments=lrOohComments,setPlOComments=setLrOohComments;
+    const calMktF=lrCalMktF,setCalMktF=setLrCalMktF,calTypeF=lrCalTypeF,setCalTypeF=setLrCalTypeF,showPast=lrShowPast,setShowPast=setLrShowPast;
+    const plEditContract=lrOohEditContract,setPlEditContract=setLrOohEditContract;
+    const plEditDates=lrOohEditDates,setPlEditDates=setLrOohEditDates;
+    const viewChiFaces=lrPanels.filter(p=>/View/.test(p.vendor)&&(mktF?p.market==="CHI":true)).map(p=>p.unit).sort();
+    // Faces are computed inline when building traffic lines instead of useEffect
+    const plEditList=lrOohEditList,setPlEditList=setLrOohEditList,plEditPct=lrOohEditPct,setPlEditPct=setLrOohEditPct;
+    // Rotating programs carry multiple creatives (like WK): digital boards, rotary poster
+    // programs, and remnant programs all rotate their creative pool. Fixed single boards carry one.
+    const plRotates=(p)=>/digital|rotary|remnant|program/i.test(p.media||"");
+    const plDesignPcts=(list,pct)=>(Array.isArray(pct)&&pct.length===list.length&&pct.every(x=>typeof x==="number"))?pct.slice():evenSplit(list.length);
+    const startPlEdit=(unit,cur)=>{const p=lrPanels.find(x=>x.unit===unit);setPlEditId(unit);
+      if(p&&plRotates(p)){const list=(p.isciList&&p.isciList.length)?[...p.isciList]:(p.isci?[p.isci]:["",""]);setPlEditList(list);setPlEditPct((p.isciPct&&p.isciPct.length===list.length)?[...p.isciPct]:evenSplit(list.length))}
+      else setPlEditVal(cur||"")};
+    const cancelPlEdit=()=>{setPlEditId(null);setPlEditVal("");setPlEditList([]);setPlEditPct([])};
+    const plIsciTitle=(code)=>{if(!code)return"";const m=iscis.find(i=>i.code===code);return m?m.title:""};
+    // PL OOH ISCIs available to assign on a card — the market's OOH ISCIs first, else all PL OOH.
+    const plOohIscisFor=(mkt)=>{const inMkt=iscis.filter(i=>i.suffix==="O"&&i.brand==="Lerner & Rowe"&&i.active&&i.dma===mkt);return inMkt.length?inMkt:iscis.filter(i=>i.suffix==="O"&&i.brand==="Lerner & Rowe"&&i.active)};
+    // Single assign (static board) — save-on-pick, mirrors WK.
+    const setPlIsci=(unit,v)=>{setLrPanels(prev=>prev.map(p=>p.unit===unit?{...p,isci:v,isciList:v?[v]:[],isciPct:[]}:p));setPlEditId(null);log("PL OOH Assign",unit+" → "+(v||"(cleared)"));notify(unit+" ISCI "+(v?"set":"cleared"))};
+    // Rotation editor (digital board) — add/remove creatives, auto-even the % split.
+    const plSetRow=(k,v)=>setPlEditList(prev=>{const a=Array.isArray(prev)?[...prev]:[];a[k]=v;return a});
+    const plSetPct=(k,v)=>setPlEditPct(prev=>{const a=Array.isArray(prev)?[...prev]:[];a[k]=Math.max(0,Math.min(100,parseInt(v,10)||0));return a});
+    const plAddRow=()=>{const a=[...(Array.isArray(plEditList)?plEditList:[]),""];setPlEditList(a);setPlEditPct(evenSplit(a.length))};
+    const plRemoveRow=(k)=>{const a=(Array.isArray(plEditList)?plEditList:[]).filter((_,i)=>i!==k);setPlEditList(a);setPlEditPct(evenSplit(a.length))};
+    const plEvenSplitNow=()=>setPlEditPct(evenSplit((Array.isArray(plEditList)?plEditList:[]).filter(Boolean).length||(Array.isArray(plEditList)?plEditList:[]).length));
+    const savePlRotation=(unit)=>{const pairs=(Array.isArray(plEditList)?plEditList:[]).map((c,i)=>[(c||"").trim(),(plEditPct&&plEditPct[i])||0]).filter(x=>x[0]);const list=pairs.map(x=>x[0]);const pct=pairs.map(x=>x[1]);setLrPanels(prev=>prev.map(p=>p.unit===unit?{...p,isciList:list,isci:list[0]||"",isciPct:pct}:p));setPlEditId(null);log("PL OOH Rotation",unit+" → "+(pairs.map(x=>x[0]+" "+x[1]+"%").join(" / ")||"(cleared)"));notify(unit+" creative "+(list.length?"set":"cleared"))};
+    // CARD TRAFFIC REPORT (PL) — read-only. Pulls each board's assigned ISCI creative into a
+    // traffic PDF with clickable download links, resolved strictly by ISCI code (never breaks).
+    const printPlCardReport=()=>{
+      const scope=fl.filter(p=>p.isci||(p.isciList&&p.isciList.length));
+      if(!scope.length){notify("No boards have an ISCI/creative assigned yet");return}
+      const fmtFl=f=>String(f||"").split("(")[0].trim();
+      const mktLabel=mktF||"All PL Markets";
+      // A board may carry one creative, or several rotating (digital) with percentages —
+      // each resolved to its art by exact ISCI code so the download link can't break.
+      const boardCreative=(p)=>{const list=(p.isciList&&p.isciList.length)?p.isciList:(p.isci?[p.isci]:[]);const rot=plRotates(p)&&list.length>1;const pcts=rot?plDesignPcts(list,p.isciPct):null;return list.map((code,k)=>{const m=iscis.find(i=>i.code===code);return{code,title:m?m.title:code,pct:pcts?pcts[k]:null,f:(m&&m.fileUrl)?{url:m.fileUrl,name:m.title||code}:null}})};
+      const w=window.open("","","width=1000,height=820");
+      w.document.write('<html><head><title>PL OOH Traffic — '+escHtml(mktLabel)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#2FBF71;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}@media print{body{margin:14px}.dl{display:none}tr{page-break-inside:avoid}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<div style="text-align:center;margin-bottom:12px"><h2>LERNER & ROWE</h2><div class="tag">OUT-OF-HOME TRAFFIC INSTRUCTIONS</div></div>');
+      const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v||"")+'</span></div>');
+      hd("Agency","Atticor");hd("Client","Lerner & Rowe");
+      hd("Market(s)",[...new Set(scope.map(p=>p.market))].sort().join(", "));
+      hd("Vendor(s)",[...new Set(scope.map(p=>p.vendor))].sort().join(", "),"amb");
+      hd("Buyer","Atticor Media","red");hd("Media","OOH — Out of Home","red");hd("Broadcast Month",workMonth,"grn");
+      const mktsIn=[...new Set(scope.map(p=>p.market))].sort();let grand=0;
+      mktsIn.forEach((mk,mi)=>{const bds=scope.filter(p=>p.market===mk).sort((a,b)=>String(a.vendor).localeCompare(String(b.vendor))||String(a.unit).localeCompare(String(b.unit)));grand+=bds.length;
+        w.document.write('<div class="mkt"'+(mi>0?' style="page-break-before:always"':'')+'>'+escHtml(mk)+' — '+bds.length+' boards</div>');
+        w.document.write('<table><tr><th style="width:64px">Unit #</th><th>Location</th><th style="width:120px">Media / Size</th><th style="width:170px">Creative</th><th style="width:130px">ISCI</th><th style="width:74px">Flight</th></tr>');
+        bds.forEach(p=>{const crs=boardCreative(p);
+          const crCell=crs.length?crs.map(c=>{const pctTag=c.pct!=null?' <b style="color:#b8860b">('+c.pct+'%)</b>':'';return c.f?('<a href="'+escHtml(oohVendorDl(c.f.url,c.f.name))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(c.title||c.code)+'</a>'+pctTag):('<b>'+escHtml(c.title||c.code)+'</b>'+pctTag+' <span style="color:#b00">⚠ no art uploaded</span>')}).join('<br>'):'<span style="color:#b00">⚠ no creative assigned</span>';
+          const isciCol=(((p.isciList&&p.isciList.length)?p.isciList:(p.isci?[p.isci]:[])).map(c=>escHtml(c)).join("<br>"))||"—";
+          w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.unit))+'</td><td>'+escHtml(p.location||"")+'</td><td>'+escHtml((p.media||"")+" · "+(p.size||""))+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+isciCol+'</td><td>'+escHtml(fmtFl(p.flight))+'</td></tr>')});
+        w.document.write('</table>')});
+      w.document.write('<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+grand+'</div>');
+      w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
+      w.document.write('</body></html>');w.document.close();
+      log("PL OOH Card Traffic Report",mktLabel+" · "+grand+" boards");notify("PL traffic report — "+grand+" boards");
+    };
+    const mkts=[...new Set(lrPanels.map(p=>p.market))].sort();
+    const plVendors=[...new Set(lrPanels.map(p=>p.vendor))].sort();
+    // The buy = current 2026 boards + inherited boards carried over from the prior cycle
+    // (they're still part of the annual buy, just on earlier flights). Both show by default,
+    // with inherited badged. Only genuinely dead boards (plan "expired" — contract ran out)
+    // are archived out of the default view and revealed via the Plan filter.
+    const plArchived=p=>p.plan==="expired";
+    const fl=lrPanels.filter(p=>(mktF?p.market===mktF:true)&&(vendF?p.vendor===vendF:true)&&(planF?p.plan===planF:p.plan!=="expired"));
+    const totalImpr=fl.reduce((a,p)=>a+(p.impressions*p.numUnits),0);
+    const posted=fl.filter(p=>p.status==="posted").length;
+    const upcoming=fl.filter(p=>p.status==="upcoming").length;
+
+    const mktColors={CHI:"#2FBF71",ABQ:"#E85A7A",LAS:"#D4A040",PHX:"#4AC8E8",TUC:"#5BC4A0",RNO:"#a855f7",SEA:"#6366f1",YUM:"#ec4899",KGB:"#f59e0b"};
+    const mktNames={CHI:"Chicago",ABQ:"Albuquerque",LAS:"Las Vegas",PHX:"Phoenix",TUC:"Tucson",RNO:"Reno",SEA:"Seattle",YUM:"Yuma",KGB:"King/Bull"};
+
+    // Map pins from LR_PANELS with coords
+    const mapPins=fl.filter(p=>p.lat&&p.lng).map(p=>({id:p.unit,lat:p.lat,lng:p.lng,location:p.location,vendor:p.vendor,size:p.size,status:p.status,impressions:p.impressions*p.numUnits,market:p.market,creative:(typeof POP_TITLES!=='undefined'&&POP_TITLES[p.unit])||""}));
+
+    const CardGrid=()=><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
+      {fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const flightClean=p.flight.split('(')[0].trim();const pop=LR_POPS[p.unit];const exp=plArchived(p);
+        const _popTitle=(typeof POP_TITLES!=='undefined'&&POP_TITLES[p.unit])||"PoP Photo";
+        const _popAlts=((typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[p.unit])||[]).map((u,i)=>({url:u,label:((typeof POP_TITLES_ALT!=='undefined'&&POP_TITLES_ALT[p.unit])||[])[i]||"PoP Photo (alt "+(i+1)+")",hardcoded:true}));
+        const allCardPhotos=POP_PHOTOS[p.unit]?[{url:POP_PHOTOS[p.unit],label:_popTitle,hardcoded:true},..._popAlts,...(oohPhotos[p.unit]||[])]:[..._popAlts,...(oohPhotos[p.unit]||[])];
+        const openCardPop=(e)=>{
+          // Skip if the click came from an interactive child (ISCI edit input,
+          // upload button, individual photo with its own handler, etc).
+          if(e.defaultPrevented)return;
+          const t=e.target;
+          if(t.closest('input,button,select,textarea,img,a,label'))return;
+          if(!allCardPhotos.length)return;
+          setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0});
+        };
+        return<div key={i} onClick={openCardPop} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:exp?"#e5e0ec":"#F0E8F8",borderLeft:`4px solid ${exp?"#9B8EAD":c}`,cursor:allCardPhotos.length?"pointer":"default",opacity:exp?0.6:1,filter:exp?"grayscale(0.8)":"none"}}>
+          <div style={{padding:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+              <div>
+                <div style={{display:"flex",gap:5,alignItems:"center"}}>
+                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#2d1f42"}}>{p.unit}</span>
+                  <B l={p.market} c={c}/>
+                  {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#1e1233",color:"#9B8EAD",fontWeight:600}}>INHERITED</span>}
+                  {p.plan==="expired"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#3a2f2f",color:"#c9b8b8",fontWeight:700}}>⧗ EXPIRED · ARCHIVED</span>}
+                  {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#3a2f2f",color:"#c9b8b8",fontWeight:700}}>⧗ ARCHIVED</span>}
+                  {pop&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#dbeafe",color:"#4AC8E8",fontWeight:600}}>PoP ✓</span>}
                 </div>
-                {editId===c.key?<div style={{padding:12,display:"flex",flexDirection:"column",gap:6}}>
+                <div style={{fontSize:14,color:"#9B8EAD",marginTop:2}}>{p.media} · {p.size} · {p.vendor}</div>
+              </div>
+              <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:exp?"#e5e7eb":p.status==="posted"?"#dcfce7":"#fef3c7",color:exp?"#6b7280":p.status==="posted"?"#5BC4A0":"#D4A040"}}>{p.status}</span>
+            </div>
+            <div style={{fontSize:14,color:"#9B8EAD",marginTop:6}}>{p.location}</div>
+            <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #4a3565"}}>
+              <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Flight</div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD"}}>{flightClean||"TBD"}</div></div>
+              <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Cycles</div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD"}}>{p.cycles||"—"}</div></div>
+              <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Impr/Wk</div><div style={{fontSize:14,fontWeight:700,color:c}}>{(p.impressions*p.numUnits).toLocaleString()}</div></div>
+              {p.facing&&p.facing!=="N/A"&&p.facing!=="Various"&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#6366f1"/></div></div>}
+              {pop&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>PoP Date</div><div style={{fontSize:14,fontWeight:600,color:"#4AC8E8"}}>{pop.popDate}</div></div>}
+            </div>
+            {POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                <div style={{fontSize:12,fontWeight:600,color:"#4AC8E8",textTransform:"uppercase"}}>📸 {1+(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length?"s":""}</div>
+                <OohPhotoUpload id={p.unit}/>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length?"1fr 1fr":"1fr",gap:4}}>
+                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0})}}/>
+                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=>{const altCount=_popAlts.length;return<img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:1+altCount+pi})}}/>})}
+              </div>
+            </div>}
+            {!POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
+              {(oohPhotos[p.unit]||[]).length?<div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                  <div style={{fontSize:12,fontWeight:600,color:"#4AC8E8",textTransform:"uppercase"}}>📸 {(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length>1?"s":""}</div>
+                  <OohPhotoUpload id={p.unit}/>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length>1?"1fr 1fr":"1fr",gap:4}}>
+                  {(oohPhotos[p.unit]||[]).slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:oohPhotos[p.unit],startIdx:pi})}}/>)}
+                </div>
+              </div>:<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{fontSize:12,color:"#64748b"}}>No PoP photos</span>
+                <OohPhotoUpload id={p.unit}/>
+              </div>}
+            </div>}
+            {(()=>{const dl=(p.isciList&&p.isciList.length)?p.isciList:(p.isci?[p.isci]:[]);const rot=plRotates(p);const has=dl.length>0;return <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:has?"#1f3530":"#fffbeb",border:`1px solid ${has?"#bbf7d0":"#fde68a"}`}}>
+              {plEditId===p.unit?
+                (rot?
+                  <div onClick={e=>e.stopPropagation()}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#2FBF71",marginBottom:3}}>↻ Rotation — digital board</div>
+                    {(plEditList||[]).map((code,k)=><div key={k} style={{display:"flex",gap:3,alignItems:"center",marginBottom:2}}>
+                      <select value={code||""} onChange={e=>plSetRow(k,e.target.value)} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:12,background:"#fff"}}>
+                        <option value="">— select ISCI —</option>
+                        {plOohIscisFor(p.market).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?" 🎬":""}</option>)}
+                      </select>
+                      <input type="number" value={(plEditPct&&plEditPct[k])||0} onChange={e=>plSetPct(k,e.target.value)} style={{width:42,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center"}}/><span style={{fontSize:11,color:"#9B8EAD"}}>%</span>
+                      <button onClick={()=>plRemoveRow(k)} style={{padding:"1px 5px",background:"#3a1f35",color:"#E85A7A",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✕</button>
+                    </div>)}
+                    <div style={{display:"flex",gap:3,marginTop:3}}>
+                      <button onClick={plAddRow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#4AC8E8",border:"1px solid #4a3565",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>+ Add</button>
+                      <button onClick={plEvenSplitNow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#5BC4A0",border:"1px solid #4a3565",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>⚖ Even</button>
+                      <button onClick={()=>savePlRotation(p.unit)} style={{marginLeft:"auto",padding:"2px 8px",background:"#5BC4A0",color:"#fff",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✓ Save</button>
+                      <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✕</button>
+                    </div>
+                  </div>
+                :
+                  <div style={{display:"flex",gap:3,alignItems:"center"}} onClick={e=>e.stopPropagation()}>
+                    <select value={p.isci||""} autoFocus onChange={e=>setPlIsci(p.unit,e.target.value)} onBlur={cancelPlEdit} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:13,background:"#fff"}}>
+                      <option value="">— select ISCI —</option>
+                      {plOohIscisFor(p.market).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?" 🎬":""}</option>)}
+                    </select>
+                    <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
+                  </div>)
+                :
+                <div onClick={(e)=>{e.stopPropagation();startPlEdit(p.unit,p.isci)}} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  {has?<div style={{flex:1,minWidth:0}}>{rot&&dl.length>1&&<div style={{fontSize:11,fontWeight:700,color:"#2FBF71"}}>↻ Rotation</div>}
+                    {(()=>{const pcts=rot?plDesignPcts(dl,p.isciPct):null;return dl.map((code,k)=>{const m=iscis.find(i=>i.code===code);return<div key={k} style={{marginTop:k?2:0}}>
+                      <div style={{fontSize:13,fontWeight:700,fontFamily:"monospace",color:"#5BC4A0"}}>{code}{pcts&&dl.length>1?<span style={{color:"#2FBF71"}}> · {pcts[k]}%</span>:null}</div>
+                      <div style={{fontSize:12,color:"#9B8EAD"}}>{m?m.title:""}</div>
+                      {m&&m.fileUrl?<a href={dlUrl(m.fileUrl)} target="_blank" rel="noopener" download onClick={e=>e.stopPropagation()} style={{fontSize:12,color:"#4AC8E8",fontWeight:600,textDecoration:"none"}}>📁 Download</a>:<span style={{fontSize:12,color:"#D4A040"}}>⚠ no art</span>}
+                    </div>})})()}
+                  </div>
+                  :<div style={{fontSize:14,color:"#D4A040",fontStyle:"italic"}}>No creative — click to assign{rot?" (rotates)":""}</div>}
+                  <span style={{fontSize:13,color:"#9B8EAD",marginLeft:4}}>✎</span>
+                </div>
+              }
+            </div>;})()}
+          </div>
+        </div>;
+      })}
+    </div>;
+
+    return<div style={{display:"flex",flexDirection:"column",gap:10}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+        <div><PageHead title="Lerner & Rowe — OOH Media Plan" pgKey="ooh"/>
+          <p style={{fontSize:13,color:"#9B8EAD"}}>2026 All Markets · {lrPanels.filter(p=>p.plan!=="expired").length} placements across {mkts.length} DMAs · {lrPanels.filter(p=>p.plan!=="expired"&&p.isci).length}/{lrPanels.filter(p=>p.plan!=="expired").length} ISCI assigned{(()=>{const a=lrPanels.filter(p=>p.plan==="expired").length;return a?" · "+a+" archived":""})()}</p>
+        </div>
+        <div style={{display:"flex",gap:4}}>
+          <Btn small onClick={()=>{
+            const headers=["Market","Unit/Face","Vendor","Media Type","Size","Location","Zip","Flight","Cycles","Status","ISCI","ISCI Title","PoP Date","Contract","Impressions/Wk","Facing","Latitude","Longitude","Plan"];
+            const rows=fl.map(p=>{const pop=LR_POPS[p.unit];const zip=typeof PL_ZIPS!=='undefined'?(PL_ZIPS[p.submarket]||PL_ZIPS[p.market]||""):"";return[p.market,p.unit,p.vendor,p.media,p.size,p.location,zip,p.flight.split('(')[0].trim(),p.cycles||"",p.status,p.isci||"",plIsciTitle(p.isci),pop?pop.popDate:"",pop?pop.contract:"",p.impressions*p.numUnits,p.facing||"",p.lat||"",p.lng||"",p.plan]});
+            exportCsv("LR_OOH_"+(mktF||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
+          }} color="#059669">📥 Export</Btn>
+          <Btn small onClick={printPlCardReport} color="#4AC8E8">🖨 Traffic Report</Btn>
+          <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
+          <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
+          <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>📍 Map</Btn>
+          <Btn small onClick={()=>setViewMode("ref")} primary={viewMode==="ref"}>📋 Reference</Btn>
+          <Btn small onClick={()=>setViewMode("traffic")} primary={viewMode==="traffic"} color="#2FBF71">📡 Traffic</Btn>
+          <Btn small onClick={()=>setViewMode("calendar")} primary={viewMode==="calendar"} color="#E85A7A">📅 Creative Calendar</Btn>
+          <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"} color="#D4A040">📑 Contracts</Btn>
+        </div>
+      </div>
+      <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+        <Sel label="Market" options={mkts.map(m=>m)} value={mktF} onChange={setMktF} placeholder="All Markets"/>
+        <Sel label="Vendor" options={plVendors} value={vendF} onChange={setVendF} placeholder="All Vendors"/>
+        <Sel label="Plan" options={["2026","inherited","expired"]} value={planF} onChange={setPlanF} placeholder="Current (2026 only)"/>
+        {(mktF||planF||vendF)&&<Btn small onClick={()=>{setMktF("");setPlanF("");setVendF("")}}>Clear</Btn>}
+      </div>
+      {/* Market stat cards */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
+        {mkts.map(m=>{const allM=lrPanels.filter(p=>p.market===m);const all=allM.filter(p=>p.plan!=="expired");const arch=allM.length-all.length;const impr=all.reduce((a,p)=>a+(p.impressions*p.numUnits),0);const u=new Set(all.map(p=>p.unit)).size;const p2026=all.filter(x=>x.plan==="2026").length;const pops=all.filter(x=>LR_POPS[x.unit]).length;const isciCount=all.filter(x=>x.isci).length;
+          const c=mktColors[m]||"#64748b";
+          return<div key={m} onClick={()=>setMktF(mktF===m?"":m)} style={{padding:"10px 12px",borderRadius:9,border:mktF===m?`2px solid ${c}`:"1px solid #E8DFF0",background:mktF===m?c+"0a":"#fff",cursor:"pointer"}}>
+            <div style={{fontSize:13,fontWeight:700,color:c,textTransform:"uppercase",letterSpacing:1}}>{mktNames[m]}</div>
+            <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{all.length}{arch>0&&<span style={{fontSize:12,fontWeight:600,color:"#9B8EAD"}}> +{arch} arch</span>}</div>
+            <div style={{fontSize:14,color:"#9B8EAD"}}>{u} unique units</div>
+            <div style={{fontSize:14,color:c,fontWeight:600}}>{impr.toLocaleString()} wkly</div>
+            <div style={{fontSize:13,color:"#9B8EAD",marginTop:2}}>{pops?`${pops} PoP · `:"" }{isciCount}/{all.length} ISCI</div>
+          </div>;
+        })}
+        <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #4a3565",background:"linear-gradient(135deg,#faf5ff,#F0E8F8)"}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#2FBF71",textTransform:"uppercase",letterSpacing:1}}>ALL MARKETS</div>
+          <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{lrPanels.filter(p=>p.plan!=="expired").length}{(()=>{const a=lrPanels.filter(p=>p.plan==="expired").length;return a>0?<span style={{fontSize:12,fontWeight:600,color:"#9B8EAD"}}> +{a} arch</span>:null})()}</div>
+          <div style={{fontSize:14,color:"#2FBF71",fontWeight:600}}>{totalImpr.toLocaleString()} wkly</div>
+          <div style={{fontSize:13,color:"#9B8EAD"}}>{posted} posted · {upcoming} upcoming</div>
+        </div>
+      </div>
+
+      {viewMode==="cards"?<CardGrid/>:
+       viewMode==="map"?<Cd><div style={{padding:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:6}}>
+          <div style={{fontSize:14,fontWeight:700}}>📍 PL OOH Board Locations</div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            {lrMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={lrClusterRadius} onChange={e=>setLrClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#4AC8E8",minWidth:30}}>{lrClusterRadius} mi</span></div>}
+            <div style={{display:"flex",gap:0,border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}>
+              <button onClick={()=>setLrMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:lrMapMode==="market"?"rgba(155,123,176,.2)":"transparent",color:lrMapMode==="market"?"#C4A0C8":"#94a3b8"}}>📍 By Market</button>
+              <button onClick={()=>setLrMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:lrMapMode==="creative"?"rgba(74,200,232,.2)":"transparent",color:lrMapMode==="creative"?"#4AC8E8":"#94a3b8"}}>🎨 By Creative</button>
+            </div>
+          </div>
+        </div>
+        {(()=>{
+          const clusters=lrMapMode==="creative"?findClusters(mapPins,lrClusterRadius):{};
+          const pinsWithStatus=mapPins.map(p=>{let st=p.creative?"Creative: "+p.creative:"Untagged";if(clusters[p.id])st+=" · ⚠ "+clusters[p.id]+" neighbor"+(clusters[p.id]>1?"s":"")+" w/ same creative";return{...p,status:st}});
+          return<><OohMap pins={pinsWithStatus} colorFn={p=>lrMapMode==="creative"?creativeColor(p.creative):(mktColors[p.market]||"#64748b")} height={420}/>
+          {lrMapMode==="market"?
+            <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>{Object.entries(mktColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{mktNames[k]}</div>)}</div>
+            :
+            (()=>{const titles=[...new Set(mapPins.map(p=>p.creative).filter(Boolean))].sort();const clusterCnt=Object.keys(clusters).length;return<div style={{marginTop:6}}>
+              {clusterCnt>0&&<div style={{textAlign:"center",fontSize:13,color:"#F4C242",fontWeight:600,marginBottom:6,padding:"4px 8px",background:"rgba(244,194,66,.1)",border:"1px solid rgba(244,194,66,.3)",borderRadius:4}}>⚠ {clusterCnt} unit{clusterCnt!==1?"s":""} within {lrClusterRadius} mi of another running the same creative</div>}
+              {titles.length===0?
+                <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No creatives tagged yet — all units untagged.</div>
+                :
+                <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+                  {titles.map(t=>{const cnt=mapPins.filter(p=>p.creative===t).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #4a3565"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
+                </div>
+              }
+            </div>})()
+          }</>;
+        })()}
+       </div></Cd>:
+       viewMode==="ref"?<Cd><div style={{padding:10}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+          <div style={{fontSize:14,fontWeight:700}}>📋 PL OOH Reference — Unit × Vendor × Contract × PoP</div>
+          <Btn small onClick={()=>{
+            const headers=["#","Market","Unit/Face","Vendor","Media Type","Size","Location","City","Zip","Flight","Cycles","Status","ISCI","ISCI Title","PoP Date","Contract","Impressions/Wk","Facing","Latitude","Longitude","Plan","Num Units"];
+            const rows=fl.map((p,i)=>{const pop=LR_POPS[p.unit];const zip=typeof PL_ZIPS!=='undefined'?(PL_ZIPS[p.submarket]||PL_ZIPS[p.market]||""):"";return[i+1,p.market,p.unit,p.vendor,p.media,p.size,p.location,p.submarket||"",zip,p.flight.split('(')[0].trim(),p.cycles||"",p.status,p.isci||"",plIsciTitle(p.isci),pop?pop.popDate:"",pop?pop.contract:"",p.impressions*p.numUnits,p.facing||"",p.lat||"",p.lng||"",p.plan,p.numUnits]});
+            exportCsv("LR_OOH_Reference_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
+          }}>📥 Export CSV</Btn>
+        </div>
+        <div style={{overflowX:"auto",maxHeight:500}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Mkt</TH><TH>Unit / Face</TH><TH>Vendor</TH><TH>Media Type</TH><TH>Size</TH><TH>Location</TH><TH>Flight</TH><TH>Status</TH><TH>ISCI</TH><TH>PoP Date</TH><TH>Contract</TH><TH>Impr/Wk</TH><TH>Coords</TH></tr></thead>
+          <tbody>{fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const pop=LR_POPS[p.unit];return<tr key={i} style={{background:pop?"#1f254011":""}}>
+            <TD b>{i+1}</TD><TD><B l={p.market} c={c}/></TD><TD m b>{p.unit}</TD><TD><span style={{fontSize:14,fontWeight:600}}>{p.vendor}</span></TD><TD><span style={{fontSize:13}}>{p.media}</span></TD><TD>{p.size}</TD>
+            <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:200,display:"inline-block"}}>{p.location}</span></TD>
+            <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{p.flight.split('(')[0].trim()}</span></TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#5BC4A0":"#D4A040"}}>{p.status}</span></TD>
+            <TD><span style={{fontFamily:"monospace",fontSize:14,color:p.isci?"#5BC4A0":"#9ca3af",fontWeight:p.isci?700:400,cursor:"pointer"}} onClick={()=>startPlEdit(p.unit,p.isci)}>{p.isci||"— assign"}</span></TD>
+            <TD>{pop?<span style={{fontSize:14,fontWeight:600,color:"#4AC8E8"}}>{pop.popDate} ✓</span>:<span style={{fontSize:13,color:"#9B8EAD"}}>—</span>}</TD>
+            <TD><span style={{fontSize:13,fontFamily:"monospace"}}>{pop?pop.contract:"—"}</span></TD>
+            <TD b>{(p.impressions*p.numUnits).toLocaleString()}</TD>
+            <TD>{p.lat&&p.lng&&p.lat!==0?<span style={{fontSize:11,color:"#5BC4A0",fontFamily:"monospace"}}>{p.lat.toFixed(3)}, {p.lng.toFixed(3)}</span>:<span style={{fontSize:13,color:"#9B8EAD"}}>—</span>}</TD>
+          </tr>})}</tbody>
+        </table></div></div></Cd>:
+       viewMode==="traffic"?(()=>{
+        const plOohIscis=iscis.filter(i=>i.suffix==="O"&&i.brand==="Lerner & Rowe"&&i.active);
+        const addLine=()=>setPlOLines(p=>[...p,{flight:"",isci:"",units:"",panel:"",faces:[],notes:""}]);
+        const upL=(i,k,v)=>setPlOLines(p=>p.map((r,j)=>j===i?{...r,[k]:v}:r));
+        const delL=(i)=>setPlOLines(p=>p.filter((_,j)=>j!==i));
+        const mktLabel=mktF||"All Markets";
+        const trafficVendor=vendF||"";
+        const vendorUnits=fl.filter(p=>trafficVendor?p.vendor===trafficVendor:true);
+        const vendorPanels=vendorUnits.filter(p=>lrOohTypeF?mediaCategory(p.media||p.type)===lrOohTypeF:true).map(p=>({id:p.unit,panel:p.unit,mkt:p.market,sub:p.submarket||"",loc:p.location,type:p.media,size:p.size,impr:p.impressions,vendor:p.vendor,numUnits:p.numUnits})).sort((a,b)=>a.mkt.localeCompare(b.mkt)||a.panel.localeCompare(b.panel));
+        const totalUnits=plOLines.reduce((a,l)=>a+(parseInt(l.units)||0),0);
+        const totalPanels=plOLines.filter(l=>l.panel).length;
+        const usePanelMode=lrOohTrafficMode==="panels";
+        const printOoh=()=>{
+          const vLabel=trafficVendor||"All Vendors";
+          const hasPanel=plOLines.some(l=>l.panel);
+          const w=window.open("","","width=900,height=700");
+          w.document.write("<html><head><title>OOH Traffic - PL "+escHtml(mktLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
+          w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">LERNER & ROWE</h2></div>');
+          const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
+          w.document.write(hd("Agency","Atticor"));w.document.write(hd("Client","Lerner & Rowe"));
+          w.document.write(hd("Market",mktLabel));w.document.write(hd("Vendor",vLabel,"amb"));
+          w.document.write(hd("Buyer","Atticor Media","red"));w.document.write(hd("Media","OOH","red"));
+          w.document.write(hd("Broadcast Month",workMonth,"grn"));
+          w.document.write(hd("Post Dates",plOPostDates||"TBD","grn"));w.document.write(hd("Version/ Links",plOVersion||""));
+          if(plOComments)w.document.write(hd("Comments",plOComments));
+          if(hasPanel){
+            w.document.write("<table><thead><tr><th>Flight Dates</th><th>Unit #</th><th>Market</th><th>Location</th><th>ISCI / Creative</th><th>Face #s</th><th>Notes</th></tr></thead><tbody>");
+            plOLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel);w.document.write("<tr><td><b>"+escHtml(l.flight||plOPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+escHtml(l.panel||"")+"</td><td>"+escHtml(bd?bd.mkt:"")+"</td><td style='font-size:10px'>"+escHtml(bd?bd.loc:"")+"</td><td>"+escHtml(l.isci)+"</td><td style='font-family:monospace;font-size:10px'>"+escHtml(l.faces&&l.faces.length?l.faces.join(", "):"")+"</td><td>"+escHtml(l.notes||"")+"</td></tr>")});
+          }else{
+            w.document.write("<table><thead><tr><th>Flight Dates</th><th>ISCI Codes &amp; Title</th><th>Market</th><th>Rot %</th><th>Unit Amounts</th><th>Face Numbers</th><th>Notes</th></tr></thead><tbody>");
+            plOLines.filter(l=>l.isci).forEach(l=>{w.document.write("<tr><td><b>"+escHtml(l.flight||plOPostDates||"")+"</b></td><td>"+escHtml(l.isci)+"</td><td>"+escHtml(l.market||mktLabel)+"</td><td style='text-align:center;font-weight:700'>"+(l.pct?escHtml(l.pct)+"%":"")+"</td><td style='text-align:center;font-weight:700'>"+escHtml(l.units||"")+"</td><td style='font-family:monospace;font-size:10px'>"+escHtml(l.faces&&l.faces.length?l.faces.join(", "):"")+"</td><td>"+escHtml(l.notes||"")+"</td></tr>")});
+          }
+          w.document.write("</tbody></table>");
+          if(hasPanel)w.document.write('<div style="margin-top:6px;font-size:11px"><b>Total Panels:</b> '+totalPanels+"</div>");
+          else if(totalUnits)w.document.write('<div style="margin-top:6px;font-size:11px"><b>Total Units:</b> '+totalUnits+"</div>");
+          w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
+          w.document.write('<div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div>');
+          w.document.write("</body></html>");w.document.close();w.print();
+          log("OOH Traffic Generated","PL "+mktLabel+" - "+vLabel+" - "+(hasPanel?totalPanels+" panels":totalUnits+" units"));
+          notify("PL OOH traffic sheet generated - "+vLabel);
+          const isciLines=plOLines.filter(l=>l.isci||l.panel).map(l=>({code:l.panel||l.isci,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}));
+          setTrafficHistory(p=>[{ts:new Date().toISOString(),est:"OOH-LR-"+mktLabel+"-"+(trafficVendor||"ALL"),brand:"Lerner & Rowe",market:mktLabel,media:"OOH",buyer:"Atticor Media",month:workMonth,flight:plOPostDates,version:plOVersion,comments:plOComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor},...p]);
+        };
+        const assignAll=(isciVal)=>{setPlOLines(p=>p.map(l=>l.panel&&!l.isci?{...l,isci:isciVal}:l))};
+        return<Cd style={{padding:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={{fontSize:14,fontWeight:800}}>📡 OOH Traffic Instructions — PL {mktLabel}</div>
+            <div style={{display:"flex",gap:4,alignItems:"center"}}>
+              <span style={{fontSize:11,color:"#94a3b8"}}>Vendor:</span>
+              {plVendors.map(v=><button key={v} onClick={()=>setVendF(vendF===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:vendF===v?"2px solid #2FBF71":"1px solid #4a3565",background:vendF===v?"rgba(47,191,113,.15)":"transparent",color:vendF===v?"#C4A0C8":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
+            </div>
+          </div>
+          <div style={{display:"flex",gap:4,marginBottom:8}}>
+            <button onClick={()=>setLrOohTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:lrOohTrafficMode==="units"?"2px solid #5BC4A0":"1px solid #4a3565",background:lrOohTrafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:lrOohTrafficMode==="units"?"#5BC4A0":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
+            <button onClick={()=>setLrOohTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:lrOohTrafficMode==="panels"?"2px solid #2FBF71":"1px solid #4a3565",background:lrOohTrafficMode==="panels"?"rgba(47,191,113,.15)":"transparent",color:lrOohTrafficMode==="panels"?"#C4A0C8":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
+            <div style={{marginLeft:"auto",display:"flex",gap:3,alignItems:"center"}}>
+              <span style={{fontSize:11,color:"#94a3b8"}}>Type:</span>
+              {(()=>{const cats=[...new Set(vendorUnits.map(p=>mediaCategory(p.media||p.type)))].sort();return cats.map(c=>{const col=MEDIA_CAT_COLORS[c];const matches=vendorUnits.filter(p=>mediaCategory(p.media||p.type)===c).length;return<button key={c} onClick={()=>setLrOohTypeF(lrOohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:lrOohTypeF===c?"2px solid "+col.border:"1px solid #4a3565",background:lrOohTypeF===c?col.bg:"transparent",color:lrOohTypeF===c?col.fg:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
+            <Inp label="Post Dates" value={plOPostDates} onChange={e=>setPlOPostDates(e.target.value)} placeholder="e.g., 2/9 - 4/5"/>
+            <Inp label="Version / Links" value={plOVersion} onChange={e=>setPlOVersion(e.target.value)} placeholder="e.g., Chicago Posters"/>
+            <Inp label="Comments" value={plOComments} onChange={e=>setPlOComments(e.target.value)} placeholder="Optional"/>
+          </div>
+          <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {mktLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} units | Buyer: Atticor Media | Broadcast: {workMonth}</div>
+          {usePanelMode&&plOLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(47,191,113,.08)",borderRadius:5,border:"1px solid rgba(47,191,113,.2)"}}>
+            <span style={{fontSize:11,color:"#C4A0C8"}}>Quick assign creative to all {plOLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
+            {plOohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0",width:200}}/>}
+          </div>}
+          <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
+            <TH w="90">Flight</TH>
+            {usePanelMode?<TH>Unit / Panel</TH>:<TH>ISCI / Creative</TH>}
+            {usePanelMode&&<TH>Creative</TH>}
+            {!usePanelMode&&<TH w="70">Market</TH>}
+            {!usePanelMode&&<TH w="50">Rot %</TH>}
+            {!usePanelMode&&<TH w="50">Units</TH>}
+            <TH>Face #s</TH>
+            <TH>Notes</TH><TH w="30"/>
+          </tr></thead>
+            <tbody>{plOLines.map((l,i)=>{const bd=usePanelMode?vendorPanels.find(p=>p.panel===l.panel):null;return<tr key={i}>
+              <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={plOPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></TD>
+              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.mkt} - {p.vendor} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
+              {usePanelMode&&<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
+              {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">All</option>{mkts.map(m=><option key={m} value={m}>{m}</option>)}</select></TD>}
+              {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1e1233",color:"#E8DFF0"}}/></TD>}
+              {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1e1233",color:"#E8DFF0"}}/></TD>}
+              <TD>{viewChiFaces.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:3,maxWidth:220}}>{viewChiFaces.map(f=>{const sel=(l.faces||[]).includes(f);return<span key={f} onClick={()=>{const cur=l.faces||[];upL(i,"faces",sel?cur.filter(x=>x!==f):[...cur,f])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",fontFamily:"monospace",fontWeight:sel?700:400,background:sel?"#2FBF71":"#2d1f42",color:sel?"#fff":"#9B8EAD",border:"1px solid "+(sel?"#2FBF71":"#4a3565"),userSelect:"none"}}>{f}</span>})}<span onClick={()=>{const allSel=viewChiFaces.every(f=>(l.faces||[]).includes(f));upL(i,"faces",allSel?[]:[...viewChiFaces])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",background:"#1e1233",color:"#9B8EAD",border:"1px solid #4a3565",userSelect:"none"}}>{viewChiFaces.every(f=>(l.faces||[]).includes(f))?"none":"all"}</span></div>:<span style={{fontSize:12,color:"#6B5E80"}}>--</span>}</TD>
+              <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></TD>
+              <TD>{plOLines.length>1&&<button onClick={()=>delL(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#ef4444"}}>✕</button>}</TD>
+            </tr>})}</tbody>
+          </table>
+          <div style={{display:"flex",gap:6,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
+            <Btn small onClick={addLine}>+ Add Line</Btn>
+            {usePanelMode&&<Btn small onClick={()=>{const used=plOLines.map(l=>l.panel).filter(Boolean);const unassigned=vendorPanels.filter(p=>!used.includes(p.panel));if(!unassigned.length){notify("All units already added");return}const nl=unassigned.map(p=>({flight:plOPostDates||"",panel:p.panel,isci:"",units:"",faces:[],notes:""}));setPlOLines(p=>[...p,...nl]);notify(unassigned.length+" units added")}} color="#2FBF71">+ Add All {trafficVendor||""} Units</Btn>}
+            <Btn small primary color="#2FBF71" onClick={printOoh} disabled={!plOLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
+            <span style={{marginLeft:"auto",fontSize:12,color:"#94a3b8"}}>{usePanelMode?totalPanels+" units":""+plOLines.filter(l=>l.isci).length+" creatives | "+totalUnits+" units"}{trafficVendor?" | "+trafficVendor:""}</span>
+          </div>
+        </Cd>;
+       })():
+      viewMode==="calendar"?(()=>{
+        const calItems=LR_CREATIVE_CAL.filter(e=>(calMktF?e.dmas.includes(calMktF):true)&&(calTypeF?e.type===calTypeF:true));
+        const sorted=[...calItems].sort((a,b)=>new Date(a.due)-new Date(b.due));
+        const filtered=showPast?sorted:sorted.filter(e=>oohCalStatus(e.due).days>=0);
+        const upcoming=sorted.filter(e=>{const s=oohCalStatus(e.due);return s.days>=0&&s.days<=14});
+        const nextUp=sorted.find(e=>oohCalStatus(e.due).days>=0);
+        return<Cd style={{padding:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:10}}>
+            <div>
+              <div style={{fontSize:14,fontWeight:800}}>📅 OOH Creative Calendar — Lerner & Rowe</div>
+              <div style={{fontSize:14,color:"#9B8EAD"}}>Creative switch & rotation deadlines from Outlook marketing calendar · {LR_CREATIVE_CAL.length} events</div>
+            </div>
+            {nextUp&&<div style={{padding:"6px 12px",borderRadius:8,background:"rgba(220,38,38,.15)",border:"1px solid #fecaca"}}>
+              <div style={{fontSize:14,fontWeight:700,color:"#E85A7A",textTransform:"uppercase"}}>Next Deadline</div>
+              <div style={{fontSize:14,fontWeight:800,color:"#E85A7A"}}>{new Date(nextUp.due+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"})} — {nextUp.dmas.join("/")} {nextUp.title}</div>
+              <div style={{fontSize:14,color:"#9B8EAD"}}>{oohCalStatus(nextUp.due).label} away</div>
+            </div>}
+          </div>
+          <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
+            <Sel label="Market" options={["CHI","ABQ","LAS","PHX","TUC","RNO","SEA","YUM","KGB"]} value={calMktF} onChange={setCalMktF} placeholder="All Markets"/>
+            <Sel label="Type" options={["creative","switch","dark","launch"]} value={calTypeF} onChange={setCalTypeF} placeholder="All Types"/>
+            <label style={{display:"flex",alignItems:"center",gap:4,fontSize:14,color:"#9B8EAD",cursor:"pointer"}}><input type="checkbox" checked={showPast} onChange={e=>setShowPast(e.target.checked)}/> Show past events</label>
+          </div>
+          {/* Urgency summary */}
+          {upcoming.length>0&&<div style={{padding:8,borderRadius:8,background:"#fff7ed",border:"1px solid #fed7aa",marginBottom:10}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#ea580c",marginBottom:4}}>⚠ {upcoming.length} deadline{upcoming.length>1?"s":""} in the next 2 weeks</div>
+            {upcoming.map((e,i)=>{const s=oohCalStatus(e.due);const t=oohCalType(e.type);return<div key={i} style={{display:"flex",gap:8,alignItems:"center",padding:"3px 0",fontSize:14,flexWrap:"wrap"}}>
+              <span style={{fontWeight:700,color:s.status==="today"?"#E85A7A":s.status==="urgent"?"#ea580c":"#D4A040"}}>{s.label}</span>
+              <span>{t.icon}</span>
+              <span style={{fontWeight:600}}>{e.dmas.join("/")}</span>
+              <span style={{color:"#9B8EAD"}}>{e.title}</span>
+              {e.units&&<span style={{fontSize:13,color:"#4AC8E8",fontFamily:"monospace"}}>[{e.units.length>40?e.units.slice(0,40)+"…":e.units}]</span>}
+              {e.size&&<span style={{fontSize:14,padding:"0 4px",background:"#f0f9ff",borderRadius:3,color:"#4AC8E8"}}>{e.size}</span>}
+              <span style={{fontSize:13,color:"#9B8EAD"}}>{new Date(e.due+"T00:00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}</span>
+            </div>})}
+          </div>}
+          {/* Calendar list */}
+          <div style={{display:"flex",flexDirection:"column",gap:4}}>
+            {filtered.map((e,i)=>{const s=oohCalStatus(e.due);const t=oohCalType(e.type);const dateObj=new Date(e.due+"T00:00:00");
+              const urgBorder=s.status==="today"?"2px solid #E85A7A":s.status==="urgent"?"2px solid #ea580c":s.status==="soon"?"1px solid #fed7aa":"1px solid #E8DFF0";
+              const urgBg=s.status==="today"?"#3a1f35":s.status==="urgent"?"#fff7ed":s.status==="past"?"#2d1f42":"#fff";
+              return<div key={i} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",borderRadius:8,border:urgBorder,background:urgBg,opacity:s.status==="past"?0.6:1}}>
+                <div style={{width:50,textAlign:"center",flexShrink:0}}>
+                  <div style={{fontSize:24,fontWeight:800,color:s.status==="past"?"#9ca3af":t.color,lineHeight:1}}>{dateObj.getDate()}</div>
+                  <div style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>{dateObj.toLocaleDateString("en-US",{month:"short"})}</div>
+                  <div style={{fontSize:14,color:"#9B8EAD"}}>{dateObj.toLocaleDateString("en-US",{weekday:"short"})}</div>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",gap:5,alignItems:"center"}}>
+                    <span style={{fontSize:13}}>{t.icon}</span>
+                    <span style={{fontSize:14,fontWeight:700,color:"#F0E8F8"}}>{e.title}</span>
+                    <span style={{fontSize:14,padding:"1px 6px",borderRadius:6,fontWeight:600,background:t.bg,color:t.color}}>{t.label}</span>
+                  </div>
+                  <div style={{display:"flex",gap:4,marginTop:3,alignItems:"center",flexWrap:"wrap"}}>
+                    {e.dmas.map(d=><B key={d} l={d} c={mktColors[d]||"#64748b"}/>)}
+                    {e.size&&<span style={{fontSize:14,padding:"1px 5px",borderRadius:4,background:"#f0f9ff",color:"#4AC8E8",fontWeight:600,border:"1px solid #bfdbfe"}}>{e.size}</span>}
+                    {e.spec&&<span style={{fontSize:13,color:"#9B8EAD"}}>{e.spec}</span>}
+                  </div>
+                  {e.units&&<div style={{fontSize:13,color:"#9B8EAD",marginTop:2,fontFamily:"monospace",background:"#1e1233",padding:"2px 6px",borderRadius:3,border:"1px solid #4a3565"}}>📋 {e.units}</div>}
+                  {e.start&&<div style={{fontSize:14,color:"#5BC4A0",marginTop:1}}>▶ Posts {new Date(e.start+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</div>}
+                </div>
+                <div style={{textAlign:"right",flexShrink:0}}>
+                  {s.status==="past"?<span style={{fontSize:14,color:"#9B8EAD"}}>✓ Done</span>:
+                   s.status==="today"?<span style={{fontSize:14,fontWeight:800,color:"#E85A7A",animation:"pulse 1s infinite"}}>TODAY</span>:
+                   <span style={{fontSize:13,fontWeight:700,color:s.days<=7?"#E85A7A":s.days<=14?"#ea580c":"#64748b"}}>{s.label}</span>}
+                </div>
+              </div>;
+            })}
+          </div>
+          {filtered.length===0&&<div style={{textAlign:"center",padding:24,color:"#9B8EAD",fontSize:14}}>No upcoming creative deadlines{calMktF?" for "+calMktF:""}</div>}
+        </Cd>;
+       })():
+      viewMode==="contracts"?(()=>{
+        const plContracts=Object.keys(oohContracts).filter(k=>oohContracts[k]&&oohContracts[k].brand==="Lerner & Rowe");
+        const startContractEdit=(cNum)=>{const c=oohContracts[cNum]||{};setPlEditContract(cNum);setPlEditDates({startDate:c.startDate||"",endDate:c.endDate||"",notes:c.notes||"",manualStatus:c.manualStatus||""})};
+        const saveContractEdit=()=>{setOohContracts(prev=>({...prev,[plEditContract]:{...prev[plEditContract],num:plEditContract,...plEditDates}}));setPlEditContract(null);log("Contract Edit",`${plEditContract} PL dates updated`);notify("Contract "+plEditContract+" updated")};
+        return<Cd style={{padding:12}}>
+          <div style={{fontSize:14,fontWeight:800,marginBottom:8}}>📑 OOH Contract Status — Lerner & Rowe</div>
+          <div style={{fontSize:14,color:"#9B8EAD",marginBottom:10}}>Track contract dates, status, and renewal deadlines per vendor contract</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
+            {plContracts.map(cNum=>{const c=oohContracts[cNum]||{num:cNum};const cs=contractStatus(c);const popUnits=[];const boards=fl.filter(p=>p.contract===cNum);const mktsInContract=[...new Set(boards.map(p=>p.market))];const totalImprC=boards.reduce((a,p)=>a+(p.impressions*p.numUnits),0);
+              return<div key={cNum} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#F0E8F8"}}>
+                <div style={{padding:"10px 14px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#F0E8F8"}}>{cNum}</span>
+                      <span style={{fontSize:13,padding:"2px 8px",borderRadius:10,fontWeight:700,background:cs.color+"18",color:cs.color}}>{cs.label}</span>
+                    </div>
+                    <button onClick={()=>plEditContract===cNum?setPlEditContract(null):startContractEdit(cNum)} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#9B8EAD"}}>✎ Edit</button>
+                  </div>
+                  <div style={{fontSize:14,color:"#9B8EAD",marginTop:3}}>{c.vendor||"Wilkins Media"} · {c.brand||"Lerner & Rowe"}</div>
+                </div>
+                {plEditContract===cNum?<div style={{padding:12,background:"#1e1233",display:"flex",flexDirection:"column",gap:6}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                    <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Start</label><input type="date" value={editDates.startDate} onChange={e=>setEditDates(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+brandColor,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}/></div>
-                    <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>End</label><input type="date" value={editDates.endDate} onChange={e=>setEditDates(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+brandColor,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}/></div>
+                    <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Start Date</label><input type="date" value={plEditDates.startDate} onChange={e=>setPlEditDates(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:13}}/></div>
+                    <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>End Date</label><input type="date" value={plEditDates.endDate} onChange={e=>setPlEditDates(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:13}}/></div>
                   </div>
-                  <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Override Status</label><select value={editDates.manualStatus} onChange={e=>setEditDates(p=>({...p,manualStatus:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+brandColor,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}><option value="">Auto (from dates)</option><option value="active">Active</option><option value="renewal">Pending Renewal</option><option value="expired">Expired</option></select></div>
-                  <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Notes</label><input value={editDates.notes} onChange={e=>setEditDates(p=>({...p,notes:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+brandColor,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}} placeholder="Renewal / notes..."/></div>
-                  <div style={{display:"flex",gap:4}}><Btn small primary color={brandColor} onClick={saveEdit}>Save</Btn><Btn small onClick={()=>setEditId(null)}>Cancel</Btn></div>
+                  <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Override Status</label><select value={plEditDates.manualStatus} onChange={e=>setPlEditDates(p=>({...p,manualStatus:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:13}}>
+                    <option value="">Auto (from dates)</option><option value="active">Active</option><option value="renewal">Pending Renewal</option><option value="expired">Expired</option>
+                  </select></div>
+                  <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Notes</label><input value={plEditDates.notes} onChange={e=>setPlEditDates(p=>({...p,notes:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:13}} placeholder="Renewal notes..."/></div>
+                  <div style={{display:"flex",gap:4}}>
+                    <Btn small primary onClick={saveContractEdit}>Save</Btn>
+                    <Btn small onClick={()=>setPlEditContract(null)}>Cancel</Btn>
+                  </div>
                 </div>:
-                <div style={{padding:"9px 12px"}}>
-                  <div style={{display:"flex",gap:14,marginBottom:7}}>
-                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Start</div><div style={{fontSize:12,fontWeight:600,color:"#C4A0C8"}}>{fmtDate(c.startDate)}</div></div>
-                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>End</div><div style={{fontSize:12,fontWeight:600,color:cs.color}}>{c.endDate?fmtDate(c.endDate):(c.manualStatus==="active"?"Ongoing (UFN)":"—")}</div></div>
-                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:12,fontWeight:700,color:cs.color}}>{cs.daysLeft!==undefined?cs.daysLeft:"—"}</div></div>
+                <div style={{padding:"10px 14px"}}>
+                  <div style={{display:"flex",gap:16,marginBottom:8}}>
+                    <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Start</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>{c.startDate?new Date(c.startDate+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not set"}</div></div>
+                    <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>End</div><div style={{fontSize:13,fontWeight:600,color:cs.color}}>{c.endDate?new Date(c.endDate+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not set"}</div></div>
+                    <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:13,fontWeight:700,color:cs.color}}>{cs.daysLeft!==undefined?cs.daysLeft:"—"}</div></div>
                   </div>
-                  <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",fontSize:12}}>
-                    {c.category&&<B l={c.category} c="#4AC8E8"/>}
-                    {c.mediaType&&<span style={{color:"#C4A0C8"}}>{c.mediaType}</span>}
+                  <div style={{display:"flex",gap:4,marginBottom:6,flexWrap:"wrap"}}>
+                    {mktsInContract.map(d=><B key={d} l={d} c={mktColors[d]||"#64748b"}/>)}
                   </div>
-                  <div style={{display:"flex",gap:14,fontSize:12,color:"#9B8EAD",marginTop:6}}>
-                    {c.qty!=null&&<span><strong style={{color:"#E8DFF0"}}>{Number(c.qty).toLocaleString()}</strong> units</span>}
-                    {c.monthly!=null&&<span><strong style={{color:"#D4A040"}}>{money(c.monthly)}</strong> / mo</span>}
+                  <div style={{display:"flex",gap:12,fontSize:14,color:"#9B8EAD"}}>
+                    <span><strong>{popUnits.length}</strong> PoP units</span>
+                    <span><strong>{boards.length}</strong> matching panels</span>
+                    <span><strong>{totalImprC.toLocaleString()}</strong> wkly impressions</span>
                   </div>
-                  {c.link&&<div style={{marginTop:6}}><a href={c.link} target="_blank" rel="noopener noreferrer" style={{fontSize:12,fontWeight:700,color:"#4AC8E8"}}>📄 Contract PDF ↗</a><span style={{fontSize:11,color:"#6B5E80",marginLeft:6}}>panel list + locations</span></div>}
-                  {c.notes&&<div style={{fontSize:12,color:"#9B8EAD",marginTop:5,fontStyle:"italic"}}>📝 {c.notes}</div>}
+                  {c.notes&&<div style={{fontSize:14,color:"#9B8EAD",marginTop:6,fontStyle:"italic"}}>📝 {c.notes}</div>}
                 </div>}
               </div>;
             })}
           </div>
+          {/* Contract timeline bar */}
+          <div style={{marginTop:14,padding:12,background:"#1e1233",borderRadius:8,border:"1px solid #4a3565"}}>
+            <div style={{fontSize:13,fontWeight:700,marginBottom:8}}>Contract Timeline</div>
+            {plContracts.map(cNum=>{const c=oohContracts[cNum]||{};const cs=contractStatus(c);if(!c.startDate||!c.endDate)return null;
+              const start=new Date(c.startDate);const end=new Date(c.endDate);const rangeStart=new Date("2025-10-01");const rangeEnd=new Date("2026-12-31");const total=rangeEnd-rangeStart;
+              const left=Math.max(0,Math.min(100,((start-rangeStart)/total)*100));const width=Math.max(2,Math.min(100-left,((end-start)/total)*100));
+              const now=new Date();const nowPos=Math.max(0,Math.min(100,((now-rangeStart)/total)*100));
+              return<div key={cNum} style={{marginBottom:6}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#9B8EAD"}}><span style={{fontWeight:700,fontFamily:"monospace"}}>{cNum}</span><span>{cs.label}</span></div>
+                <div style={{position:"relative",height:14,background:"#E8DFF0",borderRadius:4,overflow:"hidden"}}>
+                  <div style={{position:"absolute",left:left+"%",width:width+"%",height:"100%",background:cs.color+"60",borderRadius:4}}/>
+                  <div style={{position:"absolute",left:nowPos+"%",width:1,height:"100%",background:"#1e1233"}}/>
+                </div>
+              </div>;
+            })}
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#9B8EAD",marginTop:4}}>
+              <span>Oct 2025</span><span>Jan 2026</span><span>Apr 2026</span><span>Jul 2026</span><span>Oct 2026</span><span>Dec 2026</span>
+            </div>
+          </div>
         </Cd>;
-      })}
-      {filtered.length===0&&<Cd style={{padding:30}}><div style={{textAlign:"center",color:"#9B8EAD",fontSize:14,fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div></Cd>}
+       })():
+      <Cd><div style={{overflowX:"auto",maxHeight:520}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Mkt</TH><TH>Unit</TH><TH>Type</TH><TH>Size</TH><TH>Location</TH><TH>Flight</TH><TH>Cycles</TH><TH>Impr/Wk</TH><TH>Dir</TH><TH>Status</TH><TH>Plan</TH></tr></thead>
+        <tbody>{fl.map((p,i)=>{
+          const c=mktColors[p.market]||"#64748b";const pop=LR_POPS[p.unit];
+          return<tr key={i} style={{background:p.status==="posted"?"#1f353011":""}}>
+            <TD b>{i+1}</TD>
+            <TD><B l={p.market} c={c}/></TD>
+            <TD m b>{p.unit}{pop&&<span style={{fontSize:14,color:"#4AC8E8",marginLeft:3}}>PoP✓</span>}</TD>
+            <TD><span style={{fontSize:13}}>{p.media}</span></TD>
+            <TD>{p.size}</TD>
+            <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:220,display:"inline-block"}}>{p.location}</span></TD>
+            <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{p.flight.split('(')[0].trim()}</span></TD>
+            <TD b>{p.cycles}</TD>
+            <TD b>{(p.impressions*p.numUnits).toLocaleString()}</TD>
+            <TD>{p.facing&&p.facing!=="N/A"?<B l={p.facing} c="#6366f1"/>:<span style={{fontSize:13,color:"#9B8EAD"}}>—</span>}</TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#5BC4A0":"#D4A040"}}>{p.status}</span></TD>
+            <TD><span style={{fontSize:13,color:p.plan==="2026"?"#4AC8E8":"#9ca3af",fontWeight:p.plan==="2026"?600:400}}>{p.plan}</span></TD>
+          </tr>;
+        })}</tbody>
+      </table></div></Cd>}
     </div>;
   };
 
@@ -8161,7 +8638,7 @@ Rules:
             its own hook scope. Bare-calling them conditionally changed OohHub's
             hook count between routes (Rules of Hooks violation → white-screen). */}
         {subRoute==="pl"&&<PlOohPg/>}
-        {subRoute==="lr"&&<LrOohPg/>}
+        {subRoute==="lr"&&<LrBoardsPg/>}
         {subRoute==="isci"&&oohIsciPg()}
         {subRoute==="import"&&<UploadPg/>}
         {!["wk","pl","lr","isci","import"].includes(subRoute)&&OohPg()}

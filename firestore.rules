@@ -60,6 +60,8 @@ service cloud.firestore {
         'workMonth',
         'wkOohIscis',
         'plOohIscis',
+        'lrOohIscis',
+        'lrOohIsciPct',
         'oohPhotos',
         'backups',
         'iscis_backup',
