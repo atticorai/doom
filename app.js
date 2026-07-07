@@ -8384,76 +8384,50 @@ Rules:
         </Cd>;
        })():
       viewMode==="contracts"?(()=>{
-        const plContracts=Object.keys(oohContracts).filter(k=>oohContracts[k]&&oohContracts[k].brand==="Lerner & Rowe");
-        const startContractEdit=(cNum)=>{const c=oohContracts[cNum]||{};setPlEditContract(cNum);setPlEditDates({startDate:c.startDate||"",endDate:c.endDate||"",notes:c.notes||"",manualStatus:c.manualStatus||""})};
-        const saveContractEdit=()=>{setOohContracts(prev=>({...prev,[plEditContract]:{...prev[plEditContract],num:plEditContract,...plEditDates}}));setPlEditContract(null);log("Contract Edit",`${plEditContract} PL dates updated`);notify("Contract "+plEditContract+" updated")};
+        const lrKeys=Object.keys(oohContracts).filter(k=>{const c=oohContracts[k];return c&&c.brand==="Lerner & Rowe"&&(mktF?(c.dmas&&c.dmas[0])===mktF:true)&&(vendF?c.vendor===vendF:true)}).sort((a,b)=>{const A=oohContracts[a],B=oohContracts[b];return String((A.dmas&&A.dmas[0])||"").localeCompare(String((B.dmas&&B.dmas[0])||""))||String(A.vendor||"").localeCompare(String(B.vendor||""))});
+        const startContractEdit=(k)=>{const c=oohContracts[k]||{};setPlEditContract(k);setPlEditDates({startDate:c.startDate||"",endDate:c.endDate||"",notes:c.notes||"",manualStatus:c.manualStatus||""})};
+        const saveContractEdit=()=>{setOohContracts(prev=>({...prev,[plEditContract]:{...prev[plEditContract],...plEditDates}}));const n=(oohContracts[plEditContract]||{}).num||plEditContract;setPlEditContract(null);log("Contract Edit",n+" (L&R) updated");notify("Contract "+n+" updated")};
+        const fmtD=d=>d?new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"—";
         return<Cd style={{padding:12}}>
-          <div style={{fontSize:14,fontWeight:800,marginBottom:8}}>📑 OOH Contract Status — Lerner & Rowe</div>
-          <div style={{fontSize:14,color:"#9B8EAD",marginBottom:10}}>Track contract dates, status, and renewal deadlines per vendor contract</div>
+          <div style={{fontSize:14,fontWeight:800,marginBottom:2}}>📑 Contracts — Lerner & Rowe</div>
+          <div style={{fontSize:13,color:"#9B8EAD",marginBottom:10}}>{lrKeys.length} contract{lrKeys.length!==1?"s":""}{mktF?" · "+(mktNames[mktF]||mktF):""}{vendF?" · "+vendF:""} — vendor, dates, status, units, and the signed PDF</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
-            {plContracts.map(cNum=>{const c=oohContracts[cNum]||{num:cNum};const cs=contractStatus(c);const popUnits=[];const boards=fl.filter(p=>p.contract===cNum);const mktsInContract=[...new Set(boards.map(p=>p.market))];const totalImprC=boards.reduce((a,p)=>a+(p.impressions*p.numUnits),0);
-              return<div key={cNum} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#F0E8F8"}}>
-                <div style={{padding:"10px 14px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
+            {lrKeys.map(k=>{const c=oohContracts[k]||{num:k};const cs=contractStatus(c);const dma=(c.dmas&&c.dmas[0])||"";
+              return<div key={k} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#1e1233"}}>
+                <div style={{padding:"9px 12px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#F0E8F8"}}>{cNum}</span>
-                      <span style={{fontSize:13,padding:"2px 8px",borderRadius:10,fontWeight:700,background:cs.color+"18",color:cs.color}}>{cs.label}</span>
+                    <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#1e1233"}}>{c.num||k}</span>
+                      <span style={{fontSize:12,padding:"1px 7px",borderRadius:10,fontWeight:700,background:cs.color+"22",color:cs.color}}>{cs.label}</span>
                     </div>
-                    <button onClick={()=>plEditContract===cNum?setPlEditContract(null):startContractEdit(cNum)} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#9B8EAD"}}>✎ Edit</button>
+                    <button onClick={()=>plEditContract===k?setPlEditContract(null):startContractEdit(k)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#3a2a4a"}}>✎</button>
                   </div>
-                  <div style={{fontSize:14,color:"#9B8EAD",marginTop:3}}>{c.vendor||"Wilkins Media"} · {c.brand||"Lerner & Rowe"}</div>
+                  <div style={{fontSize:12,color:"#3a2a4a",marginTop:2,fontWeight:600}}>{c.vendor||""}{dma?" · "+(mktNames[dma]||dma):""}{c.subMarket?" · "+c.subMarket:""}</div>
                 </div>
-                {plEditContract===cNum?<div style={{padding:12,background:"#1e1233",display:"flex",flexDirection:"column",gap:6}}>
+                {plEditContract===k?<div style={{padding:12,display:"flex",flexDirection:"column",gap:6}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                    <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Start Date</label><input type="date" value={plEditDates.startDate} onChange={e=>setPlEditDates(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:13}}/></div>
-                    <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>End Date</label><input type="date" value={plEditDates.endDate} onChange={e=>setPlEditDates(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:13}}/></div>
+                    <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Start</label><input type="date" value={plEditDates.startDate} onChange={e=>setPlEditDates(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}/></div>
+                    <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>End</label><input type="date" value={plEditDates.endDate} onChange={e=>setPlEditDates(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}/></div>
                   </div>
-                  <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Override Status</label><select value={plEditDates.manualStatus} onChange={e=>setPlEditDates(p=>({...p,manualStatus:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:13}}>
-                    <option value="">Auto (from dates)</option><option value="active">Active</option><option value="renewal">Pending Renewal</option><option value="expired">Expired</option>
-                  </select></div>
-                  <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Notes</label><input value={plEditDates.notes} onChange={e=>setPlEditDates(p=>({...p,notes:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:13}} placeholder="Renewal notes..."/></div>
-                  <div style={{display:"flex",gap:4}}>
-                    <Btn small primary onClick={saveContractEdit}>Save</Btn>
-                    <Btn small onClick={()=>setPlEditContract(null)}>Cancel</Btn>
-                  </div>
+                  <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Override Status</label><select value={plEditDates.manualStatus} onChange={e=>setPlEditDates(p=>({...p,manualStatus:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}><option value="">Auto (from dates)</option><option value="active">Active</option><option value="renewal">Pending Renewal</option><option value="expired">Expired</option></select></div>
+                  <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Notes</label><input value={plEditDates.notes} onChange={e=>setPlEditDates(p=>({...p,notes:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}} placeholder="Renewal / notes..."/></div>
+                  <div style={{display:"flex",gap:4}}><Btn small primary color="#2FBF71" onClick={saveContractEdit}>Save</Btn><Btn small onClick={()=>setPlEditContract(null)}>Cancel</Btn></div>
                 </div>:
-                <div style={{padding:"10px 14px"}}>
-                  <div style={{display:"flex",gap:16,marginBottom:8}}>
-                    <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Start</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>{c.startDate?new Date(c.startDate+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not set"}</div></div>
-                    <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>End</div><div style={{fontSize:13,fontWeight:600,color:cs.color}}>{c.endDate?new Date(c.endDate+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not set"}</div></div>
-                    <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:13,fontWeight:700,color:cs.color}}>{cs.daysLeft!==undefined?cs.daysLeft:"—"}</div></div>
+                <div style={{padding:"9px 12px"}}>
+                  <div style={{display:"flex",gap:14,marginBottom:6}}>
+                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Start</div><div style={{fontSize:12,fontWeight:600,color:"#C4A0C8"}}>{fmtD(c.startDate)}</div></div>
+                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>End</div><div style={{fontSize:12,fontWeight:600,color:cs.color}}>{c.endDate?fmtD(c.endDate):(c.manualStatus==="active"?"Ongoing":"—")}</div></div>
+                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:12,fontWeight:700,color:cs.color}}>{cs.daysLeft!==undefined?cs.daysLeft:"—"}</div></div>
                   </div>
-                  <div style={{display:"flex",gap:4,marginBottom:6,flexWrap:"wrap"}}>
-                    {mktsInContract.map(d=><B key={d} l={d} c={mktColors[d]||"#64748b"}/>)}
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",fontSize:12,marginBottom:5}}>
+                    {c.mediaType&&<span style={{color:"#C4A0C8"}}>{c.mediaType}</span>}
+                    {c.qty!=null&&<span style={{color:"#9B8EAD"}}>· <strong style={{color:"#E8DFF0"}}>{Number(c.qty).toLocaleString()}</strong> units</span>}
                   </div>
-                  <div style={{display:"flex",gap:12,fontSize:14,color:"#9B8EAD"}}>
-                    <span><strong>{popUnits.length}</strong> PoP units</span>
-                    <span><strong>{boards.length}</strong> matching panels</span>
-                    <span><strong>{totalImprC.toLocaleString()}</strong> wkly impressions</span>
-                  </div>
-                  {c.notes&&<div style={{fontSize:14,color:"#9B8EAD",marginTop:6,fontStyle:"italic"}}>📝 {c.notes}</div>}
+                  {c.link&&<a href={c.link} target="_blank" rel="noopener noreferrer" style={{fontSize:12,fontWeight:700,color:"#4AC8E8"}}>📄 Contract PDF ↗</a>}
+                  {c.notes&&<div style={{fontSize:12,color:"#9B8EAD",marginTop:5,fontStyle:"italic"}}>📝 {c.notes}</div>}
                 </div>}
               </div>;
             })}
-          </div>
-          {/* Contract timeline bar */}
-          <div style={{marginTop:14,padding:12,background:"#1e1233",borderRadius:8,border:"1px solid #4a3565"}}>
-            <div style={{fontSize:13,fontWeight:700,marginBottom:8}}>Contract Timeline</div>
-            {plContracts.map(cNum=>{const c=oohContracts[cNum]||{};const cs=contractStatus(c);if(!c.startDate||!c.endDate)return null;
-              const start=new Date(c.startDate);const end=new Date(c.endDate);const rangeStart=new Date("2025-10-01");const rangeEnd=new Date("2026-12-31");const total=rangeEnd-rangeStart;
-              const left=Math.max(0,Math.min(100,((start-rangeStart)/total)*100));const width=Math.max(2,Math.min(100-left,((end-start)/total)*100));
-              const now=new Date();const nowPos=Math.max(0,Math.min(100,((now-rangeStart)/total)*100));
-              return<div key={cNum} style={{marginBottom:6}}>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#9B8EAD"}}><span style={{fontWeight:700,fontFamily:"monospace"}}>{cNum}</span><span>{cs.label}</span></div>
-                <div style={{position:"relative",height:14,background:"#E8DFF0",borderRadius:4,overflow:"hidden"}}>
-                  <div style={{position:"absolute",left:left+"%",width:width+"%",height:"100%",background:cs.color+"60",borderRadius:4}}/>
-                  <div style={{position:"absolute",left:nowPos+"%",width:1,height:"100%",background:"#1e1233"}}/>
-                </div>
-              </div>;
-            })}
-            <div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#9B8EAD",marginTop:4}}>
-              <span>Oct 2025</span><span>Jan 2026</span><span>Apr 2026</span><span>Jul 2026</span><span>Oct 2026</span><span>Dec 2026</span>
-            </div>
           </div>
         </Cd>;
        })():
