@@ -7237,11 +7237,10 @@ ${fullText.substring(0,3000)}`}]
       const months=[...new Set(brandTraffic.map(h=>h.month))].sort((a,b)=>MO.indexOf(b)-MO.indexOf(a));
       let markets=[...new Set(brandTraffic.map(h=>h.market))].sort();
       const mediaTypes=[...new Set(brandTraffic.map(h=>h.media))].sort();
-      // OOH brands (e.g. Lerner & Rowe) have no TV/radio rotation. Fall back to
-      // the brand's configured markets so the planner still gives market-level
-      // strategy off the board inventory instead of reporting "no data".
-      const oohMode=markets.length===0&&brandMktCodes(brand).length>0;
-      if(oohMode)markets=brandMktNames(brand).slice().sort();
+      // A brand with no traffic history yet has no markets to analyze — fall
+      // back to its configured markets so the planner has market data to work
+      // from instead of coming back empty.
+      if(markets.length===0&&brandMktCodes(brand).length>0)markets=brandMktNames(brand).slice().sort();
 
       // Category, Value Prop, VO distribution across all traffic
       const catCounts={},vpCounts={},voCounts={};
@@ -7338,20 +7337,6 @@ ${fullText.substring(0,3000)}`}]
           })
         };
       }).filter(m=>m.media.length>0);
-      // OOH inventory summary — per market board counts, vendors, media mix,
-      // categories and impressions. Feeds the OOH planner path for brands that
-      // have no TV/radio rotation (e.g. Lerner & Rowe runs billboards only).
-      const oohBoards=oohMode?lrPanels.filter(p=>p.plan!=="expired"):[];
-      const oohInventory=oohMode?brandMktCodes(brand).map(code=>{
-        const boards=oohBoards.filter(p=>p.market===code);
-        const physical=boards.filter(p=>!p.network&&!p.tbd);
-        const vendors=[...new Set(boards.map(p=>p.vendor).filter(Boolean))];
-        const contracts=Object.values(oohContracts).filter(c=>c&&c.brand===brand&&Array.isArray(c.dmas)&&c.dmas.includes(code));
-        const mediaMix={};contracts.forEach(c=>{const t=c.mediaType||c.category||"Unknown";mediaMix[t]=(mediaMix[t]||0)+1});
-        const cats=[...new Set(contracts.map(c=>c.category).filter(Boolean))];
-        const impr=physical.reduce((a,p)=>a+((p.impressions||0)*(p.numUnits||1)),0);
-        return{market:DMA_MARKET[code]||DM[code]||code,dma:code,physicalBoards:physical.length,digitalOrTbdLines:boards.length-physical.length,units:new Set(physical.map(p=>p.unit)).size,vendors,contractCount:contracts.length,mediaMix,categories:cats,monthlyImpressions:impr};
-      }).filter(m=>m.physicalBoards>0||m.digitalOrTbdLines>0||m.contractCount>0):[];
       const dataPayload=JSON.stringify({
         brand,
         todaysDate:nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}),
@@ -7455,68 +7440,14 @@ Rules:
 - DO use real ISCI codes from staleIscis (for retire) and from non-stale inventory (for mock_rotation).
 - No corporate-speak. JSON only.`;
 
-      // OOH brands run billboards, not TV/radio spots — no ISCIs, no weights,
-      // no rotation to evolve. Give market-level OUT-OF-HOME strategy off the
-      // board inventory instead, and never let the model claim "no data".
-      const oohSystemPrompt=`You are a media planning AI for Atticor, a media buying agency managing OUT-OF-HOME (billboard / outdoor) advertising for personal injury law firms in 2026.
-
-TODAY: ${nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
-CURRENT MONTH: ${currentBroadcastMonth}
-PLANNING FOR: ${nextBroadcastMonth}
-
-${brand} is an OUT-OF-HOME advertiser — bulletins, digital boards, posters, transit, wallscapes. There is NO TV or radio rotation for this brand, so DO NOT ask for ISCIs, spot weights, or bookend pairs, and NEVER say "there's no data" — you HAVE the board inventory in the payload's 'oohInventory'. Your job is MARKET-LEVEL OOH STRATEGY.
-
-You receive a JSON payload with 'oohInventory' (per market: physical board count, digital/TBD lines, vendors, media mix, categories, monthly impressions) and 'marketProfiles' (climate, industries, sports, accident drivers, cultural notes). USE the profiles to make every recommendation locally specific — I-25's "Big I" in Albuquerque, the Strip and I-15 in Las Vegas, snowbird traffic and Loop 101 in Phoenix, I-80 and the Gigafactory in Reno, rain-slick I-5 in Seattle, Spanish-language reach in the border and desert markets.
-
-Personality: channel Megara as the voice — snarky, dry, confident, slightly mocking.
-
-OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence:
-
-\`\`\`json
-{
-  "megara_verdict": "2-3 sentences in Megara's voice — the brand's OUT-OF-HOME story for ${nextBroadcastMonth}. What footprint they've got and what it's doing for them.",
-  "big_idea": {"title":"6-word campaign theme for the outdoor buy","tagline":"one-line billboard chyron","why_now":"one sentence — what makes this the moment"},
-  "marketSnapshots": [
-    {
-      "market": "Albuquerque",
-      "inventory_note": "1 sentence grounded in the real numbers — board count, top vendors, media mix",
-      "angles": ["2-4 SHORT bullets — case-types and high-traffic locations the boards should hammer. Prefix a gap with 'Gap:' e.g. 'Gap: no digital on I-25'"],
-      "recommendation": "1-2 sentences — where to add, shift, or hold OOH spend for ${nextBroadcastMonth}",
-      "spot_concept": {"title":"ONE new billboard concept the market needs","case_type":"Auto Accident","brief":"2 sentences max — the visual and the headline. Billboards get ~6 words; make them land."}
-    }
-  ]
-}
-\`\`\`
-
-Rules:
-- One entry in marketSnapshots per market in 'oohInventory' that has any inventory. Use the market's full name.
-- Be CONCISE. angles = 2-4 short bullets. No rambling.
-- 'inventory_note': ground it in the actual oohInventory numbers for that market.
-- 'angles': the case-types and corridors the boards should push, plus 1-2 gaps.
-- 'recommendation': one concrete next-month move — add boards on X corridor, shift static to digital, hold.
-- 'spot_concept': ONE fresh billboard idea with a 6-word-headline discipline.
-- megara_verdict + big_idea set up the whole brand. Snarky, dry, confident.
-- No corporate-speak. JSON only. Never claim there's no data — the inventory is right there in the payload.`;
-      const oohPayload=JSON.stringify({
-        brand,
-        todaysDate:nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}),
-        currentBroadcastMonth,nextBroadcastMonth,
-        mediaType:"Out-of-Home (billboards, digital boards, posters, transit, bulletins)",
-        markets,
-        oohInventory,
-        marketProfiles:relevantProfiles
-      });
-
       const resp=await fetch("/api/planner",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-5",
           max_tokens:8000,
-          system:oohMode?oohSystemPrompt:systemPrompt,
-          messages:[{role:"user",content:oohMode
-            ?("Here is the current out-of-home inventory for "+brand+":\n\n"+oohPayload+"\n\nGive me market-by-market OOH strategy.")
-            :("Here is the current rotation data for "+brand+":\n\n"+dataPayload+"\n\nPlease analyze and provide your recommendations.")}]
+          system:systemPrompt,
+          messages:[{role:"user",content:"Here is the current rotation data for "+brand+":\n\n"+dataPayload+"\n\nPlease analyze and provide your recommendations."}]
         })
       });
       if(!resp.ok)throw new Error("API error: "+resp.status);
@@ -7797,7 +7728,6 @@ Rules:
             <span style={{fontSize:18,fontWeight:800,color:"#F0E8F8",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.3}}>📍 {ms.market}</span>
             {ms.mock_rotation?.headline&&<span style={{fontSize:12,color:"#C4A0C8",fontStyle:"italic",marginLeft:"auto"}}>{ms.mock_rotation.headline}</span>}
           </div>
-          {ms.inventory_note&&<div style={{marginBottom:10,fontSize:12,color:"#9B8EAD",fontStyle:"italic"}}>{ms.inventory_note}</div>}
           {ms.angles&&Array.isArray(ms.angles)&&ms.angles.length>0&&<div style={{marginBottom:10,display:"flex",flexDirection:"column",gap:5}}>
             {ms.angles.map((a,j)=><div key={j} style={{display:"flex",gap:8,fontSize:13,color:"#E8DFF0"}}><span style={{color:"#D4A040",fontWeight:800}}>▸</span><span style={{flex:1}}>{a}</span></div>)}
           </div>}
@@ -7805,10 +7735,9 @@ Rules:
             <span style={{color:"#4AC8E8",fontWeight:700,fontStyle:"normal",marginRight:6}}>↳ Evolving from {playbook.priorMonth||"last month"}:</span>{ms.evolution_note}
           </div>}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,alignItems:"start"}}>
-            {/* Mock rotation column (TV) — or OOH recommendation */}
+            {/* Mock rotation column */}
             <div>
-              {ms.recommendation&&<div style={{marginBottom:12,padding:"8px 11px",background:"rgba(91,196,160,.08)",borderLeft:"3px solid #5BC4A0",borderRadius:5,fontSize:12,color:"#E8DFF0",lineHeight:1.5}}><span style={{color:"#5BC4A0",fontWeight:800,textTransform:"uppercase",fontSize:9,letterSpacing:1,display:"block",marginBottom:3}}>Recommendation</span>{ms.recommendation}</div>}
-              {ms.mock_rotation&&<div style={{fontSize:10,fontWeight:800,color:"#5BC4A0",textTransform:"uppercase",letterSpacing:1.5,marginBottom:8}}>🎯 Mock Rotation</div>}
+              <div style={{fontSize:10,fontWeight:800,color:"#5BC4A0",textTransform:"uppercase",letterSpacing:1.5,marginBottom:8}}>🎯 Mock Rotation</div>
               {ms.mock_rotation?.thirties&&Array.isArray(ms.mock_rotation.thirties)&&ms.mock_rotation.thirties.length>0&&<div style={{marginBottom:10}}>
                 <div style={{fontSize:9,fontWeight:700,color:"#9B8EAD",letterSpacing:.6,marginBottom:4}}>30s</div>
                 <div style={{display:"flex",borderRadius:4,overflow:"hidden",height:6,marginBottom:5}}>{ms.mock_rotation.thirties.map((s,j)=>{const pct=parseInt(s.weight)||0;return<div key={j} title={s.title+" "+s.weight} style={{width:s.weight,minWidth:0,background:themeColor(s.case_type)}}/>})}</div>
