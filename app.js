@@ -7241,6 +7241,10 @@ ${fullText.substring(0,3000)}`}]
       // back to its configured markets so the planner has market data to work
       // from instead of coming back empty.
       if(markets.length===0&&brandMktCodes(brand).length>0)markets=brandMktNames(brand).slice().sort();
+      // No trafficked rotation to evolve (e.g. a newer brand). The planner
+      // still gives market-level strategy — case-type angles per market drawn
+      // from the market profiles — instead of reporting "no data".
+      const noRotation=brandTraffic.length===0;
 
       // Category, Value Prop, VO distribution across all traffic
       const catCounts={},vpCounts={},voCounts={};
@@ -7440,14 +7444,59 @@ Rules:
 - DO use real ISCI codes from staleIscis (for retire) and from non-stale inventory (for mock_rotation).
 - No corporate-speak. JSON only.`;
 
+      // Newer brand with no rotation to evolve — give market-level strategy
+      // (which case-types to focus on and why, per market) off the market
+      // profiles, instead of demanding an ISCI rotation that doesn't exist.
+      const marketStrategyPrompt=`You are a media planning AI for Atticor, a media buying agency handling TV, Radio, and Cable advertising for personal injury law firms in 2026.
+
+TODAY: ${nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
+CURRENT MONTH: ${currentBroadcastMonth}
+PLANNING FOR: ${nextBroadcastMonth}
+
+${brand} is a newer brand — there is NO trafficked rotation history to evolve yet, and no ISCI inventory. Do NOT say "there's no data", do NOT ask for ISCIs or spot weights, and do NOT invent ISCI codes. Instead give MARKET-LEVEL CREATIVE STRATEGY: for each market, using its profile (climate, industries, sports, accident drivers, cultural notes), tell them which case-types to focus on and WHY.
+
+You receive a JSON payload with 'markets' and 'marketProfiles'. Ground every angle in the local reality — e.g. "Focus on workers comp in Tucson — Raytheon, Davis-Monthan, and the mining workforce feed on-the-job injury claims." Use the brand's real case-type language (Workers Comp, Auto Accident, Trucking, Premises Liability, Distracted Driving, Brand, etc.).
+
+Personality: channel Megara as the voice — snarky, dry, confident, slightly mocking.
+
+OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence:
+
+\`\`\`json
+{
+  "megara_verdict": "2-3 sentences in Megara's voice — the brand's strategic story for ${nextBroadcastMonth}.",
+  "big_idea": {"title":"6-word campaign theme","tagline":"one-line tagline","why_now":"one sentence — what makes this the moment"},
+  "marketSnapshots": [
+    {
+      "market": "Tucson",
+      "angles": [
+        "Focus on workers comp — Raytheon / Davis-Monthan / mining workforce = on-the-job injury volume",
+        "Monsoon flash-flood auto wrecks Jul-Sep — lead auto-accident creative into summer",
+        "Spanish-language creative for the large Hispanic base is table stakes"
+      ],
+      "spot_concept": {"title":"ONE new spot the market needs","case_type":"Workers Comp","brief":"2 sentences max — what we see, what the VO says, the angle."}
+    }
+  ]
+}
+\`\`\`
+
+Rules:
+- One entry in marketSnapshots per market in the payload. Use the market's full name.
+- 'angles': 3-4 SHORT bullets. Each is a case-type focus + a one-clause reason tied to that market's profile. This is the whole point — be specific to the city.
+- 'spot_concept': ONE new spot idea the market's angles call for.
+- NO mock_rotation, NO ISCI codes, NO weights — there's no history yet.
+- megara_verdict + big_idea set up the brand for the month. Snarky, dry, confident.
+- No corporate-speak. JSON only. Never claim there's no data — you have the markets and their profiles.`;
+
       const resp=await fetch("/api/planner",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-5",
           max_tokens:8000,
-          system:systemPrompt,
-          messages:[{role:"user",content:"Here is the current rotation data for "+brand+":\n\n"+dataPayload+"\n\nPlease analyze and provide your recommendations."}]
+          system:noRotation?marketStrategyPrompt:systemPrompt,
+          messages:[{role:"user",content:noRotation
+            ?("Here are the markets and market profiles for "+brand+":\n\n"+dataPayload+"\n\nGive me market-by-market creative strategy.")
+            :("Here is the current rotation data for "+brand+":\n\n"+dataPayload+"\n\nPlease analyze and provide your recommendations.")}]
         })
       });
       if(!resp.ok)throw new Error("API error: "+resp.status);
@@ -7737,7 +7786,7 @@ Rules:
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,alignItems:"start"}}>
             {/* Mock rotation column */}
             <div>
-              <div style={{fontSize:10,fontWeight:800,color:"#5BC4A0",textTransform:"uppercase",letterSpacing:1.5,marginBottom:8}}>🎯 Mock Rotation</div>
+              {ms.mock_rotation&&<div style={{fontSize:10,fontWeight:800,color:"#5BC4A0",textTransform:"uppercase",letterSpacing:1.5,marginBottom:8}}>🎯 Mock Rotation</div>}
               {ms.mock_rotation?.thirties&&Array.isArray(ms.mock_rotation.thirties)&&ms.mock_rotation.thirties.length>0&&<div style={{marginBottom:10}}>
                 <div style={{fontSize:9,fontWeight:700,color:"#9B8EAD",letterSpacing:.6,marginBottom:4}}>30s</div>
                 <div style={{display:"flex",borderRadius:4,overflow:"hidden",height:6,marginBottom:5}}>{ms.mock_rotation.thirties.map((s,j)=>{const pct=parseInt(s.weight)||0;return<div key={j} title={s.title+" "+s.weight} style={{width:s.weight,minWidth:0,background:themeColor(s.case_type)}}/>})}</div>
