@@ -27,7 +27,7 @@ const BRANDS=[
   {code:"PL",name:"Postman Law",agency:"Blackacre Services",logo:LOGO_PL,color:"#9b7bb0",colorBg:"#F0E8F8",gradientFrom:"#a855f7",gradientTo:"#9b7bb0",markets:["CHI","CIN","DEN","MSP"],airingKey:"est"},
   {code:"WK",name:"Wettermark Keith",agency:"WK Advertising Solutions",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",gradientFrom:"#818cf8",gradientTo:"#6366f1",markets:["BRM","HSV","KNX","CHA","MTG","DHN"],airingKey:"est|market"},
   // Lerner & Rowe — OOH-only for now (contract-level buys, no board/ISCI detail yet).
-  {code:"LR",name:"Lerner & Rowe",agency:"Atticor Media",logo:"",color:"#2FBF71",colorBg:"#e9fbf1",gradientFrom:"#34d399",gradientTo:"#2FBF71",markets:["ABQ","CHI","KGB","LAS","PHX","RNO","SEA","TUC","YUM"],airingKey:"est"}
+  {code:"LR",name:"Lerner & Rowe",agency:"Atticor Media",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#2FBF71",colorBg:"#e9fbf1",gradientFrom:"#34d399",gradientTo:"#2FBF71",markets:["ABQ","CHI","KGB","LAS","PHX","RNO","SEA","TUC","YUM"],airingKey:"est"}
 ];
 // Brand helpers — use these instead of hardcoded ternaries
 const getBrand=(v)=>BRANDS.find(b=>b.name===v||b.code===v)||BRANDS[0];
