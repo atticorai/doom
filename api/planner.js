@@ -8,7 +8,7 @@ function getCorsOrigin(req) {
 }
 
 // Whitelist of allowed models and max token cap
-const ALLOWED_MODELS = ['claude-sonnet-4-20250514', 'claude-haiku-4-5-20251001'];
+const ALLOWED_MODELS = ['claude-sonnet-5', 'claude-haiku-4-5-20251001', 'claude-opus-4-8'];
 const MAX_TOKENS_CAP = 8000;
 
 module.exports = async function handler(req, res) {
@@ -35,7 +35,7 @@ module.exports = async function handler(req, res) {
     const { model, max_tokens, system, messages } = req.body || {};
 
     // Validate model against whitelist
-    const safeModel = ALLOWED_MODELS.includes(model) ? model : 'claude-sonnet-4-20250514';
+    const safeModel = ALLOWED_MODELS.includes(model) ? model : 'claude-sonnet-5';
 
     // Cap max_tokens to prevent abuse
     const safeMaxTokens = Math.min(Math.max(parseInt(max_tokens) || 4000, 1), MAX_TOKENS_CAP);

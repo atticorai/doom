@@ -5770,7 +5770,7 @@ const App=()=>{
           const resp=await fetch("/api/planner",{
             method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({
-              model:"claude-sonnet-4-20250514",max_tokens:1000,
+              model:"claude-sonnet-5",max_tokens:1000,
               messages:[{role:"user",content:`Extract OOH (outdoor advertising) contract details from this text. Return ONLY a JSON object with these fields:
 {
   "vendor": "company name",
@@ -7432,7 +7432,7 @@ Rules:
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
-          model:"claude-sonnet-4-20250514",
+          model:"claude-sonnet-5",
           max_tokens:8000,
           system:systemPrompt,
           messages:[{role:"user",content:"Here is the current rotation data for "+brand+":\n\n"+dataPayload+"\n\nPlease analyze and provide your recommendations."}]
