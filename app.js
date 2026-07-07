@@ -438,6 +438,9 @@ const BRANDS=[
   {code:"WK",name:"Wettermark Keith",agency:"WK Advertising Solutions",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb"}
 ];
 const getBrandColor=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.color:"#9B8EAD"};
+const brandMktCodes=(v)=>{const b=BRANDS.find(x=>x.name===v||x.code===v);return b?b.markets:[]};
+const brandMktNames=(v)=>brandMktCodes(v).map(c=>(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c])||(typeof DM!=="undefined"&&DM[c])||c);
+const brandLogo=(v)=>{const b=BRANDS.find(x=>x.name===v||x.code===v);return b&&b.logo?b.logo:(typeof LOGO_PL!=="undefined"?LOGO_PL:"")};
 const getBrandBg=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.colorBg:"#F0E8F8"};
 const getBrandAgency=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.agency:"Atticor"};
 const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display","Tagline"];const OOH_TYPES=[{code:"SB",name:"Static Billboard"},{code:"DB",name:"Digital Bulletin"},{code:"SP",name:"Static Poster"},{code:"DP",name:"Digital Poster"},{code:"BS",name:"Transit / Bus Shelter"},{code:"PT",name:"Gas Pump Topper"},{code:"WS",name:"Wallscape"},{code:"TR",name:"Transit"},{code:"SF",name:"Street Furniture"},{code:"JP",name:"Junior Poster"}];
@@ -1790,7 +1793,7 @@ const App=()=>{
     const{jsPDF:JP}=window.jspdf;const pdf=new JP("p","mm","a4");
     const pw=210;const ph=297;const mx=14;const cw=pw-2*mx;let y=16;
     const S=v=>v==null?"":String(v);
-    const bc=trafficRec.brand==="Postman Law"?[124,58,237]:[217,119,6];
+    const bc=trafficRec.brand==="Postman Law"?[124,58,237]:trafficRec.brand==="Lerner & Rowe"?[47,191,113]:[217,119,6];
     const checkPage=(need)=>{if(y+need>ph-14){pdf.addPage();y=14}};
     // Blend an rgb color toward white by `amt` (0=original, 1=white). Use
     // instead of passing opacity to setFillColor — jsPDF treats 4 numeric
@@ -2110,6 +2113,7 @@ const App=()=>{
       <StatC label="Stations" value={stations.length} sub={<><span>{confirmedCount} confirmed</span><Sparkline data={confirmsByWeek} color="#059669"/></>} color="#059669" onClick={()=>setPg("sta")}/>
       <StatC label="WK OOH" value={POSTINGS.length} sub={`${[...new Set(POSTINGS.map(p=>p.dma))].length} DMAs · WK Advtg`} color="#D4A040" onClick={()=>navigateHash("ooh/wk")}/>
       <StatC label="PL OOH" value={PL_PANELS.length} sub={oohAlerts.length?`⚠ ${oohAlerts.length} due soon`:`${[...new Set(PL_PANELS.map(p=>p.market))].length} markets · Postman Law`} color="#9b7bb0" onClick={()=>navigateHash("ooh/pl")}/>
+      <StatC label="L&R OOH" value={typeof LR_PANELS!=="undefined"?LR_PANELS.length:0} sub={typeof LR_PANELS!=="undefined"?`${[...new Set(LR_PANELS.map(p=>p.market))].length} markets · Lerner & Rowe`:"Lerner & Rowe"} color="#2FBF71" onClick={()=>navigateHash("ooh/lr")}/>
       <StatC label="Traffic Sent" value={sentCount} sub={<><span>{trafficHistory.length} total</span><Sparkline data={trafficByWeek} color="#4AC8E8"/></>} color="#4AC8E8" onClick={()=>setPg("library")}/>
     </div>
     <Cd style={{padding:10}}><div style={{fontSize:13,fontWeight:700,marginBottom:6}}>2026 Broadcast Calendar</div>
@@ -2170,7 +2174,7 @@ const App=()=>{
       <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setModal({t:"socialTraffic"})} color="#9b7bb0">📱 Social Traffic</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j],crLock:true}:x);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>{const n=iscis.filter(i=>i.fileUrl&&!i.crLock).length;if(!n){notify("All linked creative is already locked");return}if(!confirm("Lock "+n+" ISCI"+(n>1?"s":"")+" to their current creative file? This freezes each file→ISCI binding so download links can't break. You can unlock any one from its edit screen."))return;setIscis(prev=>prev.map(i=>i.fileUrl?{...i,crLock:true}:i));log("Creative Lock","Locked "+n+" ISCIs to their creative");notify("🔒 Locked "+n+" creative link"+(n>1?"s":""))}} color="#5BC4A0">🔒 Lock Creative</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
       {showTagMgr&&<Cd style={{padding:14,marginTop:8}}>
         <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:8}}>🏷 Manage Categories, Value Props & VOs</div>
-        {["Postman Law","Wettermark Keith"].map(brand=>{const bc=brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
+        {BRANDS.map(x=>x.name).map(brand=>{const bc=getBrandColor(brand);const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
           return<div key={brand} style={{marginBottom:16}}>
           <div style={{fontSize:13,fontWeight:800,color:bc,marginBottom:6}}>{brand}</div>
           {[{key:"categories",label:"Categories",color:"#4AC8E8"},{key:"valueProps",label:"Value Props",color:"#5BC4A0"},{key:"vos",label:"VOs",color:"#D4A040"}].map(({key,label,color})=><div key={key} style={{marginBottom:8}}>
@@ -2263,7 +2267,7 @@ const App=()=>{
       <div style={{display:"flex",gap:3}}>{MEDIA.filter(m=>m!=="OOH").map(m=>{const count=iscis.filter(i=>i.media===m&&i.brand===isciBrand&&i.active&&i.suffix!=="O").length;return<button key={m} onClick={()=>setF("media",sf.media===m?"":m)} style={{flex:1,padding:"4px",borderRadius:6,border:sf.media===m?`2px solid ${mc(m)}`:"1px solid #E8DFF0",background:sf.media===m?mc(m)+"18":"#fff",cursor:"pointer",textAlign:"center",opacity:count?1:0.5}}><div style={{fontSize:14,fontWeight:700,color:mc(m)}}>{m}</div><div style={{fontSize:13,fontWeight:800}}>{count}</div></button>})}</div>
       <div style={{display:"flex",gap:5,alignItems:"end",flexWrap:"wrap"}}>
         <input placeholder="Search..." value={isciSearch} onChange={e=>setIsciSearch(e.target.value)} style={{width:180,padding:"6px 9px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
-        <Sel options={DL.filter(d=>(isciBrand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG","NSH"]).includes(d.code)).map(d=>({v:d.code,l:`${d.code} - ${d.name}`}))} value={sf.dma} onChange={v=>setF("dma",v)} placeholder="All DMAs"/>
+        <Sel options={DL.filter(d=>(brandMktCodes(isciBrand)).includes(d.code)).map(d=>({v:d.code,l:`${d.code} - ${d.name}`}))} value={sf.dma} onChange={v=>setF("dma",v)} placeholder="All DMAs"/>
         <label style={{fontSize:14,display:"flex",alignItems:"center",gap:3,cursor:"pointer"}}><input type="checkbox" checked={showOff} onChange={e=>setShowOff(e.target.checked)}/> Inactive</label>
         {(sf.media||sf.dma||isciSearch)&&<Btn small onClick={()=>{setSf({brand:"",media:"",dma:"",search:"",estGroup:""});setIsciSearch("")}}>Clear</Btn>}
       </div>
@@ -5083,9 +5087,9 @@ const App=()=>{
     const isTag=f2.media==="Tagline";
     const isPT=isOoh&&f2.oohType==="PT";
     const isCampaign=isDisplay&&!!f2.noMkt;
-    const suf=SUFFIXES[f2.media]||"T";const bD=f2.brand==="PL"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG","NSH"];
+    const suf=SUFFIXES[f2.media]||"T";const bD=brandMktCodes(f2.brand);
     const durField=isOoh?f2.oohType:isDisplay?f2.displayType:f2.dur;
-    const brandName=f2.brand==="PL"?"Postman Law":"Wettermark Keith";
+    const brandName=(BRANDS.find(b=>b.code===f2.brand)||{}).name||"Postman Law";
     const normTitle=function(t){var s=(t||"").toLowerCase().trim();Object.values(DM).forEach(function(n){s=s.split(n.toLowerCase()).join("")});Object.keys(DM).forEach(function(c){s=s.split(c.toLowerCase()).join("")});return s.replace(/[-–—,_\s]+/g," ").trim()};
     const normInput=normTitle(f2.title);
     const brandIscis=iscis.filter(i=>i.brand===brandName&&i.dur===durField&&i.suffix===suf);
@@ -6355,11 +6359,11 @@ ${fullText.substring(0,3000)}`}]
 
       {/* BRAND TABS */}
       <div style={{display:"flex",gap:0,marginBottom:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=fBrand===b;const c=b==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const ct=trackingData.filter(d=>d.brand===b).length;return<button key={b} onClick={()=>{setFBrand(b);setFMarket("all");setFMedia("all");setFMonth("all")}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
+        {BRANDS.map(x=>x.name).map(b=>{const active=fBrand===b;const c=getBrandColor(b);const ct=trackingData.filter(d=>d.brand===b).length;return<button key={b} onClick={()=>{setFBrand(b);setFMarket("all");setFMedia("all");setFMonth("all")}} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
         <div style={{flex:1,borderBottom:"2px solid #4a3565"}}/>
       </div>
       {/* FILTERS */}
-      <Cd style={{padding:10,marginBottom:12,borderRadius:"0 8px 8px 8px",borderTop:"2px solid "+(fBrand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK"))}}>
+      <Cd style={{padding:10,marginBottom:12,borderRadius:"0 8px 8px 8px",borderTop:"2px solid "+(getBrandColor(fBrand))}}>
         <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"end"}}>
           <FiltSel label="Market" value={fMarket} onChange={setFMarket} options={markets} fmt={o=>DM[o]||o}/>
           <FiltSel label="Media" value={fMedia} onChange={setFMedia} options={medias}/>
@@ -6725,13 +6729,13 @@ ${fullText.substring(0,3000)}`}]
     const archivedCount=brandData.filter(h=>isArch(h)).length;
     const visData=showArchived?brandData:brandData.filter(h=>!isArch(h));
     const searched=libSearch.trim()?visData.filter(h=>{const q=libSearch.toLowerCase();const mName=(DM[h.market]||h.market).toLowerCase();return(h.market||"").toLowerCase().includes(q)||mName.includes(q)||(h.media||"").toLowerCase().includes(q)||(h.est||"").toLowerCase().includes(q)||(h.buyer||"").toLowerCase().includes(q)||(h.month||"").toLowerCase().includes(q)||(h.iscis||[]).some(r=>(r.code||"").toLowerCase().includes(q)||(r.title||"").toLowerCase().includes(q))}):visData;
-    const bc2=libBrand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");
+    const bc2=getBrandColor(libBrand);
     // Manual form JSX
     const SCHED_COLORS_LIB={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#dcfce7","Holiday Only":"#fee2e2"};
     const SCHED_ORDER_LIB=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
     const bldHtml=(h)=>{
-      const bc=h.brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");
-      const lg=h.brand==="Postman Law"?LOGO_PL:LOGO_WK;
+      const bc=getBrandColor(h.brand);
+      const lg=brandLogo(h.brand);
       let x='<html><head><style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}body{padding:28px;background:#fff;color:#1e1233}table{width:100%;border-collapse:collapse;margin-top:14px}th{background:#F0E8F8;padding:7px 9px;text-align:left;font-size:10px;border-bottom:2px solid #333;text-transform:uppercase;color:#6B5E80}td{padding:6px 9px;font-size:11px;border-bottom:1px solid rgba(0,0,0,.06)}.grp{font-weight:700;font-size:11px;text-transform:uppercase;padding:5px 9px;color:#333}.sig{margin-top:36px;border-top:2px solid '+bc+';padding-top:8px}.note{background:#fffbeb;padding:7px;font-size:10px;color:#92400e;margin-top:6px;border:1px solid #fde68a}</style></head><body>';
       const hd=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+escHtml(v)+'</span></div>';
       x+='<div style="text-align:center;margin-bottom:14px"><img src="'+escHtml(lg)+'" style="height:48px"/></div>';
@@ -6913,7 +6917,7 @@ ${fullText.substring(0,3000)}`}]
       </Cd>}
       {/* Brand Tabs */}
       <div style={{display:"flex",gap:0,marginBottom:0}}>
-        {["Postman Law","Wettermark Keith"].map(b=>{const active=libBrand===b;const c=b==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");const ct=trafficHistory.filter(h=>h.brand===b).length;return<button key={b} onClick={()=>setLibBrand(b)} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
+        {BRANDS.map(x=>x.name).map(b=>{const active=libBrand===b;const c=getBrandColor(b);const ct=trafficHistory.filter(h=>h.brand===b).length;return<button key={b} onClick={()=>setLibBrand(b)} style={{padding:"10px 24px",fontSize:14,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#64748b",borderRadius:"8px 8px 0 0",position:"relative",zIndex:active?1:0}}>{b} <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({ct})</span></button>})}
         <div style={{flex:1,borderBottom:"2px solid #4a3565"}}/>
       </div>
       {/* Search + archive bar */}
@@ -7057,7 +7061,7 @@ ${fullText.substring(0,3000)}`}]
                         const copy={...h,ts:new Date().toISOString(),est:newEst,month:newMonth,flight:newFlight,version:"1",status:"copied",_id:Date.now(),isRevision:false,prevVersion:null,statusNote:"Copied from "+h.month};setTrafficHistory(p=>{const nx=[copy,...p];saveToDb("trafficHistory",nx);return nx});log("Traffic Copied",h.brand+" "+h.market+" "+h.media+" "+h.month+" → "+newMonth+" (Est "+newEst+")");notify("Copied "+h.market+" "+h.media+" to "+newMonth+" — Est "+newEst);e.target.value=""}} style={{padding:"2px 4px",borderRadius:4,border:"1px solid #D4A040",background:"rgba(217,119,6,.1)",color:"#D4A040",fontSize:11,fontWeight:600,cursor:"pointer"}}><option value="">Copy to month...</option>{CALENDAR.map(c=><option key={c.month} value={c.month}>{c.month}</option>)}</select>
                       <select onChange={e=>{if(!e.target.value)return;const destMkt=e.target.value;
                         // Same brand only — markets list per brand
-                        const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
+                        const brandMkts=brandMktCodes(h.brand);
                         if(!brandMkts.includes(destMkt)){e.target.value="";return}
                         // Normalize source market to its 3-char DMA code so the
                         // ISCI prefix swap works whether records store "BRM" or
@@ -7101,7 +7105,7 @@ ${fullText.substring(0,3000)}`}]
                         e.target.value="";
                       }} style={{padding:"2px 4px",borderRadius:4,border:"1px solid #4AC8E8",background:"rgba(74,200,232,.1)",color:"#4AC8E8",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                         <option value="">Copy to market...</option>
-                        {(h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"]).filter(m=>m!==(normMkt(h.market)||h.market)).map(m=><option key={m} value={m}>{m} — {DM[m]||m}</option>)}
+                        {(brandMktCodes(h.brand)).filter(m=>m!==(normMkt(h.market)||h.market)).map(m=><option key={m} value={m}>{m} — {DM[m]||m}</option>)}
                       </select>
                     </div>
                   </div>
@@ -7451,7 +7455,7 @@ Rules:
     const MO=["January","February","March","April","May","June","July","August","September","October","November","December"];
     const bt=trafficHistory.filter(h=>h.brand===brand);
     const bi=iscis.filter(i=>i.brand===brand&&i.active&&i.suffix!=="O");
-    const allMarkets=brand==="Postman Law"?["Chicago","Cincinnati","Denver","Minneapolis"]:["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan"];
+    const allMarkets=brandMktNames(brand);
     const mediaList=["TV","Radio","Streaming Audio","Cable","Digital","OOH"];
     const mediaSplit=(m)=>String(m||"").split(/\s*\/\s*/);
     const months=[...new Set(bt.map(h=>h.month).filter(Boolean))].sort((a,b)=>MO.indexOf(b)-MO.indexOf(a));
@@ -7636,7 +7640,7 @@ Rules:
       <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
         {/* Brand tabs */}
         <div style={{display:"flex",gap:0}}>
-          {["Postman Law","Wettermark Keith"].map(b=>{const active=planBrand===b;const c=b==="Postman Law"?getBrandColor("PL"):getBrandColor("WK");return<button key={b} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null);setPlanMonthA("");setPlanMonthB("")}} style={{padding:"7px 18px",fontSize:13,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#6B5E80",borderRadius:"8px 8px 0 0"}}>{b}</button>})}
+          {BRANDS.map(x=>x.name).map(b=>{const active=planBrand===b;const c=getBrandColor(b);return<button key={b} onClick={()=>{setPlanBrand(b);setPlanResult(null);setPlanError(null);setPlanMonthA("");setPlanMonthB("")}} style={{padding:"7px 18px",fontSize:13,fontWeight:800,cursor:"pointer",border:"2px solid "+(active?c:"#4a3565"),borderBottom:active?"none":"2px solid #4a3565",background:active?"#2d1f42":"#1e1233",color:active?c:"#6B5E80",borderRadius:"8px 8px 0 0"}}>{b}</button>})}
         </div>
         {/* Month picker — Month A (or single view) */}
         <div style={{display:"flex",alignItems:"center",gap:6,marginLeft:8}}>
@@ -7678,7 +7682,7 @@ Rules:
             {monthlyReport.sections.map(s=>{
               const multiMarket=s.perMarket.length>1;
               return<div key={s.label} style={{marginBottom:14}}>
-                <div style={{fontSize:14,fontWeight:800,color:s.brand==="Postman Law"?"#9b7bb0":"#D4A040",marginBottom:4}}>{s.label}</div>
+                <div style={{fontSize:14,fontWeight:800,color:getBrandColor(s.brand),marginBottom:4}}>{s.label}</div>
                 <ul style={{margin:0,paddingLeft:18,color:"#C4A0C8"}}>
                   <li style={{marginBottom:4}}>{s.markets.length} market{s.markets.length===1?"":"s"} — {s.markets.join(", ")}{s.totalIscis?` · ${s.totalIscis} ISCI${s.totalIscis===1?"":"s"}`:""}</li>
                   {multiMarket?<ul style={{paddingLeft:18,margin:"4px 0"}}>{s.perMarket.map(m=><li key={m.market} style={{marginBottom:4}}><b style={{color:"#E8DFF0"}}>{m.market}</b><ul style={{paddingLeft:18,margin:"2px 0"}}>{m.items.map(it=><li key={it.code} style={{fontFamily:"monospace",fontSize:12}}>{it.url?<a href={it.url} target="_blank" rel="noreferrer" style={{color:"#4AC8E8"}}>{it.code}{it.title?" - "+it.title:""}{s.ext}</a>:<span style={{color:"#9B8EAD"}}>{it.code}{it.title?" - "+it.title:""}{s.ext}</span>}</li>)}</ul></li>)}</ul>:
@@ -8578,7 +8582,7 @@ Rules:
               <tbody>{filtered.map((ic,i)=>{const gi=iscis.findIndex(x=>x.code===ic.code&&x.dma===ic.dma);return<tr key={ic.code+ic.dma} style={{opacity:ic.active?1:.45}}>
                 <TD m b><span style={{cursor:"pointer",color:"#4AC8E8",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})}>{ic.code}</span></TD>
                 <TD>{ic.title}</TD>
-                <TD><B l={ic.brand} c={ic.brand==="Postman Law"?getBrandColor("PL"):getBrandColor("WK")}/></TD>
+                <TD><B l={ic.brand} c={getBrandColor(ic.brand)}/></TD>
                 <TD>{DM[ic.dma]||ic.dma}</TD>
                 <TD>{ic.dur}</TD>
                 <TD>{ic.fileUrl?<a href={ic.fileUrl} target="_blank" rel="noopener noreferrer" style={{color:"#4AC8E8",fontSize:12,fontWeight:600}}>📁 View</a>:<span style={{color:"#E85A7A",fontSize:12}}>No file</span>}</TD>
@@ -8626,8 +8630,8 @@ Rules:
     const[trackerBrand,setTrackerBrand]=useState("Postman Law");
     const[trackerExpanded,setTrackerExpanded]=useState(null);
     const isPL=trackerBrand==="Postman Law";
-    const mkts=isPL?["Chicago","Cincinnati","Denver","Minneapolis"]:["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan"];
-    const buyTypes=isPL?["TV Base","TV Sponsorship","TV UD/AV","TV Sports","Cable","Heavy Up","Radio","Streaming Audio","Digital","OOH"]:["TV Base","TV Sponsorship","TV UD/AV","Radio","Streaming Audio","OOH"];
+    const mkts=brandMktNames(trackerBrand);
+    const buyTypes=trackerBrand==="Lerner & Rowe"?["OOH"]:isPL?["TV Base","TV Sponsorship","TV UD/AV","TV Sports","Cable","Heavy Up","Radio","Streaming Audio","Digital","OOH"]:["TV Base","TV Sponsorship","TV UD/AV","Radio","Streaming Audio","OOH"];
     // Map buy types to estimate groups for matching
     const buyToGroup={"TV Base":"Base","TV Sponsorship":"Sponsorship","TV UD/AV":"UD/AV","TV Sports":"Sports","Cable":"Cable","Heavy Up":"Heavy Up","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
     const buyToMedia={"TV Base":"TV","TV Sponsorship":"TV","TV UD/AV":"TV","TV Sports":"TV","Cable":"Cable","Heavy Up":"TV","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
@@ -8694,7 +8698,7 @@ Rules:
       <PageHead title="Traffic Tracker" pgKey="tracker" sub={"Mission control — "+trackerMonth+" "+trackerBrand}/>
       {/* Brand + Month selector */}
       <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-        {["Postman Law","Wettermark Keith"].map(b=><button key={b} onClick={()=>setTrackerBrand(b)} style={{padding:"6px 16px",borderRadius:8,border:trackerBrand===b?"2px solid "+(b==="Postman Law"?getBrandColor("PL"):getBrandColor("WK")):"1px solid #4a3565",background:trackerBrand===b?"rgba(155,123,176,.1)":"transparent",color:trackerBrand===b?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:700,cursor:"pointer"}}>{b}</button>)}
+        {BRANDS.map(x=>x.name).map(b=><button key={b} onClick={()=>setTrackerBrand(b)} style={{padding:"6px 16px",borderRadius:8,border:trackerBrand===b?"2px solid "+(getBrandColor(b)):"1px solid #4a3565",background:trackerBrand===b?"rgba(155,123,176,.1)":"transparent",color:trackerBrand===b?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:700,cursor:"pointer"}}>{b}</button>)}
         <div style={{marginLeft:8,display:"flex",gap:3}}>{CALENDAR.map(c=><button key={c.month} onClick={()=>setTrackerMonth(c.month)} style={{padding:"4px 10px",borderRadius:6,border:trackerMonth===c.month?"2px solid #D4A040":"1px solid #4a3565",background:trackerMonth===c.month?"rgba(212,160,64,.12)":"transparent",color:trackerMonth===c.month?"#D4A040":"#6B5E80",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c.month.substring(0,3)}</button>)}</div>
       </div>
       {/* Progress bar */}
@@ -11548,7 +11552,7 @@ Rules:
                 // auto-advance to next month — that was hiding both options.
                 const h=trafficHistory[idx];if(!h)return;
                 const months=CALENDAR.map(c=>c.month);
-                const brandMkts=h.brand==="Postman Law"?["CHI","CIN","DEN","MSP"]:["BRM","CHA","DHN","HSV","KNX","MTG"];
+                const brandMkts=brandMktCodes(h.brand);
                 const srcMkt=normMkt(h.market)||h.market;
                 const monthOpts=months.filter(m=>m!==h.month);
                 const mktOpts=brandMkts.filter(m=>m!==srcMkt);
