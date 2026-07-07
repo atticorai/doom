@@ -7964,7 +7964,7 @@ Rules:
       const w=window.open("","","width=1000,height=820");
       w.document.write('<html><head><title>PL OOH Traffic — '+escHtml(mktLabel)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#2FBF71;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}@media print{body{margin:14px}.dl{display:none}tr{page-break-inside:avoid}}</style></head><body>');
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
-      w.document.write('<div style="text-align:center;margin-bottom:12px"><img src="'+getBrand("LR").logo+'" style="height:56px;max-width:440px"/><div class="tag">OUT-OF-HOME TRAFFIC INSTRUCTIONS</div></div>');
+      w.document.write('<div style="text-align:center;margin-bottom:12px"><img src="'+(typeof LOGO_LR!=="undefined"?LOGO_LR:"")+'" style="height:56px;max-width:440px"/><div class="tag">OUT-OF-HOME TRAFFIC INSTRUCTIONS</div></div>');
       const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v||"")+'</span></div>');
       hd("Agency","Atticor");hd("Client","Lerner & Rowe");
       hd("Market(s)",[...new Set(scope.map(p=>p.market))].sort().join(", "));
@@ -8113,7 +8113,7 @@ Rules:
 
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
-        <div><img src={getBrand("LR").logo} alt="Lerner & Rowe" style={{height:34,marginBottom:6,background:"#fff",padding:"4px 8px",borderRadius:6}}/><PageHead title="Lerner & Rowe — OOH Media Plan" pgKey="ooh"/>
+        <div><img src={(typeof LOGO_LR!=="undefined"?LOGO_LR:"")} alt="Lerner & Rowe" style={{height:34,marginBottom:6,background:"#fff",padding:"4px 8px",borderRadius:6}}/><PageHead title="Lerner & Rowe — OOH Media Plan" pgKey="ooh"/>
           <p style={{fontSize:13,color:"#9B8EAD"}}>2026 All Markets · {lrPanels.filter(p=>p.plan!=="expired").length} placements across {mkts.length} DMAs · {lrPanels.filter(p=>p.plan!=="expired"&&p.isci).length}/{lrPanels.filter(p=>p.plan!=="expired").length} ISCI assigned{(()=>{const a=lrPanels.filter(p=>p.plan==="expired").length;return a?" · "+a+" archived":""})()}</p>
         </div>
         <div style={{display:"flex",gap:4}}>
@@ -8228,7 +8228,7 @@ Rules:
           const hasPanel=plOLines.some(l=>l.panel);
           const w=window.open("","","width=900,height=700");
           w.document.write("<html><head><title>OOH Traffic - PL "+escHtml(mktLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
-          w.document.write('<div style="text-align:center;margin-bottom:20px"><img src="'+getBrand("LR").logo+'" style="height:56px;max-width:440px"/></div>');
+          w.document.write('<div style="text-align:center;margin-bottom:20px"><img src="'+(typeof LOGO_LR!=="undefined"?LOGO_LR:"")+'" style="height:56px;max-width:440px"/></div>');
           const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
           w.document.write(hd("Agency","Atticor"));w.document.write(hd("Client","Lerner & Rowe"));
           w.document.write(hd("Market",mktLabel));w.document.write(hd("Vendor",vLabel,"amb"));
