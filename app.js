@@ -434,8 +434,9 @@ const normMkt=(m)=>{if(!m)return"";const v=m.trim();if(DM[v])return v;const noSt
 const mediaLabel=(m)=>{if(!m)return"";if(m==="Cable")return"TV/Cable";return m};
 const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
 const BRANDS=[
-  {code:"PL",name:"Postman Law",agency:"Blackacre Services",logo:LOGO_PL,color:"#9b7bb0",colorBg:"#F0E8F8"},
-  {code:"WK",name:"Wettermark Keith",agency:"WK Advertising Solutions",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb"}
+  {code:"PL",name:"Postman Law",agency:"Blackacre Services",logo:LOGO_PL,color:"#9b7bb0",colorBg:"#F0E8F8",markets:["CHI","CIN","DEN","MSP"],airingKey:"est"},
+  {code:"WK",name:"Wettermark Keith",agency:"WK Advertising Solutions",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",markets:["BRM","HSV","KNX","CHA","MTG","DHN"],airingKey:"est|market"},
+  {code:"LR",name:"Lerner & Rowe",agency:"Atticor Media",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#2FBF71",colorBg:"#e9fbf1",markets:["ABQ","CHI","KGB","LAS","PHX","RNO","SEA","TUC","YUM"],airingKey:"est"}
 ];
 const getBrandColor=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.color:"#9B8EAD"};
 const brandMktCodes=(v)=>{const b=BRANDS.find(x=>x.name===v||x.code===v);return b?b.markets:[]};
