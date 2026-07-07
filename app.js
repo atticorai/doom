@@ -7235,8 +7235,13 @@ ${fullText.substring(0,3000)}`}]
       // Build data summary for AI
       const MO=["January","February","March","April","May","June","July","August","September","October","November","December"];
       const months=[...new Set(brandTraffic.map(h=>h.month))].sort((a,b)=>MO.indexOf(b)-MO.indexOf(a));
-      const markets=[...new Set(brandTraffic.map(h=>h.market))].sort();
+      let markets=[...new Set(brandTraffic.map(h=>h.market))].sort();
       const mediaTypes=[...new Set(brandTraffic.map(h=>h.media))].sort();
+      // OOH brands (e.g. Lerner & Rowe) have no TV/radio rotation. Fall back to
+      // the brand's configured markets so the planner still gives market-level
+      // strategy off the board inventory instead of reporting "no data".
+      const oohMode=markets.length===0&&brandMktCodes(brand).length>0;
+      if(oohMode)markets=brandMktNames(brand).slice().sort();
 
       // Category, Value Prop, VO distribution across all traffic
       const catCounts={},vpCounts={},voCounts={};
@@ -7303,6 +7308,14 @@ ${fullText.substring(0,3000)}`}]
         Chattanooga:{climate:"four seasons, mild, river valley humidity",population:"mid-size, revitalized downtown, outdoor-rec destination",industries:"VW manufacturing, logistics, freight rail (largest single-rail-line in US), outdoor recreation",sports:"Tennessee Volunteers, Chattanooga FC, Lookouts (minor-league baseball)",seasonal:"I-24/I-75 trucking corridor year-round (national chokepoint), summer river/outdoor injury season",notes:"unusually high commercial-vehicle PI volume for the metro size due to interstate junction; VW workforce = workers comp"},
         Montgomery:{climate:"warm humid, mild winters",population:"state capital, civil rights heritage city, lower income vs Birmingham",industries:"government, Hyundai manufacturing, military (Maxwell AFB)",sports:"Alabama/Auburn college football, Biscuits (minor-league)",seasonal:"I-65 north-south trucking corridor, spring storm disruption",notes:"capital + military audience; conservative-leaning, faith-anchored messaging works; civil rights tourism brings out-of-state visitors who don't know roads; Hyundai plant = manufacturing accident angle"},
         Dothan:{climate:"warm humid, mild winters",population:"small market, agricultural center (Peanut Capital), aging skewing",industries:"agriculture (peanuts), healthcare (Southeast Health regional hospital), military spillover (Fort Novosel/Rucker)",sports:"Alabama/Auburn college football, high-school football is huge",seasonal:"farm-equipment road accidents year-round, rural highway crashes, hurricane spillover Aug-Oct",notes:"rural audience — straight-talking direct messaging works best; agricultural/farm-vehicle accidents are a distinct PI angle (combines, tractors); limited local TV inventory; Fort Novosel = aviation injury angle"},
+        Albuquerque:{climate:"high desert, mild winters, monsoon storms Jul-Sep, flash flooding",population:"majority-Hispanic metro, sprawling, car-dependent",industries:"Kirtland AFB, Sandia/Los Alamos labs, film/TV production, healthcare, logistics",sports:"Lobos (UNM), Isotopes (minor-league baseball), no major pro teams",seasonal:"monsoon flash-flood crashes Jul-Sep, I-25/I-40 'Big I' interchange is the state's highest-crash node, DUI a persistent problem (among worst rates in US)",notes:"Spanish-language creative is essential, not optional; sprawl means billboards on I-25/I-40 and Coors/Central corridors dominate reach; DUI and uninsured-motorist angles over-index"},
+        "Las Vegas":{climate:"hot desert, extreme summer heat, flash-flood monsoon",population:"transient tourist economy + fast-growing resident base, 24-hour city",industries:"gaming/hospitality, conventions, construction, warehousing",sports:"Raiders (NFL), Golden Knights (NHL), Aces (WNBA), F1 Grand Prix (Nov)",seasonal:"DUI/pedestrian volume year-round on the Strip, construction-worker injuries with the building boom, F1 and big-fight weekends spike crashes",notes:"the Strip and I-15 are premium billboard real estate; huge tourist + service-worker audience; pedestrian-accident and construction/workers-comp angles are strong; 24-hour town means digital boards work overnight"},
+        Reno:{climate:"high desert, cold snowy winters, dry summers",population:"'Biggest Little City', Tahoe-adjacent, tech transplants from California",industries:"Tesla Gigafactory, warehousing/logistics (Amazon), tourism, gaming",sports:"Nevada Wolf Pack (UNR), Aces (minor-league baseball)",seasonal:"I-80 Sierra winter crashes Nov-Mar, Tahoe ski/tourist traffic, summer 'Burning Man' and event surges",notes:"I-80 freight corridor + Gigafactory shift traffic drives commercial-vehicle and workers-comp cases; winter mountain driving by newcomers; billboards on I-80 and Virginia St carry the market"},
+        Seattle:{climate:"wet, gray, mild; heavy rain Oct-Apr",population:"large affluent tech metro, dense urban core + sprawling suburbs, heavy transit use",industries:"Amazon, Microsoft, Boeing, healthcare, shipping/ports, biotech",sports:"Seahawks (NFL), Mariners (MLB), Kraken (NHL), Sounders (MLS), Storm (WNBA)",seasonal:"rain-slick rear-end crashes Oct-Apr, I-5/I-405 chronic congestion, ferry and transit pedestrian volume",notes:"expensive, competitive PI market; rain-related auto accidents dominate; transit/bus-side and highway digital boards reach commuters; affluent audience wants results-and-credibility messaging"},
+        Phoenix:{climate:"extreme desert heat, monsoon dust storms (haboobs) Jul-Sep, mild winters",population:"massive sprawling Sun Belt metro, heavy snowbird influx Nov-Mar, large Hispanic population",industries:"semiconductors (TSMC/Intel), aerospace, healthcare, construction, tourism/golf",sports:"Cardinals (NFL), Suns (NBA), Diamondbacks (MLB), Coyotes/hockey, spring training",seasonal:"snowbird traffic swells crashes Nov-Mar, monsoon dust-storm pileups Jul-Sep, extreme-heat vehicle incidents, spring-training tourism",notes:"freeway sprawl (Loop 101/202, I-10) makes billboards king; snowbird + Spanish-language segments both matter; older winter-resident drivers = distinct angle; construction boom = workers-comp volume"},
+        Tucson:{climate:"high desert, hot, monsoon Jul-Sep, milder than Phoenix",population:"college town + retiree/snowbird base, large Hispanic population, lower income than Phoenix",industries:"University of Arizona, Raytheon/defense, Davis-Monthan AFB, healthcare, mining",sports:"Arizona Wildcats (UA) dominate, no major pro teams",seasonal:"monsoon flash-flood crashes Jul-Sep, I-10 truck corridor to Phoenix/El Paso, winter snowbird uptick",notes:"UA student audience + retiree base; Spanish-language creative matters; I-10 commercial-vehicle corridor; mostly transit and digital OOH rather than fixed bulletins here"},
+        Yuma:{climate:"extreme desert heat, very dry, sunniest city in US",population:"small border-adjacent market, huge winter-visitor ('snowbird') swell, heavy agricultural workforce",industries:"agriculture (winter lettuce capital), Marine Corps Air Station, border logistics, tourism",sports:"high-school and youth sports, no major teams",seasonal:"winter-visitor population triples Nov-Mar (crash volume follows), farm-equipment and ag-worker injuries, I-8 border-corridor freight",notes:"heavily Hispanic + agricultural audience — Spanish-language essential; ag-worker and farm-vehicle injury angles; snowbird season is the whole ballgame; limited fixed inventory, transit/digital-led"},
+        King:{climate:"Mojave desert, extreme summer heat, mild winters",population:"Kingman + Bullhead City / Lake Havasu (Mohave County) — spread-out retiree and river-tourism market straddling AZ/NV/CA",industries:"tourism (Colorado River, Laughlin casinos across the river), logistics on I-40, retirees, some mining",sports:"no major teams; river recreation and off-road culture",seasonal:"I-40 and US-93 (Phoenix–Vegas) freight-corridor crashes year-round, summer river-tourism and boating injuries, snowbird winter influx",notes:"Route 66 / I-40 and US-93 billboards catch Phoenix–Vegas through-traffic; Laughlin casino spillover; retiree + tourist audience; DUI and out-of-town-driver angles; sparse fixed inventory, corridor bulletins matter most"},
       };
       const relevantProfiles={};markets.forEach(m=>{const cleanM=String(m||"").split(/[,/]/)[0].trim();if(MARKET_PROFILES[cleanM])relevantProfiles[cleanM]=MARKET_PROFILES[cleanM]});
       // Prior-month rotation snapshot — what actually ran in the most
@@ -7325,6 +7338,20 @@ ${fullText.substring(0,3000)}`}]
           })
         };
       }).filter(m=>m.media.length>0);
+      // OOH inventory summary — per market board counts, vendors, media mix,
+      // categories and impressions. Feeds the OOH planner path for brands that
+      // have no TV/radio rotation (e.g. Lerner & Rowe runs billboards only).
+      const oohBoards=oohMode?lrPanels.filter(p=>p.plan!=="expired"):[];
+      const oohInventory=oohMode?brandMktCodes(brand).map(code=>{
+        const boards=oohBoards.filter(p=>p.market===code);
+        const physical=boards.filter(p=>!p.network&&!p.tbd);
+        const vendors=[...new Set(boards.map(p=>p.vendor).filter(Boolean))];
+        const contracts=Object.values(oohContracts).filter(c=>c&&c.brand===brand&&Array.isArray(c.dmas)&&c.dmas.includes(code));
+        const mediaMix={};contracts.forEach(c=>{const t=c.mediaType||c.category||"Unknown";mediaMix[t]=(mediaMix[t]||0)+1});
+        const cats=[...new Set(contracts.map(c=>c.category).filter(Boolean))];
+        const impr=physical.reduce((a,p)=>a+((p.impressions||0)*(p.numUnits||1)),0);
+        return{market:DMA_MARKET[code]||DM[code]||code,dma:code,physicalBoards:physical.length,digitalOrTbdLines:boards.length-physical.length,units:new Set(physical.map(p=>p.unit)).size,vendors,contractCount:contracts.length,mediaMix,categories:cats,monthlyImpressions:impr};
+      }).filter(m=>m.physicalBoards>0||m.digitalOrTbdLines>0||m.contractCount>0):[];
       const dataPayload=JSON.stringify({
         brand,
         todaysDate:nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}),
@@ -7428,14 +7455,68 @@ Rules:
 - DO use real ISCI codes from staleIscis (for retire) and from non-stale inventory (for mock_rotation).
 - No corporate-speak. JSON only.`;
 
+      // OOH brands run billboards, not TV/radio spots — no ISCIs, no weights,
+      // no rotation to evolve. Give market-level OUT-OF-HOME strategy off the
+      // board inventory instead, and never let the model claim "no data".
+      const oohSystemPrompt=`You are a media planning AI for Atticor, a media buying agency managing OUT-OF-HOME (billboard / outdoor) advertising for personal injury law firms in 2026.
+
+TODAY: ${nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
+CURRENT MONTH: ${currentBroadcastMonth}
+PLANNING FOR: ${nextBroadcastMonth}
+
+${brand} is an OUT-OF-HOME advertiser — bulletins, digital boards, posters, transit, wallscapes. There is NO TV or radio rotation for this brand, so DO NOT ask for ISCIs, spot weights, or bookend pairs, and NEVER say "there's no data" — you HAVE the board inventory in the payload's 'oohInventory'. Your job is MARKET-LEVEL OOH STRATEGY.
+
+You receive a JSON payload with 'oohInventory' (per market: physical board count, digital/TBD lines, vendors, media mix, categories, monthly impressions) and 'marketProfiles' (climate, industries, sports, accident drivers, cultural notes). USE the profiles to make every recommendation locally specific — I-25's "Big I" in Albuquerque, the Strip and I-15 in Las Vegas, snowbird traffic and Loop 101 in Phoenix, I-80 and the Gigafactory in Reno, rain-slick I-5 in Seattle, Spanish-language reach in the border and desert markets.
+
+Personality: channel Megara as the voice — snarky, dry, confident, slightly mocking.
+
+OUTPUT FORMAT — return ONLY a JSON object inside a \`\`\`json code fence:
+
+\`\`\`json
+{
+  "megara_verdict": "2-3 sentences in Megara's voice — the brand's OUT-OF-HOME story for ${nextBroadcastMonth}. What footprint they've got and what it's doing for them.",
+  "big_idea": {"title":"6-word campaign theme for the outdoor buy","tagline":"one-line billboard chyron","why_now":"one sentence — what makes this the moment"},
+  "marketSnapshots": [
+    {
+      "market": "Albuquerque",
+      "inventory_note": "1 sentence grounded in the real numbers — board count, top vendors, media mix",
+      "angles": ["2-4 SHORT bullets — case-types and high-traffic locations the boards should hammer. Prefix a gap with 'Gap:' e.g. 'Gap: no digital on I-25'"],
+      "recommendation": "1-2 sentences — where to add, shift, or hold OOH spend for ${nextBroadcastMonth}",
+      "spot_concept": {"title":"ONE new billboard concept the market needs","case_type":"Auto Accident","brief":"2 sentences max — the visual and the headline. Billboards get ~6 words; make them land."}
+    }
+  ]
+}
+\`\`\`
+
+Rules:
+- One entry in marketSnapshots per market in 'oohInventory' that has any inventory. Use the market's full name.
+- Be CONCISE. angles = 2-4 short bullets. No rambling.
+- 'inventory_note': ground it in the actual oohInventory numbers for that market.
+- 'angles': the case-types and corridors the boards should push, plus 1-2 gaps.
+- 'recommendation': one concrete next-month move — add boards on X corridor, shift static to digital, hold.
+- 'spot_concept': ONE fresh billboard idea with a 6-word-headline discipline.
+- megara_verdict + big_idea set up the whole brand. Snarky, dry, confident.
+- No corporate-speak. JSON only. Never claim there's no data — the inventory is right there in the payload.`;
+      const oohPayload=JSON.stringify({
+        brand,
+        todaysDate:nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}),
+        currentBroadcastMonth,nextBroadcastMonth,
+        mediaType:"Out-of-Home (billboards, digital boards, posters, transit, bulletins)",
+        markets,
+        oohInventory,
+        marketProfiles:relevantProfiles
+      });
+
       const resp=await fetch("/api/planner",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-5",
           max_tokens:8000,
-          system:systemPrompt,
-          messages:[{role:"user",content:"Here is the current rotation data for "+brand+":\n\n"+dataPayload+"\n\nPlease analyze and provide your recommendations."}]
+          system:oohMode?oohSystemPrompt:systemPrompt,
+          messages:[{role:"user",content:oohMode
+            ?("Here is the current out-of-home inventory for "+brand+":\n\n"+oohPayload+"\n\nGive me market-by-market OOH strategy.")
+            :("Here is the current rotation data for "+brand+":\n\n"+dataPayload+"\n\nPlease analyze and provide your recommendations.")}]
         })
       });
       if(!resp.ok)throw new Error("API error: "+resp.status);
@@ -7716,6 +7797,7 @@ Rules:
             <span style={{fontSize:18,fontWeight:800,color:"#F0E8F8",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.3}}>📍 {ms.market}</span>
             {ms.mock_rotation?.headline&&<span style={{fontSize:12,color:"#C4A0C8",fontStyle:"italic",marginLeft:"auto"}}>{ms.mock_rotation.headline}</span>}
           </div>
+          {ms.inventory_note&&<div style={{marginBottom:10,fontSize:12,color:"#9B8EAD",fontStyle:"italic"}}>{ms.inventory_note}</div>}
           {ms.angles&&Array.isArray(ms.angles)&&ms.angles.length>0&&<div style={{marginBottom:10,display:"flex",flexDirection:"column",gap:5}}>
             {ms.angles.map((a,j)=><div key={j} style={{display:"flex",gap:8,fontSize:13,color:"#E8DFF0"}}><span style={{color:"#D4A040",fontWeight:800}}>▸</span><span style={{flex:1}}>{a}</span></div>)}
           </div>}
@@ -7723,9 +7805,10 @@ Rules:
             <span style={{color:"#4AC8E8",fontWeight:700,fontStyle:"normal",marginRight:6}}>↳ Evolving from {playbook.priorMonth||"last month"}:</span>{ms.evolution_note}
           </div>}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,alignItems:"start"}}>
-            {/* Mock rotation column */}
+            {/* Mock rotation column (TV) — or OOH recommendation */}
             <div>
-              <div style={{fontSize:10,fontWeight:800,color:"#5BC4A0",textTransform:"uppercase",letterSpacing:1.5,marginBottom:8}}>🎯 Mock Rotation</div>
+              {ms.recommendation&&<div style={{marginBottom:12,padding:"8px 11px",background:"rgba(91,196,160,.08)",borderLeft:"3px solid #5BC4A0",borderRadius:5,fontSize:12,color:"#E8DFF0",lineHeight:1.5}}><span style={{color:"#5BC4A0",fontWeight:800,textTransform:"uppercase",fontSize:9,letterSpacing:1,display:"block",marginBottom:3}}>Recommendation</span>{ms.recommendation}</div>}
+              {ms.mock_rotation&&<div style={{fontSize:10,fontWeight:800,color:"#5BC4A0",textTransform:"uppercase",letterSpacing:1.5,marginBottom:8}}>🎯 Mock Rotation</div>}
               {ms.mock_rotation?.thirties&&Array.isArray(ms.mock_rotation.thirties)&&ms.mock_rotation.thirties.length>0&&<div style={{marginBottom:10}}>
                 <div style={{fontSize:9,fontWeight:700,color:"#9B8EAD",letterSpacing:.6,marginBottom:4}}>30s</div>
                 <div style={{display:"flex",borderRadius:4,overflow:"hidden",height:6,marginBottom:5}}>{ms.mock_rotation.thirties.map((s,j)=>{const pct=parseInt(s.weight)||0;return<div key={j} title={s.title+" "+s.weight} style={{width:s.weight,minWidth:0,background:themeColor(s.case_type)}}/>})}</div>
