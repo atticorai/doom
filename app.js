@@ -4609,7 +4609,9 @@ const App=()=>{
     // Download a real (OSM) street map of the boards in view, recommended ones
     // starred — opens a print window with a "Save as PDF" button.
     const downloadPlMap=()=>{
-      const boards=fl.filter(p=>p.lat&&p.lng&&p.lat!==0);
+      // Dedupe by unit — a board can appear on multiple flight rows.
+      const _seen=new Set();
+      const boards=fl.filter(p=>p.lat&&p.lng&&p.lat!==0).filter(p=>{if(_seen.has(p.unit))return false;_seen.add(p.unit);return true});
       if(!boards.length){notify("No board coordinates in this view");return}
       const pins=boards.map(p=>({lat:p.lat,lng:p.lng,unit:String(p.unit),loc:escHtml(p.location||""),hi:PL_REC.has(p.unit)}));
       const rec=boards.filter(p=>PL_REC.has(p.unit)).map(p=>{const m=PL_REC_META[p.unit]||{};return{unit:String(p.unit),city:escHtml(p.submarket||""),loc:escHtml(p.location||""),cost:m.cost||"—",term:m.term||"",impr:(p.impressions*p.numUnits).toLocaleString()}});
