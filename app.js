@@ -4602,7 +4602,34 @@ const App=()=>{
     const mktNames={CHI:"Chicago",MSP:"Minneapolis",CIN:"Cincinnati",DEN:"Denver"};
 
     // Map pins from PL_PANELS with coords
-    const mapPins=fl.filter(p=>p.lat&&p.lng).map(p=>({id:p.unit,lat:p.lat,lng:p.lng,location:p.location,vendor:p.vendor,size:p.size,status:p.status,impressions:p.impressions*p.numUnits,market:p.market,creative:(typeof POP_TITLES!=='undefined'&&POP_TITLES[p.unit])||""}));
+    // Recommended-board highlight (temporary client review — clear the set to remove).
+    const PL_REC=new Set(["1636","1512O","1084","8520KO"]);
+    const PL_REC_META={"1636":{cost:"$3,300 / 4 wks",term:"thru 11/29/26"},"1512O":{cost:"$4,895 / 4 wks",term:"thru 12/20/26"},"1084":{cost:"$2,100 / 4 wks",term:"thru 12/27/26"},"8520KO":{cost:"—",term:"thru 12/20/26"}};
+    const mapPins=fl.filter(p=>p.lat&&p.lng).map(p=>({id:p.unit,lat:p.lat,lng:p.lng,location:p.location,vendor:p.vendor,size:p.size,status:p.status,impressions:p.impressions*p.numUnits,market:p.market,creative:(typeof POP_TITLES!=='undefined'&&POP_TITLES[p.unit])||"",hi:PL_REC.has(p.unit)}));
+    // Download a real (OSM) street map of the boards in view, recommended ones
+    // starred — opens a print window with a "Save as PDF" button.
+    const downloadPlMap=()=>{
+      const boards=fl.filter(p=>p.lat&&p.lng&&p.lat!==0);
+      if(!boards.length){notify("No board coordinates in this view");return}
+      const pins=boards.map(p=>({lat:p.lat,lng:p.lng,unit:String(p.unit),loc:escHtml(p.location||""),hi:PL_REC.has(p.unit)}));
+      const rec=boards.filter(p=>PL_REC.has(p.unit)).map(p=>{const m=PL_REC_META[p.unit]||{};return{unit:String(p.unit),city:escHtml(p.submarket||""),loc:escHtml(p.location||""),cost:m.cost||"—",term:m.term||"",impr:(p.impressions*p.numUnits).toLocaleString()}});
+      const mktLabel=mktF?(DM[mktF]||mktF):"All Markets";
+      const recTable=rec.length?'<table><tr><th>★ Unit</th><th>Submarket</th><th>Location</th><th>Cost</th><th>Term</th><th>Wkly Impr</th></tr>'+rec.map(r=>'<tr><td><b>'+escHtml(r.unit)+'</b></td><td>'+r.city+'</td><td>'+r.loc+'</td><td>'+escHtml(r.cost)+'</td><td>'+escHtml(r.term)+'</td><td>'+r.impr+'</td></tr>').join("")+'</table>':"";
+      const w=window.open("","","width=1040,height=900");
+      w.document.write('<html><head><title>Postman Law — Chicago OOH Board Map</title>');
+      w.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>');
+      w.document.write('<style>body{font-family:Arial,sans-serif;margin:24px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.sub{color:#555;font-weight:bold;margin:2px 0 10px}#map{height:520px;border:1px solid #ccc;border-radius:8px}.lg{margin:8px 0;font-size:12px}.sw{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:middle;border:1px solid #333}.box{border:1px solid #ccc;border-radius:8px;padding:10px 12px;margin-top:12px}table{width:100%;border-collapse:collapse;margin-top:6px}th,td{border:1px solid #ddd;padding:4px 8px;font-size:11px;text-align:left}th{background:#f4f4f4}.leaflet-tooltip.hl{background:#D4A040;color:#1a1a1a;border:none;font-weight:800;font-size:11px}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{body{margin:12px}.box,#map{page-break-inside:avoid}.dl{display:none}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<div style="text-align:center;margin-bottom:6px"><h2>POSTMAN LAW</h2><div style="font-weight:bold;color:#555">CHICAGO OOH BOARD MAP</div></div>');
+      w.document.write('<div class="sub">'+escHtml(mktLabel)+' &nbsp;·&nbsp; '+pins.length+' boards &nbsp;·&nbsp; '+rec.length+' recommended &nbsp;·&nbsp; '+new Date().toLocaleDateString()+'</div>');
+      w.document.write('<div class="lg"><span class="sw" style="background:#4AC8E8"></span>Existing board ('+(pins.length-rec.length)+') &nbsp;&nbsp;<span class="sw" style="background:#D4A040"></span>★ Recommended ('+rec.length+')</div>');
+      w.document.write('<div id="map"></div>');
+      if(recTable)w.document.write('<div class="box"><div style="font-weight:bold;font-size:13px">★ Recommended boards</div>'+recTable+'</div>');
+      w.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"><\/script>');
+      w.document.write('<script>var P='+JSON.stringify(pins)+';(function go(){if(typeof L==="undefined")return setTimeout(go,60);var map=L.map("map",{zoomControl:true,attributionControl:false});L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18}).addTo(map);var b=[];P.forEach(function(p){if(p.hi){L.circleMarker([p.lat,p.lng],{radius:9,color:"#7a4b00",weight:2,fillColor:"#D4A040",fillOpacity:1}).bindTooltip("★ "+p.unit,{permanent:true,direction:"right",offset:[8,0],className:"hl"}).addTo(map)}else{L.circleMarker([p.lat,p.lng],{radius:5,color:"#12384f",weight:1,fillColor:"#4AC8E8",fillOpacity:.85}).bindTooltip(p.unit+" — "+p.loc).addTo(map)}b.push([p.lat,p.lng])});if(b.length)map.fitBounds(b,{padding:[28,28]});setTimeout(function(){window.focus();window.print()},1700)})();<\/script>');
+      w.document.write('</body></html>');w.document.close();
+      log("PL OOH Map Export",mktLabel+" · "+pins.length+" boards");
+    };
 
     const CardGrid=()=><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
       {fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const flightClean=p.flight.split('(')[0].trim();const pop=PL_POPS[p.unit];const exp=plArchived(p);
@@ -4765,6 +4792,7 @@ const App=()=>{
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:6}}>
           <div style={{fontSize:14,fontWeight:700}}>📍 PL OOH Board Locations</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <button onClick={downloadPlMap} title="Open a printable street map (Save as PDF) with the recommended boards starred" style={{padding:"4px 11px",fontSize:11,fontWeight:800,cursor:"pointer",border:"none",borderRadius:6,background:"#D4A040",color:"#1e1233"}}>⬇ Download Map</button>
             {plMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={plClusterRadius} onChange={e=>setPlClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#4AC8E8",minWidth:30}}>{plClusterRadius} mi</span></div>}
             <div style={{display:"flex",gap:0,border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}>
               <button onClick={()=>setPlMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:plMapMode==="market"?"rgba(155,123,176,.2)":"transparent",color:plMapMode==="market"?"#C4A0C8":"#94a3b8"}}>📍 By Market</button>

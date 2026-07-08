@@ -128,8 +128,18 @@ const OohMap=({pins,colorFn,labelFn,height,showHeat})=>{
     }
     valid.forEach(p=>{
       const c=colorFn?colorFn(p):"#dc2626";
-      const icon=window.L.divIcon({className:'',html:'<div style="width:'+(heatOn?'8':'12')+'px;height:'+(heatOn?'8':'12')+'px;border-radius:50%;background:'+c+';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);opacity:'+(heatOn?'.6':'1')+'"></div>',iconSize:[12,12],iconAnchor:[6,6]});
-      const m=window.L.marker([p.lat,p.lng],{icon}).addTo(map);
+      let icon,mopts;
+      if(p.hi){
+        // Highlighted board — larger gold marker with a ★ + unit label, drawn on top.
+        const sz=22;
+        icon=window.L.divIcon({className:'',html:'<div style="position:relative;display:flex;justify-content:center"><div style="width:'+sz+'px;height:'+sz+'px;border-radius:50%;background:#D4A040;border:3px solid #fff;box-shadow:0 0 0 4px rgba(212,160,64,.4),0 2px 6px rgba(0,0,0,.45)"></div><div style="position:absolute;top:'+(sz+3)+'px;white-space:nowrap;font:800 10px \'DM Sans\',sans-serif;color:#1e1233;background:#D4A040;padding:1px 6px;border-radius:7px;box-shadow:0 1px 3px rgba(0,0,0,.35)">★ '+p.id+'</div></div>',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
+        mopts={icon,zIndexOffset:1000};
+      }else{
+        const sz=heatOn?8:12;
+        icon=window.L.divIcon({className:'',html:'<div style="width:'+sz+'px;height:'+sz+'px;border-radius:50%;background:'+c+';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);opacity:'+(heatOn?'.6':'1')+'"></div>',iconSize:[12,12],iconAnchor:[6,6]});
+        mopts={icon};
+      }
+      const m=window.L.marker([p.lat,p.lng],mopts).addTo(map);
       const label=labelFn?labelFn(p):p.id;
       const popPhoto=typeof POP_PHOTOS!=='undefined'&&POP_PHOTOS[p.id]?POP_PHOTOS[p.id]:(typeof POP_IMGS!=='undefined'&&p.closeImg?POP_IMGS[p.closeImg]:null);
       m.bindPopup('<div style="font-family:DM Sans,sans-serif;min-width:200px;max-width:320px"><div style="font-weight:700;font-size:13px">'+p.id+'</div>'+(p.vendor?'<div style="font-size:10px;color:#7c3aed;font-weight:600">'+p.vendor+'</div>':'')+'<div style="font-size:10px;color:#475569;margin-top:4px">'+p.location+'</div>'+(p.size?'<div style="font-size:10px;color:#64748b">'+p.size+'</div>':'')+(p.status?'<div style="font-size:10px;margin-top:4px;font-weight:600;color:#16a34a">'+p.status+'</div>':'')+(p.impressions?'<div style="font-size:10px;color:#2563eb;font-weight:600">'+(p.impressions).toLocaleString()+' wkly</div>':'')+(popPhoto?'<div style="margin-top:6px;border-top:1px solid #e2e8f0;padding-top:6px"><div style="font-size:9px;font-weight:600;color:#2563eb;margin-bottom:3px">📸 PoP Photo</div><img src="'+popPhoto+'" style="width:100%;border-radius:4px;border:1px solid #e2e8f0"/></div>':'')+'</div>',{maxWidth:340});
