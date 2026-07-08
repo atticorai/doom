@@ -8491,6 +8491,13 @@ Rules:
                   </div>
                   {c.link&&<a href={c.link} target="_blank" rel="noopener noreferrer" style={{fontSize:12,fontWeight:700,color:"#4AC8E8"}}>📄 Contract PDF ↗</a>}
                   {c.notes&&<div style={{fontSize:12,color:"#9B8EAD",marginTop:5,fontStyle:"italic"}}>📝 {c.notes}</div>}
+                  {(()=>{const pops=(typeof window!=="undefined"&&window.LR_CONTRACT_POPS&&window.LR_CONTRACT_POPS[k])||null;return pops&&pops.length?<div style={{marginTop:8,borderTop:"1px solid #4a3565",paddingTop:6}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#4AC8E8",textTransform:"uppercase",marginBottom:4}}>📸 {pops.length} Proof-of-Posting Photo{pops.length>1?"s":""}</div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(54px,1fr))",gap:4}}>
+                      {pops.map((ph,pi)=><img key={pi} src={ph.url} title={ph.label} onClick={()=>setModal({type:"oohPhoto",id:k,photos:pops,startIdx:pi})} style={{width:"100%",height:46,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}}/>)}
+                    </div>
+                    <div style={{fontSize:10,color:"#6B5E80",marginTop:3,fontStyle:"italic"}}>Vendor proofs for this buy (not tied to a specific panel)</div>
+                  </div>:null})()}
                 </div>}
               </div>;
             })}
