@@ -389,11 +389,11 @@ const CALENDAR=D_C.map(r=>({month:r[0],rotDue:r[1],bcStart:r[2],bcEnd:r[3]}));
 // already-airing month.
 const nextTrafficMonth=()=>{const t=new Date();t.setHours(0,0,0,0);const c=CALENDAR.find(c=>new Date(c.bcStart+"T00:00:00")>t);return c?c.month:(CALENDAR[CALENDAR.length-1]||{}).month||"December"};
 const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const mk=r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17],design:(r[18]?(Array.isArray(r[18])?r[18].filter(Boolean):[r[18]]):[]),vendorRef:r[19]||""});const base=D_P.map(mk);const extra=(typeof D_P_NEW!=="undefined"?D_P_NEW:[]).map(mk);return[...base,...extra]})();
-const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KGB:"King/Bull",LAS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YUM:"Yuma"};
+const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KGB:"King/Bull",LAS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YUM:"Yuma",OKC:"Oklahoma City",TUL:"Tulsa"};
 // Market rolls up by FULL NAME everywhere in the app (traffic library, history,
 // metrics, AI planner) — the prefix lives ONLY in the ISCI code. Gadsden (GAD)
 // is not its own market; it falls under Birmingham.
-const DMA_MARKET={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",GAD:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KGB:"King/Bull",LAS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YUM:"Yuma"};
+const DMA_MARKET={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",GAD:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KGB:"King/Bull",LAS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YUM:"Yuma",OKC:"Oklahoma City",TUL:"Tulsa"};
 const oohMarket=(dma)=>DMA_MARKET[dma]||DM[dma]||dma;
 // The ISCI market prefix is the board's REAL market — GAD is never a prefix
 // (Gadsden rolls into Birmingham → BRM). Extend this map if more areas roll up.
@@ -436,7 +436,8 @@ const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
 const BRANDS=[
   {code:"PL",name:"Postman Law",agency:"Atticor Group LLC",logo:LOGO_PL,color:"#9b7bb0",colorBg:"#F0E8F8",markets:["CHI","CIN","DEN","MSP"],airingKey:"est"},
   {code:"WK",name:"Wettermark Keith",agency:"Atticor Group LLC",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",markets:["BRM","HSV","KNX","CHA","MTG","DHN"],airingKey:"est|market"},
-  {code:"LR",name:"Lerner & Rowe",agency:"Atticor Group LLC",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#2FBF71",colorBg:"#e9fbf1",markets:["ABQ","CHI","KGB","LAS","PHX","RNO","SEA","TUC","YUM"],airingKey:"est"}
+  {code:"LR",name:"Lerner & Rowe",agency:"Atticor Group LLC",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#2FBF71",colorBg:"#e9fbf1",markets:["ABQ","CHI","KGB","LAS","PHX","RNO","SEA","TUC","YUM"],airingKey:"est"},
+  {code:"PDV",name:"Parrish DeVaughn",agency:"Atticor Group LLC",logo:(typeof LOGO_PDV!=="undefined"?LOGO_PDV:""),color:"#EE2B37",colorBg:"#FDECEE",markets:["OKC","TUL"],airingKey:"est"}
 ];
 const getBrandColor=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.color:"#9B8EAD"};
 const brandMktCodes=(v)=>{const b=BRANDS.find(x=>x.name===v||x.code===v);return b?b.markets:[]};
@@ -3393,9 +3394,9 @@ const App=()=>{
     const nextNum=()=>{const nums=estimates.map(e=>parseInt(e.num)).filter(n=>!isNaN(n));return nums.length?String(Math.max(...nums)+1):"2700"};
     const BT=["Base","Sponsorship","UD/AV","Sports","Cable","Heavy Up","Radio","Streaming Audio","OOH","Event Sponsorship","TTWN"];
     const REASONS=["New market launch","New media type","New flight period","Agency buy plan"];
-    const BB={"Postman Law":["Ken Lazar","Lynn Cortelezzi","Hazel Wolf"],"Wettermark Keith":["Amy Coffey"]};
+    const BB={"Postman Law":["Ken Lazar","Lynn Cortelezzi","Hazel Wolf"],"Wettermark Keith":["Amy Coffey"],"Parrish DeVaughn":[]};
     const BUYER_EMAILS={"Ken Lazar":"ken.lazar@atticor.ai","Lynn Cortelezzi":"lynn.cortelezzi@atticor.ai","Amy Coffey":"acoffey@wkfirm.com","Jessica Flynn":"jessica.flynn@atticor.ai"};
-    const BM={"Postman Law":["Chicago","Cincinnati","Denver","Minneapolis"],"Wettermark Keith":["Birmingham","Chattanooga","Dothan","Huntsville","Knoxville","Montgomery"]};
+    const BM={"Postman Law":["Chicago","Cincinnati","Denver","Minneapolis"],"Wettermark Keith":["Birmingham","Chattanooga","Dothan","Huntsville","Knoxville","Montgomery"],"Parrish DeVaughn":["Oklahoma City","Tulsa"]};
     const findSta=()=>{if(!nr.market||!nr.brand||!nr.media)return[];return stations.filter(s=>s.market===nr.market&&s.brand===nr.brand&&(nr.media==="Sports"||nr.media==="Heavy Up"?s.media==="TV":nr.media==="Streaming Audio"?s.media==="Radio":s.media===nr.media))};
     const openC=()=>{setShowAdd(true);setStep(1);setNr({num:nextNum(),market:"",media:"",group:"",campaign:"",buyer:"",brand:"",reason:""});setSugStations([]);setSelStations([])};
     const closeC=()=>{setShowAdd(false);setStep(1)};
@@ -6680,7 +6681,7 @@ ${fullText.substring(0,3000)}`}]
         const lines=t.split("\n");
         const iscis=[];
         for(const line of lines){
-          const codeMatch=line.match(/([A-Z]{3,4}(?:PL|WK)\d{4,7}[A-Z0-9])\s*-\s*(.+)/);
+          const codeMatch=line.match(/([A-Z]{3,4}(?:PL|WK|LR|PDV)\d{4,7}[A-Z0-9])\s*-\s*(.+)/);
           if(!codeMatch)continue;
           const code=codeMatch[1];
           let rest=codeMatch[2];
@@ -6699,7 +6700,7 @@ ${fullText.substring(0,3000)}`}]
           iscis.push({code,title,dur,pct,sched:schedType||lineFlight||flight||"",bookend});
         }
         if(!iscis.length){
-          const codePat=/([A-Z]{3,4}(?:PL|WK)\d{4,7}[A-Z0-9])/g;
+          const codePat=/([A-Z]{3,4}(?:PL|WK|LR|PDV)\d{4,7}[A-Z0-9])/g;
           const found=[...new Set((t.match(codePat)||[]))];
           if(found.length)found.forEach(code=>iscis.push({code,title:"",dur:"30",pct:"",sched:flight||"",bookend:""}));
         }
@@ -10417,7 +10418,7 @@ Rules:
             const campaign=(t.match(/UTM_Campaign=[A-Z]{3}([A-Za-z]+?)&/)||[])[1]||"";
             // Grab EVERY ISCI code globally (TV/Radio/Cable/Digital/OOH formats all covered);
             // OOH codes have letters mid-string (e.g. BRMWK26SP009O) so don't require all-digits.
-            const codeRe=/([A-Z]{3}(?:PL|WK)[0-9][A-Z0-9]{4,9})/g;
+            const codeRe=/([A-Z]{3}(?:PL|WK|LR|PDV)[0-9][A-Z0-9]{4,9})/g;
             const iscis=[];const seen=new Set();let m;
             while((m=codeRe.exec(t))){const c=m[1];if(seen.has(c))continue;seen.add(c);
               const after=t.slice(m.index+c.length,m.index+c.length+90);
@@ -11857,7 +11858,7 @@ Rules:
                     if(brand.toLowerCase().includes("postman"))brand="Postman Law";
                     else if(brand.toLowerCase().includes("wettermark"))brand="Wettermark Keith";
                     const lines=t.split("\n");const iscis=[];
-                    const codePat=/([A-Z]{3,4}(?:PL|WK)\d{4,7}[A-Z0-9])/;
+                    const codePat=/([A-Z]{3,4}(?:PL|WK|LR|PDV)\d{4,7}[A-Z0-9])/;
                     for(const line of lines){
                       const m=line.match(codePat);if(!m)continue;
                       const code=m[1];
