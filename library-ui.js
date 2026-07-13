@@ -1498,7 +1498,7 @@ function Fe({
                 })() }),
                 /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-[140px_1fr] gap-y-2.5 text-sm max-w-2xl mb-8", children: [
                   /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-700", children: "Agency:" }),
-                  /* @__PURE__ */ e.jsx("span", { className: "text-gray-900", children: t.brand === "Postman Law" ? "Blackacre Services" : "WK Advertising Solutions" }),
+                  /* @__PURE__ */ e.jsx("span", { className: "text-gray-900", children: "Atticor Group LLC" }),
                   /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-700", children: "Client:" }),
                   /* @__PURE__ */ e.jsx("span", { className: "text-purple-600 font-medium", children: t.brand }),
                   /* @__PURE__ */ e.jsx("span", { className: "font-bold text-gray-700", children: "Market:" }),

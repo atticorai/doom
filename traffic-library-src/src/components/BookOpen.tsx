@@ -131,7 +131,7 @@ export function BookOpen({
               <div className="grid grid-cols-[140px_1fr] gap-y-2.5 text-sm max-w-2xl mb-8">
                 <span className="font-bold text-gray-700">Agency:</span>
                 <span className="text-gray-900">
-                  {instruction.brand === 'Postman Law' ? 'Blackacre Services' : 'WK Advertising Solutions'}
+                  {'Atticor Group LLC'}
                 </span>
                 <span className="font-bold text-gray-700">Client:</span>
                 <span className="text-purple-600 font-medium">

@@ -434,16 +434,16 @@ const normMkt=(m)=>{if(!m)return"";const v=m.trim();if(DM[v])return v;const noSt
 const mediaLabel=(m)=>{if(!m)return"";if(m==="Cable")return"TV/Cable";return m};
 const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
 const BRANDS=[
-  {code:"PL",name:"Postman Law",agency:"Blackacre Services",logo:LOGO_PL,color:"#9b7bb0",colorBg:"#F0E8F8",markets:["CHI","CIN","DEN","MSP"],airingKey:"est"},
-  {code:"WK",name:"Wettermark Keith",agency:"WK Advertising Solutions",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",markets:["BRM","HSV","KNX","CHA","MTG","DHN"],airingKey:"est|market"},
-  {code:"LR",name:"Lerner & Rowe",agency:"Atticor Media",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#2FBF71",colorBg:"#e9fbf1",markets:["ABQ","CHI","KGB","LAS","PHX","RNO","SEA","TUC","YUM"],airingKey:"est"}
+  {code:"PL",name:"Postman Law",agency:"Atticor Group LLC",logo:LOGO_PL,color:"#9b7bb0",colorBg:"#F0E8F8",markets:["CHI","CIN","DEN","MSP"],airingKey:"est"},
+  {code:"WK",name:"Wettermark Keith",agency:"Atticor Group LLC",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",markets:["BRM","HSV","KNX","CHA","MTG","DHN"],airingKey:"est|market"},
+  {code:"LR",name:"Lerner & Rowe",agency:"Atticor Group LLC",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#2FBF71",colorBg:"#e9fbf1",markets:["ABQ","CHI","KGB","LAS","PHX","RNO","SEA","TUC","YUM"],airingKey:"est"}
 ];
 const getBrandColor=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.color:"#9B8EAD"};
 const brandMktCodes=(v)=>{const b=BRANDS.find(x=>x.name===v||x.code===v);return b?b.markets:[]};
 const brandMktNames=(v)=>brandMktCodes(v).map(c=>(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c])||(typeof DM!=="undefined"&&DM[c])||c);
 const brandLogo=(v)=>{const b=BRANDS.find(x=>x.name===v||x.code===v);return b&&b.logo?b.logo:(typeof LOGO_PL!=="undefined"?LOGO_PL:"")};
 const getBrandBg=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.colorBg:"#F0E8F8"};
-const getBrandAgency=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.agency:"Atticor"};
+const getBrandAgency=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.agency:"Atticor Group LLC"};
 const MEDIA=["TV","Radio","Digital","Streaming Audio","Cable","OOH","Display","Tagline"];const OOH_TYPES=[{code:"SB",name:"Static Billboard"},{code:"DB",name:"Digital Bulletin"},{code:"SP",name:"Static Poster"},{code:"DP",name:"Digital Poster"},{code:"BS",name:"Transit / Bus Shelter"},{code:"PT",name:"Gas Pump Topper"},{code:"WS",name:"Wallscape"},{code:"TR",name:"Transit"},{code:"SF",name:"Street Furniture"},{code:"JP",name:"Junior Poster"}];
 const DISPLAY_TYPES=[{code:"MR",name:"Medium Rectangle (300x250)"},{code:"LB",name:"Leaderboard (728x90)"},{code:"SQ",name:"Square (640x640)"},{code:"SK",name:"Skyscraper (300x600)"},{code:"MB",name:"Mobile Banner (320x50)"},{code:"WB",name:"Wide Banner (1280x100)"},{code:"SL",name:"Slim Banner (970x66)"},{code:"PR",name:"Portrait (1080x1350)"},{code:"ST",name:"Story (1080x1920)"},{code:"BN",name:"Banner (Generic)"}];
 const SUFFIXES={TV:"T",Radio:"R",Digital:"D","Streaming Audio":"S",OOH:"O",Cable:"T",Display:"B",Tagline:"G"};const OOH_SUFFIXES={SB:"O",DB:"O",SP:"O",DP:"O",BS:"O",PT:"O",WS:"O",TR:"O",SF:"O",JP:"O"};
@@ -3847,7 +3847,7 @@ const App=()=>{
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
       w.document.write('<div style="text-align:center;margin-bottom:12px"><h2>WETTERMARK KEITH</h2><div class="tag">PERSONAL INJURY LAWYERS — OOH TRAFFIC INSTRUCTIONS'+(resendOnly?' · <span style="color:#b00">REVISION — CORRECTED CREATIVE ONLY</span>':'')+'</div></div>');
       const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v||"")+'</span></div>');
-      hd("Agency","WK Advertising Solutions");hd("Client","Wettermark Keith");
+      hd("Agency","Atticor Group LLC");hd("Client","Wettermark Keith");
       hd("Vendor",vendorName,"amb");if(contact)hd("Vendor Contact",contact);
       hd("Contracts",[...new Set(scope.map(p=>p.contract).filter(Boolean))].join(", "));
       hd("Market(s)",dmasIn.join(", "));
@@ -3962,7 +3962,7 @@ const App=()=>{
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
       w.document.write('<div style="text-align:center;margin-bottom:12px"><h2>WETTERMARK KEITH</h2><div class="tag">PERSONAL INJURY LAWYERS — OOH TRAFFIC INSTRUCTIONS</div></div>');
       const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v||"")+'</span></div>');
-      hd("Agency","WK Advertising Solutions");hd("Client","Wettermark Keith");hd("Vendor",vendorName,"amb");
+      hd("Agency","Atticor Group LLC");hd("Client","Wettermark Keith");hd("Vendor",vendorName,"amb");
       hd("Market(s)",[...new Set(scope.map(p=>oohMarket(p.dma)))].sort().join(", "));
       hd("Buyer","Amy Coffey","red");hd("Media","OOH — Out of Home","red");hd("Broadcast Month",workMonth,"grn");
       hd("Post / Start Date",dateLabel,"grn");
@@ -4301,7 +4301,7 @@ const App=()=>{
           w.document.write("<html><head><title>OOH Traffic - "+escHtml(dmaLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
           w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">WETTERMARK KEITH</h2><div style="font-weight:bold;color:#555">PERSONAL INJURY LAWYERS</div></div>');
           const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
-          w.document.write(hd("Agency","WK Advertising Solutions"));w.document.write(hd("Client","Wettermark Keith"));
+          w.document.write(hd("Agency","Atticor Group LLC"));w.document.write(hd("Client","Wettermark Keith"));
           w.document.write(hd("Market",dmaLabel));w.document.write(hd("Vendor",vLabel,"amb"));
           w.document.write(hd("Buyer","Amy Coffey","red"));w.document.write(hd("Media","OOH","red"));
           w.document.write(hd("Broadcast Month",workMonth,"grn"));
@@ -8897,7 +8897,7 @@ Rules:
       if(lg)x+='<div style="text-align:center;margin-bottom:14px"><img src="'+lg+'" style="height:48px"/></div>';
       else x+='<div style="text-align:center;margin-bottom:14px;font-size:20px;font-weight:800;letter-spacing:2px;color:'+bc+'">WETTERMARK KEITH</div>';
       const hd=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0"><b style="min-width:140px;color:#555">'+l+':</b><span'+(c?' style="color:'+c+';font-weight:600"':'')+'>'+(v||"")+'</span></div>';
-      x+=hd("Agency","WK Advertising Solutions");
+      x+=hd("Agency","Atticor Group LLC");
       x+=hd("Client",h.brand||"Wettermark Keith",bc);
       x+=hd("Market",h.market||"");
       x+=hd("Buyer",h.buyer||"","#D4A040");
@@ -9134,7 +9134,7 @@ Rules:
       return {
         id:(h.ts||"")+"_"+(h.market||""),
         client:h.brand||"Wettermark Keith",
-        agency:"Atticor",
+        agency:"Atticor Group LLC",
         market:h.market||"",
         buyer:h.buyer||"",
         estimate:h.est||"",
