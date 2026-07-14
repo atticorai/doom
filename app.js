@@ -11182,6 +11182,16 @@ Rules:
     return[...BOOK_PAGES_1,...BOOK_PAGES_2,...BOOK_PAGES_3];
   },[iscis,stations,trafficHistory,workMonth]);
 
+  const DOOM_CHANGELOG=[
+    {d:"07/14/2026",t:"Parrish DeVaughn estimates",x:"Added TV estimates 2676 (Oklahoma City) and 2677 (Tulsa), buyer Jessica Flynn."},
+    {d:"07/14/2026",t:"Live Guide",x:"Guide now renders live brand/market/prefix data, per-brand counts, and this changelog."},
+    {d:"07/14/2026",t:"Lerner & Rowe onboarded",x:"171 ISCIs across 9 markets in Atticor's naming convention; 14 estimates (2661–2674); same spot shares one number + title across markets; Spanish flagged in the code (…LRSP…)."},
+    {d:"07/14/2026",t:"Market prefixes finalized",x:"Las Vegas LAS→LVS, Yuma YUM→YMA, King/Bull KGB→KBH; added Bullhead (BHD) and Flagstaff (FLG) as their own TV/Radio markets."},
+    {d:"07/14/2026",t:"Brand colors corrected",x:"Postman Law → deeper purple (#5D3A87); Lerner & Rowe → brand black & yellow (#F2DD00)."},
+    {d:"07/14/2026",t:"Traffic Tracker",x:"Lerner & Rowe now reads TV + Radio (previously OOH-only)."},
+    {d:"07/14/2026",t:"Parrish DeVaughn added",x:"New brand: 342 ISCIs (Oklahoma City live, Tulsa staged inactive), brand red #EE2B37, buyer Jessica Flynn."},
+    {d:"07/14/2026",t:"Agency corrected",x:"All brands now bill as Atticor Group LLC (replacing stale placeholders)."},
+  ];
   const BrandPrefixGuide=()=>{
     const tc=(hex)=>{try{const n=parseInt(String(hex).slice(1),16);return (0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))>150?"#1e1233":"#fff"}catch(e){return"#fff"}};
     const mktName=(c)=>(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c])||(typeof DM!=="undefined"&&DM[c])||c;
@@ -11229,6 +11239,15 @@ Rules:
         <span style={{color:"#4AC8E8"}}>LVS</span> · <span style={{color:"#D4A040"}}>LR</span> · <span style={{color:"#5BC4A0"}}>26</span> · <span style={{color:"#E8DFF0"}}>30</span> · <span style={{color:"#E8DFF0"}}>001</span> · <span style={{color:"#E85A7A"}}>R</span> &nbsp;→&nbsp; <b style={{color:"#F0E8F8"}}>LVSLR2630001R</b>
         <span style={{color:"#9B8EAD"}}> &nbsp;(Las Vegas · Lerner &amp; Rowe · 2026 · :30 · #001 · Radio)</span><br/>
         <span style={{color:"#9B8EAD"}}>Spanish inserts</span> <span style={{color:"#4AC8E8"}}>SP</span> <span style={{color:"#9B8EAD"}}>after the brand → </span><b style={{color:"#F0E8F8"}}>LVSLRSP2630001R</b>. <span style={{color:"#9B8EAD"}}>Media suffix: T=TV, R=Radio, S=Streaming, O=OOH, D=Digital.</span>
+      </div>
+      <div style={{fontSize:16,fontWeight:800,color:"#F0E8F8",margin:"20px 0 4px"}}>Changelog <span style={{fontSize:10,color:"#5BC4A0",fontWeight:700,letterSpacing:1}}>● LIVE</span></div>
+      <div style={{fontSize:12,color:"#9B8EAD",marginBottom:10}}>Every change to Doom, logged and explained — newest first.</div>
+      <div style={{display:"flex",flexDirection:"column",gap:0}}>
+        {DOOM_CHANGELOG.map((c,i)=><div key={i} style={{display:"flex",gap:12,padding:"9px 0",borderBottom:i<DOOM_CHANGELOG.length-1?"1px solid rgba(155,123,176,.12)":"none"}}>
+          <span style={{fontSize:11,fontFamily:"monospace",color:"#9B8EAD",whiteSpace:"nowrap",paddingTop:2}}>{c.d}</span>
+          <span style={{width:6,height:6,borderRadius:99,background:"#5BC4A0",marginTop:6,flexShrink:0}}/>
+          <span><b style={{color:"#F0E8F8",fontSize:13.5}}>{c.t}</b><div style={{color:"#C4A0C8",fontSize:12,marginTop:1}}>{c.x}</div></span>
+        </div>)}
       </div>
     </div>;
   };
