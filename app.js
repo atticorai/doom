@@ -8743,7 +8743,7 @@ Rules:
     const[trackerExpanded,setTrackerExpanded]=useState(null);
     const isPL=trackerBrand==="Postman Law";
     const mkts=brandMktNames(trackerBrand);
-    const buyTypes=trackerBrand==="Lerner & Rowe"?["TV Base","Radio","OOH"]:isPL?["TV Base","TV Sponsorship","TV UD/AV","TV Sports","Cable","Heavy Up","Radio","Streaming Audio","Digital","OOH"]:["TV Base","TV Sponsorship","TV UD/AV","Radio","Streaming Audio","OOH"];
+    const buyTypes=trackerBrand==="Parrish DeVaughn"?["TV Base","Radio","Digital","OOH"]:trackerBrand==="Lerner & Rowe"?["TV Base","Radio","OOH"]:isPL?["TV Base","TV Sponsorship","TV UD/AV","TV Sports","Cable","Heavy Up","Radio","Streaming Audio","Digital","OOH"]:["TV Base","TV Sponsorship","TV UD/AV","Radio","Streaming Audio","OOH"];
     // Map buy types to estimate groups for matching
     const buyToGroup={"TV Base":"Base","TV Sponsorship":"Sponsorship","TV UD/AV":"UD/AV","TV Sports":"Sports","Cable":"Cable","Heavy Up":"Heavy Up","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
     const buyToMedia={"TV Base":"TV","TV Sponsorship":"TV","TV UD/AV":"TV","TV Sports":"TV","Cable":"Cable","Heavy Up":"TV","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
@@ -11183,7 +11183,7 @@ Rules:
   },[iscis,stations,trafficHistory,workMonth]);
 
   const DOOM_CHANGELOG=[
-    {d:"07/14/2026",t:"Parrish DeVaughn estimates",x:"Added TV estimates 2676 (Oklahoma City) and 2677 (Tulsa), buyer Jessica Flynn."},
+    {d:"07/14/2026",t:"Parrish DeVaughn real buys",x:"Replaced placeholder estimates with 24 real cj estimate numbers (5372–6864) across 8 products (Auto, AM News, Discretionary, Products, Thunder, EN/LN, CTV, YouTube). Added Oklahoma City stations: 7 broadcast TV (KFOR/KOCO/KWTV/KOKH/KAUT/KOCB/KSBI), 12 radio, 4 CTV/digital vendors; plus 5 Tulsa target radio stations. Traffic Tracker now reads PDV's TV/Radio/Digital/OOH. Traffic emails still needed for sends."},
     {d:"07/14/2026",t:"Live Guide",x:"Guide now renders live brand/market/prefix data, per-brand counts, and this changelog."},
     {d:"07/14/2026",t:"Lerner & Rowe onboarded",x:"171 ISCIs across 9 markets in Atticor's naming convention; 14 estimates (2661–2674); same spot shares one number + title across markets; Spanish flagged in the code (…LRSP…)."},
     {d:"07/14/2026",t:"Market prefixes finalized",x:"Las Vegas LAS→LVS, Yuma YUM→YMA, King/Bull KGB→KBH; added Bullhead (BHD) and Flagstaff (FLG) as their own TV/Radio markets."},
