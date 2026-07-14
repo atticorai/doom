@@ -8743,7 +8743,7 @@ Rules:
     const[trackerExpanded,setTrackerExpanded]=useState(null);
     const isPL=trackerBrand==="Postman Law";
     const mkts=brandMktNames(trackerBrand);
-    const buyTypes=trackerBrand==="Lerner & Rowe"?["OOH"]:isPL?["TV Base","TV Sponsorship","TV UD/AV","TV Sports","Cable","Heavy Up","Radio","Streaming Audio","Digital","OOH"]:["TV Base","TV Sponsorship","TV UD/AV","Radio","Streaming Audio","OOH"];
+    const buyTypes=trackerBrand==="Lerner & Rowe"?["TV Base","Radio","OOH"]:isPL?["TV Base","TV Sponsorship","TV UD/AV","TV Sports","Cable","Heavy Up","Radio","Streaming Audio","Digital","OOH"]:["TV Base","TV Sponsorship","TV UD/AV","Radio","Streaming Audio","OOH"];
     // Map buy types to estimate groups for matching
     const buyToGroup={"TV Base":"Base","TV Sponsorship":"Sponsorship","TV UD/AV":"UD/AV","TV Sports":"Sports","Cable":"Cable","Heavy Up":"Heavy Up","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
     const buyToMedia={"TV Base":"TV","TV Sponsorship":"TV","TV UD/AV":"TV","TV Sports":"TV","Cable":"Cable","Heavy Up":"TV","Radio":"Radio","Streaming Audio":"Streaming Audio","Digital":"Digital","OOH":"OOH"};
@@ -11182,9 +11182,38 @@ Rules:
     return[...BOOK_PAGES_1,...BOOK_PAGES_2,...BOOK_PAGES_3];
   },[iscis,stations,trafficHistory,workMonth]);
 
+  const BrandPrefixGuide=()=>{
+    const tc=(hex)=>{try{const n=parseInt(String(hex).slice(1),16);return (0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))>150?"#1e1233":"#fff"}catch(e){return"#fff"}};
+    const mktName=(c)=>(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c])||(typeof DM!=="undefined"&&DM[c])||c;
+    return<div style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid rgba(196,160,200,.15)",borderRadius:12,padding:16,marginBottom:14}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:6}}>
+        <span style={{fontSize:16,fontWeight:800,color:"#F0E8F8"}}>Brand Markets &amp; Prefixes</span>
+        <span style={{fontSize:10,color:"#5BC4A0",fontWeight:700,textTransform:"uppercase",letterSpacing:1}}>● Live</span>
+      </div>
+      <div style={{fontSize:12,color:"#9B8EAD",margin:"4px 0 14px"}}>The <b style={{color:"#C4A0C8"}}>prefix</b> is the 3-letter market code that starts every ISCI — e.g. <span style={{fontFamily:"monospace",color:"#4AC8E8"}}>LVS</span> + brand + year + length → <span style={{fontFamily:"monospace",color:"#4AC8E8"}}>LVSLR2630001R</span>. This reference updates automatically as brands and markets change in Doom.</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:12}}>
+        {BRANDS.map(b=>{const codes=(b.markets||[]);return<div key={b.code} style={{border:"1px solid #4a3565",borderRadius:10,overflow:"hidden",background:"#261840"}}>
+          <div style={{height:5,background:b.color}}/>
+          <div style={{padding:"10px 12px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <span style={{fontWeight:800,color:"#F0E8F8",fontSize:15}}>{b.name}</span>
+              <span style={{fontSize:11,color:"#9B8EAD",fontFamily:"monospace"}}>{b.code} · {codes.length} mkt{codes.length!==1?"s":""}</span>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 14px"}}>
+              {codes.map(c=><div key={c} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:6,padding:"2px 0",borderBottom:"1px dashed rgba(155,123,176,.15)"}}>
+                <span style={{fontSize:12,color:"#E8DFF0",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{mktName(c)}</span>
+                <span style={{fontFamily:"monospace",fontSize:11,fontWeight:800,color:tc(b.color),background:b.color,padding:"1px 7px",borderRadius:5,letterSpacing:.5}}>{c}</span>
+              </div>)}
+            </div>
+          </div>
+        </div>;})}
+      </div>
+    </div>;
+  };
   const DocsPg=()=>{
     return<div className="flex flex-col gap-3" style={{display:"flex",flexDirection:"column",gap:12}}>
       <PageHead title="Guide" pgKey="docs"/>
+      <BrandPrefixGuide/>
       <div className="relative flex flex-col items-center justify-center py-4 px-2 overflow-hidden" style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",paddingTop:16,paddingBottom:16,paddingLeft:8,paddingRight:8,overflow:"hidden",minHeight:"calc(100vh - 120px)"}}>
         <BookSoulParticles/>
         <BookFlyingPegasus/>
