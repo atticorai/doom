@@ -389,11 +389,11 @@ const CALENDAR=D_C.map(r=>({month:r[0],rotDue:r[1],bcStart:r[2],bcEnd:r[3]}));
 // already-airing month.
 const nextTrafficMonth=()=>{const t=new Date();t.setHours(0,0,0,0);const c=CALENDAR.find(c=>new Date(c.bcStart+"T00:00:00")>t);return c?c.month:(CALENDAR[CALENDAR.length-1]||{}).month||"December"};
 const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const mk=r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17],design:(r[18]?(Array.isArray(r[18])?r[18].filter(Boolean):[r[18]]):[]),vendorRef:r[19]||""});const base=D_P.map(mk);const extra=(typeof D_P_NEW!=="undefined"?D_P_NEW:[]).map(mk);return[...base,...extra]})();
-const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KGB:"King/Bull",LAS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YUM:"Yuma",OKC:"Oklahoma City",TUL:"Tulsa"};
+const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KBH:"King/Bull",BHD:"Bullhead",FLG:"Flagstaff",LVS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YMA:"Yuma",OKC:"Oklahoma City",TUL:"Tulsa"};
 // Market rolls up by FULL NAME everywhere in the app (traffic library, history,
 // metrics, AI planner) — the prefix lives ONLY in the ISCI code. Gadsden (GAD)
 // is not its own market; it falls under Birmingham.
-const DMA_MARKET={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",GAD:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KGB:"King/Bull",LAS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YUM:"Yuma",OKC:"Oklahoma City",TUL:"Tulsa"};
+const DMA_MARKET={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",GAD:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KBH:"King/Bull",BHD:"Bullhead",FLG:"Flagstaff",LVS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YMA:"Yuma",OKC:"Oklahoma City",TUL:"Tulsa"};
 const oohMarket=(dma)=>DMA_MARKET[dma]||DM[dma]||dma;
 // The ISCI market prefix is the board's REAL market — GAD is never a prefix
 // (Gadsden rolls into Birmingham → BRM). Extend this map if more areas roll up.
@@ -436,7 +436,7 @@ const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
 const BRANDS=[
   {code:"PL",name:"Postman Law",agency:"Atticor Group LLC",logo:LOGO_PL,color:"#9b7bb0",colorBg:"#F0E8F8",markets:["CHI","CIN","DEN","MSP"],airingKey:"est"},
   {code:"WK",name:"Wettermark Keith",agency:"Atticor Group LLC",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",markets:["BRM","HSV","KNX","CHA","MTG","DHN"],airingKey:"est|market"},
-  {code:"LR",name:"Lerner & Rowe",agency:"Atticor Group LLC",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#2FBF71",colorBg:"#e9fbf1",markets:["ABQ","CHI","KGB","LAS","PHX","RNO","SEA","TUC","YUM"],airingKey:"est"},
+  {code:"LR",name:"Lerner & Rowe",agency:"Atticor Group LLC",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#2FBF71",colorBg:"#e9fbf1",markets:["ABQ","BHD","CHI","FLG","KBH","LVS","PHX","RNO","SEA","TUC","YMA"],airingKey:"est"},
   {code:"PDV",name:"Parrish DeVaughn",agency:"Atticor Group LLC",logo:(typeof LOGO_PDV!=="undefined"?LOGO_PDV:""),color:"#EE2B37",colorBg:"#FDECEE",markets:["OKC","TUL"],airingKey:"est"}
 ];
 const getBrandColor=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.color:"#9B8EAD"};
@@ -8106,7 +8106,7 @@ Rules:
     const upcoming=fl.filter(p=>p.status==="upcoming").length;
 
     const mktColors={CHI:"#2FBF71",ABQ:"#E85A7A",LAS:"#D4A040",PHX:"#4AC8E8",TUC:"#5BC4A0",RNO:"#a855f7",SEA:"#6366f1",YUM:"#ec4899",KGB:"#f59e0b"};
-    const mktNames={CHI:"Chicago",ABQ:"Albuquerque",LAS:"Las Vegas",PHX:"Phoenix",TUC:"Tucson",RNO:"Reno",SEA:"Seattle",YUM:"Yuma",KGB:"King/Bull"};
+    const mktNames={CHI:"Chicago",ABQ:"Albuquerque",LVS:"Las Vegas",PHX:"Phoenix",TUC:"Tucson",RNO:"Reno",SEA:"Seattle",YMA:"Yuma",KBH:"King/Bull"};
 
     // Map pins from LR_PANELS with coords
     const mapPins=fl.filter(p=>p.lat&&p.lng).map(p=>({id:p.unit,lat:p.lat,lng:p.lng,location:p.location,vendor:p.vendor,size:p.size,status:p.status,impressions:p.impressions*p.numUnits,market:p.market,creative:(typeof POP_TITLES!=='undefined'&&POP_TITLES[p.unit])||""}));
@@ -8439,7 +8439,7 @@ Rules:
             </div>}
           </div>
           <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
-            <Sel label="Market" options={["CHI","ABQ","LAS","PHX","TUC","RNO","SEA","YUM","KGB"]} value={calMktF} onChange={setCalMktF} placeholder="All Markets"/>
+            <Sel label="Market" options={["CHI","ABQ","LVS","PHX","TUC","RNO","SEA","YMA","KBH"]} value={calMktF} onChange={setCalMktF} placeholder="All Markets"/>
             <Sel label="Type" options={["creative","switch","dark","launch"]} value={calTypeF} onChange={setCalTypeF} placeholder="All Types"/>
             <label style={{display:"flex",alignItems:"center",gap:4,fontSize:14,color:"#9B8EAD",cursor:"pointer"}}><input type="checkbox" checked={showPast} onChange={e=>setShowPast(e.target.checked)}/> Show past events</label>
           </div>
