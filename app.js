@@ -434,9 +434,9 @@ const normMkt=(m)=>{if(!m)return"";const v=m.trim();if(DM[v])return v;const noSt
 const mediaLabel=(m)=>{if(!m)return"";if(m==="Cable")return"TV/Cable";return m};
 const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
 const BRANDS=[
-  {code:"PL",name:"Postman Law",agency:"Atticor Group LLC",logo:LOGO_PL,color:"#9b7bb0",colorBg:"#F0E8F8",markets:["CHI","CIN","DEN","MSP"],airingKey:"est"},
+  {code:"PL",name:"Postman Law",agency:"Atticor Group LLC",logo:LOGO_PL,color:"#5D3A87",colorBg:"#EDE6F5",markets:["CHI","CIN","DEN","MSP"],airingKey:"est"},
   {code:"WK",name:"Wettermark Keith",agency:"Atticor Group LLC",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",markets:["BRM","HSV","KNX","CHA","MTG","DHN"],airingKey:"est|market"},
-  {code:"LR",name:"Lerner & Rowe",agency:"Atticor Group LLC",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#2FBF71",colorBg:"#e9fbf1",markets:["ABQ","BHD","CHI","FLG","KBH","LVS","PHX","RNO","SEA","TUC","YMA"],airingKey:"est"},
+  {code:"LR",name:"Lerner & Rowe",agency:"Atticor Group LLC",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#F2DD00",colorBg:"#FFFCE0",markets:["ABQ","BHD","CHI","FLG","KBH","LVS","PHX","RNO","SEA","TUC","YMA"],airingKey:"est"},
   {code:"PDV",name:"Parrish DeVaughn",agency:"Atticor Group LLC",logo:(typeof LOGO_PDV!=="undefined"?LOGO_PDV:""),color:"#EE2B37",colorBg:"#FDECEE",markets:["OKC","TUL"],airingKey:"est"}
 ];
 const getBrandColor=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.color:"#9B8EAD"};

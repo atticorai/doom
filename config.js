@@ -24,10 +24,10 @@ const POSTINGS=D_P.map(r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:r[3],typ
 const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",ABQ:"Albuquerque",KBH:"King/Bull",BHD:"Bullhead",FLG:"Flagstaff",LVS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YMA:"Yuma",OKC:"Oklahoma City",TUL:"Tulsa"};
 const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
 const BRANDS=[
-  {code:"PL",name:"Postman Law",agency:"Atticor Group LLC",logo:LOGO_PL,color:"#9b7bb0",colorBg:"#F0E8F8",gradientFrom:"#a855f7",gradientTo:"#9b7bb0",markets:["CHI","CIN","DEN","MSP"],airingKey:"est"},
+  {code:"PL",name:"Postman Law",agency:"Atticor Group LLC",logo:LOGO_PL,color:"#5D3A87",colorBg:"#EDE6F5",gradientFrom:"#7C4DB5",gradientTo:"#5D3A87",markets:["CHI","CIN","DEN","MSP"],airingKey:"est"},
   {code:"WK",name:"Wettermark Keith",agency:"Atticor Group LLC",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",gradientFrom:"#818cf8",gradientTo:"#6366f1",markets:["BRM","HSV","KNX","CHA","MTG","DHN"],airingKey:"est|market"},
   // Lerner & Rowe — OOH-only for now (contract-level buys, no board/ISCI detail yet).
-  {code:"LR",name:"Lerner & Rowe",agency:"Atticor Group LLC",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#2FBF71",colorBg:"#e9fbf1",gradientFrom:"#34d399",gradientTo:"#2FBF71",markets:["ABQ","BHD","CHI","FLG","KBH","LVS","PHX","RNO","SEA","TUC","YMA"],airingKey:"est"},
+  {code:"LR",name:"Lerner & Rowe",agency:"Atticor Group LLC",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#F2DD00",colorBg:"#FFFCE0",gradientFrom:"#FFF04D",gradientTo:"#F2DD00",markets:["ABQ","BHD","CHI","FLG","KBH","LVS","PHX","RNO","SEA","TUC","YMA"],airingKey:"est"},
   // Parrish DeVaughn — Oklahoma City personal injury firm. Broadcast TV + OOH. Brand red #EE2B37 (PMS 1788 C).
   {code:"PDV",name:"Parrish DeVaughn",agency:"Atticor Group LLC",logo:(typeof LOGO_PDV!=="undefined"?LOGO_PDV:""),color:"#EE2B37",colorBg:"#FDECEE",gradientFrom:"#F45A64",gradientTo:"#EE2B37",markets:["OKC","TUL"],airingKey:"est"}
 ];
