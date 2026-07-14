@@ -1542,6 +1542,11 @@ const App=()=>{
       categories:["Auto Accidents","Motorcycle","Trucking","Testimonials","Sports","Premises Liability","Nursing Home Abuse","Mass Tort","Workers Comp","Brand","Personal Injury (General)"],
       valueProps:["No Fee Guarantee","Big Results","Fast & On-Scene","Local & Experienced","Tough Advocate","Personal & Compassion","Consumer Warning"],
       vos:[]
+    },
+    "Lerner & Rowe":{
+      categories:["Auto Accidents","Trucking","Results","Local","Brand"],
+      valueProps:["No Fee","Big Cases","Results","Experience","Local","Aggressive"],
+      vos:[]
     }
   });
   const[isciBulkPreview,setIsciBulkPreview]=useState([]);
