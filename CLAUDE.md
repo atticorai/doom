@@ -103,6 +103,7 @@ Heading text:   #F0E8F8 (warm white)
 8. **Ownership group sends** — never send individual emails per station
 9. **HTML loader stays visible** until React's `dbLoaded` is true (React returns null while loading)
 10. **Loader animations CSS in `<head>`** — not inside `#R` where React would destroy them
+11. **Log every change** — any change to Doom gets a `DOOM_CHANGELOG` entry (in app.js, rendered live on the Guide page): `{d:"MM/DD/YYYY", t:"short title", x:"plain-language explanation"}`, newest first. The Guide is a live document — keep the brand/market/prefix data and changelog current with every change.
 
 ## Outstanding Work
 - Pegasus SVG character for empty states, transitions, Help page
