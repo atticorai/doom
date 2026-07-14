@@ -1808,10 +1808,12 @@ const App=()=>{
     let logoDrawn=false;
     try{
       const isPL=trafficRec.brand==="Postman Law";
-      const logoSrc=isPL?LOGO_PL:LOGO_WK;
-      const logoFmt=isPL?"JPEG":"PNG";
+      const logoSrc=brandLogo(trafficRec.brand);
+      const logoFmt=/^data:image\/jpe?g/i.test(logoSrc||"")?"JPEG":"PNG";
+      // Aspect ratio per brand lockup (width/height) so the logo isn't stretched.
+      const _asp={"Postman Law":2.67,"Wettermark Keith":4.06,"Parrish DeVaughn":3.32}[trafficRec.brand]||3.0;
       const logoW=isPL?28:32; // mm
-      const logoH=isPL?logoW/2.67:logoW/4.06;
+      const logoH=logoW/_asp;
       if(logoSrc){pdf.addImage(logoSrc,logoFmt,pw/2-logoW/2,y-2,logoW,logoH);y+=logoH+2;logoDrawn=true}
     }catch(e){/* logo fails silently, text header still renders */}
     // Header — the logo lockup already contains the brand name, so only print
@@ -3394,7 +3396,7 @@ const App=()=>{
     const nextNum=()=>{const nums=estimates.map(e=>parseInt(e.num)).filter(n=>!isNaN(n));return nums.length?String(Math.max(...nums)+1):"2700"};
     const BT=["Base","Sponsorship","UD/AV","Sports","Cable","Heavy Up","Radio","Streaming Audio","OOH","Event Sponsorship","TTWN"];
     const REASONS=["New market launch","New media type","New flight period","Agency buy plan"];
-    const BB={"Postman Law":["Ken Lazar","Lynn Cortelezzi","Hazel Wolf"],"Wettermark Keith":["Amy Coffey"],"Parrish DeVaughn":[]};
+    const BB={"Postman Law":["Ken Lazar","Lynn Cortelezzi","Hazel Wolf"],"Wettermark Keith":["Amy Coffey"],"Parrish DeVaughn":["Jessica Flynn"]};
     const BUYER_EMAILS={"Ken Lazar":"ken.lazar@atticor.ai","Lynn Cortelezzi":"lynn.cortelezzi@atticor.ai","Amy Coffey":"acoffey@wkfirm.com","Jessica Flynn":"jessica.flynn@atticor.ai"};
     const BM={"Postman Law":["Chicago","Cincinnati","Denver","Minneapolis"],"Wettermark Keith":["Birmingham","Chattanooga","Dothan","Huntsville","Knoxville","Montgomery"],"Parrish DeVaughn":["Oklahoma City","Tulsa"]};
     const findSta=()=>{if(!nr.market||!nr.brand||!nr.media)return[];return stations.filter(s=>s.market===nr.market&&s.brand===nr.brand&&(nr.media==="Sports"||nr.media==="Heavy Up"?s.media==="TV":nr.media==="Streaming Audio"?s.media==="Radio":s.media===nr.media))};
@@ -11503,7 +11505,7 @@ Rules:
             window.MegaraLibraryData=data;
             // Logos read by brand by the library's BookOpen (keeps one copy of
             // each base64 instead of duplicating it into every instruction).
-            window.MegaraLibraryLogos={"Postman Law":LOGO_PL,"Wettermark Keith":LOGO_WK};
+            window.MegaraLibraryLogos={"Postman Law":LOGO_PL,"Wettermark Keith":LOGO_WK,"Lerner & Rowe":(typeof LOGO_LR!=="undefined"?LOGO_LR:""),"Parrish DeVaughn":(typeof LOGO_PDV!=="undefined"?LOGO_PDV:"")};
             // Debug helper — open devtools and run
             //   MegaraLibraryDebug("Wettermark Keith","Montgomery","Radio","January")
             // to dump every Firestore trafficHistory record for that exact slot,
