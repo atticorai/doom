@@ -98,7 +98,7 @@ const autoCase=(title)=>{
   return"Personal Injury (General)";
 };
 
-const ISCIS_INIT=(()=>{const seen=new Set();return D_I.filter(r=>{if(seen.has(r[0]))return false;seen.add(r[0]);return true}).map(r=>({code:r[0],title:r[1],media:r[2],brand:r[3],dma:r[4],dur:r[5],suffix:r[6],active:r[7]!==false,caseType:r[8]||autoCase(r[1]),category:r[8]||autoCase(r[1]),valueProp:"",vo:"",fileUrl:r[9]||"",sentAt:null,sentInEst:null}))})();
+const ISCIS_INIT=(()=>{const seen=new Set();return D_I.filter(r=>{if(seen.has(r[0]))return false;seen.add(r[0]);return true}).map(r=>({code:r[0],title:r[1],media:r[2],brand:r[3],dma:r[4],dur:r[5],suffix:r[6],active:r[7]!==false,caseType:r[8]||autoCase(r[1]),category:r[8]||autoCase(r[1]),valueProp:r[10]||"",vo:"",fileUrl:r[9]||"",sentAt:null,sentInEst:null}))})();
 const ESTIMATES=(()=>{
   // Filter out old 4-digit WK estimates — replaced by 3-digit monthly system
   const OLD_WK_NUMS=new Set(["2633","2634","2635","2636","2637","2638","2639","2640","2641","2642","2643","2644","2645","2646","2647","2648","2649","2650","2651","2652","2653","2654","2655","2656","2657","2658","2659","2660"]);
@@ -1109,7 +1109,7 @@ const App=()=>{
           ["5570867","5570997","5571005","5570957","5570939","5570967","5571406"].forEach(k=>{if(merged[k]&&OOH_CONTRACTS_INIT[k])merged[k]={...merged[k],startDate:OOH_CONTRACTS_INIT[k].startDate,endDate:OOH_CONTRACTS_INIT[k].endDate}});
           return merged})}
         if(docs.oohCreativeFiles?.data){try{const d=JSON.parse(docs.oohCreativeFiles.data);if(Array.isArray(d)&&d.length)setOohCreativeFiles(d)}catch(_e){}}
-        if(docs.customTags?.data){const d=JSON.parse(docs.customTags.data);if(d["Postman Law"]?.categories||d["Wettermark Keith"]?.categories)setCustomFields(d);else if(Object.keys(d).length){const migrated={};Object.entries(d).forEach(([brand,tags])=>{if(Array.isArray(tags)){migrated[brand]={categories:tags.filter(t=>["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),valueProps:tags.filter(t=>!["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),vos:[]}}else{migrated[brand]=tags}});setCustomFields(migrated)}}
+        if(docs.customTags?.data){const d=JSON.parse(docs.customTags.data);if(d["Postman Law"]?.categories||d["Wettermark Keith"]?.categories)setCustomFields(p=>({...p,...d}));else if(Object.keys(d).length){const migrated={};Object.entries(d).forEach(([brand,tags])=>{if(Array.isArray(tags)){migrated[brand]={categories:tags.filter(t=>["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),valueProps:tags.filter(t=>!["Car Wreck","Trucking","Premise Injury","Commercial Vehicle","On The Job Injury","Distracted Driving","Brand","Holiday","Auto Accident","Premises","Testimonial"].includes(t)),vos:[]}}else{migrated[brand]=tags}});setCustomFields(p=>({...p,...migrated}))}}
         if(docs.settings?.data){try{const s=JSON.parse(docs.settings.data);if(typeof s.campaignIcsUrl==="string")setCampaignIcsUrl(s.campaignIcsUrl)}catch(_e){}}
         try{if(docs.wkOohIscis?.data){const d=JSON.parse(docs.wkOohIscis.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>{if(d[p.boardId]===undefined)return p;const _ic=d[p.boardId];const _m=OOH_RENUMBER[_ic]||_ic;return{...p,isci:/^[A-Z]{3}WK26[A-Z]{2}\d+O$/.test(_m)?_m:p.isci}}))}}catch(_e){console.warn("wkOohIscis load skipped",_e)}
         try{if(docs.wkOohDesigns?.data){const d=JSON.parse(docs.wkOohDesigns.data);if(Object.keys(d).length)setPops(prev=>prev.map(p=>{if(d[p.boardId]===undefined)return p;const v=d[p.boardId];return{...p,design:Array.isArray(v)?v.filter(Boolean):(v?[v]:[])}}))}}catch(_e){console.warn("wkOohDesigns load skipped",_e)}
@@ -1536,6 +1536,11 @@ const App=()=>{
     "Postman Law":{
       categories:["Auto Accident","Trucking","Premises","Brand","Holiday","Testimonial"],
       valueProps:["Justice & Representation","Legal Firepower","Local Lawyers","Warren's Story","Harvard/Elite","Confidence","Results","Fighting Spirit","To Do List","Change"],
+      vos:[]
+    },
+    "Parrish DeVaughn":{
+      categories:["Auto Accidents","Motorcycle","Trucking","Testimonials","Sports","Premises Liability","Nursing Home Abuse","Mass Tort","Workers Comp","Brand","Personal Injury (General)"],
+      valueProps:["No Fee Guarantee","Big Results","Fast & On-Scene","Local & Experienced","Tough Advocate","Personal & Compassion","Consumer Warning"],
       vos:[]
     }
   });
