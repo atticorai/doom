@@ -989,7 +989,15 @@ const App=()=>{
           // OOH renumber migration: align each saved OOH ISCI's code to the seed code
           // for its title (renumber changed codes, never titles). Title-keyed = idempotent.
           const _seedOohByTitle=new Map(ISCIS_INIT.filter(i=>i.suffix==="O"&&i.title).map(i=>[i.title+"|"+(i.dma||""),i.code]));
-          const cleaned=(d.length?d:[]).filter(i=>!REMOVE_ISCIS.has(i.code)).map(i=>{if(i.code&&/^[A-Z]{3,4}[A-Z]{2}\d/.test(i.code)){const dashMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*[-–—:]+\s*(.+)$/);if(dashMatch)return{...i,code:dashMatch[1].trim(),title:dashMatch[2].trim()||i.title};const spaceMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s{2,}(.+)$/);if(spaceMatch)return{...i,code:spaceMatch[1].trim(),title:spaceMatch[2].trim()||i.title};if(i.code.length>16){const coreMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*(.*)$/);if(coreMatch&&coreMatch[2])return{...i,code:coreMatch[1].trim(),title:coreMatch[2].trim()||i.title}}}return i}).map(i=>{if(i.suffix==="O"&&i.title){const _cc=_seedOohByTitle.get(i.title+"|"+(i.dma||""));if(_cc&&_cc!==i.code)return{...i,code:_cc}}return i});
+          // Lerner & Rowe purge: the seed is the canonical clean L&R set (our naming
+          // conventions, SP-infix codes, professional titles). Any L&R record in
+          // Firestore whose code isn't in the seed is stale cj-imported junk (cj-format
+          // codes like LRAL35122, plus orphan PHXLR2630004R rows with [SP]/mixdown/yaya
+          // titles and bad file links). Drop them so the clean seed restores in their
+          // place. Protect suffix "O" (OOH) — L&R OOH isn't represented in the seed.
+          const _seedLR=new Set(ISCIS_INIT.filter(i=>i.brand==="Lerner & Rowe").map(i=>i.code));
+          const _isLrJunk=i=>(/^LR[A-Z]{2}\d/.test(i.code||""))||(i.brand==="Lerner & Rowe"&&i.suffix!=="O"&&!_seedLR.has(i.code));
+          const cleaned=(d.length?d:[]).filter(i=>!REMOVE_ISCIS.has(i.code)&&!_isLrJunk(i)).map(i=>{if(i.code&&/^[A-Z]{3,4}[A-Z]{2}\d/.test(i.code)){const dashMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*[-–—:]+\s*(.+)$/);if(dashMatch)return{...i,code:dashMatch[1].trim(),title:dashMatch[2].trim()||i.title};const spaceMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s{2,}(.+)$/);if(spaceMatch)return{...i,code:spaceMatch[1].trim(),title:spaceMatch[2].trim()||i.title};if(i.code.length>16){const coreMatch=i.code.match(/^([A-Z]{3,4}[A-Z]{2}\d{7}[A-Z]?)\s*(.*)$/);if(coreMatch&&coreMatch[2])return{...i,code:coreMatch[1].trim(),title:coreMatch[2].trim()||i.title}}}return i}).map(i=>{if(i.suffix==="O"&&i.title){const _cc=_seedOohByTitle.get(i.title+"|"+(i.dma||""));if(_cc&&_cc!==i.code)return{...i,code:_cc}}return i});
           // ═══ MERGE RULES ═══
           // 1. Firestore wins for: title, dur, media (user edits persist)
           // 2. Seed fills blanks for title/dur/media when Firestore has empty values
@@ -11183,6 +11191,7 @@ Rules:
   },[iscis,stations,trafficHistory,workMonth]);
 
   const DOOM_CHANGELOG=[
+    {d:"07/14/2026",t:"Lerner & Rowe registry purge",x:"The registry was still showing stale cj-imported L&R ISCIs from Firestore — cj-format codes (LRAL35122, LRPH35109) and orphan rows (PHXLR2630004R) with [SP]/mixdown/yaya titles and bad file links — because Firestore records survive seed edits. Load now drops any L&R record whose code isn't in the clean seed (our naming, SP-infix, professional titles) and restores the canonical 171 in their place. Fix is self-healing and persists back to Firestore on load."},
     {d:"07/14/2026",t:"Parrish DeVaughn real buys",x:"Replaced placeholder estimates with 24 real cj estimate numbers (5372–6864) across 8 products (Auto, AM News, Discretionary, Products, Thunder, EN/LN, CTV, YouTube). Added Oklahoma City stations: 7 broadcast TV (KFOR/KOCO/KWTV/KOKH/KAUT/KOCB/KSBI), 12 radio, 4 CTV/digital vendors; plus 5 Tulsa target radio stations. Traffic Tracker now reads PDV's TV/Radio/Digital/OOH. Traffic emails still needed for sends."},
     {d:"07/14/2026",t:"Live Guide",x:"Guide now renders live brand/market/prefix data, per-brand counts, and this changelog."},
     {d:"07/14/2026",t:"Lerner & Rowe onboarded",x:"171 ISCIs across 9 markets in Atticor's naming convention; 14 estimates (2661–2674); same spot shares one number + title across markets; Spanish flagged in the code (…LRSP…)."},
