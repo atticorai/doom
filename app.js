@@ -11208,6 +11208,28 @@ Rules:
           </div>
         </div>;})}
       </div>
+      <div style={{fontSize:16,fontWeight:800,color:"#F0E8F8",margin:"20px 0 4px"}}>By the Numbers <span style={{fontSize:10,color:"#5BC4A0",fontWeight:700,letterSpacing:1}}>● LIVE</span></div>
+      <div style={{fontSize:12,color:"#9B8EAD",marginBottom:10}}>Real-time counts pulled from Doom right now.</div>
+      <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+        <thead><tr>{["Brand","Markets","Estimates","Active Creative","Stations"].map((h,i)=><th key={h} style={{textAlign:i?"right":"left",padding:"6px 10px",color:"#D4A040",fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,borderBottom:"2px solid rgba(212,160,64,.2)"}}>{h}</th>)}</tr></thead>
+        <tbody>{BRANDS.map(b=>{
+          const est=(estimates||[]).filter(e=>e.brand===b.name).length;
+          const cre=(iscis||[]).filter(i=>i.brand===b.name&&i.active&&i.suffix!=="O").length;
+          const sta=(stations||[]).filter(s=>s.brand===b.name).length;
+          const cell=(v,warn)=><td style={{textAlign:"right",padding:"6px 10px",color:warn&&!v?"#E85A7A":"#E8DFF0",fontWeight:700,borderBottom:"1px solid rgba(155,123,176,.12)"}}>{v||(warn?"— none":0)}</td>;
+          return<tr key={b.code}>
+            <td style={{padding:"6px 10px",borderBottom:"1px solid rgba(155,123,176,.12)"}}><span style={{display:"inline-block",width:8,height:8,borderRadius:2,background:b.color,marginRight:7}}/><span style={{color:"#F0E8F8",fontWeight:700}}>{b.name}</span></td>
+            {cell((b.markets||[]).length)}{cell(est,true)}{cell(cre)}{cell(sta,true)}
+          </tr>;})}</tbody>
+      </table></div>
+      <div style={{fontSize:11,color:"#9B8EAD",marginTop:8}}><span style={{color:"#E85A7A"}}>Red "none"</span> flags a gap that blocks trafficking — a brand needs <b>estimates</b> to build and <b>stations</b> to send.</div>
+      <div style={{fontSize:16,fontWeight:800,color:"#F0E8F8",margin:"20px 0 6px"}}>ISCI Code Format</div>
+      <div style={{fontSize:12.5,color:"#C4A0C8",fontFamily:"monospace",background:"#261840",border:"1px solid #4a3565",borderRadius:8,padding:"10px 12px",lineHeight:1.8}}>
+        [MARKET][BRAND][YEAR][LENGTH][SEQ][MEDIA]<br/>
+        <span style={{color:"#4AC8E8"}}>LVS</span> · <span style={{color:"#D4A040"}}>LR</span> · <span style={{color:"#5BC4A0"}}>26</span> · <span style={{color:"#E8DFF0"}}>30</span> · <span style={{color:"#E8DFF0"}}>001</span> · <span style={{color:"#E85A7A"}}>R</span> &nbsp;→&nbsp; <b style={{color:"#F0E8F8"}}>LVSLR2630001R</b>
+        <span style={{color:"#9B8EAD"}}> &nbsp;(Las Vegas · Lerner &amp; Rowe · 2026 · :30 · #001 · Radio)</span><br/>
+        <span style={{color:"#9B8EAD"}}>Spanish inserts</span> <span style={{color:"#4AC8E8"}}>SP</span> <span style={{color:"#9B8EAD"}}>after the brand → </span><b style={{color:"#F0E8F8"}}>LVSLRSP2630001R</b>. <span style={{color:"#9B8EAD"}}>Media suffix: T=TV, R=Radio, S=Streaming, O=OOH, D=Digital.</span>
+      </div>
     </div>;
   };
   const DocsPg=()=>{
