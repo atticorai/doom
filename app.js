@@ -2190,27 +2190,66 @@ const App=()=>{
     const brandOrder=(typeof BRANDS!=="undefined"?BRANDS.map(b=>b.name):[]).filter(b=>G[b]);
     Object.keys(G).forEach(b=>{if(brandOrder.indexOf(b)<0)brandOrder.push(b)});
     const totalBoards=rows.length;const sized=rows.filter(r=>r.size).length;
-    const w=window.open("","","width=1080,height=940");
-    w.document.write('<html><head><title>OOH Size Report — All Brands</title>');
-    w.document.write('<style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}h3{margin:20px 0 4px;font-size:15px;border-bottom:3px solid #2d1f42;padding-bottom:3px}h4{margin:12px 0 2px;font-size:13px;color:#2d1f42}.sub{color:#555;font-weight:bold;margin:2px 0 6px}table{width:100%;border-collapse:collapse;font-size:11px;margin-top:3px}th,td{border:1px solid #ccc;padding:4px 8px;text-align:left;vertical-align:top}th{background:#2d1f42;color:#fff}td.n{font-weight:bold;text-align:center}.tbd{color:#b45309;font-weight:bold}.warn{background:#fff8e6}.dl{position:fixed;top:12px;right:12px;background:#5BC4A0;color:#0a2e22;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{.dl{display:none}body{margin:12px}h3,h4{page-break-after:avoid}}</style></head><body>');
-    w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
-    w.document.write('<div style="text-align:center;margin-bottom:6px"><h2>'+escHtml((brandFilter||"ATTICOR").toUpperCase())+' — OOH SIZE REPORT</h2><div style="font-weight:bold;color:#555">'+(brandFilter?escHtml(brandFilter):"All brands")+' · for the design team</div></div>');
-    w.document.write('<div class="sub">'+totalBoards+' boards · '+sized+' sized · '+(totalBoards-sized)+' set closer to posting · '+new Date().toLocaleDateString()+'</div>');
+    // Render a clean, designed PDF via jsPDF (no browser print chrome).
+    const JPP=window.jspdf&&window.jspdf.jsPDF;
+    if(!JPP){notify("PDF library not loaded — try again in a moment");return}
+    const pdf=new JPP("p","mm","a4");
+    const PW=210,PH=297,MX=16,RIGHT=PW-MX;
+    const INK=[38,34,49],SUB=[120,120,132],RULE=[228,224,234],HEAD=[245,242,248];
+    const brandRGB=(n)=>n==="Postman Law"?[93,58,135]:n==="Wettermark Keith"?[176,132,32]:n==="Lerner & Rowe"?[27,120,70]:n==="Parrish DeVaughn"?[200,32,44]:[45,31,66];
+    const ACC=brandFilter?brandRGB(brandFilter):[45,31,66];
+    const tc=c=>pdf.setTextColor(c[0],c[1],c[2]);
+    const dc=c=>pdf.setDrawColor(c[0],c[1],c[2]);
+    const fc=c=>pdf.setFillColor(c[0],c[1],c[2]);
+    let y=0;
+    const check=(need)=>{if(y+need>PH-16){pdf.addPage();y=20;}};
+    // header
+    fc(ACC);pdf.rect(0,0,PW,4,"F");
+    y=22;pdf.setFont("helvetica","bold");pdf.setFontSize(19);tc(INK);
+    pdf.text((brandFilter||"Atticor")+"  ·  OOH Size Report",MX,y);
+    y+=6.5;pdf.setFont("helvetica","normal");pdf.setFontSize(10);tc(SUB);
+    pdf.text("Board sizes for the creative team",MX,y);
+    y+=5.5;pdf.setFontSize(9);
+    pdf.text(totalBoards+" boards      "+sized+" sized      "+(totalBoards-sized)+" set closer to posting      "+new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}),MX,y);
+    y+=5;dc(RULE);pdf.setLineWidth(0.4);pdf.line(MX,y,RIGHT,y);y+=9;
+    const SIZEX=118,QTYX=RIGHT-2;
     brandOrder.forEach(b=>{
-      const bTotal=Object.values(G[b]).reduce((a,m)=>a+Object.values(m).reduce((x,g)=>x+g.units.length,0),0);
-      const bSized=Object.values(G[b]).reduce((a,m)=>a+Object.values(m).reduce((x,g)=>x+(g.size?g.units.length:0),0),0);
-      w.document.write('<h3>'+escHtml(b)+' <span style="font-size:12px;color:#777;font-weight:normal">— '+bTotal+' boards, '+bSized+' sized</span></h3>');
+      if(!brandFilter){
+        const bTotal=Object.values(G[b]).reduce((a,m)=>a+Object.values(m).reduce((x,g)=>x+g.units.length,0),0);
+        check(14);pdf.setFont("helvetica","bold");pdf.setFontSize(14);tc(brandRGB(b));
+        pdf.text(b,MX,y);pdf.setFont("helvetica","normal");pdf.setFontSize(9);tc(SUB);
+        pdf.text(bTotal+" boards",RIGHT,y,{align:"right"});y+=7;
+      }
       Object.keys(G[b]).sort().forEach(mk=>{
-        const groups=Object.values(G[b][mk]).sort((a,b)=>String(a.type).localeCompare(String(b.type))||String(a.size).localeCompare(String(b.size)));
-        w.document.write('<h4>'+escHtml(mk)+'</h4>');
-        w.document.write('<table><tr><th>Board Type</th><th>Size</th><th>Qty</th></tr>');
-        groups.forEach(g=>w.document.write('<tr><td>'+escHtml(g.type||"—")+'</td><td style="white-space:nowrap">'+(g.size?escHtml(g.size):'<span style="color:#888">TBD — set ~1 wk out</span>')+'</td><td class="n">'+g.units.length+'</td></tr>'));
-        w.document.write('</table>');
+        const groups=Object.values(G[b][mk]).sort((a,c)=>String(a.type).localeCompare(String(c.type))||String(a.size).localeCompare(String(c.size)));
+        check(16);
+        pdf.setFont("helvetica","bold");pdf.setFontSize(11.5);tc(INK);pdf.text(mk,MX,y);y+=2.5;
+        dc(brandFilter?ACC:brandRGB(b));pdf.setLineWidth(0.6);pdf.line(MX,y,RIGHT,y);y+=5.5;
+        // column header
+        fc(HEAD);pdf.rect(MX,y-4,RIGHT-MX,6.2,"F");
+        pdf.setFont("helvetica","bold");pdf.setFontSize(8);tc(SUB);
+        pdf.text("BOARD TYPE",MX+2,y);pdf.text("SIZE",SIZEX,y);pdf.text("QTY",QTYX,y,{align:"right"});
+        y+=6.5;
+        groups.forEach(g=>{
+          check(7);
+          pdf.setFont("helvetica","normal");pdf.setFontSize(10);tc(INK);
+          pdf.text(g.type||"—",MX+2,y);
+          if(g.size){tc(INK);pdf.setFont("helvetica","normal");pdf.text(g.size,SIZEX,y);}
+          else{tc(SUB);pdf.setFont("helvetica","italic");pdf.setFontSize(9);pdf.text("TBD — set ~1 wk out",SIZEX,y);}
+          pdf.setFont("helvetica","bold");pdf.setFontSize(10);tc(INK);pdf.text(String(g.units.length),QTYX,y,{align:"right"});
+          y+=4;dc(RULE);pdf.setLineWidth(0.2);pdf.line(MX,y,RIGHT,y);y+=4;
+        });
+        y+=5;
       });
     });
-    w.document.write('<div style="margin-top:14px;font-size:10px;color:#888">"TBD — set ~1 wk out" = preemptible / late-assigned boards; their size is confirmed roughly a week before posting. Generated '+new Date().toLocaleString()+'.</div>');
-    w.document.write('</body></html>');w.document.close();
-    log("OOH Size Report","All brands · "+totalBoards+" boards · "+sized+" sized");
+    // footnote + page footers
+    check(10);pdf.setFont("helvetica","italic");pdf.setFontSize(8);tc(SUB);
+    pdf.text('"TBD — set ~1 wk out" = preemptible / late-assigned boards; size confirmed roughly a week before posting.',MX,y);
+    const n=pdf.getNumberOfPages();
+    for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFont("helvetica","normal");pdf.setFontSize(7.5);tc(SUB);
+      pdf.text("Atticor · OOH Size Report",MX,PH-8);pdf.text("Page "+i+" of "+n,RIGHT,PH-8,{align:"right"});}
+    pdf.save((brandFilter?brandFilter.replace(/[^A-Za-z0-9]+/g,"_"):"OOH")+"_Size_Report_"+new Date().toISOString().slice(0,10)+".pdf");
+    log("OOH Size Report",(brandFilter||"All brands")+" · "+totalBoards+" boards · "+sized+" sized");
   };
 
   // ── DASHBOARD ─────────────────────────────────────────
