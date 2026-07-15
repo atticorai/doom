@@ -2177,12 +2177,12 @@ const App=()=>{
   // Cross-brand OOH size report — every OOH board across all brands, grouped
   // by brand → market → type/size with quantities, for the design team. Boards
   // still missing a size are flagged so the gaps are visible.
-  const openOohSizesReport=()=>{
+  const openOohSizesReport=(brandFilter)=>{
     const rows=[];
-    const push=(brand,mktCode,type,size,unit)=>{rows.push({brand,mkt:(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[mktCode])||(typeof DM!=="undefined"&&DM[mktCode])||mktCode,type:type||"—",size:(size||"").trim(),unit})};
-    (typeof PL_PANELS!=="undefined"?PL_PANELS:[]).forEach(p=>push("Postman Law",p.market,p.type,p.size,p.unit));
+    const push=(brand,mktCode,type,size,unit)=>{if(brandFilter&&brand!==brandFilter)return;rows.push({brand,mkt:(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[mktCode])||(typeof DM!=="undefined"&&DM[mktCode])||mktCode,type:type||"—",size:(size||"").trim(),unit})};
+    if(!brandFilter||brandFilter==="Postman Law")(typeof PL_PANELS!=="undefined"?PL_PANELS:[]).forEach(p=>push("Postman Law",p.market,p.type,p.size,p.unit));
     (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>push(p.brand||"Wettermark Keith",p.dma,p.type,p.size,p.boardId));
-    (typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(p.network||p.tbd)return;push("Lerner & Rowe",p.market,p.media,p.size,p.unit)});
+    if(!brandFilter||brandFilter==="Lerner & Rowe")(typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(p.network||p.tbd)return;push("Lerner & Rowe",p.market,p.media,p.size,p.unit)});
     if(!rows.length){notify("No OOH boards found");return}
     // group brand -> market -> type|size
     const G={};
@@ -2194,7 +2194,7 @@ const App=()=>{
     w.document.write('<html><head><title>OOH Size Report — All Brands</title>');
     w.document.write('<style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}h3{margin:20px 0 4px;font-size:15px;border-bottom:3px solid #2d1f42;padding-bottom:3px}h4{margin:12px 0 2px;font-size:13px;color:#2d1f42}.sub{color:#555;font-weight:bold;margin:2px 0 6px}table{width:100%;border-collapse:collapse;font-size:11px;margin-top:3px}th,td{border:1px solid #ccc;padding:4px 8px;text-align:left;vertical-align:top}th{background:#2d1f42;color:#fff}td.n{font-weight:bold;text-align:center}.tbd{color:#b45309;font-weight:bold}.warn{background:#fff8e6}.dl{position:fixed;top:12px;right:12px;background:#5BC4A0;color:#0a2e22;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{.dl{display:none}body{margin:12px}h3,h4{page-break-after:avoid}}</style></head><body>');
     w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
-    w.document.write('<div style="text-align:center;margin-bottom:6px"><h2>ATTICOR — OOH SIZE REPORT</h2><div style="font-weight:bold;color:#555">All brands · for the design team</div></div>');
+    w.document.write('<div style="text-align:center;margin-bottom:6px"><h2>'+escHtml((brandFilter||"ATTICOR").toUpperCase())+' — OOH SIZE REPORT</h2><div style="font-weight:bold;color:#555">'+(brandFilter?escHtml(brandFilter):"All brands")+' · for the design team</div></div>');
     w.document.write('<div class="sub">'+totalBoards+' boards · '+sized+' sized · <span class="tbd">'+(totalBoards-sized)+' size TBD</span> · '+new Date().toLocaleDateString()+'</div>');
     brandOrder.forEach(b=>{
       const bTotal=Object.values(G[b]).reduce((a,m)=>a+Object.values(m).reduce((x,g)=>x+g.units.length,0),0);
@@ -8394,6 +8394,7 @@ Rules:
             const rows=fl.map(p=>{const pop=LR_POPS[p.unit];const zip=typeof PL_ZIPS!=='undefined'?(PL_ZIPS[p.submarket]||PL_ZIPS[p.market]||""):"";return[p.market,p.unit,p.vendor,p.media,p.size,p.location,zip,p.flight.split('(')[0].trim(),p.cycles||"",p.status,p.isci||"",plIsciTitle(p.isci),pop?pop.popDate:"",pop?pop.contract:"",p.impressions*p.numUnits,p.facing||"",p.lat||"",p.lng||"",p.plan]});
             exportCsv("LR_OOH_"+(mktF||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
+          <Btn small onClick={()=>openOohSizesReport("Lerner & Rowe")} color="#5BC4A0">📐 Size Report</Btn>
           <Btn small onClick={printPlCardReport} color="#4AC8E8">🖨 Traffic Report</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
