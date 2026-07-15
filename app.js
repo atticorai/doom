@@ -2103,6 +2103,7 @@ const App=()=>{
       const bcode=(BRANDS.find(b=>b.name===g.brand||b.code===g.brand)||{}).code||g.brand;
       a.push({type:"ooh-cal",severity:g.daysToDue<=7?"critical":"warning",days:g.daysToDue,
         key:"oohdue-"+g.brand+"-"+g.dma+"-"+(g.vendor||"")+"-"+g.post.toISOString().slice(0,10),
+        report:{brand:g.brand,dma:g.dma,vendor:g.vendor,post:g.post.toISOString().slice(0,10)},
         msg:`🎨 ${bcode} OOH creative due ${fD(g.due.toISOString().slice(0,10))} · ${mkt}${g.vendor?" · "+g.vendor:""} · ${g.units.length} board${g.units.length!==1?"s":""} post ${fD(g.post.toISOString().slice(0,10))}`});
     });
     // Rotation due dates — already handled in dashboard but add to alert feed
@@ -2119,6 +2120,59 @@ const App=()=>{
   },[alertsDismissed,oohContracts]);
 
   const dismissAlert=(key)=>setAlertsDismissed(p=>[...p,key]);
+
+  // Creative Brief — a report for the creative team: what sizes to build for a
+  // batch of boards due to post, plus placement guidance so the same creative
+  // isn't clustered (over-saturation). Opened from a Command Center alert.
+  const openCreativeBrief=(rep)=>{
+    if(!rep)return;
+    const _pd=(str)=>{if(!str)return null;str=String(str).trim();let m;if(m=str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return new Date(+m[1],+m[2]-1,+m[3]);if(m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)){let y=+m[3];if(y<100)y+=2000;return new Date(y,+m[1]-1,+m[2])}return null};
+    const iso=(d)=>d?d.toISOString().slice(0,10):"";
+    const boards=[];
+    (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>{if(p.brand!==rep.brand||p.dma!==rep.dma)return;const d=_pd(p.installDate);if(!d||iso(d)!==rep.post)return;const co=(typeof WK_COORDS!=="undefined"&&WK_COORDS[p.boardId])||null;boards.push({unit:p.panel||p.boardId,type:p.type||"",size:p.size||"",vendor:p.vendor||"",loc:p.location||"",lat:co?co[0]:null,lng:co?co[1]:null})});
+    (typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(rep.brand!=="Lerner & Rowe"||p.network||p.tbd||p.market!==rep.dma||!p.flight)return;const d=_pd(String(p.flight).split("-")[0]);if(!d||iso(d)!==rep.post)return;boards.push({unit:p.unit,type:p.media||"",size:p.size||"",vendor:p.vendor||"",loc:p.location||"",lat:p.lat||null,lng:p.lng||null})});
+    if(!boards.length){notify("No boards found for that posting");return}
+    const mkt=(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[rep.dma])||(typeof DM!=="undefined"&&DM[rep.dma])||rep.dma;
+    const bcode=(BRANDS.find(b=>b.name===rep.brand||b.code===rep.brand)||{}).code||rep.brand;
+    const postD=_pd(rep.post);const dueD=postD?new Date(postD.getTime()-14*864e5):null;
+    const fmtD=(d)=>d?(d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear():"—";
+    const specOf=(type)=>{const t=(type||"").toLowerCase();if(t.indexOf("digital")>=0)return{c:"RGB",r:"72 dpi",f:"JPG/PNG (static) · MP4/MOV (motion)"};if(t.indexOf("poster")>=0)return{c:"CMYK",r:"300 dpi",f:"Print-ready PDF"};return{c:"CMYK",r:"150 dpi at full scale",f:"Print-ready PDF + packaged native files"}};
+    // sizes breakdown
+    const sizeG={};boards.forEach(b=>{const k=(b.type||"")+"||"+(b.size||"");if(!sizeG[k])sizeG[k]={type:b.type,size:b.size,units:[]};sizeG[k].units.push(b.unit)});
+    const sizeRows=Object.values(sizeG).sort((a,b)=>String(a.type).localeCompare(String(b.type))||String(a.size).localeCompare(String(b.size)));
+    // saturation
+    const geo=boards.filter(b=>b.lat&&b.lng);const RAD=2;
+    let maxDeg=0;const tight=[];
+    geo.forEach((p,i)=>{let deg=0;geo.forEach((q,j)=>{if(i===j)return;const mi=milesBetween(p.lat,p.lng,q.lat,q.lng);if(mi<=RAD){deg++;if(i<j)tight.push({a:p.unit,b:q.unit,mi})}});if(deg>maxDeg)maxDeg=deg});
+    tight.sort((x,y)=>x.mi-y.mi);
+    const suggested=geo.length?Math.max(2,maxDeg+1):Math.max(2,Math.round(boards.length/7));
+    const w=window.open("","","width=1060,height=920");
+    w.document.write('<html><head><title>'+bcode+' OOH — Creative Brief · '+escHtml(mkt)+'</title>');
+    w.document.write('<style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}h3{margin:18px 0 6px;font-size:14px;border-bottom:2px solid #2d1f42;padding-bottom:3px}.sub{color:#555;font-weight:bold;margin:2px 0 6px}table{width:100%;border-collapse:collapse;font-size:11px;margin-top:4px}th,td{border:1px solid #ccc;padding:5px 8px;text-align:left;vertical-align:top}th{background:#2d1f42;color:#fff}td.n{font-weight:bold;text-align:center}tr:nth-child(even){background:#faf7fc}.rec{background:#fff8e6;border:1px solid #f0d68a;border-radius:7px;padding:10px 12px;margin-top:6px;font-size:12px}.rec b{color:#8a5a00}.tag{display:inline-block;background:#2d1f42;color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:bold}.dl{position:fixed;top:12px;right:12px;background:#5BC4A0;color:#093;color:#0a2e22;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{.dl{display:none}body{margin:12px}h3{page-break-after:avoid}table{page-break-inside:auto}}</style></head><body>');
+    w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+    w.document.write('<div style="text-align:center;margin-bottom:6px"><h2>'+escHtml(rep.brand.toUpperCase())+'</h2><div style="font-weight:bold;color:#555">OOH CREATIVE BRIEF</div></div>');
+    w.document.write('<div class="sub">'+escHtml(mkt)+(rep.vendor?" · "+escHtml(rep.vendor):"")+' &nbsp;·&nbsp; <span class="tag">'+boards.length+' boards</span> &nbsp;·&nbsp; Creative due <b>'+fmtD(dueD)+'</b> &nbsp;·&nbsp; Posts <b>'+fmtD(postD)+'</b></div>');
+    w.document.write('<h3>1 · Sizes to produce</h3>');
+    w.document.write('<table><tr><th>Board Type</th><th>Size</th><th>Qty</th><th>Color</th><th>Resolution</th><th>File Format</th><th>Units</th></tr>');
+    sizeRows.forEach(g=>{const sp=specOf(g.type);w.document.write('<tr><td>'+escHtml(g.type)+'</td><td>'+escHtml(g.size)+'</td><td class="n">'+g.units.length+'</td><td>'+sp.c+'</td><td>'+sp.r+'</td><td>'+sp.f+'</td><td style="font-size:10px">'+g.units.map(escHtml).join(", ")+'</td></tr>')});
+    w.document.write('</table>');
+    w.document.write('<div style="font-size:11px;color:#555;margin-top:4px">Digital pixel dimensions vary by panel — confirm exact px per unit with '+(rep.vendor?escHtml(rep.vendor):"the vendor")+'.</div>');
+    w.document.write('<h3>2 · Placement — avoid over-saturation</h3>');
+    if(geo.length){
+      w.document.write('<div class="rec"><b>Run at least '+suggested+' distinct creative versions.</b> '+geo.length+' of '+boards.length+' boards are geo-located; the densest cluster has '+(maxDeg+1)+' boards within '+RAD+' mi of each other. Give neighboring boards different messages so no corridor repeats the same creative.</div>');
+      if(tight.length){
+        w.document.write('<div style="font-size:12px;margin-top:6px"><b>Closest pairs (assign different creative):</b></div>');
+        w.document.write('<table><tr><th>Board A</th><th>Board B</th><th>Apart</th></tr>');
+        tight.slice(0,15).forEach(t=>w.document.write('<tr><td><b>'+escHtml(t.a)+'</b></td><td><b>'+escHtml(t.b)+'</b></td><td>'+t.mi.toFixed(1)+' mi</td></tr>'));
+        w.document.write('</table>');
+      }
+    } else {
+      w.document.write('<div class="rec"><b>Locations are still TBD for these boards.</b> For a buy this size, plan <b>~'+suggested+' distinct creative versions</b> to keep the market varied. Once the vendor assigns locations, space same-creative boards at least '+RAD+' mi apart — re-open this brief and it will map the clusters.</div>');
+    }
+    w.document.write('<div style="margin-top:16px;font-size:10px;color:#888">Generated '+new Date().toLocaleString()+' · Doom & Deliverables</div>');
+    w.document.write('</body></html>');w.document.close();
+    log("Creative Brief",bcode+" · "+mkt+" · "+boards.length+" boards post "+rep.post);
+  };
 
   // ── DASHBOARD ─────────────────────────────────────────
   const Dash=()=>{const ai=iscis.filter(i=>i.active);const oohAlerts=alerts.filter(a=>a.type==="ooh");const rotAlerts=alerts.filter(a=>a.type==="rotation"||a.type==="media");
@@ -2150,7 +2204,10 @@ const App=()=>{
     </div>
     {alerts.length>0&&<div style={{padding:12,borderRadius:12,background:"linear-gradient(135deg,rgba(232,90,122,.08),rgba(212,160,64,.05))",border:"1px solid rgba(232,90,122,.2)",boxShadow:"0 4px 20px rgba(232,90,122,.08),0 0 0 1px rgba(232,90,122,.05) inset"}}><div style={{fontSize:13,fontWeight:800,color:"#D4A040",marginBottom:6,textTransform:"uppercase",letterSpacing:1}}>⚡ {alerts.length} Alert{alerts.length>1?"s":""} — {doomPick(DOOM.alert)}</div>{alerts.slice(0,alertsExpanded?999:5).map(a=><div key={a.key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px solid rgba(155,123,176,.1)"}}>
       <span style={{fontSize:13,color:a.severity==="critical"?"#E85A7A":"#D4A040",fontWeight:600}}>{a.severity==="critical"?"🔥":"⚠"} {a.msg} ({a.days}d)</span>
-      <button onClick={()=>dismissAlert(a.key)} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#6B5E80"}}>✕</button>
+      <span style={{display:"flex",gap:8,alignItems:"center"}}>
+        {a.report&&<button onClick={()=>openCreativeBrief(a.report)} style={{background:"rgba(91,196,160,.15)",border:"1px solid #5BC4A0",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:700,color:"#5BC4A0",padding:"2px 9px",whiteSpace:"nowrap"}}>📄 Creative Brief</button>}
+        <button onClick={()=>dismissAlert(a.key)} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#6B5E80"}}>✕</button>
+      </span>
     </div>)}{alerts.length>5&&<button onClick={()=>setAlertsExpanded(p=>!p)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#4AC8E8",fontWeight:600,marginTop:4,padding:0}}>{alertsExpanded?"Show less":"+"+String(alerts.length-5)+" more"}</button>}</div>}
     {nextRot&&daysRot<=14&&!alerts.some(a=>a.type==="rotation")&&<Cd style={{padding:10,borderColor:daysRot<=7?"#fecaca":"#fde68a",background:daysRot<=7?"#3a1f35":"#fffbeb"}}><div style={{fontSize:14,fontWeight:700,color:daysRot<=7?"#E85A7A":"#D4A040"}}>⚠ Rotation Due: {nextRot.month} — {fD(nextRot.rotDue)} ({daysRot}d)</div></Cd>}
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:7}}>
