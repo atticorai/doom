@@ -2174,6 +2174,45 @@ const App=()=>{
     log("Creative Brief",bcode+" · "+mkt+" · "+boards.length+" boards post "+rep.post);
   };
 
+  // Cross-brand OOH size report — every OOH board across all brands, grouped
+  // by brand → market → type/size with quantities, for the design team. Boards
+  // still missing a size are flagged so the gaps are visible.
+  const openOohSizesReport=()=>{
+    const rows=[];
+    const push=(brand,mktCode,type,size,unit)=>{rows.push({brand,mkt:(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[mktCode])||(typeof DM!=="undefined"&&DM[mktCode])||mktCode,type:type||"—",size:(size||"").trim(),unit})};
+    (typeof PL_PANELS!=="undefined"?PL_PANELS:[]).forEach(p=>push("Postman Law",p.market,p.type,p.size,p.unit));
+    (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>push(p.brand||"Wettermark Keith",p.dma,p.type,p.size,p.boardId));
+    (typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(p.network||p.tbd)return;push("Lerner & Rowe",p.market,p.media,p.size,p.unit)});
+    if(!rows.length){notify("No OOH boards found");return}
+    // group brand -> market -> type|size
+    const G={};
+    rows.forEach(r=>{const bk=r.brand;const mk=r.mkt;const key=(r.type||"—")+"||"+(r.size||"");G[bk]=G[bk]||{};G[bk][mk]=G[bk][mk]||{};const gk=key;G[bk][mk][gk]=G[bk][mk][gk]||{type:r.type,size:r.size,units:[]};G[bk][mk][gk].units.push(r.unit)});
+    const brandOrder=(typeof BRANDS!=="undefined"?BRANDS.map(b=>b.name):[]).filter(b=>G[b]);
+    Object.keys(G).forEach(b=>{if(brandOrder.indexOf(b)<0)brandOrder.push(b)});
+    const totalBoards=rows.length;const sized=rows.filter(r=>r.size).length;
+    const w=window.open("","","width=1080,height=940");
+    w.document.write('<html><head><title>OOH Size Report — All Brands</title>');
+    w.document.write('<style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}h3{margin:20px 0 4px;font-size:15px;border-bottom:3px solid #2d1f42;padding-bottom:3px}h4{margin:12px 0 2px;font-size:13px;color:#2d1f42}.sub{color:#555;font-weight:bold;margin:2px 0 6px}table{width:100%;border-collapse:collapse;font-size:11px;margin-top:3px}th,td{border:1px solid #ccc;padding:4px 8px;text-align:left;vertical-align:top}th{background:#2d1f42;color:#fff}td.n{font-weight:bold;text-align:center}.tbd{color:#b45309;font-weight:bold}.warn{background:#fff8e6}.dl{position:fixed;top:12px;right:12px;background:#5BC4A0;color:#0a2e22;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{.dl{display:none}body{margin:12px}h3,h4{page-break-after:avoid}}</style></head><body>');
+    w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+    w.document.write('<div style="text-align:center;margin-bottom:6px"><h2>ATTICOR — OOH SIZE REPORT</h2><div style="font-weight:bold;color:#555">All brands · for the design team</div></div>');
+    w.document.write('<div class="sub">'+totalBoards+' boards · '+sized+' sized · <span class="tbd">'+(totalBoards-sized)+' size TBD</span> · '+new Date().toLocaleDateString()+'</div>');
+    brandOrder.forEach(b=>{
+      const bTotal=Object.values(G[b]).reduce((a,m)=>a+Object.values(m).reduce((x,g)=>x+g.units.length,0),0);
+      const bSized=Object.values(G[b]).reduce((a,m)=>a+Object.values(m).reduce((x,g)=>x+(g.size?g.units.length:0),0),0);
+      w.document.write('<h3>'+escHtml(b)+' <span style="font-size:12px;color:#777;font-weight:normal">— '+bTotal+' boards, '+bSized+' sized</span></h3>');
+      Object.keys(G[b]).sort().forEach(mk=>{
+        const groups=Object.values(G[b][mk]).sort((a,b)=>String(a.type).localeCompare(String(b.type))||String(a.size).localeCompare(String(b.size)));
+        w.document.write('<h4>'+escHtml(mk)+'</h4>');
+        w.document.write('<table><tr><th>Board Type</th><th>Size</th><th>Qty</th><th>Units</th></tr>');
+        groups.forEach(g=>w.document.write('<tr'+(g.size?'':' class="warn"')+'><td>'+escHtml(g.type||"—")+'</td><td>'+(g.size?escHtml(g.size):'<span class="tbd">TBD</span>')+'</td><td class="n">'+g.units.length+'</td><td style="font-size:10px">'+g.units.slice(0,30).map(escHtml).join(", ")+(g.units.length>30?" …":"")+'</td></tr>'));
+        w.document.write('</table>');
+      });
+    });
+    w.document.write('<div style="margin-top:14px;font-size:10px;color:#888">Rows flagged TBD have no size on file yet — pull from the vendor board list. Generated '+new Date().toLocaleString()+'.</div>');
+    w.document.write('</body></html>');w.document.close();
+    log("OOH Size Report","All brands · "+totalBoards+" boards · "+sized+" sized");
+  };
+
   // ── DASHBOARD ─────────────────────────────────────────
   const Dash=()=>{const ai=iscis.filter(i=>i.active);const oohAlerts=alerts.filter(a=>a.type==="ooh");const rotAlerts=alerts.filter(a=>a.type==="rotation"||a.type==="media");
     const[alertsExpanded,setAlertsExpanded]=useState(false);
@@ -8842,7 +8881,8 @@ Rules:
           <div style={{fontSize:11,color:"#9B8EAD",letterSpacing:2,fontWeight:600}}>OUTDOOR MEDIA</div>
         </div>
         <nav style={{flex:1,padding:"3px 0"}}>{oohNav.map(n=>{const a=subRoute===n.id;const badge=n.id==="pl"&&calAlerts?calAlerts:null;return<button key={n.id} onClick={()=>navigateHash("ooh/"+n.id)} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"6px 11px",border:"none",background:a?"#2d1f42":"transparent",color:a?"#fff":"#9ca3af",fontSize:13,fontWeight:a?600:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative"}}><span style={{fontSize:13}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:14,fontWeight:800,padding:"1px 5px",borderRadius:8,background:"#D4A040",color:"#fff"}}>{badge}</span>}</button>})}</nav>
-        <div style={{padding:"8px 11px",borderTop:"1px solid #2d1f42"}}>
+        <div style={{padding:"8px 11px",borderTop:"1px solid #2d1f42",display:"flex",flexDirection:"column",gap:6}}>
+          <button onClick={openOohSizesReport} style={{display:"flex",alignItems:"center",gap:6,width:"100%",padding:"6px 8px",border:"none",borderRadius:6,background:"#5BC4A0",color:"#0a2e22",fontSize:13,fontWeight:700,cursor:"pointer"}}>📐 OOH Size Report (all brands)</button>
           <button onClick={()=>{navigateHash("");setPg("dash")}} style={{display:"flex",alignItems:"center",gap:6,width:"100%",padding:"6px 8px",border:"1px solid #4a3565",borderRadius:6,background:"transparent",color:"#9B8EAD",fontSize:13,fontWeight:600,cursor:"pointer"}}>← Back to D&D</button>
         </div>
       </div>
