@@ -2203,8 +2203,8 @@ const App=()=>{
       Object.keys(G[b]).sort().forEach(mk=>{
         const groups=Object.values(G[b][mk]).sort((a,b)=>String(a.type).localeCompare(String(b.type))||String(a.size).localeCompare(String(b.size)));
         w.document.write('<h4>'+escHtml(mk)+'</h4>');
-        w.document.write('<table><tr><th>Board Type</th><th>Size</th><th>Qty</th><th>Units</th></tr>');
-        groups.forEach(g=>w.document.write('<tr'+(g.size?'':' class="warn"')+'><td>'+escHtml(g.type||"—")+'</td><td>'+(g.size?escHtml(g.size):'<span class="tbd">TBD</span>')+'</td><td class="n">'+g.units.length+'</td><td style="font-size:10px">'+g.units.slice(0,30).map(escHtml).join(", ")+(g.units.length>30?" …":"")+'</td></tr>'));
+        w.document.write('<table><tr><th>Board Type</th><th>Size</th><th>Qty</th></tr>');
+        groups.forEach(g=>w.document.write('<tr'+(g.size?'':' class="warn"')+'><td>'+escHtml(g.type||"—")+'</td><td style="white-space:nowrap">'+(g.size?escHtml(g.size):'<span class="tbd">TBD</span>')+'</td><td class="n">'+g.units.length+'</td></tr>'));
         w.document.write('</table>');
       });
     });
