@@ -3784,6 +3784,33 @@ const App=()=>{
     const marketColor=(mkt)=>{const b=activePops.find(p=>oohMarket(p.dma)===mkt);return b?(dmaColors[b.dma]||"#64748b"):"#64748b"};
     const btypes=[...new Set(activePops.map(p=>oohBoardType(p.type,p.size)))].sort();
     const fl=activePops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true)&&(typeF?oohBoardType(p.type,p.size)===typeF:true));
+    // Pull a creative-production spec sheet for the boards in view — grouped by
+    // market/type/size with qty, color mode, resolution, file format, creative-
+    // due (14d before posting) and posting date — to hand to the creative team.
+    const printCreativeSpecs=()=>{
+      const boards=fl.slice();
+      if(!boards.length){notify("No boards in this view");return}
+      const mktLabel=om?(DM[om]||om):"All Markets";
+      const dueOf=(inst)=>{if(!inst)return"";const iso=String(inst).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);const us=String(inst).match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);let d;if(iso)d=new Date(+iso[1],+iso[2]-1,+iso[3]);else if(us){let y=+us[3];if(y<100)y+=2000;d=new Date(y,+us[1]-1,+us[2])}else return"";d=new Date(d.getTime()-14*864e5);return(d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear()};
+      const specOf=(type)=>{const t=(type||"").toLowerCase();if(t.indexOf("digital")>=0)return{color:"RGB",res:"72 dpi",fmt:"JPG/PNG (static) · MP4/MOV (motion)"};if(t.indexOf("poster")>=0)return{color:"CMYK",res:"300 dpi",fmt:"Print-ready PDF"};return{color:"CMYK",res:"150 dpi at full scale",fmt:"Print-ready PDF + packaged native files"}};
+      const groups={};
+      boards.forEach(p=>{const mkt=oohMarket(p.dma);const gk=mkt+"||"+(p.type||"")+"||"+(p.size||"")+"||"+(p.vendor||"");
+        if(!groups[gk])groups[gk]={mkt,type:p.type||"",size:p.size||"",vendor:p.vendor||"",contract:p.contract||"",install:p.installDate||"",units:[]};
+        groups[gk].units.push(String(p.panel||p.boardId));});
+      const rows=Object.values(groups).sort((a,b)=>a.mkt.localeCompare(b.mkt)||a.type.localeCompare(b.type)||String(a.size).localeCompare(String(b.size)));
+      const w=window.open("","","width=1060,height=900");
+      w.document.write('<html><head><title>WK OOH — Creative Specs</title>');
+      w.document.write('<style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.sub{color:#555;font-weight:bold;margin:2px 0 12px}table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #ccc;padding:5px 8px;text-align:left;vertical-align:top}th{background:#2d1f42;color:#fff}td.n{font-weight:bold;text-align:center}tr:nth-child(even){background:#faf7fc}.note{margin-top:12px;font-size:11px;color:#555;border-left:3px solid #D4A040;padding-left:8px}.dl{position:fixed;top:12px;right:12px;background:#D4A040;color:#1e1233;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{.dl{display:none}body{margin:12px}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<div style="text-align:center;margin-bottom:8px"><h2>WETTERMARK KEITH</h2><div style="font-weight:bold;color:#555">OOH CREATIVE SPECS — FOR PRODUCTION</div></div>');
+      w.document.write('<div class="sub">'+escHtml(mktLabel)+' · '+boards.length+' boards · '+rows.length+' spec groups · '+new Date().toLocaleDateString()+'</div>');
+      w.document.write('<table><tr><th>Market</th><th>Board Type</th><th>Size</th><th>Qty</th><th>Color</th><th>Resolution</th><th>File Format</th><th>Creative Due</th><th>Posts</th><th>Vendor</th><th>Units</th></tr>');
+      rows.forEach(g=>{const sp=specOf(g.type);w.document.write('<tr><td>'+escHtml(g.mkt)+'</td><td>'+escHtml(g.type)+'</td><td>'+escHtml(g.size)+'</td><td class="n">'+g.units.length+'</td><td>'+sp.color+'</td><td>'+sp.res+'</td><td>'+sp.fmt+'</td><td>'+escHtml(dueOf(g.install))+'</td><td>'+escHtml(g.install||"—")+'</td><td>'+escHtml(g.vendor)+'</td><td style="font-size:10px">'+g.units.map(escHtml).join(", ")+'</td></tr>')});
+      w.document.write('</table>');
+      w.document.write('<div class="note"><b>Digital boards:</b> pixel dimensions vary by panel — confirm exact px per unit with the vendor before building. Size shown is the physical board face. <b>Static:</b> build full-scale at the resolution shown; print-ready PDF with packaged fonts/links.</div>');
+      w.document.write('</body></html>');w.document.close();
+      log("OOH Creative Specs","WK · "+mktLabel+" · "+boards.length+" boards");
+    };
     const tagged=fl.filter(p=>p.isci).length;
     const totalImpr=fl.reduce((a,p)=>a+p.impressions,0);
 
@@ -4199,6 +4226,7 @@ const App=()=>{
           <Btn small color="#9b7bb0" onClick={()=>{const scope=fl.filter(p=>!String(p.panel).includes("TBD"));const lbl=(om||ov||oVend)?`the ${scope.length} filtered boards`:`all ${scope.length} boards`;if(window.confirm(`Auto-name + ISCI ${lbl}?\n\n• Assigns ONE creative per board (bulletins from 2, posters/juniors from 3), spread by location so neighbours differ.\n• Generates an ISCI per market·size·creative, titled to your convention (WK <Type> - <Size> - <Market> - <Creative>).\n\nThis OVERWRITES current creative + ISCI assignments in view.`))autoNameSpread(fl)}}>🪄 Auto-name + ISCI</Btn>
           <Btn small color="#D4A040" onClick={()=>printVendorTrafficSheet()}>📄 Vendor Sheet</Btn>
           <Btn small color="#E85A7A" onClick={()=>printVendorTrafficSheet({resendOnly:true})}>📄 Revision Sheet</Btn>
+          <Btn small color="#5BC4A0" onClick={()=>printCreativeSpecs()}>📐 Creative Specs</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
           <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>📍 Map</Btn>
