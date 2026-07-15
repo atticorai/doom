@@ -2073,12 +2073,7 @@ const App=()=>{
       if(!p.installDate)return;
       // For WK OOH, check install dates (these are start dates; no end dates in data yet)
     });
-    // Contract expiry alerts
-    Object.values(oohContracts).forEach(c=>{
-      if(!c.endDate)return;const cs=contractStatus(c);
-      if(cs.status==="expiring")a.push({type:"contract",severity:"critical",msg:"Contract "+c.num+" ("+(c.vendor||"—")+" · "+(c.dmas||[]).join("/")+") expiring — "+cs.daysLeft+"d left",days:cs.daysLeft,key:"ctr-"+c.num});
-      else if(cs.status==="expiring-soon")a.push({type:"contract",severity:"warning",msg:"Contract "+c.num+" ("+(c.vendor||"—")+" · "+(c.dmas||[]).join("/")+") — "+cs.daysLeft+"d remaining",days:cs.daysLeft,key:"ctr-"+c.num});
-    });
+    // (Contract-expiry alerts removed — not wanted in the Command Center feed.)
     // OOH Creative Calendar alerts (upcoming deadlines)
     OOH_CREATIVE_CAL.forEach((e,idx)=>{
       const s=oohCalStatus(e.due);
