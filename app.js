@@ -1013,7 +1013,7 @@ const App=()=>{
             const seed=seedMap.get(fb.code+"|"+(fb.dma||""));
             if(!seed)return fb; // User-added ISCI, keep as-is
             const seedCat=seed.category||seed.caseType||"";const fbCat=fb.category||fb.caseType||"";const useSeedCat=seedCat&&(seedCat!=="Personal Injury (General)")&&(!fbCat||fbCat==="Personal Injury (General)"||fbCat==="—");
-            return{...fb,title:fb.title||seed.title,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:fb.fileUrl||seed.fileUrl,category:useSeedCat?seedCat:(fbCat||seedCat),caseType:useSeedCat?seedCat:(fbCat||seedCat),vo:fb.vo||seed.vo||""};
+            return{...fb,title:fb.title||seed.title,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:fb.fileUrl||seed.fileUrl,category:useSeedCat?seedCat:(fbCat||seedCat),caseType:useSeedCat?seedCat:(fbCat||seedCat),valueProp:fb.valueProp||seed.valueProp||"",vo:fb.vo||seed.vo||""};
           });
           // Always add back missing seed ISCIs — better to recover than lose
           const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||""))&&!loadedDeleted.has(init.code+"|"+(init.dma||"")));
@@ -1553,7 +1553,7 @@ const App=()=>{
     },
     "Parrish DeVaughn":{
       categories:["Auto Accidents","Motorcycle","Trucking","Testimonials","Sports","Premises Liability","Nursing Home Abuse","Mass Tort","Workers Comp","Brand","Personal Injury (General)"],
-      valueProps:["No Fee Guarantee","Big Results","Fast & On-Scene","Local & Experienced","Tough Advocate","Personal & Compassion","Consumer Warning"],
+      valueProps:["No Fee Guarantee","Big Results","Fast & On-Scene","Local & Experienced","Tough Advocate","Personal & Compassion","Consumer Warning","Spokes Person/Motorcycle","Brand - 444"],
       vos:[]
     },
     "Lerner & Rowe":{
@@ -11199,6 +11199,7 @@ Rules:
   },[iscis,stations,trafficHistory,workMonth]);
 
   const DOOM_CHANGELOG=[
+    {d:"07/15/2026",t:"Parrish DeVaughn value props showing",x:"PDV value props weren't displaying — Firestore stored them blank (saved before they were set) and the load merge didn't fall back to the seed for valueProp like it does for title/category/VO. Fixed the merge to restore seed value props where Firestore is blank (user edits still win). Also synced PDV value props + categories to the approved mapping across OKC and the Tulsa mirrors, and added 'Spokes Person/Motorcycle' and 'Brand - 444' to the PDV value-prop vocabulary."},
     {d:"07/15/2026",t:"ASCII-clean ISCI titles",x:"Normalized 21 titles that carried unicode punctuation to plain ASCII — Parrish DeVaughn 'Don't DIY' (curly apostrophe), Postman Law 'Peace of Mind –' (en-dash), and a Wettermark Keith title with a non-breaking space. Load now cleans titles on read (curly quotes, dashes, nbsp) and persists back, so Firestore-stored copies get fixed too and downloaded creative filenames stay clean."},
     {d:"07/15/2026",t:"Lerner & Rowe new creative (studio drop)",x:"Added 123 ISCIs from Chad Watrous's July drop (19 source files), all active. Accident Tips + 6 MythBusters (16x9) run TV across all 9 markets as shared creative (same number/title, market-coded); the 6 MythBuster 9x16 verticals are Digital (…D codes) across all 9 markets; Phoenix locals (Accident Tips Phoenix, Copy Cat, Zero Upfront, LRGB) and Chicago locals (Imposter, Imposter 2) are market-specific. Codes seq 020–032 (TV) and 001–006 (Digital), :15. Bulk download page refreshed to include them."},
     {d:"07/14/2026",t:"Lerner & Rowe registry purge",x:"The registry was still showing stale cj-imported L&R ISCIs from Firestore — cj-format codes (LRAL35122, LRPH35109) and orphan rows (PHXLR2630004R) with [SP]/mixdown/yaya titles and bad file links — because Firestore records survive seed edits. Load now drops any L&R record whose code isn't in the clean seed (our naming, SP-infix, professional titles) and restores the canonical 171 in their place. Fix is self-healing and persists back to Firestore on load."},
