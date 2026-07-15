@@ -5139,7 +5139,10 @@ const App=()=>{
     const isTag=f2.media==="Tagline";
     const isPT=isOoh&&f2.oohType==="PT";
     const isCampaign=isDisplay&&!!f2.noMkt;
-    const suf=SUFFIXES[f2.media]||"T";const bD=brandMktCodes(f2.brand);
+    const suf=SUFFIXES[f2.media]||"T";let bD=brandMktCodes(f2.brand);
+    // Nashville is a Wettermark Keith OOH-only market (not in WK's core market
+    // list), so it needs to be selectable when registering an OOH ISCI.
+    if(isOoh&&f2.brand==="WK"&&!bD.includes("NSH"))bD=[...bD,"NSH"];
     const durField=isOoh?f2.oohType:isDisplay?f2.displayType:f2.dur;
     const brandName=(BRANDS.find(b=>b.code===f2.brand)||{}).name||"Postman Law";
     const normTitle=function(t){var s=(t||"").toLowerCase().trim();Object.values(DM).forEach(function(n){s=s.split(n.toLowerCase()).join("")});Object.keys(DM).forEach(function(c){s=s.split(c.toLowerCase()).join("")});return s.replace(/[-–—,_\s]+/g," ").trim()};
