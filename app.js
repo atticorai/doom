@@ -1018,6 +1018,11 @@ const App=()=>{
           // Always add back missing seed ISCIs — better to recover than lose
           const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||""))&&!loadedDeleted.has(init.code+"|"+(init.dma||"")));
           const all=[...enhanced,...missing];
+          // Normalize any unicode punctuation in titles to plain ASCII (curly quotes,
+          // en/em dashes, non-breaking spaces) — Firestore-stored titles win over seed,
+          // so this cleans them on load and persists the fix back below.
+          const _asciiTitle=t=>t?String(t).replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,"-").replace(/…/g,"...").replace(/ /g," ").replace(/\s+_/g,"_").replace(/[^\x00-\x7F]/g,"").replace(/[ \t]+/g," ").trim():t;
+          all.forEach(i=>{if(i.title){const nt=_asciiTitle(i.title);if(nt!==i.title)i.title=nt}});
           // Assign WK categories and VO — only if empty or generic. User edits stick.
           const GENERIC=new Set(["","Personal Injury (General)","—"]);
           all.forEach(i=>{if(i.brand!=="Wettermark Keith")return;
@@ -11194,6 +11199,7 @@ Rules:
   },[iscis,stations,trafficHistory,workMonth]);
 
   const DOOM_CHANGELOG=[
+    {d:"07/15/2026",t:"ASCII-clean ISCI titles",x:"Normalized 21 titles that carried unicode punctuation to plain ASCII — Parrish DeVaughn 'Don't DIY' (curly apostrophe), Postman Law 'Peace of Mind –' (en-dash), and a Wettermark Keith title with a non-breaking space. Load now cleans titles on read (curly quotes, dashes, nbsp) and persists back, so Firestore-stored copies get fixed too and downloaded creative filenames stay clean."},
     {d:"07/15/2026",t:"Lerner & Rowe new creative (studio drop)",x:"Added 123 ISCIs from Chad Watrous's July drop (19 source files), all active. Accident Tips + 6 MythBusters (16x9) run TV across all 9 markets as shared creative (same number/title, market-coded); the 6 MythBuster 9x16 verticals are Digital (…D codes) across all 9 markets; Phoenix locals (Accident Tips Phoenix, Copy Cat, Zero Upfront, LRGB) and Chicago locals (Imposter, Imposter 2) are market-specific. Codes seq 020–032 (TV) and 001–006 (Digital), :15. Bulk download page refreshed to include them."},
     {d:"07/14/2026",t:"Lerner & Rowe registry purge",x:"The registry was still showing stale cj-imported L&R ISCIs from Firestore — cj-format codes (LRAL35122, LRPH35109) and orphan rows (PHXLR2630004R) with [SP]/mixdown/yaya titles and bad file links — because Firestore records survive seed edits. Load now drops any L&R record whose code isn't in the clean seed (our naming, SP-infix, professional titles) and restores the canonical 171 in their place. Fix is self-healing and persists back to Firestore on load."},
     {d:"07/14/2026",t:"Parrish DeVaughn real buys",x:"Replaced placeholder estimates with 24 real cj estimate numbers (5372–6864) across 8 products (Auto, AM News, Discretionary, Products, Thunder, EN/LN, CTV, YouTube). Added Oklahoma City stations: 7 broadcast TV (KFOR/KOCO/KWTV/KOKH/KAUT/KOCB/KSBI), 12 radio, 4 CTV/digital vendors; plus 5 Tulsa target radio stations. Traffic Tracker now reads PDV's TV/Radio/Digital/OOH. Traffic emails still needed for sends."},
