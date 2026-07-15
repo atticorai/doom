@@ -2179,7 +2179,7 @@ const App=()=>{
   // still missing a size are flagged so the gaps are visible.
   const openOohSizesReport=(brandFilter)=>{
     const rows=[];
-    const push=(brand,mktCode,type,size,unit)=>{if(brandFilter&&brand!==brandFilter)return;rows.push({brand,mkt:(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[mktCode])||(typeof DM!=="undefined"&&DM[mktCode])||mktCode,type:type||"—",size:(size||"").trim(),unit})};
+    const push=(brand,mktCode,type,size,unit)=>{if(brandFilter&&brand!==brandFilter)return;if(!(size||"").trim())return;rows.push({brand,mkt:(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[mktCode])||(typeof DM!=="undefined"&&DM[mktCode])||mktCode,type:type||"—",size:(size||"").trim(),unit})};
     if(!brandFilter||brandFilter==="Postman Law")(typeof PL_PANELS!=="undefined"?PL_PANELS:[]).forEach(p=>push("Postman Law",p.market,p.type,p.size,p.unit));
     (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>push(p.brand||"Wettermark Keith",p.dma,p.type,p.size,p.boardId));
     if(!brandFilter||brandFilter==="Lerner & Rowe")(typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(p.network||p.tbd)return;push("Lerner & Rowe",p.market,p.media,p.size,p.unit)});
@@ -2210,7 +2210,7 @@ const App=()=>{
     y+=6.5;pdf.setFont("helvetica","normal");pdf.setFontSize(10);tc(SUB);
     pdf.text("Board sizes for the creative team",MX,y);
     y+=5.5;pdf.setFontSize(9);
-    pdf.text(totalBoards+" boards      "+sized+" sized      "+(totalBoards-sized)+" set closer to posting      "+new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}),MX,y);
+    pdf.text(totalBoards+" boards with confirmed sizes      "+new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}),MX,y);
     y+=5;dc(RULE);pdf.setLineWidth(0.4);pdf.line(MX,y,RIGHT,y);y+=9;
     const SIZEX=118,QTYX=RIGHT-2;
     brandOrder.forEach(b=>{
@@ -2242,9 +2242,7 @@ const App=()=>{
         y+=5;
       });
     });
-    // footnote + page footers
-    check(10);pdf.setFont("helvetica","italic");pdf.setFontSize(8);tc(SUB);
-    pdf.text('"TBD — set ~1 wk out" = preemptible / late-assigned boards; size confirmed roughly a week before posting.',MX,y);
+    // page footers
     const n=pdf.getNumberOfPages();
     for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFont("helvetica","normal");pdf.setFontSize(7.5);tc(SUB);
       pdf.text("Atticor · OOH Size Report",MX,PH-8);pdf.text("Page "+i+" of "+n,RIGHT,PH-8,{align:"right"});}
