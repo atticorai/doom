@@ -2086,6 +2086,30 @@ const App=()=>{
       else if(s.status==="urgent")a.push({type:"ooh-cal",severity:"critical",msg:`🎨 OOH Creative — ${e.dmas.join("/")} ${e.title} in ${s.days}d${e.size?" · "+e.size:""}`,days:s.days,key:`cal-${idx}`});
       else if(s.status==="soon")a.push({type:"ooh-cal",severity:"warning",msg:`🎨 OOH Creative — ${e.dmas.join("/")} ${e.title} in ${s.days}d${e.size?" · "+e.size:""}`,days:s.days,key:`cal-${idx}`});
     });
+    // OOH creative due for posting — derived from every board's posting date,
+    // across ALL brands / markets / vendors, ≥2 weeks ahead. Creative-due date
+    // is 14 days before a board's flight start (matches how PL's calendar is
+    // modeled). PL is covered by OOH_CREATIVE_CAL above; this fills WK,
+    // Lerner & Rowe, and PDV, which had no creative-due alerts at all.
+    const _pDate=(str)=>{if(!str)return null;str=String(str).trim();let m;if(m=str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return new Date(+m[1],+m[2]-1,+m[3]);if(m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)){let y=+m[3];if(y<100)y+=2000;return new Date(y,+m[1]-1,+m[2])}const d=new Date(str);return isNaN(d.getTime())?null:d};
+    const _cg={};
+    const _addCreative=(brand,dma,vendor,unit,postStr)=>{
+      const post=_pDate(postStr);if(!post)return;post.setHours(0,0,0,0);
+      const due=new Date(post.getTime()-14*864e5);const daysToDue=Math.round((due-today)/864e5);
+      if(daysToDue>14||daysToDue<-3)return; // fire once creative-due is within 2 weeks (posting ~2-4 wks out), through a few days overdue
+      const k=brand+"|"+dma+"|"+(vendor||"")+"|"+post.toISOString().slice(0,10);
+      if(!_cg[k])_cg[k]={brand,dma,vendor,post,due,daysToDue,units:[]};
+      if(unit&&_cg[k].units.indexOf(unit)<0)_cg[k].units.push(unit);
+    };
+    (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>{if(p&&p.installDate)_addCreative(p.brand,p.dma,p.vendor,p.boardId,p.installDate)});
+    (typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(!p||p.network||p.tbd||p.plan==="expired"||!p.flight)return;_addCreative("Lerner & Rowe",p.market,p.vendor,p.unit,String(p.flight).split("-")[0])});
+    Object.values(_cg).forEach(g=>{
+      const mkt=(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[g.dma])||(typeof DM!=="undefined"&&DM[g.dma])||g.dma;
+      const bcode=(BRANDS.find(b=>b.name===g.brand||b.code===g.brand)||{}).code||g.brand;
+      a.push({type:"ooh-cal",severity:g.daysToDue<=7?"critical":"warning",days:g.daysToDue,
+        key:"oohdue-"+g.brand+"-"+g.dma+"-"+(g.vendor||"")+"-"+g.post.toISOString().slice(0,10),
+        msg:`🎨 ${bcode} OOH creative due ${fD(g.due.toISOString().slice(0,10))} · ${mkt}${g.vendor?" · "+g.vendor:""} · ${g.units.length} board${g.units.length!==1?"s":""} post ${fD(g.post.toISOString().slice(0,10))}`});
+    });
     // Rotation due dates — already handled in dashboard but add to alert feed
     CALENDAR.forEach(c=>{
       const d=new Date(c.rotDue+"T00:00:00");const days=Math.round((d-today)/864e5);
