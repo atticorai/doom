@@ -1023,6 +1023,10 @@ const App=()=>{
           // so this cleans them on load and persists the fix back below.
           const _asciiTitle=t=>t?String(t).replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,"-").replace(/…/g,"...").replace(/ /g," ").replace(/\s+_/g,"_").replace(/[^\x00-\x7F]/g,"").replace(/[ \t]+/g," ").trim():t;
           all.forEach(i=>{if(i.title){const nt=_asciiTitle(i.title);if(nt!==i.title)i.title=nt}});
+          // Lerner & Rowe: clear stale Google Drive links (they were never real
+          // uploads). Scoped to drive.google URLs so once real files are uploaded
+          // (Supabase URLs) they persist and aren't wiped on the next load.
+          all.forEach(i=>{if(i.brand==="Lerner & Rowe"&&i.fileUrl&&/drive\.google/.test(i.fileUrl)){i.fileUrl="";i.crLock=false}});
           // Assign WK categories and VO — only if empty or generic. User edits stick.
           const GENERIC=new Set(["","Personal Injury (General)","—"]);
           all.forEach(i=>{if(i.brand!=="Wettermark Keith")return;
@@ -11385,6 +11389,7 @@ Rules:
   },[iscis,stations,trafficHistory,workMonth]);
 
   const DOOM_CHANGELOG=[
+    {d:"07/15/2026",t:"Clear stale L&R Drive links",x:"Lerner & Rowe ISCIs were still carrying Google Drive URLs from the vendor share (never real uploads), so they showed a file when there wasn't one in storage. Load now blanks any drive.google link on L&R creative — scoped to Drive URLs so real uploads (Supabase) stick. L&R creative can now be uploaded from actual files."},
     {d:"07/15/2026",t:"Brand tab counts for all brands",x:"The count badges on the brand tabs (ISCI Registry, Traffic Tracker, Estimates, Stations) were hardcoded to Postman Law and Wettermark Keith, so Lerner & Rowe and Parrish DeVaughn always read (0) despite being full of creative/estimates/stations. Counts now compute for every brand."},
     {d:"07/15/2026",t:"ISCI Registry filters: length, category, value prop",x:"Added Length, Category, and Value Prop dropdown filters to the ISCI Registry (alongside the existing media/DMA/search), plus a Clear filters button. Options populate from the current brand's creative, so you can narrow to just :30s, a single category, a value prop, or any combination."},
     {d:"07/15/2026",t:"Tag vocabularies merge instead of overwrite",x:"Category/value-prop/VO dropdowns were missing standard options (e.g. Motorcycle for Parrish DeVaughn) because Firestore's saved tag lists replaced the built-in defaults per brand on load. Any spot set to a missing option showed blank. Load now unions the built-in vocabulary with the saved one, so standard categories and value props always appear alongside custom additions."},
