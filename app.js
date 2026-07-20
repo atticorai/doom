@@ -7970,12 +7970,15 @@ Rules:
     const acceptPlan=()=>{
       if(!hasMarketSnapshots){notify("Run the AI first");return}
       const stamp=new Date().toISOString();
+      // Auto-link the brand's TV stations for each market (brand-wide). If the
+      // brand has no stations yet (e.g. L&R), the draft's stations stay empty.
+      const stationsFor=(mk)=>stations.filter(s=>s.brand===planBrand&&(normMkt(s.market)===normMkt(mk)||s.market===mk)&&/tv/i.test(String(s.media||""))).map(s=>s.call);
       const recs=playbook.marketSnapshots.map(ms=>{
         const mr=ms.mock_rotation||{};
         const row=(s,dur)=>({code:s.code,title:s.title||"",dur:String(dur),pct:parseInt(s.weight)||0,sched:"All Week",bookend:""});
         const iscis=[...(Array.isArray(mr.thirties)?mr.thirties.map(s=>row(s,30)):[]),...(Array.isArray(mr.fifteens)?mr.fifteens.map(s=>row(s,15)):[])].filter(r=>r.code);
         (Array.isArray(mr.bookend_pairs)?mr.bookend_pairs:[]).forEach((bp,bi)=>{(bp.spots||[]).forEach((sp,si)=>{const r=iscis.find(x=>x.code===sp.code);if(r)r.bookend=(bp.slot||("Pair "+(bi+1)))+" "+String.fromCharCode(65+si)})});
-        return{ts:stamp,est:planBrand==="Wettermark Keith"?(WK_MONTH_EST_MAP[monthA]||""):"",brand:planBrand,market:ms.market,media:"TV",month:monthA,version:1,iscis,stations:[],status:"draft",source:"muses",comments:"AI mock rotation"+(playbook.big_idea&&playbook.big_idea.title?(" — "+playbook.big_idea.title):"")};
+        return{ts:stamp,est:planBrand==="Wettermark Keith"?(WK_MONTH_EST_MAP[monthA]||""):"",brand:planBrand,market:ms.market,media:"TV",month:monthA,version:1,iscis,stations:stationsFor(ms.market),status:"draft",source:"muses",comments:"AI mock rotation"+(playbook.big_idea&&playbook.big_idea.title?(" — "+playbook.big_idea.title):"")};
       }).filter(r=>r.iscis.length);
       if(!recs.length){notify("No rotation in this plan to save");return}
       setTrafficHistory(p=>[...recs,...p]);
@@ -11437,7 +11440,7 @@ Rules:
   },[iscis,stations,trafficHistory,workMonth]);
 
   const DOOM_CHANGELOG=[
-    {d:"07/16/2026",t:"Muses: Make it Real → Library",x:"The AI mock rotation can now be accepted. 'Make it Real → Library' saves a DRAFT per market into the Traffic Library (rotation, weights, bookend pairs, auto-filled estimate for WK), downloads a rotation PDF, and logs it. Nothing sends — drafts are finished (stations) and sent through the normal Library flow. 'Re-run AI' is the try-again."},
+    {d:"07/16/2026",t:"Muses: Make it Real → Library",x:"The AI mock rotation can now be accepted. 'Make it Real → Library' saves a DRAFT per market into the Traffic Library (rotation, weights, bookend pairs, auto-filled estimate for WK), auto-links the brand's TV stations for each market (brand-wide; left empty only if the brand has no stations yet), downloads a rotation PDF, and logs it. Nothing sends — drafts are finished and sent through the normal Library flow. 'Re-run AI' is the try-again."},
     {d:"07/16/2026",t:"AI Planner trafficking rules",x:"Baked two hard rules into The Muses: Wettermark Keith's 'Mother's Wreck' (any length) is a locked spot — never retired, never dropped from a rotation; and Parrish DeVaughn's Tulsa is an expansion market — lead with Local & Experienced spots, add a few case types, always recommend bookend pairs. The AI now respects both in its recommendations."},
     {d:"07/16/2026",t:"AI Planner sees all creative",x:"The Muses only received the first 80 bench spots, so newly-uploaded creative (appended to the end of the library) never reached the AI and got left out of the analysis. Raised the bench cap to 400 so the planner sees the full available library, including brand-new spots."},
     {d:"07/16/2026",t:"De-duplicate ISCI codes on load",x:"The new duplicate-code alarm caught 4 real collisions (WK Spanish OOH: HSVWK26SP009O/010O/011O, MTGWK26SP009O) — the OOH title→code remap had mapped two saved records onto the same seed code. Load now collapses any duplicate-code records to a single one (carrying over the creative link/active flag from the dropped twin) and persists the fix, so the alarm clears and sends stay clean."},
