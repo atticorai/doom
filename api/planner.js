@@ -60,6 +60,11 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({
         model: safeModel,
         max_tokens: safeMaxTokens,
+        // Structured-JSON task — disable extended thinking so the full token
+        // budget goes to the answer instead of being burned on reasoning
+        // (which was returning empty/truncated output). Ignored by models
+        // that don't support the field.
+        thinking: { type: 'disabled' },
         system: typeof system === 'string' ? system : '',
         messages: Array.isArray(messages) ? messages : []
       })
