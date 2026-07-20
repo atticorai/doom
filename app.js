@@ -1013,7 +1013,11 @@ const App=()=>{
             const seed=seedMap.get(fb.code+"|"+(fb.dma||""));
             if(!seed)return fb; // User-added ISCI, keep as-is
             const seedCat=seed.category||seed.caseType||"";const fbCat=fb.category||fb.caseType||"";const useSeedCat=seedCat&&(seedCat!=="Personal Injury (General)")&&(!fbCat||fbCat==="Personal Injury (General)"||fbCat==="—");
-            return{...fb,title:fb.title||seed.title,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:fb.fileUrl||seed.fileUrl,category:useSeedCat?seedCat:(fbCat||seedCat),caseType:useSeedCat?seedCat:(fbCat||seedCat),valueProp:fb.valueProp||seed.valueProp||"",vo:fb.vo||seed.vo||""};
+            // Lerner & Rowe: the seed titles are the clean canonical set (our naming,
+            // no [SP]/REV/mixdown vendor junk); Firestore's stored titles are stale, so
+            // force the seed title for L&R. Other brands keep the Firestore-wins rule.
+            const useTitle=(fb.brand==="Lerner & Rowe"&&seed.title)?seed.title:(fb.title||seed.title);
+            return{...fb,title:useTitle,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:fb.fileUrl||seed.fileUrl,category:useSeedCat?seedCat:(fbCat||seedCat),caseType:useSeedCat?seedCat:(fbCat||seedCat),valueProp:fb.valueProp||seed.valueProp||"",vo:fb.vo||seed.vo||""};
           });
           // Always add back missing seed ISCIs — better to recover than lose
           const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||""))&&!loadedDeleted.has(init.code+"|"+(init.dma||"")));
@@ -11389,6 +11393,7 @@ Rules:
   },[iscis,stations,trafficHistory,workMonth]);
 
   const DOOM_CHANGELOG=[
+    {d:"07/16/2026",t:"Force clean L&R titles",x:"Lerner & Rowe titles still showed the vendor junk ([SP], REV25, mixdown, etc.) because Firestore's stored titles overrode the clean seed titles. Load now forces the seed title for L&R (our naming, no junk), so the registry, sheets, and filenames all read clean. Other brands keep the Firestore-wins rule so their edits stick."},
     {d:"07/16/2026",t:"July poster POPs → real boards + photos (WK Birmingham & Knoxville)",x:"The July Lamar Proof-of-Performance reports (contracts 5570867 & 5570939) are the actual posted locations for the 'TBD rotating poster' slots that Lamar only confirms ~1 week before posting. Filled all 33 of those placeholders with the real posted board — panel #, cross-street location, size, weekly impressions, install date — plus each board's install photo. Breakdown: 23 Birmingham-area (Birmingham/Jasper/Albertville-Boaz), 5 Gadsden-area (Anniston/Gadsden/Centre/Talladega), 5 Knoxville (Knoxville/Lenoir City), and the 3 permanent Gadsden poster faces (60001/60045/60067). Every field comes straight from the report. Map pins still pending — the POP gives cross-streets, not coordinates."},
     {d:"07/15/2026",t:"Clear stale L&R Drive links",x:"Lerner & Rowe ISCIs were still carrying Google Drive URLs from the vendor share (never real uploads), so they showed a file when there wasn't one in storage. Load now blanks any drive.google link on L&R creative — scoped to Drive URLs so real uploads (Supabase) stick. L&R creative can now be uploaded from actual files."},
     {d:"07/15/2026",t:"Brand tab counts for all brands",x:"The count badges on the brand tabs (ISCI Registry, Traffic Tracker, Estimates, Stations) were hardcoded to Postman Law and Wettermark Keith, so Lerner & Rowe and Parrish DeVaughn always read (0) despite being full of creative/estimates/stations. Counts now compute for every brand."},
