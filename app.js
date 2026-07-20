@@ -6028,7 +6028,7 @@ const App=()=>{
           const resp=await fetch("/api/planner",{
             method:"POST",headers:{"Content-Type":"application/json"},
             body:JSON.stringify({
-              model:"claude-sonnet-5",max_tokens:1000,
+              model:"claude-sonnet-5",max_tokens:6000,
               messages:[{role:"user",content:`Extract OOH (outdoor advertising) contract details from this text. Return ONLY a JSON object with these fields:
 {
   "vendor": "company name",
@@ -7750,7 +7750,7 @@ Rules:
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"claude-sonnet-5",
-          max_tokens:8000,
+          max_tokens:24000,
           system:noRotation?marketStrategyPrompt:systemPrompt,
           messages:[{role:"user",content:noRotation
             ?("Here are the markets and market profiles for "+brand+":\n\n"+dataPayload+"\n\nGive me market-by-market creative strategy.")
@@ -11401,6 +11401,7 @@ Rules:
   },[iscis,stations,trafficHistory,workMonth]);
 
   const DOOM_CHANGELOG=[
+    {d:"07/16/2026",t:"Fix The Muses (AI Planner) empty output",x:"The AI Planner returned 'No response' because claude-sonnet-5 spent the entire 8,000-token budget on internal reasoning (stop_reason=max_tokens) and never wrote the answer. Raised the token cap to 32,000 and the Muses request to 24,000 (and the quip call to 6,000) so there's room for thinking plus the JSON output. Also made failures show the real reason instead of a blank 'No response.'"},
     {d:"07/16/2026",t:"Wettermark Keith V2 TV creative",x:"Added 70 revamped WK TV spots (5 categories × 2 lengths × 7 markets incl. Nashville), titled with a V2 tag (e.g. 'Auto Accident V2_30'). Codes numbered above the live max (:30 seq 19–23, :15 seq 18–22) — verified against live for zero collisions. Deactivated the 17 V1 generic-category spots the V2s supersede (Auto Accident, Premises Liability, On The Job). General PI parked under Brand pending a dedicated category."},
     {d:"07/16/2026",t:"Duplicate ISCI code alarm",x:"Added a safety net to the ISCI Registry: if any two records ever share the same ISCI code (which breaks trafficking and sends), a red banner now flags it at the top of the page with the offending codes. Catches collisions immediately instead of letting them slip in silently."},
     {d:"07/16/2026",t:"Force clean L&R titles",x:"Lerner & Rowe titles still showed the vendor junk ([SP], REV25, mixdown, etc.) because Firestore's stored titles overrode the clean seed titles. Load now forces the seed title for L&R (our naming, no junk), so the registry, sheets, and filenames all read clean. Other brands keep the Firestore-wins rule so their edits stick."},

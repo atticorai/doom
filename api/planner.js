@@ -9,7 +9,7 @@ function getCorsOrigin(req) {
 
 // Whitelist of allowed models and max token cap
 const ALLOWED_MODELS = ['claude-sonnet-5', 'claude-haiku-4-5-20251001', 'claude-opus-4-8'];
-const MAX_TOKENS_CAP = 8000;
+const MAX_TOKENS_CAP = 32000;
 
 module.exports = async function handler(req, res) {
   const corsOrigin = getCorsOrigin(req);
