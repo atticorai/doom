@@ -1051,6 +1051,11 @@ const App=()=>{
           });
           if(missing.length>0)console.warn("ISCI RESTORE: "+missing.length+" seed ISCIs were missing from Firestore — restored");
           console.log("ISCI load: "+enhanced.length+" from Firestore + "+missing.length+" restored = "+all.length+" total");
+          // Safety net: collapse any duplicate ISCI codes (e.g. the OOH title→code
+          // remap can map two saved records onto one seed code). Keep the first,
+          // but carry over a creative link / active flag from the dropped twin so
+          // nothing is lost. Two records sharing a code breaks trafficking/sends.
+          {const _seenC={};let _dup=0;for(let _k=0;_k<all.length;_k++){const _c=all[_k].code;const keep=_seenC[_c];if(keep){const d=all[_k];if(!keep.fileUrl&&d.fileUrl){keep.fileUrl=d.fileUrl;keep.crLock=d.crLock}if(d.active)keep.active=true;all.splice(_k,1);_k--;_dup++}else{_seenC[_c]=all[_k]}}if(_dup)console.warn("ISCI DEDUP: collapsed "+_dup+" duplicate-code record(s)")}
           // Save tagged ISCIs back to Firestore immediately
           {const _ts=Date.now();docTsRef.current.iscis=_ts;try{db.collection("appData").doc("iscis").set({data:JSON.stringify(all),ts:_ts}).catch(()=>{})}catch(e){}}
           setIscis(all);isciFbCountRef.current=all.length;iscisLoadedRef.current=true
@@ -11401,6 +11406,7 @@ Rules:
   },[iscis,stations,trafficHistory,workMonth]);
 
   const DOOM_CHANGELOG=[
+    {d:"07/16/2026",t:"De-duplicate ISCI codes on load",x:"The new duplicate-code alarm caught 4 real collisions (WK Spanish OOH: HSVWK26SP009O/010O/011O, MTGWK26SP009O) — the OOH title→code remap had mapped two saved records onto the same seed code. Load now collapses any duplicate-code records to a single one (carrying over the creative link/active flag from the dropped twin) and persists the fix, so the alarm clears and sends stay clean."},
     {d:"07/16/2026",t:"Fix The Muses (AI Planner) empty output",x:"The AI Planner returned 'No response' because claude-sonnet-5 spent the entire 8,000-token budget on internal reasoning (stop_reason=max_tokens) and never wrote the answer. Raised the token cap to 32,000 and the Muses request to 24,000 (and the quip call to 6,000) so there's room for thinking plus the JSON output. Also made failures show the real reason instead of a blank 'No response.'"},
     {d:"07/16/2026",t:"Wettermark Keith V2 TV creative",x:"Added 70 revamped WK TV spots (5 categories × 2 lengths × 7 markets incl. Nashville), titled with a V2 tag (e.g. 'Auto Accident V2_30'). Codes numbered above the live max (:30 seq 19–23, :15 seq 18–22) — verified against live for zero collisions. Deactivated the 17 V1 generic-category spots the V2s supersede (Auto Accident, Premises Liability, On The Job). General PI parked under Brand pending a dedicated category."},
     {d:"07/16/2026",t:"Duplicate ISCI code alarm",x:"Added a safety net to the ISCI Registry: if any two records ever share the same ISCI code (which breaks trafficking and sends), a red banner now flags it at the top of the page with the offending codes. Catches collisions immediately instead of letting them slip in silently."},
