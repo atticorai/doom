@@ -11252,6 +11252,8 @@ Rules:
     const WK_ME={January:"210",February:"211",March:"212",April:"213",May:"214",June:"215",July:"218",August:"221",September:"222",October:"223",November:"224",December:"225"};
     const plActive=iscis.filter(i=>i.brand==="Postman Law"&&i.active&&i.suffix!=="O").length;
     const wkActive=iscis.filter(i=>i.brand==="Wettermark Keith"&&i.active&&i.suffix!=="O").length;
+    const lrActive=iscis.filter(i=>i.brand==="Lerner & Rowe"&&i.active&&i.suffix!=="O").length;
+    const pdvActive=iscis.filter(i=>i.brand==="Parrish DeVaughn"&&i.active&&i.suffix!=="O").length;
     const plSta=stations.filter(s=>s.brand==="Postman Law").length;
     const wkSta=stations.filter(s=>s.brand==="Wettermark Keith").length;
     const withCreative=iscis.filter(i=>i.fileUrl&&i.suffix!=="O"&&i.active).length;
@@ -11259,7 +11261,7 @@ Rules:
     const curWkEst=WK_ME[workMonth]||"—";
     const BOOK_PAGES_1=[
       {title:"Welcome to Doom & Deliverables",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p><span style={{fontSize:28,fontFamily:"'Cinzel',serif",float:"left",marginRight:8,color:"#4a1a1a",lineHeight:1}}>T</span>his manual covers every procedure in the Doom & Deliverables Traffic Management System. It manages TV, Radio, Streaming Audio, Digital, and OOH advertising traffic for two brands: Postman Law and Wettermark Keith.</p>
+        <p><span style={{fontSize:28,fontFamily:"'Cinzel',serif",float:"left",marginRight:8,color:"#4a1a1a",lineHeight:1}}>T</span>his manual covers every procedure in the Doom & Deliverables Traffic Management System. It manages TV, Radio, Streaming Audio, Digital, and OOH advertising traffic for four brands: Postman Law, Wettermark Keith, Lerner &amp; Rowe, and Parrish DeVaughn.</p>
         <p>Every rotation you build, every email you send, every confirmation you track flows through this system. Follow the procedures in order and you'll be sending traffic in under an hour.</p>
         <BookMarginNote author="meg">I didn't volunteer to write this. But here we are.</BookMarginNote>
       </div>,damageEffects:<>{<BookBurnMark style={{top:0,right:0,width:96,height:96,opacity:.4}}/>}{<BookInkSplatter style={{bottom:32,left:16,opacity:.4}}/>}{<BookLipstickMark style={{top:"25%",right:32,opacity:.6,transform:"rotate(15deg) scale(1.25)"}}/>}</>},
@@ -11303,6 +11305,20 @@ Rules:
         <p>Old 4-digit WK estimates (2633–2660) are legacy — the system filters them out automatically. Ignore them if you see references.</p>
         <BookMarginNote author="muses">Six markets share one number's name<br/>But Birmingham and Dothan aren't the same!</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:32,opacity:.5,transform:"rotate(10deg) scale(.9)"}}/>}</>},
+
+      {title:"Lerner & Rowe Overview",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>Lerner &amp; Rowe runs across the Southwest and Pacific Northwest — Phoenix, Tucson, Albuquerque, Las Vegas, Reno, Seattle, Flagstaff, Bullhead, Yuma, and Chicago. Estimates are 4-digit (2661–2674).</p>
+        <p>Unlike the others, most L&amp;R creative is <b>shared</b> — the same spot carries one number and one title across every market, coded by market. Spanish spots are flagged right in the code with an <b>SP</b> after the brand: <span style={{fontFamily:"monospace"}}>LVSLRSP2630001R</span>.</p>
+        <p>Brand look is black &amp; gold. <span style={{color:"#C4A0C8",fontWeight:700}}>{lrActive} active ISCIs</span> across the markets.</p>
+        <BookMarginNote author="meg">New blood. Try to keep the codes straight.</BookMarginNote>
+      </div>,damageEffects:<>{<BookInkSplatter style={{bottom:20,right:20,opacity:.4}}/>}{<BookHoofMark style={{top:20,left:20,opacity:.2,transform:"rotate(12deg) scale(.65)"}}/>}</>},
+
+      {title:"Parrish DeVaughn Overview",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>Parrish DeVaughn is Oklahoma — <b>Oklahoma City</b> is live and <b>Tulsa</b> is the expansion market. Jessica Flynn is the buyer.</p>
+        <p>PDV leans on Local &amp; Experienced and No-Fee-Guarantee messaging, and it's the one brand with a <b>Motorcycle</b> category. Estimates are the real numbers (5372–6864) across eight products — Auto, AM News, Discretionary, Products, Thunder, EN/LN, CTV, YouTube.</p>
+        <p>Brand red. <span style={{color:"#C4A0C8",fontWeight:700}}>{pdvActive} active ISCIs</span>. For Tulsa: lead with Local &amp; Experienced, add case types, always recommend bookend pairs.</p>
+        <BookMarginNote author="muses">From OKC to Tulsa's rise<br/>New markets bloom before our eyes!</BookMarginNote>
+      </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:28,opacity:.45,transform:"rotate(10deg) scale(.95)"}}/>}{<BookDroolStain style={{bottom:16,left:16,width:72,height:72,opacity:.2}}/>}</>},
 
       {title:"How to Build a Rotation",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
         <p>In the Traffic Center: 1) Set the broadcast month. 2) Select an estimate (or multiple for PL combined). 3) Click 'Build.' 4) Choose which ISCIs to include. 5) Set rotation percentages per schedule (M–F, Weekend, All Week, Bookend). Each must total 100%.</p>
@@ -11420,6 +11436,7 @@ Rules:
       {title:"The AI Planner",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
         <p>Open the AI Planner to get a Claude-powered analysis of your traffic strategy. It checks: which rotations are getting stale, which markets are missing coverage, whether you're rotating enough creative variety, and which markets need attention.</p>
         <p>The analysis is presented by the Five Muses — they narrate your traffic story with dramatic flair. Use their recommendations to prioritize what to build or re-send next.</p>
+        <p>The Muses also hand you a <b>mock rotation</b> per market. Hit <b>'Make it Real → Library'</b> to save it as a draft (stations auto-linked, PDF downloaded, logged) that you finish and send the normal way — or <b>'Download Rotation'</b> for just the PDF. The planner honors the rules: Wettermark Keith's Mother's Wreck never leaves a rotation, and Parrish DeVaughn's Tulsa gets the expansion treatment.</p>
         <BookMarginNote author="muses">We are the Muses, goddesses of the arts<br/>We'll sing of your traffic — the sum of its parts!</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:32,right:24,opacity:.5,transform:"rotate(10deg) scale(1.1)"}}/>}{<BookDroolStain style={{bottom:16,left:32,width:80,height:80,opacity:.2}}/>}</>},
 
@@ -11443,6 +11460,15 @@ Rules:
         <BookMarginNote author="muses">It saves itself, no button to press<br/>But heed the banners — avoid the mess!</BookMarginNote>
       </div>,damageEffects:<>{<BookDroolStain style={{bottom:16,left:24,width:72,height:72,opacity:.2}}/>}</>},
 
+      {title:"The Living Record",content:<div style={{display:"flex",flexDirection:"column",gap:12}}>
+        <p><span style={{fontSize:28,fontFamily:"'Cinzel',serif",float:"left",marginRight:8,color:"#4a1a1a",lineHeight:1}}>D</span>oom is never finished — she grows. This page is where her evolution is written down. The <b>Audit Log</b> remembers who did what; this remembers what got <i>built</i>.</p>
+        <p><b>Two brands became four.</b> Lerner &amp; Rowe (Southwest &amp; Pacific Northwest, shared creative, Spanish in the code) and Parrish DeVaughn (Oklahoma City live, Tulsa expanding) joined Postman Law and Wettermark Keith.</p>
+        <p><b>Wettermark Keith was rebuilt in V2</b> — a fresh set of TV spots (Auto, Premises, General PI, Trucking, On The Job, in :30 and :15) across every market, with Nashville coming online.</p>
+        <p><b>The Muses learned to act.</b> The AI Planner now turns a mock rotation into a real Library draft — stations auto-linked, PDF in hand — or downloads the rotation on its own.</p>
+        <p><b>The registry got smarter and safer</b> — filter by length, category, or value prop, and a duplicate-code alarm stops collisions before they ever reach a send.</p>
+        <BookMarginNote author="meg">I keep the receipts. Everything I've built is written here — and I'm not done.</BookMarginNote>
+      </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:28,opacity:.5,transform:"rotate(12deg) scale(1.1)"}}/>}{<BookInkSplatter style={{bottom:20,left:20,opacity:.4}}/>}{<BookBurnMark style={{top:0,left:0,width:80,height:80,opacity:.25}}/>}</>},
+
       {title:"End of the Line",content:<div style={{display:"flex",flexDirection:"column",gap:14,textAlign:"center",paddingTop:24}}>
         <p style={{fontSize:17,fontFamily:"'Cinzel',serif",color:"#4a1a1a"}}>Thus concludes the operating manual for Doom & Deliverables.</p>
         <p style={{fontStyle:"italic",color:"#5a4a3a",fontSize:12}}>May your rotations total 100%, your confirmations come swiftly, and your ISCIs never drop below the safeguard.</p>
@@ -11455,34 +11481,7 @@ Rules:
     return[...BOOK_PAGES_1,...BOOK_PAGES_2,...BOOK_PAGES_3];
   },[iscis,stations,trafficHistory,workMonth]);
 
-  const DOOM_CHANGELOG=[
-    {d:"07/20/2026",t:"Muses: standalone Download Rotation button",x:"Added a dedicated '⬇ Download Rotation' button next to 'Make it Real → Library'. Before, the rotation PDF only came out as a side effect of accepting into the Library — if you just wanted the mock rotation on paper (to review or share) without committing a draft, there was nothing to click. Now Download Rotation gives you the traffic-instructions PDF with no save and no log; Make it Real still does the full save+link+download+log."},
-    {d:"07/16/2026",t:"Muses: Make it Real → Library",x:"The AI mock rotation can now be accepted. 'Make it Real → Library' saves a DRAFT per market into the Traffic Library (rotation, weights, bookend pairs, auto-filled estimate for WK), auto-links the brand's TV stations for each market (brand-wide; left empty only if the brand has no stations yet), downloads a rotation PDF, and logs it. Nothing sends — drafts are finished and sent through the normal Library flow. 'Re-run AI' is the try-again."},
-    {d:"07/16/2026",t:"AI Planner trafficking rules",x:"Baked two hard rules into The Muses: Wettermark Keith's 'Mother's Wreck' (any length) is a locked spot — never retired, never dropped from a rotation; and Parrish DeVaughn's Tulsa is an expansion market — lead with Local & Experienced spots, add a few case types, always recommend bookend pairs. The AI now respects both in its recommendations."},
-    {d:"07/16/2026",t:"AI Planner sees all creative",x:"The Muses only received the first 80 bench spots, so newly-uploaded creative (appended to the end of the library) never reached the AI and got left out of the analysis. Raised the bench cap to 400 so the planner sees the full available library, including brand-new spots."},
-    {d:"07/16/2026",t:"De-duplicate ISCI codes on load",x:"The new duplicate-code alarm caught 4 real collisions (WK Spanish OOH: HSVWK26SP009O/010O/011O, MTGWK26SP009O) — the OOH title→code remap had mapped two saved records onto the same seed code. Load now collapses any duplicate-code records to a single one (carrying over the creative link/active flag from the dropped twin) and persists the fix, so the alarm clears and sends stay clean."},
-    {d:"07/16/2026",t:"Fix The Muses (AI Planner) empty output",x:"The AI Planner returned 'No response' because claude-sonnet-5 spent the entire 8,000-token budget on internal reasoning (stop_reason=max_tokens) and never wrote the answer. Raised the token cap to 32,000 and the Muses request to 24,000 (and the quip call to 6,000) so there's room for thinking plus the JSON output. Also made failures show the real reason instead of a blank 'No response.'"},
-    {d:"07/16/2026",t:"Wettermark Keith V2 TV creative",x:"Added 70 revamped WK TV spots (5 categories × 2 lengths × 7 markets incl. Nashville), titled with a V2 tag (e.g. 'Auto Accident V2_30'). Codes numbered above the live max (:30 seq 19–23, :15 seq 18–22) — verified against live for zero collisions. Deactivated the 17 V1 generic-category spots the V2s supersede (Auto Accident, Premises Liability, On The Job). General PI parked under Brand pending a dedicated category."},
-    {d:"07/16/2026",t:"Duplicate ISCI code alarm",x:"Added a safety net to the ISCI Registry: if any two records ever share the same ISCI code (which breaks trafficking and sends), a red banner now flags it at the top of the page with the offending codes. Catches collisions immediately instead of letting them slip in silently."},
-    {d:"07/16/2026",t:"Force clean L&R titles",x:"Lerner & Rowe titles still showed the vendor junk ([SP], REV25, mixdown, etc.) because Firestore's stored titles overrode the clean seed titles. Load now forces the seed title for L&R (our naming, no junk), so the registry, sheets, and filenames all read clean. Other brands keep the Firestore-wins rule so their edits stick."},
-    {d:"07/16/2026",t:"July poster POPs → real boards + photos (WK Birmingham & Knoxville)",x:"The July Lamar Proof-of-Performance reports (contracts 5570867 & 5570939) are the actual posted locations for the 'TBD rotating poster' slots that Lamar only confirms ~1 week before posting. Filled all 33 of those placeholders with the real posted board — panel #, cross-street location, size, weekly impressions, install date — plus each board's install photo. Breakdown: 23 Birmingham-area (Birmingham/Jasper/Albertville-Boaz), 5 Gadsden-area (Anniston/Gadsden/Centre/Talladega), 5 Knoxville (Knoxville/Lenoir City), and the 3 permanent Gadsden poster faces (60001/60045/60067). Every field comes straight from the report. Map pins still pending — the POP gives cross-streets, not coordinates."},
-    {d:"07/15/2026",t:"Clear stale L&R Drive links",x:"Lerner & Rowe ISCIs were still carrying Google Drive URLs from the vendor share (never real uploads), so they showed a file when there wasn't one in storage. Load now blanks any drive.google link on L&R creative — scoped to Drive URLs so real uploads (Supabase) stick. L&R creative can now be uploaded from actual files."},
-    {d:"07/15/2026",t:"Brand tab counts for all brands",x:"The count badges on the brand tabs (ISCI Registry, Traffic Tracker, Estimates, Stations) were hardcoded to Postman Law and Wettermark Keith, so Lerner & Rowe and Parrish DeVaughn always read (0) despite being full of creative/estimates/stations. Counts now compute for every brand."},
-    {d:"07/15/2026",t:"ISCI Registry filters: length, category, value prop",x:"Added Length, Category, and Value Prop dropdown filters to the ISCI Registry (alongside the existing media/DMA/search), plus a Clear filters button. Options populate from the current brand's creative, so you can narrow to just :30s, a single category, a value prop, or any combination."},
-    {d:"07/15/2026",t:"Tag vocabularies merge instead of overwrite",x:"Category/value-prop/VO dropdowns were missing standard options (e.g. Motorcycle for Parrish DeVaughn) because Firestore's saved tag lists replaced the built-in defaults per brand on load. Any spot set to a missing option showed blank. Load now unions the built-in vocabulary with the saved one, so standard categories and value props always appear alongside custom additions."},
-    {d:"07/15/2026",t:"Parrish DeVaughn value props showing",x:"PDV value props weren't displaying — Firestore stored them blank (saved before they were set) and the load merge didn't fall back to the seed for valueProp like it does for title/category/VO. Fixed the merge to restore seed value props where Firestore is blank (user edits still win). Also synced PDV value props + categories to the approved mapping across OKC and the Tulsa mirrors, and added 'Spokes Person/Motorcycle' and 'Brand - 444' to the PDV value-prop vocabulary."},
-    {d:"07/15/2026",t:"ASCII-clean ISCI titles",x:"Normalized 21 titles that carried unicode punctuation to plain ASCII — Parrish DeVaughn 'Don't DIY' (curly apostrophe), Postman Law 'Peace of Mind –' (en-dash), and a Wettermark Keith title with a non-breaking space. Load now cleans titles on read (curly quotes, dashes, nbsp) and persists back, so Firestore-stored copies get fixed too and downloaded creative filenames stay clean."},
-    {d:"07/15/2026",t:"Lerner & Rowe new creative (studio drop)",x:"Added 123 ISCIs from Chad Watrous's July drop (19 source files), all active. Accident Tips + 6 MythBusters (16x9) run TV across all 9 markets as shared creative (same number/title, market-coded); the 6 MythBuster 9x16 verticals are Digital (…D codes) across all 9 markets; Phoenix locals (Accident Tips Phoenix, Copy Cat, Zero Upfront, LRGB) and Chicago locals (Imposter, Imposter 2) are market-specific. Codes seq 020–032 (TV) and 001–006 (Digital), :15. Bulk download page refreshed to include them."},
-    {d:"07/14/2026",t:"Lerner & Rowe registry purge",x:"The registry was still showing stale cj-imported L&R ISCIs from Firestore — cj-format codes (LRAL35122, LRPH35109) and orphan rows (PHXLR2630004R) with [SP]/mixdown/yaya titles and bad file links — because Firestore records survive seed edits. Load now drops any L&R record whose code isn't in the clean seed (our naming, SP-infix, professional titles) and restores the canonical 171 in their place. Fix is self-healing and persists back to Firestore on load."},
-    {d:"07/14/2026",t:"Parrish DeVaughn real buys",x:"Replaced placeholder estimates with 24 real cj estimate numbers (5372–6864) across 8 products (Auto, AM News, Discretionary, Products, Thunder, EN/LN, CTV, YouTube). Added Oklahoma City stations: 7 broadcast TV (KFOR/KOCO/KWTV/KOKH/KAUT/KOCB/KSBI), 12 radio, 4 CTV/digital vendors; plus 5 Tulsa target radio stations. Traffic Tracker now reads PDV's TV/Radio/Digital/OOH. Traffic emails still needed for sends."},
-    {d:"07/14/2026",t:"Live Guide",x:"Guide now renders live brand/market/prefix data, per-brand counts, and this changelog."},
-    {d:"07/14/2026",t:"Lerner & Rowe onboarded",x:"171 ISCIs across 9 markets in Atticor's naming convention; 14 estimates (2661–2674); same spot shares one number + title across markets; Spanish flagged in the code (…LRSP…)."},
-    {d:"07/14/2026",t:"Market prefixes finalized",x:"Las Vegas LAS→LVS, Yuma YUM→YMA, King/Bull KGB→KBH; added Bullhead (BHD) and Flagstaff (FLG) as their own TV/Radio markets."},
-    {d:"07/14/2026",t:"Brand colors corrected",x:"Postman Law → deeper purple (#5D3A87); Lerner & Rowe → brand black & yellow (#F2DD00)."},
-    {d:"07/14/2026",t:"Traffic Tracker",x:"Lerner & Rowe now reads TV + Radio (previously OOH-only)."},
-    {d:"07/14/2026",t:"Parrish DeVaughn added",x:"New brand: 342 ISCIs (Oklahoma City live, Tulsa staged inactive), brand red #EE2B37, buyer Jessica Flynn."},
-    {d:"07/14/2026",t:"Agency corrected",x:"All brands now bill as Atticor Group LLC (replacing stale placeholders)."},
-  ];
+  const DOOM_CHANGELOG=[]; // RETIRED: the audit trail lives under Audit Log; app changes are now chronicled in the Guide book ("The Living Record" page) — the living document.
   const BrandPrefixGuide=()=>{
     const tc=(hex)=>{try{const n=parseInt(String(hex).slice(1),16);return (0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))>150?"#1e1233":"#fff"}catch(e){return"#fff"}};
     const mktName=(c)=>(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c])||(typeof DM!=="undefined"&&DM[c])||c;
@@ -11530,15 +11529,6 @@ Rules:
         <span style={{color:"#4AC8E8"}}>LVS</span> · <span style={{color:"#D4A040"}}>LR</span> · <span style={{color:"#5BC4A0"}}>26</span> · <span style={{color:"#E8DFF0"}}>30</span> · <span style={{color:"#E8DFF0"}}>001</span> · <span style={{color:"#E85A7A"}}>R</span> &nbsp;→&nbsp; <b style={{color:"#F0E8F8"}}>LVSLR2630001R</b>
         <span style={{color:"#9B8EAD"}}> &nbsp;(Las Vegas · Lerner &amp; Rowe · 2026 · :30 · #001 · Radio)</span><br/>
         <span style={{color:"#9B8EAD"}}>Spanish inserts</span> <span style={{color:"#4AC8E8"}}>SP</span> <span style={{color:"#9B8EAD"}}>after the brand → </span><b style={{color:"#F0E8F8"}}>LVSLRSP2630001R</b>. <span style={{color:"#9B8EAD"}}>Media suffix: T=TV, R=Radio, S=Streaming, O=OOH, D=Digital.</span>
-      </div>
-      <div style={{fontSize:16,fontWeight:800,color:"#F0E8F8",margin:"20px 0 4px"}}>Changelog <span style={{fontSize:10,color:"#5BC4A0",fontWeight:700,letterSpacing:1}}>● LIVE</span></div>
-      <div style={{fontSize:12,color:"#9B8EAD",marginBottom:10}}>Every change to Doom, logged and explained — newest first.</div>
-      <div style={{display:"flex",flexDirection:"column",gap:0}}>
-        {DOOM_CHANGELOG.map((c,i)=><div key={i} style={{display:"flex",gap:12,padding:"9px 0",borderBottom:i<DOOM_CHANGELOG.length-1?"1px solid rgba(155,123,176,.12)":"none"}}>
-          <span style={{fontSize:11,fontFamily:"monospace",color:"#9B8EAD",whiteSpace:"nowrap",paddingTop:2}}>{c.d}</span>
-          <span style={{width:6,height:6,borderRadius:99,background:"#5BC4A0",marginTop:6,flexShrink:0}}/>
-          <span><b style={{color:"#F0E8F8",fontSize:13.5}}>{c.t}</b><div style={{color:"#C4A0C8",fontSize:12,marginTop:1}}>{c.x}</div></span>
-        </div>)}
       </div>
     </div>;
   };
