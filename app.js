@@ -1031,6 +1031,11 @@ const App=()=>{
           // uploads). Scoped to drive.google URLs so once real files are uploaded
           // (Supabase URLs) they persist and aren't wiped on the next load.
           all.forEach(i=>{if(i.brand==="Lerner & Rowe"&&i.fileUrl&&/drive\.google/.test(i.fileUrl)){i.fileUrl="";i.crLock=false}});
+          // Wettermark Keith V2 revamp: deactivate the V1 generic-category spots the
+          // new V2 versions supersede (active is stored in the DB and wins over seed,
+          // so force it off here). The V2 replacements are already active in the seed.
+          const WK_V2_SUPERSEDED=new Set(["BRMWK2615014T","DHNWK2615014T","HSVWK2615014T","MTGWK2615014T","BRMWK2630015T","BRMWK2615013T","DHNWK2615013T","HSVWK2615013T","MTGWK2615013T","BRMWK2615012T","CHAWK2615012T","DHNWK2615012T","HSVWK2615012T","KNXWK2615012T","MTGWK2615012T","HSVWK2630012T","MTGWK2630012T"]);
+          all.forEach(i=>{if(WK_V2_SUPERSEDED.has(i.code))i.active=false});
           // Assign WK categories and VO — only if empty or generic. User edits stick.
           const GENERIC=new Set(["","Personal Injury (General)","—"]);
           all.forEach(i=>{if(i.brand!=="Wettermark Keith")return;
@@ -11395,6 +11400,7 @@ Rules:
   },[iscis,stations,trafficHistory,workMonth]);
 
   const DOOM_CHANGELOG=[
+    {d:"07/16/2026",t:"Wettermark Keith V2 TV creative",x:"Added 70 revamped WK TV spots (5 categories × 2 lengths × 7 markets incl. Nashville), titled with a V2 tag (e.g. 'Auto Accident V2_30'). Codes numbered above the live max (:30 seq 19–23, :15 seq 18–22) — verified against live for zero collisions. Deactivated the 17 V1 generic-category spots the V2s supersede (Auto Accident, Premises Liability, On The Job). General PI parked under Brand pending a dedicated category."},
     {d:"07/16/2026",t:"Duplicate ISCI code alarm",x:"Added a safety net to the ISCI Registry: if any two records ever share the same ISCI code (which breaks trafficking and sends), a red banner now flags it at the top of the page with the offending codes. Catches collisions immediately instead of letting them slip in silently."},
     {d:"07/16/2026",t:"Force clean L&R titles",x:"Lerner & Rowe titles still showed the vendor junk ([SP], REV25, mixdown, etc.) because Firestore's stored titles overrode the clean seed titles. Load now forces the seed title for L&R (our naming, no junk), so the registry, sheets, and filenames all read clean. Other brands keep the Firestore-wins rule so their edits stick."},
     {d:"07/16/2026",t:"July poster POPs → real boards + photos (WK Birmingham & Knoxville)",x:"The July Lamar Proof-of-Performance reports (contracts 5570867 & 5570939) are the actual posted locations for the 'TBD rotating poster' slots that Lamar only confirms ~1 week before posting. Filled all 33 of those placeholders with the real posted board — panel #, cross-street location, size, weekly impressions, install date — plus each board's install photo. Breakdown: 23 Birmingham-area (Birmingham/Jasper/Albertville-Boaz), 5 Gadsden-area (Anniston/Gadsden/Centre/Talladega), 5 Knoxville (Knoxville/Lenoir City), and the 3 permanent Gadsden poster faces (60001/60045/60067). Every field comes straight from the report. Map pins still pending — the POP gives cross-streets, not coordinates."},
