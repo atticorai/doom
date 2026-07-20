@@ -7621,7 +7621,7 @@ ${fullText.substring(0,3000)}`}]
         voDistribution:voCounts,
         marketBreakdown,
         marketProfiles:relevantProfiles,
-        benchISCIs:bench.slice(0,80),
+        benchISCIs:bench.slice(0,400),
         totalActiveISCIs:brandIscis.length,
         totalInRotation:inRotation.size
       });
@@ -11406,6 +11406,7 @@ Rules:
   },[iscis,stations,trafficHistory,workMonth]);
 
   const DOOM_CHANGELOG=[
+    {d:"07/16/2026",t:"AI Planner sees all creative",x:"The Muses only received the first 80 bench spots, so newly-uploaded creative (appended to the end of the library) never reached the AI and got left out of the analysis. Raised the bench cap to 400 so the planner sees the full available library, including brand-new spots."},
     {d:"07/16/2026",t:"De-duplicate ISCI codes on load",x:"The new duplicate-code alarm caught 4 real collisions (WK Spanish OOH: HSVWK26SP009O/010O/011O, MTGWK26SP009O) — the OOH title→code remap had mapped two saved records onto the same seed code. Load now collapses any duplicate-code records to a single one (carrying over the creative link/active flag from the dropped twin) and persists the fix, so the alarm clears and sends stay clean."},
     {d:"07/16/2026",t:"Fix The Muses (AI Planner) empty output",x:"The AI Planner returned 'No response' because claude-sonnet-5 spent the entire 8,000-token budget on internal reasoning (stop_reason=max_tokens) and never wrote the answer. Raised the token cap to 32,000 and the Muses request to 24,000 (and the quip call to 6,000) so there's room for thinking plus the JSON output. Also made failures show the real reason instead of a blank 'No response.'"},
     {d:"07/16/2026",t:"Wettermark Keith V2 TV creative",x:"Added 70 revamped WK TV spots (5 categories × 2 lengths × 7 markets incl. Nashville), titled with a V2 tag (e.g. 'Auto Accident V2_30'). Codes numbered above the live max (:30 seq 19–23, :15 seq 18–22) — verified against live for zero collisions. Deactivated the 17 V1 generic-category spots the V2s supersede (Auto Accident, Premises Liability, On The Job). General PI parked under Brand pending a dedicated category."},
