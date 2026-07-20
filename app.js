@@ -7757,9 +7757,10 @@ Rules:
             :("Here is the current rotation data for "+brand+":\n\n"+dataPayload+"\n\nPlease analyze and provide your recommendations.")}]
         })
       });
-      if(!resp.ok)throw new Error("API error: "+resp.status);
-      const data=await resp.json();
-      const text=data.content?.map(c=>c.text||"").join("\n")||"No response";
+      const data=await resp.json().catch(()=>({}));
+      if(!resp.ok){throw new Error("API "+resp.status+": "+(data&&data.error?(typeof data.error==="string"?data.error:JSON.stringify(data.error)):resp.statusText||"request failed"));}
+      const text=(data.content?.map(c=>c.text||"").join("\n")||"").trim();
+      if(!text){throw new Error("AI returned no text."+(data.stop_reason?(" stop_reason="+data.stop_reason+".") :"")+(data.error?(" error="+JSON.stringify(data.error)):(" raw="+JSON.stringify(data).slice(0,500))));}
       setPlanResult(text);
     }catch(e){
       setPlanError(e.message);
