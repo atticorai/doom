@@ -7626,7 +7626,10 @@ ${fullText.substring(0,3000)}`}]
         totalInRotation:inRotation.size
       });
 
-      const systemPrompt=`You are a media planning AI for Atticor, a media buying agency managing TV, Radio, Cable, Streaming Audio, Digital, and OOH advertising for personal injury law firms in 2026.
+      // Brand/market-specific trafficking rules the AI must obey (locked spots, expansion markets)
+      const brandRules=(brand==="Wettermark Keith"?"\n\nLOCKED SPOT — HARD RULE: \"Mother's Wreck\" (any length, any market) NEVER goes offline. NEVER put it in the retire list and NEVER drop it from a mock_rotation, no matter how many months it has run. It is a permanent Wettermark Keith anchor — always keep it weighted in every market that runs it.":"")+(brand==="Parrish DeVaughn"?"\n\nTULSA EXPANSION — HARD RULE: Tulsa (TUL) is a brand-NEW market for Parrish DeVaughn with no rotation history. For Tulsa, lead the rotation with \"Local & Experienced\" value-prop spots to build local trust first, supplement with a few strong case-type spots (Auto Accidents, Motorcycle, Testimonials), and always recommend bookend pairs. Do not treat Tulsa like an established market.":"");
+
+      const systemPrompt=`You are a media planning AI for Atticor, a media buying agency managing TV, Radio, Cable, Streaming Audio, Digital, and OOH advertising for personal injury law firms in 2026.${brandRules}
 
 TODAY: ${nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
 CURRENT MONTH: ${currentBroadcastMonth}
@@ -7710,7 +7713,7 @@ Rules:
       // Newer brand with no rotation to evolve — give market-level strategy
       // (which case-types to focus on and why, per market) off the market
       // profiles, instead of demanding an ISCI rotation that doesn't exist.
-      const marketStrategyPrompt=`You are a media planning AI for Atticor, a media buying agency handling TV, Radio, and Cable advertising for personal injury law firms in 2026.
+      const marketStrategyPrompt=`You are a media planning AI for Atticor, a media buying agency handling TV, Radio, and Cable advertising for personal injury law firms in 2026.${brandRules}
 
 TODAY: ${nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
 CURRENT MONTH: ${currentBroadcastMonth}
@@ -11406,6 +11409,7 @@ Rules:
   },[iscis,stations,trafficHistory,workMonth]);
 
   const DOOM_CHANGELOG=[
+    {d:"07/16/2026",t:"AI Planner trafficking rules",x:"Baked two hard rules into The Muses: Wettermark Keith's 'Mother's Wreck' (any length) is a locked spot — never retired, never dropped from a rotation; and Parrish DeVaughn's Tulsa is an expansion market — lead with Local & Experienced spots, add a few case types, always recommend bookend pairs. The AI now respects both in its recommendations."},
     {d:"07/16/2026",t:"AI Planner sees all creative",x:"The Muses only received the first 80 bench spots, so newly-uploaded creative (appended to the end of the library) never reached the AI and got left out of the analysis. Raised the bench cap to 400 so the planner sees the full available library, including brand-new spots."},
     {d:"07/16/2026",t:"De-duplicate ISCI codes on load",x:"The new duplicate-code alarm caught 4 real collisions (WK Spanish OOH: HSVWK26SP009O/010O/011O, MTGWK26SP009O) — the OOH title→code remap had mapped two saved records onto the same seed code. Load now collapses any duplicate-code records to a single one (carrying over the creative link/active flag from the dropped twin) and persists the fix, so the alarm clears and sends stay clean."},
     {d:"07/16/2026",t:"Fix The Muses (AI Planner) empty output",x:"The AI Planner returned 'No response' because claude-sonnet-5 spent the entire 8,000-token budget on internal reasoning (stop_reason=max_tokens) and never wrote the answer. Raised the token cap to 32,000 and the Muses request to 24,000 (and the quip call to 6,000) so there's room for thinking plus the JSON output. Also made failures show the real reason instead of a blank 'No response.'"},
