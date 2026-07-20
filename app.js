@@ -7964,6 +7964,33 @@ Rules:
     const hasPriorities=playbook&&Array.isArray(playbook.priorities)&&playbook.priorities.length>0;
     // Muses by short key for the chorus interjections
     const museShort={calliope:MUSES.find(m=>m.name==="Calliope"),thalia:MUSES.find(m=>m.name==="Thalia"),melpomene:MUSES.find(m=>m.name==="Melpomene"),terpsichore:MUSES.find(m=>m.name==="Terpsichore"),clio:MUSES.find(m=>m.name==="Clio")};
+    // Accept the mock rotation: save a DRAFT per market to the Traffic Library,
+    // download a rotation PDF, and log it. Nothing sends — drafts are finished
+    // and sent through the normal Library flow. (Step 1 of the accept loop.)
+    const acceptPlan=()=>{
+      if(!hasMarketSnapshots){notify("Run the AI first");return}
+      const stamp=new Date().toISOString();
+      const recs=playbook.marketSnapshots.map(ms=>{
+        const mr=ms.mock_rotation||{};
+        const row=(s,dur)=>({code:s.code,title:s.title||"",dur:String(dur),pct:parseInt(s.weight)||0,sched:"All Week",bookend:""});
+        const iscis=[...(Array.isArray(mr.thirties)?mr.thirties.map(s=>row(s,30)):[]),...(Array.isArray(mr.fifteens)?mr.fifteens.map(s=>row(s,15)):[])].filter(r=>r.code);
+        (Array.isArray(mr.bookend_pairs)?mr.bookend_pairs:[]).forEach((bp,bi)=>{(bp.spots||[]).forEach((sp,si)=>{const r=iscis.find(x=>x.code===sp.code);if(r)r.bookend=(bp.slot||("Pair "+(bi+1)))+" "+String.fromCharCode(65+si)})});
+        return{ts:stamp,est:planBrand==="Wettermark Keith"?(WK_MONTH_EST_MAP[monthA]||""):"",brand:planBrand,market:ms.market,media:"TV",month:monthA,version:1,iscis,stations:[],status:"draft",source:"muses",comments:"AI mock rotation"+(playbook.big_idea&&playbook.big_idea.title?(" — "+playbook.big_idea.title):"")};
+      }).filter(r=>r.iscis.length);
+      if(!recs.length){notify("No rotation in this plan to save");return}
+      setTrafficHistory(p=>[...recs,...p]);
+      try{
+        const jp=window.jspdf&&window.jspdf.jsPDF;if(jp){const doc=new jp({unit:"pt",format:"letter"});let y=48;const L=48;
+          doc.setFontSize(16);doc.setTextColor(60,40,90);doc.text(planBrand+" — AI Mock Rotation ("+monthA+")",L,y);y+=20;
+          doc.setFontSize(9);doc.setTextColor(130,130,130);doc.text("DRAFT plan of record · generated "+new Date().toLocaleString(),L,y);y+=16;
+          if(playbook.big_idea&&playbook.big_idea.title){doc.setFontSize(11);doc.setTextColor(180,120,40);doc.text("Big Idea: "+playbook.big_idea.title,L,y);y+=18}
+          recs.forEach(rec=>{if(y>720){doc.addPage();y=48}doc.setFontSize(12);doc.setTextColor(30,30,30);doc.text(rec.market+(rec.est?("   ·   Est "+rec.est):""),L,y);y+=15;doc.setFontSize(9);doc.setTextColor(70,70,70);
+            rec.iscis.forEach(it=>{if(y>745){doc.addPage();y=48}doc.text(":"+it.dur+"  "+String(it.pct).padStart(3)+"%  "+it.code+"  "+(it.title||"")+(it.bookend?("  ["+it.bookend+"]"):""),L,y);y+=12});y+=10});
+          doc.save(planBrand.replace(/[^A-Za-z]/g,"")+"_"+String(monthA).replace(/[^A-Za-z0-9]/g,"")+"_mock_rotation.pdf");}
+      }catch(e){notify("Saved to Library, but PDF failed: "+e.message)}
+      log("AI Rotation → Library",recs.length+" "+planBrand+" draft"+(recs.length>1?"s":"")+" for "+monthA);
+      notify("✅ "+recs.length+" draft"+(recs.length>1?"s":"")+" saved to Library · PDF downloaded");
+    };
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
       <PageHead title="The Muses" pgKey="planner" sub="Megara's strategy memo for the next broadcast month"/>
       <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
@@ -7989,6 +8016,7 @@ Rules:
         <button onClick={runPlanner} disabled={planLoading} style={{padding:"8px 18px",borderRadius:7,border:"none",background:planLoading?"#4a3565":"linear-gradient(135deg,#9b7bb0,#D4A040)",color:"#fff",fontSize:13,fontWeight:800,cursor:planLoading?"not-allowed":"pointer",letterSpacing:.5,boxShadow:planLoading?"none":"0 4px 16px rgba(155,123,176,.3)"}}>
           {planLoading?"🧠 Thinking…":(playbook?"🔄 Re-run AI":"🧠 Run AI — "+planBrand)}
         </button>
+        {hasMarketSnapshots&&<button onClick={acceptPlan} title="Save this rotation as a draft in the Traffic Library + download the PDF" style={{padding:"8px 16px",borderRadius:7,border:"none",background:"linear-gradient(135deg,#5BC4A0,#4AC8E8)",color:"#0c1420",fontSize:12,fontWeight:800,cursor:"pointer",letterSpacing:.3}}>✅ Make it Real → Library</button>}
       </div>
       {/* Monthly Summary panel — both brands, only shows sections with traffic */}
       {monthlyReport&&<div style={{padding:"14px 18px",borderRadius:10,background:"rgba(74,200,232,.05)",border:"1px solid rgba(74,200,232,.25)"}}>
@@ -11409,6 +11437,7 @@ Rules:
   },[iscis,stations,trafficHistory,workMonth]);
 
   const DOOM_CHANGELOG=[
+    {d:"07/16/2026",t:"Muses: Make it Real → Library",x:"The AI mock rotation can now be accepted. 'Make it Real → Library' saves a DRAFT per market into the Traffic Library (rotation, weights, bookend pairs, auto-filled estimate for WK), downloads a rotation PDF, and logs it. Nothing sends — drafts are finished (stations) and sent through the normal Library flow. 'Re-run AI' is the try-again."},
     {d:"07/16/2026",t:"AI Planner trafficking rules",x:"Baked two hard rules into The Muses: Wettermark Keith's 'Mother's Wreck' (any length) is a locked spot — never retired, never dropped from a rotation; and Parrish DeVaughn's Tulsa is an expansion market — lead with Local & Experienced spots, add a few case types, always recommend bookend pairs. The AI now respects both in its recommendations."},
     {d:"07/16/2026",t:"AI Planner sees all creative",x:"The Muses only received the first 80 bench spots, so newly-uploaded creative (appended to the end of the library) never reached the AI and got left out of the analysis. Raised the bench cap to 400 so the planner sees the full available library, including brand-new spots."},
     {d:"07/16/2026",t:"De-duplicate ISCI codes on load",x:"The new duplicate-code alarm caught 4 real collisions (WK Spanish OOH: HSVWK26SP009O/010O/011O, MTGWK26SP009O) — the OOH title→code remap had mapped two saved records onto the same seed code. Load now collapses any duplicate-code records to a single one (carrying over the creative link/active flag from the dropped twin) and persists the fix, so the alarm clears and sends stay clean."},
