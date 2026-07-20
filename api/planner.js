@@ -26,7 +26,9 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+  // Trim in case the env var was pasted with a trailing space/newline — that
+  // alone makes Anthropic reject an otherwise-valid key with a 401.
+  const ANTHROPIC_API_KEY = (process.env.ANTHROPIC_API_KEY || '').trim();
   if (!ANTHROPIC_API_KEY) {
     return res.status(500).json({ error: 'AI service not configured' });
   }
