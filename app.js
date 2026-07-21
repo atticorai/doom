@@ -1350,13 +1350,14 @@ const App=()=>{
     if(!dbLoaded||!loadCompleteRef.current||!trafficLoadedRef.current)return;
     if(augSeedRef.current)return;augSeedRef.current=true;
     if(typeof window==="undefined"||!Array.isArray(window.WK_AUG_DRAFTS)||!window.WK_AUG_DRAFTS.length)return;
-    try{if(localStorage.getItem("wkAug26DraftsSeeded")==="1")return}catch(e){}
+    try{if(localStorage.getItem("wkAug26DraftsV2Seeded")==="1")return}catch(e){}
     setTrafficHistory(prev=>{
       if(!Array.isArray(prev))return prev;
-      if(prev.some(h=>h&&h.source==="wk-aug26-draft"))return prev; // already seeded
-      try{localStorage.setItem("wkAug26DraftsSeeded","1")}catch(e){}
-      trafficBulkRef.current=true; // additive batch — bypass the bulk-DROP guard (this only adds)
-      return [...window.WK_AUG_DRAFTS,...prev];
+      if(prev.some(h=>h&&h.source==="wk-aug26-draft-v2"))return prev; // v2 already seeded
+      try{localStorage.setItem("wkAug26DraftsV2Seeded","1")}catch(e){}
+      trafficBulkRef.current=true; // add v2 + drop the superseded v1 drafts (net additive)
+      const cleaned=prev.filter(h=>!h||h.source!=="wk-aug26-draft"); // remove earlier wrong drafts
+      return [...window.WK_AUG_DRAFTS,...cleaned];
     });
   },[dbLoaded,trafficHistory]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(workMonth)saveToDb("workMonth",workMonth)},[workMonth,dbLoaded]);
