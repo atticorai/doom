@@ -1535,7 +1535,7 @@ const App=()=>{
   const[oohPostDates,setOohPostDates]=useState("");const[oohVersion,setOohVersion]=useState("");const[oohComments,setOohComments]=useState("");
   const[oohEditContract,setOohEditContract]=useState(null);const[oohEditDates,setOohEditDates]=useState({startDate:"",endDate:"",notes:"",manualStatus:""});
   // OOH PL page state (lifted to prevent remount on photo upload)
-  const[plMktF,setPlMktF]=useState("");const[plPlanF,setPlPlanF]=useState("");const[plVendF,setPlVendF]=useState("");
+  const[plMktF,setPlMktF]=useState("");const[plPlanF,setPlPlanF]=useState("");const[plVendF,setPlVendF]=useState("");const[plMediaF,setPlMediaF]=useState("");
   const[plMapMode,setPlMapMode]=useState("market");const[plClusterRadius,setPlClusterRadius]=useState(3);
   const[plOohEditId,setPlOohEditId]=useState(null);const[plOohEditVal,setPlOohEditVal]=useState("");
   const[plOohEditList,setPlOohEditList]=useState([]);const[plOohEditPct,setPlOohEditPct]=useState([]);
@@ -1547,7 +1547,7 @@ const App=()=>{
   // and editor state is hoisted to App level so the <LrBoardsPg/> instance keeps
   // it across App re-renders, exactly like the PL page does with its pl* hooks.
   const[lrPanels,setLrPanels]=useState(typeof LR_PANELS!=="undefined"?LR_PANELS:[]);
-  const[lrMktF,setLrMktF]=useState("");const[lrPlanF,setLrPlanF]=useState("");const[lrVendF,setLrVendF]=useState("");
+  const[lrMktF,setLrMktF]=useState("");const[lrPlanF,setLrPlanF]=useState("");const[lrVendF,setLrVendF]=useState("");const[lrMediaF,setLrMediaF]=useState("");
   const[lrViewMode,setLrViewMode]=useState("cards");
   const[lrMapMode,setLrMapMode]=useState("market");const[lrClusterRadius,setLrClusterRadius]=useState(3);
   const[lrOohEditId,setLrOohEditId]=useState(null);const[lrOohEditVal,setLrOohEditVal]=useState("");
@@ -2266,6 +2266,58 @@ const App=()=>{
       pdf.text("Atticor · OOH Size Report",MX,PH-8);pdf.text("Page "+i+" of "+n,RIGHT,PH-8,{align:"right"});}
     pdf.save((brandFilter?brandFilter.replace(/[^A-Za-z0-9]+/g,"_"):"OOH")+"_Size_Report_"+new Date().toISOString().slice(0,10)+".pdf");
     log("OOH Size Report",(brandFilter||"All brands")+" · "+totalBoards+" boards · "+sized+" sized");
+  };
+
+  // ── OOH CREATIVE SPECS ─────────────────────────────────
+  // Production spec sheet for the creative team: per media type × size, the
+  // color mode / resolution / file format to build, PLUS when art is due
+  // (14 days before the board posts) and the posting date itself. Sorted by
+  // soonest creative-due so "what needs to start" is the first thing you see.
+  // Brand-generic — callers pass normalized boards:
+  //   {market,type,size,vendor,contract,start,unit}
+  const oohFlightStart=(f)=>{if(!f)return"";const s=String(f);
+    let m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return m[1]+"-"+String(+m[2]).padStart(2,"0")+"-"+String(+m[3]).padStart(2,"0");
+    m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);if(m){let y=+m[3];if(y<100)y+=2000;return y+"-"+String(+m[1]).padStart(2,"0")+"-"+String(+m[2]).padStart(2,"0")}
+    return""};
+  const openOohCreativeSpecs=(brandLabel,boards,brandColor)=>{
+    if(!boards||!boards.length){notify("No boards in this view");return}
+    const ACC=brandColor||"#2d1f42";
+    const specOf=(type)=>{const t=(type||"").toLowerCase();
+      if(t.indexOf("digital")>=0)return{color:"RGB",res:"72 dpi",fmt:"JPG/PNG (static) · MP4/MOV (motion)"};
+      if(t.indexOf("shelter")>=0||t.indexOf("transit")>=0)return{color:"CMYK",res:"600 dpi",fmt:"Print-ready PDF"};
+      if(t.indexOf("poster")>=0)return{color:"CMYK",res:"300 dpi",fmt:"Print-ready PDF"};
+      if(t.indexOf("topper")>=0||t.indexOf("pump")>=0)return{color:"CMYK",res:"408 dpi",fmt:"Native layered files & PDF"};
+      return{color:"CMYK",res:"150 dpi at full scale",fmt:"Print-ready PDF + packaged native files"}};
+    const parseIso=(s)=>{const m=String(s||"").match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);return m?new Date(+m[1],+m[2]-1,+m[3]):null};
+    const fmtD=(d)=>d?(d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear():"";
+    const today=new Date();today.setHours(0,0,0,0);
+    const groups={};
+    boards.forEach(p=>{const gk=(p.market||"")+"||"+(p.type||"")+"||"+(p.size||"")+"||"+(p.vendor||"");
+      if(!groups[gk])groups[gk]={mkt:p.market||"",type:p.type||"",size:p.size||"",vendor:p.vendor||"",contract:p.contract||"",starts:[],units:[]};
+      const st=parseIso(p.start);if(st)groups[gk].starts.push(st);
+      groups[gk].units.push(String(p.unit||""));});
+    const rows=Object.values(groups).map(g=>{
+      const upcoming=g.starts.filter(d=>d>=today).sort((a,b)=>a-b);
+      const post=upcoming.length?upcoming[0]:(g.starts.length?g.starts.slice().sort((a,b)=>a-b)[0]:null);
+      const due=post?new Date(post.getTime()-14*864e5):null;
+      return{...g,post,due,dueDays:due?Math.round((due-today)/864e5):null}});
+    rows.sort((a,b)=>{if(a.due&&b.due)return a.due-b.due;if(a.due)return -1;if(b.due)return 1;return a.mkt.localeCompare(b.mkt)});
+    const totalBoards=boards.length;
+    const w=window.open("","","width=1120,height=920");
+    w.document.write('<html><head><title>'+escHtml(brandLabel)+' OOH — Creative Specs</title>');
+    w.document.write('<style>body{font-family:Arial,Helvetica,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.sub{color:#555;font-weight:bold;margin:2px 0 12px}table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #ccc;padding:5px 8px;text-align:left;vertical-align:top}th{background:'+ACC+';color:#fff}td.n{font-weight:bold;text-align:center}td.due{font-weight:bold;white-space:nowrap}.soon{color:#b00}.warn{color:#b8860b}.ok{color:#2a7}.units{font-size:10px;color:#666}tr:nth-child(even){background:#faf7fc}.note{margin-top:12px;font-size:11px;color:#555;border-left:3px solid '+ACC+';padding-left:8px}.dl{position:fixed;top:12px;right:12px;background:'+ACC+';color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{.dl{display:none}body{margin:12px}}</style></head><body>');
+    w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+    w.document.write('<div style="text-align:center;margin-bottom:8px"><h2>'+escHtml((brandLabel||"").toUpperCase())+'</h2><div style="font-weight:bold;color:#555">OOH CREATIVE SPECS — FOR PRODUCTION</div></div>');
+    w.document.write('<div class="sub">'+totalBoards+' boards · '+rows.length+' spec groups · sorted by creative-due date · '+new Date().toLocaleDateString()+'</div>');
+    w.document.write('<table><tr><th>Creative Due</th><th>Posts</th><th>Market</th><th>Media Type</th><th>Size</th><th>Qty</th><th>Color</th><th>Resolution</th><th>File Format</th><th>Vendor</th><th>Units</th></tr>');
+    rows.forEach(g=>{const sp=specOf(g.type);
+      const cls=g.dueDays===null?"":g.dueDays<=7?"soon":g.dueDays<=14?"warn":"ok";
+      const dueTxt=g.due?fmtD(g.due)+(g.dueDays!==null?(g.dueDays<0?" · "+(-g.dueDays)+"d ago":g.dueDays===0?" · today":" · "+g.dueDays+"d"):""):"— set ~1 wk out";
+      w.document.write('<tr><td class="due '+cls+'">'+escHtml(dueTxt)+'</td><td>'+escHtml(g.post?fmtD(g.post):"—")+'</td><td>'+escHtml(g.mkt)+'</td><td>'+escHtml(g.type||"—")+'</td><td>'+escHtml(g.size||"TBD")+'</td><td class="n">'+g.units.length+'</td><td>'+sp.color+'</td><td>'+sp.res+'</td><td>'+sp.fmt+'</td><td>'+escHtml(g.vendor||"")+'</td><td class="units">'+g.units.filter(Boolean).map(escHtml).join(", ")+'</td></tr>')});
+    w.document.write('</table>');
+    w.document.write('<div class="note"><b>Creative Due</b> = 14 days before the board posts (soonest flight per group). Red = due within a week, amber = within two weeks. <b>Digital boards:</b> pixel dimensions vary by panel — confirm exact px per unit with the vendor before building. <b>Static/print:</b> build full-scale at the resolution shown; print-ready PDF with packaged fonts/links. Sizes marked TBD are set by the vendor ~1 week before posting.</div>');
+    w.document.write('</body></html>');w.document.close();
+    log("OOH Creative Specs",brandLabel+" · "+totalBoards+" boards · "+rows.length+" spec groups");
   };
 
   // ── DASHBOARD ─────────────────────────────────────────
@@ -3932,33 +3984,9 @@ const App=()=>{
     const marketColor=(mkt)=>{const b=activePops.find(p=>oohMarket(p.dma)===mkt);return b?(dmaColors[b.dma]||"#64748b"):"#64748b"};
     const btypes=[...new Set(activePops.map(p=>oohBoardType(p.type,p.size)))].sort();
     const fl=activePops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true)&&(typeF?oohBoardType(p.type,p.size)===typeF:true));
-    // Pull a creative-production spec sheet for the boards in view — grouped by
-    // market/type/size with qty, color mode, resolution, file format, creative-
-    // due (14d before posting) and posting date — to hand to the creative team.
-    const printCreativeSpecs=()=>{
-      const boards=fl.slice();
-      if(!boards.length){notify("No boards in this view");return}
-      const mktLabel=om?(DM[om]||om):"All Markets";
-      const dueOf=(inst)=>{if(!inst)return"";const iso=String(inst).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);const us=String(inst).match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);let d;if(iso)d=new Date(+iso[1],+iso[2]-1,+iso[3]);else if(us){let y=+us[3];if(y<100)y+=2000;d=new Date(y,+us[1]-1,+us[2])}else return"";d=new Date(d.getTime()-14*864e5);return(d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear()};
-      const specOf=(type)=>{const t=(type||"").toLowerCase();if(t.indexOf("digital")>=0)return{color:"RGB",res:"72 dpi",fmt:"JPG/PNG (static) · MP4/MOV (motion)"};if(t.indexOf("poster")>=0)return{color:"CMYK",res:"300 dpi",fmt:"Print-ready PDF"};return{color:"CMYK",res:"150 dpi at full scale",fmt:"Print-ready PDF + packaged native files"}};
-      const groups={};
-      boards.forEach(p=>{const mkt=oohMarket(p.dma);const gk=mkt+"||"+(p.type||"")+"||"+(p.size||"")+"||"+(p.vendor||"");
-        if(!groups[gk])groups[gk]={mkt,type:p.type||"",size:p.size||"",vendor:p.vendor||"",contract:p.contract||"",install:p.installDate||"",units:[]};
-        groups[gk].units.push(String(p.panel||p.boardId));});
-      const rows=Object.values(groups).sort((a,b)=>a.mkt.localeCompare(b.mkt)||a.type.localeCompare(b.type)||String(a.size).localeCompare(String(b.size)));
-      const w=window.open("","","width=1060,height=900");
-      w.document.write('<html><head><title>WK OOH — Creative Specs</title>');
-      w.document.write('<style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.sub{color:#555;font-weight:bold;margin:2px 0 12px}table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #ccc;padding:5px 8px;text-align:left;vertical-align:top}th{background:#2d1f42;color:#fff}td.n{font-weight:bold;text-align:center}tr:nth-child(even){background:#faf7fc}.note{margin-top:12px;font-size:11px;color:#555;border-left:3px solid #D4A040;padding-left:8px}.dl{position:fixed;top:12px;right:12px;background:#D4A040;color:#1e1233;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{.dl{display:none}body{margin:12px}}</style></head><body>');
-      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
-      w.document.write('<div style="text-align:center;margin-bottom:8px"><h2>WETTERMARK KEITH</h2><div style="font-weight:bold;color:#555">OOH CREATIVE SPECS — FOR PRODUCTION</div></div>');
-      w.document.write('<div class="sub">'+escHtml(mktLabel)+' · '+boards.length+' boards · '+rows.length+' spec groups · '+new Date().toLocaleDateString()+'</div>');
-      w.document.write('<table><tr><th>Market</th><th>Board Type</th><th>Size</th><th>Qty</th><th>Color</th><th>Resolution</th><th>File Format</th><th>Creative Due</th><th>Posts</th><th>Vendor</th><th>Units</th></tr>');
-      rows.forEach(g=>{const sp=specOf(g.type);w.document.write('<tr><td>'+escHtml(g.mkt)+'</td><td>'+escHtml(g.type)+'</td><td>'+escHtml(g.size)+'</td><td class="n">'+g.units.length+'</td><td>'+sp.color+'</td><td>'+sp.res+'</td><td>'+sp.fmt+'</td><td>'+escHtml(dueOf(g.install))+'</td><td>'+escHtml(g.install||"—")+'</td><td>'+escHtml(g.vendor)+'</td><td style="font-size:10px">'+g.units.map(escHtml).join(", ")+'</td></tr>')});
-      w.document.write('</table>');
-      w.document.write('<div class="note"><b>Digital boards:</b> pixel dimensions vary by panel — confirm exact px per unit with the vendor before building. Size shown is the physical board face. <b>Static:</b> build full-scale at the resolution shown; print-ready PDF with packaged fonts/links.</div>');
-      w.document.write('</body></html>');w.document.close();
-      log("OOH Creative Specs","WK · "+mktLabel+" · "+boards.length+" boards");
-    };
+    // Creative-production spec sheet for the boards in view — shared generator,
+    // normalized to {market,type,size,vendor,contract,start,unit}.
+    const printCreativeSpecs=()=>openOohCreativeSpecs("Wettermark Keith",fl.map(p=>({market:oohMarket(p.dma),type:p.type,size:p.size,vendor:p.vendor,contract:p.contract,start:p.installDate,unit:p.panel||p.boardId})),"#B08420");
     const tagged=fl.filter(p=>p.isci).length;
     const totalImpr=fl.reduce((a,p)=>a+p.impressions,0);
 
@@ -4751,7 +4779,7 @@ const App=()=>{
   //   PL specifics to confirm at port time: creative pool/names, vendor (Wilkins), ISCI brand "PL".
   //   PL OOH data lives in plPanels (PL_PANELS), keyed by .unit (not .boardId).
   const PlOohPg=()=>{
-    const mktF=plMktF,setMktF=setPlMktF,planF=plPlanF,setPlanF=setPlPlanF,vendF=plVendF,setVendF=setPlVendF;const viewMode=oohViewMode;const setViewMode=setOohViewMode;
+    const mktF=plMktF,setMktF=setPlMktF,planF=plPlanF,setPlanF=setPlPlanF,vendF=plVendF,setVendF=setPlVendF;const mediaF=plMediaF,setMediaF=setPlMediaF;const viewMode=oohViewMode;const setViewMode=setOohViewMode;
     const plEditId=plOohEditId,setPlEditId=setPlOohEditId,plEditVal=plOohEditVal,setPlEditVal=setPlOohEditVal;
     const plOLines=plOohLines,setPlOLines=setPlOohLines;
     const plOPostDates=plOohPostDates,setPlOPostDates=setPlOohPostDates;
@@ -4823,7 +4851,8 @@ const App=()=>{
     // with inherited badged. Only genuinely dead boards (plan "expired" — contract ran out)
     // are archived out of the default view and revealed via the Plan filter.
     const plArchived=p=>p.plan==="expired";
-    const fl=plPanels.filter(p=>(mktF?p.market===mktF:true)&&(vendF?p.vendor===vendF:true)&&(planF?p.plan===planF:p.plan!=="expired"));
+    const fl=plPanels.filter(p=>(mktF?p.market===mktF:true)&&(vendF?p.vendor===vendF:true)&&(mediaF?(p.media||"")===mediaF:true)&&(planF?p.plan===planF:p.plan!=="expired"));
+    const plMediaTypes=[...new Set(plPanels.filter(p=>p.plan!=="expired"&&p.media).map(p=>p.media))].sort();
     const totalImpr=fl.reduce((a,p)=>a+(p.impressions*p.numUnits),0);
     const posted=fl.filter(p=>p.status==="posted").length;
     const upcoming=fl.filter(p=>p.status==="upcoming").length;
@@ -4983,6 +5012,8 @@ const App=()=>{
             const rows=fl.map(p=>{const pop=PL_POPS[p.unit];const zip=typeof PL_ZIPS!=='undefined'?(PL_ZIPS[p.submarket]||PL_ZIPS[p.market]||""):"";return[p.market,p.unit,p.vendor,p.media,p.size,p.location,zip,p.flight.split('(')[0].trim(),p.cycles||"",p.status,p.isci||"",plIsciTitle(p.isci),pop?pop.popDate:"",pop?pop.contract:"",p.impressions*p.numUnits,p.facing||"",p.lat||"",p.lng||"",p.plan]});
             exportCsv("PL_OOH_"+(mktF||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
+          <Btn small onClick={()=>openOohCreativeSpecs("Postman Law",fl.map(p=>({market:(typeof DM!=="undefined"&&DM[p.market])||p.market,type:p.media,size:p.size,vendor:p.vendor,contract:(typeof PL_POPS!=="undefined"&&PL_POPS[p.unit]?PL_POPS[p.unit].contract:""),start:oohFlightStart(p.flight),unit:p.unit})),"#5D3A87")} color="#5BC4A0">📐 Creative Specs</Btn>
+          <Btn small onClick={()=>openOohSizesReport("Postman Law")} color="#5BC4A0">📏 Size Report</Btn>
           <Btn small onClick={printPlCardReport} color="#4AC8E8">🖨 Traffic Report</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
@@ -4996,8 +5027,9 @@ const App=()=>{
       <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
         <Sel label="Market" options={mkts.map(m=>m)} value={mktF} onChange={setMktF} placeholder="All Markets"/>
         <Sel label="Vendor" options={plVendors} value={vendF} onChange={setVendF} placeholder="All Vendors"/>
+        <Sel label="Media" options={plMediaTypes} value={mediaF} onChange={setMediaF} placeholder="All Media Types"/>
         <Sel label="Plan" options={["2026","inherited","expired"]} value={planF} onChange={setPlanF} placeholder="Current (2026 only)"/>
-        {(mktF||planF||vendF)&&<Btn small onClick={()=>{setMktF("");setPlanF("");setVendF("")}}>Clear</Btn>}
+        {(mktF||planF||vendF||mediaF)&&<Btn small onClick={()=>{setMktF("");setPlanF("");setVendF("");setMediaF("")}}>Clear</Btn>}
       </div>
       {/* Market stat cards */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
@@ -8316,7 +8348,7 @@ Rules:
   //    brand-scoped to Lerner & Rowe: cards / map+heat / table / reference /
   //    traffic sheet / creative calendar / contracts). PL page left untouched.
   const LrBoardsPg=()=>{
-    const mktF=lrMktF,setMktF=setLrMktF,planF=lrPlanF,setPlanF=setLrPlanF,vendF=lrVendF,setVendF=setLrVendF;const viewMode=lrViewMode;const setViewMode=setLrViewMode;
+    const mktF=lrMktF,setMktF=setLrMktF,planF=lrPlanF,setPlanF=setLrPlanF,vendF=lrVendF,setVendF=setLrVendF;const mediaF=lrMediaF,setMediaF=setLrMediaF;const viewMode=lrViewMode;const setViewMode=setLrViewMode;
     const plEditId=lrOohEditId,setPlEditId=setLrOohEditId,plEditVal=lrOohEditVal,setPlEditVal=setLrOohEditVal;
     const plOLines=lrOohLines,setPlOLines=setLrOohLines;
     const plOPostDates=lrOohPostDates,setPlOPostDates=setLrOohPostDates;
@@ -8388,7 +8420,8 @@ Rules:
     // with inherited badged. Only genuinely dead boards (plan "expired" — contract ran out)
     // are archived out of the default view and revealed via the Plan filter.
     const plArchived=p=>p.plan==="expired";
-    const fl=lrPanels.filter(p=>(mktF?p.market===mktF:true)&&(vendF?p.vendor===vendF:true)&&(planF?p.plan===planF:p.plan!=="expired"));
+    const fl=lrPanels.filter(p=>(mktF?p.market===mktF:true)&&(vendF?p.vendor===vendF:true)&&(mediaF?(p.media||"")===mediaF:true)&&(planF?p.plan===planF:p.plan!=="expired"));
+    const lrMediaTypes=[...new Set(lrPanels.filter(p=>p.plan!=="expired"&&p.media).map(p=>p.media))].sort();
     const totalImpr=fl.reduce((a,p)=>a+(p.impressions*p.numUnits),0);
     const posted=fl.filter(p=>p.status==="posted").length;
     const upcoming=fl.filter(p=>p.status==="upcoming").length;
@@ -8519,7 +8552,8 @@ Rules:
             const rows=fl.map(p=>{const pop=LR_POPS[p.unit];const zip=typeof PL_ZIPS!=='undefined'?(PL_ZIPS[p.submarket]||PL_ZIPS[p.market]||""):"";return[p.market,p.unit,p.vendor,p.media,p.size,p.location,zip,p.flight.split('(')[0].trim(),p.cycles||"",p.status,p.isci||"",plIsciTitle(p.isci),pop?pop.popDate:"",pop?pop.contract:"",p.impressions*p.numUnits,p.facing||"",p.lat||"",p.lng||"",p.plan]});
             exportCsv("LR_OOH_"+(mktF||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
-          <Btn small onClick={()=>openOohSizesReport("Lerner & Rowe")} color="#5BC4A0">📐 Size Report</Btn>
+          <Btn small onClick={()=>openOohCreativeSpecs("Lerner & Rowe",fl.map(p=>({market:mktNames[p.market]||p.market,type:p.media,size:p.size,vendor:p.vendor,contract:(typeof LR_POPS!=="undefined"&&LR_POPS[p.unit]?LR_POPS[p.unit].contract:""),start:oohFlightStart(p.flight),unit:p.unit})),"#1B7A46")} color="#5BC4A0">📐 Creative Specs</Btn>
+          <Btn small onClick={()=>openOohSizesReport("Lerner & Rowe")} color="#5BC4A0">📏 Size Report</Btn>
           <Btn small onClick={printPlCardReport} color="#4AC8E8">🖨 Traffic Report</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
@@ -8533,8 +8567,9 @@ Rules:
       <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
         <Sel label="Market" options={mkts.map(m=>m)} value={mktF} onChange={setMktF} placeholder="All Markets"/>
         <Sel label="Vendor" options={plVendors} value={vendF} onChange={setVendF} placeholder="All Vendors"/>
+        <Sel label="Media" options={lrMediaTypes} value={mediaF} onChange={setMediaF} placeholder="All Media Types"/>
         <Sel label="Plan" options={["2026","inherited","expired"]} value={planF} onChange={setPlanF} placeholder="Current (2026 only)"/>
-        {(mktF||planF||vendF)&&<Btn small onClick={()=>{setMktF("");setPlanF("");setVendF("")}}>Clear</Btn>}
+        {(mktF||planF||vendF||mediaF)&&<Btn small onClick={()=>{setMktF("");setPlanF("");setVendF("");setMediaF("")}}>Clear</Btn>}
       </div>
       {/* Market stat cards */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
