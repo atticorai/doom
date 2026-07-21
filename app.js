@@ -1350,13 +1350,16 @@ const App=()=>{
     if(!dbLoaded||!loadCompleteRef.current||!trafficLoadedRef.current)return;
     if(augSeedRef.current)return;augSeedRef.current=true;
     if(typeof window==="undefined"||!Array.isArray(window.WK_AUG_DRAFTS)||!window.WK_AUG_DRAFTS.length)return;
-    try{if(localStorage.getItem("wkAug26DraftsV2Seeded")==="1")return}catch(e){}
+    // Version-reconcile: seed the current WK_AUG_DRAFTS_VERSION once. When the
+    // version bumps, drop any prior seeded draft (source prefix "wk-aug26-draft")
+    // and re-seed. Within a version, deletes stick (won't re-add).
+    const ver=String(window.WK_AUG_DRAFTS_VERSION||"1");
+    try{if(localStorage.getItem("wkAugDraftsVer")===ver)return}catch(e){}
     setTrafficHistory(prev=>{
       if(!Array.isArray(prev))return prev;
-      if(prev.some(h=>h&&h.source==="wk-aug26-draft-v2"))return prev; // v2 already seeded
-      try{localStorage.setItem("wkAug26DraftsV2Seeded","1")}catch(e){}
-      trafficBulkRef.current=true; // add v2 + drop the superseded v1 drafts (net additive)
-      const cleaned=prev.filter(h=>!h||h.source!=="wk-aug26-draft"); // remove earlier wrong drafts
+      try{localStorage.setItem("wkAugDraftsVer",ver)}catch(e){}
+      trafficBulkRef.current=true; // swap prior drafts for the current version (net additive)
+      const cleaned=prev.filter(h=>!h||typeof h.source!=="string"||h.source.indexOf("wk-aug26-draft")!==0);
       return [...window.WK_AUG_DRAFTS,...cleaned];
     });
   },[dbLoaded,trafficHistory]);
