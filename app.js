@@ -2195,9 +2195,21 @@ const App=()=>{
   // Cross-brand OOH size report — every OOH board across all brands, grouped
   // by brand → market → type/size with quantities, for the design team. Boards
   // still missing a size are flagged so the gaps are visible.
+  // Digital OOH pixel canvas by media class — the build spec the creative team
+  // actually needs (physical feet are meaningless for a digital board). Values
+  // are stated verbatim in the L&R vendor contracts (Clear Channel + Pacific/
+  // On Target): 400×1400 digital bulletins, 400×840 digital posters/premiere
+  // panels, 1920×1080 digital shelters. Lamar contracts are silent but run the
+  // same formats. Returns "" for non-digital media.
+  const oohDigitalCanvas=(mediaType)=>{const t=(mediaType||"").toLowerCase();
+    if(t.indexOf("digital")<0)return"";
+    if(t.indexOf("shelter")>=0||t.indexOf("transit")>=0)return"1920×1080 px";
+    if(t.indexOf("poster")>=0||t.indexOf("premiere")>=0)return"400×840 px";
+    return"400×1400 px"; // digital bulletin / digital board
+  };
   const openOohSizesReport=(brandFilter)=>{
     const rows=[];
-    const push=(brand,mktCode,type,size,unit)=>{if(brandFilter&&brand!==brandFilter)return;if(!(size||"").trim())return;rows.push({brand,mkt:(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[mktCode])||(typeof DM!=="undefined"&&DM[mktCode])||mktCode,type:type||"—",size:(size||"").trim(),unit})};
+    const push=(brand,mktCode,type,size,unit)=>{if(brandFilter&&brand!==brandFilter)return;const canvas=oohDigitalCanvas(type);const eff=canvas||(size||"").trim();if(!eff)return;rows.push({brand,mkt:(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[mktCode])||(typeof DM!=="undefined"&&DM[mktCode])||mktCode,type:type||"—",size:eff,unit,digital:!!canvas})};
     if(!brandFilter||brandFilter==="Postman Law")(typeof PL_PANELS!=="undefined"?PL_PANELS:[]).forEach(p=>push("Postman Law",p.market,p.type,p.size,p.unit));
     (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>push(p.brand||"Wettermark Keith",p.dma,p.type,p.size,p.boardId));
     if(!brandFilter||brandFilter==="Lerner & Rowe")(typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(p.network||p.tbd)return;push("Lerner & Rowe",p.market,p.media,p.size,p.unit)});
@@ -2283,7 +2295,8 @@ const App=()=>{
     if(!boards||!boards.length){notify("No boards in this view");return}
     const ACC=brandColor||"#2d1f42";
     const specOf=(type)=>{const t=(type||"").toLowerCase();
-      if(t.indexOf("digital")>=0)return{color:"RGB",res:"72 dpi",fmt:"JPG/PNG (static) · MP4/MOV (motion)"};
+      const canvas=oohDigitalCanvas(type);
+      if(t.indexOf("digital")>=0)return{color:"RGB",res:(canvas?canvas+" · ":"")+"72 dpi",fmt:"JPG/PNG (static) · MP4/MOV (motion)",canvas:canvas};
       if(t.indexOf("shelter")>=0||t.indexOf("transit")>=0)return{color:"CMYK",res:"600 dpi",fmt:"Print-ready PDF"};
       if(t.indexOf("poster")>=0)return{color:"CMYK",res:"300 dpi",fmt:"Print-ready PDF"};
       if(t.indexOf("topper")>=0||t.indexOf("pump")>=0)return{color:"CMYK",res:"408 dpi",fmt:"Native layered files & PDF"};
@@ -2313,7 +2326,8 @@ const App=()=>{
     rows.forEach(g=>{const sp=specOf(g.type);
       const cls=g.dueDays===null?"":g.dueDays<=7?"soon":g.dueDays<=14?"warn":"ok";
       const dueTxt=g.due?fmtD(g.due)+(g.dueDays!==null?(g.dueDays<0?" · "+(-g.dueDays)+"d ago":g.dueDays===0?" · today":" · "+g.dueDays+"d"):""):"— set ~1 wk out";
-      w.document.write('<tr><td class="due '+cls+'">'+escHtml(dueTxt)+'</td><td>'+escHtml(g.post?fmtD(g.post):"—")+'</td><td>'+escHtml(g.mkt)+'</td><td>'+escHtml(g.type||"—")+'</td><td>'+escHtml(g.size||"TBD")+'</td><td class="n">'+g.units.length+'</td><td>'+sp.color+'</td><td>'+sp.res+'</td><td>'+sp.fmt+'</td><td>'+escHtml(g.vendor||"")+'</td><td class="units">'+g.units.filter(Boolean).map(escHtml).join(", ")+'</td></tr>')});
+      const sizeCell=sp.canvas?('<b>'+sp.canvas+'</b>'+(g.size?' <span style="color:#888;font-size:10px">('+escHtml(g.size)+' face)</span>':'')):escHtml(g.size||"TBD");
+      w.document.write('<tr><td class="due '+cls+'">'+escHtml(dueTxt)+'</td><td>'+escHtml(g.post?fmtD(g.post):"—")+'</td><td>'+escHtml(g.mkt)+'</td><td>'+escHtml(g.type||"—")+'</td><td>'+sizeCell+'</td><td class="n">'+g.units.length+'</td><td>'+sp.color+'</td><td>'+sp.res+'</td><td>'+sp.fmt+'</td><td>'+escHtml(g.vendor||"")+'</td><td class="units">'+g.units.filter(Boolean).map(escHtml).join(", ")+'</td></tr>')});
     w.document.write('</table>');
     w.document.write('<div class="note"><b>Creative Due</b> = 14 days before the board posts (soonest flight per group). Red = due within a week, amber = within two weeks. <b>Digital boards:</b> pixel dimensions vary by panel — confirm exact px per unit with the vendor before building. <b>Static/print:</b> build full-scale at the resolution shown; print-ready PDF with packaged fonts/links. Sizes marked TBD are set by the vendor ~1 week before posting.</div>');
     w.document.write('</body></html>');w.document.close();
@@ -11518,6 +11532,7 @@ Rules:
         <p><b>Wettermark Keith was rebuilt in V2</b> — a fresh set of TV spots (Auto, Premises, General PI, Trucking, On The Job, in :30 and :15) across every market, with Nashville coming online.</p>
         <p><b>The Muses learned to act.</b> The AI Planner now turns a mock rotation into a real Library draft — stations auto-linked, PDF in hand — or downloads the rotation on its own.</p>
         <p><b>The registry got smarter and safer</b> — filter by length, category, or value prop, and a duplicate-code alarm stops collisions before they ever reach a send.</p>
+        <p><b>Out-of-home learned to brief its own creative.</b> Every brand's OOH page now pulls a Creative Specs sheet — grouped by media type, sorted by the day art is due, and telling production exactly what to build: CMYK print resolutions for vinyl, and the real <i>pixel canvas</i> for digital (400×1400 bulletins, 400×840 posters, 1920×1080 shelters) instead of meaningless physical feet. Filter any board page by media type, and digital boards finally read in pixels.</p>
         <BookMarginNote author="meg">I keep the receipts. Everything I've built is written here — and I'm not done.</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:28,opacity:.5,transform:"rotate(12deg) scale(1.1)"}}/>}{<BookInkSplatter style={{bottom:20,left:20,opacity:.4}}/>}{<BookBurnMark style={{top:0,left:0,width:80,height:80,opacity:.25}}/>}</>},
 
