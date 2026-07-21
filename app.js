@@ -1339,6 +1339,26 @@ const App=()=>{
       .then(()=>{trafficFbCountRef.current=trafficHistory.length;trafficBulkRef.current=false})
       .catch(e=>{trafficDirtyRef.current=true;console.error("trafficHistory save failed:",e);try{notify("⚠ Traffic save FAILED — your change did NOT persist: "+(e&&e.message||e))}catch(_){}});
   },[trafficHistory,dbLoaded]);
+  // One-time seed: drop the WK August mock rotations into the Library as DRAFTS.
+  // Runs once after load completes, ADDS only (never overwrites), and is guarded
+  // three ways so it can't fight the "no auto-restore" rule: (1) skips if a draft
+  // with this source tag is already present, (2) a localStorage flag so once you
+  // delete them they stay deleted, (3) a per-session ref. The add persists through
+  // the normal traffic save effect above. Delete any of them freely in the Library.
+  const augSeedRef=React.useRef(false);
+  React.useEffect(()=>{
+    if(!dbLoaded||!loadCompleteRef.current||!trafficLoadedRef.current)return;
+    if(augSeedRef.current)return;augSeedRef.current=true;
+    if(typeof window==="undefined"||!Array.isArray(window.WK_AUG_DRAFTS)||!window.WK_AUG_DRAFTS.length)return;
+    try{if(localStorage.getItem("wkAug26DraftsSeeded")==="1")return}catch(e){}
+    setTrafficHistory(prev=>{
+      if(!Array.isArray(prev))return prev;
+      if(prev.some(h=>h&&h.source==="wk-aug26-draft"))return prev; // already seeded
+      try{localStorage.setItem("wkAug26DraftsSeeded","1")}catch(e){}
+      trafficBulkRef.current=true; // additive batch — bypass the bulk-DROP guard (this only adds)
+      return [...window.WK_AUG_DRAFTS,...prev];
+    });
+  },[dbLoaded,trafficHistory]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(workMonth)saveToDb("workMonth",workMonth)},[workMonth,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(confirmations).length>0)saveToDb("confirmations",confirmations)},[confirmations,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohRemindersSent).length>0)saveToDb("oohRemindersSent",oohRemindersSent)},[oohRemindersSent,dbLoaded]);
