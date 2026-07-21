@@ -7584,6 +7584,20 @@ ${fullText.substring(0,3000)}`}]
         King:{climate:"Mojave desert, extreme summer heat, mild winters",population:"Kingman + Bullhead City / Lake Havasu (Mohave County) — spread-out retiree and river-tourism market straddling AZ/NV/CA",industries:"tourism (Colorado River, Laughlin casinos across the river), logistics on I-40, retirees, some mining",sports:"no major teams; river recreation and off-road culture",seasonal:"I-40 and US-93 (Phoenix–Vegas) freight-corridor crashes year-round, summer river-tourism and boating injuries, snowbird winter influx",notes:"Route 66 / I-40 and US-93 billboards catch Phoenix–Vegas through-traffic; Laughlin casino spillover; retiree + tourist audience; DUI and out-of-town-driver angles; sparse fixed inventory, corridor bulletins matter most"},
       };
       const relevantProfiles={};markets.forEach(m=>{const cleanM=String(m||"").split(/[,/]/)[0].trim();if(MARKET_PROFILES[cleanM])relevantProfiles[cleanM]=MARKET_PROFILES[cleanM]});
+      // Real TV buy weight per Wettermark Keith market — avg monthly spot count +
+      // net spend, from the 2026 TV Buy Analysis (YTD Jan–Jun avg). This is how
+      // much media each market actually buys, so the AI can size rotation depth
+      // to it and never oversaturate a light market. (WK-only; other brands have
+      // no buy-weight data yet, so the rule below stays off for them.)
+      const WK_BUY_WEIGHT={
+        Birmingham:{spotsMo:3742,spendMo:147079,tier:"heavy"},
+        Chattanooga:{spotsMo:2661,spendMo:83259,tier:"heavy"},
+        Montgomery:{spotsMo:2200,spendMo:74768,tier:"mid"},
+        Huntsville:{spotsMo:2121,spendMo:65239,tier:"mid"},
+        Knoxville:{spotsMo:1108,spendMo:43414,tier:"light"},
+        Dothan:{spotsMo:407,spendMo:11912,tier:"very light"}
+      };
+      const relevantBuyWeight={};markets.forEach(m=>{const cm=String(m||"").split(/[,/]/)[0].trim();if(WK_BUY_WEIGHT[cm])relevantBuyWeight[cm]=WK_BUY_WEIGHT[cm]});
       // Prior-month rotation snapshot — what actually ran in the most
       // recent fully-trafficked month, per market + media. AI uses this
       // as the baseline to EVOLVE for next month, not to build from
@@ -7621,6 +7635,7 @@ ${fullText.substring(0,3000)}`}]
         voDistribution:voCounts,
         marketBreakdown,
         marketProfiles:relevantProfiles,
+        marketBuyWeight:relevantBuyWeight,
         benchISCIs:bench.slice(0,400),
         totalActiveISCIs:brandIscis.length,
         totalInRotation:inRotation.size
@@ -7628,8 +7643,10 @@ ${fullText.substring(0,3000)}`}]
 
       // Brand/market-specific trafficking rules the AI must obey (locked spots, expansion markets)
       const brandRules=(brand==="Wettermark Keith"?"\n\nLOCKED SPOT — HARD RULE: \"Mother's Wreck\" (any length, any market) NEVER goes offline. NEVER put it in the retire list and NEVER drop it from a mock_rotation, no matter how many months it has run. It is a permanent Wettermark Keith anchor — always keep it weighted in every market that runs it.":"")+(brand==="Parrish DeVaughn"?"\n\nTULSA EXPANSION — HARD RULE: Tulsa (TUL) is a brand-NEW market for Parrish DeVaughn with no rotation history. For Tulsa, lead the rotation with \"Local & Experienced\" value-prop spots to build local trust first, supplement with a few strong case-type spots (Auto Accidents, Motorcycle, Testimonials), and always recommend bookend pairs. Do not treat Tulsa like an established market.":"");
+      // Buy-weight rule — only when the payload carries real per-market buy data (WK today).
+      const buyWeightRule=Object.keys(relevantBuyWeight).length?`\n\nBUY WEIGHT — RIGHT-SIZE EVERY ROTATION: The payload includes 'marketBuyWeight' — each market's real TV buy (avg spots/month, spend/month, and a tier: heavy / mid / light / very light). Scale rotation DEPTH and EVENNESS to it. A heavy market can carry a deep, fairly even rotation (5-6 spots). A light or very-light market CANNOT — splitting a small buy across many creatives starves each of effective frequency (oversaturation). For light/very-light markets, run FEWER creatives (3-4), weighted toward the brand spot plus the market's single dominant case type, and drop the angles that don't fit. Whenever you trim a market for buy weight, SAY SO in that market's evolution_note (e.g. "Dothan is a very-light buy — capped at 3 spots, concentrated on brand + workers' comp"). Never recommend more rotation variety than the buy can actually deliver.`:"";
 
-      const systemPrompt=`You are a media planning AI for Atticor, a media buying agency managing TV, Radio, Cable, Streaming Audio, Digital, and OOH advertising for personal injury law firms in 2026.${brandRules}
+      const systemPrompt=`You are a media planning AI for Atticor, a media buying agency managing TV, Radio, Cable, Streaming Audio, Digital, and OOH advertising for personal injury law firms in 2026.${brandRules}${buyWeightRule}
 
 TODAY: ${nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
 CURRENT MONTH: ${currentBroadcastMonth}
@@ -7713,7 +7730,7 @@ Rules:
       // Newer brand with no rotation to evolve — give market-level strategy
       // (which case-types to focus on and why, per market) off the market
       // profiles, instead of demanding an ISCI rotation that doesn't exist.
-      const marketStrategyPrompt=`You are a media planning AI for Atticor, a media buying agency handling TV, Radio, and Cable advertising for personal injury law firms in 2026.${brandRules}
+      const marketStrategyPrompt=`You are a media planning AI for Atticor, a media buying agency handling TV, Radio, and Cable advertising for personal injury law firms in 2026.${brandRules}${buyWeightRule}
 
 TODAY: ${nowDate.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
 CURRENT MONTH: ${currentBroadcastMonth}
