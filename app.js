@@ -389,11 +389,11 @@ const CALENDAR=D_C.map(r=>({month:r[0],rotDue:r[1],bcStart:r[2],bcEnd:r[3]}));
 // already-airing month.
 const nextTrafficMonth=()=>{const t=new Date();t.setHours(0,0,0,0);const c=CALENDAR.find(c=>new Date(c.bcStart+"T00:00:00")>t);return c?c.month:(CALENDAR[CALENDAR.length-1]||{}).month||"December"};
 const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const mk=r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17],design:(r[18]?(Array.isArray(r[18])?r[18].filter(Boolean):[r[18]]):[]),vendorRef:r[19]||""});const base=D_P.map(mk);const extra=(typeof D_P_NEW!=="undefined"?D_P_NEW:[]).map(mk);return[...base,...extra]})();
-const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KBH:"King/Bull",BHD:"Bullhead",FLG:"Flagstaff",LVS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YMA:"Yuma",OKC:"Oklahoma City",TUL:"Tulsa"};
+const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KBH:"King/Bull",BHD:"Bullhead",FLG:"Flagstaff",LVS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YMA:"Yuma",OKC:"Oklahoma City",TUL:"Tulsa",BOS:"Boston"};
 // Market rolls up by FULL NAME everywhere in the app (traffic library, history,
 // metrics, AI planner) — the prefix lives ONLY in the ISCI code. Gadsden (GAD)
 // is not its own market; it falls under Birmingham.
-const DMA_MARKET={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",GAD:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KBH:"King/Bull",BHD:"Bullhead",FLG:"Flagstaff",LVS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YMA:"Yuma",OKC:"Oklahoma City",TUL:"Tulsa"};
+const DMA_MARKET={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",GAD:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KBH:"King/Bull",BHD:"Bullhead",FLG:"Flagstaff",LVS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YMA:"Yuma",OKC:"Oklahoma City",TUL:"Tulsa",BOS:"Boston"};
 const oohMarket=(dma)=>DMA_MARKET[dma]||DM[dma]||dma;
 // The ISCI market prefix is the board's REAL market — GAD is never a prefix
 // (Gadsden rolls into Birmingham → BRM). Extend this map if more areas roll up.
@@ -437,7 +437,8 @@ const BRANDS=[
   {code:"PL",name:"Postman Law",agency:"Atticor Group LLC",logo:LOGO_PL,color:"#5D3A87",colorBg:"#EDE6F5",markets:["CHI","CIN","DEN","MSP"],airingKey:"est"},
   {code:"WK",name:"Wettermark Keith",agency:"Atticor Group LLC",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",markets:["BRM","HSV","KNX","CHA","MTG","DHN"],airingKey:"est|market"},
   {code:"LR",name:"Lerner & Rowe",agency:"Atticor Group LLC",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#F2DD00",colorBg:"#FFFCE0",markets:["ABQ","BHD","CHI","FLG","KBH","LVS","PHX","RNO","SEA","TUC","YMA"],airingKey:"est"},
-  {code:"PDV",name:"Parrish DeVaughn",agency:"Atticor Group LLC",logo:(typeof LOGO_PDV!=="undefined"?LOGO_PDV:""),color:"#EE2B37",colorBg:"#FDECEE",markets:["OKC","TUL"],airingKey:"est"}
+  {code:"PDV",name:"Parrish DeVaughn",agency:"Atticor Group LLC",logo:(typeof LOGO_PDV!=="undefined"?LOGO_PDV:""),color:"#EE2B37",colorBg:"#FDECEE",markets:["OKC","TUL"],airingKey:"est"},
+  {code:"KE",name:"Keches Law Group",agency:"Atticor Group LLC",logo:(typeof LOGO_KE!=="undefined"?LOGO_KE:""),color:"#1E5F9E",colorBg:"#E8F0F9",markets:["BOS"],airingKey:"est"}
 ];
 const getBrandColor=(v)=>{const b=BRANDS.find(b=>b.name===v||b.code===v);return b?b.color:"#9B8EAD"};
 const brandMktCodes=(v)=>{const b=BRANDS.find(x=>x.name===v||x.code===v);return b?b.markets:[]};
@@ -2250,7 +2251,7 @@ const App=()=>{
     const pdf=new JPP("p","mm","a4");
     const PW=210,PH=297,MX=16,RIGHT=PW-MX;
     const INK=[38,34,49],SUB=[120,120,132],RULE=[228,224,234],HEAD=[245,242,248];
-    const brandRGB=(n)=>n==="Postman Law"?[93,58,135]:n==="Wettermark Keith"?[176,132,32]:n==="Lerner & Rowe"?[27,120,70]:n==="Parrish DeVaughn"?[200,32,44]:[45,31,66];
+    const brandRGB=(n)=>n==="Postman Law"?[93,58,135]:n==="Wettermark Keith"?[176,132,32]:n==="Lerner & Rowe"?[27,120,70]:n==="Parrish DeVaughn"?[200,32,44]:n==="Keches Law Group"?[30,95,158]:[45,31,66];
     const ACC=brandFilter?brandRGB(brandFilter):[45,31,66];
     const tc=c=>pdf.setTextColor(c[0],c[1],c[2]);
     const dc=c=>pdf.setDrawColor(c[0],c[1],c[2]);
@@ -3685,9 +3686,9 @@ const App=()=>{
     const nextNum=()=>{const nums=estimates.map(e=>parseInt(e.num)).filter(n=>!isNaN(n));return nums.length?String(Math.max(...nums)+1):"2700"};
     const BT=["Base","Sponsorship","UD/AV","Sports","Cable","Heavy Up","Radio","Streaming Audio","OOH","Event Sponsorship","TTWN"];
     const REASONS=["New market launch","New media type","New flight period","Agency buy plan"];
-    const BB={"Postman Law":["Ken Lazar","Lynn Cortelezzi","Hazel Wolf"],"Wettermark Keith":["Amy Coffey"],"Parrish DeVaughn":["Jessica Flynn"],"Lerner & Rowe":[]};
+    const BB={"Postman Law":["Ken Lazar","Lynn Cortelezzi","Hazel Wolf"],"Wettermark Keith":["Amy Coffey"],"Parrish DeVaughn":["Jessica Flynn"],"Lerner & Rowe":[],"Keches Law Group":[]};
     const BUYER_EMAILS={"Ken Lazar":"ken.lazar@atticor.ai","Lynn Cortelezzi":"lynn.cortelezzi@atticor.ai","Amy Coffey":"acoffey@wkfirm.com","Jessica Flynn":"jessica.flynn@atticor.ai"};
-    const BM={"Postman Law":["Chicago","Cincinnati","Denver","Minneapolis"],"Wettermark Keith":["Birmingham","Chattanooga","Dothan","Huntsville","Knoxville","Montgomery"],"Parrish DeVaughn":["Oklahoma City","Tulsa"],"Lerner & Rowe":["Albuquerque","Bullhead","Chicago","Flagstaff","Las Vegas","Phoenix","Reno","Tucson","Yuma"]};
+    const BM={"Postman Law":["Chicago","Cincinnati","Denver","Minneapolis"],"Wettermark Keith":["Birmingham","Chattanooga","Dothan","Huntsville","Knoxville","Montgomery"],"Parrish DeVaughn":["Oklahoma City","Tulsa"],"Lerner & Rowe":["Albuquerque","Bullhead","Chicago","Flagstaff","Las Vegas","Phoenix","Reno","Tucson","Yuma"],"Keches Law Group":["Boston"]};
     const findSta=()=>{if(!nr.market||!nr.brand||!nr.media)return[];return stations.filter(s=>s.market===nr.market&&s.brand===nr.brand&&(nr.media==="Sports"||nr.media==="Heavy Up"?s.media==="TV":nr.media==="Streaming Audio"?s.media==="Radio":s.media===nr.media))};
     const openC=()=>{setShowAdd(true);setStep(1);setNr({num:nextNum(),market:"",media:"",group:"",campaign:"",buyer:"",brand:"",reason:""});setSugStations([]);setSelStations([])};
     const closeC=()=>{setShowAdd(false);setStep(1)};
@@ -6983,7 +6984,7 @@ ${fullText.substring(0,3000)}`}]
         const lines=t.split("\n");
         const iscis=[];
         for(const line of lines){
-          const codeMatch=line.match(/([A-Z]{3,4}(?:PL|WK|LR|PDV)\d{4,7}[A-Z0-9])\s*-\s*(.+)/);
+          const codeMatch=line.match(/([A-Z]{3,4}(?:PL|WK|LR|PDV|KE)\d{4,7}[A-Z0-9])\s*-\s*(.+)/);
           if(!codeMatch)continue;
           const code=codeMatch[1];
           let rest=codeMatch[2];
@@ -7002,7 +7003,7 @@ ${fullText.substring(0,3000)}`}]
           iscis.push({code,title,dur,pct,sched:schedType||lineFlight||flight||"",bookend});
         }
         if(!iscis.length){
-          const codePat=/([A-Z]{3,4}(?:PL|WK|LR|PDV)\d{4,7}[A-Z0-9])/g;
+          const codePat=/([A-Z]{3,4}(?:PL|WK|LR|PDV|KE)\d{4,7}[A-Z0-9])/g;
           const found=[...new Set((t.match(codePat)||[]))];
           if(found.length)found.forEach(code=>iscis.push({code,title:"",dur:"30",pct:"",sched:flight||"",bookend:""}));
         }
@@ -10793,7 +10794,7 @@ Rules:
             const campaign=(t.match(/UTM_Campaign=[A-Z]{3}([A-Za-z]+?)&/)||[])[1]||"";
             // Grab EVERY ISCI code globally (TV/Radio/Cable/Digital/OOH formats all covered);
             // OOH codes have letters mid-string (e.g. BRMWK26SP009O) so don't require all-digits.
-            const codeRe=/([A-Z]{3}(?:PL|WK|LR|PDV)[0-9][A-Z0-9]{4,9})/g;
+            const codeRe=/([A-Z]{3}(?:PL|WK|LR|PDV|KE)[0-9][A-Z0-9]{4,9})/g;
             const iscis=[];const seen=new Set();let m;
             while((m=codeRe.exec(t))){const c=m[1];if(seen.has(c))continue;seen.add(c);
               const after=t.slice(m.index+c.length,m.index+c.length+90);
@@ -11351,7 +11352,7 @@ Rules:
     const curWkEst=WK_ME[workMonth]||"—";
     const BOOK_PAGES_1=[
       {title:"Welcome to Doom & Deliverables",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p><span style={{fontSize:28,fontFamily:"'Cinzel',serif",float:"left",marginRight:8,color:"#4a1a1a",lineHeight:1}}>T</span>his manual covers every procedure in the Doom & Deliverables Traffic Management System. It manages TV, Radio, Streaming Audio, Digital, and OOH advertising traffic for four brands: Postman Law, Wettermark Keith, Lerner &amp; Rowe, and Parrish DeVaughn.</p>
+        <p><span style={{fontSize:28,fontFamily:"'Cinzel',serif",float:"left",marginRight:8,color:"#4a1a1a",lineHeight:1}}>T</span>his manual covers every procedure in the Doom & Deliverables Traffic Management System. It manages TV, Radio, Streaming Audio, Digital, and OOH advertising traffic for five brands: Postman Law, Wettermark Keith, Lerner &amp; Rowe, Parrish DeVaughn, and Keches Law Group.</p>
         <p>Every rotation you build, every email you send, every confirmation you track flows through this system. Follow the procedures in order and you'll be sending traffic in under an hour.</p>
         <BookMarginNote author="meg">I didn't volunteer to write this. But here we are.</BookMarginNote>
       </div>,damageEffects:<>{<BookBurnMark style={{top:0,right:0,width:96,height:96,opacity:.4}}/>}{<BookInkSplatter style={{bottom:32,left:16,opacity:.4}}/>}{<BookLipstickMark style={{top:"25%",right:32,opacity:.6,transform:"rotate(15deg) scale(1.25)"}}/>}</>},
@@ -11957,7 +11958,7 @@ Rules:
             window.MegaraLibraryData=data;
             // Logos read by brand by the library's BookOpen (keeps one copy of
             // each base64 instead of duplicating it into every instruction).
-            window.MegaraLibraryLogos={"Postman Law":LOGO_PL,"Wettermark Keith":LOGO_WK,"Lerner & Rowe":(typeof LOGO_LR!=="undefined"?LOGO_LR:""),"Parrish DeVaughn":(typeof LOGO_PDV!=="undefined"?LOGO_PDV:"")};
+            window.MegaraLibraryLogos={"Postman Law":LOGO_PL,"Wettermark Keith":LOGO_WK,"Lerner & Rowe":(typeof LOGO_LR!=="undefined"?LOGO_LR:""),"Parrish DeVaughn":(typeof LOGO_PDV!=="undefined"?LOGO_PDV:""),"Keches Law Group":(typeof LOGO_KE!=="undefined"?LOGO_KE:"")};
             // Debug helper — open devtools and run
             //   MegaraLibraryDebug("Wettermark Keith","Montgomery","Radio","January")
             // to dump every Firestore trafficHistory record for that exact slot,
@@ -12312,7 +12313,7 @@ Rules:
                     if(brand.toLowerCase().includes("postman"))brand="Postman Law";
                     else if(brand.toLowerCase().includes("wettermark"))brand="Wettermark Keith";
                     const lines=t.split("\n");const iscis=[];
-                    const codePat=/([A-Z]{3,4}(?:PL|WK|LR|PDV)\d{4,7}[A-Z0-9])/;
+                    const codePat=/([A-Z]{3,4}(?:PL|WK|LR|PDV|KE)\d{4,7}[A-Z0-9])/;
                     for(const line of lines){
                       const m=line.match(codePat);if(!m)continue;
                       const code=m[1];
