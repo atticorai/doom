@@ -1364,6 +1364,23 @@ const App=()=>{
       return [...window.WK_AUG_DRAFTS,...cleaned];
     });
   },[dbLoaded,trafficHistory]);
+  // Separate radio-draft seed — own source prefix ("wk-aug26-radio") and version,
+  // so it NEVER touches the TV drafts (which may already be sent).
+  const augRadioSeedRef=React.useRef(false);
+  React.useEffect(()=>{
+    if(!dbLoaded||!loadCompleteRef.current||!trafficLoadedRef.current)return;
+    if(augRadioSeedRef.current)return;augRadioSeedRef.current=true;
+    if(typeof window==="undefined"||!Array.isArray(window.WK_AUG_RADIO_DRAFTS)||!window.WK_AUG_RADIO_DRAFTS.length)return;
+    const ver=String(window.WK_AUG_RADIO_VERSION||"1");
+    try{if(localStorage.getItem("wkAugRadioVer")===ver)return}catch(e){}
+    setTrafficHistory(prev=>{
+      if(!Array.isArray(prev))return prev;
+      try{localStorage.setItem("wkAugRadioVer",ver)}catch(e){}
+      trafficBulkRef.current=true;
+      const cleaned=prev.filter(h=>!h||typeof h.source!=="string"||h.source.indexOf("wk-aug26-radio")!==0);
+      return [...window.WK_AUG_RADIO_DRAFTS,...cleaned];
+    });
+  },[dbLoaded,trafficHistory]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(workMonth)saveToDb("workMonth",workMonth)},[workMonth,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(confirmations).length>0)saveToDb("confirmations",confirmations)},[confirmations,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohRemindersSent).length>0)saveToDb("oohRemindersSent",oohRemindersSent)},[oohRemindersSent,dbLoaded]);
