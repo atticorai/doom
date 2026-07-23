@@ -986,7 +986,7 @@ const App=()=>{
         setDeletedIsciKeys(loadedDeleted);
         if(docs.iscis?.data){const d=JSON.parse(docs.iscis.data);console.log("Firestore ISCIs: "+d.length+" records, ISCIS_INIT has "+ISCIS_INIT.length);
           // Clean codes (fix malformed ISCI codes with titles stuck in them)
-          const REMOVE_ISCIS=new Set(["CINPL2660003T","MSPPL2660001T","CHIPL2660005T","CINPL2660005T","DENPL2660005T","MSPPL2660005T","BRMWK2630009R","BRMWK2630010R","CHAWK2630009R","CHAWK2630010R","DHNWK2630009R","DHNWK2630010R","HSVWK2630009R","HSVWK2630010R","KNXWK2630009R","KNXWK2630010R","MTGWK2630009R","MTGWK2630010R"]);
+          const REMOVE_ISCIS=new Set(["CINPL2660003T","MSPPL2660001T","CHIPL2660005T","CINPL2660005T","DENPL2660005T","MSPPL2660005T","BRMWK2630009R","BRMWK2630010R","CHAWK2630009R","CHAWK2630010R","DHNWK2630009R","DHNWK2630010R","HSVWK2630009R","HSVWK2630010R","KNXWK2630009R","KNXWK2630010R","MTGWK2630009R","MTGWK2630010R","DHNWK2630013R","DHNWK2615006R","KNXWK2630001R","KNXWK2615001R","CHAWK2630001R","CHAWK2615001R"]);
           // OOH renumber migration: align each saved OOH ISCI's code to the seed code
           // for its title (renumber changed codes, never titles). Title-keyed = idempotent.
           const _seedOohByTitle=new Map(ISCIS_INIT.filter(i=>i.suffix==="O"&&i.title).map(i=>[i.title+"|"+(i.dma||""),i.code]));
