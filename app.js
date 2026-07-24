@@ -204,6 +204,8 @@ const STATIONS=(()=>{
     ["Montgomery","WHLW-FM","Radio","iHeart Media","adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
     ["Montgomery","WWMG-FM","Radio","iHeart Media","adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
     ["Montgomery","WZHT-FM","Radio","iHeart Media","adahu@iheartmedia.com; ihmcommercialcontent@iHeartMedia.com; melissaberry@iheartmedia.com","Wettermark Keith","Amy Coffey"],
+    ["Huntsville","Audacy","Radio","Audacy Inc.","christopher.stella@audacy.com","Wettermark Keith","Amy Coffey"],
+    ["Montgomery","Audacy","Radio","Audacy Inc.","christopher.stella@audacy.com","Wettermark Keith","Amy Coffey"],
   ];
   // Authoritative WK station call signs — anything not on this list gets dropped
   const WK_CALLS_AUTH=new Set(Object.keys(WK_UPD));
