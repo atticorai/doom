@@ -22,5 +22,7 @@ const OOH_CONTRACTS_INIT={
   "2026-41356":{num:"2026-41356",vendor:"Wilkins Media",brand:"Postman Law",dmas:["DEN"],startDate:"2026-06-22",endDate:"2026-12-06",notes:"DEN Transit Shelters + Gas Pump Toppers"},
   "2026-41357":{num:"2026-41357",vendor:"Wilkins Media",brand:"Postman Law",dmas:["MSP"],startDate:"2026-03-30",endDate:"2026-12-27",notes:"MSP 2026 annual buy (10 boards) — signed 1/7/26. Note: 127O & 166O keep current creative from 3/30; new vinyl 6/1"},
   "CIN-2026-Wilkins":{num:"CIN-2026-Wilkins",vendor:"Wilkins Media",brand:"Postman Law",dmas:["CIN"],startDate:"2026-02-02",endDate:"2026-12-27",notes:"CIN 2026 annual: 25 rotary posters + 6 remnant bulletins + 2 bonus digital posters. 21 prior-cycle boards expire Jan–May 2026 (archived)"},
-  "VIEWC-2026-PL":{num:"VIEWC-2026-PL",vendor:"View Chicago",brand:"Postman Law",dmas:["CHI"],startDate:"2026-01-05",endDate:"2027-01-03",notes:"CHI View Chicago: 3 train overpass + 1 wall + 11 HotSpot (15 units) — signed 11/14/25"}
+  "VIEWC-2026-PL":{num:"VIEWC-2026-PL",vendor:"View Chicago",brand:"Postman Law",dmas:["CHI"],startDate:"2026-01-05",endDate:"2027-01-03",notes:"CHI View Chicago: 3 train overpass + 1 wall + 11 HotSpot (15 units) — signed 11/14/25"},
+  // ── Parrish DeVaughn · Oklahoma City (vendor CJ per buyer note) ──
+  "PDV-OKC-26":{num:"PDV-OKC-26",vendor:"CJ",brand:"Parrish DeVaughn",dmas:["OKC"],startDate:"2026-03-23",endDate:"2027-10-17",notes:"OKC OOH from vendor plant list · 5 fixed boards (perm bulletins/poster + digital poster) + 4 rotating programs (10 pre-empt bulletins, digital bulletins, 45 jr posters, 75 posters). Vendor tagged CJ — confirm."}
 };

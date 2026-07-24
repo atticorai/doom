@@ -1597,6 +1597,7 @@ const App=()=>{
   // and editor state is hoisted to App level so the <LrBoardsPg/> instance keeps
   // it across App re-renders, exactly like the PL page does with its pl* hooks.
   const[lrPanels,setLrPanels]=useState(typeof LR_PANELS!=="undefined"?LR_PANELS:[]);
+  const[pdvPanels,setPdvPanels]=useState(typeof PDV_PANELS!=="undefined"?PDV_PANELS:[]);
   const[lrMktF,setLrMktF]=useState("");const[lrPlanF,setLrPlanF]=useState("");const[lrVendF,setLrVendF]=useState("");const[lrMediaF,setLrMediaF]=useState("");
   const[lrViewMode,setLrViewMode]=useState("cards");
   const[lrMapMode,setLrMapMode]=useState("market");const[lrClusterRadius,setLrClusterRadius]=useState(3);
@@ -2263,6 +2264,7 @@ const App=()=>{
     if(!brandFilter||brandFilter==="Postman Law")(typeof PL_PANELS!=="undefined"?PL_PANELS:[]).forEach(p=>push("Postman Law",p.market,p.type,p.size,p.unit));
     (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>push(p.brand||"Wettermark Keith",p.dma,p.type,p.size,p.boardId));
     if(!brandFilter||brandFilter==="Lerner & Rowe")(typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(p.network||p.tbd)return;push("Lerner & Rowe",p.market,p.media,p.size,p.unit)});
+    if(!brandFilter||brandFilter==="Parrish DeVaughn")(typeof PDV_PANELS!=="undefined"?PDV_PANELS:[]).forEach(p=>push("Parrish DeVaughn",p.market,p.media,p.size,p.unit));
     if(!rows.length){notify("No OOH boards found");return}
     // group brand -> market -> type|size
     const G={};
@@ -2427,6 +2429,7 @@ const App=()=>{
       <StatC label="WK OOH" value={POSTINGS.length} sub={`${[...new Set(POSTINGS.map(p=>p.dma))].length} DMAs · WK Advtg`} color="#D4A040" onClick={()=>navigateHash("ooh/wk")}/>
       <StatC label="PL OOH" value={PL_PANELS.length} sub={oohAlerts.length?`⚠ ${oohAlerts.length} due soon`:`${[...new Set(PL_PANELS.map(p=>p.market))].length} markets · Postman Law`} color="#9b7bb0" onClick={()=>navigateHash("ooh/pl")}/>
       <StatC label="L&R OOH" value={typeof LR_PANELS!=="undefined"?LR_PANELS.length:0} sub={typeof LR_PANELS!=="undefined"?`${[...new Set(LR_PANELS.map(p=>p.market))].length} markets · Lerner & Rowe`:"Lerner & Rowe"} color="#2FBF71" onClick={()=>navigateHash("ooh/lr")}/>
+      <StatC label="PDV OOH" value={typeof PDV_PANELS!=="undefined"?PDV_PANELS.length:0} sub={typeof PDV_PANELS!=="undefined"?`${[...new Set(PDV_PANELS.map(p=>p.market))].length} market · Parrish DeVaughn`:"Parrish DeVaughn"} color="#EE2B37" onClick={()=>navigateHash("ooh/pdv")}/>
       <StatC label="Traffic Sent" value={sentCount} sub={<><span>{trafficHistory.length} total</span><Sparkline data={trafficByWeek} color="#4AC8E8"/></>} color="#4AC8E8" onClick={()=>setPg("library")}/>
     </div>
     <Cd style={{padding:10}}><div style={{fontSize:13,fontWeight:700,marginBottom:6}}>2026 Broadcast Calendar</div>
@@ -8958,12 +8961,113 @@ Rules:
   };
 
   // ── OOH HUB (sub-app) ──────────────────────────────────
+  const PdvOohPg=()=>{
+    const [mktF,setMktF]=React.useState("");
+    const [mediaF,setMediaF]=React.useState("");
+    const [vendF,setVendF]=React.useState("");
+    const [viewMode,setViewMode]=React.useState("cards");
+    const ACC="#EE2B37";
+    const mktNames={OKC:"Oklahoma City",TUL:"Tulsa"};
+    const mkts=[...new Set(pdvPanels.map(p=>p.market))].sort();
+    const vendors=[...new Set(pdvPanels.map(p=>p.vendor))].sort();
+    const mediaTypes=[...new Set(pdvPanels.filter(p=>p.media).map(p=>p.media))].sort();
+    const fl=pdvPanels.filter(p=>(mktF?p.market===mktF:true)&&(vendF?p.vendor===vendF:true)&&(mediaF?(p.media||"")===mediaF:true));
+    const totalUnits=fl.reduce((a,p)=>a+(p.numUnits||1),0);
+    const fixed=pdvPanels.filter(p=>/^\d+$/.test(p.unit)).length;
+    const programs=pdvPanels.length-fixed;
+    const fmtFl=f=>String(f||"").split("(")[0].trim();
+    // Read-only board list PDF (the creative BRIEF runs off openOohCreativeSpecs → sizes to produce + art-due dates).
+    const printBoardList=()=>{
+      if(!fl.length){notify("No boards in this view");return}
+      const w=window.open("","","width=1000,height=800");
+      w.document.write('<html><head><title>PDV OOH — Board List</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;background:#EE2B37;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}@media print{.dl{display:none}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<div style="text-align:center;margin-bottom:12px"><img src="'+(typeof LOGO_PDV!=="undefined"?LOGO_PDV:"")+'" style="height:52px;max-width:420px"/><div style="font-weight:bold;color:#555;letter-spacing:2px">OUT-OF-HOME BOARD LIST</div></div>');
+      w.document.write('<div style="font-size:12px"><b>Client:</b> Parrish DeVaughn &nbsp;·&nbsp; <b>Market:</b> '+escHtml(mktF?(mktNames[mktF]||mktF):"Oklahoma City")+' &nbsp;·&nbsp; <b>Vendor:</b> '+escHtml([...new Set(fl.map(p=>p.vendor))].join(", "))+' &nbsp;·&nbsp; <b>Boards:</b> '+fl.length+' ('+totalUnits+' units)</div>');
+      w.document.write('<table><tr><th>Unit #</th><th>Type</th><th>Size</th><th>Location</th><th>Run Dates</th><th>Units</th><th>Status</th></tr>');
+      fl.forEach(p=>w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.unit))+'</td><td>'+escHtml(p.media)+'</td><td>'+escHtml(p.size)+'</td><td>'+escHtml(p.location)+'</td><td>'+escHtml(fmtFl(p.flight))+'</td><td style="text-align:center">'+(p.numUnits||1)+'</td><td>'+escHtml(p.status)+'</td></tr>'));
+      w.document.write('</table></body></html>');w.document.close();
+      log("PDV OOH Board List",(mktF||"All")+" · "+fl.length+" boards");notify("PDV board list — "+fl.length+" boards");
+    };
+    return <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",flexWrap:"wrap",gap:8}}>
+        <div><img src={(typeof LOGO_PDV!=="undefined"?LOGO_PDV:"")} alt="Parrish DeVaughn" style={{height:34,marginBottom:6,background:"#fff",padding:"4px 8px",borderRadius:6}}/><PageHead title="Parrish DeVaughn — OOH Media Plan" pgKey="ooh"/>
+          <p style={{fontSize:13,color:"#9B8EAD"}}>Oklahoma City · {pdvPanels.length} placements ({fixed} fixed boards · {programs} rotating programs) · {totalUnits} total units · vendor CJ</p>
+        </div>
+        <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+          <Btn small onClick={()=>{
+            const headers=["Market","Unit","Vendor","Media Type","Size","Location","Facing","Flight","Cycles","Units","Status","Contract","ISCI"];
+            const rows=fl.map(p=>[mktNames[p.market]||p.market,p.unit,p.vendor,p.media,p.size,p.location,p.facing||"",fmtFl(p.flight),p.cycles||"",p.numUnits||1,p.status,p.contract||"",p.isci||""]);
+            exportCsv("PDV_OOH_"+(mktF||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
+          }} color="#059669">📥 Export</Btn>
+          <Btn small onClick={()=>openOohCreativeSpecs("Parrish DeVaughn",fl.map(p=>({market:mktNames[p.market]||p.market,type:p.media,size:p.size,vendor:p.vendor,contract:p.contract||"",start:oohFlightStart(p.flight),unit:p.unit})),ACC)} color="#5BC4A0">📐 Creative Brief</Btn>
+          <Btn small onClick={()=>openOohSizesReport("Parrish DeVaughn")} color="#5BC4A0">📏 Size Report</Btn>
+          <Btn small onClick={printBoardList} color="#4AC8E8">🖨 Board List</Btn>
+          <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
+          <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
+        </div>
+      </div>
+      <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+        <Sel label="Market" options={mkts} value={mktF} onChange={setMktF} placeholder="All Markets"/>
+        <Sel label="Vendor" options={vendors} value={vendF} onChange={setVendF} placeholder="All Vendors"/>
+        <Sel label="Media" options={mediaTypes} value={mediaF} onChange={setMediaF} placeholder="All Media Types"/>
+        {(mktF||vendF||mediaF)&&<Btn small onClick={()=>{setMktF("");setVendF("");setMediaF("")}}>Clear</Btn>}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:8}}>
+        {mediaTypes.map(mt=>{const bs=pdvPanels.filter(p=>p.media===mt);const u=bs.reduce((a,p)=>a+(p.numUnits||1),0);
+          return <div key={mt} onClick={()=>setMediaF(mediaF===mt?"":mt)} style={{padding:"10px 12px",borderRadius:9,border:mediaF===mt?"2px solid "+ACC:"1px solid #4a3565",background:mediaF===mt?ACC+"12":"#2d1f42",cursor:"pointer"}}>
+            <div style={{fontSize:13,fontWeight:700,color:ACC,textTransform:"uppercase",letterSpacing:1}}>{mt}</div>
+            <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{bs.length}</div>
+            <div style={{fontSize:14,color:"#9B8EAD"}}>{u} units</div>
+          </div>;
+        })}
+        <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #4a3565",background:"linear-gradient(135deg,#2a1a3e,#2d1f42)"}}>
+          <div style={{fontSize:13,fontWeight:700,color:ACC,textTransform:"uppercase",letterSpacing:1}}>ALL OOH</div>
+          <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{pdvPanels.length}</div>
+          <div style={{fontSize:14,color:"#9B8EAD"}}>{pdvPanels.reduce((a,p)=>a+(p.numUnits||1),0)} total units</div>
+        </div>
+      </div>
+      {viewMode==="cards"?
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
+          {fl.map((p,i)=>{const posted=p.status==="posted";return <div key={i} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:"#2d1f42",borderLeft:"4px solid "+ACC}}>
+            <div style={{padding:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+                <div>
+                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#F0E8F8"}}>{p.unit}</span>
+                  <div style={{fontSize:14,color:"#9B8EAD",marginTop:2}}>{p.media} · {p.size} · {p.vendor}</div>
+                </div>
+                <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:posted?"#1f3530":"#3a2f1a",color:posted?"#5BC4A0":"#D4A040"}}>{p.status}</span>
+              </div>
+              <div style={{fontSize:14,color:"#9B8EAD",marginTop:6}}>{p.location}</div>
+              <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #4a3565"}}>
+                <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Run Dates</div><div style={{fontSize:14,fontWeight:600,color:"#E8DFF0"}}>{fmtFl(p.flight)||"TBD"}</div></div>
+                {p.cycles&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Cycles</div><div style={{fontSize:14,fontWeight:600,color:"#E8DFF0"}}>{p.cycles}</div></div>}
+                {(p.numUnits||1)>1&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Units</div><div style={{fontSize:14,fontWeight:700,color:ACC}}>{p.numUnits}</div></div>}
+                {p.facing&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#6366f1"/></div></div>}
+              </div>
+              <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:"#3a2f1a",border:"1px solid #5a4a2a",fontSize:13,color:"#D4A040",fontStyle:"italic"}}>No creative assigned yet</div>
+            </div>
+          </div>;})}
+        </div>
+      :
+        <Cd><div style={{overflowX:"auto",maxHeight:560}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Unit</TH><TH>Type</TH><TH>Size</TH><TH>Location</TH><TH>Run Dates</TH><TH>Cycles</TH><TH>Units</TH><TH>Status</TH></tr></thead>
+          <tbody>{fl.map((p,i)=><tr key={i}>
+            <TD b>{i+1}</TD><TD m b>{p.unit}</TD><TD>{p.media}</TD><TD>{p.size}</TD>
+            <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:240,display:"inline-block"}}>{p.location}</span></TD>
+            <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{fmtFl(p.flight)}</span></TD>
+            <TD>{p.cycles||"—"}</TD><TD b>{p.numUnits||1}</TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#5BC4A0":"#D4A040"}}>{p.status}</span></TD>
+          </tr>)}</tbody>
+        </table></div></Cd>}
+    </div>;
+  };
   const OohHub=()=>{
     const subRoute=routeHash.replace(/^ooh\/?/,'') || 'wk';
     const oohNav=[
       {id:"wk",l:"WK OOH",e:"🛣"},
       {id:"pl",l:"PL OOH",e:"📋"},
       {id:"lr",l:"L&R OOH",e:"🟢"},
+      {id:"pdv",l:"PDV OOH",e:"🔴"},
       {id:"isci",l:"OOH ISCI Registry",e:"◈"},
       {id:"import",l:"Import / Upload",e:"📤"}
     ];
@@ -9118,9 +9222,10 @@ Rules:
             hook count between routes (Rules of Hooks violation → white-screen). */}
         {subRoute==="pl"&&<PlOohPg/>}
         {subRoute==="lr"&&<LrBoardsPg/>}
+        {subRoute==="pdv"&&<PdvOohPg/>}
         {subRoute==="isci"&&oohIsciPg()}
         {subRoute==="import"&&<UploadPg/>}
-        {!["wk","pl","lr","isci","import"].includes(subRoute)&&OohPg()}
+        {!["wk","pl","lr","pdv","isci","import"].includes(subRoute)&&OohPg()}
       </div>
     </div>;
   };
@@ -11583,6 +11688,7 @@ Rules:
         <p><b>The Muses learned to act.</b> The AI Planner now turns a mock rotation into a real Library draft — stations auto-linked, PDF in hand — or downloads the rotation on its own.</p>
         <p><b>The registry got smarter and safer</b> — filter by length, category, or value prop, and a duplicate-code alarm stops collisions before they ever reach a send.</p>
         <p><b>Out-of-home learned to brief its own creative.</b> Every brand's OOH page now pulls a Creative Specs sheet — grouped by media type, sorted by the day art is due, and telling production exactly what to build: CMYK print resolutions for vinyl, and the real <i>pixel canvas</i> for digital (400×1400 bulletins, 400×840 posters, 1920×1080 shelters) instead of meaningless physical feet. Filter any board page by media type, and digital boards finally read in pixels.</p>
+        <p><b>Parrish DeVaughn came outdoors.</b> Oklahoma City's board plant — five fixed panels (perm bulletins, a poster, a digital) plus four rotating programs (pre-empt bulletins, digital bulletins, and the jr/standard poster showings) — now lives in its own <b>PDV OOH</b> page in the Hub, carrying the same Creative Brief, Size Report, and board-list downloads every other brand does.</p>
         <BookMarginNote author="meg">I keep the receipts. Everything I've built is written here — and I'm not done.</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:28,opacity:.5,transform:"rotate(12deg) scale(1.1)"}}/>}{<BookInkSplatter style={{bottom:20,left:20,opacity:.4}}/>}{<BookBurnMark style={{top:0,left:0,width:80,height:80,opacity:.25}}/>}</>},
 
