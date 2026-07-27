@@ -111,9 +111,6 @@ const ESTIMATES=(()=>{
     ["226","TV","Sponsorship"],["227","TV","UD/AV"],["228","TV","UD/AV"],["229","TV","UD/AV"],["230","TV","UD/AV"],["231","TV","Heavy Up"]
   ];
   const WK_MKTS=["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan","Nashville"];
-  // Nashville launched Aug 2026 (est 221) — a brand-new market with no prior books,
-  // so it skips the Jan–Jul monthly estimates (210–215 = Jan–Jun, 218 = Jul). Radio
-  // (216) stays staged for Nashville — it's handled by the special-case list below.
   const NSH_PRELAUNCH=new Set(["210","211","212","213","214","215","218"]);
   const newEsts=[];
   WK_EST_NEW.forEach(([num,media,group])=>{
@@ -1393,8 +1390,6 @@ const App=()=>{
       return [...window.WK_AUG_RADIO_DRAFTS,...cleaned];
     });
   },[dbLoaded,trafficHistory]);
-  // Separate Nashville TV launch-rotation seed — own source ("wk-nsh-tv-draft") and
-  // version, so it NEVER touches the six existing market TV drafts (which may be sent).
   const nshTvSeedRef=React.useRef(false);
   React.useEffect(()=>{
     if(!dbLoaded||!loadCompleteRef.current||!trafficLoadedRef.current)return;
