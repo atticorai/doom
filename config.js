@@ -21,11 +21,11 @@ const ESTIMATES=(()=>{const CABLE_NUMS=new Set(["2605","2613","2621","2629"]);re
 const STATIONS=D_S.map(r=>({market:r[0],call:r[1],media:r[2],ownership:r[3],contact:r[4],brand:r[5],buyer:r[6]}));
 const CALENDAR=D_C.map(r=>({month:r[0],rotDue:r[1],bcStart:r[2],bcEnd:r[3]}));
 const POSTINGS=D_P.map(r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:r[3],type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17]}));
-const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",ABQ:"Albuquerque",KBH:"King/Bull",BHD:"Bullhead",FLG:"Flagstaff",LVS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YMA:"Yuma",OKC:"Oklahoma City",TUL:"Tulsa",BOS:"Boston"};
+const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",ABQ:"Albuquerque",KBH:"King/Bull",BHD:"Bullhead",FLG:"Flagstaff",LVS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YMA:"Yuma",OKC:"Oklahoma City",TUL:"Tulsa",BOS:"Boston"};
 const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
 const BRANDS=[
   {code:"PL",name:"Postman Law",agency:"Atticor Group LLC",logo:LOGO_PL,color:"#5D3A87",colorBg:"#EDE6F5",gradientFrom:"#7C4DB5",gradientTo:"#5D3A87",markets:["CHI","CIN","DEN","MSP"],airingKey:"est"},
-  {code:"WK",name:"Wettermark Keith",agency:"Atticor Group LLC",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",gradientFrom:"#818cf8",gradientTo:"#6366f1",markets:["BRM","HSV","KNX","CHA","MTG","DHN"],airingKey:"est|market"},
+  {code:"WK",name:"Wettermark Keith",agency:"Atticor Group LLC",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",gradientFrom:"#818cf8",gradientTo:"#6366f1",markets:["BRM","HSV","KNX","CHA","MTG","DHN","NSH"],airingKey:"est|market"},
   // Lerner & Rowe — OOH-only for now (contract-level buys, no board/ISCI detail yet).
   {code:"LR",name:"Lerner & Rowe",agency:"Atticor Group LLC",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#F2DD00",colorBg:"#FFFCE0",gradientFrom:"#FFF04D",gradientTo:"#F2DD00",markets:["ABQ","BHD","CHI","FLG","KBH","LVS","PHX","RNO","SEA","TUC","YMA"],airingKey:"est"},
   // Parrish DeVaughn — Oklahoma City personal injury firm. Broadcast TV + OOH. Brand red #EE2B37 (PMS 1788 C).

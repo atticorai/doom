@@ -110,11 +110,15 @@ const ESTIMATES=(()=>{
     ["221","TV","Base"],["222","TV","Base"],["223","TV","Base"],["224","TV","Base"],["225","TV","Base"],
     ["226","TV","Sponsorship"],["227","TV","UD/AV"],["228","TV","UD/AV"],["229","TV","UD/AV"],["230","TV","UD/AV"],["231","TV","Heavy Up"]
   ];
-  const WK_MKTS=["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan"];
+  const WK_MKTS=["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan","Nashville"];
+  // Nashville launched Aug 2026 (est 221) — a brand-new market with no prior books,
+  // so it skips the Jan–Jul monthly estimates (210–215 = Jan–Jun, 218 = Jul). Radio
+  // (216) stays staged for Nashville — it's handled by the special-case list below.
+  const NSH_PRELAUNCH=new Set(["210","211","212","213","214","215","218"]);
   const newEsts=[];
   WK_EST_NEW.forEach(([num,media,group])=>{
     const mkts=num==="231"?["Knoxville"]:num==="216"?["Birmingham","Huntsville","Montgomery"]:WK_MKTS;
-    mkts.forEach(m=>{if(!base.some(e=>e.num===num&&e.market===m))newEsts.push({num,market:m,media,group,campaign:"",buyer:"Amy Coffey",brand:"Wettermark Keith"})});
+    mkts.forEach(m=>{if(m==="Nashville"&&NSH_PRELAUNCH.has(num))return;if(!base.some(e=>e.num===num&&e.market===m))newEsts.push({num,market:m,media,group,campaign:"",buyer:"Amy Coffey",brand:"Wettermark Keith"})});
   });
   // TTWN estimates — network radio buy, all markets per brand
   WK_MKTS.forEach(m=>{if(!base.some(e=>e.num==="232"&&e.market===m))newEsts.push({num:"232",market:m,media:"Streaming Audio",group:"TTWN",campaign:"",buyer:"Amy Coffey",brand:"Wettermark Keith"})});
@@ -443,7 +447,7 @@ const mediaLabel=(m)=>{if(!m)return"";if(m==="Cable")return"TV/Cable";return m};
 const DL=Object.entries(DM).map(([c,n])=>({code:c,name:n}));
 const BRANDS=[
   {code:"PL",name:"Postman Law",agency:"Atticor Group LLC",logo:LOGO_PL,color:"#5D3A87",colorBg:"#EDE6F5",markets:["CHI","CIN","DEN","MSP"],airingKey:"est"},
-  {code:"WK",name:"Wettermark Keith",agency:"Atticor Group LLC",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",markets:["BRM","HSV","KNX","CHA","MTG","DHN"],airingKey:"est|market"},
+  {code:"WK",name:"Wettermark Keith",agency:"Atticor Group LLC",logo:LOGO_WK,color:"#D4A040",colorBg:"#fffbeb",markets:["BRM","HSV","KNX","CHA","MTG","DHN","NSH"],airingKey:"est|market"},
   {code:"LR",name:"Lerner & Rowe",agency:"Atticor Group LLC",logo:(typeof LOGO_LR!=="undefined"?LOGO_LR:""),color:"#F2DD00",colorBg:"#FFFCE0",markets:["ABQ","BHD","CHI","FLG","KBH","LVS","PHX","RNO","SEA","TUC","YMA"],airingKey:"est"},
   {code:"PDV",name:"Parrish DeVaughn",agency:"Atticor Group LLC",logo:(typeof LOGO_PDV!=="undefined"?LOGO_PDV:""),color:"#EE2B37",colorBg:"#FDECEE",markets:["OKC","TUL"],airingKey:"est"},
   {code:"KE",name:"Keches Law Group",agency:"Atticor Group LLC",logo:(typeof LOGO_KE!=="undefined"?LOGO_KE:""),color:"#1E5F9E",colorBg:"#E8F0F9",markets:["BOS"],airingKey:"est"}
@@ -3716,7 +3720,7 @@ const App=()=>{
     const REASONS=["New market launch","New media type","New flight period","Agency buy plan"];
     const BB={"Postman Law":["Ken Lazar","Lynn Cortelezzi","Hazel Wolf"],"Wettermark Keith":["Amy Coffey"],"Parrish DeVaughn":["Jessica Flynn"],"Lerner & Rowe":[],"Keches Law Group":[]};
     const BUYER_EMAILS={"Ken Lazar":"ken.lazar@atticor.ai","Lynn Cortelezzi":"lynn.cortelezzi@atticor.ai","Amy Coffey":"acoffey@wkfirm.com","Jessica Flynn":"jessica.flynn@atticor.ai"};
-    const BM={"Postman Law":["Chicago","Cincinnati","Denver","Minneapolis"],"Wettermark Keith":["Birmingham","Chattanooga","Dothan","Huntsville","Knoxville","Montgomery"],"Parrish DeVaughn":["Oklahoma City","Tulsa"],"Lerner & Rowe":["Albuquerque","Bullhead","Chicago","Flagstaff","Las Vegas","Phoenix","Reno","Tucson","Yuma"],"Keches Law Group":["Boston"]};
+    const BM={"Postman Law":["Chicago","Cincinnati","Denver","Minneapolis"],"Wettermark Keith":["Birmingham","Chattanooga","Dothan","Huntsville","Knoxville","Montgomery","Nashville"],"Parrish DeVaughn":["Oklahoma City","Tulsa"],"Lerner & Rowe":["Albuquerque","Bullhead","Chicago","Flagstaff","Las Vegas","Phoenix","Reno","Tucson","Yuma"],"Keches Law Group":["Boston"]};
     const findSta=()=>{if(!nr.market||!nr.brand||!nr.media)return[];return stations.filter(s=>s.market===nr.market&&s.brand===nr.brand&&(nr.media==="Sports"||nr.media==="Heavy Up"?s.media==="TV":nr.media==="Streaming Audio"?s.media==="Radio":s.media===nr.media))};
     const openC=()=>{setShowAdd(true);setStep(1);setNr({num:nextNum(),market:"",media:"",group:"",campaign:"",buyer:"",brand:"",reason:""});setSugStations([]);setSelStations([])};
     const closeC=()=>{setShowAdd(false);setStep(1)};
@@ -9386,7 +9390,7 @@ Rules:
   // Read-only view. Records are populated by Claude on the backend.
   // Two tabs: Instructions (archive + click-to-view) | Creative (by month).
   const VaultPg=()=>{
-    const WK_MKTS_FULL=["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan","Gadsden"];
+    const WK_MKTS_FULL=["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan","Nashville","Gadsden"];
     const MEDIA_OPTS=["TV","Cable","Radio","Streaming Audio","Digital","OOH"];
     const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
     const SCHED_COLORS_V={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#dcfce7","Holiday Only":"#fee2e2"};
@@ -11515,16 +11519,16 @@ Rules:
       </div>,damageEffects:<>{<BookBurnMark style={{top:0,right:0,width:80,height:80,opacity:.3}}/>}</>},
 
       {title:"Wettermark Keith Overview",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p>WK has six markets: Birmingham (BRM), Huntsville (HSV), Knoxville (KNX), Chattanooga (CHA), Montgomery (MTG), Dothan (DHN). Amy Coffey is the buyer for all WK markets — she's CC'd on every send.</p>
-        <p>WK uses 3-digit monthly estimates shared across ALL six markets. One number covers every market for that month. But you still build traffic per market — Birmingham gets its own rotation, Dothan gets its own, etc. <span style={{color:"#C4A0C8",fontWeight:700}}>{wkActive} active ISCIs</span> · {wkSta} stations currently in the registry.</p>
-        <BookMarginNote author="meg">Six markets. One buyer. One estimate per month. Don't mix them up.</BookMarginNote>
+        <p>WK has seven markets: Birmingham (BRM), Huntsville (HSV), Knoxville (KNX), Chattanooga (CHA), Montgomery (MTG), Dothan (DHN), and Nashville (NSH) — the newest, launched August 2026. Amy Coffey is the buyer for all WK markets — she's CC'd on every send.</p>
+        <p>WK uses 3-digit monthly estimates shared across every WK market. One number covers every market for that month. But you still build traffic per market — Birmingham gets its own rotation, Dothan gets its own, etc. Nashville only carries estimates from its August launch forward — no phantom Jan–July books. <span style={{color:"#C4A0C8",fontWeight:700}}>{wkActive} active ISCIs</span> · {wkSta} stations currently in the registry.</p>
+        <BookMarginNote author="meg">Seven markets now — Nashville joined in August. One buyer, one estimate per month. Don't mix them up.</BookMarginNote>
       </div>,damageEffects:<>{<BookHoofMark style={{bottom:16,right:16,opacity:.3,transform:"rotate(-10deg) scale(.75)"}}/>}{<BookDroolStain style={{top:16,right:16,width:80,height:80,opacity:.2}}/>}</>},
 
       {title:"WK Estimate Numbers",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
         <p>The WK monthly estimate map: 210=Jan, 211=Feb, 212=Mar, 213=Apr, 214=May, 215=Jun, 218=Jul, 221=Aug, 222=Sep, 223=Oct, 224=Nov, 225=Dec. Note the gap — July is 218, not 216. For {workMonth}, use estimate {curWkEst}.</p>
         <p>Set the broadcast month first, then the correct estimate appears automatically. If you're copying traffic to another month, the system swaps the estimate number for you (April 213 → May 214).</p>
         <p>Old 4-digit WK estimates (2633–2660) are legacy — the system filters them out automatically. Ignore them if you see references.</p>
-        <BookMarginNote author="muses">Six markets share one number's name<br/>But Birmingham and Dothan aren't the same!</BookMarginNote>
+        <BookMarginNote author="muses">Seven markets share one number's name<br/>But Birmingham and Nashville aren't the same!</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:32,opacity:.5,transform:"rotate(10deg) scale(.9)"}}/>}</>},
 
       {title:"Lerner & Rowe Overview",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -11622,7 +11626,7 @@ Rules:
 
       {title:"OOH Hub: Getting Around",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
         <p>The OOH Hub is a separate app — click OOH Hub in the nav or go to #ooh. It has its own sidebar with four sections: WK OOH, PL OOH, OOH ISCI Registry, and Import/Upload.</p>
-        <p>WK OOH: browse billboard/poster inventory across 6 markets. Use card view for photos, map view for locations, or the contract tracker for vendor management. Build OOH traffic per vendor/DMA.</p>
+        <p>WK OOH: browse billboard/poster inventory across 7 markets. Use card view for photos, map view for locations, or the contract tracker for vendor management. Build OOH traffic per vendor/DMA.</p>
         <p>PL OOH: manage panels with a creative calendar. Track due dates, board switches, and flight dates. Dashboard alerts when creative is due.</p>
         <BookMarginNote author="meg">I manage 300+ boards. What do you manage?</BookMarginNote>
       </div>,damageEffects:<>{<BookBurnMark style={{bottom:8,left:8,width:96,height:96,opacity:.25}}/>}{<BookHoofMark style={{top:16,right:16,opacity:.2,transform:"rotate(-15deg) scale(.6)"}}/>}</>},
@@ -11684,7 +11688,7 @@ Rules:
       {title:"The Living Record",content:<div style={{display:"flex",flexDirection:"column",gap:12}}>
         <p><span style={{fontSize:28,fontFamily:"'Cinzel',serif",float:"left",marginRight:8,color:"#4a1a1a",lineHeight:1}}>D</span>oom is never finished — she grows. This page is where her evolution is written down. The <b>Audit Log</b> remembers who did what; this remembers what got <i>built</i>.</p>
         <p><b>Two brands became four.</b> Lerner &amp; Rowe (Southwest &amp; Pacific Northwest, shared creative, Spanish in the code) and Parrish DeVaughn (Oklahoma City live, Tulsa expanding) joined Postman Law and Wettermark Keith.</p>
-        <p><b>Wettermark Keith was rebuilt in V2</b> — a fresh set of TV spots (Auto, Premises, General PI, Trucking, On The Job, in :30 and :15) across every market, with Nashville coming online.</p>
+        <p><b>Wettermark Keith was rebuilt in V2</b> — a fresh set of TV spots (Auto, Premises, General PI, Trucking, On The Job, in :30 and :15) across every market. <b>Nashville came fully online</b> as WK's seventh market — TV stations, ISCIs, and estimates from its August 2026 launch forward (no phantom back-months), joining the six it grew up with.</p>
         <p><b>The Muses learned to act.</b> The AI Planner now turns a mock rotation into a real Library draft — stations auto-linked, PDF in hand — or downloads the rotation on its own.</p>
         <p><b>The registry got smarter and safer</b> — filter by length, category, or value prop, and a duplicate-code alarm stops collisions before they ever reach a send.</p>
         <p><b>Out-of-home learned to brief its own creative.</b> Every brand's OOH page now pulls a Creative Specs sheet — grouped by media type, sorted by the day art is due, and telling production exactly what to build: CMYK print resolutions for vinyl, and the real <i>pixel canvas</i> for digital (400×1400 bulletins, 400×840 posters, 1920×1080 shelters) instead of meaningless physical feet. Filter any board page by media type, and digital boards finally read in pixels.</p>
