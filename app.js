@@ -1393,6 +1393,23 @@ const App=()=>{
       return [...window.WK_AUG_RADIO_DRAFTS,...cleaned];
     });
   },[dbLoaded,trafficHistory]);
+  // Separate Nashville TV launch-rotation seed — own source ("wk-nsh-tv-draft") and
+  // version, so it NEVER touches the six existing market TV drafts (which may be sent).
+  const nshTvSeedRef=React.useRef(false);
+  React.useEffect(()=>{
+    if(!dbLoaded||!loadCompleteRef.current||!trafficLoadedRef.current)return;
+    if(nshTvSeedRef.current)return;nshTvSeedRef.current=true;
+    if(typeof window==="undefined"||!Array.isArray(window.WK_NSH_TV_DRAFTS)||!window.WK_NSH_TV_DRAFTS.length)return;
+    const ver=String(window.WK_NSH_TV_VERSION||"1");
+    try{if(localStorage.getItem("wkNshTvVer")===ver)return}catch(e){}
+    setTrafficHistory(prev=>{
+      if(!Array.isArray(prev))return prev;
+      try{localStorage.setItem("wkNshTvVer",ver)}catch(e){}
+      trafficBulkRef.current=true;
+      const cleaned=prev.filter(h=>!h||typeof h.source!=="string"||h.source.indexOf("wk-nsh-tv-draft")!==0);
+      return [...window.WK_NSH_TV_DRAFTS,...cleaned];
+    });
+  },[dbLoaded,trafficHistory]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(workMonth)saveToDb("workMonth",workMonth)},[workMonth,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(confirmations).length>0)saveToDb("confirmations",confirmations)},[confirmations,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohRemindersSent).length>0)saveToDb("oohRemindersSent",oohRemindersSent)},[oohRemindersSent,dbLoaded]);
@@ -11688,7 +11705,7 @@ Rules:
       {title:"The Living Record",content:<div style={{display:"flex",flexDirection:"column",gap:12}}>
         <p><span style={{fontSize:28,fontFamily:"'Cinzel',serif",float:"left",marginRight:8,color:"#4a1a1a",lineHeight:1}}>D</span>oom is never finished — she grows. This page is where her evolution is written down. The <b>Audit Log</b> remembers who did what; this remembers what got <i>built</i>.</p>
         <p><b>Two brands became four.</b> Lerner &amp; Rowe (Southwest &amp; Pacific Northwest, shared creative, Spanish in the code) and Parrish DeVaughn (Oklahoma City live, Tulsa expanding) joined Postman Law and Wettermark Keith.</p>
-        <p><b>Wettermark Keith was rebuilt in V2</b> — a fresh set of TV spots (Auto, Premises, General PI, Trucking, On The Job, in :30 and :15) across every market. <b>Nashville came fully online</b> as WK's seventh market — TV stations, ISCIs, and estimates from its August 2026 launch forward (no phantom back-months), joining the six it grew up with.</p>
+        <p><b>Wettermark Keith was rebuilt in V2</b> — a fresh set of TV spots (Auto, Premises, General PI, Trucking, On The Job, in :30 and :15) across every market. <b>Nashville came fully online</b> as WK's seventh market — TV stations, ISCIs, and estimates from its August 2026 launch forward (no phantom back-months), joining the six it grew up with. Two new spots joined the roster — the market-specific <i>"Not New To Nashville"</i> brand cut in :30 and :15 — and its launch TV rotation waits in the Library as a draft for the buyer's approval.</p>
         <p><b>The Muses learned to act.</b> The AI Planner now turns a mock rotation into a real Library draft — stations auto-linked, PDF in hand — or downloads the rotation on its own.</p>
         <p><b>The registry got smarter and safer</b> — filter by length, category, or value prop, and a duplicate-code alarm stops collisions before they ever reach a send.</p>
         <p><b>Out-of-home learned to brief its own creative.</b> Every brand's OOH page now pulls a Creative Specs sheet — grouped by media type, sorted by the day art is due, and telling production exactly what to build: CMYK print resolutions for vinyl, and the real <i>pixel canvas</i> for digital (400×1400 bulletins, 400×840 posters, 1920×1080 shelters) instead of meaningless physical feet. Filter any board page by media type, and digital boards finally read in pixels.</p>
