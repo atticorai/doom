@@ -1390,19 +1390,17 @@ const App=()=>{
       return [...window.WK_AUG_RADIO_DRAFTS,...cleaned];
     });
   },[dbLoaded,trafficHistory]);
-  const nshTvSeedRef=React.useRef(false);
+  const nshTvPurgeRef=React.useRef(false);
   React.useEffect(()=>{
     if(!dbLoaded||!loadCompleteRef.current||!trafficLoadedRef.current)return;
-    if(nshTvSeedRef.current)return;nshTvSeedRef.current=true;
-    if(typeof window==="undefined"||!Array.isArray(window.WK_NSH_TV_DRAFTS)||!window.WK_NSH_TV_DRAFTS.length)return;
-    const ver=String(window.WK_NSH_TV_VERSION||"1");
-    try{if(localStorage.getItem("wkNshTvVer")===ver)return}catch(e){}
+    if(nshTvPurgeRef.current)return;nshTvPurgeRef.current=true;
+    try{if(localStorage.getItem("wkNshTvPurged")==="1")return}catch(e){}
     setTrafficHistory(prev=>{
+      try{localStorage.setItem("wkNshTvPurged","1")}catch(e){}
       if(!Array.isArray(prev))return prev;
-      try{localStorage.setItem("wkNshTvVer",ver)}catch(e){}
+      if(!prev.some(h=>h&&typeof h.source==="string"&&h.source.indexOf("wk-nsh-tv-draft")===0))return prev;
       trafficBulkRef.current=true;
-      const cleaned=prev.filter(h=>!h||typeof h.source!=="string"||h.source.indexOf("wk-nsh-tv-draft")!==0);
-      return [...window.WK_NSH_TV_DRAFTS,...cleaned];
+      return prev.filter(h=>!h||typeof h.source!=="string"||h.source.indexOf("wk-nsh-tv-draft")!==0);
     });
   },[dbLoaded,trafficHistory]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(workMonth)saveToDb("workMonth",workMonth)},[workMonth,dbLoaded]);
