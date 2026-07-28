@@ -9092,6 +9092,8 @@ Rules:
     const ACC="#1E5F9E";
     const mediaTypes=[...new Set(kePanels.filter(p=>p.media).map(p=>p.media))].sort();
     const statuses=[...new Set(kePanels.map(p=>p.status).filter(Boolean))];
+    const vendors=[...new Set(kePanels.map(p=>p.vendor).filter(Boolean))];
+    const vendorLabel=vendors.length===1?"vendor "+vendors[0]:vendors.length+" vendors";
     const fl=kePanels.filter(p=>(mediaF?(p.media||"")===mediaF:true)&&(statF?p.status===statF:true));
     const totalUnits=fl.reduce((a,p)=>a+(p.numUnits||1),0);
     const fmtFl=f=>String(f||"").split("(")[0].trim();
@@ -9106,7 +9108,7 @@ Rules:
       w.document.write('<html><head><title>Keches OOH — Board List</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;background:#1E5F9E;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}@media print{.dl{display:none}}</style></head><body>');
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
       w.document.write('<div style="text-align:center;margin-bottom:12px"><div style="font-weight:bold;color:#1E5F9E;font-size:20px">Keches Law Group</div><div style="font-weight:bold;color:#555;letter-spacing:2px">OUT-OF-HOME BOARD LIST</div></div>');
-      w.document.write('<div style="font-size:12px"><b>Client:</b> Keches Law Group &nbsp;·&nbsp; <b>Market:</b> Boston &nbsp;·&nbsp; <b>Vendor:</b> Clear Channel Outdoor &nbsp;·&nbsp; <b>Boards:</b> '+fl.length+' ('+totalUnits+' units)</div>');
+      w.document.write('<div style="font-size:12px"><b>Client:</b> Keches Law Group &nbsp;·&nbsp; <b>Market:</b> Boston &nbsp;·&nbsp; <b>Vendor:</b> '+escHtml([...new Set(fl.map(p=>p.vendor).filter(Boolean))].join(", "))+' &nbsp;·&nbsp; <b>Boards:</b> '+fl.length+' ('+totalUnits+' units)</div>');
       w.document.write('<table><tr><th>Unit #</th><th>Type</th><th>Size</th><th>Location</th><th>Run Dates</th><th>Status</th></tr>');
       fl.forEach(p=>w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.unit))+'</td><td>'+escHtml(p.media)+(p.slots?' ('+p.slots+' slots)':'')+'</td><td>'+escHtml(p.size)+'</td><td>'+escHtml(p.location)+'</td><td>'+escHtml(fmtFl(p.flight))+'</td><td>'+escHtml(p.status)+'</td></tr>'));
       w.document.write('</table></body></html>');w.document.close();
@@ -9115,7 +9117,7 @@ Rules:
     return <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",flexWrap:"wrap",gap:8}}>
         <div>{hasLogo?<img src={LOGO_KE} alt="Keches Law Group" style={{height:34,marginBottom:6,background:"#fff",padding:"4px 8px",borderRadius:6}}/>:<div style={{fontSize:20,fontWeight:900,color:ACC,fontFamily:"'Cormorant Garamond',serif",marginBottom:2}}>Keches Law Group</div>}<PageHead title="Keches Law Group — OOH Media Plan" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>Boston · {kePanels.length} board{kePanels.length!==1?"s":""} · {totalUnits} units · vendor Clear Channel Outdoor · {keKeys.length} contract{keKeys.length!==1?"s":""}</p>
+          <p style={{fontSize:13,color:"#9B8EAD"}}>Boston · {kePanels.length} board{kePanels.length!==1?"s":""} · {totalUnits} units · {vendorLabel} · {keKeys.length} contract{keKeys.length!==1?"s":""}</p>
         </div>
         <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
           <Btn small onClick={()=>{
