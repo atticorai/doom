@@ -1110,7 +1110,12 @@ const App=()=>{
           });
           // Add links for new stations not yet in Firestore
           const defaultLinks=buildDefaultLinks(_loadedStations,ESTIMATES);
-          Object.entries(defaultLinks).forEach(([k,nums])=>{if(!migrated[k]){migrated[k]=nums;migCount++}});
+          // Backfill default market+media estimate links for any station that has NO
+          // links (missing key OR an empty list). A station with zero links can't be
+          // sent to at all, so this only ever unblocks sends — it never overrides links
+          // a user intentionally kept. (Fixes Nashville TV stations that loaded after the
+          // links doc was first built, leaving them unlinked from estimate 221.)
+          Object.entries(defaultLinks).forEach(([k,nums])=>{if(!migrated[k]||migrated[k].length===0){migrated[k]=nums;migCount++}});
           if(migCount>0){console.log("Migrated "+migCount+" station-estimate links");try{db.collection("appData").doc("staEstLinks").set({data:JSON.stringify(migrated),ts:Date.now()})}catch(e){}}
           setStaEstLinks(migrated);
           linksReady.current=true;
@@ -1489,6 +1494,10 @@ const App=()=>{
     const links={};
     const mediaCompat=(sMed,eMed)=>{
       if(sMed===eMed)return true;
+      // A TV station covers the whole TV family of estimates (Sports, Heavy Up,
+      // UD/AV, Sponsorship) — same rule the load-time migration uses — so a
+      // Nashville TV station links to August (221) AND the rest of its TV buys.
+      if(sMed==="TV"&&(eMed==="Sports"||eMed==="Heavy Up"||eMed==="UD/AV"||eMed==="Sponsorship"))return true;
       return false;
     };
     stationsList.forEach(s=>{
