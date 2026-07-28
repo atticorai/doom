@@ -1026,11 +1026,7 @@ const App=()=>{
             // Lerner & Rowe: the seed titles are the clean canonical set (our naming,
             // no [SP]/REV/mixdown vendor junk); Firestore's stored titles are stale, so
             // force the seed title for L&R. Other brands keep the Firestore-wins rule.
-            // Seed titles that carry their own ISCI-code prefix ("CODE - Title") are the
-            // canonical name — force the seed title to win so a stale Firestore-stored
-            // title can't strip the code back off. Same override rule as Lerner & Rowe.
-            const seedCodeTitle=seed.title&&seed.title.indexOf(seed.code+" - ")===0;
-            const useTitle=((fb.brand==="Lerner & Rowe"&&seed.title)||seedCodeTitle)?seed.title:(fb.title||seed.title);
+            const useTitle=(fb.brand==="Lerner & Rowe"&&seed.title)?seed.title:(fb.title||seed.title);
             return{...fb,title:useTitle,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:fb.fileUrl||seed.fileUrl,category:useSeedCat?seedCat:(fbCat||seedCat),caseType:useSeedCat?seedCat:(fbCat||seedCat),valueProp:fb.valueProp||seed.valueProp||"",vo:fb.vo||seed.vo||""};
           });
           // Always add back missing seed ISCIs — better to recover than lose
@@ -1041,6 +1037,10 @@ const App=()=>{
           // so this cleans them on load and persists the fix back below.
           const _asciiTitle=t=>t?String(t).replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,"-").replace(/…/g,"...").replace(/ /g," ").replace(/\s+_/g,"_").replace(/[^\x00-\x7F]/g,"").replace(/[ \t]+/g," ").trim():t;
           all.forEach(i=>{if(i.title){const nt=_asciiTitle(i.title);if(nt!==i.title)i.title=nt}});
+          // Strip a redundant leading "CODE - " from titles (the ISCI code already has
+          // its own column) so a stale Firestore-stored "CODE - Title" is cleaned on load
+          // and persisted back — titles read as the plain name, like every other ISCI.
+          all.forEach(i=>{if(i.title&&i.code&&i.title.indexOf(i.code+" - ")===0)i.title=i.title.slice((i.code+" - ").length)});
           // Lerner & Rowe: clear stale Google Drive links (they were never real
           // uploads). Scoped to drive.google URLs so once real files are uploaded
           // (Supabase URLs) they persist and aren't wiped on the next load.
