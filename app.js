@@ -114,7 +114,7 @@ const ESTIMATES=(()=>{
   const NSH_PRELAUNCH=new Set(["210","211","212","213","214","215","218"]);
   const newEsts=[];
   WK_EST_NEW.forEach(([num,media,group])=>{
-    const mkts=num==="231"?["Knoxville"]:num==="216"?["Birmingham","Huntsville","Montgomery"]:WK_MKTS;
+    const mkts=num==="231"?["Knoxville"]:num==="216"?["Birmingham","Huntsville","Montgomery","Nashville"]:WK_MKTS;
     mkts.forEach(m=>{if(m==="Nashville"&&NSH_PRELAUNCH.has(num))return;if(!base.some(e=>e.num===num&&e.market===m))newEsts.push({num,market:m,media,group,campaign:"",buyer:"Amy Coffey",brand:"Wettermark Keith"})});
   });
   // TTWN estimates — network radio buy, all markets per brand
