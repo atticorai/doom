@@ -9085,12 +9085,14 @@ Rules:
   // core artifact for this brand — always-on digital dominations + static segments).
   const KeOohPg=()=>{
     const [mediaF,setMediaF]=React.useState("");
+    const [statF,setStatF]=React.useState("");
     const [viewMode,setViewMode]=React.useState("cards");
     const [keEditK,setKeEditK]=React.useState(null);
     const [keEditD,setKeEditD]=React.useState({startDate:"",endDate:"",notes:"",manualStatus:""});
     const ACC="#1E5F9E";
     const mediaTypes=[...new Set(kePanels.filter(p=>p.media).map(p=>p.media))].sort();
-    const fl=kePanels.filter(p=>(mediaF?(p.media||"")===mediaF:true));
+    const statuses=[...new Set(kePanels.map(p=>p.status).filter(Boolean))];
+    const fl=kePanels.filter(p=>(mediaF?(p.media||"")===mediaF:true)&&(statF?p.status===statF:true));
     const totalUnits=fl.reduce((a,p)=>a+(p.numUnits||1),0);
     const fmtFl=f=>String(f||"").split("(")[0].trim();
     const fmtD=d=>d?new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"—";
@@ -9129,9 +9131,11 @@ Rules:
           <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"}>📑 Contracts</Btn>
         </div>
       </div>
-      {viewMode!=="contracts"&&<div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+      {viewMode!=="contracts"&&<div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
         <Sel label="Media" options={mediaTypes} value={mediaF} onChange={setMediaF} placeholder="All Media Types"/>
-        {mediaF&&<Btn small onClick={()=>setMediaF("")}>Clear</Btn>}
+        <Sel label="Status" options={statuses} value={statF} onChange={setStatF} placeholder="All Statuses"/>
+        {(mediaF||statF)&&<Btn small onClick={()=>{setMediaF("");setStatF("")}}>Clear</Btn>}
+        <span style={{fontSize:12,color:"#9B8EAD"}}>{fl.length} of {kePanels.length} boards</span>
       </div>}
       {viewMode!=="contracts"&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:8}}>
         {mediaTypes.map(mt=>{const bs=kePanels.filter(p=>p.media===mt);const u=bs.reduce((a,p)=>a+(p.numUnits||1),0);
