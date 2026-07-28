@@ -9544,6 +9544,85 @@ Rules:
   // ── WK LEGACY VAULT ──────────────────────────────────────────────
   // Read-only view. Records are populated by Claude on the backend.
   // Two tabs: Instructions (archive + click-to-view) | Creative (by month).
+  // ── CONTRACTS VAULT ─────────────────────────────────
+  // Keches Law Group media-contract portfolio across every medium. Merges the
+  // OOH billboard contracts (from oohContracts) with the non-OOH KE_VAULT
+  // (TV/Radio/Print/Podcast/Digital/Sponsorship/Event) into one filterable view.
+  const ContractsPg=()=>{
+    const [medF,setMedF]=React.useState("");
+    const [statF,setStatF]=React.useState("");
+    const MED_COLOR={OOH:"#1E5F9E",TV:"#9b7bb0",Radio:"#5BC4A0",Print:"#D4A040",Podcast:"#E85A7A",Digital:"#4AC8E8",Sponsorship:"#E8913A",Event:"#A78BFA"};
+    const medColor=m=>MED_COLOR[m]||"#9B8EAD";
+    const dmName=code=>(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[code])||(typeof DM!=="undefined"&&DM[code])||code||"";
+    const fmtD=d=>d?new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"—";
+    // Normalize Keches OOH contracts + the non-OOH vault into one shape.
+    const oohRecs=Object.keys(oohContracts).filter(k=>{const c=oohContracts[k];return c&&c.brand==="Keches Law Group"}).map(k=>{const c=oohContracts[k];return{id:c.num||k,vendor:c.vendor||"",medium:"OOH",title:c.mediaType||"OOH billboards",market:dmName(c.dmas&&c.dmas[0]),startDate:c.startDate,endDate:c.endDate,total:c.total,notes:c.notes,manualStatus:c.manualStatus,link:c.link,signed:""}});
+    const vaultRecs=(typeof KE_VAULT!=="undefined"?KE_VAULT:[]).map(v=>({...v}));
+    const all=[...oohRecs,...vaultRecs].map(r=>({...r,cs:contractStatus({endDate:r.endDate,startDate:r.startDate,manualStatus:r.manualStatus})}));
+    const mediums=[...new Set(all.map(r=>r.medium))].sort((a,b)=>a.localeCompare(b));
+    const isActive=cs=>cs&&(cs.status==="active"||cs.status==="expiring"||cs.status==="expiring-soon"||cs.status==="renewal");
+    const filtered=all.filter(r=>(medF?r.medium===medF:true)&&(statF==="active"?isActive(r.cs):statF==="expired"?(r.cs&&r.cs.status==="expired"):true))
+      .sort((a,b)=>{const av=isActive(a.cs)?0:1,bv=isActive(b.cs)?0:1;return av-bv||String(b.startDate||"").localeCompare(String(a.startDate||""))});
+    const activeCount=all.filter(r=>isActive(r.cs)).length;
+    const activeValue=all.filter(r=>isActive(r.cs)).reduce((s,r)=>s+(Number(r.total)||0),0);
+    return<div style={{display:"flex",flexDirection:"column",gap:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",flexWrap:"wrap",gap:8}}>
+        <div>
+          <div style={{fontSize:20,fontWeight:900,color:"#1E5F9E",fontFamily:"'Cormorant Garamond',serif",marginBottom:2}}>Keches Law Group</div>
+          <PageHead title="Media Contracts Vault" pgKey="dash" sub={all.length+" contracts · "+activeCount+" active · $"+activeValue.toLocaleString()+" active/annual value · "+mediums.length+" media types"}/>
+        </div>
+        <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+          <Btn small onClick={()=>{
+            const headers=["Medium","Vendor","Title","Market","Start","End","Status","Total","ID"];
+            const rows=filtered.map(r=>[r.medium,r.vendor,r.title,r.market||"",r.startDate||"",r.endDate||"",(r.cs&&r.cs.label)||"",r.total!=null?r.total:"",r.id]);
+            exportCsv("Keches_Contracts_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
+          }} color="#059669">📥 Export</Btn>
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:8}}>
+        {mediums.map(m=>{const recs=all.filter(r=>r.medium===m);const act=recs.filter(r=>isActive(r.cs)).length;const c=medColor(m);
+          return<div key={m} onClick={()=>setMedF(medF===m?"":m)} style={{padding:"10px 12px",borderRadius:9,border:medF===m?"2px solid "+c:"1px solid #4a3565",background:medF===m?c+"18":"#2d1f42",cursor:"pointer"}}>
+            <div style={{fontSize:12,fontWeight:800,color:c,textTransform:"uppercase",letterSpacing:1}}>{m}</div>
+            <div style={{fontSize:22,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{recs.length}</div>
+            <div style={{fontSize:12,color:"#9B8EAD"}}>{act} active</div>
+          </div>;})}
+      </div>
+      <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
+        <Sel label="Medium" options={mediums} value={medF} onChange={setMedF} placeholder="All Media"/>
+        <div style={{display:"flex",gap:3}}>
+          {[["","All"],["active","Active"],["expired","Expired"]].map(([v,l])=><Btn key={v} small primary={statF===v} onClick={()=>setStatF(v)}>{l}</Btn>)}
+        </div>
+        {(medF||statF)&&<Btn small onClick={()=>{setMedF("");setStatF("")}}>Clear</Btn>}
+        <span style={{fontSize:12,color:"#9B8EAD"}}>{filtered.length} shown</span>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(340px,1fr))",gap:10}}>
+        {filtered.map((r,i)=>{const cs=r.cs;const c=medColor(r.medium);
+          return<div key={r.id+"|"+i} style={{border:"1px solid #4a3565",borderRadius:10,overflow:"hidden",background:"#1e1233",borderLeft:"4px solid "+c}}>
+            <div style={{padding:"9px 12px",borderBottom:"1px solid #2d1f42"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:6}}>
+                <span style={{fontSize:11,fontWeight:800,color:c,textTransform:"uppercase",letterSpacing:1,padding:"1px 7px",borderRadius:8,background:c+"1e"}}>{r.medium}</span>
+                <span style={{fontSize:12,padding:"1px 7px",borderRadius:10,fontWeight:700,background:(cs.color||"#9B8EAD")+"22",color:cs.color||"#9B8EAD"}}>{cs.label}</span>
+              </div>
+              <div style={{fontSize:14,fontWeight:700,color:"#F0E8F8",marginTop:6,lineHeight:1.25}}>{r.title}</div>
+              <div style={{fontSize:12,color:"#9B8EAD",marginTop:2}}>{r.vendor}{r.market?" · "+r.market:""}</div>
+            </div>
+            <div style={{padding:"9px 12px"}}>
+              <div style={{display:"flex",gap:14,marginBottom:6,flexWrap:"wrap"}}>
+                <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Start</div><div style={{fontSize:12,fontWeight:600,color:"#C4A0C8"}}>{fmtD(r.startDate)}</div></div>
+                <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>End</div><div style={{fontSize:12,fontWeight:600,color:cs.color||"#C4A0C8"}}>{r.endDate?fmtD(r.endDate):(r.manualStatus==="active"?"Ongoing":"—")}</div></div>
+                {cs.daysLeft!==undefined&&<div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:12,fontWeight:700,color:cs.color||"#C4A0C8"}}>{cs.daysLeft}</div></div>}
+                {r.total!=null&&<div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Value</div><div style={{fontSize:12,fontWeight:700,color:"#5BC4A0"}}>${Number(r.total).toLocaleString()}</div></div>}
+              </div>
+              {r.link&&<a href={r.link} target="_blank" rel="noopener noreferrer" style={{fontSize:12,fontWeight:700,color:"#4AC8E8"}}>📄 Contract PDF ↗</a>}
+              {r.notes&&<div style={{fontSize:12,color:"#9B8EAD",marginTop:5,fontStyle:"italic",lineHeight:1.35}}>📝 {r.notes}</div>}
+              <div style={{fontSize:10,color:"#6B5E80",marginTop:5,fontFamily:"monospace"}}>{r.id}</div>
+            </div>
+          </div>;})}
+      </div>
+      {!filtered.length&&<div style={{padding:30,textAlign:"center",color:"#9B8EAD",fontSize:14,fontStyle:"italic"}}>No contracts match this filter.</div>}
+    </div>;
+  };
+
   const VaultPg=()=>{
     const WK_MKTS_FULL=["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan","Nashville","Gadsden"];
     const MEDIA_OPTS=["TV","Cable","Radio","Streaming Audio","Digital","OOH"];
@@ -10820,7 +10899,7 @@ Rules:
   };
 
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"cal",l:"Calendar",e:"🗓"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"cal",l:"Calendar",e:"🗓"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
@@ -12101,6 +12180,7 @@ Rules:
           {pg==="sta"&&<StaPg/>}
           {pg==="metrics"&&<MetricsPg/>}
           {pg==="vault"&&<VaultPg/>}
+          {pg==="contracts"&&<ContractsPg/>}
           {pg==="library"&&(()=>{
             // Library is rendered OUTSIDE the MDiv page-transition wrapper
             // because that wrapper applies a transform (for opacity/scale/blur
