@@ -1026,7 +1026,11 @@ const App=()=>{
             // Lerner & Rowe: the seed titles are the clean canonical set (our naming,
             // no [SP]/REV/mixdown vendor junk); Firestore's stored titles are stale, so
             // force the seed title for L&R. Other brands keep the Firestore-wins rule.
-            const useTitle=(fb.brand==="Lerner & Rowe"&&seed.title)?seed.title:(fb.title||seed.title);
+            // Seed titles that carry their own ISCI-code prefix ("CODE - Title") are the
+            // canonical name — force the seed title to win so a stale Firestore-stored
+            // title can't strip the code back off. Same override rule as Lerner & Rowe.
+            const seedCodeTitle=seed.title&&seed.title.indexOf(seed.code+" - ")===0;
+            const useTitle=((fb.brand==="Lerner & Rowe"&&seed.title)||seedCodeTitle)?seed.title:(fb.title||seed.title);
             return{...fb,title:useTitle,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:fb.fileUrl||seed.fileUrl,category:useSeedCat?seedCat:(fbCat||seedCat),caseType:useSeedCat?seedCat:(fbCat||seedCat),valueProp:fb.valueProp||seed.valueProp||"",vo:fb.vo||seed.vo||""};
           });
           // Always add back missing seed ISCIs — better to recover than lose
