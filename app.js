@@ -913,7 +913,7 @@ const App=()=>{
   const[campaignIcsUrl,setCampaignIcsUrl]=useState("");
   const[campaignEvents,setCampaignEvents]=useState([]);
   const[alertsDismissed,setAlertsDismissed]=useState([]);
-  const[oohContracts,setOohContracts]=useState({...OOH_CONTRACTS_INIT,...(typeof LR_CONTRACTS!=="undefined"?LR_CONTRACTS:{})});
+  const[oohContracts,setOohContracts]=useState({...OOH_CONTRACTS_INIT,...(typeof LR_CONTRACTS!=="undefined"?LR_CONTRACTS:{}),...(typeof KE_CONTRACTS!=="undefined"?KE_CONTRACTS:{})});
   const[oohCreativeFiles,setOohCreativeFiles]=useState([]);// every uploaded OOH creative as a STANDALONE file: {n,u,dma,c,fam,w,h}
   const[oohPhotos,setOohPhotos]=useState({});
   const[dbLoaded,setDbLoaded]=useState(false);
@@ -1612,6 +1612,7 @@ const App=()=>{
   // it across App re-renders, exactly like the PL page does with its pl* hooks.
   const[lrPanels,setLrPanels]=useState(typeof LR_PANELS!=="undefined"?LR_PANELS:[]);
   const[pdvPanels,setPdvPanels]=useState(typeof PDV_PANELS!=="undefined"?PDV_PANELS:[]);
+  const[kePanels,setKePanels]=useState(typeof KE_PANELS!=="undefined"?KE_PANELS:[]);
   const[lrMktF,setLrMktF]=useState("");const[lrPlanF,setLrPlanF]=useState("");const[lrVendF,setLrVendF]=useState("");const[lrMediaF,setLrMediaF]=useState("");
   const[lrViewMode,setLrViewMode]=useState("cards");
   const[lrMapMode,setLrMapMode]=useState("market");const[lrClusterRadius,setLrClusterRadius]=useState(3);
@@ -2279,6 +2280,7 @@ const App=()=>{
     (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>push(p.brand||"Wettermark Keith",p.dma,p.type,p.size,p.boardId));
     if(!brandFilter||brandFilter==="Lerner & Rowe")(typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(p.network||p.tbd)return;push("Lerner & Rowe",p.market,p.media,p.size,p.unit)});
     if(!brandFilter||brandFilter==="Parrish DeVaughn")(typeof PDV_PANELS!=="undefined"?PDV_PANELS:[]).forEach(p=>push("Parrish DeVaughn",p.market,p.media,p.size,p.unit));
+    if(!brandFilter||brandFilter==="Keches Law Group")(typeof KE_PANELS!=="undefined"?KE_PANELS:[]).forEach(p=>push("Keches Law Group",p.market,p.media,p.size,p.unit));
     if(!rows.length){notify("No OOH boards found");return}
     // group brand -> market -> type|size
     const G={};
@@ -2444,6 +2446,7 @@ const App=()=>{
       <StatC label="PL OOH" value={PL_PANELS.length} sub={oohAlerts.length?`⚠ ${oohAlerts.length} due soon`:`${[...new Set(PL_PANELS.map(p=>p.market))].length} markets · Postman Law`} color="#9b7bb0" onClick={()=>navigateHash("ooh/pl")}/>
       <StatC label="L&R OOH" value={typeof LR_PANELS!=="undefined"?LR_PANELS.length:0} sub={typeof LR_PANELS!=="undefined"?`${[...new Set(LR_PANELS.map(p=>p.market))].length} markets · Lerner & Rowe`:"Lerner & Rowe"} color="#2FBF71" onClick={()=>navigateHash("ooh/lr")}/>
       <StatC label="PDV OOH" value={typeof PDV_PANELS!=="undefined"?PDV_PANELS.length:0} sub={typeof PDV_PANELS!=="undefined"?`${[...new Set(PDV_PANELS.map(p=>p.market))].length} market · Parrish DeVaughn`:"Parrish DeVaughn"} color="#EE2B37" onClick={()=>navigateHash("ooh/pdv")}/>
+      <StatC label="KE OOH" value={typeof KE_PANELS!=="undefined"?KE_PANELS.length:0} sub={typeof KE_PANELS!=="undefined"?`${[...new Set(KE_PANELS.map(p=>p.market))].length} market · Keches Law Group`:"Keches Law Group"} color="#1E5F9E" onClick={()=>navigateHash("ooh/ke")}/>
       <StatC label="Traffic Sent" value={sentCount} sub={<><span>{trafficHistory.length} total</span><Sparkline data={trafficByWeek} color="#4AC8E8"/></>} color="#4AC8E8" onClick={()=>setPg("library")}/>
     </div>
     <Cd style={{padding:10}}><div style={{fontSize:13,fontWeight:700,marginBottom:6}}>2026 Broadcast Calendar</div>
@@ -9076,6 +9079,145 @@ Rules:
         </table></div></Cd>}
     </div>;
   };
+
+  // Keches Law Group — Boston OOH (Clear Channel Outdoor). Mirrors the PDV board
+  // engine and adds a contracts section (the signed CCO sales contracts are the
+  // core artifact for this brand — always-on digital dominations + static segments).
+  const KeOohPg=()=>{
+    const [mediaF,setMediaF]=React.useState("");
+    const [viewMode,setViewMode]=React.useState("cards");
+    const [keEditK,setKeEditK]=React.useState(null);
+    const [keEditD,setKeEditD]=React.useState({startDate:"",endDate:"",notes:"",manualStatus:""});
+    const ACC="#1E5F9E";
+    const mediaTypes=[...new Set(kePanels.filter(p=>p.media).map(p=>p.media))].sort();
+    const fl=kePanels.filter(p=>(mediaF?(p.media||"")===mediaF:true));
+    const totalUnits=fl.reduce((a,p)=>a+(p.numUnits||1),0);
+    const fmtFl=f=>String(f||"").split("(")[0].trim();
+    const fmtD=d=>d?new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"—";
+    const hasLogo=(typeof LOGO_KE!=="undefined"&&LOGO_KE);
+    const keKeys=Object.keys(oohContracts).filter(k=>{const c=oohContracts[k];return c&&c.brand==="Keches Law Group"}).sort((a,b)=>String((oohContracts[b]||{}).startDate||"").localeCompare(String((oohContracts[a]||{}).startDate||"")));
+    const startCEdit=(k)=>{const c=oohContracts[k]||{};setKeEditK(k);setKeEditD({startDate:c.startDate||"",endDate:c.endDate||"",notes:c.notes||"",manualStatus:c.manualStatus||""})};
+    const saveCEdit=()=>{setOohContracts(prev=>({...prev,[keEditK]:{...prev[keEditK],...keEditD}}));const n=(oohContracts[keEditK]||{}).num||keEditK;setKeEditK(null);log("Contract Edit",n+" (Keches) updated");notify("Contract "+n+" updated")};
+    const printBoardList=()=>{
+      if(!fl.length){notify("No boards in this view");return}
+      const w=window.open("","","width=1000,height=800");
+      w.document.write('<html><head><title>Keches OOH — Board List</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;background:#1E5F9E;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}@media print{.dl{display:none}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<div style="text-align:center;margin-bottom:12px"><div style="font-weight:bold;color:#1E5F9E;font-size:20px">Keches Law Group</div><div style="font-weight:bold;color:#555;letter-spacing:2px">OUT-OF-HOME BOARD LIST</div></div>');
+      w.document.write('<div style="font-size:12px"><b>Client:</b> Keches Law Group &nbsp;·&nbsp; <b>Market:</b> Boston &nbsp;·&nbsp; <b>Vendor:</b> Clear Channel Outdoor &nbsp;·&nbsp; <b>Boards:</b> '+fl.length+' ('+totalUnits+' units)</div>');
+      w.document.write('<table><tr><th>Unit #</th><th>Type</th><th>Size</th><th>Location</th><th>Run Dates</th><th>Status</th></tr>');
+      fl.forEach(p=>w.document.write('<tr><td style="font-family:monospace;font-weight:700">'+escHtml(String(p.unit))+'</td><td>'+escHtml(p.media)+(p.slots?' ('+p.slots+' slots)':'')+'</td><td>'+escHtml(p.size)+'</td><td>'+escHtml(p.location)+'</td><td>'+escHtml(fmtFl(p.flight))+'</td><td>'+escHtml(p.status)+'</td></tr>'));
+      w.document.write('</table></body></html>');w.document.close();
+      log("Keches OOH Board List",fl.length+" boards");notify("Keches board list — "+fl.length+" boards");
+    };
+    return <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",flexWrap:"wrap",gap:8}}>
+        <div>{hasLogo?<img src={LOGO_KE} alt="Keches Law Group" style={{height:34,marginBottom:6,background:"#fff",padding:"4px 8px",borderRadius:6}}/>:<div style={{fontSize:20,fontWeight:900,color:ACC,fontFamily:"'Cormorant Garamond',serif",marginBottom:2}}>Keches Law Group</div>}<PageHead title="Keches Law Group — OOH Media Plan" pgKey="ooh"/>
+          <p style={{fontSize:13,color:"#9B8EAD"}}>Boston · {kePanels.length} board{kePanels.length!==1?"s":""} · {totalUnits} units · vendor Clear Channel Outdoor · {keKeys.length} contract{keKeys.length!==1?"s":""}</p>
+        </div>
+        <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+          <Btn small onClick={()=>{
+            const headers=["Market","Unit","Vendor","Media Type","Slots","Size","Location","Facing","Flight","Units","Status","Contract","ISCI"];
+            const rows=fl.map(p=>["Boston",p.unit,p.vendor,p.media,p.slots||"",p.size,p.location,p.facing||"",fmtFl(p.flight),p.numUnits||1,p.status,p.contract||"",p.isci||""]);
+            exportCsv("Keches_OOH_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
+          }} color="#059669">📥 Export</Btn>
+          <Btn small onClick={()=>openOohCreativeSpecs("Keches Law Group",fl.map(p=>({market:"Boston",type:p.media,size:p.size,vendor:p.vendor,contract:p.contract||"",start:oohFlightStart(p.flight),unit:p.unit})),ACC)} color="#5BC4A0">📐 Creative Brief</Btn>
+          <Btn small onClick={()=>openOohSizesReport("Keches Law Group")} color="#5BC4A0">📏 Size Report</Btn>
+          <Btn small onClick={printBoardList} color="#4AC8E8">🖨 Board List</Btn>
+          <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
+          <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
+          <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"}>📑 Contracts</Btn>
+        </div>
+      </div>
+      {viewMode!=="contracts"&&<div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+        <Sel label="Media" options={mediaTypes} value={mediaF} onChange={setMediaF} placeholder="All Media Types"/>
+        {mediaF&&<Btn small onClick={()=>setMediaF("")}>Clear</Btn>}
+      </div>}
+      {viewMode!=="contracts"&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:8}}>
+        {mediaTypes.map(mt=>{const bs=kePanels.filter(p=>p.media===mt);const u=bs.reduce((a,p)=>a+(p.numUnits||1),0);
+          return <div key={mt} onClick={()=>setMediaF(mediaF===mt?"":mt)} style={{padding:"10px 12px",borderRadius:9,border:mediaF===mt?"2px solid "+ACC:"1px solid #4a3565",background:mediaF===mt?ACC+"12":"#2d1f42",cursor:"pointer"}}>
+            <div style={{fontSize:13,fontWeight:700,color:ACC,textTransform:"uppercase",letterSpacing:1}}>{mt}</div>
+            <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{bs.length}</div>
+            <div style={{fontSize:14,color:"#9B8EAD"}}>{u} units</div>
+          </div>;
+        })}
+      </div>}
+      {viewMode==="cards"?
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
+          {fl.map((p,i)=>{const posted=p.status==="posted";return <div key={i} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:"#2d1f42",borderLeft:"4px solid "+ACC}}>
+            <div style={{padding:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+                <div>
+                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#F0E8F8"}}>{p.unit}</span>
+                  <div style={{fontSize:14,color:"#9B8EAD",marginTop:2}}>{p.media}{p.slots?" · "+p.slots+" slots":""} · {p.size} · {p.vendor}</div>
+                </div>
+                <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:posted?"#1f3530":"#3a2f1a",color:posted?"#5BC4A0":"#D4A040"}}>{p.status}</span>
+              </div>
+              <div style={{fontSize:14,color:"#9B8EAD",marginTop:6}}>{p.location}{p.facing?" ("+p.facing+")":""}</div>
+              <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #4a3565"}}>
+                <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Run Dates</div><div style={{fontSize:14,fontWeight:600,color:"#E8DFF0"}}>{fmtFl(p.flight)||"TBD"}</div></div>
+                <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Contract</div><div style={{fontSize:14,fontWeight:600,color:ACC,fontFamily:"monospace"}}>{p.contract||"—"}</div></div>
+              </div>
+              <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:"#3a2f1a",border:"1px solid #5a4a2a",fontSize:13,color:"#D4A040",fontStyle:"italic"}}>No creative assigned yet</div>
+            </div>
+          </div>;})}
+        </div>
+      :viewMode==="table"?
+        <Cd><div style={{overflowX:"auto",maxHeight:560}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Unit</TH><TH>Type</TH><TH>Size</TH><TH>Location</TH><TH>Run Dates</TH><TH>Contract</TH><TH>Status</TH></tr></thead>
+          <tbody>{fl.map((p,i)=><tr key={i}>
+            <TD b>{i+1}</TD><TD m b>{p.unit}</TD><TD>{p.media}{p.slots?" ("+p.slots+" slots)":""}</TD><TD>{p.size}</TD>
+            <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:240,display:"inline-block"}}>{p.location}</span></TD>
+            <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{fmtFl(p.flight)}</span></TD>
+            <TD m>{p.contract||"—"}</TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#5BC4A0":"#D4A040"}}>{p.status}</span></TD>
+          </tr>)}</tbody>
+        </table></div></Cd>
+      :
+        <Cd style={{padding:12}}>
+          <div style={{fontSize:14,fontWeight:800,marginBottom:2}}>📑 Contracts — Keches Law Group</div>
+          <div style={{fontSize:13,color:"#9B8EAD",marginBottom:10}}>{keKeys.length} contract{keKeys.length!==1?"s":""} · Clear Channel Outdoor · Boston — vendor, dates, status, and units. Digital dominations carry a 90-day RFR renewal window; every contract has a 60-day no-penalty out.</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
+            {keKeys.map(k=>{const c=oohContracts[k]||{num:k};const cs=contractStatus(c);
+              return<div key={k} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#1e1233"}}>
+                <div style={{padding:"9px 12px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#1e1233"}}>{c.num||k}</span>
+                      <span style={{fontSize:12,padding:"1px 7px",borderRadius:10,fontWeight:700,background:cs.color+"22",color:cs.color}}>{cs.label}</span>
+                    </div>
+                    <button onClick={()=>keEditK===k?setKeEditK(null):startCEdit(k)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#3a2a4a"}}>✎</button>
+                  </div>
+                  <div style={{fontSize:12,color:"#3a2a4a",marginTop:2,fontWeight:600}}>{c.vendor||""} · Boston</div>
+                </div>
+                {keEditK===k?<div style={{padding:12,display:"flex",flexDirection:"column",gap:6}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                    <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Start</label><input type="date" value={keEditD.startDate} onChange={e=>setKeEditD(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+ACC,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}/></div>
+                    <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>End</label><input type="date" value={keEditD.endDate} onChange={e=>setKeEditD(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+ACC,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}/></div>
+                  </div>
+                  <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Override Status</label><select value={keEditD.manualStatus} onChange={e=>setKeEditD(p=>({...p,manualStatus:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+ACC,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}><option value="">Auto (from dates)</option><option value="active">Active</option><option value="renewal">Pending Renewal</option><option value="expired">Expired</option></select></div>
+                  <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Notes</label><input value={keEditD.notes} onChange={e=>setKeEditD(p=>({...p,notes:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+ACC,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}} placeholder="Renewal / notes..."/></div>
+                  <div style={{display:"flex",gap:4}}><Btn small primary color={ACC} onClick={saveCEdit}>Save</Btn><Btn small onClick={()=>setKeEditK(null)}>Cancel</Btn></div>
+                </div>:
+                <div style={{padding:"9px 12px"}}>
+                  <div style={{display:"flex",gap:14,marginBottom:6}}>
+                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Start</div><div style={{fontSize:12,fontWeight:600,color:"#C4A0C8"}}>{fmtD(c.startDate)}</div></div>
+                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>End</div><div style={{fontSize:12,fontWeight:600,color:cs.color}}>{c.endDate?fmtD(c.endDate):(c.manualStatus==="active"?"Ongoing":"—")}</div></div>
+                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:12,fontWeight:700,color:cs.color}}>{cs.daysLeft!==undefined?cs.daysLeft:"—"}</div></div>
+                  </div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",fontSize:12,marginBottom:5}}>
+                    {c.mediaType&&<span style={{color:"#C4A0C8"}}>{c.mediaType}</span>}
+                    {c.qty!=null&&<span style={{color:"#9B8EAD"}}>· <strong style={{color:"#E8DFF0"}}>{Number(c.qty).toLocaleString()}</strong> board{Number(c.qty)!==1?"s":""}</span>}
+                    {c.total!=null&&<span style={{color:"#9B8EAD"}}>· <strong style={{color:"#5BC4A0"}}>${Number(c.total).toLocaleString()}</strong></span>}
+                  </div>
+                  {c.link&&<a href={c.link} target="_blank" rel="noopener noreferrer" style={{fontSize:12,fontWeight:700,color:"#4AC8E8"}}>📄 Contract PDF ↗</a>}
+                  {c.notes&&<div style={{fontSize:12,color:"#9B8EAD",marginTop:5,fontStyle:"italic"}}>📝 {c.notes}</div>}
+                </div>}
+              </div>;
+            })}
+          </div>
+        </Cd>}
+    </div>;
+  };
   const OohHub=()=>{
     const subRoute=routeHash.replace(/^ooh\/?/,'') || 'wk';
     const oohNav=[
@@ -9083,6 +9225,7 @@ Rules:
       {id:"pl",l:"PL OOH",e:"📋"},
       {id:"lr",l:"L&R OOH",e:"🟢"},
       {id:"pdv",l:"PDV OOH",e:"🔴"},
+      {id:"ke",l:"KE OOH",e:"🔵"},
       {id:"isci",l:"OOH ISCI Registry",e:"◈"},
       {id:"import",l:"Import / Upload",e:"📤"}
     ];
@@ -9238,9 +9381,10 @@ Rules:
         {subRoute==="pl"&&<PlOohPg/>}
         {subRoute==="lr"&&<LrBoardsPg/>}
         {subRoute==="pdv"&&<PdvOohPg/>}
+        {subRoute==="ke"&&<KeOohPg/>}
         {subRoute==="isci"&&oohIsciPg()}
         {subRoute==="import"&&<UploadPg/>}
-        {!["wk","pl","lr","pdv","isci","import"].includes(subRoute)&&OohPg()}
+        {!["wk","pl","lr","pdv","ke","isci","import"].includes(subRoute)&&OohPg()}
       </div>
     </div>;
   };
@@ -11698,12 +11842,13 @@ Rules:
 
       {title:"The Living Record",content:<div style={{display:"flex",flexDirection:"column",gap:12}}>
         <p><span style={{fontSize:28,fontFamily:"'Cinzel',serif",float:"left",marginRight:8,color:"#4a1a1a",lineHeight:1}}>D</span>oom is never finished — she grows. This page is where her evolution is written down. The <b>Audit Log</b> remembers who did what; this remembers what got <i>built</i>.</p>
-        <p><b>Two brands became four.</b> Lerner &amp; Rowe (Southwest &amp; Pacific Northwest, shared creative, Spanish in the code) and Parrish DeVaughn (Oklahoma City live, Tulsa expanding) joined Postman Law and Wettermark Keith.</p>
+        <p><b>Two brands became five.</b> Lerner &amp; Rowe (Southwest &amp; Pacific Northwest, shared creative, Spanish in the code), Parrish DeVaughn (Oklahoma City live, Tulsa expanding), and Keches Law Group (Boston) joined Postman Law and Wettermark Keith.</p>
         <p><b>Wettermark Keith was rebuilt in V2</b> — a fresh set of TV spots (Auto, Premises, General PI, Trucking, On The Job, in :30 and :15) across every market. <b>Nashville came fully online</b> as WK's seventh market — TV stations, ISCIs, and estimates from its August 2026 launch forward (no phantom back-months), joining the six it grew up with. Two new spots joined the roster — the market-specific <i>"Not New To Nashville"</i> brand cut in :30 and :15 — and its launch TV rotation waits in the Library as a draft for the buyer's approval.</p>
         <p><b>The Muses learned to act.</b> The AI Planner now turns a mock rotation into a real Library draft — stations auto-linked, PDF in hand — or downloads the rotation on its own.</p>
         <p><b>The registry got smarter and safer</b> — filter by length, category, or value prop, and a duplicate-code alarm stops collisions before they ever reach a send.</p>
         <p><b>Out-of-home learned to brief its own creative.</b> Every brand's OOH page now pulls a Creative Specs sheet — grouped by media type, sorted by the day art is due, and telling production exactly what to build: CMYK print resolutions for vinyl, and the real <i>pixel canvas</i> for digital (400×1400 bulletins, 400×840 posters, 1920×1080 shelters) instead of meaningless physical feet. Filter any board page by media type, and digital boards finally read in pixels.</p>
         <p><b>Parrish DeVaughn came outdoors.</b> Oklahoma City's board plant — five fixed panels (perm bulletins, a poster, a digital) plus four rotating programs (pre-empt bulletins, digital bulletins, and the jr/standard poster showings) — now lives in its own <b>PDV OOH</b> page in the Hub, carrying the same Creative Brief, Size Report, and board-list downloads every other brand does.</p>
+        <p><b>Keches Law Group made five.</b> The Boston firm joined the roster with its own <b>KE OOH</b> page — its Clear Channel Outdoor buy (two always-on 8-slot digital dominations on I-93 plus a four-board static-bulletin segment) reconciled straight from the executed sales contracts. The page adds a <b>Contracts</b> view alongside the usual board cards, table, Creative Brief, Size Report, and board list — every signed order with its dates, dollars, status, and the 90-day renewal / 60-day cancellation clocks the buyer watches.</p>
         <BookMarginNote author="meg">I keep the receipts. Everything I've built is written here — and I'm not done.</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:28,opacity:.5,transform:"rotate(12deg) scale(1.1)"}}/>}{<BookInkSplatter style={{bottom:20,left:20,opacity:.4}}/>}{<BookBurnMark style={{top:0,left:0,width:80,height:80,opacity:.25}}/>}</>},
 
