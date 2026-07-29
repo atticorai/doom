@@ -3254,6 +3254,9 @@ const App=()=>{
       );
     };
     const SCHED_ORDER=["M-F Schedule","Weekend Schedule","All Week","M-F Bookend","Weekend Bookend"];
+    // Pandora display-banner rows for a saved record — each carries its own
+    // DisplayBanners UTM so they persist into the Traffic Library like the audio.
+    const pandoraDispRows=function(){return vendorMode==="Pandora"?pandoraDisplays.filter(function(d){return d.name.trim()}).map(function(d){var it=iscis.find(function(i){return i.code===d.name.trim()});return{code:d.name.trim(),title:(it&&it.title)||("Display Banner "+(d.size||"")),dur:d.size||"",pct:"",sched:"Display Banner",placement:"DisplayBanners",url:pandoraUrl(est.market,d.name.trim(),"DisplayBanners")}}):[]};
     // Delivery-ready Pandora sheet as a REAL text PDF (jsPDF) — full UTM URLs
     // rendered as clickable, selectable links. Mirrors the Generate sheet.
     // Self-contained: does NOT touch printStream, so Generate is unaffected.
@@ -3427,7 +3430,7 @@ const App=()=>{
           var gkbpsUrl=isB?"":baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code;
           return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:"ESPNweb",url:isPlatform?espnUrl:"",gkbpsUrl:isPlatform?gkbpsUrl:""}
         });
-        return [{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+" | Vendor: "+vLabel,iscis:allIscis,stations:[],isOoh:false,status:"print_only",isDigitalEspn:isDigital}].concat(p)
+        return [{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+" | Vendor: "+vLabel,iscis:allIscis.concat(pandoraDispRows()),stations:[],isOoh:false,status:"print_only",isDigitalEspn:isDigital}].concat(p)
       });
       setModal(null);
     };
@@ -3577,7 +3580,7 @@ const App=()=>{
             var gkbpsUrl3=isB||!isPlatform?"":baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code;
             return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:"ESPNweb",url:espnUrl,gkbpsUrl:gkbpsUrl3}
           });
-          setTrafficHistory(function(p){return [{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+(isPlatform?" | Vendor: "+vendorMode+(isDigital?" / GKBPS":""):""),iscis:allIscis2,stations:isDigital?["ESPN_GKBPS"]:[],isOoh:false,status:"saved",isDigitalEspn:isDigital}].concat(p)});
+          setTrafficHistory(function(p){return [{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+(isPlatform?" | Vendor: "+vendorMode+(isDigital?" / GKBPS":""):""),iscis:allIscis2.concat(pandoraDispRows()),stations:isDigital?["ESPN_GKBPS"]:[],isOoh:false,status:"saved",isDigitalEspn:isDigital}].concat(p)});
           notify(doomPick(DOOM.success));log("Traffic Saved",est.market+" "+est.media+" "+workMonth+" v"+version);
         }} disabled={sel.length===0}>Save to Library</Btn>
         {isPlatform&&<Btn primary color="#1e1233" disabled={sel.length===0} onClick={()=>{
@@ -3651,7 +3654,7 @@ const App=()=>{
               setTrafficHistory(function(p){
                 var allIscis3=sel.map(function(r){var isB=r.isci.suffix==="B";var med=isB?"Display":(isDigital?"Video":"Audio");var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);var pl=r.placement||utmPlacement;
                   return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:pl,url:vendorMode==="Pandora"?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":"AudioSelect"):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+pl+"&utm_Content="+r.isci.code:""),gkbpsUrl:isDigital&&!isB?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code:""}});
-                return [{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+" | Vendor: "+vendorLabel2,iscis:allIscis3,stations:[staTag2],isOoh:false,status:"sent",isDigitalEspn:isDigital}].concat(p)});
+                return [{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+" | Vendor: "+vendorLabel2,iscis:allIscis3.concat(pandoraDispRows()),stations:[staTag2],isOoh:false,status:"sent",isDigitalEspn:isDigital}].concat(p)});
             }else throw new Error("n8n "+resp2.status)
           }catch(err2){notify("Send failed: "+(err2.message||err2))}
         }}>{"\u2709"} Send to {isDigital?"ESPN/GKBPS":vendorMode}</Btn>}
@@ -3683,7 +3686,7 @@ const App=()=>{
             var resp=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:rcpts.join(","),cc:[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj,message:emailBody,pdfBase64:pdfB64,pdfName:pdfName})});
             if(resp.ok){
               var allIscis=sel.map(function(r){return{code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:""}});
-              setTrafficHistory(function(p){return[{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market||"",media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+" | Generic | Sent to: "+rcpts.join(", "),iscis:allIscis,stations:["Generic"],isOoh:false,status:"sent"}].concat(p)});
+              setTrafficHistory(function(p){return[{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market||"",media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+" | Generic | Sent to: "+rcpts.join(", "),iscis:allIscis.concat(pandoraDispRows()),stations:["Generic"],isOoh:false,status:"sent"}].concat(p)});
               notify(doomPick(DOOM.send)+" Sent to "+rcpts.length+" recipient(s)");
               log("Traffic Sent","Generic "+(est.market||"")+" "+workMonth+" v"+version+" to "+rcpts.join(", "));
             }else throw new Error("n8n "+resp.status)
