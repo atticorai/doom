@@ -2707,7 +2707,7 @@ const App=()=>{
       <Cd><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>{combineMode&&<TH w="30">✓</TH>}<STH tbl="traf" col="num">Est#</STH><STH tbl="traf" col="market">Market</STH><STH tbl="traf" col="media">Media</STH><STH tbl="traf" col="group">Buy Type</STH><STH tbl="traf" col="buyer">Buyer</STH><TH>Stations</TH><TH>ISCIs</TH><TH>Airing</TH><TH>Confirmed</TH><TH>Action</TH></tr></thead>
         <tbody>{sortRows("traf",brandEsts,{num:r=>r.num,brand:r=>r.brand,market:r=>r.market,media:r=>r.media,group:r=>r.group||"",buyer:r=>r.buyer||""}).map(e=>{
           const dc=normMkt(e.market)||"";
-          const mi=iscis.filter(i=>i.dma===dc&&i.brand===e.brand&&i.active&&(e.media==="TV"||e.media==="Cable"?i.suffix==="T":e.media==="Radio"?i.suffix==="R":e.media==="Streaming Audio"?i.suffix==="S":e.media==="OOH"?i.suffix==="O":e.media==="Digital"?i.suffix==="D":e.media==="Display"?i.suffix==="B":true));
+          const mi=iscis.filter(i=>i.dma===dc&&i.brand===e.brand&&i.active&&(e.media==="TV"||e.media==="Cable"?i.suffix==="T":e.media==="Radio"?i.suffix==="R":e.media==="Streaming Audio"?(e.brand==="Wettermark Keith"?i.suffix==="R":i.suffix==="S"):e.media==="OOH"?i.suffix==="O":e.media==="Digital"?i.suffix==="D":e.media==="Display"?i.suffix==="B":true));
           const isSel=combineSet.includes(estKey(e));
           const linkedSta=getEstStations(e);
           const airing=nowAiring[ak(e)];
@@ -3141,6 +3141,10 @@ const App=()=>{
     const vendorList=isDigital?["ESPN","Generic"]:["Pandora","Spotify","Generic"];
     const defaultVendor=isDigital?"ESPN":"Pandora";
     const PL_MKTS_ALL=["Chicago","Cincinnati","Denver","Minneapolis"];
+    const isWKstream=est.brand==="Wettermark Keith";
+    // Pandora markets: WK runs one market at a time (the estimate's market, e.g. Nashville);
+    // the other brand runs its four markets together.
+    const PAND_MKTS=isWKstream?[est.market]:PL_MKTS_ALL;
     const dc=Object.entries(DM).find(function(x){return x[1].toLowerCase()===est.market.toLowerCase()});
     const dmaPrefix=dc?dc[0]:"";
     // Quarter calculation from work month
@@ -3152,9 +3156,14 @@ const App=()=>{
     const[vendorMode,setVendorMode]=useState(defaultVendor);
     const isPlatform=vendorMode!=="Generic";
     const[rows,setRows]=useState(()=>pool.map(i=>({isci:i,selected:false,pct:"",sched:"All Week",flight:flight,companionUrl:"",companionName:"",companionBannerName:""})));
-    const baseUrl="https://www.postmanlaw.com";
-    // Pandora UTM builder
+    const baseUrl=isWKstream?"https://www.wkfirm.com":"https://www.postmanlaw.com";
+    // Pandora UTM builder — WK uses the Pandora-supplied spec against WKFIRM.com;
+    // the other brand uses its SiriusXM/Placement scheme.
     const pandoraUrl=(market,content,placement)=>{
+      if(isWKstream){
+        const camp="WettermarkKeith-"+market.replace(/\s+/g,"")+"_"+currentYear+currentQuarter;
+        return"https://www.wkfirm.com/?utm_source=Pandora&utm_medium="+encodeURIComponent("Paid Audio")+"&utm_content="+encodeURIComponent(content)+"&utm_campaign="+encodeURIComponent(camp);
+      }
       const mktPath=market.toLowerCase().replace(/\s+/g,"");
       return"https://www.postmandelivers.com/"+mktPath+"/?UTM_Source=SiriusXM&UTM_Medium=Streaming_Audio&UTM_Content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent("Blackacre_KellerPostman_PostmanLawPI-"+market+"_"+currentYear+currentQuarter);
     };
@@ -3315,7 +3324,7 @@ const App=()=>{
         }
       }else if(vendorMode==="Pandora"){
         // ═══ PANDORA: All PL markets, per-ISCI URLs ═══
-        PL_MKTS_ALL.forEach(function(mkt){
+        PAND_MKTS.forEach(function(mkt){
           var mktDma=Object.entries(DM).find(function(e){return e[1]===mkt});var dma=mktDma?mktDma[0]:"";
           var mktIscis=sel.filter(function(r){return r.isci.dma===dma});
           if(!mktIscis.length)return;
@@ -3407,8 +3416,8 @@ const App=()=>{
             <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{ESPN_CAMPAIGNS.map(c=><button key={c} onClick={()=>setEspnCampaign(c)} style={{padding:"4px 10px",borderRadius:4,border:espnCampaign===c?"2px solid #D4A040":"1px solid #4a3565",background:espnCampaign===c?"rgba(251,191,36,.15)":"transparent",color:espnCampaign===c?"#D4A040":"#94a3b8",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c}</button>)}</div>
           </div>}
           {vendorMode==="Pandora"&&<div style={{fontSize:10,color:"#94a3b8"}}>
-            <div>Source: <b style={{color:"#E8DFF0"}}>SiriusXM</b> · Medium: <b style={{color:"#E8DFF0"}}>Streaming_Audio</b></div>
-            <div>Campaign: <b style={{color:"#D4A040"}}>Blackacre_KellerPostman_PostmanLawPI-{"{Market}"}_{currentYear}{currentQuarter}</b></div>
+            <div>Source: <b style={{color:"#E8DFF0"}}>{isWKstream?"Pandora":"SiriusXM"}</b> · Medium: <b style={{color:"#E8DFF0"}}>{isWKstream?"Paid Audio":"Streaming_Audio"}</b></div>
+            <div>Campaign: <b style={{color:"#D4A040"}}>{isWKstream?("WettermarkKeith-"+(est.market||"").replace(/\s+/g,"")+"_"+currentYear+currentQuarter):("Blackacre_KellerPostman_PostmanLawPI-{Market}_"+currentYear+currentQuarter)}</b></div>
             <div style={{marginTop:4}}>Placements: <b style={{color:"#5BC4A0"}}>AudioSelect</b> · <b style={{color:"#4AC8E8"}}>CompanionBanners</b> · <b style={{color:"#ec4899"}}>DisplayBanners</b></div>
           </div>}
           {vendorMode==="ESPN"&&<div style={{fontSize:10,color:"#94a3b8",marginTop:6}}>
@@ -3432,7 +3441,7 @@ const App=()=>{
         <div style={{marginTop:4,color:"#D4A040"}}>All 4 PL markets generated on print</div>
       </div>}
       {vendorMode==="ESPN"&&<div style={{marginBottom:8,padding:6,background:"rgba(37,99,235,.06)",borderRadius:5,border:"1px solid rgba(37,99,235,.15)",fontSize:10,fontFamily:"monospace"}}>
-        {PL_MKTS_ALL.map(m=>{const d=Object.entries(DM).find(([_,n])=>n===m)?.[0]||"";return<div key={m} style={{marginBottom:4}}>
+        {PAND_MKTS.map(m=>{const d=Object.entries(DM).find(([_,n])=>n===m)?.[0]||"";return<div key={m} style={{marginBottom:4}}>
           <div style={{fontWeight:700,color:"#E8DFF0"}}>{m} ({d}):</div>
           <div><span style={{color:"#5BC4A0"}}>Video:</span> {espnUrl(d,"Video","ESPNweb")}</div>
           <div><span style={{color:"#C4A0C8"}}>GKBPS:</span> {espnUrl(d,"Video","GKBPS")}</div>
@@ -3494,7 +3503,7 @@ const App=()=>{
         <button onClick={()=>setPandoraDisplays(p=>[...p,{name:"",size:"3250x250"}])} style={{fontSize:11,padding:"2px 8px",borderRadius:4,border:"1px solid #4a3565",background:"transparent",color:"#ec4899",cursor:"pointer",fontWeight:600}}>+ Add Display Banner</button>
       </div>}
       {vendorMode==="ESPN"&&(()=>{
-        const allDmas=PL_MKTS_ALL.map(m=>Object.entries(DM).find(([_,n])=>n===m)?.[0]||"").filter(Boolean);
+        const allDmas=PAND_MKTS.map(m=>Object.entries(DM).find(([_,n])=>n===m)?.[0]||"").filter(Boolean);
         const displayIscis=iscis.filter(i=>i.suffix==="B"&&i.brand===est.brand&&allDmas.includes(i.dma)&&i.active);
         return<div style={{marginTop:10}}>
         <div style={{fontSize:12,fontWeight:700,color:"#ec4899",marginBottom:6}}>DISPLAY BANNERS (from ISCI Registry)</div>
@@ -3559,7 +3568,7 @@ const App=()=>{
             phdr("Month",workMonth);phdr("Flight",flightDates);phdr("Version","V"+version);
             if(comments)phdr("Comments",comments);
             py+=3;
-            PL_MKTS_ALL.forEach(function(mkt){
+            PAND_MKTS.forEach(function(mkt){
               var mktDma=Object.entries(DM).find(function(e){return e[1]===mkt});var dma=mktDma?mktDma[0]:"";
               var mktIscis=sel.filter(function(r){return r.isci.dma===dma});
               if(!mktIscis.length)return;
