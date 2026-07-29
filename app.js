@@ -3423,7 +3423,7 @@ const App=()=>{
         var allIscis=sel.map(function(r){
           var isB=r.isci.suffix==="B";var med=isB?"Display":"Video";
           var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);
-          var espnUrl=baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+(isB?"ESPNweb":"ESPNweb")+"&utm_Content="+r.isci.code;
+          var espnUrl=vendorMode==="Pandora"?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":"AudioSelect"):baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+(isB?"ESPNweb":"ESPNweb")+"&utm_Content="+r.isci.code;
           var gkbpsUrl=isB?"":baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code;
           return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:"ESPNweb",url:isPlatform?espnUrl:"",gkbpsUrl:isPlatform?gkbpsUrl:""}
         });
@@ -3573,7 +3573,7 @@ const App=()=>{
           var allIscis2=sel.map(function(r){
             var isB=r.isci.suffix==="B";var med=isB?"Display":"Video";
             var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);
-            var espnUrl=isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement=ESPNweb&utm_Content="+r.isci.code:"";
+            var espnUrl=vendorMode==="Pandora"?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":"AudioSelect"):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement=ESPNweb&utm_Content="+r.isci.code:"");
             var gkbpsUrl3=isB||!isPlatform?"":baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code;
             return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:"ESPNweb",url:espnUrl,gkbpsUrl:gkbpsUrl3}
           });
@@ -3650,7 +3650,7 @@ const App=()=>{
               notify(doomPick(DOOM.send));log(vendorLabel2+" Email","Sent - "+est.market+" "+workMonth);
               setTrafficHistory(function(p){
                 var allIscis3=sel.map(function(r){var isB=r.isci.suffix==="B";var med=isB?"Display":(isDigital?"Video":"Audio");var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);var pl=r.placement||utmPlacement;
-                  return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:pl,url:isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+pl+"&utm_Content="+r.isci.code:"",gkbpsUrl:isDigital&&!isB?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code:""}});
+                  return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:pl,url:vendorMode==="Pandora"?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":"AudioSelect"):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+pl+"&utm_Content="+r.isci.code:""),gkbpsUrl:isDigital&&!isB?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code:""}});
                 return [{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+" | Vendor: "+vendorLabel2,iscis:allIscis3,stations:[staTag2],isOoh:false,status:"sent",isDigitalEspn:isDigital}].concat(p)});
             }else throw new Error("n8n "+resp2.status)
           }catch(err2){notify("Send failed: "+(err2.message||err2))}
@@ -7119,6 +7119,27 @@ ${fullText.substring(0,3000)}`}]
         (h.iscis||[]).forEach(r=>{x+='<tr><td>'+escHtml(r.sched||h.postDates||h.flight||"")+'</td><td>'+escHtml(r.title)+'.pdf</td><td style="text-align:center;font-weight:700">'+escHtml(r.units||"")+'</td><td></td></tr>'});
         x+='</tbody></table>';
         if(h.totalUnits)x+='<div style="margin-top:8px;font-size:11px;color:#555"><b>Total Units:</b> '+h.totalUnits+'</div>';
+        x+='<div class="sig"><div style="display:flex;justify-content:space-between"><div><b>Accepted by:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div class="note">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></div>';
+        x+='</body></html>';return x;
+      }
+      // Streaming Audio (Pandora) — full UTM URL sheet, matching the Generate view.
+      if(h.media==="Streaming Audio"){
+        var _dc=normMkt(h.market)||"";
+        var _aud=(h.iscis||[]).filter(function(r){return !((r.placement==="DisplayBanners")||(r.code&&/B$/.test(r.code)))});
+        var _dsp=(h.iscis||[]).filter(function(r){return (r.placement==="DisplayBanners")||(r.code&&/B$/.test(r.code))});
+        x+='<div style="font-weight:700;font-size:13px;color:#0891b2;border-top:2px solid #0891b2;padding-top:8px;margin-top:12px">'+escHtml((h.market||"").toUpperCase())+' ('+escHtml(_dc)+')</div>';
+        if(_aud.length){
+          x+='<div style="font-weight:700;font-size:11px;color:#059669;margin:8px 0 4px">AUDIO CREATIVES — Placement: AudioSelect</div>';
+          x+='<table><thead><tr><th>UTM_Content</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Placement</th><th>Full URL</th></tr></thead><tbody>';
+          _aud.forEach(function(r){var _u=r.url||"";x+='<tr><td style="font-family:monospace;font-weight:700">'+escHtml(r.code)+'</td><td>'+escHtml(r.title)+'</td><td>:'+escHtml(r.dur)+'</td><td style="text-align:center;font-weight:700">'+escHtml(r.pct||"")+'</td><td>AudioSelect</td><td style="font-size:8px;word-break:break-all"><a href="'+escHtml(_u)+'" style="color:#4AC8E8">'+escHtml(_u)+'</a></td></tr>'});
+          x+='</tbody></table>';
+        }
+        if(_dsp.length){
+          x+='<div style="font-weight:700;font-size:11px;color:#ec4899;margin:8px 0 4px">DISPLAY BANNERS — Placement: DisplayBanners</div>';
+          x+='<table><thead><tr><th>UTM_Content</th><th>Size</th><th>Placement</th><th>Full URL</th></tr></thead><tbody>';
+          _dsp.forEach(function(r){var _u=r.url||"";x+='<tr><td style="font-family:monospace">'+escHtml(r.code)+'</td><td>'+escHtml(r.dur||"")+'</td><td>DisplayBanners</td><td style="font-size:8px;word-break:break-all"><a href="'+escHtml(_u)+'" style="color:#4AC8E8">'+escHtml(_u)+'</a></td></tr>'});
+          x+='</tbody></table>';
+        }
         x+='<div class="sig"><div style="display:flex;justify-content:space-between"><div><b>Accepted by:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div class="note">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></div>';
         x+='</body></html>';return x;
       }
