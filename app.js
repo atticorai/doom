@@ -3181,6 +3181,7 @@ const App=()=>{
     // Pandora companion/display banner names
     const[pandoraCompanions,setPandoraCompanions]=useState([{name:"",size:"350x250"}]);
     const[pandoraDisplays,setPandoraDisplays]=useState([{name:"",size:"3250x250"},{name:"",size:"3250x250"}]);
+    const[abTest,setAbTest]=useState(true);
     const[version,setVersion]=useState("1");
     const[flightDates,setFlightDates]=useState(flight);
     const[comments,setComments]=useState("");
@@ -3486,17 +3487,18 @@ const App=()=>{
       </div>
       <div style={{display:"flex",gap:4,marginTop:4}}><Btn small onClick={()=>setRows(p=>p.map(r=>({...r,selected:true})))}>Select All</Btn><Btn small onClick={()=>setRows(p=>p.map(r=>({...r,selected:false})))}>Clear</Btn>{isDigital&&<Btn small onClick={()=>setRows(p=>p.map(r=>r.isci.suffix==="D"?{...r,selected:true}:r))}>Select Video</Btn>}{isDigital&&<Btn small onClick={()=>setRows(p=>p.map(r=>r.isci.suffix==="B"?{...r,selected:true}:r))}>Select Display</Btn>}{isDigital&&<Btn small color="#D4A040" onClick={()=>setRows(p=>p.map(r=>r.selected?{...r,placement:"ESPNweb"}:r))}>Set ESPN</Btn>}{isDigital&&<Btn small color="#9b7bb0" onClick={()=>setRows(p=>p.map(r=>r.selected&&r.isci.suffix!=="B"?{...r,placement:"GKBPS"}:r))}>Set GKBPS</Btn>}</div>
       {vendorMode==="Pandora"&&<div style={{marginTop:10}}>
-        <div style={{fontSize:12,fontWeight:700,color:"#4AC8E8",marginBottom:6}}>COMPANION BANNERS (paired with audio creatives)</div>
+        {!isWKstream&&<React.Fragment><div style={{fontSize:12,fontWeight:700,color:"#4AC8E8",marginBottom:6}}>COMPANION BANNERS (paired with audio creatives)</div>
         {pandoraCompanions.map((c,ci)=><div key={ci} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
           <input value={c.name} onChange={e=>{const v=e.target.value;setPandoraCompanions(p=>p.map((x,i)=>i===ci?{...x,name:v}:x))}} placeholder="e.g. Pandora_Banner_Ad_350x250_CHI_CityscapeIA_Let_us_Deliver_for_You" style={{flex:1,padding:"4px 8px",borderRadius:4,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:11}}/>
           <input value={c.size} onChange={e=>{const v=e.target.value;setPandoraCompanions(p=>p.map((x,i)=>i===ci?{...x,size:v}:x))}} style={{width:80,padding:"4px 6px",borderRadius:4,border:"1px solid #4a3565",background:"#1e1233",color:"#94a3b8",fontSize:11}} placeholder="Size"/>
           {pandoraCompanions.length>1&&<button onClick={()=>setPandoraCompanions(p=>p.filter((_,i)=>i!==ci))} style={{border:"none",background:"transparent",color:"#E85A7A",cursor:"pointer",fontSize:14}}>✕</button>}
         </div>)}
-        <button onClick={()=>setPandoraCompanions(p=>[...p,{name:"",size:"350x250"}])} style={{fontSize:11,padding:"2px 8px",borderRadius:4,border:"1px solid #4a3565",background:"transparent",color:"#4AC8E8",cursor:"pointer",fontWeight:600}}>+ Add Companion</button>
+        <button onClick={()=>setPandoraCompanions(p=>[...p,{name:"",size:"350x250"}])} style={{fontSize:11,padding:"2px 8px",borderRadius:4,border:"1px solid #4a3565",background:"transparent",color:"#4AC8E8",cursor:"pointer",fontWeight:600}}>+ Add Companion</button></React.Fragment>}
 
-        <div style={{fontSize:12,fontWeight:700,color:"#ec4899",marginTop:10,marginBottom:6}}>DISPLAY BANNERS (A/B test — standalone ads)</div>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginTop:10,marginBottom:6}}><div style={{fontSize:12,fontWeight:700,color:"#ec4899"}}>DISPLAY BANNERS{abTest?" (A/B test)":""}</div><label style={{fontSize:11,color:"#9B8EAD",display:"flex",alignItems:"center",gap:4,cursor:"pointer"}}><input type="checkbox" checked={abTest} onChange={e=>setAbTest(e.target.checked)}/> A/B Test</label></div>
         {(()=>{const _dc=Object.entries(DM).find(([_,n])=>n===est.market)?.[0]||"";const dbi=iscis.filter(i=>i.suffix==="B"&&i.brand===est.brand&&i.dma===_dc&&i.active!==false);return dbi.length?<select value="" onChange={e=>{const c=e.target.value;if(!c)return;const it=dbi.find(x=>x.code===c);if(!it)return;const sz=((String(it.title).match(/(\d+\s*x\s*\d+)/)||[])[1]||"").replace(/\s/g,"");setPandoraDisplays(p=>[...p.filter(x=>x.name.trim()),{name:it.code,size:sz}]);e.target.value=""}} style={{width:"100%",marginBottom:6,padding:"5px 8px",borderRadius:4,border:"1px solid #ec4899",background:"#1e1233",color:"#E8DFF0",fontSize:11}}><option value="">+ Add from registered display banners…</option>{dbi.map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}</option>)}</select>:<div style={{fontSize:10,color:"#9B8EAD",marginBottom:6}}>No registered display-banner ISCIs for {est.market} — type them below or register them (media "Display").</div>})()}
         {pandoraDisplays.map((d,di)=><div key={di} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
+          {abTest&&<span style={{fontSize:11,fontWeight:800,color:"#ec4899",width:16,textAlign:"center"}}>{String.fromCharCode(65+di)}</span>}
           <input value={d.name} onChange={e=>{const v=e.target.value;setPandoraDisplays(p=>p.map((x,i)=>i===di?{...x,name:v}:x))}} placeholder="e.g. Pandora_Banner_Ad_3250x250_CHI_AccidentIALogo_Contact_Us" style={{flex:1,padding:"4px 8px",borderRadius:4,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:11}}/>
           <input value={d.size} onChange={e=>{const v=e.target.value;setPandoraDisplays(p=>p.map((x,i)=>i===di?{...x,size:v}:x))}} style={{width:80,padding:"4px 6px",borderRadius:4,border:"1px solid #4a3565",background:"#1e1233",color:"#94a3b8",fontSize:11}} placeholder="Size"/>
           {pandoraDisplays.length>1&&<button onClick={()=>setPandoraDisplays(p=>p.filter((_,i)=>i!==di))} style={{border:"none",background:"transparent",color:"#E85A7A",cursor:"pointer",fontSize:14}}>✕</button>}
@@ -3654,8 +3656,8 @@ const App=()=>{
             var hd4=function(l,v){return '<div class="h"><b>'+l+':</b> '+v+'</div>'};
             ph3+='<div style="text-align:center;margin-bottom:20px"><img src="'+brand.logo+'" style="height:48px;margin-bottom:8px"/><h2 style="margin:0;letter-spacing:2px">'+(est.brand||"").toUpperCase()+'</h2><div style="font-size:11px;color:#555">STREAMING AUDIO TRAFFIC INSTRUCTIONS</div></div>';
             ph3+=hd4("Agency","Atticor")+hd4("Client",est.brand)+hd4("Market",est.market)+hd4("Vendor",vendorMode)+hd4("Buyer",est.buyer)+hd4("Media","Streaming Audio")+hd4("Month",workMonth)+hd4("Flight",flightDates)+hd4("Estimate",est.num)+hd4("Version","V"+version);
-            ph3+='<div class="section">AUDIO ROTATION</div><table><thead><tr><th>ISCI</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Schedule</th><th>Flight</th><th>File</th><th>Companion</th></tr></thead><tbody>';
-            sel.forEach(function(r){var file=r.isci.fileUrl?'<a href="'+dlUrl(r.isci.fileUrl)+'">DL</a>':"TBD";var comp=r.companionUrl?'<a href="'+dlUrl(r.companionUrl)+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td>"+(r.pct||"")+"%</td><td>"+r.sched+"</td><td>"+r.flight+"</td><td>"+file+"</td><td>"+comp+"</td></tr>"});
+            ph3+='<div class="section">AUDIO ROTATION</div><table><thead><tr><th>ISCI</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Schedule</th><th>Flight</th><th>File</th>'+(isWKstream?"":"<th>Companion</th>")+'</tr></thead><tbody>';
+            sel.forEach(function(r){var file=r.isci.fileUrl?'<a href="'+dlUrl(r.isci.fileUrl)+'">DL</a>':"TBD";var comp=r.companionUrl?'<a href="'+dlUrl(r.companionUrl)+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td>"+(r.pct||"")+"%</td><td>"+r.sched+"</td><td>"+r.flight+"</td><td>"+file+"</td>"+(isWKstream?"":"<td>"+comp+"</td>")+"</tr>"});
             ph3+="</tbody></table>";
             var dc5=Object.entries(DM).find(function(e){return e[1].toLowerCase()===est.market.toLowerCase()});var dcCode5=dc5?dc5[0]:"";
             var dispIscis5=iscis.filter(function(i){return i.suffix==="B"&&i.brand===est.brand&&i.dma===dcCode5&&i.active});
