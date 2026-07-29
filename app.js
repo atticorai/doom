@@ -3560,12 +3560,12 @@ const App=()=>{
             var ppw=210;var pph=297;var pmx=12;var pcw=ppw-2*pmx;var py=14;
             var pCheckPage=function(need){if(py+need>pph-12){ppdf.addPage();py=12}};
             ppdf.setFont("helvetica","bold");ppdf.setFontSize(14);ppdf.setTextColor(124,58,237);
-            ppdf.text("POSTMAN LAW",ppw/2,py,{align:"center"});py+=5;
+            ppdf.text((est.brand||"").toUpperCase(),ppw/2,py,{align:"center"});py+=5;
             ppdf.setFontSize(8);ppdf.setTextColor(100,100,100);
-            ppdf.text("PANDORA / SIRIUSXM STREAMING AUDIO TRAFFIC",ppw/2,py,{align:"center"});py+=7;
+            ppdf.text(isWKstream?"PANDORA STREAMING AUDIO TRAFFIC":"PANDORA / SIRIUSXM STREAMING AUDIO TRAFFIC",ppw/2,py,{align:"center"});py+=7;
             ppdf.setFontSize(8);ppdf.setTextColor(0,0,0);
             var phdr=function(l,v){ppdf.setFont("helvetica","bold");ppdf.setTextColor(100,100,100);ppdf.text(l+":",pmx,py);ppdf.setFont("helvetica","normal");ppdf.setTextColor(0,0,0);ppdf.text(v,pmx+30,py);py+=3.8};
-            phdr("Agency","Atticor");phdr("Client","Postman Law");phdr("Buyer",est.buyer);
+            phdr("Agency","Atticor");phdr("Client",est.brand);phdr("Buyer",est.buyer);
             phdr("Month",workMonth);phdr("Flight",flightDates);phdr("Version","V"+version);
             if(comments)phdr("Comments",comments);
             py+=3;
@@ -3652,8 +3652,8 @@ const App=()=>{
           }else{
             var ph3="<html><head><style>body{font-family:Arial,sans-serif;margin:30px;font-size:12px;background:#fff;color:#1e1233}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.section{margin-top:16px;padding-top:8px;border-top:2px solid #E8DFF0;font-size:13px;font-weight:700}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}</style></head><body>";
             var hd4=function(l,v){return '<div class="h"><b>'+l+':</b> '+v+'</div>'};
-            ph3+='<div style="text-align:center;margin-bottom:20px"><img src="'+brand.logo+'" style="height:48px;margin-bottom:8px"/><h2 style="margin:0;letter-spacing:2px">POSTMAN LAW</h2><div style="font-size:11px;color:#555">STREAMING AUDIO TRAFFIC INSTRUCTIONS</div></div>';
-            ph3+=hd4("Agency","Atticor")+hd4("Client","Postman Law")+hd4("Market",est.market)+hd4("Vendor",vendorMode)+hd4("Buyer",est.buyer)+hd4("Media","Streaming Audio")+hd4("Month",workMonth)+hd4("Flight",flightDates)+hd4("Estimate",est.num)+hd4("Version","V"+version);
+            ph3+='<div style="text-align:center;margin-bottom:20px"><img src="'+brand.logo+'" style="height:48px;margin-bottom:8px"/><h2 style="margin:0;letter-spacing:2px">'+(est.brand||"").toUpperCase()+'</h2><div style="font-size:11px;color:#555">STREAMING AUDIO TRAFFIC INSTRUCTIONS</div></div>';
+            ph3+=hd4("Agency","Atticor")+hd4("Client",est.brand)+hd4("Market",est.market)+hd4("Vendor",vendorMode)+hd4("Buyer",est.buyer)+hd4("Media","Streaming Audio")+hd4("Month",workMonth)+hd4("Flight",flightDates)+hd4("Estimate",est.num)+hd4("Version","V"+version);
             ph3+='<div class="section">AUDIO ROTATION</div><table><thead><tr><th>ISCI</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Schedule</th><th>Flight</th><th>File</th><th>Companion</th></tr></thead><tbody>';
             sel.forEach(function(r){var file=r.isci.fileUrl?'<a href="'+dlUrl(r.isci.fileUrl)+'">DL</a>':"TBD";var comp=r.companionUrl?'<a href="'+dlUrl(r.companionUrl)+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+r.isci.code+"</td><td>"+r.isci.title+"</td><td>:"+r.isci.dur+"</td><td>"+(r.pct||"")+"%</td><td>"+r.sched+"</td><td>"+r.flight+"</td><td>"+file+"</td><td>"+comp+"</td></tr>"});
             ph3+="</tbody></table>";
@@ -3666,7 +3666,7 @@ const App=()=>{
           // Build email
           var vendorLabel2=isDigital?"ESPN / GKBPS":vendorMode;
           var allWithFiles2=sel.filter(function(r){return r.isci.fileUrl});
-          var emailBody2="Hello,<br><br>Please find the attached "+mediaLabel+" traffic instructions for Postman Law — "+est.market+" — "+workMonth+" V"+version+".<br><br>";
+          var emailBody2="Hello,<br><br>Please find the attached "+mediaLabel+" traffic instructions for "+est.brand+" — "+est.market+" — "+workMonth+" V"+version+".<br><br>";
           if(emailNote.trim())emailBody2+="<b>Note:</b> "+emailNote.trim()+"<br><br>";
           emailBody2+="<b>Broadcast Month:</b> "+workMonth+"<br><b>Flight Dates:</b> "+flightDates+"<br><b>Estimate:</b> "+est.num+"<br><b>Vendor:</b> "+vendorLabel2+"<br><br>";
           if(allWithFiles2.length>0){emailBody2+="<b>Creative Files:</b><br>";allWithFiles2.forEach(function(r){emailBody2+='<a href="'+dlUrl(r.isci.fileUrl)+'">'+r.isci.code+" — "+r.isci.title+"</a><br>"});emailBody2+="<br>"}
@@ -3678,8 +3678,12 @@ const App=()=>{
           var tok3=reserveToken(ak(est),staTag2);
           var confirmUrl3=confirmBase2+"?confirm="+encodeURIComponent(est.num)+"&sta="+encodeURIComponent(staTag2)+"&tok="+encodeURIComponent(tok3);
           emailBody2+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmUrl3+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Atticor';
-          var subj2="Postman Law - "+mediaLabel+" Traffic Instructions - "+workMonth+" V"+version+" - "+est.market+" - "+vendorLabel2;
-          var recipients2=isDigital?["jmondo@goodkarmabrands.com","mmetroka@goodkarmabrands.com","jessica.flynn@atticor.ai"]:["jake.jaffe@siriusxm.com","josh.mustachi@siriusxm.com","jessica.flynn@atticor.ai"];
+          var subj2=est.brand+" - "+mediaLabel+" Traffic Instructions - "+workMonth+" V"+version+" - "+est.market+" - "+vendorLabel2;
+          // Vendor reps are brand-specific. The SiriusXM/ESPN contacts below belong to
+          // Postman Law's buys — never send another brand's traffic to them. For brands
+          // without a stored platform rep (e.g. WK Pandora), route to the buyer + Atticor
+          // so it can't misfire externally; add the real vendor rep in the SEND TO field.
+          var recipients2=est.brand==="Postman Law"?(isDigital?["jmondo@goodkarmabrands.com","mmetroka@goodkarmabrands.com","jessica.flynn@atticor.ai"]:["jake.jaffe@siriusxm.com","josh.mustachi@siriusxm.com","jessica.flynn@atticor.ai"]):[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean);
           try{
             var resp2=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients2.join(","),cc:[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj2,message:emailBody2,pdfBase64:pdfB64,pdfName:pdfName})});
             if(resp2.ok){
