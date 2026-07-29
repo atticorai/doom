@@ -3679,11 +3679,11 @@ const App=()=>{
           var confirmUrl3=confirmBase2+"?confirm="+encodeURIComponent(est.num)+"&sta="+encodeURIComponent(staTag2)+"&tok="+encodeURIComponent(tok3);
           emailBody2+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmUrl3+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Atticor';
           var subj2=est.brand+" - "+mediaLabel+" Traffic Instructions - "+workMonth+" V"+version+" - "+est.market+" - "+vendorLabel2;
-          // Vendor reps are brand-specific. The SiriusXM/ESPN contacts below belong to
-          // Postman Law's buys — never send another brand's traffic to them. For brands
-          // without a stored platform rep (e.g. WK Pandora), route to the buyer + Atticor
-          // so it can't misfire externally; add the real vendor rep in the SEND TO field.
-          var recipients2=est.brand==="Postman Law"?(isDigital?["jmondo@goodkarmabrands.com","mmetroka@goodkarmabrands.com","jessica.flynn@atticor.ai"]:["jake.jaffe@siriusxm.com","josh.mustachi@siriusxm.com","jessica.flynn@atticor.ai"]):[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean);
+          // Pandora/SiriusXM reps are the same people across brands, but kept as
+          // separate per-brand lists so each buy is configured independently. A brand
+          // with no stored rep falls back to the buyer + Atticor rather than misfiring.
+          var STREAM_REPS={"Postman Law":["jake.jaffe@siriusxm.com","josh.mustachi@siriusxm.com","jessica.flynn@atticor.ai"],"Wettermark Keith":["jake.jaffe@siriusxm.com","josh.mustachi@siriusxm.com","jessica.flynn@atticor.ai"]};
+          var recipients2=isDigital?["jmondo@goodkarmabrands.com","mmetroka@goodkarmabrands.com","jessica.flynn@atticor.ai"]:(STREAM_REPS[est.brand]||[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean));
           try{
             var resp2=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients2.join(","),cc:[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj2,message:emailBody2,pdfBase64:pdfB64,pdfName:pdfName})});
             if(resp2.ok){
