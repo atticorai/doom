@@ -3254,13 +3254,16 @@ const App=()=>{
       );
     };
     const SCHED_ORDER=["M-F Schedule","Weekend Schedule","All Week","M-F Bookend","Weekend Bookend"];
-    const printStream=function(){
+    const printStream=function(asHtml){
       var vLabel=vendorMode;
-      var w=window.open("","","width=1000,height=900");
+      // When asHtml is set, capture the exact same sheet as a string (via a
+      // fake writer) instead of opening a print window — so Download PDF and
+      // Send produce the identical delivery-ready sheet the print view does.
+      var _H="";var w=asHtml?{document:{write:function(s){_H+=s},close:function(){}},print:function(){},focus:function(){}}:window.open("","","width=1000,height=900");
       w.document.write("<html><head><title>"+escHtml(mediaLabel)+" Traffic - "+escHtml(est.market)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px;font-size:12px;background:#fff;color:#1e1233}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:5px 8px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.blu{color:#4AC8E8}.amb{color:#D4A040}.url{font-size:9px;word-break:break-all;color:#4AC8E8;font-family:monospace}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}.section{margin-top:16px;padding-top:8px;border-top:2px solid #E8DFF0;font-size:13px;font-weight:700}@media print{body{margin:20px}}</style></head><body>");
       w.document.write('<div style="text-align:center;margin-bottom:20px"><img src="'+escHtml(brand.logo)+'" style="height:48px;margin-bottom:8px"/><h2 style="margin:0;letter-spacing:2px">'+escHtml(est.brand.toUpperCase())+'</h2><div style="font-size:11px;color:#555;margin-top:4px">'+escHtml(mediaLabel.toUpperCase())+' TRAFFIC INSTRUCTIONS</div></div>');
       var hd=function(l,v,c){return '<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>'};
-      w.document.write(hd("Agency","Atticor"));w.document.write(hd("Client","Postman Law","red"));
+      w.document.write(hd("Agency","Atticor"));w.document.write(hd("Client",est.brand,"red"));
       w.document.write(hd("Market",est.market));w.document.write(hd("Vendor",vLabel+(isDigital?" / GKBPS":""),"amb"));
       w.document.write(hd("Buyer",est.buyer+(isDigital?" — jessica.flynn@atticor.ai":""),"red"));w.document.write(hd("Media",mediaLabel,"blu"));
       w.document.write(hd("Broadcast Month",workMonth,"grn"));w.document.write(hd("Flight Dates",flightDates,"grn"));
@@ -3381,7 +3384,7 @@ const App=()=>{
       }
       w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
       w.document.write('<div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div>');
-      w.document.write("</body></html>");w.document.close();w.print();
+      w.document.write("</body></html>");w.document.close();if(asHtml)return _H;w.print();
       log(mediaLabel+" Traffic",est.market+" - "+vLabel+" - "+sel.length+" creatives");
       notify(mediaLabel+" traffic generated - "+vLabel);
       setTrafficHistory(function(p){
@@ -3389,7 +3392,7 @@ const App=()=>{
         var allIscis=sel.map(function(r){
           var isB=r.isci.suffix==="B";var med=isB?"Display":"Video";
           var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);
-          var espnUrl=baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+(isB?"ESPNweb":"ESPNweb")+"&utm_Content="+r.isci.code;
+          var espnUrl=vendorMode==="Pandora"?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":"AudioSelect"):baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+(isB?"ESPNweb":"ESPNweb")+"&utm_Content="+r.isci.code;
           var gkbpsUrl=isB?"":baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code;
           return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:"ESPNweb",url:isPlatform?espnUrl:"",gkbpsUrl:isPlatform?gkbpsUrl:""}
         });
@@ -3539,7 +3542,7 @@ const App=()=>{
           var allIscis2=sel.map(function(r){
             var isB=r.isci.suffix==="B";var med=isB?"Display":"Video";
             var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);
-            var espnUrl=isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement=ESPNweb&utm_Content="+r.isci.code:"";
+            var espnUrl=vendorMode==="Pandora"?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":"AudioSelect"):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement=ESPNweb&utm_Content="+r.isci.code:"");
             var gkbpsUrl3=isB||!isPlatform?"":baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code;
             return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:"ESPNweb",url:espnUrl,gkbpsUrl:gkbpsUrl3}
           });
@@ -3557,84 +3560,9 @@ const App=()=>{
               notify(doomPick(DOOM.success));
             }catch(pe){console.warn("PDF gen failed:",pe);notify("PDF generation failed")}
           }else if(vendorMode==="Pandora"){
-            // Generate Pandora PDF with per-ISCI URLs for all PL markets
-            var{jsPDF:JP2}=window.jspdf;var ppdf=new JP2("p","mm","a4");
-            var ppw=210;var pph=297;var pmx=12;var pcw=ppw-2*pmx;var py=14;
-            var pCheckPage=function(need){if(py+need>pph-12){ppdf.addPage();py=12}};
-            ppdf.setFont("helvetica","bold");ppdf.setFontSize(14);ppdf.setTextColor(124,58,237);
-            ppdf.text((est.brand||"").toUpperCase(),ppw/2,py,{align:"center"});py+=5;
-            ppdf.setFontSize(8);ppdf.setTextColor(100,100,100);
-            ppdf.text(isWKstream?"PANDORA STREAMING AUDIO TRAFFIC":"PANDORA / SIRIUSXM STREAMING AUDIO TRAFFIC",ppw/2,py,{align:"center"});py+=7;
-            ppdf.setFontSize(8);ppdf.setTextColor(0,0,0);
-            var phdr=function(l,v){ppdf.setFont("helvetica","bold");ppdf.setTextColor(100,100,100);ppdf.text(l+":",pmx,py);ppdf.setFont("helvetica","normal");ppdf.setTextColor(0,0,0);ppdf.text(v,pmx+30,py);py+=3.8};
-            phdr("Agency","Atticor");phdr("Client",est.brand);phdr("Buyer",est.buyer);
-            phdr("Month",workMonth);phdr("Flight",flightDates);phdr("Version","V"+version);
-            if(comments)phdr("Comments",comments);
-            py+=3;
-            PAND_MKTS.forEach(function(mkt){
-              var mktDma=Object.entries(DM).find(function(e){return e[1]===mkt});var dma=mktDma?mktDma[0]:"";
-              var mktIscis=sel.filter(function(r){return r.isci.dma===dma});
-              if(!mktIscis.length)return;
-              pCheckPage(20);
-              ppdf.setDrawColor(8,145,178);ppdf.setLineWidth(0.5);ppdf.line(pmx,py,pmx+pcw,py);py+=5;
-              ppdf.setFont("helvetica","bold");ppdf.setFontSize(10);ppdf.setTextColor(8,145,178);
-              ppdf.text(mkt.toUpperCase()+" ("+dma+")",pmx,py);py+=5;
-              // Audio table
-              ppdf.setFont("helvetica","bold");ppdf.setFontSize(7);ppdf.setTextColor(5,150,105);
-              ppdf.text("AUDIO — AudioSelect",pmx,py);py+=4;
-              ppdf.setFontSize(6.5);ppdf.setTextColor(100,100,100);
-              ppdf.text("UTM_Content",pmx,py);ppdf.text("Title",pmx+35,py);ppdf.text("Dur",pmx+80,py);ppdf.text("Rot%",pmx+90,py);ppdf.text("Full URL",pmx+100,py);py+=3.5;
-              ppdf.setFont("helvetica","normal");ppdf.setFontSize(7);
-              mktIscis.forEach(function(r){
-                pCheckPage(5);
-                ppdf.setTextColor(0,0,0);ppdf.setFont("helvetica","bold");
-                ppdf.text(r.isci.code,pmx,py);ppdf.setFont("helvetica","normal");
-                ppdf.text(r.isci.title.substring(0,30),pmx+35,py);
-                ppdf.text(":"+r.isci.dur,pmx+80,py);
-                ppdf.text((r.pct||"")+"%",pmx+90,py);
-                var pUrl=pandoraUrl(mkt,r.isci.code,"AudioSelect");
-                ppdf.setTextColor(37,99,235);
-                ppdf.textWithLink("Click",pmx+100,py,{url:pUrl});
-                py+=3.5;
-              });
-              // Companion banners
-              var comps2=pandoraCompanions.filter(function(c){return c.name.trim()});
-              if(comps2.length){
-                py+=2;pCheckPage(10);
-                ppdf.setFont("helvetica","bold");ppdf.setFontSize(7);ppdf.setTextColor(8,145,178);
-                ppdf.text("COMPANION — CompanionBanners",pmx,py);py+=4;
-                ppdf.setFont("helvetica","normal");ppdf.setFontSize(7);
-                comps2.forEach(function(c){
-                  pCheckPage(4);ppdf.setTextColor(0,0,0);
-                  ppdf.text(c.name.substring(0,50)+" ("+c.size+")",pmx,py);
-                  var cUrl=pandoraUrl(mkt,c.name.trim(),"CompanionBanners");
-                  ppdf.setTextColor(37,99,235);ppdf.textWithLink("URL",pmx+pcw-10,py,{url:cUrl});py+=3.5;
-                });
-              }
-              // Display banners
-              var disps2=pandoraDisplays.filter(function(d){return d.name.trim()});
-              if(disps2.length){
-                py+=2;pCheckPage(10);
-                ppdf.setFont("helvetica","bold");ppdf.setFontSize(7);ppdf.setTextColor(236,72,153);
-                ppdf.text("DISPLAY — DisplayBanners",pmx,py);py+=4;
-                ppdf.setFont("helvetica","normal");ppdf.setFontSize(7);
-                disps2.forEach(function(d){
-                  pCheckPage(4);ppdf.setTextColor(0,0,0);
-                  ppdf.text(d.name.substring(0,50)+" ("+d.size+")",pmx,py);
-                  var dUrl=pandoraUrl(mkt,d.name.trim(),"DisplayBanners");
-                  ppdf.setTextColor(37,99,235);ppdf.textWithLink("URL",pmx+pcw-10,py,{url:dUrl});py+=3.5;
-                });
-              }
-              py+=4;
-            });
-            // Signature
-            py+=4;pCheckPage(10);
-            ppdf.setDrawColor(124,58,237);ppdf.setLineWidth(0.5);ppdf.line(pmx,py,pmx+pcw,py);py+=5;
-            ppdf.setFont("helvetica","bold");ppdf.setFontSize(8);ppdf.setTextColor(0,0,0);
-            ppdf.text("Accepted by: _________________________",pmx,py);ppdf.text("Date: _______________",pmx+pcw-60,py);
-            var pdfUri4=ppdf.output("datauristring");
-            var a2=document.createElement("a");a2.href=pdfUri4;a2.download="Traffic_PostmanLaw_Pandora_"+workMonth.replace(/\s/g,"")+"_v"+version+".pdf";a2.click();
-            notify(doomPick(DOOM.success));
+            // Same delivery-ready sheet as the print/generate view (identical HTML),
+            // rendered straight to a downloadable PDF.
+            generatePdfBase64(printStream(true)).then(function(uri){var a2=document.createElement("a");a2.href=uri;a2.download="Traffic_"+(est.brand||"").replace(/\s/g,"")+"_Pandora_"+(est.market||"").replace(/[\s\/]/g,"")+"_"+workMonth.replace(/\s/g,"")+"_v"+version+".pdf";a2.click();notify(doomPick(DOOM.success));}).catch(function(pe){notify("PDF generation failed")});
           }else{
             printStream();notify("Use browser Print > Save as PDF");
           }
@@ -3663,7 +3591,8 @@ const App=()=>{
             var dispIscis5=iscis.filter(function(i){return i.suffix==="B"&&i.brand===est.brand&&i.dma===dcCode5&&i.active});
             if(dispIscis5.length>0){ph3+='<div class="section">DISPLAY BANNERS</div><table><thead><tr><th>ISCI</th><th>Title</th><th>File</th><th>Click-Through URL</th></tr></thead><tbody>';dispIscis5.forEach(function(d){var fc=d.fileUrl?'<a href="'+dlUrl(d.fileUrl)+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+d.code+"</td><td>"+d.title+"</td><td>"+fc+"</td><td style='font-size:9px'>"+(vendorMode==="Pandora"?pandoraUrl(est.market,d.code,"DisplayBanners"):buildUtm("Display",d.code,dcCode5))+"</td></tr>"});ph3+="</tbody></table>"}
             ph3+='<div class="sig"><div>Accepted by:</div><div>Date:</div></div><div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></body></html>';
-            try{var pdfUri5=await generatePdfBase64(ph3);pdfB64=pdfUri5.split(",")[1]||""}catch(pe2){notify("PDF generation failed");return}
+            // Attach the same delivery-ready sheet the print/generate view produces.
+            try{var pdfUri5=await generatePdfBase64(printStream(true));pdfB64=pdfUri5.split(",")[1]||""}catch(pe2){notify("PDF generation failed");return}
           }
           // Build email
           var vendorLabel2=isDigital?"ESPN / GKBPS":vendorMode;
@@ -3692,7 +3621,7 @@ const App=()=>{
               notify(doomPick(DOOM.send));log(vendorLabel2+" Email","Sent - "+est.market+" "+workMonth);
               setTrafficHistory(function(p){
                 var allIscis3=sel.map(function(r){var isB=r.isci.suffix==="B";var med=isB?"Display":(isDigital?"Video":"Audio");var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);var pl=r.placement||utmPlacement;
-                  return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:pl,url:isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+pl+"&utm_Content="+r.isci.code:"",gkbpsUrl:isDigital&&!isB?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code:""}});
+                  return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:pl,url:vendorMode==="Pandora"?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":"AudioSelect"):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+pl+"&utm_Content="+r.isci.code:""),gkbpsUrl:isDigital&&!isB?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code:""}});
                 return [{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+" | Vendor: "+vendorLabel2,iscis:allIscis3,stations:[staTag2],isOoh:false,status:"sent",isDigitalEspn:isDigital}].concat(p)});
             }else throw new Error("n8n "+resp2.status)
           }catch(err2){notify("Send failed: "+(err2.message||err2))}
