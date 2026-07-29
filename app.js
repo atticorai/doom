@@ -3138,7 +3138,7 @@ const App=()=>{
     const flight=curMonth?fDs(curMonth.bcStart)+" - "+fDs(curMonth.bcEnd):"";
     const isDigital=est.media==="Digital";
     const mediaLabel=isDigital?"Digital Video":"Streaming Audio";
-    const vendorList=isDigital?["ESPN","Generic"]:["Pandora","Spotify","Generic"];
+    const vendorList=isDigital?["ESPN","Generic"]:(est.brand==="Wettermark Keith"?["Pandora","Paramount","Spotify","Generic"]:["Pandora","Spotify","Generic"]);
     const defaultVendor=isDigital?"ESPN":"Pandora";
     const PL_MKTS_ALL=["Chicago","Cincinnati","Denver","Minneapolis"];
     const isWKstream=est.brand==="Wettermark Keith";
@@ -3155,14 +3155,21 @@ const App=()=>{
     const ESPN_CAMPAIGNS=["MarchMadness","MLB","NFL","NBA","CFB","MMA","Golf"];
     const[vendorMode,setVendorMode]=useState(defaultVendor);
     const isPlatform=vendorMode!=="Generic";
+    // Paramount = video streaming: same sheet as Pandora but video spots.
+    const audPlc=vendorMode==="Paramount"?"Video":"AudioSelect";
+    const audLabel=vendorMode==="Paramount"?"VIDEO CREATIVES":"AUDIO CREATIVES";
     const[rows,setRows]=useState(()=>pool.map(i=>({isci:i,selected:false,pct:"",sched:"All Week",flight:flight,companionUrl:"",companionName:"",companionBannerName:""})));
+    // Paramount pulls the market's TV ISCIs as its creative pool; switching back
+    // to Pandora restores the estimate's own (radio) pool.
+    useEffect(()=>{if(!isWKstream)return;const _dc=Object.entries(DM).find(function(e){return e[1]===est.market});const dc=_dc?_dc[0]:"";const src=vendorMode==="Paramount"?iscis.filter(i=>i.dma===dc&&i.brand===est.brand&&i.active&&i.suffix==="T"):pool;setRows(src.map(i=>({isci:i,selected:false,pct:"",sched:"All Week",flight:flight,companionUrl:"",companionName:"",companionBannerName:""})))},[vendorMode]);
     const baseUrl=isWKstream?"https://www.wkfirm.com":"https://www.postmanlaw.com";
     // Pandora UTM builder — WK uses the Pandora-supplied spec against WKFIRM.com;
     // the other brand uses its SiriusXM/Placement scheme.
     const pandoraUrl=(market,content,placement)=>{
       if(isWKstream){
-        const camp="WettermarkKeith_Nashville_Pandora_"+currentYear+currentQuarter;
-        return"https://seriousinjury.wkfirm.com/nashville-personal-injury-lawyers?utm_source=Pandora&utm_medium=Streaming_Audio&utm_content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent(camp);
+        const camp="WettermarkKeith_Nashville_"+vendorMode+"_"+currentYear+currentQuarter;
+        const medium=vendorMode==="Paramount"?"Video_Streaming":"Streaming_Audio";
+        return"https://seriousinjury.wkfirm.com/nashville-personal-injury-lawyers?utm_source="+encodeURIComponent(vendorMode)+"&utm_medium="+medium+"&utm_content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent(camp);
       }
       const mktPath=market.toLowerCase().replace(/\s+/g,"");
       return"https://www.postmandelivers.com/"+mktPath+"/?UTM_Source=SiriusXM&UTM_Medium=Streaming_Audio&UTM_Content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent("Blackacre_KellerPostman_PostmanLawPI-"+market+"_"+currentYear+currentQuarter);
@@ -3256,7 +3263,7 @@ const App=()=>{
     const SCHED_ORDER=["M-F Schedule","Weekend Schedule","All Week","M-F Bookend","Weekend Bookend"];
     // Pandora display-banner rows for a saved record — each carries its own
     // DisplayBanners UTM so they persist into the Traffic Library like the audio.
-    const pandoraDispRows=function(){return vendorMode==="Pandora"?pandoraDisplays.filter(function(d){return d.name.trim()}).map(function(d){var it=iscis.find(function(i){return i.code===d.name.trim()});return{code:d.name.trim(),title:(it&&it.title)||("Display Banner "+(d.size||"")),dur:d.size||"",pct:"",sched:"Display Banner",placement:"DisplayBanners",url:pandoraUrl(est.market,d.name.trim(),"DisplayBanners")}}):[]};
+    const pandoraDispRows=function(){return (vendorMode==="Pandora"||vendorMode==="Paramount")?pandoraDisplays.filter(function(d){return d.name.trim()}).map(function(d){var it=iscis.find(function(i){return i.code===d.name.trim()});return{code:d.name.trim(),title:(it&&it.title)||("Display Banner "+(d.size||"")),dur:d.size||"",pct:"",sched:"Display Banner",placement:"DisplayBanners",url:pandoraUrl(est.market,d.name.trim(),"DisplayBanners")}}):[]};
     // Delivery-ready Pandora sheet as a REAL text PDF (jsPDF) — full UTM URLs
     // rendered as clickable, selectable links. Mirrors the Generate sheet.
     // Self-contained: does NOT touch printStream, so Generate is unaffected.
@@ -3267,9 +3274,9 @@ const App=()=>{
       d.setFont("helvetica","bold");d.setFontSize(16);d.setTextColor(124,58,237);
       d.text((est.brand||"").toUpperCase(),W/2,y,{align:"center"});y+=6;
       d.setFont("helvetica","bold");d.setFontSize(9);d.setTextColor(90,90,90);
-      d.text("STREAMING AUDIO TRAFFIC INSTRUCTIONS",W/2,y,{align:"center"});y+=8;
+      d.text(vendorMode==="Paramount"?"VIDEO STREAMING TRAFFIC INSTRUCTIONS":"STREAMING AUDIO TRAFFIC INSTRUCTIONS",W/2,y,{align:"center"});y+=8;
       var info=function(l,v){d.setFont("helvetica","bold");d.setFontSize(9);d.setTextColor(60,60,60);d.text(l+":",mx,y);d.setFont("helvetica","normal");d.setTextColor(0,0,0);d.text(String(v==null?"":v),mx+38,y);y+=4.6};
-      info("Agency","Atticor");info("Client",est.brand);info("Market",est.market);info("Vendor",vendorMode);info("Buyer",est.buyer);info("Media","Streaming Audio");info("Broadcast Month",workMonth);info("Flight Dates",flightDates);info("Estimate",est.num);info("Version","V"+version);
+      info("Agency","Atticor");info("Client",est.brand);info("Market",est.market);info("Vendor",vendorMode);info("Buyer",est.buyer);info("Media",vendorMode==="Paramount"?"Video Streaming":"Streaming Audio");info("Broadcast Month",workMonth);info("Flight Dates",flightDates);info("Estimate",est.num);info("Version","V"+version);
       y+=2;d.setDrawColor(8,145,178);d.setLineWidth(0.5);d.line(mx,y,mx+cw,y);y+=6;
       var dmaCode=(Object.entries(DM).find(function(e){return e[1]===est.market})||[])[0]||"";
       d.setFont("helvetica","bold");d.setFontSize(11);d.setTextColor(8,145,178);
@@ -3277,8 +3284,8 @@ const App=()=>{
       var urlBlock=function(url){d.setTextColor(37,99,235);d.setFontSize(6.5);d.splitTextToSize(url,cw-6).forEach(function(ln){check(3.5);d.textWithLink(ln,mx+4,y,{url:url});y+=3});y+=2};
       var audio=sel.filter(function(r){return r.isci.suffix!=="B"});
       if(audio.length){
-        d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(5,150,105);d.text("AUDIO CREATIVES — Placement: AudioSelect",mx,y);y+=5;
-        audio.forEach(function(r){check(11);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(String(r.isci.code),mx,y);d.setFont("helvetica","normal");d.text(String(r.isci.title||"").substring(0,36),mx+34,y);d.text(":"+String(r.isci.dur),mx+96,y);d.text(String(r.pct||"")+"%",mx+108,y);y+=3.8;urlBlock(pandoraUrl(est.market,r.isci.code,"AudioSelect"));check(4);if(r.isci.fileUrl){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download creative",mx+4,y,{url:dlUrl(r.isci.fileUrl)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("Creative: TBD",mx+4,y)}y+=5});
+        d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(5,150,105);d.text(audLabel+" — Placement: "+audPlc,mx,y);y+=5;
+        audio.forEach(function(r){check(11);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(String(r.isci.code),mx,y);d.setFont("helvetica","normal");d.text(String(r.isci.title||"").substring(0,36),mx+34,y);d.text(":"+String(r.isci.dur),mx+96,y);d.text(String(r.pct||"")+"%",mx+108,y);y+=3.8;urlBlock(pandoraUrl(est.market,r.isci.code,audPlc));check(4);if(r.isci.fileUrl){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download creative",mx+4,y,{url:dlUrl(r.isci.fileUrl)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("Creative: TBD",mx+4,y)}y+=5});
       }
       var disps=pandoraDisplays.filter(function(x){return x.name.trim()});
       if(disps.length){
@@ -3360,7 +3367,7 @@ const App=()=>{
           });
           w.document.write("</tbody></table>");
         }
-      }else if(vendorMode==="Pandora"){
+      }else if((vendorMode==="Pandora"||vendorMode==="Paramount")){
         // ═══ PANDORA: All PL markets, per-ISCI URLs ═══
         PAND_MKTS.forEach(function(mkt){
           var mktDma=Object.entries(DM).find(function(e){return e[1]===mkt});var dma=mktDma?mktDma[0]:"";
@@ -3368,12 +3375,12 @@ const App=()=>{
           if(!mktIscis.length)return;
           w.document.write('<div class="section" style="border-top-color:#4AC8E8">'+mkt.toUpperCase()+' ('+dma+')</div>');
           // Audio creatives
-          w.document.write('<div style="font-weight:700;font-size:11px;color:#059669;margin:8px 0 4px">AUDIO CREATIVES — Placement: AudioSelect</div>');
+          w.document.write('<div style="font-weight:700;font-size:11px;color:#059669;margin:8px 0 4px">'+audLabel+' — Placement: '+audPlc+'</div>');
           w.document.write("<table><thead><tr><th>UTM_Content</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Placement</th><th>Full URL</th><th>Creative</th></tr></thead><tbody>");
           mktIscis.forEach(function(r){
-            var url=pandoraUrl(mkt,r.isci.code,"AudioSelect");
+            var url=pandoraUrl(mkt,r.isci.code,audPlc);
             var dl=r.isci.fileUrl?"<a href='"+escHtml(dlUrl(r.isci.fileUrl))+"' style='color:#5BC4A0;font-weight:700'>Download</a>":"TBD";
-            w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+escHtml(r.isci.code)+"</td><td>"+escHtml(r.isci.title)+"</td><td>:"+escHtml(r.isci.dur)+"</td><td style='text-align:center;font-weight:700'>"+escHtml(r.pct||"")+"%</td><td>AudioSelect</td><td class='url'><a href='"+escHtml(url)+"' style='color:#4AC8E8'>"+escHtml(url)+"</a></td><td>"+dl+"</td></tr>");
+            w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+escHtml(r.isci.code)+"</td><td>"+escHtml(r.isci.title)+"</td><td>:"+escHtml(r.isci.dur)+"</td><td style='text-align:center;font-weight:700'>"+escHtml(r.pct||"")+"%</td><td>'+audPlc+'</td><td class='url'><a href='"+escHtml(url)+"' style='color:#4AC8E8'>"+escHtml(url)+"</a></td><td>"+dl+"</td></tr>");
           });
           w.document.write("</tbody></table>");
           // Companion banners
@@ -3429,7 +3436,7 @@ const App=()=>{
         var allIscis=sel.map(function(r){
           var isB=r.isci.suffix==="B";var med=isB?"Display":"Video";
           var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);
-          var espnUrl=vendorMode==="Pandora"?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":"AudioSelect"):baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+(isB?"ESPNweb":"ESPNweb")+"&utm_Content="+r.isci.code;
+          var espnUrl=(vendorMode==="Pandora"||vendorMode==="Paramount")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+(isB?"ESPNweb":"ESPNweb")+"&utm_Content="+r.isci.code;
           var gkbpsUrl=isB?"":baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code;
           return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:"ESPNweb",url:isPlatform?espnUrl:"",gkbpsUrl:isPlatform?gkbpsUrl:""}
         });
@@ -3451,14 +3458,14 @@ const App=()=>{
           </div>
         </div>
         {isPlatform&&<div style={{background:"#1e1233",border:"1px solid #4a3565",borderRadius:6,padding:8}}>
-          <div style={{fontSize:12,fontWeight:700,color:"#D4A040",marginBottom:6}}>UTM PARAMETERS {vendorMode==="Pandora"?"(auto-generated per ISCI)":vendorMode==="ESPN"?"(per campaign)":""}</div>
+          <div style={{fontSize:12,fontWeight:700,color:"#D4A040",marginBottom:6}}>UTM PARAMETERS {(vendorMode==="Pandora"||vendorMode==="Paramount")?"(auto-generated per ISCI)":vendorMode==="ESPN"?"(per campaign)":""}</div>
           {vendorMode==="ESPN"&&<div style={{marginBottom:6}}>
             <div style={{fontSize:11,color:"#94a3b8",marginBottom:4}}>Campaign:</div>
             <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{ESPN_CAMPAIGNS.map(c=><button key={c} onClick={()=>setEspnCampaign(c)} style={{padding:"4px 10px",borderRadius:4,border:espnCampaign===c?"2px solid #D4A040":"1px solid #4a3565",background:espnCampaign===c?"rgba(251,191,36,.15)":"transparent",color:espnCampaign===c?"#D4A040":"#94a3b8",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c}</button>)}</div>
           </div>}
-          {vendorMode==="Pandora"&&<div style={{fontSize:10,color:"#94a3b8"}}>
-            <div>Source: <b style={{color:"#E8DFF0"}}>{isWKstream?"Pandora":"SiriusXM"}</b> · Medium: <b style={{color:"#E8DFF0"}}>Streaming_Audio</b></div>
-            <div>Campaign: <b style={{color:"#D4A040"}}>{isWKstream?("WettermarkKeith_Nashville_Pandora_"+currentYear+currentQuarter):("Blackacre_KellerPostman_PostmanLawPI-{Market}_"+currentYear+currentQuarter)}</b></div>
+          {(vendorMode==="Pandora"||vendorMode==="Paramount")&&<div style={{fontSize:10,color:"#94a3b8"}}>
+            <div>Source: <b style={{color:"#E8DFF0"}}>{isWKstream?vendorMode:"SiriusXM"}</b> · Medium: <b style={{color:"#E8DFF0"}}>{isWKstream&&vendorMode==="Paramount"?"Video_Streaming":"Streaming_Audio"}</b></div>
+            <div>Campaign: <b style={{color:"#D4A040"}}>{isWKstream?("WettermarkKeith_Nashville_"+vendorMode+"_"+currentYear+currentQuarter):("Blackacre_KellerPostman_PostmanLawPI-{Market}_"+currentYear+currentQuarter)}</b></div>
             <div style={{marginTop:4}}>Placements: <b style={{color:"#5BC4A0"}}>AudioSelect</b> · <b style={{color:"#4AC8E8"}}>CompanionBanners</b> · <b style={{color:"#ec4899"}}>DisplayBanners</b></div>
           </div>}
           {vendorMode==="ESPN"&&<div style={{fontSize:10,color:"#94a3b8",marginTop:6}}>
@@ -3475,8 +3482,8 @@ const App=()=>{
           </div>}
         </div>}
       </div>
-      {vendorMode==="Pandora"&&<div style={{marginBottom:8,padding:6,background:"rgba(37,99,235,.06)",borderRadius:5,border:"1px solid rgba(37,99,235,.15)",fontSize:10,fontFamily:"monospace"}}>
-        <div><span style={{color:"#5BC4A0"}}>Audio:</span> {pandoraUrl(est.market,"{ISCI}","AudioSelect")}</div>
+      {(vendorMode==="Pandora"||vendorMode==="Paramount")&&<div style={{marginBottom:8,padding:6,background:"rgba(37,99,235,.06)",borderRadius:5,border:"1px solid rgba(37,99,235,.15)",fontSize:10,fontFamily:"monospace"}}>
+        <div><span style={{color:"#5BC4A0"}}>Audio:</span> {pandoraUrl(est.market,"{ISCI}",audPlc)}</div>
         <div><span style={{color:"#4AC8E8"}}>Companion:</span> {pandoraUrl(est.market,"{BannerName}","CompanionBanners")}</div>
         <div><span style={{color:"#ec4899"}}>Display:</span> {pandoraUrl(est.market,"{BannerName}","DisplayBanners")}</div>
         <div style={{marginTop:4,color:"#D4A040"}}>All 4 PL markets generated on print</div>
@@ -3526,7 +3533,7 @@ const App=()=>{
         </table>
       </div>
       <div style={{display:"flex",gap:4,marginTop:4}}><Btn small onClick={()=>setRows(p=>p.map(r=>({...r,selected:true})))}>Select All</Btn><Btn small onClick={()=>setRows(p=>p.map(r=>({...r,selected:false})))}>Clear</Btn>{isDigital&&<Btn small onClick={()=>setRows(p=>p.map(r=>r.isci.suffix==="D"?{...r,selected:true}:r))}>Select Video</Btn>}{isDigital&&<Btn small onClick={()=>setRows(p=>p.map(r=>r.isci.suffix==="B"?{...r,selected:true}:r))}>Select Display</Btn>}{isDigital&&<Btn small color="#D4A040" onClick={()=>setRows(p=>p.map(r=>r.selected?{...r,placement:"ESPNweb"}:r))}>Set ESPN</Btn>}{isDigital&&<Btn small color="#9b7bb0" onClick={()=>setRows(p=>p.map(r=>r.selected&&r.isci.suffix!=="B"?{...r,placement:"GKBPS"}:r))}>Set GKBPS</Btn>}</div>
-      {vendorMode==="Pandora"&&<div style={{marginTop:10}}>
+      {(vendorMode==="Pandora"||vendorMode==="Paramount")&&<div style={{marginTop:10}}>
         {!isWKstream&&<React.Fragment><div style={{fontSize:12,fontWeight:700,color:"#4AC8E8",marginBottom:6}}>COMPANION BANNERS (paired with audio creatives)</div>
         {pandoraCompanions.map((c,ci)=><div key={ci} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
           <input value={c.name} onChange={e=>{const v=e.target.value;setPandoraCompanions(p=>p.map((x,i)=>i===ci?{...x,name:v}:x))}} placeholder="e.g. Pandora_Banner_Ad_350x250_CHI_CityscapeIA_Let_us_Deliver_for_You" style={{flex:1,padding:"4px 8px",borderRadius:4,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:11}}/>
@@ -3579,7 +3586,7 @@ const App=()=>{
           var allIscis2=sel.map(function(r){
             var isB=r.isci.suffix==="B";var med=isB?"Display":"Video";
             var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);
-            var espnUrl=vendorMode==="Pandora"?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":"AudioSelect"):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement=ESPNweb&utm_Content="+r.isci.code:"");
+            var espnUrl=(vendorMode==="Pandora"||vendorMode==="Paramount")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement=ESPNweb&utm_Content="+r.isci.code:"");
             var gkbpsUrl3=isB||!isPlatform?"":baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code;
             return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:"ESPNweb",url:espnUrl,gkbpsUrl:gkbpsUrl3}
           });
@@ -3596,9 +3603,9 @@ const App=()=>{
               var a=document.createElement("a");a.href=pdfUri3;a.download="Traffic_PostmanLaw_Digital_ESPN_GKBPS_"+workMonth.replace(/\s/g,"")+"_v"+version+".pdf";a.click();
               notify(doomPick(DOOM.success));
             }catch(pe){console.warn("PDF gen failed:",pe);notify("PDF generation failed")}
-          }else if(vendorMode==="Pandora"){
+          }else if((vendorMode==="Pandora"||vendorMode==="Paramount")){
             // Clickable delivery-ready sheet, same as the Generate view.
-            var uriP=buildPandoraPdf();var a2=document.createElement("a");a2.href=uriP;a2.download="Traffic_"+(est.brand||"").replace(/\s/g,"")+"_Pandora_"+(est.market||"").replace(/[\s\/]/g,"")+"_"+workMonth.replace(/\s/g,"")+"_v"+version+".pdf";a2.click();notify(doomPick(DOOM.success));
+            var uriP=buildPandoraPdf();var a2=document.createElement("a");a2.href=uriP;a2.download="Traffic_"+(est.brand||"").replace(/\s/g,"")+"_"+vendorMode+"_"+(est.market||"").replace(/[\s\/]/g,"")+"_"+workMonth.replace(/\s/g,"")+"_v"+version+".pdf";a2.click();notify(doomPick(DOOM.success));
           }else{
             printStream();notify("Use browser Print > Save as PDF");
           }
@@ -3625,9 +3632,9 @@ const App=()=>{
             ph3+="</tbody></table>";
             var dc5=Object.entries(DM).find(function(e){return e[1].toLowerCase()===est.market.toLowerCase()});var dcCode5=dc5?dc5[0]:"";
             var dispIscis5=iscis.filter(function(i){return i.suffix==="B"&&i.brand===est.brand&&i.dma===dcCode5&&i.active});
-            if(dispIscis5.length>0){ph3+='<div class="section">DISPLAY BANNERS</div><table><thead><tr><th>ISCI</th><th>Title</th><th>File</th><th>Click-Through URL</th></tr></thead><tbody>';dispIscis5.forEach(function(d){var fc=d.fileUrl?'<a href="'+dlUrl(d.fileUrl)+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+d.code+"</td><td>"+d.title+"</td><td>"+fc+"</td><td style='font-size:9px'>"+(vendorMode==="Pandora"?pandoraUrl(est.market,d.code,"DisplayBanners"):buildUtm("Display",d.code,dcCode5))+"</td></tr>"});ph3+="</tbody></table>"}
+            if(dispIscis5.length>0){ph3+='<div class="section">DISPLAY BANNERS</div><table><thead><tr><th>ISCI</th><th>Title</th><th>File</th><th>Click-Through URL</th></tr></thead><tbody>';dispIscis5.forEach(function(d){var fc=d.fileUrl?'<a href="'+dlUrl(d.fileUrl)+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+d.code+"</td><td>"+d.title+"</td><td>"+fc+"</td><td style='font-size:9px'>"+((vendorMode==="Pandora"||vendorMode==="Paramount")?pandoraUrl(est.market,d.code,"DisplayBanners"):buildUtm("Display",d.code,dcCode5))+"</td></tr>"});ph3+="</tbody></table>"}
             ph3+='<div class="sig"><div>Accepted by:</div><div>Date:</div></div><div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></body></html>';
-            try{var pdfUri5=vendorMode==="Pandora"?buildPandoraPdf():await generatePdfBase64(ph3);pdfB64=pdfUri5.split(",")[1]||""}catch(pe2){notify("PDF generation failed");return}
+            try{var pdfUri5=(vendorMode==="Pandora"||vendorMode==="Paramount")?buildPandoraPdf():await generatePdfBase64(ph3);pdfB64=pdfUri5.split(",")[1]||""}catch(pe2){notify("PDF generation failed");return}
           }
           // Build email
           var vendorLabel2=isDigital?"ESPN / GKBPS":vendorMode;
@@ -3649,14 +3656,16 @@ const App=()=>{
           // separate per-brand lists so each buy is configured independently. A brand
           // with no stored rep falls back to the buyer + Atticor rather than misfiring.
           var STREAM_REPS={"Postman Law":["jake.jaffe@siriusxm.com","josh.mustachi@siriusxm.com","jessica.flynn@atticor.ai"],"Wettermark Keith":["jake.jaffe@siriusxm.com","josh.mustachi@siriusxm.com","jessica.flynn@atticor.ai"]};
-          var recipients2=isDigital?["jmondo@goodkarmabrands.com","mmetroka@goodkarmabrands.com","jessica.flynn@atticor.ai"]:(STREAM_REPS[est.brand]||[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean));
+          // Paramount has no stored rep yet — route to buyer + Atticor so it can't
+          // misfire to the SiriusXM/Pandora reps. Add the real rep when known.
+          var recipients2=isDigital?["jmondo@goodkarmabrands.com","mmetroka@goodkarmabrands.com","jessica.flynn@atticor.ai"]:(vendorMode==="Paramount"?[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean):(STREAM_REPS[est.brand]||[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean)));
           try{
             var resp2=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients2.join(","),cc:[BUYER_EMAILS[est.buyer]||"","emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subj2,message:emailBody2,pdfBase64:pdfB64,pdfName:pdfName})});
             if(resp2.ok){
               notify(doomPick(DOOM.send));log(vendorLabel2+" Email","Sent - "+est.market+" "+workMonth);
               setTrafficHistory(function(p){
                 var allIscis3=sel.map(function(r){var isB=r.isci.suffix==="B";var med=isB?"Display":(isDigital?"Video":"Audio");var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);var pl=r.placement||utmPlacement;
-                  return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:pl,url:vendorMode==="Pandora"?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":"AudioSelect"):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+pl+"&utm_Content="+r.isci.code:""),gkbpsUrl:isDigital&&!isB?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code:""}});
+                  return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:pl,url:(vendorMode==="Pandora"||vendorMode==="Paramount")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+pl+"&utm_Content="+r.isci.code:""),gkbpsUrl:isDigital&&!isB?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code:""}});
                 return [{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+" | Vendor: "+vendorLabel2,iscis:allIscis3.concat(pandoraDispRows()),stations:[staTag2],isOoh:false,status:"sent",isDigitalEspn:isDigital}].concat(p)});
             }else throw new Error("n8n "+resp2.status)
           }catch(err2){notify("Send failed: "+(err2.message||err2))}
@@ -7131,13 +7140,17 @@ ${fullText.substring(0,3000)}`}]
       // Streaming Audio (Pandora) — full UTM URL sheet, matching the Generate view.
       if(h.media==="Streaming Audio"){
         var _dc=normMkt(h.market)||"";
+        // Vendor from the record's comments ("| Vendor: Paramount") — Paramount is video.
+        var _isPar=/Paramount/.test(h.comments||"");
+        var _plc=_isPar?"Video":"AudioSelect";
+        var _lbl=_isPar?"VIDEO CREATIVES":"AUDIO CREATIVES";
         var _aud=(h.iscis||[]).filter(function(r){return !((r.placement==="DisplayBanners")||(r.code&&/B$/.test(r.code)))});
         var _dsp=(h.iscis||[]).filter(function(r){return (r.placement==="DisplayBanners")||(r.code&&/B$/.test(r.code))});
         x+='<div style="font-weight:700;font-size:13px;color:#0891b2;border-top:2px solid #0891b2;padding-top:8px;margin-top:12px">'+escHtml((h.market||"").toUpperCase())+' ('+escHtml(_dc)+')</div>';
         if(_aud.length){
-          x+='<div style="font-weight:700;font-size:11px;color:#059669;margin:8px 0 4px">AUDIO CREATIVES — Placement: AudioSelect</div>';
+          x+='<div style="font-weight:700;font-size:11px;color:#059669;margin:8px 0 4px">'+_lbl+' — Placement: '+_plc+'</div>';
           x+='<table><thead><tr><th>UTM_Content</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Placement</th><th>Full URL</th><th>Creative</th></tr></thead><tbody>';
-          _aud.forEach(function(r){var _u=r.url||"";var _f=(iscis.find(function(i){return i.code===r.code})||{}).fileUrl;var _dl=_f?'<a href="'+escHtml(dlUrl(_f))+'" style="color:#5BC4A0;font-weight:700">Download</a>':'TBD';x+='<tr><td style="font-family:monospace;font-weight:700">'+escHtml(r.code)+'</td><td>'+escHtml(r.title)+'</td><td>:'+escHtml(r.dur)+'</td><td style="text-align:center;font-weight:700">'+escHtml(r.pct||"")+'</td><td>AudioSelect</td><td style="font-size:8px;word-break:break-all"><a href="'+escHtml(_u)+'" style="color:#4AC8E8">'+escHtml(_u)+'</a></td><td>'+_dl+'</td></tr>'});
+          _aud.forEach(function(r){var _u=r.url||"";var _f=(iscis.find(function(i){return i.code===r.code})||{}).fileUrl;var _dl=_f?'<a href="'+escHtml(dlUrl(_f))+'" style="color:#5BC4A0;font-weight:700">Download</a>':'TBD';x+='<tr><td style="font-family:monospace;font-weight:700">'+escHtml(r.code)+'</td><td>'+escHtml(r.title)+'</td><td>:'+escHtml(r.dur)+'</td><td style="text-align:center;font-weight:700">'+escHtml(r.pct||"")+'</td><td>'+_plc+'</td><td style="font-size:8px;word-break:break-all"><a href="'+escHtml(_u)+'" style="color:#4AC8E8">'+escHtml(_u)+'</a></td><td>'+_dl+'</td></tr>'});
           x+='</tbody></table>';
         }
         if(_dsp.length){
