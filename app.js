@@ -2453,6 +2453,35 @@ const App=()=>{
     log("OOH Creative Specs",brandLabel+" · "+totalBoards+" boards · "+rows.length+" spec groups");
   };
 
+  // Lerner & Rowe vendor spec-sheet reference — the artwork/spec templates per market,
+  // per vendor (Drive links + exact pixel sizes). Data from Lerner__Rowe_Specs.xlsx.
+  const openLrVendorSpecs=()=>{
+    if(typeof LR_SPECS==="undefined"){notify("Spec reference not loaded");return}
+    const ACC="#1B7A46";
+    const order=["ABQ","CHI","KBH","LVS","PHX","RNO","SEA","TUC","YMA"];
+    const mktName=(c)=>(typeof DM!=="undefined"&&DM[c])||c;
+    const w=window.open("","","width=1080,height=920");
+    w.document.write('<html><head><title>Lerner & Rowe — OOH Vendor Spec Sheets</title>');
+    w.document.write('<style>body{font-family:Arial,Helvetica,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}h3{margin:18px 0 4px;color:'+ACC+';border-bottom:2px solid '+ACC+';padding-bottom:3px}.sub{color:#555;font-weight:bold;margin:2px 0 10px}table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px}th,td{border:1px solid #ccc;padding:5px 8px;text-align:left;vertical-align:top}th{background:'+ACC+';color:#fff}a{color:#1565c0;text-decoration:none}a:hover{text-decoration:underline}tr:nth-child(even){background:#f2f9f4}.note{color:#555;font-size:10px;white-space:pre-line}.master{background:#f2f9f4;border-left:3px solid '+ACC+';padding:8px 12px;margin-bottom:10px;font-size:12px}.dl{position:fixed;top:12px;right:12px;background:'+ACC+';color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{.dl{display:none}body{margin:12px}a{color:#1a1a1a}}</style></head><body>');
+    w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+    w.document.write('<div style="text-align:center;margin-bottom:8px"><h2>LERNER &amp; ROWE</h2><div style="font-weight:bold;color:#555">OOH VENDOR SPEC SHEETS — ARTWORK TEMPLATES BY MARKET</div></div>');
+    if(typeof LR_SPEC_MASTER!=="undefined"){
+      w.document.write('<div class="master"><b>Lamar master spec generators:</b> '+
+        '<a href="'+escHtml(LR_SPEC_MASTER.static)+'" target="_blank">Static Specs</a> &nbsp;·&nbsp; '+
+        '<a href="'+escHtml(LR_SPEC_MASTER.digital)+'" target="_blank">Digital Specs</a></div>');
+    }
+    let total=0;
+    order.forEach(dma=>{const rows=LR_SPECS[dma];if(!rows||!rows.length)return;total+=rows.length;
+      w.document.write('<h3>'+escHtml(mktName(dma))+' <span style="color:#888;font-weight:normal;font-size:11px">('+dma+')</span></h3>');
+      w.document.write('<table><tr><th style="width:20%">Vendor</th><th style="width:26%">Type / Size</th><th style="width:12%">Spec Sheet</th><th>Notes</th></tr>');
+      rows.forEach(r=>{w.document.write('<tr><td><b>'+escHtml(r.company)+'</b></td><td>'+escHtml(r.spec||"")+'</td><td>'+(r.link?'<a href="'+escHtml(r.link)+'" target="_blank">📎 Open</a>':'—')+'</td><td class="note">'+escHtml(r.note||"")+'</td></tr>')});
+      w.document.write('</table>');
+    });
+    w.document.write('<div style="margin-top:14px;font-size:11px;color:#555;border-left:3px solid '+ACC+';padding-left:8px">'+total+' vendor spec sheets across '+order.filter(d=>LR_SPECS[d]&&LR_SPECS[d].length).length+' markets. Digital sizes are the vendor\'s required pixel canvas; static billboards build full-scale CMYK print-ready. Source: Lamar/vendor spec templates.</div>');
+    w.document.write('</body></html>');w.document.close();
+    log("L&R Vendor Spec Sheets","opened reference");
+  };
+
   // ── DASHBOARD ─────────────────────────────────────────
   const Dash=()=>{const ai=iscis.filter(i=>i.active);const oohAlerts=alerts.filter(a=>a.type==="ooh");const rotAlerts=alerts.filter(a=>a.type==="rotation"||a.type==="media");
     const[alertsExpanded,setAlertsExpanded]=useState(false);
@@ -8727,6 +8756,7 @@ Rules:
             exportCsv("LR_OOH_"+(mktF||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
           <Btn small onClick={()=>openOohCreativeSpecs("Lerner & Rowe",fl.map(p=>({market:mktNames[p.market]||p.market,type:p.media,size:p.size,vendor:p.vendor,contract:(typeof LR_POPS!=="undefined"&&LR_POPS[p.unit]?LR_POPS[p.unit].contract:""),start:oohFlightStart(p.flight),unit:p.unit})),"#1B7A46")} color="#5BC4A0">📐 Creative Specs</Btn>
+          <Btn small onClick={openLrVendorSpecs} color="#5BC4A0">📎 Vendor Specs</Btn>
           <Btn small onClick={()=>openOohSizesReport("Lerner & Rowe")} color="#5BC4A0">📏 Size Report</Btn>
           <Btn small onClick={printPlCardReport} color="#4AC8E8">🖨 Traffic Report</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
@@ -12024,6 +12054,7 @@ Rules:
         <p><b>Parrish DeVaughn came outdoors.</b> Oklahoma City's board plant — five fixed panels (perm bulletins, a poster, a digital) plus four rotating programs (pre-empt bulletins, digital bulletins, and the jr/standard poster showings) — now lives in its own <b>PDV OOH</b> page in the Hub, carrying the same Creative Brief, Size Report, and board-list downloads every other brand does.</p>
         <p><b>Keches Law Group made five.</b> The Boston firm joined the roster with its own <b>KE OOH</b> page — its full Clear Channel Outdoor board plant (two always-on 8-slot digital dominations on I-93, the static-bulletin segments, and the whole eligible-display rotation pool — 35 boards) reconciled straight from the executed sales contracts, plus the Patriot Place billboard from the Patriots deal. The page adds a <b>Contracts</b> view alongside the board cards, table, Creative Brief, Size Report, board list, and a status filter. Beyond outdoor, a brand-new <b>Contracts Vault</b> gathers the whole Keches media portfolio — TV, radio, print, podcast, event, and every arena/sports sponsorship (Bruins, Patriots, Railers, Free Jacks, Boston College) — filterable by medium. And Keches' Boston <b>radio stations</b> — 98.5 The Sports Hub, Country 102.5, 105.7 WROR (Beasley) and WEEI (Audacy) — now live in the Station Registry.</p>
         <p><b>The poster showing stopped being a guess.</b> Wettermark Keith's placeholder Lamar poster slots across Birmingham, Jasper, Gadsden, Centre, Anniston, Albertville (contract 5570867) and Knoxville (contract 5570939) were <b>resolved from Lamar's Proof-of-Performance reports</b> — each 10'6×22'9 slot now carries its confirmed panel number, real location, install date, weekly impressions, and its two <b>proof photos</b> (the street-level close-up and the down-the-block distance shot), so every board shows its installed creative on its OOH card.</p>
+        <p><b>Lerner &amp; Rowe's art department got its spec book.</b> Every L&amp;R OOH market now carries its <b>vendor spec sheets</b> — the Drive links to each vendor's artwork templates (Lamar, Clear Channel, OutFront, View, Becker, Kemp, and the rest) plus their exact required pixel canvases (Chicago's 400×1400 / 400×840, the Yuma bus display/back/side dimensions, and more), reached from a new <b>📎 Vendor Specs</b> button on the L&amp;R OOH page, with Lamar's master static and digital spec generators pinned at the top.</p>
         <BookMarginNote author="meg">I keep the receipts. Everything I've built is written here — and I'm not done.</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:28,opacity:.5,transform:"rotate(12deg) scale(1.1)"}}/>}{<BookInkSplatter style={{bottom:20,left:20,opacity:.4}}/>}{<BookBurnMark style={{top:0,left:0,width:80,height:80,opacity:.25}}/>}</>},
 
