@@ -3254,40 +3254,6 @@ const App=()=>{
       );
     };
     const SCHED_ORDER=["M-F Schedule","Weekend Schedule","All Week","M-F Bookend","Weekend Bookend"];
-    // Delivery-ready Pandora sheet as a REAL text PDF (jsPDF) — full UTM URLs
-    // rendered as clickable, selectable links (textWithLink), same layout as the
-    // print/generate view. Used for both Download PDF and the Send attachment.
-    const buildPandoraPdf=function(){
-      var{jsPDF:JPP}=window.jspdf;var d=new JPP("p","mm","a4");
-      var W=210,Hh=297,mx=12,cw=W-2*mx,y=16;
-      var check=function(n){if(y+n>Hh-14){d.addPage();y=16}};
-      d.setFont("helvetica","bold");d.setFontSize(16);d.setTextColor(124,58,237);
-      d.text((est.brand||"").toUpperCase(),W/2,y,{align:"center"});y+=6;
-      d.setFont("helvetica","bold");d.setFontSize(9);d.setTextColor(90,90,90);
-      d.text("STREAMING AUDIO TRAFFIC INSTRUCTIONS",W/2,y,{align:"center"});y+=8;
-      var info=function(l,v){d.setFont("helvetica","bold");d.setFontSize(9);d.setTextColor(60,60,60);d.text(l+":",mx,y);d.setFont("helvetica","normal");d.setTextColor(0,0,0);d.text(String(v==null?"":v),mx+38,y);y+=4.6};
-      info("Agency","Atticor");info("Client",est.brand);info("Market",est.market);info("Vendor",vendorMode);info("Buyer",est.buyer);info("Media","Streaming Audio");info("Broadcast Month",workMonth);info("Flight Dates",flightDates);info("Estimate",est.num);info("Version","V"+version);
-      y+=2;d.setDrawColor(8,145,178);d.setLineWidth(0.5);d.line(mx,y,mx+cw,y);y+=6;
-      var dmaCode=(Object.entries(DM).find(function(e){return e[1]===est.market})||[])[0]||"";
-      d.setFont("helvetica","bold");d.setFontSize(11);d.setTextColor(8,145,178);
-      d.text((est.market||"").toUpperCase()+" ("+dmaCode+")",mx,y);y+=6;
-      var urlBlock=function(url){d.setTextColor(37,99,235);d.setFontSize(6.5);d.splitTextToSize(url,cw-6).forEach(function(ln){check(3.5);d.textWithLink(ln,mx+4,y,{url:url});y+=3});y+=2};
-      var audio=sel.filter(function(r){return r.isci.suffix!=="B"});
-      if(audio.length){
-        d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(5,150,105);d.text("AUDIO CREATIVES — Placement: AudioSelect",mx,y);y+=5;
-        audio.forEach(function(r){check(11);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(String(r.isci.code),mx,y);d.setFont("helvetica","normal");d.text(String(r.isci.title||"").substring(0,36),mx+34,y);d.text(":"+String(r.isci.dur),mx+96,y);d.text(String(r.pct||"")+"%",mx+108,y);y+=3.8;urlBlock(pandoraUrl(est.market,r.isci.code,"AudioSelect"))});
-      }
-      var disps=pandoraDisplays.filter(function(x){return x.name.trim()});
-      if(disps.length){
-        y+=2;check(10);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(236,72,153);d.text("DISPLAY BANNERS — Placement: DisplayBanners",mx,y);y+=5;
-        disps.forEach(function(x){check(11);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(x.name.trim(),mx,y);d.setFont("helvetica","normal");d.text(String(x.size||""),mx+96,y);y+=3.8;urlBlock(pandoraUrl(est.market,x.name.trim(),"DisplayBanners"))});
-      }
-      Object.entries(durGroups).forEach(function(e){var g=e[1];check(5);var ok=Math.abs(g.total-100)<0.5;d.setFont("helvetica","normal");d.setFontSize(8);d.setTextColor(ok?91:232,ok?196:90,ok?160:122);d.text((DM[g.dma]||g.dma)+" :"+g.dur+" rotation: "+g.total+"% "+(ok?"(OK)":"(CHECK)"),mx,y);y+=4});
-      y+=6;check(14);d.setDrawColor(124,58,237);d.setLineWidth(0.5);d.line(mx,y,mx+cw,y);y+=6;
-      d.setFont("helvetica","bold");d.setFontSize(9);d.setTextColor(0,0,0);d.text("Accepted by: __________________________",mx,y);d.text("Date: ______________",mx+cw-58,y);y+=6;
-      d.setFont("helvetica","italic");d.setFontSize(7);d.setTextColor(120,90,30);d.text("Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.",mx,y);
-      return d.output("datauristring");
-    };
     const printStream=function(asHtml){
       var vLabel=vendorMode;
       // When asHtml is set, capture the exact same sheet as a string (via a
@@ -3596,7 +3562,7 @@ const App=()=>{
           }else if(vendorMode==="Pandora"){
             // Same delivery-ready sheet as the print/generate view (identical HTML),
             // rendered straight to a downloadable PDF.
-            var uriP=buildPandoraPdf();var a2=document.createElement("a");a2.href=uriP;a2.download="Traffic_"+(est.brand||"").replace(/\s/g,"")+"_Pandora_"+(est.market||"").replace(/[\s\/]/g,"")+"_"+workMonth.replace(/\s/g,"")+"_v"+version+".pdf";a2.click();notify(doomPick(DOOM.success));
+            generatePdfBase64(printStream(true)).then(function(uri){var a2=document.createElement("a");a2.href=uri;a2.download="Traffic_"+(est.brand||"").replace(/\s/g,"")+"_Pandora_"+(est.market||"").replace(/[\s\/]/g,"")+"_"+workMonth.replace(/\s/g,"")+"_v"+version+".pdf";a2.click();notify(doomPick(DOOM.success));}).catch(function(pe){notify("PDF generation failed")});
           }else{
             printStream();notify("Use browser Print > Save as PDF");
           }
@@ -3626,7 +3592,7 @@ const App=()=>{
             if(dispIscis5.length>0){ph3+='<div class="section">DISPLAY BANNERS</div><table><thead><tr><th>ISCI</th><th>Title</th><th>File</th><th>Click-Through URL</th></tr></thead><tbody>';dispIscis5.forEach(function(d){var fc=d.fileUrl?'<a href="'+dlUrl(d.fileUrl)+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+d.code+"</td><td>"+d.title+"</td><td>"+fc+"</td><td style='font-size:9px'>"+(vendorMode==="Pandora"?pandoraUrl(est.market,d.code,"DisplayBanners"):buildUtm("Display",d.code,dcCode5))+"</td></tr>"});ph3+="</tbody></table>"}
             ph3+='<div class="sig"><div>Accepted by:</div><div>Date:</div></div><div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></body></html>';
             // Attach the same delivery-ready sheet the print/generate view produces.
-            try{var pdfUri5=vendorMode==="Pandora"?buildPandoraPdf():await generatePdfBase64(printStream(true));pdfB64=pdfUri5.split(",")[1]||""}catch(pe2){notify("PDF generation failed");return}
+            try{var pdfUri5=await generatePdfBase64(printStream(true));pdfB64=pdfUri5.split(",")[1]||""}catch(pe2){notify("PDF generation failed");return}
           }
           // Build email
           var vendorLabel2=isDigital?"ESPN / GKBPS":vendorMode;
