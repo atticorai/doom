@@ -3663,11 +3663,7 @@ const App=()=>{
             var dispIscis5=iscis.filter(function(i){return i.suffix==="B"&&i.brand===est.brand&&i.dma===dcCode5&&i.active});
             if(dispIscis5.length>0){ph3+='<div class="section">DISPLAY BANNERS</div><table><thead><tr><th>ISCI</th><th>Title</th><th>File</th><th>Click-Through URL</th></tr></thead><tbody>';dispIscis5.forEach(function(d){var fc=d.fileUrl?'<a href="'+dlUrl(d.fileUrl)+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+d.code+"</td><td>"+d.title+"</td><td>"+fc+"</td><td style='font-size:9px'>"+(vendorMode==="Pandora"?pandoraUrl(est.market,d.code,"DisplayBanners"):buildUtm("Display",d.code,dcCode5))+"</td></tr>"});ph3+="</tbody></table>"}
             ph3+='<div class="sig"><div>Accepted by:</div><div>Date:</div></div><div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></body></html>';
-            // Render via the standard rotation PDF (same as every other traffic sheet):
-            // real rotation table + a "CREATIVE FILES — CLICK TO DOWNLOAD" section with
-            // clickable creative links, instead of a rasterized image with dead links.
-            var streamRec3={est:est.num,brand:est.brand,market:est.market,media:"Streaming Audio",buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments,iscis:sel.map(function(r){return{code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct,sched:r.sched,flight:r.flight||flightDates}})};
-            try{var pdfUri5=await generatePdfBase64(ph3,streamRec3);pdfB64=pdfUri5.split(",")[1]||""}catch(pe2){notify("PDF generation failed");return}
+            try{var pdfUri5=await generatePdfBase64(ph3);pdfB64=pdfUri5.split(",")[1]||""}catch(pe2){notify("PDF generation failed");return}
           }
           // Build email
           var vendorLabel2=isDigital?"ESPN / GKBPS":vendorMode;
