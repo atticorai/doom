@@ -3161,8 +3161,8 @@ const App=()=>{
     // the other brand uses its SiriusXM/Placement scheme.
     const pandoraUrl=(market,content,placement)=>{
       if(isWKstream){
-        const camp="WettermarkKeith-"+market.replace(/\s+/g,"")+"_"+currentYear+currentQuarter;
-        return"https://www.wkfirm.com/?utm_source=Pandora&utm_medium="+encodeURIComponent("Paid Audio")+"&utm_content="+encodeURIComponent(content)+"&utm_campaign="+encodeURIComponent(camp);
+        const camp="WettermarkKeith_Nashville_Pandora_"+currentYear+currentQuarter;
+        return"https://www.wkfirm.com/?utm_source=Pandora&utm_medium=Streaming_Audio&utm_content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent(camp);
       }
       const mktPath=market.toLowerCase().replace(/\s+/g,"");
       return"https://www.postmandelivers.com/"+mktPath+"/?UTM_Source=SiriusXM&UTM_Medium=Streaming_Audio&UTM_Content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent("Blackacre_KellerPostman_PostmanLawPI-"+market+"_"+currentYear+currentQuarter);
@@ -3416,8 +3416,8 @@ const App=()=>{
             <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{ESPN_CAMPAIGNS.map(c=><button key={c} onClick={()=>setEspnCampaign(c)} style={{padding:"4px 10px",borderRadius:4,border:espnCampaign===c?"2px solid #D4A040":"1px solid #4a3565",background:espnCampaign===c?"rgba(251,191,36,.15)":"transparent",color:espnCampaign===c?"#D4A040":"#94a3b8",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c}</button>)}</div>
           </div>}
           {vendorMode==="Pandora"&&<div style={{fontSize:10,color:"#94a3b8"}}>
-            <div>Source: <b style={{color:"#E8DFF0"}}>{isWKstream?"Pandora":"SiriusXM"}</b> · Medium: <b style={{color:"#E8DFF0"}}>{isWKstream?"Paid Audio":"Streaming_Audio"}</b></div>
-            <div>Campaign: <b style={{color:"#D4A040"}}>{isWKstream?("WettermarkKeith-"+(est.market||"").replace(/\s+/g,"")+"_"+currentYear+currentQuarter):("Blackacre_KellerPostman_PostmanLawPI-{Market}_"+currentYear+currentQuarter)}</b></div>
+            <div>Source: <b style={{color:"#E8DFF0"}}>{isWKstream?"Pandora":"SiriusXM"}</b> · Medium: <b style={{color:"#E8DFF0"}}>Streaming_Audio</b></div>
+            <div>Campaign: <b style={{color:"#D4A040"}}>{isWKstream?("WettermarkKeith_Nashville_Pandora_"+currentYear+currentQuarter):("Blackacre_KellerPostman_PostmanLawPI-{Market}_"+currentYear+currentQuarter)}</b></div>
             <div style={{marginTop:4}}>Placements: <b style={{color:"#5BC4A0"}}>AudioSelect</b> · <b style={{color:"#4AC8E8"}}>CompanionBanners</b> · <b style={{color:"#ec4899"}}>DisplayBanners</b></div>
           </div>}
           {vendorMode==="ESPN"&&<div style={{fontSize:10,color:"#94a3b8",marginTop:6}}>
