@@ -3162,7 +3162,7 @@ const App=()=>{
     const pandoraUrl=(market,content,placement)=>{
       if(isWKstream){
         const camp="WettermarkKeith_Nashville_Pandora_"+currentYear+currentQuarter;
-        return"https://www.wkfirm.com/?utm_source=Pandora&utm_medium=Streaming_Audio&utm_content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent(camp);
+        return"https://seriousinjury.wkfirm.com/nashville-personal-injury-lawyers?utm_source=Pandora&utm_medium=Streaming_Audio&utm_content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent(camp);
       }
       const mktPath=market.toLowerCase().replace(/\s+/g,"");
       return"https://www.postmandelivers.com/"+mktPath+"/?UTM_Source=SiriusXM&UTM_Medium=Streaming_Audio&UTM_Content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent("Blackacre_KellerPostman_PostmanLawPI-"+market+"_"+currentYear+currentQuarter);
@@ -3283,7 +3283,7 @@ const App=()=>{
       var disps=pandoraDisplays.filter(function(x){return x.name.trim()});
       if(disps.length){
         y+=2;check(10);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(236,72,153);d.text("DISPLAY BANNERS — Placement: DisplayBanners",mx,y);y+=5;
-        disps.forEach(function(x){check(11);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(x.name.trim(),mx,y);d.setFont("helvetica","normal");d.text(String(x.size||""),mx+96,y);y+=3.8;urlBlock(pandoraUrl(est.market,x.name.trim(),"DisplayBanners"));var _xf=(iscis.find(function(i){return i.code===x.name.trim()})||{}).fileUrl;check(4);if(_xf){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download creative",mx+4,y,{url:dlUrl(_xf)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("Creative: TBD",mx+4,y)}y+=5});
+        disps.forEach(function(x){check(9);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(x.name.trim(),mx,y);d.setFont("helvetica","normal");d.text(String(x.size||""),mx+96,y);var _xf=(iscis.find(function(i){return i.code===x.name.trim()})||{}).fileUrl;if(_xf){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download",mx+130,y,{url:dlUrl(_xf)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("TBD",mx+130,y)}y+=5});
       }
       Object.entries(durGroups).forEach(function(e){var g=e[1];check(5);var ok=Math.abs(g.total-100)<0.5;d.setFont("helvetica","normal");d.setFontSize(8);d.setTextColor(ok?91:232,ok?196:90,ok?160:122);d.text((DM[g.dma]||g.dma)+" :"+g.dur+" rotation: "+g.total+"% "+(ok?"(OK)":"(CHECK)"),mx,y);y+=4});
       y+=6;check(14);d.setDrawColor(124,58,237);d.setLineWidth(0.5);d.line(mx,y,mx+cw,y);y+=6;
@@ -3380,13 +3380,13 @@ const App=()=>{
           var comps=pandoraCompanions.filter(function(c){return c.name.trim()});
           if(comps.length){
             w.document.write('<div style="font-weight:700;font-size:11px;color:#4AC8E8;margin:8px 0 4px">COMPANION BANNERS — Placement: CompanionBanners</div>');
-            w.document.write("<table><thead><tr><th>UTM_Content</th><th>Size</th><th>Placement</th><th>Full URL</th><th>Creative</th></tr></thead><tbody>");
+            w.document.write("<table><thead><tr><th>Banner</th><th>Size</th><th>Creative</th></tr></thead><tbody>");
             comps.forEach(function(c){
               // Replace market prefix in banner name for this market
               var name=c.name.trim();
               var url=pandoraUrl(mkt,name,"CompanionBanners");
               var _cf=(iscis.find(function(i){return i.code===name})||{}).fileUrl;var cdl=_cf?"<a href='"+escHtml(dlUrl(_cf))+"' style='color:#5BC4A0;font-weight:700'>Download</a>":"TBD";
-              w.document.write("<tr><td style='font-family:monospace;font-size:10px'>"+escHtml(name)+"</td><td>"+escHtml(c.size)+"</td><td>CompanionBanners</td><td class='url'><a href='"+escHtml(url)+"' style='color:#4AC8E8'>"+escHtml(url)+"</a></td><td>"+cdl+"</td></tr>");
+              w.document.write("<tr><td style='font-family:monospace;font-size:10px'>"+escHtml(name)+"</td><td>"+escHtml(c.size)+"</td><td>"+cdl+"</td></tr>");
             });
             w.document.write("</tbody></table>");
           }
@@ -3394,12 +3394,12 @@ const App=()=>{
           var disps=pandoraDisplays.filter(function(d){return d.name.trim()});
           if(disps.length){
             w.document.write('<div style="font-weight:700;font-size:11px;color:#ec4899;margin:8px 0 4px">DISPLAY BANNERS — Placement: DisplayBanners</div>');
-            w.document.write("<table><thead><tr><th>UTM_Content</th><th>Size</th><th>Placement</th><th>Full URL</th><th>Creative</th></tr></thead><tbody>");
+            w.document.write("<table><thead><tr><th>Banner</th><th>Size</th><th>Creative</th></tr></thead><tbody>");
             disps.forEach(function(d){
               var name=d.name.trim();
               var url=pandoraUrl(mkt,name,"DisplayBanners");
               var _df=(iscis.find(function(i){return i.code===name})||{}).fileUrl;var ddl=_df?"<a href='"+escHtml(dlUrl(_df))+"' style='color:#5BC4A0;font-weight:700'>Download</a>":"TBD";
-              w.document.write("<tr><td style='font-family:monospace;font-size:10px'>"+escHtml(name)+"</td><td>"+escHtml(d.size)+"</td><td>DisplayBanners</td><td class='url'><a href='"+escHtml(url)+"' style='color:#4AC8E8'>"+escHtml(url)+"</a></td><td>"+ddl+"</td></tr>");
+              w.document.write("<tr><td style='font-family:monospace;font-size:10px'>"+escHtml(name)+"</td><td>"+escHtml(d.size)+"</td><td>"+ddl+"</td></tr>");
             });
             w.document.write("</tbody></table>");
           }
@@ -7142,8 +7142,8 @@ ${fullText.substring(0,3000)}`}]
         }
         if(_dsp.length){
           x+='<div style="font-weight:700;font-size:11px;color:#ec4899;margin:8px 0 4px">DISPLAY BANNERS — Placement: DisplayBanners</div>';
-          x+='<table><thead><tr><th>UTM_Content</th><th>Size</th><th>Placement</th><th>Full URL</th><th>Creative</th></tr></thead><tbody>';
-          _dsp.forEach(function(r){var _u=r.url||"";var _f=(iscis.find(function(i){return i.code===r.code})||{}).fileUrl;var _dl=_f?'<a href="'+escHtml(dlUrl(_f))+'" style="color:#5BC4A0;font-weight:700">Download</a>':'TBD';x+='<tr><td style="font-family:monospace">'+escHtml(r.code)+'</td><td>'+escHtml(r.dur||"")+'</td><td>DisplayBanners</td><td style="font-size:8px;word-break:break-all"><a href="'+escHtml(_u)+'" style="color:#4AC8E8">'+escHtml(_u)+'</a></td><td>'+_dl+'</td></tr>'});
+          x+='<table><thead><tr><th>Banner</th><th>Size</th><th>Creative</th></tr></thead><tbody>';
+          _dsp.forEach(function(r){var _f=(iscis.find(function(i){return i.code===r.code})||{}).fileUrl;var _dl=_f?'<a href="'+escHtml(dlUrl(_f))+'" style="color:#5BC4A0;font-weight:700">Download</a>':'TBD';x+='<tr><td style="font-family:monospace">'+escHtml(r.code)+'</td><td>'+escHtml(r.dur||"")+'</td><td>'+_dl+'</td></tr>'});
           x+='</tbody></table>';
         }
         x+='<div class="sig"><div style="display:flex;justify-content:space-between"><div><b>Accepted by:</b> _________________________</div><div><b>Date:</b> _______________</div></div><div class="note">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></div>';
