@@ -3466,7 +3466,7 @@ const App=()=>{
           {isDigital&&<TH>UTM Campaign</TH>}
           {isDigital&&<TH w="70">Placement</TH>}
           {isPlatform&&!isDigital&&<TH w="40">File</TH>}
-          {isPlatform&&!isDigital&&<TH w="80">Companion 300x250</TH>}
+          {isPlatform&&!isDigital&&!isWKstream&&<TH w="80">Companion 300x250</TH>}
         </tr></thead>
           <tbody>{sortedRows.map(function(sr){var r=sr.r;var i=sr.oi;var isB=r.isci.suffix==="B";var dmaC={"CHI":"#E85A7A","CIN":"#9b7bb0","DEN":"#059669","MSP":"#4AC8E8","BRM":"#D4A040","MTG":"#ec4899","CHA":"#06b6d4","DHN":"#84cc16","HSV":"#f97316","KNX":"#6366f1"};return<tr key={r.isci.code} style={{background:r.selected?"rgba(37,99,235,.08)":""}}>
             <TD a="center"><input type="checkbox" checked={r.selected} onChange={()=>updRow(i,"selected",!r.selected)}/></TD>
@@ -3481,7 +3481,7 @@ const App=()=>{
             {isDigital&&<TD><span style={{fontSize:9,fontFamily:"monospace",color:"#D4A040"}}>{utmCampaign.replace(dmaPrefix,r.isci.dma)}</span></TD>}
             {isDigital&&<TD><select value={r.placement} onChange={e=>updRow(i,"placement",e.target.value)} style={{width:"100%",fontSize:9,padding:"2px 2px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:r.placement==="GKBPS"?"#C4A0C8":"#E8DFF0",fontWeight:600}}><option value="ESPNweb">ESPNweb</option><option value="GKBPS">GKBPS</option></select></TD>}
             {isPlatform&&!isDigital&&<TD>{r.isci.fileUrl?<a href={r.isci.fileUrl} target="_blank" rel="noopener" style={{color:"#5BC4A0",fontSize:10,fontWeight:600}}>DL</a>:<span style={{color:"#E85A7A",fontSize:10}}>TBD</span>}</TD>}
-            {isPlatform&&!isDigital&&<TD>{r.companionUrl?<div style={{display:"flex",gap:3,alignItems:"center"}}><a href={r.companionUrl} target="_blank" rel="noopener" style={{color:"#4AC8E8",fontSize:10,fontWeight:600}}>View</a><button onClick={()=>{updRow(i,"companionUrl","");updRow(i,"companionName","")}} style={{fontSize:9,border:"none",background:"transparent",color:"#E85A7A",cursor:"pointer"}}>x</button></div>:<label style={{cursor:"pointer",fontSize:10,color:"#4AC8E8",fontWeight:600,display:"block"}} onDrop={e=>{e.preventDefault();e.stopPropagation();uploadCompanion(i,{target:{files:e.dataTransfer.files}})}} onDragOver={e=>{e.preventDefault();e.stopPropagation()}}>Drop or click<input type="file" accept="image/*" onChange={e=>uploadCompanion(i,e)} style={{display:"none"}}/></label>}</TD>}
+            {isPlatform&&!isDigital&&!isWKstream&&<TD>{r.companionUrl?<div style={{display:"flex",gap:3,alignItems:"center"}}><a href={r.companionUrl} target="_blank" rel="noopener" style={{color:"#4AC8E8",fontSize:10,fontWeight:600}}>View</a><button onClick={()=>{updRow(i,"companionUrl","");updRow(i,"companionName","")}} style={{fontSize:9,border:"none",background:"transparent",color:"#E85A7A",cursor:"pointer"}}>x</button></div>:<label style={{cursor:"pointer",fontSize:10,color:"#4AC8E8",fontWeight:600,display:"block"}} onDrop={e=>{e.preventDefault();e.stopPropagation();uploadCompanion(i,{target:{files:e.dataTransfer.files}})}} onDragOver={e=>{e.preventDefault();e.stopPropagation()}}>Drop or click<input type="file" accept="image/*" onChange={e=>uploadCompanion(i,e)} style={{display:"none"}}/></label>}</TD>}
           </tr>})}</tbody>
         </table>
       </div>
