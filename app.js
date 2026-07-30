@@ -11843,26 +11843,46 @@ Rules:
       if(!r.ok){setError(d.error||"Couldn't load the roster");return}
       setRows(d.users||[]);
     }catch(e){if(live)setError("Couldn't reach the team roster")}})();return()=>{live=false}},[]);
-    const head="#4a1a1a",ink="#3a2a1a",muted="#6a5540",line="rgba(74,26,26,.18)";
+    const ink="#2a1a1a",muted="#6a5540",accent="#8b5fbf";
     const roleLabel=r=>r==="owner"?"Owner":r==="admin"?"Admin":"Member";
-    const roleColor=r=>r==="owner"?"#8a5a12":r==="admin"?"#1a6a7a":"#6a5540";
-    return<div style={{border:"1px solid "+line,borderRadius:8,background:"rgba(255,248,235,.5)",padding:"8px 10px"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
-        <span style={{fontWeight:800,color:head,fontSize:14}}>Who's on the team right now</span>
-        <span style={{fontSize:9,color:"#2a7a4a",fontWeight:700,letterSpacing:.5}}>● LIVE</span>
+    const sorted=rows?rows.slice().sort((a,b)=>(({owner:0,admin:1,member:2}[a.role]??9)-({owner:0,admin:1,member:2}[b.role]??9))||String(a.name).localeCompare(String(b.name))):[];
+    return<div style={{margin:"6px 0"}}>
+      <div style={{fontFamily:"'Cinzel',serif",fontSize:12,letterSpacing:"0.15em",color:accent,textTransform:"uppercase",margin:"6px 0 4px",borderBottom:"1px solid rgba(139,95,191,.25)",paddingBottom:3}}>The Present Company</div>
+      {error&&<div style={{fontStyle:"italic",color:muted}}>{error}</div>}
+      {!error&&rows===null&&<div style={{fontStyle:"italic",color:muted}}>Consulting the roll…</div>}
+      {!error&&rows&&rows.length===0&&<div style={{fontStyle:"italic",color:muted}}>No names on the roll yet.</div>}
+      {!error&&sorted.map(u=><div key={u.name} style={{display:"flex",alignItems:"baseline",gap:8,padding:"1px 0"}}>
+        <span style={{color:ink,fontWeight:700}}>{u.name}</span>
+        <span style={{fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:"0.08em",color:accent}}>{roleLabel(u.role)}</span>
+        {u.title&&<span style={{fontStyle:"italic",color:muted}}>— {u.title}</span>}
+      </div>)}
+      <div style={{fontStyle:"italic",color:muted,fontSize:12,marginTop:5}}>Drawn from the living roll — name someone on the Team page and they appear here on their own.</div>
+    </div>;
+  };
+
+  // Live per-brand facts strip for the Guide book — markets + their ISCI
+  // prefixes, and real-time counts, all read from the system. Baked into each
+  // brand's own overview page so the facts live where they belong and never
+  // go stale. Parchment-styled to sit inside a book page.
+  const BookBrandFacts=({brand})=>{
+    const b=(typeof BRANDS!=="undefined"?BRANDS:[]).find(x=>x.name===brand||x.code===brand);
+    if(!b)return null;
+    const mktName=(c)=>(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c])||(typeof DM!=="undefined"&&DM[c])||c;
+    const codes=b.markets||[];
+    const est=(estimates||[]).filter(e=>e.brand===b.name).length;
+    const cre=(iscis||[]).filter(i=>i.brand===b.name&&i.active&&i.suffix!=="O").length;
+    const sta=(stations||[]).filter(s=>s.brand===b.name).length;
+    const ink="#2a1a1a",muted="#6a5540",accent="#8b5fbf";
+    return<div style={{margin:"6px 0"}}>
+      <div style={{fontFamily:"'Cinzel',serif",fontSize:12,letterSpacing:"0.15em",color:accent,textTransform:"uppercase",margin:"6px 0 4px",borderBottom:"1px solid rgba(139,95,191,.25)",paddingBottom:3}}>Markets &amp; Prefixes</div>
+      <div style={{lineHeight:1.9}}>
+        {codes.map((c,i)=><span key={c} style={{whiteSpace:"nowrap"}}>
+          {i>0&&<span style={{color:muted}}> · </span>}
+          <span style={{display:"inline-block",width:7,height:7,borderRadius:2,background:b.color,marginRight:5,verticalAlign:"middle"}}/>
+          <span style={{color:ink}}>{mktName(c)}</span> <span style={{fontFamily:"monospace",fontWeight:700,color:ink}}>{c}</span>
+        </span>)}
       </div>
-      {error&&<div style={{fontSize:12,color:"#a11"}}>{error}</div>}
-      {!error&&rows===null&&<div style={{fontSize:12,color:muted}}>Reading the roster…</div>}
-      {!error&&rows&&rows.length===0&&<div style={{fontSize:12,color:muted}}>No one on the roster yet.</div>}
-      {!error&&rows&&rows.length>0&&<table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-        <thead><tr>{["Name","Role","Title"].map((h,i)=><th key={h} style={{textAlign:i===1?"center":"left",padding:"3px 8px",color:head,fontSize:9,fontWeight:800,textTransform:"uppercase",letterSpacing:.6,borderBottom:"2px solid "+line}}>{h}</th>)}</tr></thead>
-        <tbody>{rows.slice().sort((a,b)=>({owner:0,admin:1,member:2}[a.role]-{owner:0,admin:1,member:2}[b.role])||String(a.name).localeCompare(String(b.name))).map(u=><tr key={u.name}>
-          <td style={{padding:"3px 8px",color:head,fontWeight:700,borderBottom:"1px solid "+line}}>{u.name}</td>
-          <td style={{padding:"3px 8px",textAlign:"center",borderBottom:"1px solid "+line}}><span style={{fontSize:10,fontWeight:800,color:roleColor(u.role)}}>{roleLabel(u.role)}</span></td>
-          <td style={{padding:"3px 8px",color:ink,borderBottom:"1px solid "+line}}>{u.title||"—"}</td>
-        </tr>)}</tbody>
-      </table>}
-      <div style={{fontSize:10,color:muted,marginTop:6}}>Pulled from the live user list — add or re-role someone on the Team page and it changes here.</div>
+      <div style={{fontStyle:"italic",color:muted,marginTop:5}}>{codes.length} markets · {est||"no"} estimates · {cre} active creative · {sta||"no"} stations <span style={{fontSize:12}}>— counted live</span></div>
     </div>;
   };
 
@@ -11881,54 +11901,10 @@ Rules:
     const curWkEst=WK_ME[workMonth]||"—";
     const BOOK_PAGES_1=[
       {title:"Welcome to Doom & Deliverables",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p><span style={{fontSize:28,fontFamily:"'Cinzel',serif",float:"left",marginRight:8,color:"#4a1a1a",lineHeight:1}}>T</span>his manual covers every procedure in the Doom & Deliverables Traffic Management System. It manages TV, Radio, Streaming Audio, Digital, and OOH advertising traffic for five brands: Postman Law, Wettermark Keith, Lerner &amp; Rowe, Parrish DeVaughn, and Keches Law Group.</p>
+        <p><span style={{fontSize:28,fontFamily:"'Cinzel',serif",float:"left",marginRight:8,color:"#4a1a1a",lineHeight:1}}>T</span>his manual covers every procedure in the Doom & Deliverables Traffic Management System. It manages TV, Radio, Streaming Audio, Digital, and OOH advertising traffic for {(typeof BRANDS!=="undefined"?BRANDS:[]).length} brands: {(typeof BRANDS!=="undefined"?BRANDS:[]).map(b=>b.name).join(", ")}.</p>
         <p>Every rotation you build, every email you send, every confirmation you track flows through this system. Follow the procedures in order and you'll be sending traffic in under an hour.</p>
         <BookMarginNote author="meg">I didn't volunteer to write this. But here we are.</BookMarginNote>
       </div>,damageEffects:<>{<BookBurnMark style={{top:0,right:0,width:96,height:96,opacity:.4}}/>}{<BookInkSplatter style={{bottom:32,left:16,opacity:.4}}/>}{<BookLipstickMark style={{top:"25%",right:32,opacity:.6,transform:"rotate(15deg) scale(1.25)"}}/>}</>},
-
-      {title:"Brand Markets & Prefixes",content:(()=>{
-        const tc=(hex)=>{try{const n=parseInt(String(hex).slice(1),16);return (0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))>150?"#1e1233":"#fff"}catch(e){return"#fff"}};
-        const mktName=(c)=>(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c])||(typeof DM!=="undefined"&&DM[c])||c;
-        const ink="#3a2a1a",head="#4a1a1a",muted="#6a5540",line="rgba(74,26,26,.18)";
-        return<div style={{display:"flex",flexDirection:"column",gap:12}}>
-          <p style={{color:ink}}>Every ISCI code starts with a <b>3-letter market prefix</b> — e.g. <span style={{fontFamily:"monospace",fontWeight:700}}>LVS</span> + brand + year + length → <span style={{fontFamily:"monospace",fontWeight:700}}>LVSLR2630001R</span>. This page is <b>live</b>: it redraws itself whenever brands or markets change in the system, so it's always current.</p>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:10}}>
-            {BRANDS.map(b=>{const codes=b.markets||[];return<div key={b.code} style={{border:"1px solid "+line,borderRadius:8,overflow:"hidden",background:"rgba(255,248,235,.5)"}}>
-              <div style={{height:4,background:b.color}}/>
-              <div style={{padding:"8px 10px"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                  <span style={{fontWeight:800,color:head,fontSize:14}}>{b.name}</span>
-                  <span style={{fontSize:10,color:muted,fontFamily:"monospace"}}>{b.code} · {codes.length} mkt{codes.length!==1?"s":""}</span>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"2px 12px"}}>
-                  {codes.map(c=><div key={c} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:6,padding:"1px 0",borderBottom:"1px dashed "+line}}>
-                    <span style={{fontSize:11,color:ink,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{mktName(c)}</span>
-                    <span style={{fontFamily:"monospace",fontSize:10,fontWeight:800,color:tc(b.color),background:b.color,padding:"1px 6px",borderRadius:4}}>{c}</span>
-                  </div>)}
-                </div>
-              </div>
-            </div>;})}
-          </div>
-          <div style={{fontWeight:800,color:head,fontSize:15,marginTop:6}}>By the Numbers <span style={{fontSize:9,color:"#2a7a4a",fontWeight:700}}>● LIVE</span></div>
-          <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-            <thead><tr>{["Brand","Markets","Estimates","Active Creative","Stations"].map((h,i)=><th key={h} style={{textAlign:i?"right":"left",padding:"4px 8px",color:head,fontSize:9,fontWeight:800,textTransform:"uppercase",letterSpacing:.6,borderBottom:"2px solid "+line}}>{h}</th>)}</tr></thead>
-            <tbody>{BRANDS.map(b=>{
-              const est=(estimates||[]).filter(e=>e.brand===b.name).length;
-              const cre=(iscis||[]).filter(i=>i.brand===b.name&&i.active&&i.suffix!=="O").length;
-              const sta=(stations||[]).filter(s=>s.brand===b.name).length;
-              const cell=(v,warn)=><td style={{textAlign:"right",padding:"4px 8px",color:warn&&!v?"#a11":ink,fontWeight:700,borderBottom:"1px solid "+line}}>{v||(warn?"— none":0)}</td>;
-              return<tr key={b.code}><td style={{padding:"4px 8px",borderBottom:"1px solid "+line}}><span style={{display:"inline-block",width:7,height:7,borderRadius:2,background:b.color,marginRight:6}}/><span style={{color:head,fontWeight:700}}>{b.name}</span></td>{cell((b.markets||[]).length)}{cell(est,true)}{cell(cre)}{cell(sta,true)}</tr>;})}</tbody>
-          </table></div>
-          <p style={{fontSize:11,color:muted}}><b style={{color:"#a11"}}>"— none"</b> flags a gap that blocks trafficking: a brand needs <b>estimates</b> to build and <b>stations</b> to send.</p>
-          <div style={{fontWeight:800,color:head,fontSize:15,marginTop:6}}>ISCI Code Format</div>
-          <div style={{fontFamily:"monospace",fontSize:12,background:"rgba(74,26,26,.06)",border:"1px solid "+line,borderRadius:6,padding:"8px 10px",lineHeight:1.7,color:ink}}>
-            [MARKET][BRAND][YEAR][LENGTH][SEQ][MEDIA]<br/>
-            LVS · LR · 26 · 30 · 001 · R &nbsp;→&nbsp; <b>LVSLR2630001R</b> <span style={{color:muted}}>(Las Vegas · Lerner &amp; Rowe · 2026 · :30 · #001 · Radio)</span><br/>
-            Spanish inserts <b>SP</b> after the brand → <b>LVSLRSP2630001R</b>. <span style={{color:muted}}>Media suffix: T=TV, R=Radio, S=Streaming, O=OOH, D=Digital.</span>
-          </div>
-          <BookMarginNote author="meg">Learn the prefixes. Everything I build is keyed to them.</BookMarginNote>
-        </div>;
-      })(),damageEffects:<>{<BookInkSplatter style={{bottom:20,right:18,opacity:.35}}/>}</>},
 
       {title:"How to Log In",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
         <p>Go to the login screen and enter the system password. Click 'Let Me In.' Your session persists until you close the tab — no need to log in again while the tab is open.</p>
@@ -11940,13 +11916,15 @@ Rules:
         <p>Before doing anything, set the Broadcast Month in the Traffic Center header. This is the master control — it determines which WK estimate number appears, sets flight dates, and controls what the Tracker shows.</p>
         <p>If you're building April traffic for WK, set the month to April and estimate 213 appears. For May, set May and 214 appears. PL estimates don't change by month — they're valid all year.</p>
         <p>Always confirm the month is correct before building or sending. Sending under the wrong month means wrong estimate numbers on the traffic sheet.</p>
+        <p style={{fontStyle:"italic",color:"#6a5540"}}>Right now the system is set to <b style={{color:"#2a1a1a"}}>{workMonth}</b> — the WK estimate in play is <b style={{color:"#2a1a1a"}}>{curWkEst}</b>. Change the month in the Traffic Center and this line moves with it.</p>
         <BookMarginNote author="meg">Wrong month = wrong estimate = my problem. Set it first.</BookMarginNote>
       </div>,damageEffects:<>{<BookBiteMark style={{top:"33%",right:0,opacity:.6,transform:"rotate(-90deg) scale(.7)"}}/>}</>},
 
       {title:"Postman Law Overview",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
         <p>PL has four markets: Chicago (CHI), Cincinnati (CIN), Denver (DEN), Minneapolis (MSP). Each has its own stations and traffic sheets. Estimates are 4-digit numbers (2601–2643), one per market per buy type, valid all year.</p>
         <p>There are 6 TV buy types: Base, Sponsorship, UD/AV, Sports, Cable, Heavy Up. You can build them individually or combine all 6 into one sheet per market.</p>
-        <p>Buyers: Ken Lazar handles MSP. Lynn Cortelezzi handles CHI, CIN, DEN. They get CC'd automatically on every send. <span style={{color:"#C4A0C8",fontWeight:700}}>{plActive} active ISCIs</span> · {plSta} stations currently in the registry.</p>
+        <p>Buyers: Ken Lazar handles MSP. Lynn Cortelezzi handles CHI, CIN, DEN. They get CC'd automatically on every send.</p>
+        <BookBrandFacts brand="Postman Law"/>
         <BookMarginNote author="meg">Four markets. Six buy types. One button to combine them.</BookMarginNote>
       </div>,damageEffects:<>{<BookInkSplatter style={{bottom:24,left:16,opacity:.4}}/>}{<BookHoofMark style={{top:16,right:24,opacity:.2,transform:"rotate(15deg) scale(.65)"}}/>}</>},
 
@@ -11960,6 +11938,7 @@ Rules:
       {title:"Wettermark Keith Overview",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
         <p>WK has seven markets: Birmingham (BRM), Huntsville (HSV), Knoxville (KNX), Chattanooga (CHA), Montgomery (MTG), Dothan (DHN), and Nashville (NSH) — the newest, launched August 2026. Amy Coffey is the buyer for all WK markets — she's CC'd on every send.</p>
         <p>WK uses 3-digit monthly estimates shared across every WK market. One number covers every market for that month. But you still build traffic per market — Birmingham gets its own rotation, Dothan gets its own, etc. Nashville only carries estimates from its August launch forward — no phantom Jan–July books. <span style={{color:"#C4A0C8",fontWeight:700}}>{wkActive} active ISCIs</span> · {wkSta} stations currently in the registry.</p>
+        <BookBrandFacts brand="Wettermark Keith"/>
         <BookMarginNote author="meg">Seven markets now — Nashville joined in August. One buyer, one estimate per month. Don't mix them up.</BookMarginNote>
       </div>,damageEffects:<>{<BookHoofMark style={{bottom:16,right:16,opacity:.3,transform:"rotate(-10deg) scale(.75)"}}/>}{<BookDroolStain style={{top:16,right:16,width:80,height:80,opacity:.2}}/>}</>},
 
@@ -11974,6 +11953,7 @@ Rules:
         <p>Lerner &amp; Rowe runs across the Southwest and Pacific Northwest — Phoenix, Tucson, Albuquerque, Las Vegas, Reno, Seattle, Flagstaff, Bullhead, Yuma, and Chicago. Estimates are 4-digit (2661–2674).</p>
         <p>Unlike the others, most L&amp;R creative is <b>shared</b> — the same spot carries one number and one title across every market, coded by market. Spanish spots are flagged right in the code with an <b>SP</b> after the brand: <span style={{fontFamily:"monospace"}}>LVSLRSP2630001R</span>.</p>
         <p>Brand look is black &amp; gold. <span style={{color:"#C4A0C8",fontWeight:700}}>{lrActive} active ISCIs</span> across the markets.</p>
+        <BookBrandFacts brand="Lerner & Rowe"/>
         <BookMarginNote author="meg">New blood. Try to keep the codes straight.</BookMarginNote>
       </div>,damageEffects:<>{<BookInkSplatter style={{bottom:20,right:20,opacity:.4}}/>}{<BookHoofMark style={{top:20,left:20,opacity:.2,transform:"rotate(12deg) scale(.65)"}}/>}</>},
 
@@ -11981,8 +11961,16 @@ Rules:
         <p>Parrish DeVaughn is Oklahoma — <b>Oklahoma City</b> is live and <b>Tulsa</b> is the expansion market. Jessica Flynn is the buyer.</p>
         <p>PDV leans on Local &amp; Experienced and No-Fee-Guarantee messaging, and it's the one brand with a <b>Motorcycle</b> category. Estimates are the real numbers (5372–6864) across eight products — Auto, AM News, Discretionary, Products, Thunder, EN/LN, CTV, YouTube.</p>
         <p>Brand red. <span style={{color:"#C4A0C8",fontWeight:700}}>{pdvActive} active ISCIs</span>. For Tulsa: lead with Local &amp; Experienced, add case types, always recommend bookend pairs.</p>
+        <BookBrandFacts brand="Parrish DeVaughn"/>
         <BookMarginNote author="muses">From OKC to Tulsa's rise<br/>New markets bloom before our eyes!</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:28,opacity:.45,transform:"rotate(10deg) scale(.95)"}}/>}{<BookDroolStain style={{bottom:16,left:16,width:72,height:72,opacity:.2}}/>}</>},
+
+      {title:"Keches Law Group Overview",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>Keches Law Group is the Boston firm — the fifth brand. Its media spans TV, radio, print, and podcast, plus a deep bench of arena and sports sponsorships (Bruins, Patriots, Railers, Free Jacks, Boston College) and a full Clear Channel Outdoor board plant on I-93.</p>
+        <p>Out-of-home is reconciled straight from the executed sales contracts — two always-on 8-slot digital dominations, the static-bulletin segments, and the eligible-display rotation pool. The whole portfolio lives in the Contracts Vault, filterable by medium.</p>
+        <BookBrandFacts brand="Keches Law Group"/>
+        <BookMarginNote author="meg">Boston makes five. Sponsorships everywhere — keep the contracts straight.</BookMarginNote>
+      </div>,damageEffects:<>{<BookInkSplatter style={{bottom:20,left:18,opacity:.4}}/>}</>},
 
       {title:"How to Build a Rotation",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
         <p>In the Traffic Center: 1) Set the broadcast month. 2) Select an estimate (or multiple for PL combined). 3) Click 'Build.' 4) Choose which ISCIs to include. 5) Set rotation percentages per schedule (M–F, Weekend, All Week, Bookend). Each must total 100%.</p>
@@ -12124,21 +12112,6 @@ Rules:
         <p>Since more than one person can be in here, watch for the gold <b style={{color:"#D4A040"}}>"Updated in another session"</b> banner. It means someone else changed something — reload before you keep editing so you don't overwrite their work.</p>
         <BookMarginNote author="muses">It saves itself, no button to press<br/>But heed the banners — avoid the mess!</BookMarginNote>
       </div>,damageEffects:<>{<BookDroolStain style={{bottom:16,left:24,width:72,height:72,opacity:.2}}/>}</>},
-
-      {title:"The Living Record",content:<div style={{display:"flex",flexDirection:"column",gap:12}}>
-        <p><span style={{fontSize:28,fontFamily:"'Cinzel',serif",float:"left",marginRight:8,color:"#4a1a1a",lineHeight:1}}>D</span>oom is never finished — she grows. This page is where her evolution is written down. The <b>Audit Log</b> remembers who did what; this remembers what got <i>built</i>.</p>
-        <p><b>Two brands became five.</b> Lerner &amp; Rowe (Southwest &amp; Pacific Northwest, shared creative, Spanish in the code), Parrish DeVaughn (Oklahoma City live, Tulsa expanding), and Keches Law Group (Boston) joined Postman Law and Wettermark Keith.</p>
-        <p><b>Wettermark Keith was rebuilt in V2</b> — a fresh set of TV spots (Auto, Premises, General PI, Trucking, On The Job, in :30 and :15) across every market. <b>Nashville came fully online</b> as WK's seventh market — TV stations, ISCIs, and estimates from its August 2026 launch forward (no phantom back-months), joining the six it grew up with. Two new spots joined the roster — the market-specific <i>"Not New To Nashville"</i> brand cut in :30 and :15 — and its launch TV rotation waits in the Library as a draft for the buyer's approval. <b>Nashville also found its radio voice</b> — four brand spots (<i>A City Built On Being Heard</i>, <i>What Comes Next</i>, <i>About You</i>, and <i>Trophy Case</i>) registered in :30 and :15, coded and waiting for their creative to land.</p>
-        <p><b>The Muses learned to act.</b> The AI Planner now turns a mock rotation into a real Library draft — stations auto-linked, PDF in hand — or downloads the rotation on its own.</p>
-        <p><b>The registry got smarter and safer</b> — filter by length, category, or value prop, and a duplicate-code alarm stops collisions before they ever reach a send.</p>
-        <p><b>Out-of-home learned to brief its own creative.</b> Every brand's OOH page now pulls a Creative Specs sheet — grouped by media type, sorted by the day art is due, and telling production exactly what to build: CMYK print resolutions for vinyl, and the real <i>pixel canvas</i> for digital (400×1400 bulletins, 400×840 posters, 1920×1080 shelters) instead of meaningless physical feet. Filter any board page by media type, and digital boards finally read in pixels.</p>
-        <p><b>Parrish DeVaughn came outdoors.</b> Oklahoma City's board plant — five fixed panels (perm bulletins, a poster, a digital) plus four rotating programs (pre-empt bulletins, digital bulletins, and the jr/standard poster showings) — now lives in its own <b>PDV OOH</b> page in the Hub, carrying the same Creative Brief, Size Report, and board-list downloads every other brand does.</p>
-        <p><b>Keches Law Group made five.</b> The Boston firm joined the roster with its own <b>KE OOH</b> page — its full Clear Channel Outdoor board plant (two always-on 8-slot digital dominations on I-93, the static-bulletin segments, and the whole eligible-display rotation pool — 35 boards) reconciled straight from the executed sales contracts, plus the Patriot Place billboard from the Patriots deal. The page adds a <b>Contracts</b> view alongside the board cards, table, Creative Brief, Size Report, board list, and a status filter. Beyond outdoor, a brand-new <b>Contracts Vault</b> gathers the whole Keches media portfolio — TV, radio, print, podcast, event, and every arena/sports sponsorship (Bruins, Patriots, Railers, Free Jacks, Boston College) — filterable by medium. And Keches' Boston <b>radio stations</b> — 98.5 The Sports Hub, Country 102.5, 105.7 WROR (Beasley) and WEEI (Audacy) — now live in the Station Registry.</p>
-        <p><b>The poster showing stopped being a guess.</b> Wettermark Keith's placeholder Lamar poster slots across Birmingham, Jasper, Gadsden, Centre, Anniston, Albertville (contract 5570867) and Knoxville (contract 5570939) were <b>resolved from Lamar's Proof-of-Performance reports</b> — each 10'6×22'9 slot now carries its confirmed panel number, real location, install date, weekly impressions, and its two <b>proof photos</b> (the street-level close-up and the down-the-block distance shot), so every board shows its installed creative on its OOH card.</p>
-        <p><b>Lerner &amp; Rowe's art department got its spec book.</b> Every L&amp;R OOH market now carries its <b>vendor spec sheets</b> — the Drive links to each vendor's artwork templates (Lamar, Clear Channel, OutFront, View, Becker, Kemp, and the rest) plus their exact required pixel canvases (Chicago's 400×1400 / 400×840, the Yuma bus display/back/side dimensions, and more), reached from a new <b>📎 Vendor Specs</b> button on the L&amp;R OOH page, with Lamar's master static and digital spec generators pinned at the top.</p>
-        <p><b>The book started reading itself.</b> The Guide is the whole show now — the floating book, nothing stacked around it — and it reads live data instead of frozen prose: <b>Brand Markets &amp; Prefixes</b> with per-brand counts moved <i>into</i> the book, and the <b>Team &amp; Roles</b> page now shows the real roster pulled from the live user list, so adding or re-roling anyone appears in the book on its own. The way it was always meant to be.</p>
-        <BookMarginNote author="meg">I keep the receipts. Everything I've built is written here — and I'm not done.</BookMarginNote>
-      </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:28,opacity:.5,transform:"rotate(12deg) scale(1.1)"}}/>}{<BookInkSplatter style={{bottom:20,left:20,opacity:.4}}/>}{<BookBurnMark style={{top:0,left:0,width:80,height:80,opacity:.25}}/>}</>},
 
       {title:"End of the Line",content:<div style={{display:"flex",flexDirection:"column",gap:14,textAlign:"center",paddingTop:24}}>
         <p style={{fontSize:17,fontFamily:"'Cinzel',serif",color:"#4a1a1a"}}>Thus concludes the operating manual for Doom & Deliverables.</p>
