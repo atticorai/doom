@@ -3476,7 +3476,7 @@ const App=()=>{
             <div><b style={{color:"#C4A0C8"}}>GKBPS:</b> {espnUrl(dmaPrefix||"DMA","Video","GKBPS")}</div>
             <div><b style={{color:"#ec4899"}}>Display:</b> {espnUrl(dmaPrefix||"DMA","Display","ESPNweb")}</div>
           </div>}
-          {vendorMode!=="Pandora"&&vendorMode!=="ESPN"&&<div>
+          {vendorMode!=="Pandora"&&vendorMode!=="Paramount"&&vendorMode!=="ESPN"&&<div>
             <Inp label="UTM_Source" value={utmSource} onChange={e=>setUtmSource(e.target.value)}/>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,marginTop:4}}>
               <Inp label="UTM_Medium" value={utmMedium} onChange={e=>setUtmMedium(e.target.value)}/>
@@ -3486,7 +3486,7 @@ const App=()=>{
         </div>}
       </div>
       {(vendorMode==="Pandora"||vendorMode==="Paramount")&&<div style={{marginBottom:8,padding:6,background:"rgba(37,99,235,.06)",borderRadius:5,border:"1px solid rgba(37,99,235,.15)",fontSize:10,fontFamily:"monospace"}}>
-        <div><span style={{color:"#5BC4A0"}}>Audio:</span> {pandoraUrl(est.market,"{ISCI}",audPlc)}</div>
+        <div><span style={{color:"#5BC4A0"}}>{vendorMode==="Paramount"?"Video:":"Audio:"}</span> {pandoraUrl(est.market,"{ISCI}",audPlc)}</div>
         <div><span style={{color:"#4AC8E8"}}>Companion:</span> {pandoraUrl(est.market,"{BannerName}","CompanionBanners")}</div>
         <div><span style={{color:"#ec4899"}}>Display:</span> {pandoraUrl(est.market,"{BannerName}","DisplayBanners")}</div>
         <div style={{marginTop:4,color:"#D4A040"}}>All 4 PL markets generated on print</div>
