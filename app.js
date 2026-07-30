@@ -11850,6 +11850,50 @@ Rules:
         <BookMarginNote author="meg">I didn't volunteer to write this. But here we are.</BookMarginNote>
       </div>,damageEffects:<>{<BookBurnMark style={{top:0,right:0,width:96,height:96,opacity:.4}}/>}{<BookInkSplatter style={{bottom:32,left:16,opacity:.4}}/>}{<BookLipstickMark style={{top:"25%",right:32,opacity:.6,transform:"rotate(15deg) scale(1.25)"}}/>}</>},
 
+      {title:"Brand Markets & Prefixes",content:(()=>{
+        const tc=(hex)=>{try{const n=parseInt(String(hex).slice(1),16);return (0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))>150?"#1e1233":"#fff"}catch(e){return"#fff"}};
+        const mktName=(c)=>(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c])||(typeof DM!=="undefined"&&DM[c])||c;
+        const ink="#3a2a1a",head="#4a1a1a",muted="#6a5540",line="rgba(74,26,26,.18)";
+        return<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <p style={{color:ink}}>Every ISCI code starts with a <b>3-letter market prefix</b> — e.g. <span style={{fontFamily:"monospace",fontWeight:700}}>LVS</span> + brand + year + length → <span style={{fontFamily:"monospace",fontWeight:700}}>LVSLR2630001R</span>. This page is <b>live</b>: it redraws itself whenever brands or markets change in the system, so it's always current.</p>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:10}}>
+            {BRANDS.map(b=>{const codes=b.markets||[];return<div key={b.code} style={{border:"1px solid "+line,borderRadius:8,overflow:"hidden",background:"rgba(255,248,235,.5)"}}>
+              <div style={{height:4,background:b.color}}/>
+              <div style={{padding:"8px 10px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <span style={{fontWeight:800,color:head,fontSize:14}}>{b.name}</span>
+                  <span style={{fontSize:10,color:muted,fontFamily:"monospace"}}>{b.code} · {codes.length} mkt{codes.length!==1?"s":""}</span>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"2px 12px"}}>
+                  {codes.map(c=><div key={c} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:6,padding:"1px 0",borderBottom:"1px dashed "+line}}>
+                    <span style={{fontSize:11,color:ink,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{mktName(c)}</span>
+                    <span style={{fontFamily:"monospace",fontSize:10,fontWeight:800,color:tc(b.color),background:b.color,padding:"1px 6px",borderRadius:4}}>{c}</span>
+                  </div>)}
+                </div>
+              </div>
+            </div>;})}
+          </div>
+          <div style={{fontWeight:800,color:head,fontSize:15,marginTop:6}}>By the Numbers <span style={{fontSize:9,color:"#2a7a4a",fontWeight:700}}>● LIVE</span></div>
+          <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+            <thead><tr>{["Brand","Markets","Estimates","Active Creative","Stations"].map((h,i)=><th key={h} style={{textAlign:i?"right":"left",padding:"4px 8px",color:head,fontSize:9,fontWeight:800,textTransform:"uppercase",letterSpacing:.6,borderBottom:"2px solid "+line}}>{h}</th>)}</tr></thead>
+            <tbody>{BRANDS.map(b=>{
+              const est=(estimates||[]).filter(e=>e.brand===b.name).length;
+              const cre=(iscis||[]).filter(i=>i.brand===b.name&&i.active&&i.suffix!=="O").length;
+              const sta=(stations||[]).filter(s=>s.brand===b.name).length;
+              const cell=(v,warn)=><td style={{textAlign:"right",padding:"4px 8px",color:warn&&!v?"#a11":ink,fontWeight:700,borderBottom:"1px solid "+line}}>{v||(warn?"— none":0)}</td>;
+              return<tr key={b.code}><td style={{padding:"4px 8px",borderBottom:"1px solid "+line}}><span style={{display:"inline-block",width:7,height:7,borderRadius:2,background:b.color,marginRight:6}}/><span style={{color:head,fontWeight:700}}>{b.name}</span></td>{cell((b.markets||[]).length)}{cell(est,true)}{cell(cre)}{cell(sta,true)}</tr>;})}</tbody>
+          </table></div>
+          <p style={{fontSize:11,color:muted}}><b style={{color:"#a11"}}>"— none"</b> flags a gap that blocks trafficking: a brand needs <b>estimates</b> to build and <b>stations</b> to send.</p>
+          <div style={{fontWeight:800,color:head,fontSize:15,marginTop:6}}>ISCI Code Format</div>
+          <div style={{fontFamily:"monospace",fontSize:12,background:"rgba(74,26,26,.06)",border:"1px solid "+line,borderRadius:6,padding:"8px 10px",lineHeight:1.7,color:ink}}>
+            [MARKET][BRAND][YEAR][LENGTH][SEQ][MEDIA]<br/>
+            LVS · LR · 26 · 30 · 001 · R &nbsp;→&nbsp; <b>LVSLR2630001R</b> <span style={{color:muted}}>(Las Vegas · Lerner &amp; Rowe · 2026 · :30 · #001 · Radio)</span><br/>
+            Spanish inserts <b>SP</b> after the brand → <b>LVSLRSP2630001R</b>. <span style={{color:muted}}>Media suffix: T=TV, R=Radio, S=Streaming, O=OOH, D=Digital.</span>
+          </div>
+          <BookMarginNote author="meg">Learn the prefixes. Everything I build is keyed to them.</BookMarginNote>
+        </div>;
+      })(),damageEffects:<>{<BookInkSplatter style={{bottom:20,right:18,opacity:.35}}/>}</>},
+
       {title:"How to Log In",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
         <p>Go to the login screen and enter the system password. Click 'Let Me In.' Your session persists until you close the tab — no need to log in again while the tab is open.</p>
         <p>Once in, the sidebar on the left lists every page. Badge numbers on sidebar items mean something needs your attention — unconfirmed sends, pending imports, or overdue creative. Use the search bar at the top to quickly find any ISCI, station, estimate, or market.</p>
@@ -12068,7 +12112,7 @@ Rules:
       </div>,damageEffects:<>{<BookBurnMark style={{bottom:0,right:0,width:160,height:160,opacity:.3}}/>}{<BookLipstickMark style={{bottom:"25%",left:"25%",opacity:.6,transform:"rotate(-15deg) scale(1.5)"}}/>}</>},
     ];
     return[...BOOK_PAGES_1,...BOOK_PAGES_2,...BOOK_PAGES_3];
-  },[iscis,stations,trafficHistory,workMonth]);
+  },[iscis,stations,estimates,trafficHistory,workMonth]);
 
   const DOOM_CHANGELOG=[]; // RETIRED: the audit trail lives under Audit Log; app changes are now chronicled in the Guide book ("The Living Record" page) — the living document.
   const BrandPrefixGuide=()=>{
@@ -12123,9 +12167,7 @@ Rules:
   };
   const DocsPg=()=>{
     return<div className="flex flex-col gap-3" style={{display:"flex",flexDirection:"column",gap:12}}>
-      <PageHead title="Guide" pgKey="docs"/>
-      <BrandPrefixGuide/>
-      <div className="relative flex flex-col items-center justify-center py-4 px-2 overflow-hidden" style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",paddingTop:16,paddingBottom:16,paddingLeft:8,paddingRight:8,overflow:"hidden",minHeight:"calc(100vh - 120px)"}}>
+      <div className="relative flex flex-col items-center justify-center py-4 px-2 overflow-hidden" style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",paddingTop:16,paddingBottom:16,paddingLeft:8,paddingRight:8,overflow:"hidden",minHeight:"calc(100vh - 40px)"}}>
         <BookSoulParticles/>
         <BookFlyingPegasus/>
         <BookPegasusConstellation/>
