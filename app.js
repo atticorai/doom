@@ -1892,6 +1892,42 @@ const App=()=>{
   }
   const notify=useCallback(m=>{setToast(m);setTimeout(()=>setToast(null),3e3)},[]);
   // Generate PDF with clickable links using jsPDF text rendering (not html2canvas)
+    // Clickable streaming sheet (jsPDF) built from a SAVED record — used by the
+    // library's send/download for Streaming Audio + Digital Streaming records.
+    // Mirrors the builder's sheet: UTM link + creative Download link per row.
+  const buildStreamPdfFromRec=(h)=>{
+      const{jsPDF:JPS}=window.jspdf;const d=new JPS("p","mm","a4");
+      const W=210,Hh=297,mx=12,cw=W-2*mx;let y=16;
+      const isPar=/Paramount/.test(h.comments||"");
+      const check=n=>{if(y+n>Hh-14){d.addPage();y=16}};
+      d.setFont("helvetica","bold");d.setFontSize(16);d.setTextColor(124,58,237);
+      d.text((h.brand||"").toUpperCase(),W/2,y,{align:"center"});y+=6;
+      d.setFontSize(9);d.setTextColor(90,90,90);
+      d.text(isPar?"VIDEO STREAMING TRAFFIC INSTRUCTIONS":"STREAMING AUDIO TRAFFIC INSTRUCTIONS",W/2,y,{align:"center"});y+=8;
+      const vend=isPar?"Paramount":/Spotify/.test(h.comments||"")?"Spotify":"Pandora";
+      const info=(l,v)=>{d.setFont("helvetica","bold");d.setFontSize(9);d.setTextColor(60,60,60);d.text(l+":",mx,y);d.setFont("helvetica","normal");d.setTextColor(0,0,0);d.text(String(v==null?"":v),mx+38,y);y+=4.6};
+      info("Agency","Atticor");info("Client",h.brand);info("Market",DM[h.market]||h.market);info("Vendor",vend);info("Buyer",h.buyer);info("Media",h.media);info("Broadcast Month",h.month);info("Flight Dates",h.flight);info("Estimate",h.est);info("Version","V"+(h.version||"1"));
+      y+=2;d.setDrawColor(8,145,178);d.setLineWidth(0.5);d.line(mx,y,mx+cw,y);y+=6;
+      const dcode=normMkt(h.market)||"";
+      d.setFont("helvetica","bold");d.setFontSize(11);d.setTextColor(8,145,178);
+      d.text(String(DM[h.market]||h.market||"").toUpperCase()+(dcode?" ("+dcode+")":""),mx,y);y+=6;
+      const urlBlock=u=>{if(!u)return;d.setTextColor(37,99,235);d.setFontSize(6.5);d.splitTextToSize(u,cw-6).forEach(ln=>{check(3.5);d.textWithLink(ln,mx+4,y,{url:u});y+=3});y+=1};
+      const rows=h.iscis||[];
+      const isDispRow=r=>(r.placement==="DisplayBanners")||(r.sched==="Display Banner");
+      const aud=rows.filter(r=>!isDispRow(r)),dsp=rows.filter(isDispRow);
+      if(aud.length){
+        d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(5,150,105);d.text(isPar?"VIDEO CREATIVES — Placement: Video":"AUDIO CREATIVES — Placement: AudioSelect",mx,y);y+=5;
+        aud.forEach(r=>{check(12);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(String(r.code||""),mx,y);d.setFont("helvetica","normal");d.text(String(r.title||"").substring(0,36),mx+34,y);d.text(r.dur?":"+String(r.dur):"",mx+96,y);d.text(String(r.pct||""),mx+108,y);y+=3.8;urlBlock(r.url);const full=iscis.find(i=>i.code===r.code);check(4);if(full&&full.fileUrl){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download creative",mx+4,y,{url:dlUrl(full.fileUrl)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("Creative: TBD",mx+4,y)}y+=5});
+      }
+      if(dsp.length){
+        y+=2;check(10);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(236,72,153);d.text("DISPLAY BANNERS",mx,y);y+=5;
+        dsp.forEach(r=>{check(6);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(String(r.code||""),mx,y);d.setFont("helvetica","normal");d.text(String(r.dur||""),mx+96,y);const full=iscis.find(i=>i.code===r.code);if(full&&full.fileUrl){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download",mx+130,y,{url:dlUrl(full.fileUrl)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("TBD",mx+130,y)}y+=5});
+      }
+      y+=6;check(14);d.setDrawColor(124,58,237);d.setLineWidth(0.5);d.line(mx,y,mx+cw,y);y+=6;
+      d.setFont("helvetica","bold");d.setFontSize(9);d.setTextColor(0,0,0);d.text("Accepted by: __________________________",mx,y);d.text("Date: ______________",mx+cw-58,y);y+=6;
+      d.setFont("helvetica","italic");d.setFontSize(7);d.setTextColor(120,90,30);d.text("Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.",mx,y);
+      return d.output("datauristring");
+    };
   const generatePdfBase64=async(html,trafficRec)=>{
     // If no traffic record passed, fall back to canvas method for non-traffic uses
     if(!trafficRec){
@@ -7394,7 +7430,8 @@ ${fullText.substring(0,3000)}`}]
                         var resendNote=isCopied?"":prompt("Add a note to this email (optional):")||"";
                         var sheetHtml=bldHtml(h);
                         var pdfB64="";
-                        try{var pdfUri=await generatePdfBase64(sheetHtml,h);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
+                        var _isStreamRec=h.media==="Streaming Audio"||h.media==="Digital Streaming";
+                        try{var pdfUri=_isStreamRec?buildStreamPdfFromRec(h):await generatePdfBase64(sheetHtml,h);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
                         var pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+(h.market||"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
                         var buyerCcR=BUYER_EMAILS[h.buyer]||"";
                         var ccListR=[buyerCcR,"emm.caban@atticor.ai"].filter(Boolean).join(",");
@@ -7413,6 +7450,28 @@ ${fullText.substring(0,3000)}`}]
                           notify("Sending to "+recipients.join(", ")+"...");
                           try{var resp2=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipients.join(","),cc:ccListR,subject:subj,message:emailBody,pdfBase64:pdfB64,pdfName:pdfName})});
                             if(resp2.ok){notify(doomPick(DOOM.send))}else throw new Error("n8n "+resp2.status)}catch(e3){notify("Failed: "+(e3.message||e3))}
+                          log("Traffic Sent",h.market+" "+h.media+" "+h.month);
+                          setTrafficHistory(p=>p.map((r,ri)=>ri===gIdx?{...r,status:"sent",statusNote:"Sent "+new Date().toLocaleDateString()}:r));
+                        }else if(_isStreamRec){
+                          // Streaming (Pandora/Paramount): no stations — send the clickable
+                          // streaming sheet to the vendor reps. Paramount routes to the buyer
+                          // + Atticor until a Paramount rep is stored.
+                          var isParS=/Paramount/.test(h.comments||"");
+                          var vendS=isParS?"Paramount":/Spotify/.test(h.comments||"")?"Spotify":"Pandora";
+                          var allWithFilesS=(h.iscis||[]).filter(function(r){var full=iscis.find(function(i){return i.code===r.code});return full&&full.fileUrl});
+                          var bodyS="Hello,<br><br>Please find the attached "+(h.media==="Digital Streaming"?"video streaming":"streaming audio")+" traffic instructions for "+(h.brand||"")+" — "+(DM[h.market]||h.market||"")+" — "+(h.month||"")+" V"+(h.version||"1")+".<br><br>";
+                          if(resendNote.trim())bodyS+="<b>Note:</b> "+resendNote.trim()+"<br><br>";
+                          bodyS+="<b>Broadcast Month:</b> "+(h.month||"")+"<br><b>Flight Dates:</b> "+(h.flight||"")+"<br><b>Estimate:</b> "+(h.est||"")+"<br><b>Vendor:</b> "+vendS+"<br><br>";
+                          if(allWithFilesS.length>0){bodyS+="<b>Creative Files:</b><br>";allWithFilesS.forEach(function(r){var full=iscis.find(function(i){return i.code===r.code});if(full&&full.fileUrl)bodyS+='<a href="'+dlUrl(full.fileUrl)+'">'+r.code+" — "+(r.title||"")+"</a><br>"});bodyS+="<br>"}
+                          var confirmBaseS=window.location.href.split("?")[0].split("#")[0];
+                          var tokS=reserveToken(akFromHistory(h),vendS);
+                          var confirmUrlS=confirmBaseS+"?confirm="+encodeURIComponent(h.est||"")+"&sta="+encodeURIComponent(vendS)+"&tok="+encodeURIComponent(tokS);
+                          bodyS+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+confirmUrlS+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager';
+                          var subjS=(h.brand||"")+" - "+(h.media||"")+" Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+(DM[h.market]||h.market||"")+" - "+vendS;
+                          var recipS=vendS==="Pandora"?["jake.jaffe@siriusxm.com","josh.mustachi@siriusxm.com","jessica.flynn@atticor.ai"]:[BUYER_EMAILS[h.buyer]||"","emm.caban@atticor.ai"].filter(Boolean);
+                          notify("Sending to "+recipS.join(", ")+"...");
+                          try{var respS=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipS.join(","),cc:ccListR,subject:subjS,message:bodyS,pdfBase64:pdfB64,pdfName:pdfName})});
+                            if(respS.ok){notify(doomPick(DOOM.send))}else throw new Error("n8n "+respS.status)}catch(eS2){notify("Failed: "+(eS2.message||eS2))}
                           log("Traffic Sent",h.market+" "+h.media+" "+h.month);
                           setTrafficHistory(p=>p.map((r,ri)=>ri===gIdx?{...r,status:"sent",statusNote:"Sent "+new Date().toLocaleDateString()}:r));
                         }else{
@@ -12406,12 +12465,15 @@ Rules:
                 const _cmF=CALENDAR.find(c=>String(c.month).toLowerCase()===String(h.month||"").trim().split(/\s+/)[0].toLowerCase());
                 const flightDates=_cmF?(fDs(_cmF.bcStart)+" - "+fDs(_cmF.bcEnd)):(h.flight||"");
                 const sheetHtml=data[idx]?.sheetHtml||"";
-                let pdfUri="";try{pdfUri=await generatePdfBase64(sheetHtml,{...h,flight:flightDates})}catch(pe){notify("PDF gen failed: "+pe.message);return}
+                let pdfUri="";try{pdfUri=(h.media==="Streaming Audio"||h.media==="Digital Streaming")?buildStreamPdfFromRec({...h,flight:flightDates}):await generatePdfBase64(sheetHtml,{...h,flight:flightDates})}catch(pe){notify("PDF gen failed: "+pe.message);return}
                 const mktName=DM[h.market]||h.market||"";
                 const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+mktName.replace(/\s/g,"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
                 const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const hMedias=String(h.media||"").split(/\s*\/\s*/).map(x=>x.trim().toLowerCase()).filter(Boolean);const sMedia=String(s.media||"").toLowerCase();if(hMedias.length&&!hMedias.includes(sMedia))return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
                 const isWK=h.brand==="Wettermark Keith";
                 const buyerEmail=BUYER_EMAILS[h.buyer]||"";
+                const _isStrm=h.media==="Streaming Audio"||h.media==="Digital Streaming";
+                const _vendP=/Paramount/.test(h.comments||"")?"Paramount":/Spotify/.test(h.comments||"")?"Spotify":"Pandora";
+                const _repsP=_vendP==="Pandora"?["jake.jaffe@siriusxm.com","josh.mustachi@siriusxm.com","jessica.flynn@atticor.ai"]:[buyerEmail,"emm.caban@atticor.ai"].filter(Boolean);
                 const ccList="emm.caban@atticor.ai";
                 const subj=(h.brand||"")+" - Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+mktName;
                 const body="Hello,<br><br>Please find the attached traffic instructions for "+escHtml(h.brand||"")+" — "+escHtml(mktName)+" — "+escHtml(h.month||"")+" V"+escHtml(h.version||"1")+".<br><br><b>Broadcast Month:</b> "+escHtml(h.month||"")+"<br><b>Flight Dates:</b> "+escHtml(flightDates)+"<br><b>Estimate:</b> "+escHtml(h.est||"")+"<br><br><span style=\"display:inline-block;padding:8px 18px;background:#9b7bb0;color:#fff;border-radius:6px;font-weight:700;margin:6px 0\">Confirm {STATION}</span> <span style=\"color:#6b7280;font-size:12px\">(one per-station link per station in the group)</span><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager";
@@ -12427,11 +12489,14 @@ Rules:
                   const buyerTag=buyerEmail?' <span style="background:#D4A040;color:#1e1233;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:700">+ '+escHtml(h.buyer||"buyer")+'</span>':'';
                   return '<div class="card"><div style="font-weight:700;color:#1e1233;margin-bottom:6px">✉ Email '+(gi+1)+' — '+escHtml(gName)+' ('+gs.length+' station'+(gs.length>1?"s":"")+')'+buyerTag+'</div><div><b>To:</b> '+(emails.length?escHtml(emails.join(", ")):'<span style="color:#b91c1c">(no emails — this group would be skipped)</span>')+'</div><div style="margin-top:4px;color:#6b7280;font-size:12px">Stations: '+gs.map(s=>escHtml(s.call)).join(", ")+'</div></div>';
                 }).join("");
-                const previewHtml='<!doctype html><html><head><meta charset="UTF-8"><title>Send Preview — '+escHtml(h.brand+' '+mktName+' '+h.media)+'</title><style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f9fafb;color:#111827}header{background:linear-gradient(135deg,#1e1233,#2a1a3e);color:#E8DFF0;padding:18px 24px}h1{margin:0 0 4px;font-size:20px;font-weight:700}.banner{display:inline-block;padding:4px 10px;background:#D4A040;color:#1e1233;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-right:10px}.meta{color:#9B8EAD;font-size:13px;margin-top:6px}main{padding:24px;max-width:900px;margin:0 auto}.pdfbtn{display:inline-block;padding:10px 18px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin-bottom:20px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px;color:#374151}.card b{color:#1e1233}.sec{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#9B8EAD;margin:18px 0 8px}</style></head><body><header><div><span class="banner">PREVIEW — NOT SENT</span><span style="color:#D4A040;font-weight:700">'+escHtml(h.brand+' · '+mktName+' · '+h.media+' · '+h.month+' · v'+(h.version||"1"))+'</span></div><h1>'+pEntries.length+' separate email'+(pEntries.length===1?"":"s")+' — one per ownership group · '+pTotal+' recipient(s)</h1><div class="meta">Nothing has been sent. Each ownership group below gets its OWN email'+(buyerEmail?' with '+escHtml(h.buyer||"the buyer")+' ('+escHtml(buyerEmail)+') added as a recipient':'')+'.</div></header><main><a class="pdfbtn" href="'+pdfUri+'" download="'+pdfName+'" target="_blank">📄 Open the actual PDF attachment</a><div class="card"><b>Subject:</b> '+escHtml(subj)+'</div><div class="card"><b>Cc (every email):</b> '+escHtml(ccList)+' &nbsp;<span style="color:#b91c1c;font-size:11px">the n8n webhook drops CC — that is why the buyer is added to To, not Cc</span></div><div class="card"><b>Attachment:</b> '+escHtml(pdfName)+'</div><div class="sec">'+pEntries.length+' email(s) — one per ownership group</div>'+(groupCards||'<div class="card"><span style="color:#b91c1c">No stations linked — Send would fail.</span></div>')+'<div class="sec">Email body (same in each)</div><div class="card"><div style="line-height:1.5">'+body+'</div></div></main></body></html>';
+                const groupCardsF=_isStrm?('<div class="card"><div style="font-weight:700;color:#1e1233;margin-bottom:6px">\u2709 Email 1 — '+_vendP+' (vendor reps)</div><div><b>To:</b> '+escHtml(_repsP.join(", "))+'</div><div style="margin-top:4px;color:#6b7280;font-size:12px">Streaming send — no stations; goes straight to the vendor reps.</div></div>'):groupCards;
+                const pCount=_isStrm?1:pEntries.length;
+                const pRecip=_isStrm?_repsP.length:pTotal;
+                const previewHtml='<!doctype html><html><head><meta charset="UTF-8"><title>Send Preview — '+escHtml(h.brand+' '+mktName+' '+h.media)+'</title><style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f9fafb;color:#111827}header{background:linear-gradient(135deg,#1e1233,#2a1a3e);color:#E8DFF0;padding:18px 24px}h1{margin:0 0 4px;font-size:20px;font-weight:700}.banner{display:inline-block;padding:4px 10px;background:#D4A040;color:#1e1233;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-right:10px}.meta{color:#9B8EAD;font-size:13px;margin-top:6px}main{padding:24px;max-width:900px;margin:0 auto}.pdfbtn{display:inline-block;padding:10px 18px;background:#4AC8E8;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin-bottom:20px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px;color:#374151}.card b{color:#1e1233}.sec{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#9B8EAD;margin:18px 0 8px}</style></head><body><header><div><span class="banner">PREVIEW — NOT SENT</span><span style="color:#D4A040;font-weight:700">'+escHtml(h.brand+' · '+mktName+' · '+h.media+' · '+h.month+' · v'+(h.version||"1"))+'</span></div><h1>'+pCount+' separate email'+(pCount===1?"":"s")+' — '+(_isStrm?'streaming vendor send':'one per ownership group')+' · '+pRecip+' recipient(s)</h1><div class="meta">Nothing has been sent. Each ownership group below gets its OWN email'+(buyerEmail?' with '+escHtml(h.buyer||"the buyer")+' ('+escHtml(buyerEmail)+') added as a recipient':'')+'.</div></header><main><a class="pdfbtn" href="'+pdfUri+'" download="'+pdfName+'" target="_blank">📄 Open the actual PDF attachment</a><div class="card"><b>Subject:</b> '+escHtml(subj)+'</div><div class="card"><b>Cc (every email):</b> '+escHtml(ccList)+' &nbsp;<span style="color:#b91c1c;font-size:11px">the n8n webhook drops CC — that is why the buyer is added to To, not Cc</span></div><div class="card"><b>Attachment:</b> '+escHtml(pdfName)+'</div><div class="sec">'+pCount+' email(s)</div>'+(groupCardsF||'<div class="card"><span style="color:#b91c1c">No stations linked — Send would fail.</span></div>')+'<div class="sec">Email body (same in each)</div><div class="card"><div style="line-height:1.5">'+body+'</div></div></main></body></html>';
                 const w=window.open("","","width=1100,height=900");
                 if(!w){notify("Popup blocked — allow popups to see preview");return}
                 w.document.write(previewHtml);w.document.close();w.focus();
-                notify("Preview ready — nothing sent. "+pEntries.length+" group email(s), "+pTotal+" recipient(s).");
+                notify("Preview ready — nothing sent. "+pCount+" email(s), "+pRecip+" recipient(s).");
               },
               send:async(idx)=>{
                 const h=trafficHistory[idx];if(!h)return;
@@ -12447,9 +12512,35 @@ Rules:
                 const flightDates=_cmF?(fDs(_cmF.bcStart)+" - "+fDs(_cmF.bcEnd)):(h.flight||"");
                 const hPdf={...h,flight:flightDates};
                 const sheetHtml=data[idx]?.sheetHtml||"";
-                let pdfB64="";try{const pdfUri=await generatePdfBase64(sheetHtml,hPdf);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
+                let pdfB64="";try{const pdfUri=(h.media==="Streaming Audio"||h.media==="Digital Streaming")?buildStreamPdfFromRec(hPdf):await generatePdfBase64(sheetHtml,hPdf);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
                 const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+mktName.replace(/\s/g,"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
                 const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const hMedias=String(h.media||"").split(/\s*\/\s*/).map(x=>x.trim().toLowerCase()).filter(Boolean);const sMedia=String(s.media||"").toLowerCase();if(hMedias.length&&!hMedias.includes(sMedia))return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
+                if(h.media==="Streaming Audio"||h.media==="Digital Streaming"){
+                  // Streaming records have no stations — email the clickable streaming
+                  // sheet straight to the vendor reps (Paramount: buyer + Atticor until
+                  // a Paramount rep is stored).
+                  const isParX=/Paramount/.test(h.comments||"");
+                  const vendX=isParX?"Paramount":/Spotify/.test(h.comments||"")?"Spotify":"Pandora";
+                  const buyerEmailX=BUYER_EMAILS[h.buyer]||"";
+                  const recipX=vendX==="Pandora"?["jake.jaffe@siriusxm.com","josh.mustachi@siriusxm.com","jessica.flynn@atticor.ai"]:[buyerEmailX,"emm.caban@atticor.ai"].filter(Boolean);
+                  const confirmKeyX=(h.brand==="Wettermark Keith"&&(h.est||"").length<=3)?((h.est||"")+"|"+h.market):((h.est||"").split(/\s*[+\/]\s*/)[0].trim());
+                  const exX=(confirmations[confirmKeyX]||{})[vendX];
+                  const tokX=(exX&&exX.token)||genToken();
+                  setConfirmations(p=>{const next={...p,[confirmKeyX]:{...(p[confirmKeyX]||{}),[vendX]:{confirmed:!!(exX&&exX.confirmed),token:tokX}}};try{db.collection("appData").doc("confirmations").set({data:JSON.stringify(next),ts:Date.now()})}catch(e){console.warn("confirmations save:",e)}return next});
+                  const filesX=(h.iscis||[]).filter(r=>{const f=iscis.find(i=>i.code===r.code);return f&&f.fileUrl});
+                  let bodyX="Hello,<br><br>Please find the attached "+(h.media==="Digital Streaming"?"video streaming":"streaming audio")+" traffic instructions for "+escHtml(h.brand||"")+" — "+escHtml(mktName)+" — "+escHtml(h.month||"")+" V"+escHtml(h.version||"1")+".<br><br>";
+                  if(note)bodyX+="<b>Note:</b> "+escHtml(note)+"<br><br>";
+                  bodyX+="<b>Broadcast Month:</b> "+escHtml(h.month||"")+"<br><b>Flight Dates:</b> "+escHtml(flightDates)+"<br><b>Estimate:</b> "+escHtml(h.est||"")+"<br><b>Vendor:</b> "+vendX+"<br><br>";
+                  if(filesX.length){bodyX+="<b>Creative Files:</b><br>";filesX.forEach(r=>{const f=iscis.find(i=>i.code===r.code);if(f&&f.fileUrl)bodyX+='<a href="'+dlUrl(f.fileUrl)+'">'+escHtml(r.code)+" — "+escHtml(r.title||"")+"</a><br>"});bodyX+="<br>"}
+                  const cbX=window.location.href.split("?")[0].split("#")[0];
+                  bodyX+='Please confirm receipt of this traffic within 24 hours by clicking the link below:<br><a href="'+cbX+"?confirm="+encodeURIComponent((h.est||"").split(/\s*[+\/]\s*/)[0].trim())+"&sta="+encodeURIComponent(vendX)+"&tok="+encodeURIComponent(tokX)+'" style="display:inline-block;padding:10px 24px;background:#9b7bb0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;margin:8px 0">Confirm Receipt</a><br><br>Thank you,<br><br>Emm Caban<br>Atticor Traffic Manager';
+                  const subjX=(h.brand||"")+" - "+(h.media||"")+" Traffic Instructions - "+(h.month||"")+" V"+(h.version||"1")+" - "+mktName+" - "+vendX;
+                  notify("Sending to "+recipX.join(", ")+"...");
+                  try{const respX=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:recipX.join(","),cc:[buyerEmailX,"emm.caban@atticor.ai"].filter(Boolean).join(","),subject:subjX,message:bodyX,pdfBase64:pdfB64,pdfName:pdfName})});
+                    if(respX.ok){notify(doomPick(DOOM.send));setTrafficHistory(p=>p.map((r,ri)=>ri===idx?{...r,status:"sent",statusNote:"Sent "+new Date().toLocaleDateString()}:r));log("Traffic Sent",h.market+" "+h.media+" "+h.month)}else throw new Error("n8n "+respX.status)
+                  }catch(eX){notify("Send failed: "+(eX.message||eX))}
+                  return;
+                }
                 if(!linkedStations.length){notify("No stations linked to this record — link stations in the Stations page first.");return}
                 const isWK=h.brand==="Wettermark Keith";
                 // Clean, single estimate number for the confirm URL + key, so the portal
