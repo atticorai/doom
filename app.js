@@ -119,6 +119,8 @@ const ESTIMATES=(()=>{
   });
   // TTWN estimates — network radio buy, all markets per brand
   WK_MKTS.forEach(m=>{if(!base.some(e=>e.num==="232"&&e.market===m))newEsts.push({num:"232",market:m,media:"Streaming Audio",group:"TTWN",campaign:"",buyer:"Amy Coffey",brand:"Wettermark Keith"})});
+  // Nashville Paramount digital streaming — placeholder est number 233 until the buyer assigns one
+  if(!base.some(e=>e.num==="233"&&e.market==="Nashville"))newEsts.push({num:"233",market:"Nashville",media:"Digital Streaming",group:"Paramount",campaign:"",buyer:"Amy Coffey",brand:"Wettermark Keith"});
   const PL_MKTS=["Chicago","Cincinnati","Denver","Minneapolis"];
   const plTtwn=[];
   PL_MKTS.forEach(m=>{if(!base.some(e=>e.num==="2690"&&e.market===m))plTtwn.push({num:"2690",market:m,media:"Streaming Audio",group:"TTWN",campaign:"",buyer:m==="Minneapolis"?"Ken Lazar":"Lynn Cortelezzi",brand:"Postman Law"})});
@@ -2707,7 +2709,7 @@ const App=()=>{
       <Cd><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>{combineMode&&<TH w="30">✓</TH>}<STH tbl="traf" col="num">Est#</STH><STH tbl="traf" col="market">Market</STH><STH tbl="traf" col="media">Media</STH><STH tbl="traf" col="group">Buy Type</STH><STH tbl="traf" col="buyer">Buyer</STH><TH>Stations</TH><TH>ISCIs</TH><TH>Airing</TH><TH>Confirmed</TH><TH>Action</TH></tr></thead>
         <tbody>{sortRows("traf",brandEsts,{num:r=>r.num,brand:r=>r.brand,market:r=>r.market,media:r=>r.media,group:r=>r.group||"",buyer:r=>r.buyer||""}).map(e=>{
           const dc=normMkt(e.market)||"";
-          const mi=iscis.filter(i=>i.dma===dc&&i.brand===e.brand&&i.active&&(e.media==="TV"||e.media==="Cable"?i.suffix==="T":e.media==="Radio"?i.suffix==="R":e.media==="Streaming Audio"?(e.brand==="Wettermark Keith"?i.suffix==="R":i.suffix==="S"):e.media==="OOH"?i.suffix==="O":e.media==="Digital"?i.suffix==="D":e.media==="Display"?i.suffix==="B":true));
+          const mi=iscis.filter(i=>i.dma===dc&&i.brand===e.brand&&i.active&&(e.media==="TV"||e.media==="Cable"?i.suffix==="T":e.media==="Radio"?i.suffix==="R":e.media==="Streaming Audio"?(e.brand==="Wettermark Keith"?i.suffix==="R":i.suffix==="S"):e.media==="Digital Streaming"?i.suffix==="T":e.media==="OOH"?i.suffix==="O":e.media==="Digital"?i.suffix==="D":e.media==="Display"?i.suffix==="B":true));
           const isSel=combineSet.includes(estKey(e));
           const linkedSta=getEstStations(e);
           const airing=nowAiring[ak(e)];
@@ -2721,7 +2723,7 @@ const App=()=>{
             <TD a="center">{airing?<span style={{fontSize:13,fontWeight:600,color:confCount===totalSent&&totalSent>0?"#5BC4A0":confCount>0?"#D4A040":"#9ca3af"}}>{confCount}/{totalSent}</span>:<span style={{fontSize:13,color:"#9B8EAD"}}>—</span>}</TD>
             <TD><div style={{display:"flex",gap:3}}>
               <Btn small primary color="#4AC8E8" onClick={()=>{
-                if(e.media==="Streaming Audio"||e.media==="Digital"){
+                if(e.media==="Streaming Audio"||e.media==="Digital"||e.media==="Digital Streaming"){
                   var digitalPool=e.media==="Digital"?iscis.filter(function(i){return i.brand===e.brand&&i.active!==false&&(i.suffix==="D"||i.suffix==="B")}):mi;
                   setModal({t:"buildStream",est:e,pool:digitalPool});
                 }else{setModal({t:"buildRot",est:e,pool:mi})}
@@ -3137,9 +3139,10 @@ const App=()=>{
     const curMonth=CALENDAR.find(c=>c.month===workMonth)||CALENDAR[1];
     const flight=curMonth?fDs(curMonth.bcStart)+" - "+fDs(curMonth.bcEnd):"";
     const isDigital=est.media==="Digital";
-    const mediaLabel=isDigital?"Digital Video":"Streaming Audio";
-    const vendorList=isDigital?["ESPN","Generic"]:(est.brand==="Wettermark Keith"?["Pandora","Paramount","Spotify","Generic"]:["Pandora","Spotify","Generic"]);
-    const defaultVendor=isDigital?"ESPN":"Pandora";
+    const isDigStream=est.media==="Digital Streaming";
+    const mediaLabel=isDigital?"Digital Video":isDigStream?"Digital Streaming":"Streaming Audio";
+    const vendorList=isDigital?["ESPN","Generic"]:isDigStream?["Paramount","Generic"]:["Pandora","Spotify","Generic"];
+    const defaultVendor=isDigital?"ESPN":isDigStream?"Paramount":"Pandora";
     const PL_MKTS_ALL=["Chicago","Cincinnati","Denver","Minneapolis"];
     const isWKstream=est.brand==="Wettermark Keith";
     // Pandora markets: WK runs one market at a time (the estimate's market, e.g. Nashville);
@@ -7138,7 +7141,7 @@ ${fullText.substring(0,3000)}`}]
         x+='</body></html>';return x;
       }
       // Streaming Audio (Pandora) — full UTM URL sheet, matching the Generate view.
-      if(h.media==="Streaming Audio"){
+      if(h.media==="Streaming Audio"||h.media==="Digital Streaming"){
         var _dc=normMkt(h.market)||"";
         // Vendor from the record's comments ("| Vendor: Paramount") — Paramount is video.
         var _isPar=/Paramount/.test(h.comments||"");
