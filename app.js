@@ -11830,6 +11830,42 @@ Rules:
     </div>;
   };
 
+  // Live team roster for the Guide book — reads the real user list from the
+  // server every time the page renders, so adding/removing/re-roling anyone
+  // shows up in the book with no code change. Read-only (management stays on
+  // the Team page). Parchment-styled to sit inside a book page.
+  const BookTeamRoster=()=>{
+    const[rows,setRows]=React.useState(null);
+    const[error,setError]=React.useState("");
+    React.useEffect(()=>{let live=true;(async()=>{try{
+      const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"list"})});
+      const d=await r.json();if(!live)return;
+      if(!r.ok){setError(d.error||"Couldn't load the roster");return}
+      setRows(d.users||[]);
+    }catch(e){if(live)setError("Couldn't reach the team roster")}})();return()=>{live=false}},[]);
+    const head="#4a1a1a",ink="#3a2a1a",muted="#6a5540",line="rgba(74,26,26,.18)";
+    const roleLabel=r=>r==="owner"?"Owner":r==="admin"?"Admin":"Member";
+    const roleColor=r=>r==="owner"?"#8a5a12":r==="admin"?"#1a6a7a":"#6a5540";
+    return<div style={{border:"1px solid "+line,borderRadius:8,background:"rgba(255,248,235,.5)",padding:"8px 10px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
+        <span style={{fontWeight:800,color:head,fontSize:14}}>Who's on the team right now</span>
+        <span style={{fontSize:9,color:"#2a7a4a",fontWeight:700,letterSpacing:.5}}>● LIVE</span>
+      </div>
+      {error&&<div style={{fontSize:12,color:"#a11"}}>{error}</div>}
+      {!error&&rows===null&&<div style={{fontSize:12,color:muted}}>Reading the roster…</div>}
+      {!error&&rows&&rows.length===0&&<div style={{fontSize:12,color:muted}}>No one on the roster yet.</div>}
+      {!error&&rows&&rows.length>0&&<table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+        <thead><tr>{["Name","Role","Title"].map((h,i)=><th key={h} style={{textAlign:i===1?"center":"left",padding:"3px 8px",color:head,fontSize:9,fontWeight:800,textTransform:"uppercase",letterSpacing:.6,borderBottom:"2px solid "+line}}>{h}</th>)}</tr></thead>
+        <tbody>{rows.slice().sort((a,b)=>({owner:0,admin:1,member:2}[a.role]-{owner:0,admin:1,member:2}[b.role])||String(a.name).localeCompare(String(b.name))).map(u=><tr key={u.name}>
+          <td style={{padding:"3px 8px",color:head,fontWeight:700,borderBottom:"1px solid "+line}}>{u.name}</td>
+          <td style={{padding:"3px 8px",textAlign:"center",borderBottom:"1px solid "+line}}><span style={{fontSize:10,fontWeight:800,color:roleColor(u.role)}}>{roleLabel(u.role)}</span></td>
+          <td style={{padding:"3px 8px",color:ink,borderBottom:"1px solid "+line}}>{u.title||"—"}</td>
+        </tr>)}</tbody>
+      </table>}
+      <div style={{fontSize:10,color:muted,marginTop:6}}>Pulled from the live user list — add or re-role someone on the Team page and it changes here.</div>
+    </div>;
+  };
+
   // ── BOOK PAGES ──
   // PAGES 1-8: Welcome, Login, Setting Month, PL Overview, PL Combined, WK Overview, WK Estimates, Building Rotations
   const ALL_BOOK_PAGES=useMemo(()=>{
@@ -12079,6 +12115,7 @@ Rules:
         <p>If you're an admin, a <b>Team</b> item appears in the sidebar. You manage <i>names and roles</i> — that's it. Add someone by typing their name and picking a role; they show up on the login screen and <b>set their own PIN</b> the first time they sign in. You never handle PINs.</p>
         <p>Three roles. <b>Owner</b>: full control, can't be removed or demoted. <b>Admin</b>: can add, remove and reset <i>members</i>. <b>Member</b>: uses the app, no team management. Only the Owner can create or change Admins.</p>
         <p><b>Reset PIN</b> clears someone's PIN so they pick a new one next sign-in (use it if they're locked out). <b>Remove</b> blocks them immediately; everything they did stays in the Activity Log under their name.</p>
+        <BookTeamRoster/>
         <BookMarginNote author="hades">Names and roles are yours to hand out. The log remembers every one.</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:24,opacity:.4,transform:"rotate(10deg)"}}/>}</>},
 
@@ -12099,6 +12136,7 @@ Rules:
         <p><b>Keches Law Group made five.</b> The Boston firm joined the roster with its own <b>KE OOH</b> page — its full Clear Channel Outdoor board plant (two always-on 8-slot digital dominations on I-93, the static-bulletin segments, and the whole eligible-display rotation pool — 35 boards) reconciled straight from the executed sales contracts, plus the Patriot Place billboard from the Patriots deal. The page adds a <b>Contracts</b> view alongside the board cards, table, Creative Brief, Size Report, board list, and a status filter. Beyond outdoor, a brand-new <b>Contracts Vault</b> gathers the whole Keches media portfolio — TV, radio, print, podcast, event, and every arena/sports sponsorship (Bruins, Patriots, Railers, Free Jacks, Boston College) — filterable by medium. And Keches' Boston <b>radio stations</b> — 98.5 The Sports Hub, Country 102.5, 105.7 WROR (Beasley) and WEEI (Audacy) — now live in the Station Registry.</p>
         <p><b>The poster showing stopped being a guess.</b> Wettermark Keith's placeholder Lamar poster slots across Birmingham, Jasper, Gadsden, Centre, Anniston, Albertville (contract 5570867) and Knoxville (contract 5570939) were <b>resolved from Lamar's Proof-of-Performance reports</b> — each 10'6×22'9 slot now carries its confirmed panel number, real location, install date, weekly impressions, and its two <b>proof photos</b> (the street-level close-up and the down-the-block distance shot), so every board shows its installed creative on its OOH card.</p>
         <p><b>Lerner &amp; Rowe's art department got its spec book.</b> Every L&amp;R OOH market now carries its <b>vendor spec sheets</b> — the Drive links to each vendor's artwork templates (Lamar, Clear Channel, OutFront, View, Becker, Kemp, and the rest) plus their exact required pixel canvases (Chicago's 400×1400 / 400×840, the Yuma bus display/back/side dimensions, and more), reached from a new <b>📎 Vendor Specs</b> button on the L&amp;R OOH page, with Lamar's master static and digital spec generators pinned at the top.</p>
+        <p><b>The book started reading itself.</b> The Guide is the whole show now — the floating book, nothing stacked around it — and it reads live data instead of frozen prose: <b>Brand Markets &amp; Prefixes</b> with per-brand counts moved <i>into</i> the book, and the <b>Team &amp; Roles</b> page now shows the real roster pulled from the live user list, so adding or re-roling anyone appears in the book on its own. The way it was always meant to be.</p>
         <BookMarginNote author="meg">I keep the receipts. Everything I've built is written here — and I'm not done.</BookMarginNote>
       </div>,damageEffects:<>{<BookLipstickMark style={{top:24,right:28,opacity:.5,transform:"rotate(12deg) scale(1.1)"}}/>}{<BookInkSplatter style={{bottom:20,left:20,opacity:.4}}/>}{<BookBurnMark style={{top:0,left:0,width:80,height:80,opacity:.25}}/>}</>},
 
