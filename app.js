@@ -12178,7 +12178,7 @@ Rules:
   };
   const DocsPg=()=>{
     return<div className="flex flex-col gap-3" style={{display:"flex",flexDirection:"column",gap:12}}>
-      <div className="relative flex flex-col items-center justify-center py-4 px-2 overflow-hidden" style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",paddingTop:16,paddingBottom:16,paddingLeft:8,paddingRight:8,overflow:"hidden",minHeight:"calc(100vh - 40px)"}}>
+      <div className="relative flex flex-col items-center justify-center py-4 px-2 overflow-hidden" style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",paddingTop:16,paddingBottom:16,paddingLeft:8,paddingRight:8,overflow:"hidden",minHeight:"calc(100vh - 120px)"}}>
         <BookSoulParticles/>
         <BookFlyingPegasus/>
         <BookPegasusConstellation/>
