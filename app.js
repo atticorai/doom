@@ -3383,7 +3383,7 @@ const App=()=>{
           mktIscis.forEach(function(r){
             var url=pandoraUrl(mkt,r.isci.code,audPlc);
             var dl=r.isci.fileUrl?"<a href='"+escHtml(dlUrl(r.isci.fileUrl))+"' style='color:#5BC4A0;font-weight:700'>Download</a>":"TBD";
-            w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+escHtml(r.isci.code)+"</td><td>"+escHtml(r.isci.title)+"</td><td>:"+escHtml(r.isci.dur)+"</td><td style='text-align:center;font-weight:700'>"+escHtml(r.pct||"")+"%</td><td>'+audPlc+'</td><td class='url'><a href='"+escHtml(url)+"' style='color:#4AC8E8'>"+escHtml(url)+"</a></td><td>"+dl+"</td></tr>");
+            w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+escHtml(r.isci.code)+"</td><td>"+escHtml(r.isci.title)+"</td><td>:"+escHtml(r.isci.dur)+"</td><td style='text-align:center;font-weight:700'>"+escHtml(r.pct||"")+"%</td><td>"+audPlc+"</td><td class='url'><a href='"+escHtml(url)+"' style='color:#4AC8E8'>"+escHtml(url)+"</a></td><td>"+dl+"</td></tr>");
           });
           w.document.write("</tbody></table>");
           // Companion banners
