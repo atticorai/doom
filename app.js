@@ -9431,25 +9431,28 @@ Rules:
         </div>
         {showOohBulk&&<Cd style={{padding:12}}>
           <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>📁 Bulk OOH Creative Upload</div>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>Drag & drop or click — <b style={{color:"#E8DFF0"}}>no renaming needed</b>. Matches by ISCI code <i>or</i> by WK creative convention: market + size + creative (e.g. <b style={{color:"#E8DFF0"}}>WK_Birmingham_Cause_14x48</b> or <b style={{color:"#E8DFF0"}}>WK Static Poster - 10.6x22.9 - BRM - Case Cause - CK Blue</b>). Run <b style={{color:"#D4A040"}}>🪄 Auto-name</b> first so the ISCIs exist.</div>
+          <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>Drag & drop or click. Matches by <b style={{color:"#E8DFF0"}}>ISCI code</b> (whole token in the filename) <i>or</i> by WK creative convention with market + size in the name (e.g. <b style={{color:"#E8DFF0"}}>WK_Birmingham_Cause_14x48</b>). <b style={{color:"#E85A7A"}}>Titles alone never auto-match</b> — titles recycle across markets; those files drop to the manual-assign list. Run <b style={{color:"#D4A040"}}>🪄 Auto-name</b> first so the ISCIs exist.</div>
           <DropZone multiple accept="*/*" style={{marginBottom:8}} onFiles={async(fileList)=>{
             const files=Array.from(fileList);if(!files.length){notify("No files selected");return}
             const toB64=(f)=>new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(r.error||new Error("read failed"));r.onload=()=>res(String(r.result).split(",")[1]||"");r.readAsDataURL(f)});
             let matched=0,notFound=0,failed=0,lastErr="";const updates={};const total=files.length;const unmatched=[];const regAdd=[];
             for(let fi=0;fi<total;fi++){
               const file=files[fi];const baseUpper=file.name.replace(/\.[^.]+$/,"").trim().toUpperCase();
-              let idx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper===i.code.toUpperCase());
-              if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&(baseUpper.startsWith(i.code.toUpperCase()+" ")||baseUpper.startsWith(i.code.toUpperCase()+"-")||baseUpper.startsWith(i.code.toUpperCase()+"_")));
-              if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&baseUpper.includes(i.code.toUpperCase()));
-              if(idx===-1)idx=iscis.findIndex(i=>i.suffix==="O"&&i.code.toUpperCase().includes(baseUpper));
-              // Direct title match: files named by the convention ARE the ISCI title
-              // (e.g. "WK Bulletin - BRM - 9x48 - Case Cause Shield"). Match the file
-              // name to the title exactly — the market prefix in the name keeps it
-              // one-to-one and market-specific. This is the main path for renamed files.
-              if(idx===-1){const _fb=file.name.replace(/\.[^.]+$/,"").replace(/\s+/g," ").trim().toLowerCase();idx=iscis.findIndex(i=>i.suffix==="O"&&String(i.title||"").replace(/\s+/g," ").trim().toLowerCase()===_fb)}
-              // Fallback: match by WK creative convention (market + size + creative), so
-              // files keep their own messy names (e.g. WK_Birmingham_Cause_14x48).
+              // STRICT code-first matching: the filename must carry the ISCI code as a
+              // whole token (exact, or delimited by non-alphanumerics). NO title
+              // matching — titles recycle across markets, so a title can bind a file
+              // to the wrong market's ISCI. NO partial/substring code matching either
+              // (a short filename must never bind to whichever code happens to
+              // contain it).
+              const _bnd=ch=>ch===""||/[^A-Z0-9]/.test(ch);
+              let idx=iscis.findIndex(i=>{if(i.suffix!=="O")return false;const c=i.code.toUpperCase();if(baseUpper===c)return true;const at=baseUpper.indexOf(c);if(at===-1)return false;return _bnd(at===0?"":baseUpper[at-1])&&_bnd(at+c.length>=baseUpper.length?"":baseUpper[at+c.length])});
+              // Codeless files: the WK filename convention (market + size + creative)
+              // still auto-matches because it is market-scoped — parseOohCreativeFile
+              // requires BOTH a market and a size and only searches that market's
+              // ISCIs, so recycled concept names resolve within the right market.
               if(idx===-1)idx=matchOohCreativeFile(file.name,iscis);
+              // Still nothing → the manual-assign tray below; never guess.
+              if(idx===-1)unmatched.push({file});
               // ONE file → ONE ISCI. Creative is market+size specific, so each file
               // links only to its own board. No concept fan-out, no interlinking.
               const ext=file.name.split(".").pop();const code=idx>-1?iscis[idx].code:"";
@@ -9482,8 +9485,8 @@ Rules:
             // Merge the standalone files into the registry (dedupe by filename — re-upload overwrites cleanly).
             if(regAdd.length){setOohCreativeFiles(prev=>{const m=new Map((prev||[]).map(x=>[x.n,x]));regAdd.forEach(x=>m.set(x.n,x));return[...m.values()]})}
             setOohUnassigned(unmatched);
-            log("Bulk OOH Creative",matched+" files stored standalone, "+failed+" failed");
-            notify(matched+" file(s) uploaded — all standalone"+(failed?" | "+failed+" failed: "+lastErr:""));
+            log("Bulk OOH Creative",matched+" files stored standalone, "+unmatched.length+" need manual ISCI, "+failed+" failed");
+            notify(matched+" file(s) uploaded — all standalone"+(unmatched.length?" | "+unmatched.length+" need a manual ISCI pick below":"")+(failed?" | "+failed+" failed: "+lastErr:""));
           }}>
             <div style={{fontSize:24}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Drag & drop or click to select OOH creative files</div><div style={{fontSize:12,color:"#64748b"}}>.jpg, .png, .pdf, .psd, .ai, .eps — multiple allowed</div>
           </DropZone>
