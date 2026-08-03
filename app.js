@@ -2197,16 +2197,40 @@ const App=()=>{
   // ── ALERTS SYSTEM ─────────────────────────────────────
   const alerts=useMemo(()=>{
     const a=[];
-    // OOH: flag 2 weeks out from flight end
-    PL_PANELS.forEach(p=>{
-      if(!p.flight)return;const parts=p.flight.split('-');if(parts.length<2)return;
-      const endStr=parts[parts.length-1].trim();const end=new Date(endStr+"T00:00:00");
-      if(isNaN(end))return;const days=Math.round((end-today)/864e5);
-      if(days>=0&&days<=14)a.push({type:"ooh",severity:days<=7?"critical":"warning",msg:`PL OOH · Unit ${p.unit} · ${p.location||"—"} · ${p.size||"—"} · flight ends ${fD(endStr)}`,days,key:`pl-${p.unit}`});
-    });
-    POSTINGS.forEach(p=>{
-      if(!p.installDate)return;
-      // For WK OOH, check install dates (these are start dates; no end dates in data yet)
+    // Shared OOH date helpers. _pDate reads the FIRST date in a string —
+    // accepts 2026-08-03, 8/3/2026, and 6/22/26 forms — so a full flight
+    // range can be passed without pre-splitting (splitting on "-" mangled
+    // ISO-dated ranges). _endDate reads the LAST date in a range; appending
+    // "T00:00:00" to a M/D/YY string produced Invalid Date and silently
+    // killed every flight-end alert. _iso formats in LOCAL time (toISOString
+    // can shift a local-midnight date across the UTC boundary).
+    const _pDate=(str)=>{if(!str)return null;str=String(str).trim();let m;if(m=str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return new Date(+m[1],+m[2]-1,+m[3]);if(m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)){let y=+m[3];if(y<100)y+=2000;return new Date(y,+m[1]-1,+m[2])}const d=new Date(str);return isNaN(d.getTime())?null:d};
+    const _endDate=(str)=>{const m=String(str||"").match(/\d{4}-\d{1,2}-\d{1,2}|\d{1,2}\/\d{1,2}\/\d{2,4}/g);return m&&m.length>1?_pDate(m[m.length-1]):null};
+    const _iso=(d)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    // OOH flight-end: flag boards, all brands, ending within 2 weeks — grouped
+    // by brand + market + end date so a whole plant ending the same day is one
+    // alert, not a hundred. WK boards (POSTINGS) carry install/renewal dates
+    // rather than end dates — their renewals surface through the creative-due
+    // alerts below.
+    const _fe={};
+    const _flightEnd=(bcode,dma,p)=>{
+      const end=_endDate(p.flight);if(!end)return;end.setHours(0,0,0,0);
+      const days=Math.round((end-today)/864e5);
+      if(days<0||days>14)return;
+      const k=bcode+"|"+dma+"|"+_iso(end);
+      if(!_fe[k])_fe[k]={bcode,dma,end,days,units:[]};
+      if(p.unit&&_fe[k].units.indexOf(p.unit)<0)_fe[k].units.push(p.unit);
+    };
+    PL_PANELS.forEach(p=>{if(!p||p.plan==="expired"||!p.flight)return;_flightEnd("PL",p.market,p)});
+    (typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(!p||p.network||p.tbd||p.plan==="expired"||!p.flight)return;_flightEnd("LR",p.market,p)});
+    (typeof PDV_PANELS!=="undefined"?PDV_PANELS:[]).forEach(p=>{if(!p||p.plan==="expired"||!p.flight)return;_flightEnd("PDV",p.market,p)});
+    (typeof KE_PANELS!=="undefined"?KE_PANELS:[]).forEach(p=>{if(!p||p.status==="expired"||p.status==="eligible"||!p.flight)return;_flightEnd("KE",p.market,p)});
+    Object.values(_fe).forEach(g=>{
+      const mkt=(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[g.dma])||(typeof DM!=="undefined"&&DM[g.dma])||g.dma;
+      const preview=g.units.slice(0,3).join(", ")+(g.units.length>3?" +"+(g.units.length-3)+" more":"");
+      a.push({type:"ooh",severity:g.days<=7?"critical":"warning",days:g.days,
+        key:"oohend-"+g.bcode+"-"+g.dma+"-"+_iso(g.end),
+        msg:`${g.bcode} OOH · ${mkt} · ${g.units.length} board${g.units.length!==1?"s":""} · flight ends ${fD(_iso(g.end))} · ${preview}`});
     });
     // (Contract-expiry alerts removed — not wanted in the Command Center feed.)
     // OOH Creative Calendar alerts (upcoming deadlines)
@@ -2220,26 +2244,45 @@ const App=()=>{
     // across ALL brands / markets / vendors, ≥2 weeks ahead. Creative-due date
     // is 14 days before a board's flight start (matches how PL's calendar is
     // modeled). PL is covered by OOH_CREATIVE_CAL above; this fills WK,
-    // Lerner & Rowe, and PDV, which had no creative-due alerts at all.
-    const _pDate=(str)=>{if(!str)return null;str=String(str).trim();let m;if(m=str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return new Date(+m[1],+m[2]-1,+m[3]);if(m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)){let y=+m[3];if(y<100)y+=2000;return new Date(y,+m[1]-1,+m[2])}const d=new Date(str);return isNaN(d.getTime())?null:d};
+    // Lerner & Rowe, Parrish DeVaughn, and Keches. Multi-flight boards
+    // ("8/3/2026-8/30/2026 & 11/2/2026-11/29/2026") alert on each start.
+    // WK posting dates prefer the per-panel 2026 Lamar renewal date over the
+    // original installDate — same precedence as the vendor traffic sheet.
     const _cg={};
     const _addCreative=(brand,dma,vendor,unit,postStr)=>{
-      const post=_pDate(postStr);if(!post)return;post.setHours(0,0,0,0);
-      const due=new Date(post.getTime()-14*864e5);const daysToDue=Math.round((due-today)/864e5);
-      if(daysToDue>14||daysToDue<-3)return; // fire once creative-due is within 2 weeks (posting ~2-4 wks out), through a few days overdue
-      const k=brand+"|"+dma+"|"+(vendor||"")+"|"+post.toISOString().slice(0,10);
-      if(!_cg[k])_cg[k]={brand,dma,vendor,post,due,daysToDue,units:[]};
-      if(unit&&_cg[k].units.indexOf(unit)<0)_cg[k].units.push(unit);
+      String(postStr==null?"":postStr).split("&").forEach(seg=>{
+        const post=_pDate(seg);if(!post)return;post.setHours(0,0,0,0);
+        const due=new Date(post.getTime()-14*864e5);const daysToDue=Math.round((due-today)/864e5);
+        if(daysToDue>14||daysToDue<-3)return; // fire once creative-due is within 2 weeks (posting ~2-4 wks out), through a few days overdue
+        const k=brand+"|"+dma+"|"+(vendor||"")+"|"+_iso(post);
+        if(!_cg[k])_cg[k]={brand,dma,vendor,post,due,daysToDue,units:[]};
+        if(unit&&_cg[k].units.indexOf(unit)<0)_cg[k].units.push(unit);
+      });
     };
-    (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>{if(p&&p.installDate)_addCreative(p.brand,p.dma,p.vendor,p.boardId,p.installDate)});
-    (typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(!p||p.network||p.tbd||p.plan==="expired"||!p.flight)return;_addCreative("Lerner & Rowe",p.market,p.vendor,p.unit,String(p.flight).split("-")[0])});
+    (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>{if(!p)return;const post=(typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||p.installDate;if(post)_addCreative(p.brand,p.dma,p.vendor,p.boardId,post)});
+    (typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(!p||p.network||p.tbd||p.plan==="expired"||!p.flight)return;_addCreative("Lerner & Rowe",p.market,p.vendor,p.unit,p.flight)});
+    (typeof PDV_PANELS!=="undefined"?PDV_PANELS:[]).forEach(p=>{if(!p||p.plan==="expired"||!p.flight)return;_addCreative("Parrish DeVaughn",p.market,p.vendor,p.unit,p.flight)});
+    (typeof KE_PANELS!=="undefined"?KE_PANELS:[]).forEach(p=>{if(!p||p.status==="expired"||p.status==="eligible"||!p.flight)return;_addCreative("Keches Law Group",p.market,p.vendor,p.unit,p.flight)});
     Object.values(_cg).forEach(g=>{
       const mkt=(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[g.dma])||(typeof DM!=="undefined"&&DM[g.dma])||g.dma;
       const bcode=(BRANDS.find(b=>b.name===g.brand||b.code===g.brand)||{}).code||g.brand;
       a.push({type:"ooh-cal",severity:g.daysToDue<=7?"critical":"warning",days:g.daysToDue,
-        key:"oohdue-"+g.brand+"-"+g.dma+"-"+(g.vendor||"")+"-"+g.post.toISOString().slice(0,10),
-        report:{brand:g.brand,dma:g.dma,vendor:g.vendor,post:g.post.toISOString().slice(0,10)},
-        msg:`🎨 ${bcode} OOH creative due ${fD(g.due.toISOString().slice(0,10))} · ${mkt}${g.vendor?" · "+g.vendor:""} · ${g.units.length} board${g.units.length!==1?"s":""} post ${fD(g.post.toISOString().slice(0,10))}`});
+        key:"oohdue-"+g.brand+"-"+g.dma+"-"+(g.vendor||"")+"-"+_iso(g.post),
+        report:{brand:g.brand,dma:g.dma,vendor:g.vendor,post:_iso(g.post)},
+        msg:`🎨 ${bcode} OOH creative due ${fD(_iso(g.due))} · ${mkt}${g.vendor?" · "+g.vendor:""} · ${g.units.length} board${g.units.length!==1?"s":""} post ${fD(_iso(g.post))}`});
+    });
+    // WK monthly OOH rotation calendar (data-ooh-cal.js) — explicit per-market
+    // creative due dates for the Lamar rotation programs, which have no
+    // per-board posting rows. PL rows are covered by OOH_CREATIVE_CAL above.
+    (typeof OOH_CALENDAR!=="undefined"?OOH_CALENDAR:[]).forEach(c=>{
+      if(!c||c.brand==="PL"||!c.due)return;
+      const d=_pDate(c.due);if(!d)return;d.setHours(0,0,0,0);
+      const days=Math.round((d-today)/864e5);
+      if(days>14||days<-3)return;
+      const mkt=(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c.market])||(typeof DM!=="undefined"&&DM[c.market])||c.market;
+      a.push({type:"ooh-cal",severity:days<=7?"critical":"warning",days,
+        key:`oohcal-${c.brand}-${c.market}-${c.month}`,
+        msg:`🎨 ${c.brand} OOH creative due ${fD(_iso(d))} · ${mkt} · ${c.vendor} ${c.media} · ${c.units} unit${c.units!=="1"?"s":""} · posts ${fD(c.start)}`});
     });
     // Rotation due dates — already handled in dashboard but add to alert feed
     CALENDAR.forEach(c=>{
@@ -2262,10 +2305,16 @@ const App=()=>{
   const openCreativeBrief=(rep)=>{
     if(!rep)return;
     const _pd=(str)=>{if(!str)return null;str=String(str).trim();let m;if(m=str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return new Date(+m[1],+m[2]-1,+m[3]);if(m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)){let y=+m[3];if(y<100)y+=2000;return new Date(y,+m[1]-1,+m[2])}return null};
-    const iso=(d)=>d?d.toISOString().slice(0,10):"";
+    const iso=(d)=>d?d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"):"";
+    // Same posting-date semantics as the alert that opened this brief: read
+    // the flight's leading date without pre-splitting, match any segment of a
+    // multi-flight board, and prefer the per-panel Lamar renewal date for WK.
+    const matchPost=(str)=>String(str==null?"":str).split("&").some(seg=>iso(_pd(seg))===rep.post);
     const boards=[];
-    (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>{if(p.brand!==rep.brand||p.dma!==rep.dma)return;const d=_pd(p.installDate);if(!d||iso(d)!==rep.post)return;const co=(typeof WK_COORDS!=="undefined"&&WK_COORDS[p.boardId])||null;boards.push({unit:p.panel||p.boardId,type:p.type||"",size:p.size||"",vendor:p.vendor||"",loc:p.location||"",lat:co?co[0]:null,lng:co?co[1]:null})});
-    (typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(rep.brand!=="Lerner & Rowe"||p.network||p.tbd||p.market!==rep.dma||!p.flight)return;const d=_pd(String(p.flight).split("-")[0]);if(!d||iso(d)!==rep.post)return;boards.push({unit:p.unit,type:p.media||"",size:p.size||"",vendor:p.vendor||"",loc:p.location||"",lat:p.lat||null,lng:p.lng||null})});
+    (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>{if(p.brand!==rep.brand||p.dma!==rep.dma)return;const post=(typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||p.installDate;if(!matchPost(post))return;const co=(typeof WK_COORDS!=="undefined"&&WK_COORDS[p.boardId])||null;boards.push({unit:p.panel||p.boardId,type:p.type||"",size:p.size||"",vendor:p.vendor||"",loc:p.location||"",lat:co?co[0]:null,lng:co?co[1]:null})});
+    (typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(rep.brand!=="Lerner & Rowe"||p.network||p.tbd||p.market!==rep.dma||!p.flight||!matchPost(p.flight))return;boards.push({unit:p.unit,type:p.media||"",size:p.size||"",vendor:p.vendor||"",loc:p.location||"",lat:p.lat||null,lng:p.lng||null})});
+    (typeof PDV_PANELS!=="undefined"?PDV_PANELS:[]).forEach(p=>{if(rep.brand!=="Parrish DeVaughn"||p.plan==="expired"||p.market!==rep.dma||!p.flight||!matchPost(p.flight))return;boards.push({unit:p.unit,type:p.media||"",size:p.size||"",vendor:p.vendor||"",loc:p.location||"",lat:p.lat||null,lng:p.lng||null})});
+    (typeof KE_PANELS!=="undefined"?KE_PANELS:[]).forEach(p=>{if(rep.brand!=="Keches Law Group"||p.status==="expired"||p.status==="eligible"||p.market!==rep.dma||!p.flight||!matchPost(p.flight))return;boards.push({unit:p.unit,type:p.media||"",size:p.size||"",vendor:p.vendor||"",loc:p.location||"",lat:p.lat||null,lng:p.lng||null})});
     if(!boards.length){notify("No boards found for that posting");return}
     const mkt=(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[rep.dma])||(typeof DM!=="undefined"&&DM[rep.dma])||rep.dma;
     const bcode=(BRANDS.find(b=>b.name===rep.brand||b.code===rep.brand)||{}).code||rep.brand;
