@@ -4400,16 +4400,20 @@ const App=()=>{
         w.document.write('<div class="mkt"'+(di>0?' style="page-break-before:always"':'')+'>'+escHtml(d)+' — '+bds.length+' boards · Contract '+escHtml([...new Set(bds.map(p=>p.contract).filter(Boolean))].join(", "))+'</div>');
         w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location Description</th><th style="width:110px">Media/Style</th><th style="width:80px">H x W</th><th style="width:70px">Impr/Wk</th><th style="width:160px">Creative</th><th style="width:120px">ISCI</th><th style="width:80px">Renewal Date</th></tr>');
         const tbdSeen=new Set();
+        const _tkeyOf=(p)=>(/digital/i.test(p.type||"")?"D":"S")+(/poster/i.test(p.type||"")?"P":/junior/i.test(p.type||"")?"J":"B");
+        // Unit counts per TBD program, so the collapsed line reads "TBD (25)" the
+        // way Lamar's own contract prints it — one line, but the quantity shows.
+        const tbdCounts={};bds.forEach(p=>{if(String(p.panel).includes("TBD"))tbdCounts[_tkeyOf(p)]=(tbdCounts[_tkeyOf(p)]||0)+1});
         bds.forEach(p=>{
           const _tbd=String(p.panel).includes("TBD");
           // Bonus boards: real fixed panels (off-contract / $0 added-value, NOT TBD).
           // They keep their panel/location/size/ISCI but rotate the creative pool.
           const _bonus=!_tbd&&(typeof OOH_BONUS_ROTATE!=="undefined"&&OOH_BONUS_ROTATE.has(String(p.panel)));
           const _rot=_tbd||_bonus;  // both rotate the creative pool + get highlighted
-          // TBD rotary/preempt lines: per the buyer, we DON'T enumerate counts — one line
-          // per media type per market (panel reads "TBD"). Dedup so a type isn't repeated.
+          // TBD rotary/preempt lines: per the buyer, we don't enumerate every unit —
+          // one line per media type per market, carrying the unit count.
           if(_tbd){
-            const _tkey=(/digital/i.test(p.type||"")?"D":"S")+(/poster/i.test(p.type||"")?"P":/junior/i.test(p.type||"")?"J":"B");
+            const _tkey=_tkeyOf(p);
             if(tbdSeen.has(_tkey))return;
             tbdSeen.add(_tkey);
           }
@@ -4431,8 +4435,8 @@ const App=()=>{
           // Revision boards flagged inline on the FULL sheet (meshed) so Lamar gets one
           // complete traffic sheet with the corrected panels called out — not a separate doc.
           const _rev=(typeof OOH_RESEND_PANELS!=="undefined"&&OOH_RESEND_PANELS.has(String(p.panel)));
-          const _panelCell=(_tbd?'TBD':escHtml(String(p.panel)))+(_tbd?' <b style="color:#7c3aed">↻ ROTARY</b>':(_bonus?' <b style="color:#7c3aed">★ BONUS</b>':''))+(_rev&&!resendOnly?' <b style="color:#9b1c5e">✎ REVISED</b>':'');
-          const _loc=_tbd?'<b style="color:#7c3aed">Rotates — Lamar selects</b>':(escHtml(p.location||"")+(_bonus?' <b style="color:#7c3aed">★ Bonus (no charge)</b>':'')+(_boaz?' <b style="color:#1d4ed8">◄ Boaz — traffic as Huntsville</b>':'')+(_keep?' <b style="color:#15803d">★ Perm glitter-disc — already installed</b>':''));
+          const _panelCell=(_tbd?'TBD ('+(tbdCounts[_tkeyOf(p)]||1)+')':escHtml(String(p.panel)))+(_tbd?' <b style="color:#7c3aed">↻ ROTARY</b>':(_bonus?' <b style="color:#7c3aed">★ BONUS</b>':''))+(_rev&&!resendOnly?' <b style="color:#9b1c5e">✎ REVISED</b>':'');
+          const _loc=_tbd?'<b style="color:#7c3aed">'+(tbdCounts[_tkeyOf(p)]||1)+' rotating unit'+((tbdCounts[_tkeyOf(p)]||1)!==1?'s':'')+' — Lamar selects locations</b>':(escHtml(p.location||"")+(_bonus?' <b style="color:#7c3aed">★ Bonus (no charge)</b>':'')+(_boaz?' <b style="color:#1d4ed8">◄ Boaz — traffic as Huntsville</b>':'')+(_keep?' <b style="color:#15803d">★ Perm glitter-disc — already installed</b>':''));
           // Distinct row tint per category so the vendor can scan: Boaz = blue,
           // glitter-disc = green, TBD/rotary/bonus = amber.
           const _bg=_boaz?'#dbeafe':(_keep?'#dcfce7':(_rot?'#fff3bf':(_rev&&!resendOnly?'#fce7f3':'')));
@@ -4483,7 +4487,13 @@ const App=()=>{
       // Resolve one clickable creative for a concept — code-first, title fallback (mirrors boardCreative).
       const resolveArt=(concept,code)=>{let m=code?iscis.find(i=>i.code===code):null;if(!m||!m.fileUrl){const mm=iscis.find(i=>i.suffix==="O"&&i.title&&String(i.title).toLowerCase().includes(String(concept).toLowerCase()));if(mm&&(mm.fileUrl||!m))m=mm}return m};
       const linkCell=(label,m)=>m&&m.fileUrl?('<a href="'+escHtml(oohVendorDl(m.fileUrl,m.title||label))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(label)+'</a>'):('<b>'+escHtml(label)+'</b> <span style="color:#b00">⚠ no art uploaded</span>');
-      mkts.forEach((mk,mi)=>{const all=scope.filter(p=>oohMarket(p.dma)===mk);const posters=all.filter(p=>/poster/i.test(p.type||""));const bds=all.filter(p=>!/poster/i.test(p.type||"")).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=all.length;
+      mkts.forEach((mk,mi)=>{const all=scope.filter(p=>oohMarket(p.dma)===mk);
+        // TBD/rotary program lines are broken out SEPARATELY (they have no fixed
+        // panel, location, or assigned creative) — mirroring the contract's own
+        // "TBD (25)" call-out. Fixed boards, poster or not, keep their identity.
+        const tbds=all.filter(p=>String(p.panel).includes("TBD"));
+        const posters=all.filter(p=>/poster/i.test(p.type||"")&&!String(p.panel).includes("TBD"));
+        const bds=all.filter(p=>!/poster/i.test(p.type||"")&&!String(p.panel).includes("TBD")).sort((a,b)=>String(a.panel).localeCompare(String(b.panel)));grand+=all.length;
         w.document.write('<div class="mkt"'+(mi>0?' style="page-break-before:always"':'')+'>'+escHtml(mk)+' — '+all.length+' boards · '+escHtml(dateLabel)+'</div>');
         w.document.write('<table><tr><th style="width:64px">Panel #</th><th>Location</th><th style="width:110px">Media/Style</th><th style="width:64px">H x W</th><th style="width:170px">Creative</th><th style="width:120px">ISCI</th><th style="width:74px">Start Date</th></tr>');
         bds.forEach(p=>{const crs=boardCreative(p);
@@ -4500,6 +4510,19 @@ const App=()=>{
           const isciCell=concepts.map(e=>{const m=resolveArt(e.c,e.code);return escHtml((m&&m.code)||e.code||"—")}).join('<br>')||"—";
           const startD=[...new Set(posters.map(p=>p.installDate).filter(Boolean))];const sd=startD.length===1?fmtD(startD[0]):dateLabel;
           w.document.write('<tr style="background:#fff3bf"><td style="font-family:monospace;font-weight:700">POSTERS <b style="color:#7c3aed">↻ ROTARY</b><br><span style="font-size:9px;color:#7c3aed">'+posters.length+' faces</span></td><td><b style="color:#7c3aed">Rotates across all poster faces — spread evenly</b></td><td>'+escHtml([...new Set(posters.map(p=>p.type))].join(", "))+'</td><td>'+escHtml(spec)+'</td><td>'+crCell+'</td><td style="font-family:monospace">'+isciCell+'</td><td>'+escHtml(sd)+'</td></tr>');
+        }
+        // TBD ROTARY PROGRAMS — one line per media type with the UNIT COUNT, like
+        // the Lamar contract's own "TBD (25)" lines. No panel/location to print,
+        // so the line carries the count + the full rotating creative pool.
+        if(tbds.length){hasPosters=true;
+          const tGroups={};tbds.forEach(p=>{const k=String(p.type||"Board");if(!tGroups[k])tGroups[k]={n:0,dates:new Set()};tGroups[k].n++;if(p.installDate)tGroups[k].dates.add(p.installDate)});
+          Object.entries(tGroups).forEach(([tType,g])=>{
+            const pool=(/poster|junior/i.test(tType)?WK_OOH_CREATIVES.poster:WK_OOH_CREATIVES.bulletin)||[];
+            const pcts=evenSplit(pool.length);
+            const crCell=pool.length?pool.map((c,i)=>{const m=resolveArt(c,"");return linkCell(c,m)+' <b style="color:#b8860b">('+pcts[i]+'%)</b>'}).join('<br>'):'<span style="color:#b00">⚠ no creative pool</span>';
+            const sd=[...g.dates];const sdTxt=sd.length===1?fmtD(sd[0]):dateLabel;
+            w.document.write('<tr style="background:#fff3bf"><td style="font-family:monospace;font-weight:700">TBD ('+g.n+') <b style="color:#7c3aed">↻ ROTARY</b></td><td><b style="color:#7c3aed">'+g.n+' rotating unit'+(g.n!==1?"s":"")+' — Lamar selects locations</b></td><td>'+escHtml(tType)+'</td><td>—</td><td>'+crCell+'</td><td style="font-family:monospace">—</td><td>'+escHtml(sdTxt)+'</td></tr>');
+          });
         }
         w.document.write('</table>')});
       w.document.write('<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+grand+'</div>');
