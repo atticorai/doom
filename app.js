@@ -2236,9 +2236,12 @@ const App=()=>{
     // OOH Creative Calendar alerts (upcoming deadlines)
     OOH_CREATIVE_CAL.forEach((e,idx)=>{
       const s=oohCalStatus(e.due);
-      if(s.status==="today")a.push({type:"ooh-cal",severity:"critical",msg:`🎨 OOH Creative due TODAY — ${e.dmas.join("/")} ${e.title}${e.size?" · "+e.size:""}`,days:0,key:`cal-${idx}`});
-      else if(s.status==="urgent")a.push({type:"ooh-cal",severity:"critical",msg:`🎨 OOH Creative — ${e.dmas.join("/")} ${e.title} in ${s.days}d${e.size?" · "+e.size:""}`,days:s.days,key:`cal-${idx}`});
-      else if(s.status==="soon")a.push({type:"ooh-cal",severity:"warning",msg:`🎨 OOH Creative — ${e.dmas.join("/")} ${e.title} in ${s.days}d${e.size?" · "+e.size:""}`,days:s.days,key:`cal-${idx}`});
+      // Creative-due entries open a calendar-mode Creative Brief (launch/dark
+      // entries are informational — no brief).
+      const rep=e.type==="creative"?{cal:true,brand:"PL",dmas:e.dmas,title:e.title,units:e.units,size:e.size,spec:e.spec,due:e.due,start:e.start||""}:undefined;
+      if(s.status==="today")a.push({type:"ooh-cal",severity:"critical",msg:`🎨 OOH Creative due TODAY — ${e.dmas.join("/")} ${e.title}${e.size?" · "+e.size:""}`,days:0,key:`cal-${idx}`,report:rep});
+      else if(s.status==="urgent")a.push({type:"ooh-cal",severity:"critical",msg:`🎨 OOH Creative — ${e.dmas.join("/")} ${e.title} in ${s.days}d${e.size?" · "+e.size:""}`,days:s.days,key:`cal-${idx}`,report:rep});
+      else if(s.status==="soon")a.push({type:"ooh-cal",severity:"warning",msg:`🎨 OOH Creative — ${e.dmas.join("/")} ${e.title} in ${s.days}d${e.size?" · "+e.size:""}`,days:s.days,key:`cal-${idx}`,report:rep});
     });
     // OOH creative due for posting — derived from every board's posting date,
     // across ALL brands / markets / vendors, ≥2 weeks ahead. Creative-due date
@@ -2282,6 +2285,7 @@ const App=()=>{
       const mkt=(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c.market])||(typeof DM!=="undefined"&&DM[c.market])||c.market;
       a.push({type:"ooh-cal",severity:days<=7?"critical":"warning",days,
         key:`oohcal-${c.brand}-${c.market}-${c.month}`,
+        report:{cal:true,brand:c.brand,market:c.market,vendor:c.vendor,media:c.media,units:c.units,due:c.due,start:c.start,contract:c.contract},
         msg:`🎨 ${c.brand} OOH creative due ${fD(_iso(d))} · ${mkt} · ${c.vendor} ${c.media} · ${c.units} unit${c.units!=="1"?"s":""} · posts ${fD(c.start)}`});
     });
     // Rotation due dates — already handled in dashboard but add to alert feed
@@ -2306,6 +2310,39 @@ const App=()=>{
     if(!rep)return;
     const _pd=(str)=>{if(!str)return null;str=String(str).trim();let m;if(m=str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return new Date(+m[1],+m[2]-1,+m[3]);if(m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/)){let y=+m[3];if(y<100)y+=2000;return new Date(y,+m[1]-1,+m[2])}return null};
     const iso=(d)=>d?d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"):"";
+    // Calendar-mode brief: rotation programs and creative-calendar entries have
+    // no per-board posting rows to look up — the brief renders from the
+    // calendar entry itself (media/size/spec/unit count) instead of a board list.
+    if(rep.cal){
+      const _b=BRANDS.find(b=>b.name===rep.brand||b.code===rep.brand)||{};
+      const bcode=_b.code||rep.brand;const bname=_b.name||rep.brand;
+      const mkts=(rep.dmas&&rep.dmas.length?rep.dmas:[rep.market]).filter(Boolean).map(c=>(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c])||(typeof DM!=="undefined"&&DM[c])||c).join(" / ");
+      const _fmt=(s)=>{const d=_pd(s);return d?(d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear():"—"};
+      const _specSrc=(rep.spec||"")+" "+(rep.media||"")+" "+(rep.size||"");
+      const sp=(()=>{const t=_specSrc.toLowerCase();if(t.indexOf("digital")>=0||/\d{3,}\s*x\s*\d{3,}\s*px/.test(t))return{c:"RGB",r:"72 dpi",f:"JPG/PNG (static) · MP4/MOV (motion)"};if(t.indexOf("poster")>=0)return{c:"CMYK",r:"300 dpi",f:"Print-ready PDF"};if(t.indexOf("shelter")>=0||t.indexOf("topper")>=0)return{c:"CMYK",r:"408–600 dpi (per spec)",f:"Print-ready PDF"};return{c:"CMYK",r:"150 dpi at full scale",f:"Print-ready PDF + packaged native files"}})();
+      const nUnits=parseInt(rep.units);const unitLabel=isNaN(nUnits)?"":(nUnits+" unit"+(nUnits!==1?"s":""));
+      const unitsText=isNaN(nUnits)?(rep.units||"—"):(nUnits+" (rotation program — the vendor assigns specific panels)");
+      const sizeShown=rep.size||((rep.media||"").match(/\d+(?:\.\d+)?\s*x\s*\d+(?:\.\d+)?/i)||["—"])[0];
+      const suggested=Math.max(2,Math.round((isNaN(nUnits)?4:nUnits)/7)+1);
+      const w=window.open("","","width=1060,height=920");
+      w.document.write('<html><head><title>'+bcode+' OOH — Creative Brief · '+escHtml(mkts)+'</title>');
+      w.document.write('<style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}h3{margin:18px 0 6px;font-size:14px;border-bottom:2px solid #2d1f42;padding-bottom:3px}.sub{color:#555;font-weight:bold;margin:2px 0 6px}table{width:100%;border-collapse:collapse;font-size:11px;margin-top:4px}th,td{border:1px solid #ccc;padding:5px 8px;text-align:left;vertical-align:top}th{background:#2d1f42;color:#fff}td.n{font-weight:bold;text-align:center}.rec{background:#fff8e6;border:1px solid #f0d68a;border-radius:7px;padding:10px 12px;margin-top:6px;font-size:12px}.rec b{color:#8a5a00}.tag{display:inline-block;background:#2d1f42;color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:bold}.dl{position:fixed;top:12px;right:12px;background:#5BC4A0;color:#0a2e22;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{.dl{display:none}body{margin:12px}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<div style="text-align:center;margin-bottom:6px"><h2>'+escHtml(String(bname).toUpperCase())+'</h2><div style="font-weight:bold;color:#555">OOH CREATIVE BRIEF</div></div>');
+      w.document.write('<div class="sub">'+escHtml(mkts)+(rep.vendor?" · "+escHtml(rep.vendor):"")+(unitLabel?' &nbsp;·&nbsp; <span class="tag">'+unitLabel+'</span>':"")+' &nbsp;·&nbsp; Creative due <b>'+_fmt(rep.due)+'</b>'+(rep.start?' &nbsp;·&nbsp; Posts <b>'+_fmt(rep.start)+'</b>':"")+'</div>');
+      w.document.write('<h3>1 · What to produce</h3>');
+      w.document.write('<table><tr><th>Program / Media</th><th>Size</th><th>Color</th><th>Resolution</th><th>File Format</th><th>Units</th></tr>');
+      w.document.write('<tr><td>'+escHtml(rep.media||rep.title||"OOH Creative")+'</td><td>'+escHtml(sizeShown)+'</td><td>'+sp.c+'</td><td>'+sp.r+'</td><td>'+sp.f+'</td><td style="font-size:10px">'+escHtml(unitsText)+'</td></tr>');
+      w.document.write('</table>');
+      if(rep.spec)w.document.write('<div style="font-size:11px;color:#555;margin-top:4px"><b>Spec:</b> '+escHtml(rep.spec)+'</div>');
+      if(rep.contract)w.document.write('<div style="font-size:11px;color:#555;margin-top:2px"><b>Contract:</b> '+escHtml(rep.contract)+'</div>');
+      w.document.write('<h3>2 · Versions</h3>');
+      w.document.write('<div class="rec"><b>Plan ~'+suggested+' distinct creative version'+(suggested!==1?"s":"")+'.</b> '+(isNaN(nUnits)?'Give listed units different messages where they share a corridor.':'Panels rotate at the vendor’s discretion, so variety in the set is what keeps the market from repeating one message.')+' Confirm exact pixel/print dimensions per panel with '+(rep.vendor?escHtml(rep.vendor):"the vendor")+' before production.</div>');
+      w.document.write('<div style="margin-top:16px;font-size:10px;color:#888">Generated '+new Date().toLocaleString()+' · Doom & Deliverables</div>');
+      w.document.write('</body></html>');w.document.close();
+      log("Creative Brief",bcode+" · "+mkts+" · calendar entry due "+rep.due);
+      return;
+    }
     // Same posting-date semantics as the alert that opened this brief: read
     // the flight's leading date without pre-splitting, match any segment of a
     // multi-flight board, and prefer the per-panel Lamar renewal date for WK.
