@@ -2242,6 +2242,7 @@ const App=()=>{
       if(s.status==="today")a.push({type:"ooh-cal",severity:"critical",msg:`🎨 OOH Creative due TODAY — ${e.dmas.join("/")} ${e.title}${e.size?" · "+e.size:""}`,days:0,key:`cal-${idx}`,report:rep});
       else if(s.status==="urgent")a.push({type:"ooh-cal",severity:"critical",msg:`🎨 OOH Creative — ${e.dmas.join("/")} ${e.title} in ${s.days}d${e.size?" · "+e.size:""}`,days:s.days,key:`cal-${idx}`,report:rep});
       else if(s.status==="soon")a.push({type:"ooh-cal",severity:"warning",msg:`🎨 OOH Creative — ${e.dmas.join("/")} ${e.title} in ${s.days}d${e.size?" · "+e.size:""}`,days:s.days,key:`cal-${idx}`,report:rep});
+      else if(s.status==="past"&&e.type==="creative"&&e.start&&new Date(e.start+"T00:00:00")>=today)a.push({type:"ooh-cal",severity:"critical",overdue:true,msg:`⚠ OVERDUE ${Math.abs(s.days)}d — 🎨 OOH Creative — ${e.dmas.join("/")} ${e.title}${e.size?" · "+e.size:""} · posts ${fD(e.start)}`,days:s.days,key:`cal-${idx}`,report:rep});
     });
     // OOH creative due for posting — derived from every board's posting date,
     // across ALL brands / markets / vendors, ≥2 weeks ahead. Creative-due date
@@ -2256,23 +2257,33 @@ const App=()=>{
       String(postStr==null?"":postStr).split("&").forEach(seg=>{
         const post=_pDate(seg);if(!post)return;post.setHours(0,0,0,0);
         const due=new Date(post.getTime()-14*864e5);const daysToDue=Math.round((due-today)/864e5);
-        if(daysToDue>14||daysToDue<-3)return; // fire once creative-due is within 2 weeks (posting ~2-4 wks out), through a few days overdue
+        // Fire once creative-due is within 2 weeks (posting ~2-4 wks out). An
+        // overdue alert does NOT age out — unhandled creative stays in the feed,
+        // flagged OVERDUE, until the board actually posts or it's dismissed.
+        if(daysToDue>14||post<today)return;
         const k=brand+"|"+dma+"|"+(vendor||"")+"|"+_iso(post);
         if(!_cg[k])_cg[k]={brand,dma,vendor,post,due,daysToDue,units:[]};
         if(unit&&_cg[k].units.indexOf(unit)<0)_cg[k].units.push(unit);
       });
     };
-    (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>{if(!p)return;const post=(typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||p.installDate;if(post)_addCreative(p.brand,p.dma,p.vendor,p.boardId,post)});
+    (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>{if(!p)return;
+      // Prefer the per-panel Lamar renewal date over a stale installDate — but
+      // never pull a LATER flight backwards (flight-2 rows share the panel #,
+      // and the override describes the first renewal, not the second flight).
+      const ov=(typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||"";
+      const a1=_pDate(p.installDate),b1=_pDate(ov);
+      const post=(a1&&b1)?(a1>b1?p.installDate:ov):(ov||p.installDate);
+      if(post)_addCreative(p.brand,p.dma,p.vendor,p.boardId,post)});
     (typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(!p||p.network||p.tbd||p.plan==="expired"||!p.flight)return;_addCreative("Lerner & Rowe",p.market,p.vendor,p.unit,p.flight)});
     (typeof PDV_PANELS!=="undefined"?PDV_PANELS:[]).forEach(p=>{if(!p||p.plan==="expired"||!p.flight)return;_addCreative("Parrish DeVaughn",p.market,p.vendor,p.unit,p.flight)});
     (typeof KE_PANELS!=="undefined"?KE_PANELS:[]).forEach(p=>{if(!p||p.status==="expired"||p.status==="eligible"||!p.flight)return;_addCreative("Keches Law Group",p.market,p.vendor,p.unit,p.flight)});
     Object.values(_cg).forEach(g=>{
       const mkt=(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[g.dma])||(typeof DM!=="undefined"&&DM[g.dma])||g.dma;
       const bcode=(BRANDS.find(b=>b.name===g.brand||b.code===g.brand)||{}).code||g.brand;
-      a.push({type:"ooh-cal",severity:g.daysToDue<=7?"critical":"warning",days:g.daysToDue,
+      a.push({type:"ooh-cal",severity:g.daysToDue<=7?"critical":"warning",days:g.daysToDue,overdue:g.daysToDue<0,
         key:"oohdue-"+g.brand+"-"+g.dma+"-"+(g.vendor||"")+"-"+_iso(g.post),
         report:{brand:g.brand,dma:g.dma,vendor:g.vendor,post:_iso(g.post)},
-        msg:`🎨 ${bcode} OOH creative due ${fD(_iso(g.due))} · ${mkt}${g.vendor?" · "+g.vendor:""} · ${g.units.length} board${g.units.length!==1?"s":""} post ${fD(_iso(g.post))}`});
+        msg:`${g.daysToDue<0?"⚠ OVERDUE "+Math.abs(g.daysToDue)+"d — ":""}🎨 ${bcode} OOH creative due ${fD(_iso(g.due))} · ${mkt}${g.vendor?" · "+g.vendor:""} · ${g.units.length} board${g.units.length!==1?"s":""} post ${fD(_iso(g.post))}`});
     });
     // WK monthly OOH rotation calendar (data-ooh-cal.js) — explicit per-market
     // creative due dates for the Lamar rotation programs, which have no
@@ -2281,12 +2292,15 @@ const App=()=>{
       if(!c||c.brand==="PL"||!c.due)return;
       const d=_pDate(c.due);if(!d)return;d.setHours(0,0,0,0);
       const days=Math.round((d-today)/864e5);
-      if(days>14||days<-3)return;
+      const st=_pDate(c.start);if(st)st.setHours(0,0,0,0);
+      // Same overdue rule as board-derived alerts: stay in the feed, flagged
+      // OVERDUE, until the rotation actually starts (or -3d when no start date).
+      if(days>14)return;if(st?st<today:days<-3)return;
       const mkt=(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c.market])||(typeof DM!=="undefined"&&DM[c.market])||c.market;
-      a.push({type:"ooh-cal",severity:days<=7?"critical":"warning",days,
+      a.push({type:"ooh-cal",severity:days<=7?"critical":"warning",days,overdue:days<0,
         key:`oohcal-${c.brand}-${c.market}-${c.month}`,
         report:{cal:true,brand:c.brand,market:c.market,vendor:c.vendor,media:c.media,units:c.units,due:c.due,start:c.start,contract:c.contract},
-        msg:`🎨 ${c.brand} OOH creative due ${fD(_iso(d))} · ${mkt} · ${c.vendor} ${c.media} · ${c.units} unit${c.units!=="1"?"s":""} · posts ${fD(c.start)}`});
+        msg:`${days<0?"⚠ OVERDUE "+Math.abs(days)+"d — ":""}🎨 ${c.brand} OOH creative due ${fD(_iso(d))} · ${mkt} · ${c.vendor} ${c.media} · ${c.units} unit${c.units!=="1"?"s":""} · posts ${fD(c.start)}`});
     });
     // Rotation due dates — already handled in dashboard but add to alert feed
     CALENDAR.forEach(c=>{
@@ -2298,7 +2312,9 @@ const App=()=>{
       const bcStart=new Date(c.bcStart+"T00:00:00");const days=Math.round((bcStart-today)/864e5);
       if(days>=0&&days<=7)a.push({type:"media",severity:days<=3?"critical":"warning",msg:`BC Period Starts: ${c.month} — ${fD(c.bcStart)}`,days,key:`bc-${c.month}`});
     });
-    return a.filter(x=>!alertsDismissed.includes(x.key)&&x.days>=-1).sort((a,b)=>a.days-b.days);
+    // Overdue creative-due alerts survive the age-out — they already bound
+    // themselves by the posting date and must stay visible until handled.
+    return a.filter(x=>!alertsDismissed.includes(x.key)&&(x.days>=-1||x.overdue)).sort((a,b)=>a.days-b.days);
   },[alertsDismissed,oohContracts]);
 
   const dismissAlert=(key)=>setAlertsDismissed(p=>[...p,key]);
@@ -2348,7 +2364,7 @@ const App=()=>{
     // multi-flight board, and prefer the per-panel Lamar renewal date for WK.
     const matchPost=(str)=>String(str==null?"":str).split("&").some(seg=>iso(_pd(seg))===rep.post);
     const boards=[];
-    (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>{if(p.brand!==rep.brand||p.dma!==rep.dma)return;const post=(typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||p.installDate;if(!matchPost(post))return;const co=(typeof WK_COORDS!=="undefined"&&WK_COORDS[p.boardId])||null;boards.push({unit:p.panel||p.boardId,type:p.type||"",size:p.size||"",vendor:p.vendor||"",loc:p.location||"",lat:co?co[0]:null,lng:co?co[1]:null})});
+    (typeof POSTINGS!=="undefined"?POSTINGS:[]).forEach(p=>{if(p.brand!==rep.brand||p.dma!==rep.dma)return;const ov=(typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||"";const a1=_pd(p.installDate),b1=_pd(ov);const post=(a1&&b1)?(a1>b1?p.installDate:ov):(ov||p.installDate);if(!matchPost(post))return;const co=(typeof WK_COORDS!=="undefined"&&WK_COORDS[p.boardId])||null;boards.push({unit:p.panel||p.boardId,type:p.type||"",size:p.size||"",vendor:p.vendor||"",loc:p.location||"",lat:co?co[0]:null,lng:co?co[1]:null})});
     (typeof LR_PANELS!=="undefined"?LR_PANELS:[]).forEach(p=>{if(rep.brand!=="Lerner & Rowe"||p.network||p.tbd||p.market!==rep.dma||!p.flight||!matchPost(p.flight))return;boards.push({unit:p.unit,type:p.media||"",size:p.size||"",vendor:p.vendor||"",loc:p.location||"",lat:p.lat||null,lng:p.lng||null})});
     (typeof PDV_PANELS!=="undefined"?PDV_PANELS:[]).forEach(p=>{if(rep.brand!=="Parrish DeVaughn"||p.plan==="expired"||p.market!==rep.dma||!p.flight||!matchPost(p.flight))return;boards.push({unit:p.unit,type:p.media||"",size:p.size||"",vendor:p.vendor||"",loc:p.location||"",lat:p.lat||null,lng:p.lng||null})});
     (typeof KE_PANELS!=="undefined"?KE_PANELS:[]).forEach(p=>{if(rep.brand!=="Keches Law Group"||p.status==="expired"||p.status==="eligible"||p.market!==rep.dma||!p.flight||!matchPost(p.flight))return;boards.push({unit:p.unit,type:p.media||"",size:p.size||"",vendor:p.vendor||"",loc:p.location||"",lat:p.lat||null,lng:p.lng||null})});
