@@ -9,8 +9,8 @@ const D_I=[["NSHWK2615006R","Auto Accident V2_15","Radio","Wettermark Keith","NS
 ["BOSKE2615005R","Right Here 2_15","Radio","Keches Law Group","BOS","15","R",true,"Local","",""],
 ["BOSKE2630001R","Big Results ALT_30","Radio","Keches Law Group","BOS","30","R",true,"Results","",""],
 ["BOSKE2630002R","Providence_30","Radio","Keches Law Group","BOS","30","R",true,"Local","",""],
-["BOSKE2650001R","Big Number_50","Radio","Keches Law Group","BOS","50","R",true,"Results","",""],
-["BOSKE2650002R","Big Results_50","Radio","Keches Law Group","BOS","50","R",true,"Results","",""],
-["BOSKE2650003R","Union 1_50","Radio","Keches Law Group","BOS","50","R",true,"Workers Comp","",""],
-["BOSKE2650004R","Union 2_50","Radio","Keches Law Group","BOS","50","R",true,"Workers Comp","",""],
-["BOSKE2650005R","Largest Verdict_50","Radio","Keches Law Group","BOS","50","R",true,"Results","",""]];
+["BOSKE2630003R","Big Number_30","Radio","Keches Law Group","BOS","30","R",true,"Results","",""],
+["BOSKE2630004R","Big Results_30","Radio","Keches Law Group","BOS","30","R",true,"Results","",""],
+["BOSKE2630005R","Union 1_30","Radio","Keches Law Group","BOS","30","R",true,"Workers Comp","",""],
+["BOSKE2630006R","Union 2_30","Radio","Keches Law Group","BOS","30","R",true,"Workers Comp","",""],
+["BOSKE2630007R","Largest Verdict_30","Radio","Keches Law Group","BOS","30","R",true,"Results","",""]];
