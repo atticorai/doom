@@ -17,4 +17,17 @@ const D_I=[["NSHWK2615006R","Auto Accident V2_15","Radio","Wettermark Keith","NS
 ["BOSKE2630004R","Big Results_30","Radio","Keches Law Group","BOS","30","R",true,"Results","",""],
 ["BOSKE2630005R","Union 1_30","Radio","Keches Law Group","BOS","30","R",true,"Workers Comp","",""],
 ["BOSKE2630006R","Union 2_30","Radio","Keches Law Group","BOS","30","R",true,"Workers Comp","",""],
-["BOSKE2630007R","Largest Verdict_30","Radio","Keches Law Group","BOS","30","R",true,"Results","",""]];
+["BOSKE2630007R","Largest Verdict_30","Radio","Keches Law Group","BOS","30","R",true,"Results","",""],
+["BOSKE2515001R","Boston Firm_15","Radio","Keches Law Group","BOS","15","R",true,"Local","",""],
+["BOSKE2515002R","Boston Firm 2_15","Radio","Keches Law Group","BOS","15","R",true,"Local","",""],
+["BOSKE2515003R","Branding 1_15","Radio","Keches Law Group","BOS","15","R",true,"Brand","",""],
+["BOSKE2515004R","Lifetime Of Labor_15","Radio","Keches Law Group","BOS","15","R",true,"Workers Comp","",""],
+["BOSKE2515005R","Local Lawyers 1_15","Radio","Keches Law Group","BOS","15","R",true,"Local","",""],
+["BOSKE2515006R","New England Hometown Firm V1_15","Radio","Keches Law Group","BOS","15","R",true,"Local","",""],
+["BOSKE2515007R","New England Hometown Firm V2_15","Radio","Keches Law Group","BOS","15","R",true,"Local","",""],
+["BOSKE2530001R","Branding 1_30","Radio","Keches Law Group","BOS","30","R",true,"Brand","",""],
+["BOSKE2530002R","New England Hometown Firm V1_30","Radio","Keches Law Group","BOS","30","R",true,"Local","",""],
+["BOSKE2530003R","New England Hometown Firm V2_30","Radio","Keches Law Group","BOS","30","R",true,"Local","",""],
+["BOSKE2530004R","Real Trial Lawyer_30","Radio","Keches Law Group","BOS","30","R",true,"Brand","",""],
+["BOSKE2530005R","Wear And Tear_30","Radio","Keches Law Group","BOS","30","R",true,"Workers Comp","",""],
+["BOSKE2530006R","New England Patriots Spot_30","Radio","Keches Law Group","BOS","30","R",true,"Brand","",""]];
