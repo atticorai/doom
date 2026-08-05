@@ -350,4 +350,27 @@ const D_P_NEW = [
   ["GAD-LMR-60051", "Centre", "GAD", "Lamar", "Poster", "10'6x22'9", "US 411 S/L .5 MI W/O AL 68", 43566, "2026-07-21", "", "Wettermark Keith", "Greg Benefield", "60051", "30495402", "5570867", "", "gad-lmr-60051", "gad-lmr-60051-b", "", ""],
   ["GAD-LMR-70018", "Anniston", "GAD", "Lamar", "Poster", "10'6x22'9", "AL 21 E/L 20' S/O \"M\" ST (T)S/F", 97220, "2026-07-23", "", "Wettermark Keith", "Greg Benefield", "70018", "350077", "5570867", "", "gad-lmr-70018", "gad-lmr-70018-b", "", ""],
 
+  // Reagan CHA digital campaign (Agreement lines 4-5, missed by the Addendum board
+  // list): two 3-month flights of 10 rotating digital displays — 8/10/2026 and
+  // 2/22/2027. Locations VARIOUS per contract; creative/ISCI assigned when art lands.
+  ["CHA-RGN-DIG-01","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #1 — Reagan selects locations",0,"2026-08-10","","Wettermark Keith","","TBD D1","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-02","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #2 — Reagan selects locations",0,"2026-08-10","","Wettermark Keith","","TBD D2","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-03","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #3 — Reagan selects locations",0,"2026-08-10","","Wettermark Keith","","TBD D3","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-04","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #4 — Reagan selects locations",0,"2026-08-10","","Wettermark Keith","","TBD D4","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-05","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #5 — Reagan selects locations",0,"2026-08-10","","Wettermark Keith","","TBD D5","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-06","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #6 — Reagan selects locations",0,"2026-08-10","","Wettermark Keith","","TBD D6","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-07","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #7 — Reagan selects locations",0,"2026-08-10","","Wettermark Keith","","TBD D7","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-08","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #8 — Reagan selects locations",0,"2026-08-10","","Wettermark Keith","","TBD D8","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-09","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #9 — Reagan selects locations",0,"2026-08-10","","Wettermark Keith","","TBD D9","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-10","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #10 — Reagan selects locations",0,"2026-08-10","","Wettermark Keith","","TBD D10","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-01-F2","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #1 · flight 2 — Reagan selects locations",0,"2027-02-22","","Wettermark Keith","","TBD D1","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-02-F2","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #2 · flight 2 — Reagan selects locations",0,"2027-02-22","","Wettermark Keith","","TBD D2","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-03-F2","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #3 · flight 2 — Reagan selects locations",0,"2027-02-22","","Wettermark Keith","","TBD D3","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-04-F2","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #4 · flight 2 — Reagan selects locations",0,"2027-02-22","","Wettermark Keith","","TBD D4","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-05-F2","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #5 · flight 2 — Reagan selects locations",0,"2027-02-22","","Wettermark Keith","","TBD D5","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-06-F2","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #6 · flight 2 — Reagan selects locations",0,"2027-02-22","","Wettermark Keith","","TBD D6","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-07-F2","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #7 · flight 2 — Reagan selects locations",0,"2027-02-22","","Wettermark Keith","","TBD D7","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-08-F2","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #8 · flight 2 — Reagan selects locations",0,"2027-02-22","","Wettermark Keith","","TBD D8","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-09-F2","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #9 · flight 2 — Reagan selects locations",0,"2027-02-22","","Wettermark Keith","","TBD D9","","Reagan-Chatt-2627","","","","",""],
+  ["CHA-RGN-DIG-10-F2","Chattanooga","CHA","Reagan Outdoor","Digital Bulletin","Various","Digital rotator #10 · flight 2 — Reagan selects locations",0,"2027-02-22","","Wettermark Keith","","TBD D10","","Reagan-Chatt-2627","","","","",""],
 ];
