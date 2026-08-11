@@ -2,10 +2,10 @@
 rem ================================================================
 rem  Wettermark Keith - new creative to ISCI rename (August 2026)
 rem
-rem  Free Consultation_5   ->  {MKT}WK2605003T
-rem  General PI_5          ->  {MKT}WK2605004T
+rem  Free Consultation_05  ->  {MKT}WK2605003T
+rem  General PI_05         ->  {MKT}WK2605004T
 rem  General PI_10         ->  {MKT}WK2610003T
-rem  It's About You_10     ->  {MKT}WK2610004T
+rem  It_s About You_10     ->  {MKT}WK2610004T
 rem
 rem  Same title = same sequence number in every market; only the
 rem  market prefix changes:
@@ -16,7 +16,7 @@ rem  double-click it. Missing or already-renamed files are reported.
 rem ================================================================
 setlocal
 echo.
-echo --- Free Consultation_5 ---
+echo --- Free Consultation_05 ---
 call :r "Free Consultation_BHAM_5" BRMWK2605003T
 call :r "Free Consultation_CHAT_5" CHAWK2605003T
 call :r "Free Consultation_DOTH_5" DHNWK2605003T
@@ -25,7 +25,7 @@ call :r "Free Consultation_KNOX_5" KNXWK2605003T
 call :r "Free Consultation_MONT_5" MTGWK2605003T
 call :r "Free Consultation_NASH_5" NSHWK2605003T
 echo.
-echo --- General PI_5 ---
+echo --- General PI_05 ---
 call :r "General PI_BHAM_5" BRMWK2605004T
 call :r "General PI_CHAT_5" CHAWK2605004T
 call :r "General PI_DOTH_5" DHNWK2605004T
