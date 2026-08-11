@@ -14,7 +14,28 @@ try{console.log("%c⚡ DOOM build: "+__APP_VERSION__,"background:#1e1233;color:#
 const escHtml=(v)=>String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 // Supabase public URLs open inline; ?download forces a file download (the
 // <a download> attr is ignored cross-origin). Firebase URLs already download.
-const dlUrl=(u)=>!u?u:(/supabase\.co/.test(u)?u+(u.includes("?")?"&":"?")+"download":u);
+// Download-name map: code -> title, so every creative download saves as
+// "CODE - Title.ext" instead of a bare ISCI code nobody can identify.
+// Seeded from the D_I registry at load; App refreshes it whenever the live
+// ISCI list changes so edited titles carry into download names.
+const ISCI_TITLE_MAP={};
+try{D_I.forEach(r=>{if(r[0])ISCI_TITLE_MAP[r[0]]=r[1]||""})}catch(e){}
+const dlUrl=(u,name)=>{
+  if(!u||!/supabase\.co/.test(u))return u;
+  let fn=name;
+  if(!fn){
+    // Storage objects are keyed by ISCI code (creative/CODE.ext) — parse the
+    // code out of the URL and attach its title to the download name.
+    const base=decodeURIComponent(String(u).split("?")[0].split("/").pop()||"");
+    const code=base.replace(/\.[^.]+$/,"");
+    const title=ISCI_TITLE_MAP[code];
+    if(title)fn=code+" - "+title;
+  }
+  if(!fn)return u+(u.includes("?")?"&":"?")+"download";
+  const ext=(String(u).split("?")[0].match(/\.([a-z0-9]+)$/i)||[,""])[1];
+  if(ext&&!fn.toLowerCase().endsWith("."+ext.toLowerCase()))fn+="."+ext;
+  return u+(u.includes("?")?"&":"?")+"download="+encodeURIComponent(fn.replace(/[\/\\]/g,"-"));
+};
 
 // Server-side auth verification. On successful login, /api/auth may return a
 // Firebase Auth custom token (when FIREBASE_ADMIN_KEY is set on the server) —
@@ -1630,6 +1651,10 @@ const App=()=>{
     }).catch(e=>{console.warn("oohSheets load failed:",e);if(alive)setOohSheets({})});
     return()=>{alive=false};
   },[pg,dbLoaded,oohSheets]);
+  // Keep download names honest: refresh the code->title map behind dlUrl
+  // whenever the live ISCI list changes, so downloads always save as
+  // "CODE - Title.ext" with the current title.
+  React.useEffect(()=>{try{iscis.forEach(i=>{if(i&&i.code)ISCI_TITLE_MAP[i.code]=i.title||ISCI_TITLE_MAP[i.code]||""})}catch(e){}},[iscis]);
   // Store a generated OOH sheet (fire-and-forget) + prime the in-memory cache
   // so the Library shows it immediately in this session.
   const saveOohSheet=React.useCallback((recTs,html)=>{
@@ -4533,7 +4558,7 @@ const App=()=>{
       const mkts=[...new Set(scope.map(p=>oohMarket(p.dma)))].sort();let grand=0;let hasPosters=false;
       // Resolve one clickable creative for a concept — code-first, title fallback (mirrors boardCreative).
       const resolveArt=(concept,code)=>{let m=code?iscis.find(i=>i.code===code):null;if(!m||!m.fileUrl){const mm=iscis.find(i=>i.suffix==="O"&&i.title&&String(i.title).toLowerCase().includes(String(concept).toLowerCase()));if(mm&&(mm.fileUrl||!m))m=mm}return m};
-      const linkCell=(label,m)=>m&&m.fileUrl?('<a href="'+escHtml(oohVendorDl(m.fileUrl,m.title||label))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(label)+'</a>'):('<b>'+escHtml(label)+'</b> <span style="color:#b00">⚠ no art uploaded</span>');
+      const linkCell=(label,m)=>m&&m.fileUrl?('<a href="'+escHtml(oohVendorDl(m.fileUrl,(m.code?m.code+" - ":"")+(m.title||label)))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(label)+'</a>'):('<b>'+escHtml(label)+'</b> <span style="color:#b00">⚠ no art uploaded</span>');
       mkts.forEach((mk,mi)=>{const all=scope.filter(p=>oohMarket(p.dma)===mk);
         // TBD/rotary program lines are broken out SEPARATELY (they have no fixed
         // panel, location, or assigned creative) — mirroring the contract's own
@@ -4897,7 +4922,7 @@ const App=()=>{
           if(oComments)w.document.write(hd("Comments",oComments));
           // Link each line's creative to its uploaded ISCI artwork (match by ISCI code,
           // else by title) so the vendor gets clickable creative files in the sheet.
-          const _lnk=(s)=>{const t=String(s||"").trim();if(!t)return"";const code=t.split(" - ")[0].trim();let m=iscis.find(i=>i.code===code);if(!m){const low=t.toLowerCase();m=iscis.find(i=>i.title&&(low.includes(i.title.toLowerCase())||i.title.toLowerCase().includes(low)))}return(m&&m.fileUrl)?'<a href="'+escHtml(oohVendorDl(m.fileUrl,m.title||code))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(t)+'</a>':escHtml(t)};
+          const _lnk=(s)=>{const t=String(s||"").trim();if(!t)return"";const code=t.split(" - ")[0].trim();let m=iscis.find(i=>i.code===code);if(!m){const low=t.toLowerCase();m=iscis.find(i=>i.title&&(low.includes(i.title.toLowerCase())||i.title.toLowerCase().includes(low)))}return(m&&m.fileUrl)?'<a href="'+escHtml(oohVendorDl(m.fileUrl,m.title?m.code+" - "+m.title:m.code))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(t)+'</a>':escHtml(t)};
           if(hasPanel){
             w.document.write("<table><thead><tr><th>Flight Dates</th><th>Unit #</th><th>DMA</th><th>Location</th><th>ISCI / Creative</th><th>Notes</th></tr></thead><tbody>");
             oLines.filter(l=>l.panel||l.isci).forEach(l=>{const bd=vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel);w.document.write("<tr><td><b>"+escHtml(l.flight||oPostDates||"")+"</b></td><td style='font-family:monospace;font-weight:700'>"+escHtml(l.panel||"")+"</td><td>"+escHtml(bd?bd.dma:"")+"</td><td style='font-size:10px'>"+escHtml(bd?bd.loc:"")+"</td><td>"+_lnk(l.isci)+"</td><td>"+escHtml(l.notes||"")+"</td></tr>")});
