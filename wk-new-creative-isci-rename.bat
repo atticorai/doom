@@ -5,7 +5,7 @@ rem
 rem  Free Consultation_05  ->  {MKT}WK2605003T
 rem  General PI_05         ->  {MKT}WK2605004T
 rem  General PI_10         ->  {MKT}WK2610003T
-rem  It_s About You_10     ->  {MKT}WK2610004T
+rem  It's About You_10     ->  {MKT}WK2610004T
 rem
 rem  Same title = same sequence number in every market; only the
 rem  market prefix changes:
@@ -43,7 +43,7 @@ call :r "General PI_KNOX_10" KNXWK2610003T
 call :r "General PI_MONT_10" MTGWK2610003T
 call :r "General PI_NASH_10" NSHWK2610003T
 echo.
-echo --- It_s About You_10 ---
+echo --- It's About You_10 ---
 call :r "It_s About You_BHAM_10" BRMWK2610004T
 call :r "It_s About You_CHAT_10" CHAWK2610004T
 call :r "It_s About You_DOTH_10" DHNWK2610004T
