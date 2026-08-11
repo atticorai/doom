@@ -1609,6 +1609,34 @@ const App=()=>{
   const[libSearch2,setLibSearch2]=useState("");
   const[libShowArchived,setLibShowArchived]=useState(false);
   const[libBrand,setLibBrand]=useState("Postman Law");
+  // OOH sheets — the EXACT HTML captured the moment an OOH traffic sheet was
+  // generated (oohSheets collection, one doc per trafficHistory record, keyed
+  // by the record's ts). The Library shows these verbatim so an OOH record
+  // always looks the way it did when first generated. Loaded once, lazily,
+  // the first time the Library opens. null = not loaded yet.
+  const[oohSheets,setOohSheets]=useState(null);
+  React.useEffect(()=>{
+    if(pg!=="library"||!dbLoaded||oohSheets!==null)return;
+    let alive=true;
+    db.collection("oohSheets").get().then(snap=>{
+      const m={};
+      snap.forEach(d=>{
+        const raw=d.data&&d.data();if(!raw)return;
+        // Supabase shim wraps the payload as {data,ts}; Firestore returns it flat.
+        const p=(raw.html===undefined&&raw.data&&typeof raw.data==="object")?raw.data:raw;
+        if(p&&p.html&&p.recTs)m[p.recTs]=p.html;
+      });
+      if(alive)setOohSheets(m);
+    }).catch(e=>{console.warn("oohSheets load failed:",e);if(alive)setOohSheets({})});
+    return()=>{alive=false};
+  },[pg,dbLoaded,oohSheets]);
+  // Store a generated OOH sheet (fire-and-forget) + prime the in-memory cache
+  // so the Library shows it immediately in this session.
+  const saveOohSheet=React.useCallback((recTs,html)=>{
+    try{db.collection("oohSheets").doc("OOH_"+recTs).set({html:html,recTs:recTs,ts:Date.now()}).catch(e=>console.warn("OOH sheet save failed:",e))}
+    catch(e){console.warn("OOH sheet save failed:",e)}
+    setOohSheets(p=>p?{...p,[recTs]:html}:p);
+  },[]);
   const[trafBrand,setTrafBrand]=useState("Postman Law");
   const[isciBrand,setIsciBrand]=useState("Postman Law");
   const[estBrand,setEstBrand]=useState("Postman Law");
@@ -4367,7 +4395,11 @@ const App=()=>{
       // off the Tuscaloosa contract (5570957) so nothing in the data has to move.
       const sheetMarket=(p)=>String(p.contract)==="5570957"?"Tuscaloosa":oohMarket(p.dma);
       const dmasIn=[...new Set(scope.map(p=>sheetMarket(p)))].sort();
-      const w=window.open("","","width=1000,height=820");
+      // Buffer every write so the EXACT sheet can be stored and re-shown
+      // verbatim by the Traffic Library (oohSheets collection).
+      const wWin=window.open("","","width=1000,height=820");
+      let _oohHtml="";
+      const w={document:{write:s=>{_oohHtml+=s},close:()=>{if(wWin){wWin.document.write(_oohHtml);wWin.document.close()}}}};
       w.document.write('<html><head><title>WK OOH Traffic — '+escHtml(mktLabel)+' — '+escHtml(vendorName)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}.sub{margin-top:8px;font-size:12px;font-weight:bold;color:#444;border-bottom:2px solid #999}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:8px;font-size:11px;font-weight:bold}@media print{body{margin:14px}.dl{display:none}table{page-break-inside:auto}tr{page-break-inside:avoid}}</style></head><body>');
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
       w.document.write('<div style="text-align:center;margin-bottom:12px"><h2>WETTERMARK KEITH</h2><div class="tag">PERSONAL INJURY LAWYERS — OOH TRAFFIC INSTRUCTIONS'+(resendOnly?' · <span style="color:#b00">REVISION — CORRECTED CREATIVE ONLY</span>':'')+'</div></div>');
@@ -4462,7 +4494,10 @@ const App=()=>{
       w.document.write('<div class="nt">Note: Please return signed Traffic Instructions or confirm receipt by email within 24 hours.</div>');
       w.document.write('</body></html>');w.document.close();
       const isciLines=scope.map(p=>({code:p.isci||p.panel,title:(Array.isArray(p.design)?p.design.join(" / "):""),dur:p.size||"",pct:"",sched:oPostDates||"",bookend:"",units:""}));
-      setTrafficHistory(prev=>[{ts:new Date().toISOString(),est:"OOH-"+mktLabel+"-"+vendorName,brand:"Wettermark Keith",market:mktLabel,media:"OOH",buyer:"Amy Coffey",month:workMonth,flight:oPostDates,version:oVersion,comments:(oComments||"")+" | Vendor: "+vendorName,iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:grand,vendor:vendorName},...prev]);
+      const recTs=new Date().toISOString();
+      // Strip the on-screen print button from the stored copy — it's popup chrome, not sheet content.
+      saveOohSheet(recTs,_oohHtml.replace('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>',''));
+      setTrafficHistory(prev=>[{ts:recTs,est:"OOH-"+mktLabel+"-"+vendorName,brand:"Wettermark Keith",market:mktLabel,media:"OOH",buyer:"Amy Coffey",month:workMonth,flight:oPostDates,version:oVersion,comments:(oComments||"")+" | Vendor: "+vendorName,iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:grand,vendor:vendorName},...prev]);
       log("OOH Vendor Sheet",mktLabel+" · "+vendorName+" · "+grand+" boards");notify("Vendor traffic sheet — "+grand+" boards");
     };
     // CARD TRAFFIC REPORT — read-only. Pulls each board's ALREADY-ASSIGNED creative
@@ -4846,7 +4881,11 @@ const App=()=>{
         const printOoh=()=>{
           const vLabel=trafficVendor||"All Vendors";
           const hasPanel=oLines.some(l=>l.panel);
-          const w=window.open("","","width=900,height=700");
+          // Buffer every write so the EXACT sheet can be stored and re-shown
+          // verbatim by the Traffic Library (oohSheets collection).
+          const wWin=window.open("","","width=900,height=700");
+          let _oohHtml="";
+          const w={document:{write:s=>{_oohHtml+=s},close:()=>{if(wWin){wWin.document.write(_oohHtml);wWin.document.close()}}},print:()=>{if(wWin)wWin.print()}};
           w.document.write("<html><head><title>OOH Traffic - "+escHtml(dmaLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
           w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">WETTERMARK KEITH</h2><div style="font-weight:bold;color:#555">PERSONAL INJURY LAWYERS</div></div>');
           const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
@@ -4875,7 +4914,9 @@ const App=()=>{
           log("OOH Traffic Generated",dmaLabel+" - "+vLabel+" - "+(hasPanel?totalPanels+" panels":totalUnits+" units"));
           notify("OOH traffic sheet generated - "+vLabel);
           const isciLines=oLines.filter(l=>l.isci||l.panel).map(l=>({code:l.panel||l.isci,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}));
-          setTrafficHistory(p=>[{ts:new Date().toISOString(),est:"OOH-"+dmaLabel+"-"+(trafficVendor||"ALL"),brand:"Wettermark Keith",market:dmaLabel,media:"OOH",buyer:"Amy Coffey",month:workMonth,flight:oPostDates,version:oVersion,comments:oComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor},...p]);
+          const recTs=new Date().toISOString();
+          saveOohSheet(recTs,_oohHtml);
+          setTrafficHistory(p=>[{ts:recTs,est:"OOH-"+dmaLabel+"-"+(trafficVendor||"ALL"),brand:"Wettermark Keith",market:dmaLabel,media:"OOH",buyer:"Amy Coffey",month:workMonth,flight:oPostDates,version:oVersion,comments:oComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor},...p]);
         };
         const assignAll=(isciVal)=>{setOLines(p=>p.map(l=>l.panel&&!l.isci?{...l,isci:isciVal}:l))};
         return<Cd style={{padding:12}}>
@@ -5411,7 +5452,11 @@ const App=()=>{
         const printOoh=()=>{
           const vLabel=trafficVendor||"All Vendors";
           const hasPanel=plOLines.some(l=>l.panel);
-          const w=window.open("","","width=900,height=700");
+          // Buffer every write so the EXACT sheet can be stored and re-shown
+          // verbatim by the Traffic Library (oohSheets collection).
+          const wWin=window.open("","","width=900,height=700");
+          let _oohHtml="";
+          const w={document:{write:s=>{_oohHtml+=s},close:()=>{if(wWin){wWin.document.write(_oohHtml);wWin.document.close()}}},print:()=>{if(wWin)wWin.print()}};
           w.document.write("<html><head><title>OOH Traffic - PL "+escHtml(mktLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
           w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">POSTMAN LAW</h2></div>');
           const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
@@ -5437,7 +5482,9 @@ const App=()=>{
           log("OOH Traffic Generated","PL "+mktLabel+" - "+vLabel+" - "+(hasPanel?totalPanels+" panels":totalUnits+" units"));
           notify("PL OOH traffic sheet generated - "+vLabel);
           const isciLines=plOLines.filter(l=>l.isci||l.panel).map(l=>({code:l.panel||l.isci,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}));
-          setTrafficHistory(p=>[{ts:new Date().toISOString(),est:"OOH-PL-"+mktLabel+"-"+(trafficVendor||"ALL"),brand:"Postman Law",market:mktLabel,media:"OOH",buyer:"Ken Lazar",month:workMonth,flight:plOPostDates,version:plOVersion,comments:plOComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor},...p]);
+          const recTs=new Date().toISOString();
+          saveOohSheet(recTs,_oohHtml);
+          setTrafficHistory(p=>[{ts:recTs,est:"OOH-PL-"+mktLabel+"-"+(trafficVendor||"ALL"),brand:"Postman Law",market:mktLabel,media:"OOH",buyer:"Ken Lazar",month:workMonth,flight:plOPostDates,version:plOVersion,comments:plOComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor},...p]);
         };
         const assignAll=(isciVal)=>{setPlOLines(p=>p.map(l=>l.panel&&!l.isci?{...l,isci:isciVal}:l))};
         return<Cd style={{padding:12}}>
@@ -5875,10 +5922,10 @@ const App=()=>{
   // If this modal were redefined each App render it would remount and WIPE
   // the user's in-progress edits (the "dates won't save" bug). We create the
   // component once in a ref and feed it fresh App data through _etmLive.
-  const _etmLive=React.useRef({});_etmLive.current={trafficHistory,setTrafficHistory,iscis,log,notify};
+  const _etmLive=React.useRef({});_etmLive.current={trafficHistory,setTrafficHistory,iscis,log,notify,setOohSheets};
   const _etmRef=React.useRef(null);
   if(!_etmRef.current)_etmRef.current=({editIdx,onClose})=>{
-    const{trafficHistory,setTrafficHistory,iscis,log,notify}=_etmLive.current;
+    const{trafficHistory,setTrafficHistory,iscis,log,notify,setOohSheets}=_etmLive.current;
     const eh=trafficHistory[editIdx];
     const SCHED_OPTS=["M-F Schedule","Weekend Schedule","M-F Bookend","Weekend Bookend","All Week","Holiday Only"];
     const[editIscis,setEditIscis]=useState(()=>JSON.parse(JSON.stringify(eh?.iscis||[])));
@@ -5932,6 +5979,12 @@ const App=()=>{
       const validIscis=editIscis.filter(r=>r.code&&r.code.trim());
       if(!validIscis.length){alert("Cannot save — no ISCIs with codes. Add at least one ISCI.");return}
       setTrafficHistory(p=>p.map((h,i)=>i===editIdx?{...h,iscis:validIscis,month:editMeta.month,flight:editMeta.flight,version:editMeta.version,comments:editMeta.comments}:h));
+      if(eh.isOoh&&eh.ts){
+        // The generation-time sheet snapshot no longer matches the edited
+        // record — drop it so the Library rebuilds from the record itself.
+        try{db.collection("oohSheets").doc("OOH_"+eh.ts).delete().catch(()=>{})}catch(_e){}
+        if(setOohSheets)setOohSheets(p=>{if(!p||!p[eh.ts])return p;const n={...p};delete n[eh.ts];return n});
+      }
       log("Traffic Edited",eh.brand+" "+eh.market+" "+eh.media+" "+editMeta.month);
       notify("Traffic updated — "+validIscis.length+" ISCIs");
       onClose();
@@ -9000,7 +9053,11 @@ Rules:
         const printOoh=()=>{
           const vLabel=trafficVendor||"All Vendors";
           const hasPanel=plOLines.some(l=>l.panel);
-          const w=window.open("","","width=900,height=700");
+          // Buffer every write so the EXACT sheet can be stored and re-shown
+          // verbatim by the Traffic Library (oohSheets collection).
+          const wWin=window.open("","","width=900,height=700");
+          let _oohHtml="";
+          const w={document:{write:s=>{_oohHtml+=s},close:()=>{if(wWin){wWin.document.write(_oohHtml);wWin.document.close()}}},print:()=>{if(wWin)wWin.print()}};
           w.document.write("<html><head><title>OOH Traffic - PL "+escHtml(mktLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
           w.document.write('<div style="text-align:center;margin-bottom:20px"><img src="'+(typeof LOGO_LR!=="undefined"?LOGO_LR:"")+'" style="height:56px;max-width:440px"/></div>');
           const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
@@ -9026,7 +9083,10 @@ Rules:
           log("OOH Traffic Generated","PL "+mktLabel+" - "+vLabel+" - "+(hasPanel?totalPanels+" panels":totalUnits+" units"));
           notify("PL OOH traffic sheet generated - "+vLabel);
           const isciLines=plOLines.filter(l=>l.isci||l.panel).map(l=>({code:l.panel||l.isci,title:l.isci||"",dur:"",pct:l.units?l.units+" units":"",sched:l.flight||"",bookend:"",units:l.units||""}));
-          setTrafficHistory(p=>[{ts:new Date().toISOString(),est:"OOH-LR-"+mktLabel+"-"+(trafficVendor||"ALL"),brand:"Lerner & Rowe",market:mktLabel,media:"OOH",buyer:"Atticor Media",month:workMonth,flight:plOPostDates,version:plOVersion,comments:plOComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor},...p]);
+          const recTs=new Date().toISOString();
+          // Store with the logo tokenized so each saved sheet doesn't carry the base64.
+          saveOohSheet(recTs,(typeof LOGO_LR!=="undefined"&&LOGO_LR)?_oohHtml.split(LOGO_LR).join("{{LOGO_LR}}"):_oohHtml);
+          setTrafficHistory(p=>[{ts:recTs,est:"OOH-LR-"+mktLabel+"-"+(trafficVendor||"ALL"),brand:"Lerner & Rowe",market:mktLabel,media:"OOH",buyer:"Atticor Media",month:workMonth,flight:plOPostDates,version:plOVersion,comments:plOComments+(trafficVendor?" | Vendor: "+trafficVendor:""),iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:hasPanel?totalPanels:totalUnits,vendor:trafficVendor},...p]);
         };
         const assignAll=(isciVal)=>{setPlOLines(p=>p.map(l=>l.panel&&!l.isci?{...l,isci:isciVal}:l))};
         return<Cd style={{padding:12}}>
@@ -12209,6 +12269,7 @@ Rules:
         <p>The Library archives every rotation ever built. Use brand tabs to switch between PL and WK. Coverage tracking (green checks / red X's per market × month) lives on the Traffic Tracker page.</p>
         <p>By default the Library shows only the current broadcast month and the prior month — everything older is archived. Toggle the "📦 Archived" pill in the search bar to reveal them. The cutoff updates automatically as the calendar rolls forward.</p>
         <p>Click any rotation to open it in the book viewer. From there you can re-send, copy to another month/market, edit metadata, or delete (admin password required for destructive actions). Stations are looked up fresh on every send, grouped by ownership, same rules as the Traffic Center. {trafficCount} rotation records archived across both brands.</p>
+        <p>OOH instructions open exactly as they were generated — the sheet's HTML is captured the moment you print it from the OOH Hub and re-displayed verbatim here (view, print, and PDF included). Editing an OOH record releases the snapshot so the Library reflects your edits instead.</p>
         <BookMarginNote author="meg">I remember every version. Every mistake.</BookMarginNote>
       </div>,damageEffects:<>{<BookHoofMark style={{bottom:16,left:16,opacity:.3,transform:"rotate(15deg) scale(.7)"}}/>}</>},
 
@@ -12521,7 +12582,67 @@ Rules:
             // what was sent / printed / emailed.
             const SCHED_COLORS_SHEET={"M-F Schedule":"#dbeafe","Weekend Schedule":"#fef3c7","M-F Bookend":"#ede9fe","Weekend Bookend":"#fce7f3","All Week":"#dcfce7","Holiday Only":"#fee2e2"};
             const SCHED_ORDER_SHEET=["M-F Schedule","M-F Bookend","Weekend Schedule","Weekend Bookend","All Week","Holiday Only"];
+            // OOH records must look EXACTLY the way they did when first
+            // generated. Preferred path: the verbatim HTML captured at
+            // generation time (oohSheets). Fallback for records generated
+            // before capture existed: rebuild in the SAME layout the OOH
+            // generators print (bordered table, Unit/Rot%/Unit Amounts
+            // columns) — never the broadcast-sheet layout.
+            const renderOohSheet=(h)=>{
+              const stored=oohSheets&&h.ts&&oohSheets[h.ts];
+              if(stored)return stored.split("{{LOGO_LR}}").join(typeof LOGO_LR!=="undefined"?LOGO_LR:"");
+              const brand=h.brand||"";
+              const vendorM=(h.comments||"").match(/\|\s*Vendor:\s*([^|]+)/);
+              const vendor=(h.vendor||(vendorM?vendorM[1]:"")).trim()||"All Vendors";
+              const comments=(h.comments||"").replace(/\s*\|\s*Vendor:[^|]*/,"").trim();
+              const lines=h.iscis||[];
+              // Board-detail sheets (WK vendor sheet) save size into dur; the
+              // unit/panel builders never do. Panel mode: code is the unit #,
+              // title is the ISCI/creative string; unit mode saves them equal.
+              const isBoard=lines.some(r=>r&&r.dur&&r.dur!=="OOH");
+              // Imported sheets store code and title separately (and carry a
+              // per-line `name`) — they're unit-amount sheets, never panel mode.
+              const isImported=h.imported===true||lines.some(r=>r&&r.name!==undefined);
+              const hasPanel=!isBoard&&!isImported&&lines.some(r=>r&&r.code&&r.title&&r.code!==r.title);
+              const withFaces=brand!=="Wettermark Keith";
+              let x='<html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;margin:30px;background:#fff;color:#1a1a1a}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}</style></head><body>';
+              if(brand==="Wettermark Keith")x+='<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">WETTERMARK KEITH</h2><div style="font-weight:bold;color:#555">PERSONAL INJURY LAWYERS</div></div>';
+              else if(brand==="Lerner & Rowe")x+='<div style="text-align:center;margin-bottom:20px"><img src="'+(typeof LOGO_LR!=="undefined"?LOGO_LR:"")+'" style="height:56px;max-width:440px"/></div>';
+              else x+='<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">'+escHtml(brand.toUpperCase())+'</h2></div>';
+              const hdo=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v==null?"":String(v))+'</span></div>';
+              x+=hdo("Agency",brand==="Wettermark Keith"?"Atticor Group LLC":"Atticor");
+              x+=hdo("Client",brand);
+              x+=hdo("Market",h.market||"");
+              x+=hdo("Vendor",vendor,"amb");
+              x+=hdo("Buyer",h.buyer||"","red");
+              x+=hdo("Media","OOH","red");
+              x+=hdo("Broadcast Month",h.month||"","grn");
+              x+=hdo("Post Dates",h.postDates||h.flight||"TBD","grn");
+              x+=hdo("Version/ Links",h.versionLinks||h.version||"");
+              if(comments)x+=hdo("Comments",comments);
+              if(isBoard){
+                x+='<table><thead><tr><th>Post Dates</th><th>ISCI</th><th>Creative</th><th>H x W</th></tr></thead><tbody>';
+                lines.forEach(r=>{x+='<tr><td><b>'+escHtml(r.sched||h.flight||"")+'</b></td><td style="font-family:monospace;font-weight:700">'+escHtml(r.code||"")+'</td><td>'+escHtml(r.title||"")+'</td><td>'+escHtml(r.dur||"")+'</td></tr>'});
+                x+='</tbody></table>';
+                if(h.totalUnits)x+='<div style="margin-top:8px;font-size:12px"><b>Total boards:</b> '+h.totalUnits+'</div>';
+              }else if(hasPanel){
+                x+='<table><thead><tr><th>Flight Dates</th><th>Unit #</th><th>'+(brand==="Wettermark Keith"?"DMA":"Market")+'</th><th>Location</th><th>ISCI / Creative</th>'+(withFaces?'<th>Face #s</th>':'')+'<th>Notes</th></tr></thead><tbody>';
+                lines.forEach(r=>{x+='<tr><td><b>'+escHtml(r.sched||h.flight||"")+'</b></td><td style="font-family:monospace;font-weight:700">'+escHtml(r.code||"")+'</td><td></td><td style="font-size:10px"></td><td>'+escHtml(r.title||"")+'</td>'+(withFaces?'<td style="font-family:monospace;font-size:10px"></td>':'')+'<td></td></tr>'});
+                x+='</tbody></table>';
+                if(h.totalUnits)x+='<div style="margin-top:6px;font-size:11px"><b>Total Panels:</b> '+h.totalUnits+'</div>';
+              }else{
+                x+='<table><thead><tr><th>Flight Dates</th><th>ISCI Codes &amp; Title</th><th>Market</th><th>Rot %</th><th>Unit Amounts</th>'+(withFaces?'<th>Face Numbers</th>':'')+'<th>Notes</th></tr></thead><tbody>';
+                lines.forEach(r=>{const label=(r.code&&r.title&&r.code!==r.title)?(r.code+" - "+r.title):(r.title||r.code||"");x+='<tr><td><b>'+escHtml(r.sched||h.flight||"")+'</b></td><td>'+escHtml(label)+'</td><td>'+escHtml(h.market||"")+'</td><td style="text-align:center;font-weight:700"></td><td style="text-align:center;font-weight:700">'+escHtml(r.units||"")+'</td>'+(withFaces?'<td style="font-family:monospace;font-size:10px"></td>':'')+'<td></td></tr>'});
+                x+='</tbody></table>';
+                if(h.totalUnits)x+='<div style="margin-top:6px;font-size:11px"><b>Total Units:</b> '+h.totalUnits+'</div>';
+              }
+              x+='<div class="sig"><div>Accepted by:</div><div>Date:</div></div>';
+              x+='<div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div>';
+              x+='</body></html>';
+              return x;
+            };
             const renderSheet=(h)=>{
+              if(h.isOoh)return renderOohSheet(h);
               const code=h.brand==="Postman Law"?"PL":"WK";
               const bc=getBrandColor(code);const bcBg=getBrandBg(code);
               const logo=code==="PL"?LOGO_PL:LOGO_WK;
@@ -12690,7 +12811,7 @@ Rules:
                 const _cmF=CALENDAR.find(c=>String(c.month).toLowerCase()===String(h.month||"").trim().split(/\s+/)[0].toLowerCase());
                 const flightDates=_cmF?(fDs(_cmF.bcStart)+" - "+fDs(_cmF.bcEnd)):(h.flight||"");
                 const sheetHtml=data[idx]?.sheetHtml||"";
-                let pdfUri="";try{pdfUri=(h.media==="Streaming Audio"||h.media==="Digital Streaming")?buildStreamPdfFromRec({...h,flight:flightDates}):await generatePdfBase64(sheetHtml,{...h,flight:flightDates})}catch(pe){notify("PDF gen failed: "+pe.message);return}
+                let pdfUri="";try{pdfUri=(h.media==="Streaming Audio"||h.media==="Digital Streaming")?buildStreamPdfFromRec({...h,flight:flightDates}):await generatePdfBase64(sheetHtml,h.isOoh?null:{...h,flight:flightDates})}catch(pe){notify("PDF gen failed: "+pe.message);return}
                 const mktName=DM[h.market]||h.market||"";
                 const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+mktName.replace(/\s/g,"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
                 const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const hMedias=String(h.media||"").split(/\s*\/\s*/).map(x=>x.trim().toLowerCase()).filter(Boolean);const sMedia=String(s.media||"").toLowerCase();if(hMedias.length&&!hMedias.includes(sMedia))return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
@@ -12737,7 +12858,7 @@ Rules:
                 const flightDates=_cmF?(fDs(_cmF.bcStart)+" - "+fDs(_cmF.bcEnd)):(h.flight||"");
                 const hPdf={...h,flight:flightDates};
                 const sheetHtml=data[idx]?.sheetHtml||"";
-                let pdfB64="";try{const pdfUri=(h.media==="Streaming Audio"||h.media==="Digital Streaming")?buildStreamPdfFromRec(hPdf):await generatePdfBase64(sheetHtml,hPdf);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
+                let pdfB64="";try{const pdfUri=(h.media==="Streaming Audio"||h.media==="Digital Streaming")?buildStreamPdfFromRec(hPdf):await generatePdfBase64(sheetHtml,h.isOoh?null:hPdf);pdfB64=pdfUri.split(",")[1]||""}catch(pe){console.warn("PDF gen failed:",pe)}
                 const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+mktName.replace(/\s/g,"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
                 const linkedStations=stations.filter(s=>{const mk=normMkt(s.market)||s.market;const hm=normMkt(h.market)||h.market;if(mk!==hm)return false;const hMedias=String(h.media||"").split(/\s*\/\s*/).map(x=>x.trim().toLowerCase()).filter(Boolean);const sMedia=String(s.media||"").toLowerCase();if(hMedias.length&&!hMedias.includes(sMedia))return false;const est=(h.est||"").split(/\s*[+\/]\s*/).map(x=>x.trim()).filter(Boolean);const linked=staEstLinks[staKey(s)]||[];return est.some(n=>linked.includes(n))});
                 if(h.media==="Streaming Audio"||h.media==="Digital Streaming"){
@@ -12890,7 +13011,7 @@ Rules:
                 }
                 notify("Unknown target: '"+t+"'. Type a month name or 3-letter market code.");
               },
-              delete:async(idx)=>{const h=trafficHistory[idx];if(!h)return;const pw=prompt("Admin password to delete traffic:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok){alert("Wrong password");return}if(!confirm("Delete "+h.brand+" "+h.market+" "+h.media+" "+h.month+"? This cannot be undone."))return;setTrafficHistory(p=>p.filter((_,j)=>j!==idx));log("Traffic Deleted",h.brand+" "+h.market+" "+h.media+" "+h.month);notify("Traffic deleted")},
+              delete:async(idx)=>{const h=trafficHistory[idx];if(!h)return;const pw=prompt("Admin password to delete traffic:");if(!pw)return;const ok=await verifyAuth(pw,"admin");if(!ok){alert("Wrong password");return}if(!confirm("Delete "+h.brand+" "+h.market+" "+h.media+" "+h.month+"? This cannot be undone."))return;setTrafficHistory(p=>p.filter((_,j)=>j!==idx));if(h.isOoh&&h.ts){try{db.collection("oohSheets").doc("OOH_"+h.ts).delete().catch(()=>{})}catch(_e){}setOohSheets(p=>{if(!p||!p[h.ts])return p;const n={...p};delete n[h.ts];return n})}log("Traffic Deleted",h.brand+" "+h.market+" "+h.media+" "+h.month);notify("Traffic deleted")},
               restoreFromBackup:async()=>{
                 // Pulls every available backup — the single "latest" backup plus
                 // the rotating 10-slot history from both Firestore and
