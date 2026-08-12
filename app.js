@@ -3414,7 +3414,8 @@ const App=()=>{
       if(isWKstream){
         const camp="WettermarkKeith_Nashville_"+vendorMode+"_"+currentYear+currentQuarter;
         const medium=vendorMode==="Paramount"?"Video_Streaming":"Streaming_Audio";
-        return"https://seriousinjury.wkfirm.com/nashville-personal-injury-lawyers?utm_source="+encodeURIComponent(vendorMode)+"&utm_medium="+medium+"&utm_content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent(camp);
+        const landing=vendorMode==="Paramount"?"https://seriousinjury.wkfirm.com/nashville-personal-injury-lawyers":"https://www.wkfirm.com/";
+        return landing+"?utm_source="+encodeURIComponent(vendorMode)+"&utm_medium="+medium+"&utm_content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent(camp);
       }
       const mktPath=market.toLowerCase().replace(/\s+/g,"");
       return"https://www.postmandelivers.com/"+mktPath+"/?UTM_Source=SiriusXM&UTM_Medium=Streaming_Audio&UTM_Content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent("Blackacre_KellerPostman_PostmanLawPI-"+market+"_"+currentYear+currentQuarter);
