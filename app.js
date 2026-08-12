@@ -3414,7 +3414,7 @@ const App=()=>{
       if(isWKstream){
         const camp="WettermarkKeith_Nashville_"+vendorMode+"_"+currentYear+currentQuarter;
         const medium=vendorMode==="Paramount"?"Video_Streaming":"Streaming_Audio";
-        const landing=vendorMode==="Paramount"?"https://seriousinjury.wkfirm.com/nashville-personal-injury-lawyers":"https://www.wkfirm.com/";
+        const landing="https://www.wkfirm.com/";
         return landing+"?utm_source="+encodeURIComponent(vendorMode)+"&utm_medium="+medium+"&utm_content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent(camp);
       }
       const mktPath=market.toLowerCase().replace(/\s+/g,"");
