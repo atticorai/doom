@@ -8,6 +8,7 @@ import {
   Send,
   Trash2,
   Copy,
+  Download,
   ChevronDown } from
 'lucide-react';
 import { Instruction, marketColors } from '../data/trafficData';
@@ -72,7 +73,7 @@ export function BookOpen({
   return (
     <AnimatePresence>
       <div
-        className={`fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-6 ${light ? 'bg-black/40' : 'bg-black/70'}`}
+        className={`fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-2 sm:p-6 ${light ? 'bg-black/40' : 'bg-black/70'}`}
         onClick={handleClose}>
         
         <motion.div
@@ -96,12 +97,12 @@ export function BookOpen({
             damping: 22,
             stiffness: 180
           }}
-          className={`w-full max-w-6xl h-[85vh] flex rounded-lg overflow-hidden ${light ? 'shadow-[0_0_40px_rgba(147,51,234,0.1),0_25px_50px_rgba(0,0,0,0.2)]' : 'shadow-[0_0_60px_rgba(200,80,192,0.15),0_25px_50px_rgba(0,0,0,0.5)]'}`}
+          className={`w-full max-w-6xl h-[92dvh] md:h-[85vh] flex flex-col md:flex-row rounded-lg overflow-hidden ${light ? 'shadow-[0_0_40px_rgba(147,51,234,0.1),0_25px_50px_rgba(0,0,0,0.2)]' : 'shadow-[0_0_60px_rgba(200,80,192,0.15),0_25px_50px_rgba(0,0,0,0.5)]'}`}
           onClick={(e) => e.stopPropagation()}>
           
           {/* LEFT PAGE — real traffic sheet HTML from the host app when
               available, otherwise the React-composed fallback. */}
-          <div className="flex-1 bg-white overflow-y-auto relative">
+          <div className="flex-1 min-h-0 bg-white overflow-y-auto relative">
             <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-300 to-transparent z-10 pointer-events-none"></div>
             {(instruction as any).sheetHtml ? (
               <iframe
@@ -283,12 +284,12 @@ export function BookOpen({
 
           {/* BOOK SPINE */}
           <div
-            className={`w-4 flex-shrink-0 ${light ? 'bg-gradient-to-r from-purple-200 via-purple-300 to-purple-200 shadow-[inset_0_0_8px_rgba(0,0,0,0.15)]' : 'bg-gradient-to-r from-underworld-700 via-underworld-900 to-underworld-700 shadow-[inset_0_0_10px_rgba(0,0,0,0.8)]'}`}>
+            className={`hidden md:block w-4 flex-shrink-0 ${light ? 'bg-gradient-to-r from-purple-200 via-purple-300 to-purple-200 shadow-[inset_0_0_8px_rgba(0,0,0,0.15)]' : 'bg-gradient-to-r from-underworld-700 via-underworld-900 to-underworld-700 shadow-[inset_0_0_10px_rgba(0,0,0,0.8)]'}`}>
           </div>
 
           {/* RIGHT PAGE — Actions */}
           <div
-            className={`w-80 flex flex-col relative overflow-hidden ${light ? 'bg-[#f8f0fc]' : 'bg-underworld-800'}`}>
+            className={`w-full md:w-80 flex-shrink-0 max-h-[45%] md:max-h-none flex flex-col relative overflow-y-auto md:overflow-hidden ${light ? 'bg-[#f8f0fc]' : 'bg-underworld-800'}`}>
             
             <div
               className={`absolute inset-0 opacity-5 pointer-events-none ${light ? 'bg-[radial-gradient(circle_at_30%_50%,rgba(147,51,234,0.2),transparent_70%)]' : 'bg-[radial-gradient(circle_at_30%_50%,rgba(200,80,192,0.3),transparent_70%)]'}`}>
@@ -387,6 +388,16 @@ export function BookOpen({
                   className={`group-hover:scale-110 transition-transform ${light ? 'text-amber-600' : 'text-magic-gold'}`} />
                 {' '}
                 Print
+              </button>
+              <button
+                onClick={() => fireAction('download')}
+                title="Download the traffic sheet as a PDF"
+                className={`w-full py-2.5 px-4 rounded border text-sm flex items-center gap-3 transition-colors group font-medium ${light ? 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100' : 'border-magic-gold/40 bg-magic-gold/10 text-magic-gold hover:bg-magic-gold/20'}`}>
+                <Download
+                  size={16}
+                  className="group-hover:scale-110 transition-transform" />
+                {' '}
+                Download PDF
               </button>
               <button
                 onClick={() => fireAction('preview')}

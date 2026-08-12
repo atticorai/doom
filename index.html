@@ -249,6 +249,38 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
 .book-parchment{color:#2a1a1a}
 .book-parchment button{border-color:transparent}
 .book-leather button{border-color:transparent}
+
+/* ═══ MOBILE / TABLET (phones + iPad portrait) ═══
+   Everything lives inside this media query — desktop layout is untouched.
+   The sidebar becomes a compact top bar with a horizontally scrolling nav,
+   wide tables pan sideways instead of crushing the page, and fixed
+   multi-column grids collapse to widths that fit a phone. */
+@media (max-width:880px){
+  /* App shell (main app + OOH Hub): column layout, nav strip on top.
+     100dvh instead of 100vh so iOS Safari's toolbar doesn't hide the bottom. */
+  .dd-shell{flex-direction:column !important;height:100dvh !important}
+  .dd-side{width:100% !important;flex-shrink:0 !important;border-right:none !important;border-bottom:1px solid rgba(155,123,176,.25) !important}
+  .dd-side-logo{display:none !important}
+  .dd-side nav{display:flex !important;flex-direction:row !important;flex:0 0 auto !important;overflow-x:auto !important;overflow-y:hidden !important;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .dd-side nav::-webkit-scrollbar{display:none}
+  .dd-side nav button{width:auto !important;flex:0 0 auto !important;white-space:nowrap !important;border-left:none !important;padding:10px 11px !important}
+  .dd-main{padding:12px 10px !important;overflow-x:hidden !important}
+  /* Wide tables scroll sideways inside their card instead of squishing */
+  .dd-main table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  /* Fixed multi-column grids collapse to fit a phone */
+  .dd-main div[style*="grid-template-columns: repeat(4,1fr)"],
+  .dd-main div[style*="grid-template-columns: repeat(5,1fr)"]{grid-template-columns:repeat(2,1fr) !important}
+  .dd-main div[style*="grid-template-columns: 1fr 1fr 1fr"]{grid-template-columns:1fr !important}
+  /* Header/toolbar rows wrap instead of overflowing off-screen */
+  .dd-main div[style*="display: flex"][style*="space-between"]{flex-wrap:wrap;row-gap:6px}
+  /* Modals and their tables fit the screen */
+  #R div[style*="position: fixed"]>div{max-width:calc(100vw - 16px) !important}
+  #R div[style*="position: fixed"] table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* Media never overflows the page */
+  .dd-main img,.dd-main video,.dd-main iframe{max-width:100%}
+  /* 16px inputs stop iOS Safari from auto-zooming the page on focus */
+  input,select,textarea{font-size:16px !important}
+}
 </style></head><body style="background:linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)"><div id="R"><div id="dd-loader" style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:'DM Sans',Arial,sans-serif">
 <div style="text-align:center">
 <div style="width:88px;height:88px;border-radius:18px;background:#1e1233;border:2px solid #9b7bb0;display:inline-flex;align-items:center;justify-content:center;position:relative;margin-bottom:28px">

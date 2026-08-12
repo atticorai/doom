@@ -9721,9 +9721,9 @@ Rules:
       </div>;
     };
     const calAlerts=(()=>{const now=new Date();const wk=new Date(now.getTime()+7*864e5);return OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length})();
-    return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",color:"#E8DFF0"}}>
-      <div style={{width:200,background:"linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
-        <div style={{padding:"14px 11px",borderBottom:"1px solid #2d1f42"}}>
+    return<div className="dd-shell" style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",color:"#E8DFF0"}}>
+      <div className="dd-side" style={{width:200,background:"linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
+        <div className="dd-side-logo" style={{padding:"14px 11px",borderBottom:"1px solid #2d1f42"}}>
           <div style={{fontSize:16,fontWeight:800,letterSpacing:1,color:"#D4A040"}}>OOH HUB</div>
           <div style={{fontSize:11,color:"#9B8EAD",letterSpacing:2,fontWeight:600}}>OUTDOOR MEDIA</div>
         </div>
@@ -9733,7 +9733,7 @@ Rules:
           <button onClick={()=>{navigateHash("");setPg("dash")}} style={{display:"flex",alignItems:"center",gap:6,width:"100%",padding:"6px 8px",border:"1px solid #4a3565",borderRadius:6,background:"transparent",color:"#9B8EAD",fontSize:13,fontWeight:600,cursor:"pointer"}}>← Back to D&D</button>
         </div>
       </div>
-      <div style={{flex:1,overflowY:"auto",padding:16}}>
+      <div className="dd-main" style={{flex:1,overflowY:"auto",padding:16}}>
         {subRoute==="wk"&&OohPg()}
         {/* PlOohPg/oohIsciPg own local hooks — render as components so each keeps
             its own hook scope. Bare-calling them conditionally changed OohHub's
@@ -12349,6 +12349,12 @@ Rules:
         <BookMarginNote author="muses">It saves itself, no button to press<br/>But heed the banners — avoid the mess!</BookMarginNote>
       </div>,damageEffects:<>{<BookDroolStain style={{bottom:16,left:24,width:72,height:72,opacity:.2}}/>}</>},
 
+      {title:"Phones & iPads",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>Doom & Deliverables works on small screens now (added 08/12/2026). On a phone or an iPad held upright, the sidebar becomes a compact bar across the top — the page list scrolls sideways in a strip, and the page itself fills the rest of the screen. Wide tables pan sideways with a swipe instead of crushing the layout. Nothing changes on a desktop.</p>
+        <p>In the Traffic Library, every instruction's book now has a <b>Download PDF</b> button on the right page. It saves the exact traffic-sheet PDF the Send pipeline builds — no popups, no print dialog — which makes it the reliable way to pull a sheet onto a phone or iPad. View and Print still work anywhere popups are allowed, and View falls back to opening the sheet in a new tab when they aren't.</p>
+        <BookMarginNote author="meg">Now you can bother me from anywhere. Wonderful.</BookMarginNote>
+      </div>,damageEffects:<>{<BookHoofMark style={{bottom:20,right:20,opacity:.25,transform:"rotate(10deg) scale(.7)"}}/>}</>},
+
       {title:"End of the Line",content:<div style={{display:"flex",flexDirection:"column",gap:14,textAlign:"center",paddingTop:24}}>
         <p style={{fontSize:17,fontFamily:"'Cinzel',serif",color:"#4a1a1a"}}>Thus concludes the operating manual for Doom & Deliverables.</p>
         <p style={{fontStyle:"italic",color:"#5a4a3a",fontSize:12}}>May your rotations total 100%, your confirmations come swiftly, and your ISCIs never drop below the safeguard.</p>
@@ -12549,12 +12555,12 @@ Rules:
     {modal?.type==="oohPhoto"&&<OohPhotoModal modal={modal}/>}
     {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#2d1f42",color:"#E8DFF0",padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.3)",zIndex:9999,border:"1px solid #4a3565"}}>{toast}</div>}
   </React.Fragment>;
-  return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",overflow:"hidden"}}>
+  return<div className="dd-shell" style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",overflow:"hidden"}}>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
     {syncError&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ A save just failed ({COL_LABEL(syncError.col)}) — your last change may NOT have been saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setSyncError(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
     {externalChange&&<div style={{position:"fixed",top:syncError?37:0,left:0,right:0,zIndex:9998,background:"#D4A040",color:"#1e1233",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ Updated in another session: {externalChange.map(COL_LABEL).join(", ")}. Reload before editing so you don't overwrite it. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #1e1233",background:"transparent",color:"#1e1233",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setExternalChange(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #1e1233",background:"transparent",color:"#1e1233",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
-    <div style={{width:200,background:"linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
-      <div style={{padding:"14px 12px 12px",borderBottom:"1px solid rgba(212,160,64,.15)"}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:36,height:36,borderRadius:8,background:"linear-gradient(135deg,#2d1f42,#1e1233)",border:"1.5px solid #D4A040",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 12px rgba(212,160,64,.15)"}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="url(#sflm)"/><defs><linearGradient id="sflm" x1="12" y1="3" x2="12" y2="22"><stop stopColor="#D4A040"/><stop offset=".5" stopColor="#C4A0C8"/><stop offset="1" stopColor="#9b7bb0"/></linearGradient></defs></svg></div><div><div style={{fontSize:15,fontWeight:800,color:"#D4A040",lineHeight:1,letterSpacing:1}}>ATTICOR</div><div style={{fontSize:7,color:"#9B8EAD",fontWeight:600,letterSpacing:1.5}}>DOOM & DELIVERABLES</div></div></div></div>
+    <div className="dd-side" style={{width:200,background:"linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
+      <div className="dd-side-logo" style={{padding:"14px 12px 12px",borderBottom:"1px solid rgba(212,160,64,.15)"}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:36,height:36,borderRadius:8,background:"linear-gradient(135deg,#2d1f42,#1e1233)",border:"1.5px solid #D4A040",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 12px rgba(212,160,64,.15)"}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="url(#sflm)"/><defs><linearGradient id="sflm" x1="12" y1="3" x2="12" y2="22"><stop stopColor="#D4A040"/><stop offset=".5" stopColor="#C4A0C8"/><stop offset="1" stopColor="#9b7bb0"/></linearGradient></defs></svg></div><div><div style={{fontSize:15,fontWeight:800,color:"#D4A040",lineHeight:1,letterSpacing:1}}>ATTICOR</div><div style={{fontSize:7,color:"#9B8EAD",fontWeight:600,letterSpacing:1.5}}>DOOM & DELIVERABLES</div></div></div></div>
       <div style={{padding:"6px 10px",position:"relative"}}><input value={globalSearch} onChange={e=>setGlobalSearch(e.target.value)} placeholder="Search ISCIs, markets..." style={{width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",background:"#F0E8F8",color:"#9B8EAD",fontSize:14,outline:"none"}}/>
         {globalSearch.length>=2&&(()=>{const q=globalSearch.toLowerCase();const isciHits=iscis.filter(i=>(i.code+" "+i.title+" "+i.dma+" "+i.brand+" "+i.media).toLowerCase().includes(q)).slice(0,8);const staHits=stations.filter(s=>(s.call+" "+s.market+" "+s.brand+" "+s.ownership).toLowerCase().includes(q)).slice(0,4);const estHits=estimates.filter(e=>(e.num+" "+e.market+" "+e.brand+" "+e.buyer).toLowerCase().includes(q)).slice(0,4);if(!isciHits.length&&!staHits.length&&!estHits.length)return null;return<div style={{position:"absolute",top:"100%",left:10,right:10,background:"#2d1f42",border:"1px solid #4a3565",borderRadius:6,maxHeight:250,overflowY:"auto",zIndex:50,boxShadow:"0 4px 12px rgba(0,0,0,.4)"}}>
           {isciHits.length>0&&<div style={{padding:"4px 8px",fontSize:14,color:"#9B8EAD",fontWeight:700,textTransform:"uppercase",borderBottom:"1px solid #4a3565"}}>ISCIs</div>}
@@ -12568,7 +12574,7 @@ Rules:
       <nav style={{flex:1,minHeight:0,overflowY:"auto",padding:"3px 0",scrollbarWidth:"thin",scrollbarColor:"#4a3565 transparent"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:(pg===n.id&&!isOohHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}if(n.id==="cal"){const st=startOfToday();const c=(campaignEvents||[]).filter(e=>{const d=new Date(e.start);d.setHours(0,0,0,0);const dl=Math.round((d.getTime()-st)/86400000);return dl>=0&&dl<=7}).length;return c||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 12px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative",transition:"all .15s",letterSpacing:a?.3:0}} onMouseEnter={e=>{if(!a)e.currentTarget.style.background="rgba(155,123,176,.06)"}} onMouseLeave={e=>{if(!a)e.currentTarget.style.background="transparent"}}><span style={{fontSize:14}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:12,fontWeight:800,padding:"1px 6px",borderRadius:10,background:typeof badge==="number"?"#E85A7A":"#D4A040",color:"#fff",boxShadow:typeof badge==="number"?"0 2px 8px rgba(232,90,122,.3)":"0 2px 8px rgba(212,160,64,.3)"}}>{badge}</span>}</button>})}</nav>
       <div style={{padding:"10px 12px",borderTop:"1px solid rgba(212,160,64,.1)",fontSize:12,color:"#6B5E80"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,color:"#D4A040",letterSpacing:1}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #4a3565",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#9B8EAD",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:syncError?"#E85A7A":"#5BC4A0"}}>{syncError?"Save failed":"Synced "+(Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago")}</span>}</div><div style={{marginTop:2,color:"#6B5E80",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>Signed in as <span style={{color:"#9B8EAD",fontWeight:700}}>{currentUser()}</span></span><span style={{display:"flex",gap:8}}><button onClick={()=>setShowChangePw(true)} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Change PIN</button><button onClick={signOut} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Sign out</button></span></div></div>
     </div>
-    <div style={{flex:1,overflowY:"auto",padding:16}}>
+    <div className="dd-main" style={{flex:1,overflowY:"auto",padding:16}}>
       <AnimatePresence mode="wait" initial={false}>
         <MDiv
           key={pg}
@@ -12833,8 +12839,29 @@ Rules:
             // instruction.historyIdx set on each record below.
             window.MegaraLibraryActions={
               edit:(idx)=>{if(typeof idx==="number"){setEditTrafficIdx(idx);notify("Edit Traffic — changes save back to Supabase")}},
-              view:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close()},
-              print:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w)return;w.document.write(data[idx]?.sheetHtml||"");w.document.close();w.focus();setTimeout(()=>w.print(),300)},
+              view:(idx)=>{const html=data[idx]?.sheetHtml||"";const w=window.open("","","width=900,height=1100");if(w){w.document.write(html);w.document.close();return}
+                // Popup blocked (common on phones/iPads) — open the sheet as a
+                // blob URL in a new tab via an anchor click instead.
+                const url=URL.createObjectURL(new Blob([html],{type:"text/html"}));const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),60000)},
+              print:(idx)=>{const w=window.open("","","width=900,height=1100");if(!w){notify("Popup blocked — use Download PDF instead");return}w.document.write(data[idx]?.sheetHtml||"");w.document.close();w.focus();setTimeout(()=>w.print(),300)},
+              download:async(idx)=>{
+                // Same PDF the Send/Preview pipeline builds, saved straight to
+                // the device — works on phones/iPads where popups and print
+                // dialogs don't.
+                const h=trafficHistory[idx];if(!h)return;
+                notify("Generating PDF…");
+                const _cmF=CALENDAR.find(c=>String(c.month).toLowerCase()===String(h.month||"").trim().split(/\s+/)[0].toLowerCase());
+                const flightDates=_cmF?(fDs(_cmF.bcStart)+" - "+fDs(_cmF.bcEnd)):(h.flight||"");
+                const sheetHtml=data[idx]?.sheetHtml||"";
+                let pdfUri="";try{pdfUri=(h.media==="Streaming Audio"||h.media==="Digital Streaming")?buildStreamPdfFromRec({...h,flight:flightDates}):await generatePdfBase64(sheetHtml,h.isOoh?null:{...h,flight:flightDates})}catch(pe){notify("PDF gen failed: "+pe.message);return}
+                const mktName=DM[h.market]||h.market||"";
+                const pdfName="Traffic_"+(h.brand||"").replace(/\s/g,"")+"_"+mktName.replace(/\s/g,"")+"_"+(h.media||"")+"_"+(h.month||"").replace(/\s/g,"")+"_v"+(h.version||"1")+".pdf";
+                let href=pdfUri;
+                try{const b64=pdfUri.split(",")[1]||"";const bin=atob(b64);const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);href=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}))}catch(decodeErr){console.warn("PDF blob conversion failed:",decodeErr)}
+                const a=document.createElement("a");a.href=href;a.download=pdfName;a.rel="noopener";document.body.appendChild(a);a.click();document.body.removeChild(a);
+                if(href.startsWith("blob:"))setTimeout(()=>URL.revokeObjectURL(href),60000);
+                notify("✓ Downloaded "+pdfName);
+              },
               preview:async(idx)=>{
                 // Dry-run of the Send pipeline. Generates the real PDF
                 // and shows recipients / subject / body in a popup so
