@@ -602,7 +602,9 @@ const designPcts=(design,designPct)=>{const d=Array.isArray(design)?design:[];if
 const MediaBadge=({type,size="sm"})=>{const cat=mediaCategory(type);const c=MEDIA_CAT_COLORS[cat];const pad=size==="sm"?"1px 6px":"2px 8px";const fs=size==="sm"?10:11;return React.createElement("span",{style:{display:"inline-block",padding:pad,borderRadius:3,fontSize:fs,fontWeight:700,color:c.fg,background:c.bg,border:"1px solid "+c.border,letterSpacing:.3,textTransform:"uppercase"}},cat)};
 // Stable, deterministic color for any creative title. Same input → same color, always.
 // Used to color boards by what creative is running on them (independent of market prefix in ISCI code).
-const CREATIVE_PALETTE=["#4AC8E8","#F4C242","#9B7BB0","#5BC4A0","#E85A7A","#F08C3B","#6B8AFD","#EF6C9C","#A0D468","#C084FC","#FFA552","#4DD0E1","#FF7F50","#26A69A","#AB47BC","#FFCA28","#42A5F5","#66BB6A","#EC407A","#7E57C2"];
+// Ordered for maximum separation between neighboring assignments — no rose/pink/red
+// near-duplicates (they were indistinguishable on the creative map at pin size).
+const CREATIVE_PALETTE=["#2563EB","#F59E0B","#10B981","#DC2626","#7C3AED","#0D9488","#A16207","#84CC16","#0EA5E9","#DB2777","#475569","#CA8A04","#166534","#9333EA","#B91C1C","#0369A1","#4D7C0F","#C2410C","#6D28D9","#155E75"];
 // Fixed, maximally-distinct colours for the known WK creatives (the hash put them
 // all in the same blue range). It's Personal CK is split Bulletin vs Poster.
 const OOH_FIXED_COLORS={"Case Cause Shield":"#DC2626","It's Personal CK (Bulletin)":"#7C3AED","Case Cause CK Blue":"#2563EB","Case Cause CK Gold":"#D4A040","It's Personal CK (Poster)":"#16A34A","It's Personal CK":"#16A34A"};
