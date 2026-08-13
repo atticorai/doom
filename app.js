@@ -1238,12 +1238,12 @@ const App=()=>{
         // boards ONCE; the normal save effects then persist it, so the map/report reflect the
         // proposal. To remove the draft: revert the seed commit and bump this flag to V2.
         try{
-          if(!docs.nshPredatorsDraftV5?.data){
+          if(!docs.nshPredatorsDraftV6?.data){
             const seedNsh=Object.fromEntries((typeof POSTINGS!=="undefined"?POSTINGS:[]).filter(p=>p.dma==="NSH"&&Array.isArray(p.design)&&p.design.length).map(p=>[p.boardId,{design:p.design,isci:p.isci||""}]));
             if(Object.keys(seedNsh).length){
               setPops(prev=>prev.map(p=>p.dma==="NSH"&&seedNsh[p.boardId]?{...p,design:seedNsh[p.boardId].design.slice(),isci:seedNsh[p.boardId].isci}:p));
-              saveToDb("nshPredatorsDraftV5",{done:true,ts:Date.now()}).catch(()=>{});
-              console.log("NSH Predators draft V5 loaded onto "+Object.keys(seedNsh).length+" boards");
+              saveToDb("nshPredatorsDraftV6",{done:true,ts:Date.now()}).catch(()=>{});
+              console.log("NSH Predators draft V6 loaded onto "+Object.keys(seedNsh).length+" boards");
             }
           }
         }catch(e){console.warn("NSH Predators draft skipped",e)}
