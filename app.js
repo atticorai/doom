@@ -1230,6 +1230,21 @@ const App=()=>{
             console.log("NSH OOH creative purge: cleared "+cleared+" board overlay entries");
           }
         }catch(e){console.warn("NSH OOH purge skipped",e)}
+        // Predators sponsorship DRAFT (removable). A prior save wrote the old NSH creative
+        // into the wkOohDesigns/wkOohIscis overlays, which win over the seed on load — so the
+        // seed's Predators draft never showed on the map. Force the seed creative onto the NSH
+        // boards ONCE; the normal save effects then persist it, so the map/report reflect the
+        // proposal. To remove the draft: revert the seed commit and bump this flag to V2.
+        try{
+          if(!docs.nshPredatorsDraftV1?.data){
+            const seedNsh=Object.fromEntries((typeof POSTINGS!=="undefined"?POSTINGS:[]).filter(p=>p.dma==="NSH"&&Array.isArray(p.design)&&p.design.length).map(p=>[p.boardId,{design:p.design,isci:p.isci||""}]));
+            if(Object.keys(seedNsh).length){
+              setPops(prev=>prev.map(p=>p.dma==="NSH"&&seedNsh[p.boardId]?{...p,design:seedNsh[p.boardId].design.slice(),isci:seedNsh[p.boardId].isci}:p));
+              saveToDb("nshPredatorsDraftV1",{done:true,ts:Date.now()}).catch(()=>{});
+              console.log("NSH Predators draft loaded onto "+Object.keys(seedNsh).length+" boards");
+            }
+          }
+        }catch(e){console.warn("NSH Predators draft skipped",e)}
       }catch(e){console.warn("Firestore load failed:",e);
         // A failure in a late/optional collection (tags, settings, OOH maps)
         // must NOT permanently block saves when the core data already loaded —
