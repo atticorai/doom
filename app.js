@@ -1236,12 +1236,12 @@ const App=()=>{
         // boards ONCE; the normal save effects then persist it, so the map/report reflect the
         // proposal. To remove the draft: revert the seed commit and bump this flag to V2.
         try{
-          if(!docs.nshPredatorsDraftV1?.data){
+          if(!docs.nshPredatorsDraftV2?.data){
             const seedNsh=Object.fromEntries((typeof POSTINGS!=="undefined"?POSTINGS:[]).filter(p=>p.dma==="NSH"&&Array.isArray(p.design)&&p.design.length).map(p=>[p.boardId,{design:p.design,isci:p.isci||""}]));
             if(Object.keys(seedNsh).length){
               setPops(prev=>prev.map(p=>p.dma==="NSH"&&seedNsh[p.boardId]?{...p,design:seedNsh[p.boardId].design.slice(),isci:seedNsh[p.boardId].isci}:p));
-              saveToDb("nshPredatorsDraftV1",{done:true,ts:Date.now()}).catch(()=>{});
-              console.log("NSH Predators draft loaded onto "+Object.keys(seedNsh).length+" boards");
+              saveToDb("nshPredatorsDraftV2",{done:true,ts:Date.now()}).catch(()=>{});
+              console.log("NSH Predators draft V2 loaded onto "+Object.keys(seedNsh).length+" boards");
             }
           }
         }catch(e){console.warn("NSH Predators draft skipped",e)}
@@ -4395,20 +4395,25 @@ const App=()=>{
     // per-creative board breakdown. Vendor-ready.
     const printCreativeMap=()=>{
       // Count a board as "has creative" if it has design concepts OR an assigned ISCI
-      // (Nashville carries creative via ISCI, with design cleared).
-      const _crOf=(p)=>(Array.isArray(p.design)&&p.design.length)?p.design[0]:(isciTitle(p.isci)||p.isci||"");
-      const scope=fl.filter(p=>_crOf(p));
+      // (Nashville carries creative via ISCI, with design cleared). A rotation board
+      // carries ALL its creatives — the pin renders every color (pie-split), the legend
+      // and per-creative tables count the board under each creative it rotates.
+      const _crsOf=(p)=>(Array.isArray(p.design)&&p.design.length)?p.design:(isciTitle(p.isci)?[isciTitle(p.isci)]:(p.isci?[p.isci]:[]));
+      const _crOf=(p)=>_crsOf(p)[0]||"";
+      const scope=fl.filter(p=>_crsOf(p).length);
       if(!scope.length){notify("Assign a creative or ISCI to the boards first");return}
       const mktLabel=om?(DM[om]||om):"All Markets";
-      const cids=scope.map(p=>oohCreativeId(_crOf(p),p.type,p.size));
-      const titles=[...new Set(cids)].sort();
+      const cidsAll=scope.map(p=>_crsOf(p).map(c=>oohCreativeId(c,p.type,p.size)));
+      const titles=[...new Set(cidsAll.flat())].sort();
       const crColor=(t)=>{const i=titles.indexOf(t);return i>=0?CREATIVE_PALETTE[i%CREATIVE_PALETTE.length]:creativeColor(t)};
-      const pins=scope.map((p,pi)=>{const co=WK_COORDS[p.boardId];const cid=cids[pi];return{panel:String(p.panel),sub:p.submarket||"",loc:p.location||"",size:p.size||"",dma:oohMarket(p.dma),creative:cid,color:crColor(cid),lat:co?co[0]:null,lng:co?co[1]:null,approx:isApproxCoord(p.boardId)}});
-      const conf=[];const cp=pins.filter(p=>p.lat&&p.lng&&!p.approx);
+      const pins=scope.map((p,pi)=>{const co=WK_COORDS[p.boardId];const crs=cidsAll[pi];return{panel:String(p.panel),sub:p.submarket||"",loc:p.location||"",size:p.size||"",dma:oohMarket(p.dma),creative:crs[0],creatives:crs,colors:crs.map(crColor),color:crColor(crs[0]),lat:co?co[0]:null,lng:co?co[1]:null,approx:isApproxCoord(p.boardId)}});
+      // Spacing check applies to SINGLE-creative (static) boards — rotation boards show
+      // everything everywhere by design, so spacing between them isn't a conflict.
+      const conf=[];const cp=pins.filter(p=>p.lat&&p.lng&&!p.approx&&p.creatives.length===1);
       for(let a=0;a<cp.length;a++)for(let b=a+1;b<cp.length;b++){if(cp[a].creative!==cp[b].creative)continue;const d=milesBetween(cp[a].lat,cp[a].lng,cp[b].lat,cp[b].lng);if(d<=oohClusterRadius)conf.push({c:cp[a].creative,a:cp[a],b:cp[b],d})}
       conf.sort((x,y)=>x.d-y.d);
-      const mapPins=pins.filter(p=>p.lat&&p.lng).map(p=>({lat:p.lat,lng:p.lng,c:p.color,a:p.approx,t:escHtml(p.panel+" · "+p.creative+" · "+p.loc)}));
-      const legend=titles.map(t=>`<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0;font-size:12px"><span style="width:12px;height:12px;border-radius:6px;background:${crColor(t)};border:1px solid #333"></span><b>${escHtml(t)}</b> (${pins.filter(p=>p.creative===t).length})</span>`).join("");
+      const mapPins=pins.filter(p=>p.lat&&p.lng).map(p=>({lat:p.lat,lng:p.lng,cs:p.colors,a:p.approx,t:escHtml(p.panel+" · "+p.creatives.join(" ⇄ ")+" · "+p.loc)}));
+      const legend=titles.map(t=>`<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0;font-size:12px"><span style="width:12px;height:12px;border-radius:6px;background:${crColor(t)};border:1px solid #333"></span><b>${escHtml(t)}</b> (${pins.filter(p=>p.creatives.includes(t)).length})</span>`).join("")+`<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0;font-size:12px"><span style="width:12px;height:12px;border-radius:6px;background:conic-gradient(#ccc 0 50%,#888 50% 100%);border:1px solid #333"></span>split pin = rotation (all shown creatives run on that board)</span>`;
       const w=window.open("","","width=980,height=860");
       w.document.write('<html><head><title>WK OOH Creative Map — '+escHtml(mktLabel)+'</title>');
       w.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>');
@@ -4421,12 +4426,14 @@ const App=()=>{
       w.document.write('<div class="box">'+(conf.length?'<div class="warn">⚠ '+conf.length+' same-creative pair'+(conf.length!==1?'s':'')+' within '+oohClusterRadius+' mi — review spacing:</div>':'<div class="ok">✓ No same-creative boards within '+oohClusterRadius+' mi — clean spread.</div>'));
       if(conf.length){w.document.write('<table><tr><th>Creative</th><th>Board A</th><th>Board B</th><th>Apart</th></tr>');conf.slice(0,80).forEach(c=>w.document.write('<tr><td><span class="sw" style="background:'+crColor(c.c)+'"></span>'+escHtml(c.c)+'</td><td>'+escHtml(c.a.panel+" — "+c.a.sub)+'</td><td>'+escHtml(c.b.panel+" — "+c.b.sub)+'</td><td>'+c.d.toFixed(1)+' mi</td></tr>'));w.document.write('</table>')}
       w.document.write('</div>');
-      titles.forEach(t=>{const bs=pins.filter(p=>p.creative===t).sort((a,b)=>(a.sub||"").localeCompare(b.sub||"")||a.panel.localeCompare(b.panel));
+      titles.forEach(t=>{const bs=pins.filter(p=>p.creatives.includes(t)).sort((a,b)=>(a.sub||"").localeCompare(b.sub||"")||a.panel.localeCompare(b.panel));
         w.document.write('<div class="box"><div style="font-weight:bold;font-size:13px"><span class="sw" style="background:'+crColor(t)+'"></span>'+escHtml(t)+' — '+bs.length+' boards</div><table><tr><th>Unit</th><th>Market</th><th>Submarket</th><th>Size</th><th>Location</th></tr>');
         bs.forEach(p=>w.document.write('<tr><td><b>'+escHtml(p.panel)+'</b></td><td>'+escHtml(p.dma)+'</td><td>'+escHtml(p.sub)+'</td><td>'+escHtml(p.size)+'</td><td>'+escHtml(p.loc)+'</td></tr>'));
         w.document.write('</table></div>')});
       w.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"><\/script>');
-      w.document.write('<script>var P='+JSON.stringify(mapPins)+';(function go(){if(typeof L==="undefined")return setTimeout(go,60);var map=L.map("map",{zoomControl:true,attributionControl:false});L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18}).addTo(map);var b=[];P.forEach(function(p){L.circleMarker([p.lat,p.lng],{radius:6,color:"#222",weight:1,fillColor:p.c,fillOpacity:.9,dashArray:p.a?"2 2":null}).bindTooltip(p.t).addTo(map);b.push([p.lat,p.lng])});if(b.length)map.fitBounds(b,{padding:[24,24]});setTimeout(function(){window.focus();window.print()},1600)})();<\/script>');
+      const _landmarks={"Nashville":[[36.1593,-86.7785,"🏒 Bridgestone Arena"],[36.1665,-86.7713,"🏈 Nissan Stadium"]]};
+      const lms=scope.length?(_landmarks[oohMarket(scope[0].dma)]||[]):[];
+      w.document.write('<script>var P='+JSON.stringify(mapPins)+';var LM='+JSON.stringify(lms)+';(function go(){if(typeof L==="undefined")return setTimeout(go,60);var map=L.map("map",{zoomControl:true,attributionControl:false});L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18}).addTo(map);var b=[];P.forEach(function(p){if(p.cs.length>1){var seg=100/p.cs.length,stops=p.cs.map(function(c,i){return c+" "+(i*seg)+"% "+((i+1)*seg)+"%"}).join(",");L.marker([p.lat,p.lng],{icon:L.divIcon({className:"",html:"<div style=\\"width:14px;height:14px;border-radius:50%;border:1.5px solid #222;background:conic-gradient("+stops+")\\"></div>",iconSize:[14,14],iconAnchor:[7,7]})}).bindTooltip(p.t).addTo(map)}else{L.circleMarker([p.lat,p.lng],{radius:6,color:"#222",weight:1,fillColor:p.cs[0],fillOpacity:.9,dashArray:p.a?"2 2":null}).bindTooltip(p.t).addTo(map)}b.push([p.lat,p.lng])});LM.forEach(function(l){L.marker([l[0],l[1]],{icon:L.divIcon({className:"",html:"<div style=\\"font-size:24px;line-height:1;text-shadow:0 0 3px #fff,0 0 3px #fff\\">⭐</div>",iconSize:[24,24],iconAnchor:[12,12]})}).bindTooltip("<b>"+l[2]+"</b>",{permanent:false}).addTo(map);b.push([l[0],l[1]])});if(b.length)map.fitBounds(b,{padding:[24,24]});setTimeout(function(){window.focus();window.print()},1600)})();<\/script>');
       w.document.write('</body></html>');w.document.close();
       log("OOH Creative Map",mktLabel+" · "+pins.length+" boards");
     };
