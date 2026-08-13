@@ -1169,6 +1169,10 @@ const App=()=>{
           // ═══ LOAD-ONLY. NO AUTO-RESTORE. NO SEED MERGE. ═══
           // Whatever is in Firestore is what the app shows. If a record
           // is missing, that's because the user deleted it on purpose.
+          // One exception: normalize stored WK streaming UTM links to the
+          // buyer-confirmed working format (wkfirm.com landing, utm_term for
+          // placement) so already-saved records match freshly generated ones.
+          d.forEach(h=>{if(h&&(h.media==="Streaming Audio"||h.media==="Digital Streaming")&&Array.isArray(h.iscis)){h.iscis.forEach(r=>{if(r&&typeof r.url==="string"&&r.url.indexOf("wkfirm.com")>-1){r.url=r.url.replace("https://seriousinjury.wkfirm.com/nashville-personal-injury-lawyers?","https://www.wkfirm.com/?").replace("&Placement=","&utm_term=")}})}});
           setTrafficHistory(d);trafficFbCountRef.current=d.length
         }trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
         if(docs.workMonth?.data){
@@ -3414,8 +3418,10 @@ const App=()=>{
       if(isWKstream){
         const camp="WettermarkKeith_Nashville_"+vendorMode+"_"+currentYear+currentQuarter;
         const medium=vendorMode==="Paramount"?"Video_Streaming":"Streaming_Audio";
+        // Working format confirmed by the buyer: utm_term carries the placement
+        // (standard GA param), ordered source/medium/campaign/term/content.
         const landing="https://www.wkfirm.com/";
-        return landing+"?utm_source="+encodeURIComponent(vendorMode)+"&utm_medium="+medium+"&utm_content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent(camp);
+        return landing+"?utm_source="+encodeURIComponent(vendorMode)+"&utm_medium="+medium+"&utm_campaign="+encodeURIComponent(camp)+"&utm_term="+encodeURIComponent(placement)+"&utm_content="+encodeURIComponent(content);
       }
       const mktPath=market.toLowerCase().replace(/\s+/g,"");
       return"https://www.postmandelivers.com/"+mktPath+"/?UTM_Source=SiriusXM&UTM_Medium=Streaming_Audio&UTM_Content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent("Blackacre_KellerPostman_PostmanLawPI-"+market+"_"+currentYear+currentQuarter);
