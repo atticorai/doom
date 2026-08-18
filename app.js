@@ -693,6 +693,222 @@ const DOOM={
 };
 const doomPick=(arr)=>arr[Math.floor(Math.random()*arr.length)];
 
+// ═══════════════════════════════════════════════════════════════════════
+// DEALS & DEADLINES — Marketing Ops model (module scope)
+// Hades' wing of the house: campaign deals in, hard dates out. Doom stays
+// Megara's traffic floor; this is the Underworld office one hash away
+// (#mops). Everything here is pure data + pure helpers so the sync
+// effects, the ledger, the tripwires and the UI all speak one vocabulary.
+// The rules live in mops-data-model.md (session artifact): typed
+// requirements, evidence-only state changes, house lead times T−7 vendors /
+// T−11 creative with weekend roll-back, people as per-brand config.
+// ═══════════════════════════════════════════════════════════════════════
+const DND_LEAD={vendor:7,creative:11};
+const DND_QUIP={
+  deck:["Name's Hades. Lord of the dead, keeper of your deadlines. Hi, how ya doin'.","Every deal on this board has a due date. I never forget a due date.","Whoa, whoa — is that a launch approaching with nothing in hand? Not on my watch.","Eternity is a long time to be late, babe."],
+  dossier:["One deal. All the fine print. Sign here.","I read the whole contract so you didn't have to. You're welcome.","We had a deal. The dates are the deal."],
+  registry:["Everything you own, catalogued. I run a tight underworld.","Souls, spots, banners — I keep inventory of everything."],
+  record:["The wrapped deals. Every one delivered — or I'd remember.","History doesn't lie. Neither do I. Usually."],
+  dispatch:["Every conversation, every promise, every timestamp. Leverage, baby.","Nobody ghosts me. I'm literally the god of ghosts."],
+  intake:["Step into my office. Let's make a deal.","A new deal. I love new deals. The fine print writes itself."],
+  send:["Sent. They'll answer — they always answer me.","And it's out. The clock is theirs now.","Delivered. I'd hate to be late on MY deadline."]
+};
+const dndPick=(arr)=>arr[Math.floor(Math.random()*arr.length)];
+const campUid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const campBrandFix=(b)=>b==="Lerner and Rowe"?"Lerner & Rowe":b==="Keches and Keller"||b==="Keches Law"?"Keches Law Group":b||"";
+const campIsoD=(s)=>s?String(s).slice(0,10):"";
+const campMinusDays=(iso,n)=>{const d=campIsoD(iso);if(!d)return"";const x=new Date(d+"T00:00:00");if(isNaN(x.getTime()))return"";x.setDate(x.getDate()-n);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
+// Weekend roll-back: a computed due date landing on Sat/Sun rolls to Friday.
+// (Emm's rule — Sister Strut's return lands Fri the 18th, not Sun the 20th.)
+const dndRoll=(iso)=>{const d=campIsoD(iso);if(!d)return"";const x=new Date(d+"T00:00:00");if(isNaN(x.getTime()))return"";const dow=x.getDay();if(dow===6)x.setDate(x.getDate()-1);if(dow===0)x.setDate(x.getDate()-2);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
+const dndVendorDue=(f)=>campIsoD(f.trafficDue)||dndRoll(campMinusDays(f.flightStart,DND_LEAD.vendor));
+const dndCreativeDue=(f)=>dndRoll(campMinusDays(dndVendorDue(f),DND_LEAD.creative-DND_LEAD.vendor))||"";
+const dndMonthKey=(f)=>(campIsoD(f.flightEnd)||campIsoD(f.flightStart)).slice(0,7);
+// Channels ask their own questions; each emits its own typed drafts.
+const DND_CHANNELS=["Radio","TV","Streaming Audio","Digital","OOH","Paid Social","Paid Search","Email/SMS"];
+const DND_CH_HINT={"Radio":"stations · lengths · units · rotation","TV":"stations · lengths · units · rotation","Streaming Audio":"platform · lengths · companion sizes","Digital":"sizes · static or html5","OOH":"vendor · unit types — printing runs longer","Paid Social":"platforms · formats","Paid Search":"destination path","Email/SMS":"ESP · list notes"};
+// req kinds: creative (brief→versions→review→register) · merch (request→
+// ordered→mailed, per-brand person) · web (request→verify, SEO team).
+// Traffic is its own list on the flight — the T−7 package Emm sends herself.
+const DND_KIND_STATES={
+  creative:["needed","requested","in_review","changes","approved","na"],
+  merch:["needed","requested","ordered","mailed","received","na"],
+  web:["needed","requested","verified","na"]
+};
+const dndMkReq=(kind,label,spec,due,assignee)=>({id:campUid(),kind,label:label||"",spec:spec||"",due:due||"",assignee:assignee||(kind==="merch"?"merch":kind==="web"?"seo":"creativeOps"),state:"needed",isci:"",url:"",versions:[],confirmations:[],notes:""});
+const dndChannelEmit=(ch,detail,f)=>{
+  const cd=dndCreativeDue(f);
+  const out=[];
+  if(ch==="Radio")out.push(dndMkReq("creative",":30 Radio",detail||"per station rotation",cd));
+  if(ch==="TV")out.push(dndMkReq("creative",":30 TV",detail||"per station rotation",cd));
+  if(ch==="Streaming Audio"){out.push(dndMkReq("creative",":30 Audio",detail||"",cd));out.push(dndMkReq("creative","Companion banner",detail||"640×640",cd))}
+  if(ch==="Digital")out.push(dndMkReq("creative","Display banner",detail||"300×250 + 728×90 · static",cd));
+  if(ch==="OOH")out.push(dndMkReq("creative","OOH artwork",detail||"print-ready · vendor spec",dndRoll(campMinusDays(f.flightStart,14))));
+  if(ch==="Paid Social")out.push(dndMkReq("creative","Social graphic + video",detail||"",cd));
+  if(ch==="Email/SMS")out.push(dndMkReq("creative","Email creative",detail||"",cd));
+  return out;
+};
+// UTMs are GENERATED, never typed: brand-baked destination + enforced
+// campaign name + content from the linked creative. And only for channels
+// the flight actually has — no streaming URL without a streaming channel.
+const CAMP_BRAND_URLS={"Postman Law":"https://www.postmanlaw.com","Wettermark Keith":"https://www.wkfirm.com","Lerner & Rowe":"https://lernerandrowe.com","Parrish DeVaughn":"https://www.parrishdevaughn.com","Keches Law Group":"https://www.kecheslaw.com"};
+const DND_UTM_ELIGIBLE=(f)=>{const chs=f.channels||[];const out=[];
+  if(chs.includes("Digital"))out.push({medium:"display",label:"Display"});
+  if(chs.includes("Streaming Audio"))out.push({medium:"streaming-audio",label:"Streaming"});
+  if(chs.includes("Paid Social"))out.push({medium:"paid-social",label:"Paid Social"});
+  if(chs.includes("Paid Search"))out.push({medium:"ppc",label:"Paid Search"});
+  if(chs.includes("Email/SMS"))out.push({medium:"email",label:"Email"});
+  return out};
+const dndSlug=(x)=>String(x||"").trim().toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+const dndUtmBuild=(f,source,medium,content)=>{
+  const bcode=((BRANDS.find(b=>b.name===f.brand)||{}).code||"").toLowerCase();
+  const year=(campIsoD(f.flightStart)||"").slice(0,4)||String(new Date().getFullYear());
+  const base=String(CAMP_BRAND_URLS[f.brand]||"https://").replace(/\/+$/,"");
+  const q=["utm_source="+encodeURIComponent(dndSlug(source)),"utm_medium="+encodeURIComponent(medium),"utm_campaign="+encodeURIComponent(dndSlug(bcode+"-"+f.name)+"-"+year)];
+  if(content)q.push("utm_content="+encodeURIComponent(dndSlug(content)));
+  return base+"/?"+q.join("&");
+};
+const campNotionFields=(r)=>{
+  const fdd={};
+  if(r.name)fdd.name=r.name;
+  const b=campBrandFix(r.brand);if(b)fdd.brand=b;
+  const mk=(r.dmas&&r.dmas.length?r.dmas:(r.markets||[])).join(", ");if(mk)fdd.markets=mk;
+  if(r.flightStart)fdd.flightStart=campIsoD(r.flightStart);
+  if(r.flightEnd)fdd.flightEnd=campIsoD(r.flightEnd);
+  if(r.trafficDue)fdd.trafficDue=campIsoD(r.trafficDue);
+  if(r.stations)fdd.stations=r.stations;
+  if(r.url)fdd.notionUrl=r.url;
+  return fdd;
+};
+// ── MIGRATION: any old-shape campaign record (assets[]) or Notion row
+// becomes a flight with typed reqs + a traffic list. Live/past flights get
+// their traffic marked sent-as-legacy so migration never trips the PDV
+// tripwire on campaigns that were airing long before this hub existed. ──
+const dndKindOfOld=(a)=>{
+  if(a.type==="Merch Artwork")return"merch";
+  if(a.type==="Landing Page"||a.type==="Pixel")return"web";
+  if(a.type==="UTM / Tracking URL"||a.type==="Contract")return null;
+  return"creative";
+};
+const dndStateOfOld=(a,kind)=>{
+  if(a.status==="na")return"na";
+  if(a.status==="done")return kind==="creative"?"approved":kind==="merch"?"received":"verified";
+  if(a.status==="review")return"in_review";
+  if(a.status==="requested"||a.status==="wip")return"requested";
+  return"needed";
+};
+const dndMigrate=(c)=>{
+  if(c&&Array.isArray(c.reqs)&&Array.isArray(c.traffic))return c; // already new shape
+  const f={id:c.id||campUid(),name:c.name||"Untitled",brand:campBrandFix(c.brand),markets:c.markets||"",
+    status:c.status==="Wrapped"?"wrapped":c.status==="Live"?"live":"approach",
+    flightStart:campIsoD(c.flightStart),flightEnd:campIsoD(c.flightEnd),trafficDue:campIsoD(c.trafficDue),
+    channels:Array.isArray(c.channels)?c.channels:[],channelDetail:{},
+    stations:c.stations||"",partner:c.partner||"",contact:c.contact||"",cost:c.cost||"",notes:c.notes||"",
+    promoObligations:c.promoObligations||"",requestedBy:c.requestedBy||"",
+    notionUrl:c.notionUrl||"",notionId:c.notionId||null,briefSentAt:c.briefSentAt||null,
+    reqs:[],traffic:[],utms:Array.isArray(c.utms)?c.utms:[],created:c.created||Date.now(),updated:Date.now()};
+  (c.assets||[]).forEach(a=>{
+    const kind=dndKindOfOld(a);if(!kind)return;
+    const r=dndMkReq(kind,a.label||a.type,"",campIsoD(a.due),a.owner==="SEO / Web"?"seo":a.owner==="Hazel"?"merch":a.owner==="Station"?"station":undefined);
+    r.state=dndStateOfOld(a,kind);r.isci=a.isci||"";r.url=a.url||"";
+    if(r.url)r.versions=[{v:1,fileUrl:r.url,receivedAt:new Date(f.created).toISOString(),source:"upload"}];
+    f.reqs.push(r);
+  });
+  const vendor=(f.partner||"").trim()||String(f.stations||"").split(",")[0].trim()||"";
+  const launched=f.flightStart&&new Date(f.flightStart+"T00:00:00")<=new Date();
+  f.traffic=[{id:campUid(),vendor:vendor||"(set the vendor)",due:dndVendorDue(f),
+    state:(f.status==="live"||f.status==="wrapped"||launched)?"sent":"pending",
+    legacy:(f.status==="live"||f.status==="wrapped"||launched)?"pre-hub — assumed delivered":"",sentAt:null,dispatchId:null}];
+  return f;
+};
+const campFromNotion=(r)=>dndMigrate({
+  id:campUid(),name:r.name||"Untitled",brand:campBrandFix(r.brand),
+  markets:(r.dmas&&r.dmas.length?r.dmas:(r.markets||[])).join(", "),
+  status:"Planning",flightStart:campIsoD(r.flightStart),flightEnd:campIsoD(r.flightEnd),
+  trafficDue:campIsoD(r.trafficDue),stations:r.stations||"",notes:r.notes||"",
+  notionUrl:r.url||"",notionId:r.id,
+  assets:(r.assets||[]).map(a=>({type:/Spot/i.test(a)?"Broadcast Spot":a,label:a,status:"needed",due:campIsoD(r.trafficDue)||""})),
+  channels:(r.channels||[]).filter(ch=>DND_CHANNELS.includes(ch)||ch==="CTV/OTT"),
+  utms:[],created:Date.now()
+});
+// ── THE 2026 SLATE — the real campaigns, pulled from Notion 8/18/2026,
+// carried as seed so the deck never opens empty. Real dashed Notion ids so
+// the live sync updates these in place instead of duplicating. ──
+const _campDash=(h)=>h&&h.length===32?h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20):h||null;
+const _CS=(name,brand,status,markets,fs,fe,td,nid,sta,assets)=>dndMigrate({
+  id:campUid(),name,brand,markets:markets||"",status,flightStart:fs||"",flightEnd:fe||"",trafficDue:td||"",
+  stations:sta||"",notes:"",notionUrl:nid?"https://app.notion.com/"+nid:"",notionId:_campDash(nid),
+  assets:(assets||[]).map(a=>({type:a[0],label:a[1]||"",status:a[2]||"needed",due:a[3]||td||campMinusDays(fs,7)||"",owner:a[0]==="Merch Artwork"?"Hazel":a[0]==="Landing Page"||a[0]==="Pixel"?"SEO / Web":undefined})),
+  utms:[],created:Date.now(),seeded:true
+});
+const FLIGHT_SEED=[
+  _CS("MN State Fair","Postman Law","Planning","Minneapolis","2026-09-01","2026-10-31","2026-08-25","c6dfa3b19f26460595d63d4bf588cbf0","iHeart",[["Broadcast Spot",":30 Radio"],["Digital Banner","Fair promo banner"],["Merch Artwork","Booth tee + 6×3 banner"]]),
+  _CS("WEBN Riverfest (Western & Southern Fireworks)","Postman Law","Live","Cincinnati","2026-08-01","2026-09-06","","f341ec7d594a4362a73be543528d980a","WEBN, WLW, WKFS, WCKY, WKRC, WSAI, The Project, The Beat",[["Broadcast Spot",":30 Radio","done"]]),
+  _CS("Bears Fumble Recovery + ESPN Chicago","Lerner & Rowe","Live","Chicago","2026-08-01","2026-12-31","","6a766176ac934853aa23cea1f6e5a337","ESPN 1000, 100.3 FM HD2, ESPN Chicago App, Sirius XM, Chicago Bears App, NFL+, 20+ affiliates",[["Broadcast Spot",":15","done"],["Broadcast Spot",":30","done"],["Broadcast Spot",":60","done"],["Broadcast Spot","Host Read","done"]]),
+  _CS("White Sox Injury Report – ESPN Chicago","Lerner & Rowe","Live","Chicago","2026-02-01","2026-09-30","","4d10ba5bf8d64cfcaa7245b095328d25","ESPN 1000, ESPN Chicago App, MLB App, MLB.com, Sirius XM, 100.3 HD2",[["Broadcast Spot",":30 Radio","done"],["Broadcast Spot","Sponsor tag","done"]]),
+  _CS("Sister Strut – iHeart","Lerner & Rowe","Planning","Chicago","2026-10-01","2026-10-31","","dd2ce1d06b19494aae7ba565dfaeea5a","iHeart",[["Broadcast Spot",":30 Radio"]]),
+  _CS("Stars & Strings – Audacy","Lerner & Rowe","Planning","Chicago, Denver, Minneapolis","2026-10-25","2026-11-21","","62288def1b23478cb8b99e432d01e5d2","WUSN-FM Chicago (127x :30s); KQMT-FM Denver (187x); KQKS-HD2 Denver (435x); KMNB-FM Minneapolis (444x)",[["Broadcast Spot",":30 Radio"],["Digital Banner","Event banner"],["Broadcast Spot","Promo graphic"]]),
+  _CS("ChiGivesBack Toy Drive – B96","Lerner & Rowe","Planning","Chicago","2026-11-20","2026-12-31","","89c0c7d9b15145cc9d8676a0d8f2aefc","B96 / Audacy",[["Broadcast Spot",":30 Radio"]]),
+  _CS("Minnesota Star Tribune – MN Rising + Minnesota's Best","Postman Law","Planning","Minneapolis","","","","dcbcd39f227d43a7ae8d95b2e3d7668c","StarTribune.com, MN Rising, Minnesota's Best, Daily Delivery Podcast, Strib Varsity",[["Broadcast Spot",":30"],["Broadcast Spot",":15"],["Digital Banner",""],["Broadcast Spot","Social graphic"]]),
+  _CS("Personal Injury – Chicago","Postman Law","Live","Chicago","2026-01-22","","","24c991a2b60380f198d3da36c22b8038","",[["Broadcast Spot",":30 TV","done"],["Broadcast Spot",":30 Radio","done"]]),
+  _CS("Personal Injury – Cincinnati","Postman Law","Live","Cincinnati","2026-01-22","","","24c991a2b6038087ac9de6182b84ef49","",[["Broadcast Spot",":30 TV","done"],["Broadcast Spot",":30 Radio","done"]]),
+  _CS("Personal Injury – Denver","Postman Law","Live","Denver","2026-01-22","","","247991a2b6038069bf31c6bfca0d33e3","",[["Broadcast Spot",":30 TV","done"],["Broadcast Spot",":30 Radio","done"]]),
+  _CS("Personal Injury – Minneapolis","Postman Law","Live","Minneapolis","2026-01-22","","","24c991a2b60380dda197c344147289dc","",[["Broadcast Spot",":30 TV","done"],["Broadcast Spot",":30 Radio","done"]]),
+  _CS("Personal Injury – Wettermark Keith","Wettermark Keith","Live","Birmingham, Huntsville, Knoxville, Chattanooga, Montgomery, Dothan","2026-02-13","","","2af991a2b6038056866be4c86ec5f3d3","",[["Broadcast Spot",":30 TV","done"],["Broadcast Spot",":30 Radio","done"]]),
+  _CS("Personal Injury Workers Comp – Chicago","Postman Law","Live","Chicago","2026-01-08","","","30c991a2b60380509771e8059a1af642","",[["Broadcast Spot",":30 TV","done"],["Broadcast Spot",":30 Radio","done"]]),
+  _CS("Black Music Month – Radio One Cincinnati","Postman Law","Wrapped","Cincinnati","2026-06-01","2026-06-30","","586afe1088884ca4a6c179ccfc52a8d6","WIZF, WOSL, WDBZ",[["Broadcast Spot","Sponsor tag","done"],["Digital Banner","","done"]]),
+  _CS("Gas Card Promotion – ROI360+ / iHeart + Audacy","Postman Law","Wrapped","Chicago, Minneapolis, Denver","2026-06-13","2026-07-06","2026-06-12","a0ea4bbb14b2462f88331c6384e7075d","iHeart + Audacy (DEN, MSP, CHI)",[["Broadcast Spot",":30 Radio","done"]]),
+  _CS("9Cares Colorado Shares (Spring + Fall)","Postman Law","Wrapped","Denver","2026-03-01","2026-11-30","","c5b3db932034418c82ff71dbbcf98165","9NEWS broadcast + 9news.com",[["Broadcast Spot",":30 TV","done"],["Digital Banner","9news.com","done"]]),
+  _CS("Windy City Smokeout – Audacy","Postman Law","Wrapped","Chicago","","","","ab94592624194461a69ac9d24a7beb7f","Audacy",[]),
+  _CS("Twin Cities Irish Fest","Postman Law","Wrapped","Minneapolis","2026-08-07","2026-08-09","","d3f560a6922448bdb820a5727ceb72c5","",[]),
+  _CS("Fiesta Del Sol","Postman Law","Wrapped","Chicago","","","","eec3427fcbe24f61afee451b2503bbde","",[]),
+  _CS("OCA 5K Panda Run","Postman Law","Wrapped","Denver","","","","cbc498f064234ef184817fd755d8644d","",[])
+];
+
+// ── EVIDENCE, LEDGER, TRIPWIRES (pure — shared by UI, alert feed, email) ──
+// The complete list of what counts as "in hand" lives here and nowhere
+// else: a linked ISCI with a file, an uploaded/linked URL, an approved
+// creative, merch received, a verified pixel. Never a bare status typed in.
+const dndReqInHand=(r,iscis)=>{if(r.state==="na")return true;if(r.url)return true;if(r.kind==="creative"&&r.state==="approved")return true;if(r.kind==="merch")return r.state==="received";if(r.kind==="web")return r.state==="verified";if(r.isci){const l=(iscis||[]).find(i=>i.code+"|"+(i.dma||"")===r.isci);return!!(l&&l.fileUrl)}return false};
+const dndReqLink=(r,iscis)=>{if(r.url)return r.url;if(r.isci){const l=(iscis||[]).find(i=>i.code+"|"+(i.dma||"")===r.isci);return(l&&l.fileUrl)||""}return""};
+const dndDaysTo=(iso)=>{const i=campIsoD(iso);if(!i)return null;const d=new Date(i+"T00:00:00");if(isNaN(d.getTime()))return null;const t=new Date();t.setHours(0,0,0,0);return Math.round((d.getTime()-t.getTime())/864e5)};
+const dndFd=(s)=>{const i=campIsoD(s);if(!i)return"—";const d=new Date(i+"T00:00:00");return isNaN(d.getTime())?"—":d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})};
+const dndRoleOf=(assignee,brand,hubCfg)=>{
+  const m=(hubCfg&&hubCfg.merch)||{};
+  if(assignee==="merch"){const hit=(m.byBrand||{})[brand]||m.default||{};return{label:hit.person||"Hazel",email:hit.email||""}}
+  if(assignee==="seo")return{label:"SEO/Web",email:(hubCfg&&hubCfg.seoEmail)||""};
+  if(assignee==="station")return{label:"Station",email:""};
+  return{label:"Creative Ops",email:(hubCfg&&hubCfg.creativeOpsEmail)||""};
+};
+const dndLedgerCompute=(flights,iscis,hubCfg)=>{
+  const items=[];
+  (flights||[]).filter(f=>f.status!=="wrapped"&&f.status!=="cancelled").forEach(f=>{
+    if(!f.flightStart&&!f.trafficDue){items.push({key:"dates-"+f.id,fid:f.id,who:"You",what:"Set the flight dates",flight:f.name,due:"",days:0,orElse:"an undated deal can't be protected"});return}
+    (f.reqs||[]).forEach(r=>{
+      if(dndReqInHand(r,iscis))return;
+      items.push({key:"req-"+r.id,fid:f.id,who:dndRoleOf(r.assignee,f.brand,hubCfg).label,what:(r.label||r.kind)+(r.spec?" — "+r.spec:""),flight:f.name,due:r.due,days:dndDaysTo(r.due),
+        orElse:r.kind==="merch"?"ordered + mailed confirmed, boxes before launch":r.kind==="web"?"the pixel verifies itself when it fires":"the package can't go without it"});
+    });
+    (f.traffic||[]).forEach(t=>{
+      if(t.state==="sent")return;
+      items.push({key:"tr-"+t.id,fid:f.id,who:"You",what:"Send asset package → "+(t.vendor||"vendor"),flight:f.name,due:t.due,days:dndDaysTo(t.due),orElse:"miss it and the launch slips — the PDV clause trips here"});
+    });
+  });
+  return items.sort((a,b)=>((a.days==null?999:a.days)-(b.days==null?999:b.days)));
+};
+const dndTripwires=(flights,iscis,hubCfg)=>{
+  const tws=[];
+  (flights||[]).filter(f=>f.status!=="wrapped"&&f.status!=="cancelled").forEach(f=>{
+    const ln=dndDaysTo(f.flightStart);
+    const pending=(f.traffic||[]).filter(t=>t.state!=="sent");
+    if(!f.flightStart&&!f.trafficDue){tws.push({sev:"rose",fid:f.id,msg:f.name+(f.markets?" · "+f.markets:"")+" — no flight dates. An undated deal can't be protected.",fix:"Set the flight"});return}
+    if(ln!=null&&ln<=3&&pending.length){tws.push({sev:"red",fid:f.id,msg:f.name+(f.markets?" · "+f.markets:"")+" — launch "+(ln<0?Math.abs(ln)+"d PAST":ln===0?"is TODAY":"in "+ln+"d")+" and no traffic on record for "+pending.map(t=>t.vendor).join(", ")+". The PDV clause.",fix:"Send the package"});return}
+    const lateOpens=(f.reqs||[]).filter(r=>{if(dndReqInHand(r,iscis))return false;const n=dndDaysTo(r.due);return n!=null&&n<=3});
+    if(lateOpens.length&&ln!=null&&ln>=0)tws.push({sev:"gold",fid:f.id,msg:f.name+(f.markets?" · "+f.markets:"")+" — "+lateOpens.map(r=>r.label||r.kind).join(" + ")+" not in hand (due "+dndFd(lateOpens[0].due)+"); the "+dndFd(f.flightStart)+" launch holds only if it lands.",fix:"Chase"});
+  });
+  return tws.sort((a,b)=>(a.sev==="red"?0:a.sev==="gold"?1:2)-(b.sev==="red"?0:b.sev==="gold"?1:2));
+};
+
 // ── MUSE CHARACTERS (AI Planner narrators) ───────────
 const MUSES=[
   {name:"Calliope",role:"Coverage",color:"#E85A7A",icon:"🎭",voice:["Let me tell you a tale of market coverage…","Honey, your coverage has gaps wider than the Aegean.","Now THIS is a story worth telling.","The muse of eloquence sees… room for improvement."]},
@@ -862,9 +1078,10 @@ const useHash=()=>{
 const App=()=>{
   const[routeHash,navigateHash]=useHash();
   const isOohHub=routeHash.startsWith('ooh');
+  const isMopsHub=routeHash.startsWith('mops');
   const[pg,setPgRaw]=useState("dash");
   const prevPgRef=React.useRef("dash");
-  const setPg=(p)=>{if(p==="oohHub"){navigateHash("ooh");return}prevPgRef.current=pg;setPgRaw(p)};
+  const setPg=(p)=>{if(p==="oohHub"){navigateHash("ooh");return}if(p==="campaigns"){navigateHash("mops");return}prevPgRef.current=pg;setPgRaw(p)};
   const[lightMode,setLightMode]=useState(()=>localStorage.getItem("dd_light")==="1");
   useEffect(()=>{
     var s=document.getElementById("dd-theme-style");
@@ -909,6 +1126,17 @@ const App=()=>{
     }
   },[pg]);
   const[iscis,setIscis]=useState(ISCIS_INIT);
+  // ── DEALS & DEADLINES state — flights + config + paper trail ──
+  const[flights,setFlights]=useState([]);
+  const flightsDirtyRef=React.useRef(false); // set by every D&D mutator; gates the save so an untouched session never overwrites
+  const[taglines,setTaglines]=useState([]);
+  const taglinesDirtyRef=React.useRef(false);
+  const[hubCfg,setHubCfg]=useState({creativeOpsEmail:"",seoEmail:"",jessicaEmail:"",merch:{default:{person:"Hazel",email:""},byBrand:{}}});
+  const hubCfgDirtyRef=React.useRef(false);
+  const[assetReviews,setAssetReviews]=useState({});
+  const assetReviewsDirtyRef=React.useRef(false);
+  const[dndLog,setDndLog]=useState([]); // dispatch records — every send/answer, timestamped
+  const dndLogDirtyRef=React.useRef(false);
   const[estimates,setEstimates]=useState(ESTIMATES);
   const[stations,setStations]=useState(STATIONS);
   const[modal,setModal]=useState(null);
@@ -1175,6 +1403,11 @@ const App=()=>{
           d.forEach(h=>{if(h&&(h.media==="Streaming Audio"||h.media==="Digital Streaming")&&Array.isArray(h.iscis)){h.iscis.forEach(r=>{if(r&&typeof r.url==="string"&&r.url.indexOf("wkfirm.com")>-1){r.url=r.url.replace("https://seriousinjury.wkfirm.com/nashville-personal-injury-lawyers?","https://www.wkfirm.com/?").replace("&Placement=","&utm_term=")}})}});
           setTrafficHistory(d);trafficFbCountRef.current=d.length
         }trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
+        {let _cd=docs.campaigns?.data?JSON.parse(docs.campaigns.data):null;if(Array.isArray(_cd))_cd=_cd.filter(c=>c.notionId!=="327991a2-b603-80de-9367-e59f1d2807ba");if(Array.isArray(_cd)&&_cd.length)setFlights(_cd.map(dndMigrate));else setFlights(FLIGHT_SEED)}
+        if(docs.taglines?.data){const d=JSON.parse(docs.taglines.data);if(Array.isArray(d)&&d.length)setTaglines(d)}
+        if(docs.campaignHubCfg?.data){try{const d=JSON.parse(docs.campaignHubCfg.data);if(d&&typeof d==="object")setHubCfg(p=>({...p,...d,merch:{...(p.merch||{}),...(d.merch||{}),default:{...((p.merch||{}).default||{}),...(((d.merch||{}).default)||{})},byBrand:{...((p.merch||{}).byBrand||{}),...(((d.merch||{}).byBrand)||{})}}}))}catch(_e){}}
+        if(docs.assetReviews?.data){try{const d=JSON.parse(docs.assetReviews.data);if(d&&typeof d==="object")setAssetReviews(d)}catch(_e){}}
+        if(docs.mopsDispatch?.data){try{const d=JSON.parse(docs.mopsDispatch.data);if(Array.isArray(d))setDndLog(d)}catch(_e){}}
         if(docs.workMonth?.data){
           // Restore the saved month only if it's the current trafficking target or
           // LATER (user deliberately looking ahead). If the saved month is behind
@@ -1453,6 +1686,97 @@ const App=()=>{
     });
   },[dbLoaded,trafficHistory]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(workMonth)saveToDb("workMonth",workMonth)},[workMonth,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(!flightsDirtyRef.current)return;saveToDb("campaigns",flights)},[flights,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(!taglinesDirtyRef.current)return;saveToDb("taglines",taglines)},[taglines,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(!hubCfgDirtyRef.current)return;saveToDb("campaignHubCfg",hubCfg)},[hubCfg,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(!assetReviewsDirtyRef.current)return;saveToDb("assetReviews",assetReviews)},[assetReviews,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(!dndLogDirtyRef.current)return;saveToDb("mopsDispatch",dndLog)},[dndLog,dbLoaded]);
+  // ── NOTION → FLIGHTS SYNC — the pipe, not a UI. Upserts by notionId;
+  // a blank in Notion never clobbers a date set by hand in Doom; only rows
+  // with traffic substance materialize; finished/denied rows never do. ──
+  React.useEffect(()=>{
+    if(!dbLoaded)return;
+    let stop=false;
+    const sync=async()=>{
+      try{
+        const r=await fetch("/api/campaigns",{credentials:"include"});
+        if(!r.ok)return;
+        const d=await r.json().catch(()=>null);
+        if(stop||!d||!Array.isArray(d.campaigns))return;
+        setFlights(prev=>{
+          let changed=false;
+          const byNid={};prev.forEach(c=>{if(c.notionId)byNid[c.notionId]=c});
+          let next=[...prev];
+          d.campaigns.forEach(row=>{
+            if(!row||!row.id||!row.name)return;
+            if(byNid[row.id]){
+              const c=byNid[row.id];
+              const upd=campNotionFields(row);
+              const diff=Object.keys(upd).some(k=>String(c[k]==null?"":c[k])!==String(upd[k]==null?"":upd[k]));
+              if(diff){changed=true;next=next.map(x=>x.id===c.id?{...x,...upd,updated:Date.now()}:x)}
+            }else{
+              if(/Denied|Completed|Complete$/.test(String(row.status||"")))return;
+              const trafficky=(row.channels||[]).some(ch=>["TV","Radio","OOH","CTV/OTT","Media"].includes(ch))||row.flightStart||row.trafficDue||(row.assets||[]).length||(row.spots||[]).length;
+              if(!trafficky)return;
+              changed=true;next=[campFromNotion(row),...next];
+            }
+          });
+          if(changed){flightsDirtyRef.current=true;return next}
+          return prev;
+        });
+      }catch(e){}
+    };
+    sync();
+    const id=setInterval(sync,15*60*1000);
+    return()=>{stop=true;clearInterval(id)};
+  },[dbLoaded]);
+  // ── REVIEW VERDICTS → REQUIREMENT STATE — the portal (api/review.js)
+  // writes server-side; this poll folds answers back in: approved → the
+  // version is stamped and the req flips approved; changes → back with the
+  // feedback attached. Evidence moves state — never a hand-typed status. ──
+  React.useEffect(()=>{
+    if(!dbLoaded)return;
+    let stop=false;
+    const poll=async()=>{
+      try{
+        const snap=await db.collection("appData").doc("assetReviews").get();
+        const raw=snap&&snap.exists?snap.data():null;
+        const map=raw&&raw.data?JSON.parse(raw.data):null;
+        if(stop||!map)return;
+        const pending=Object.entries(map).filter(([t,r])=>r&&(r.status==="approved"||r.status==="changes")&&!r.applied);
+        if(!pending.length)return;
+        setFlights(prev=>{
+          let changed=false;
+          const next=prev.map(f=>{
+            const hits=pending.filter(([t,r])=>r.campId===f.id);
+            if(!hits.length)return f;
+            changed=true;
+            return{...f,updated:Date.now(),reqs:(f.reqs||[]).map(rq=>{
+              const hit=hits.find(([t,r])=>r.assetId===rq.id);
+              if(!hit)return rq;
+              const rr=hit[1];
+              const vs=[...(rq.versions||[])];
+              if(vs.length)vs[vs.length-1]={...vs[vs.length-1],verdict:rr.status,feedback:rr.feedback||"",reviewedAt:rr.respondedAt||new Date().toISOString()};
+              return rr.status==="approved"
+                ?{...rq,state:"approved",versions:vs,notes:((rq.notes||"")+" ✓ Approved "+String(rr.respondedAt||"").slice(0,10)).trim()}
+                :{...rq,state:"changes",versions:vs,notes:((rq.notes||"")+" ✏ Changes: "+(rr.feedback||"")).trim()};
+            })};
+          });
+          if(changed)flightsDirtyRef.current=true;
+          return changed?next:prev;
+        });
+        const upd={...map};pending.forEach(([t])=>{upd[t]={...upd[t],applied:true}});
+        assetReviewsDirtyRef.current=true;setAssetReviews(upd);
+        pending.forEach(([t,r])=>log("Creative Review",(r.status==="approved"?"Approved":"Changes requested")+": "+r.campName+" · "+(r.assetLabel||r.assetType)+(r.feedback?" — "+r.feedback:"")));
+        notify(pending.length===1
+          ?((pending[0][1].status==="approved"?"✓ Approved: ":"✏ Changes: ")+(pending[0][1].assetLabel||pending[0][1].assetType)+" — "+pending[0][1].campName)
+          :pending.length+" review answers came back — check Deals & Deadlines");
+      }catch(e){}
+    };
+    poll();
+    const id=setInterval(poll,5*60*1000);
+    return()=>{stop=true;clearInterval(id)};
+  },[dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(confirmations).length>0)saveToDb("confirmations",confirmations)},[confirmations,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohRemindersSent).length>0)saveToDb("oohRemindersSent",oohRemindersSent)},[oohRemindersSent,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(confirmRemindersSent).length>0)saveToDb("confirmRemindersSent",confirmRemindersSent)},[confirmRemindersSent,dbLoaded]);
@@ -2408,12 +2732,13 @@ const App=()=>{
   const alertFeedRef=React.useRef("");
   React.useEffect(()=>{
     if(!dbLoaded)return;if(!saveRef.current)return;
-    const items=alerts.map(a=>({key:a.key,msg:a.msg,days:a.days,severity:a.severity,overdue:!!a.overdue}));
+    const items=alerts.map(a=>({key:a.key,msg:a.msg,days:a.days,severity:a.severity,overdue:!!a.overdue}))
+      .concat(dndLedgerCompute(flights,iscis,hubCfg).filter(x=>x.days!=null&&x.days<=7).map(x=>({key:"dnd-"+x.key,msg:"⚑ Deals & Deadlines · "+x.who+" owes: "+x.what+" — "+x.flight+(x.due?" · due "+dndFd(x.due):""),days:x.days,severity:x.days<0?"critical":"warning",overdue:x.days<0})));
     const sig=JSON.stringify(items);
     if(sig===alertFeedRef.current)return;
     alertFeedRef.current=sig;
     saveToDb("alertFeed",{computedAt:new Date().toISOString(),items}).catch(e=>{console.error("alertFeed save failed:",e)});
-  },[alerts,dbLoaded]);
+  },[alerts,dbLoaded,flights,iscis,hubCfg]);
 
   // Creative Brief — a report for the creative team: what sizes to build for a
   // batch of boards due to post, plus placement guidance so the same creative
@@ -11273,8 +11598,988 @@ Rules:
     </div>;
   };
 
+  // ── DEALS & DEADLINES — Hades' wing (#mops) ───────────────────────────
+  // All state lives at App level and DndHub is CALLED as a function — a
+  // component defined inside App gets a new identity every render and
+  // remounts, dropping input focus (the OOH Hub note; learned the hard way).
+  const isciKeyOf=(i)=>i.code+"|"+(i.dma||"");
+  const isciByKey=(k)=>k?iscis.find(i=>isciKeyOf(i)===k):null;
+  const[dndView,setDndView]=useState("deck");
+  const[dndOv,setDndOv]=useState(null); // {t:"dossier",fid}|{t:"registry"}|{t:"record"}|{t:"dispatch"}|{t:"intake"}
+  const[dndPreview,setDndPreview]=useState(null); // {kind,fid,to,cc,subject,body,pkg?} — every send previews first
+  const[dndBusy,setDndBusy]=useState(false);
+  const[dndMint,setDndMint]=useState(null); // Register-as-ISCI prefill {fid,rid,code,title,dur,suffix,dma,url}
+  const[dndRegQ,setDndRegQ]=useState("");
+  const[dndRegBrand,setDndRegBrand]=useState("");
+  const[dndRegKind,setDndRegKind]=useState("");
+  const[dndCalM,setDndCalM]=useState(()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),1)});
+  const DNC_EMPTY={name:"",brand:"Postman Law",markets:[],flightStart:"",flightEnd:"",trafficDue:"",channels:[],channelDetail:{},spots:[],extras:[],stations:"",partner:"",contact:"",cost:"",requestedBy:"",promoObligations:"",desc:"",toNotion:true};
+  const[dnc,setDnc]=useState(DNC_EMPTY);
+  const[contractText,setContractText]=useState("");
+  const[parsing,setParsing]=useState(false);
+  const dndGo=(ov)=>setDndOv(ov);
+  const dndTouch=()=>{flightsDirtyRef.current=true};
+  const updFlight=(id,patch)=>{dndTouch();setFlights(p=>p.map(f=>f.id===id?{...f,...patch,updated:Date.now()}:f))};
+  const updReq=(fid,rid,patch)=>{dndTouch();setFlights(p=>p.map(f=>f.id!==fid?f:{...f,updated:Date.now(),reqs:(f.reqs||[]).map(r=>r.id===rid?{...r,...patch}:r)}))};
+  const delReq=(fid,rid)=>{dndTouch();setFlights(p=>p.map(f=>f.id!==fid?f:{...f,updated:Date.now(),reqs:(f.reqs||[]).filter(r=>r.id!==rid)}))};
+  const updTraffic=(fid,tid,patch)=>{dndTouch();setFlights(p=>p.map(f=>f.id!==fid?f:{...f,updated:Date.now(),traffic:(f.traffic||[]).map(t=>t.id===tid?{...t,...patch}:t)}))};
+  const delFlight=(f)=>{if(!confirm('Tear up the deal "'+f.name+'"? This can\'t be undone.'))return;dndTouch();setFlights(p=>p.filter(x=>x.id!==f.id));log("Flight","Deleted: "+f.name);setDndOv(null)};
+  const saveCfg=(patch)=>{hubCfgDirtyRef.current=true;setHubCfg(p=>({...p,...patch}))};
+  const saveMerchRole=(brand,patch)=>{hubCfgDirtyRef.current=true;setHubCfg(p=>{const m={...(p.merch||{default:{person:"Hazel",email:""},byBrand:{}})};if(brand==="default")m.default={...(m.default||{}),...patch};else m.byBrand={...(m.byBrand||{}),[brand]:{...((m.byBrand||{})[brand]||{}),...patch}};return{...p,merch:m}})};
+  const dndLogAdd=(rec)=>{dndLogDirtyRef.current=true;setDndLog(p=>[{id:campUid(),at:new Date().toISOString(),...rec},...p].slice(0,400))};
+  const dndCopy=(txt,msg)=>{try{navigator.clipboard.writeText(txt);notify(msg||"Copied")}catch(e){window.prompt("Copy:",txt)}};
+  const dndLedger=React.useMemo(()=>dndLedgerCompute(flights,iscis,hubCfg),[flights,iscis,hubCfg]);
+  const dndTws=React.useMemo(()=>dndTripwires(flights,iscis,hubCfg),[flights,iscis,hubCfg]);
+  // contract door — proven pre-strip: PDF → text → AI → prefilled form.
+  const contractPdf=async(file)=>{
+    if(!file)return;
+    try{
+      if(typeof pdfjsLib==="undefined"||!pdfjsLib.getDocument)throw new Error("no pdfjs");
+      const buf=await file.arrayBuffer();
+      const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+      let t="";for(let i=1;i<=Math.min(pdf.numPages,12);i++){const pg2=await pdf.getPage(i);const tc=await pg2.getTextContent();t+=tc.items.map(it=>it.str).join(" ")+"\n"}
+      setContractText(t.replace(/\s+/g," ").trim());
+      notify("PDF read. Now hit Read the fine print.");
+    }catch(e){notify("Couldn't read that PDF here — paste the text instead.")}
+  };
+  const parseContract=async()=>{
+    const text=contractText.trim();
+    if(text.length<40){notify("Paste the contract, media plan, or kickoff email first — or drop the PDF.");return}
+    setParsing(true);
+    try{
+      const CONTRACT_PROMPT='Extract advertising campaign details from this contract / media plan / email. Return ONLY a JSON object, no prose:\n{\n "name": "short campaign name",\n "brand": one of ["Postman Law","Wettermark Keith","Lerner & Rowe","Parrish DeVaughn","Keches Law Group"] or "",\n "markets": ["city names"],\n "flightStart": "YYYY-MM-DD" or "",\n "flightEnd": "YYYY-MM-DD" or "",\n "trafficDue": "YYYY-MM-DD" or "" (materials/traffic deadline if stated),\n "channels": array from ["Radio","TV","Streaming Audio","Digital","OOH","Paid Social","Paid Search","Email/SMS"],\n "stations": "comma list of stations/outlets",\n "spots": [":30",":15"],\n "cost": "number or empty",\n "promoObligations": "live mentions, booths, tickets, added value — verbatim-ish",\n "notes": "anything operationally important"\n}\n\nText (may be messy OCR):\n';
+      const resp=await fetch("/api/planner",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-5",max_tokens:1500,messages:[{role:"user",content:CONTRACT_PROMPT+text.substring(0,6000)}]})});
+      const data=await resp.json();
+      if(!resp.ok)throw new Error(data.error||("planner "+resp.status));
+      const aiText=(data.content||[]).map(x=>x.text||"").join("");
+      const jsonStr=(aiText.match(/\{[\s\S]*\}/)||[])[0]||"";
+      const p=JSON.parse(jsonStr);
+      const brand=BRANDS.some(b=>b.name===p.brand)?p.brand:"Postman Law";
+      const bMarkets=((BRANDS.find(b=>b.name===brand)||{}).markets||[]).map(m=>DM[m]||m);
+      setDnc({...DNC_EMPTY,name:p.name||"",brand,
+        markets:Array.isArray(p.markets)?p.markets.filter(m=>bMarkets.some(x=>x.toLowerCase()===String(m).toLowerCase())):[],
+        flightStart:campIsoD(p.flightStart),flightEnd:campIsoD(p.flightEnd),trafficDue:campIsoD(p.trafficDue),
+        channels:Array.isArray(p.channels)?p.channels.filter(x=>DND_CHANNELS.includes(x)):[],
+        spots:Array.isArray(p.spots)?p.spots.filter(x=>[":15",":30",":60","Host Read"].includes(x)):[],
+        stations:p.stations||"",cost:String(p.cost||""),promoObligations:p.promoObligations||"",
+        desc:p.notes||"",toNotion:true});
+      setContractText("");
+      log("Flight","Read from contract: "+(p.name||"untitled"));
+      notify("Fine print read. Check the prefill — you decide what it needs.");
+    }catch(e){notify("Couldn't parse that — "+(/configured/.test(String(e.message||e))?"the AI key isn't set in Vercel yet.":"try cleaner text, or enter it by hand."))}
+    setParsing(false);
+  };
+  const createFlight=async()=>{
+    const nm=dnc.name.trim();if(!nm){notify("A deal needs a name. Even I sign my contracts.");return}
+    dndTouch();const id=campUid();
+    const base={id,name:nm,brand:dnc.brand,markets:dnc.markets.join(", "),status:"approach",
+      flightStart:dnc.flightStart,flightEnd:dnc.flightEnd,trafficDue:dnc.trafficDue,
+      channels:dnc.channels,channelDetail:{...dnc.channelDetail},stations:dnc.stations.trim(),partner:dnc.partner.trim(),
+      contact:dnc.contact.trim(),cost:dnc.cost,requestedBy:dnc.requestedBy.trim(),promoObligations:dnc.promoObligations.trim(),
+      notes:dnc.desc.trim(),notionUrl:"",notionId:null,briefSentAt:null,reqs:[],traffic:[],utms:[],created:Date.now(),updated:Date.now()};
+    const cd=dndCreativeDue(base);
+    const seen={};const push=(r)=>{const k=r.kind+"|"+r.label;if(seen[k])return;seen[k]=1;base.reqs.push(r)};
+    dnc.spots.forEach(sp=>push(dndMkReq("creative",sp+" spot",dnc.channelDetail["Radio"]||dnc.channelDetail["TV"]||"",cd)));
+    dnc.channels.forEach(ch=>dndChannelEmit(ch,dnc.channelDetail[ch],base).forEach(r=>{if(r.kind==="creative"&&/spot|:30|:15|:60/i.test(r.label)&&dnc.spots.length)return;push(r)}));
+    dnc.extras.forEach(x=>{
+      if(x==="Merch")push(dndMkReq("merch","Merch — event/booth","",cd,"merch"));
+      if(x==="Pixel")push(dndMkReq("web","Pixel","destination baked into the brand",dndVendorDue(base),"seo"));
+      if(x==="Tag")push(dndMkReq("creative","Sponsor tag","",cd));
+      if(x==="Social video")push(dndMkReq("creative","Social video","",cd));
+    });
+    const vendor=dnc.partner.trim()||String(dnc.stations||"").split(",")[0].trim()||"(set the vendor)";
+    base.traffic=[{id:campUid(),vendor,due:dndVendorDue(base),state:"pending",legacy:"",sentAt:null,dispatchId:null}];
+    setFlights(p=>[base,...p]);
+    log("Flight","New deal: "+nm);
+    const snap={...dnc};
+    setDnc({...DNC_EMPTY,brand:dnc.brand});
+    setDndOv({t:"dossier",fid:id});
+    if(snap.toNotion){
+      try{
+        const r=await fetch("/api/campaigns",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({name:nm,brand:snap.brand,channels:snap.channels,markets:snap.markets.join(", "),launch:snap.flightStart,flightEnd:snap.flightEnd,trafficDue:snap.trafficDue,description:[snap.desc.trim(),snap.stations?"Stations: "+snap.stations.trim():"",snap.partner?"Partner: "+snap.partner.trim():"",snap.contact?"Contact: "+snap.contact.trim():"",snap.cost?"Cost: $"+snap.cost:"",snap.promoObligations?"Obligations: "+snap.promoObligations:"",snap.spots.length?"Spots: "+snap.spots.join(", "):""].filter(Boolean).join(" | ")})});
+        const d=await r.json().catch(()=>({}));
+        if(r.ok&&d&&d.id){dndTouch();setFlights(p=>p.map(f=>f.id===id?{...f,notionId:d.id,notionUrl:d.url||""}:f));notify("Deal made: "+nm+" — in Doom and filed in Notion")}
+        else notify("Deal made: "+nm+" — saved here; Notion push failed ("+(d.message||d.error||r.status)+")");
+      }catch(e){notify("Deal made: "+nm+" — saved here; Notion unreachable")}
+    }else notify("Deal made: "+nm+". "+dndPick(DND_QUIP.intake));
+  };
+  // ── senders — pure builders; NOTHING sends until the preview's Send. ──
+  const buildBriefEmail=(f)=>{
+    const role=dndRoleOf("creativeOps",f.brand,hubCfg);
+    if(!role.email){setDndOv({t:"dispatch"});notify("Set the Creative Ops email first — top of Dispatch");return null}
+    const open=(f.reqs||[]).filter(r=>r.kind==="creative"&&r.assignee!=="station"&&!dndReqInHand(r,iscis));
+    if(!open.length){notify("Creative owes nothing on this one.");return null}
+    const tl=taglines.filter(t=>t.active!==false&&(!t.brand||t.brand===f.brand));
+    const rows=open.map(r=>"<tr><td style='padding:6px 10px;border:1px solid #ddd'><b>"+escHtml(r.label)+"</b></td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(r.spec||"—")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(r.due?dndFd(r.due):"ASAP")+"</td></tr>").join("");
+    const body="Hello,<br><br>Creative brief for <b>"+escHtml(f.name)+"</b> ("+escHtml(f.brand||"")+(f.markets?" — "+escHtml(f.markets):"")+").<br><br>"
+      +(f.flightStart?"<b>Flight:</b> "+escHtml(dndFd(f.flightStart))+(f.flightEnd?" to "+escHtml(dndFd(f.flightEnd)):"")+"<br>":"")
+      +"<b>Assets go to the vendor:</b> "+escHtml(dndFd(dndVendorDue(f)))+"<br>"
+      +(f.stations?"<b>Stations / outlets:</b> "+escHtml(f.stations)+"<br>":"")
+      +(f.notes?"<b>Notes:</b> "+escHtml(f.notes)+"<br>":"")
+      +"<br><b>Needed, with specs and your hard return dates:</b><table style='border-collapse:collapse;font-size:13px'><tr><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Asset</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Spec</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Return by</th></tr>"+rows+"</table>"
+      +"<br>These dates hold the "+(f.flightStart?escHtml(dndFd(f.flightStart))+" launch":"launch")+" — the vendor package goes out "+escHtml(dndFd(dndVendorDue(f)))+"."
+      +(tl.length?"<br><br><b>Approved taglines — "+escHtml(f.brand)+":</b><br>"+tl.map(t=>"• "+escHtml(t.text)).join("<br>"):"")
+      +"<br><br>Finished files come back on this thread or through each asset's review link — versions tracked, feedback logged.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
+    return{to:role.email,subject:"Creative Brief — "+f.name+" ("+f.brand+") · assets due "+dndFd(dndCreativeDue(f)||dndVendorDue(f)),body};
+  };
+  const buildMerchEmail=(f)=>{
+    const role=dndRoleOf("merch",f.brand,hubCfg);
+    if(!role.email){setDndOv({t:"dispatch"});notify("Set "+role.label+"'s email first — Dispatch → Addresses");return null}
+    const open=(f.reqs||[]).filter(r=>r.kind==="merch"&&!dndReqInHand(r,iscis)&&r.state!=="mailed");
+    if(!open.length){notify("No merch owed on this one.");return null}
+    const rows=open.map(r=>"• <b>"+escHtml(r.label)+"</b>"+(r.spec?" — "+escHtml(r.spec):"")+" · needed by "+escHtml(r.due?dndFd(r.due):"ASAP")).join("<br>");
+    const body="Hi "+escHtml(role.label)+",<br><br>Merch request for <b>"+escHtml(f.name)+"</b> ("+escHtml(f.brand||"")+(f.markets?" — "+escHtml(f.markets):"")+")"+(f.flightStart?", launching "+escHtml(dndFd(f.flightStart)):"")+":<br><br>"+rows
+      +(f.promoObligations?"<br><br><b>Event obligations:</b> "+escHtml(f.promoObligations):"")
+      +"<br><br>Reply on this thread with <b>ordered</b> and again with <b>mailed</b> (tracking # if you have it) — I log both.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
+    return{to:role.email,subject:"Merch Request — "+f.name+" ("+f.brand+")",body};
+  };
+  const buildSeoEmail=(f)=>{
+    const role=dndRoleOf("seo",f.brand,hubCfg);
+    if(!role.email){setDndOv({t:"dispatch"});notify("Set the SEO / Web email first — Dispatch → Addresses");return null}
+    const open=(f.reqs||[]).filter(r=>r.kind==="web"&&!dndReqInHand(r,iscis));
+    if(!open.length){notify("Nothing owed by SEO/Web on this one.");return null}
+    const rows=open.map(r=>"• <b>"+escHtml(r.label)+"</b>"+(r.spec?" — "+escHtml(r.spec):"")+" · by "+escHtml(r.due?dndFd(r.due):"ASAP")).join("<br>");
+    const body="Hello,<br><br>Tracking / web request for <b>"+escHtml(f.name)+"</b> ("+escHtml(f.brand||"")+(f.markets?" — "+escHtml(f.markets):"")+")"+(f.flightStart?", launching "+escHtml(dndFd(f.flightStart)):"")+":<br><br>"+rows
+      +"<br><br>Destination: "+escHtml(CAMP_BRAND_URLS[f.brand]||"")+" (baked into the brand). Reply with confirmation and I'll mark it verified.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
+    return{to:role.email,subject:"Pixel / Tracking Request — "+f.name+" ("+f.brand+")",body};
+  };
+  const buildPackageEmail=(f,tr,toOverride)=>{
+    const links=(f.reqs||[]).map(r=>({r,link:dndReqLink(r,iscis)})).filter(x=>x.link);
+    const utmRows=(f.utms||[]).map(u=>"• <b>"+escHtml(u.platform||u.medium)+"</b>: <a href=\""+u.url+"\">"+escHtml(u.url)+"</a>").join("<br>");
+    if(!links.length&&!utmRows){notify("Nothing linked to send yet — link ISCIs or files first. That's the whole point.");return null}
+    const rows=links.map(x=>{const l=isciByKey(x.r.isci);return"• <b>"+escHtml(x.r.label)+"</b>"+(l?" — ISCI "+escHtml(l.code)+(l.title?" · "+escHtml(l.title):"")+(l.dur?" :"+escHtml(String(l.dur)):""):"")+": <a href=\""+x.link+"\">"+escHtml(x.link)+"</a>"}).join("<br>");
+    const to=(toOverride||f.contact||"").trim();
+    const body="Hello,<br><br>Asset package for <b>"+escHtml(f.name)+"</b> ("+escHtml(f.brand||"")+(f.markets?" — "+escHtml(f.markets):"")+")"+(f.flightStart?" — launches "+escHtml(dndFd(f.flightStart)):"")+":<br><br>"
+      +(rows?"<b>Creative:</b><br>"+rows+"<br><br>":"")
+      +(utmRows?"<b>Tracking URLs (please use exactly as written):</b><br>"+utmRows+"<br><br>":"")
+      +(f.stations?"<b>Stations / outlets:</b> "+escHtml(f.stations)+"<br>":"")
+      +(f.promoObligations?"<b>Obligations on our side:</b> "+escHtml(f.promoObligations)+"<br>":"")
+      +"<br>Please confirm receipt on this thread.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
+    return{to,subject:"Traffic / Asset Package — "+f.name+" ("+f.brand+") · launches "+dndFd(f.flightStart),body,needsTo:!to};
+  };
+  const buildRollup=()=>{
+    const to=(hubCfg.jessicaEmail||"").trim();
+    const L=dndLedger;const late=L.filter(x=>x.days!=null&&x.days<0),week=L.filter(x=>x.days!=null&&x.days>=0&&x.days<=7);
+    const launched=flights.filter(f=>{const n=dndDaysTo(f.flightStart);return n!=null&&n>=-7&&n<0});
+    const row=(x)=>"• <b>"+escHtml(x.who)+"</b> owes "+escHtml(x.what)+" — "+escHtml(x.flight)+(x.due?" · "+escHtml(dndFd(x.due)):"")+(x.days!=null&&x.days<0?" · <b style='color:#c0392b'>"+Math.abs(x.days)+"d late</b>":"");
+    const body="Hi Jessica,<br><br>Marketing Ops, this week:<br><br>"
+      +(launched.length?"<b>Launched:</b><br>"+launched.map(f=>"• "+escHtml(f.name)+" ("+escHtml(f.brand)+(f.markets?" — "+escHtml(f.markets):"")+")").join("<br>")+"<br><br>":"")
+      +(late.length?"<b>At risk / late:</b><br>"+late.map(row).join("<br>")+"<br><br>":"<b>Nothing late.</b><br><br>")
+      +(week.length?"<b>Due this week:</b><br>"+week.map(row).join("<br>")+"<br><br>":"")
+      +"Full detail lives in Doom → Deals & Deadlines.<br><br>Emm";
+    return{to,subject:"Marketing Ops — weekly status ("+new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"})+")",body,needsTo:!to};
+  };
+  const buildRecap=(f)=>{
+    const to=(hubCfg.jessicaEmail||"").trim();
+    const sent=(f.traffic||[]).filter(t=>t.state==="sent");
+    const body="Hello,<br><br>Recap — <b>"+escHtml(f.name)+"</b> ("+escHtml(f.brand||"")+(f.markets?" — "+escHtml(f.markets):"")+"):<br><br>"
+      +(f.flightStart?"<b>Flight:</b> "+escHtml(dndFd(f.flightStart))+(f.flightEnd?" to "+escHtml(dndFd(f.flightEnd)):"")+"<br>":"")
+      +(f.stations?"<b>Ran on:</b> "+escHtml(f.stations)+"<br>":"")
+      +(f.cost?"<b>Cost:</b> $"+escHtml(String(f.cost))+"<br>":"")
+      +(sent.length?"<b>Traffic:</b> delivered to "+sent.map(t=>escHtml(t.vendor)).join(", ")+"<br>":"")
+      +((f.utms||[]).length?"<b>Tracking:</b> "+(f.utms||[]).length+" URL(s) in market — results to follow from GA.<br>":"")
+      +(f.promoObligations?"<b>Obligations delivered:</b> "+escHtml(f.promoObligations)+"<br>":"")
+      +"<br>Full record in Doom → Deals & Deadlines → The Record.<br><br>Emm Caban<br>Atticor Marketing Operations";
+    return{to,subject:"Campaign Recap — "+f.name+" ("+f.brand+")",body,needsTo:!to};
+  };
+  const buildBriefPdf=(f)=>{
+    try{
+      const JS=(window.jspdf&&window.jspdf.jsPDF)?window.jspdf.jsPDF:null;
+      if(!JS)return null;
+      const doc=new JS({unit:"pt",format:"letter"});
+      const W=612;let y=54;
+      const bcol=getBrandColor(f.brand)||"#9b7bb0";
+      const hex=(h)=>{const n=parseInt(String(h).slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255]};
+      const[b1,b2,b3]=hex(bcol);
+      doc.setFillColor(b1,b2,b3);doc.rect(0,0,W,8,"F");
+      doc.setFont("helvetica","bold");doc.setFontSize(20);doc.setTextColor(20,20,35);
+      doc.text("CREATIVE BRIEF",54,y);y+=8;
+      doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(120,110,140);
+      doc.text("Deals & Deadlines · Atticor Marketing Operations",54,y+12);y+=36;
+      doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(b1,b2,b3);
+      doc.text(f.name,54,y);y+=18;
+      doc.setFontSize(11);doc.setTextColor(60,50,80);doc.setFont("helvetica","normal");
+      doc.text(String(f.brand||"")+(f.markets?"  ·  "+f.markets:""),54,y);y+=22;
+      const fact=(k,v)=>{if(!v)return;doc.setFont("helvetica","bold");doc.setTextColor(90,80,110);doc.text(k,54,y);doc.setFont("helvetica","normal");doc.setTextColor(40,30,60);doc.text(String(v),190,y);y+=16};
+      fact("Flight:",f.flightStart?dndFd(f.flightStart)+(f.flightEnd?"  to  "+dndFd(f.flightEnd):""):"");
+      fact("Package to vendor:",dndFd(dndVendorDue(f)));
+      fact("Stations / outlets:",f.stations);
+      fact("Partner contact:",f.contact);
+      y+=10;
+      doc.setFont("helvetica","bold");doc.setFontSize(12);doc.setTextColor(20,20,35);
+      doc.text("Assets needed — specs and hard return dates",54,y);y+=10;
+      doc.setDrawColor(b1,b2,b3);doc.setLineWidth(1.2);doc.line(54,y,558,y);y+=16;
+      const open=(f.reqs||[]).filter(r=>r.kind==="creative"&&r.assignee!=="station"&&!dndReqInHand(r,iscis));
+      doc.setFontSize(10);
+      doc.setFont("helvetica","bold");doc.setTextColor(120,110,140);
+      doc.text("ASSET",54,y);doc.text("SPEC",240,y);doc.text("RETURN BY",460,y);y+=6;
+      doc.setDrawColor(210,205,220);doc.setLineWidth(.6);doc.line(54,y,558,y);y+=14;
+      open.forEach(r=>{
+        doc.setFont("helvetica","bold");doc.setTextColor(40,30,60);
+        doc.text(r.label||"",54,y,{maxWidth:180});
+        doc.setFont("helvetica","normal");doc.setTextColor(90,80,110);
+        doc.text(String(r.spec||"—"),240,y,{maxWidth:210});
+        doc.setTextColor(180,60,90);doc.text(r.due?dndFd(r.due):"ASAP",460,y);
+        y+=18;if(y>720){doc.addPage();y=54}
+      });
+      y+=8;
+      doc.setFont("helvetica","italic");doc.setFontSize(10);doc.setTextColor(90,80,110);
+      doc.text("These dates hold the "+(f.flightStart?dndFd(f.flightStart)+" launch":"launch")+" — the vendor package goes out "+dndFd(dndVendorDue(f))+".",54,y,{maxWidth:500});y+=24;
+      if(f.notes){doc.setFont("helvetica","bold");doc.setTextColor(20,20,35);doc.text("Notes",54,y);y+=14;doc.setFont("helvetica","normal");doc.setTextColor(60,50,80);doc.text(String(f.notes),54,y,{maxWidth:500});y+=30}
+      const tl=taglines.filter(t=>t.active!==false&&(!t.brand||t.brand===f.brand));
+      if(tl.length){doc.setFont("helvetica","bold");doc.setTextColor(20,20,35);doc.text("Approved taglines",54,y);y+=14;doc.setFont("helvetica","italic");doc.setTextColor(90,80,110);tl.forEach(t=>{doc.text("•  "+t.text,54,y);y+=14})}
+      doc.setFontSize(8);doc.setTextColor(150,142,173);
+      doc.text("Sent from Deals & Deadlines · replies land with Emm Caban, Marketing Operations",54,760);
+      return doc.output("datauristring").split(",")[1]||null;
+    }catch(e){console.warn("brief pdf failed",e);return null}
+  };
+  const openDndPreview=(kind,f,extra)=>{
+    const e=kind==="brief"?buildBriefEmail(f)
+      :kind==="merch"?buildMerchEmail(f)
+      :kind==="seo"?buildSeoEmail(f)
+      :kind==="package"?buildPackageEmail(f,extra&&extra.tr,extra&&extra.to)
+      :kind==="rollup"?buildRollup()
+      :kind==="recap"?buildRecap(f):null;
+    if(!e)return;
+    setDndPreview({kind,fid:f?f.id:null,fName:f?f.name:"",trId:extra&&extra.tr?extra.tr.id:null,...e});
+  };
+  const confirmDndSend=async()=>{
+    const pv=dndPreview;if(!pv)return;
+    const to=(pv.to||"").trim();
+    if(!to||!/@/.test(to)){notify("It needs a real email address.");return}
+    const f=pv.fid?flights.find(x=>x.id===pv.fid):null;
+    setDndBusy(true);
+    try{
+      const payload={to,cc:"emm.caban@atticor.ai",subject:pv.subject,message:pv.body};
+      if(pv.kind==="brief"&&f){const b64=buildBriefPdf(f);if(b64){payload.pdfBase64=b64;payload.pdfName="CreativeBrief_"+String(f.name).replace(/[^A-Za-z0-9]+/g,"_")+".pdf"}}
+      const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      if(!r.ok)throw new Error("send failed");
+      const dispatchId=campUid();
+      dndLogAdd({id:dispatchId,fid:pv.fid,kind:pv.kind,to,subject:pv.subject,flight:pv.fName});
+      if(pv.kind==="brief"&&f){dndTouch();setFlights(p=>p.map(x=>x.id!==f.id?x:{...x,briefSentAt:new Date().toISOString(),updated:Date.now(),reqs:(x.reqs||[]).map(rq=>(rq.kind==="creative"&&rq.state==="needed"&&rq.assignee!=="station")?{...rq,state:"requested"}:rq)}));log("D&D Brief","Sent: "+f.name)}
+      if(pv.kind==="merch"&&f){dndTouch();setFlights(p=>p.map(x=>x.id!==f.id?x:{...x,updated:Date.now(),reqs:(x.reqs||[]).map(rq=>(rq.kind==="merch"&&rq.state==="needed")?{...rq,state:"requested"}:rq)}));log("D&D Merch","Requested: "+f.name)}
+      if(pv.kind==="seo"&&f){dndTouch();setFlights(p=>p.map(x=>x.id!==f.id?x:{...x,updated:Date.now(),reqs:(x.reqs||[]).map(rq=>(rq.kind==="web"&&rq.state==="needed")?{...rq,state:"requested"}:rq)}));log("D&D Web","Requested: "+f.name)}
+      if(pv.kind==="package"&&f){
+        // EVIDENCE: the send itself writes the traffic record, born carrying
+        // the flight id — exact linkage, no matching. This is what clears
+        // the PDV tripwire, and nothing else does.
+        updTraffic(f.id,pv.trId||((f.traffic[0]||{}).id),{state:"sent",sentAt:new Date().toISOString(),dispatchId,vendor:(f.traffic.find(t=>t.id===pv.trId)||f.traffic[0]||{}).vendor});
+        const isciLines=(f.reqs||[]).map(rq=>isciByKey(rq.isci)).filter(Boolean).map(l=>({code:l.code,title:l.title||"",dur:l.dur||""}));
+        setTrafficHistory(p=>[{ts:new Date().toISOString(),est:"DND-"+((BRANDS.find(b=>b.name===f.brand)||{}).code||"XX")+"-"+dndSlug(f.name).slice(0,18),brand:f.brand,market:f.markets,media:"Campaign",buyer:"Marketing Ops",month:workMonth,flight:(f.flightStart||"")+(f.flightEnd?" - "+f.flightEnd:""),version:1,comments:"Deals & Deadlines package → "+to,iscis:isciLines,stations:[((f.traffic[0]||{}).vendor)||""],isOoh:false,status:"sent",flightId:f.id},...p]);
+        log("D&D Package","Sent: "+f.name+" → "+to);
+      }
+      if(pv.kind==="rollup")log("D&D Rollup","Weekly status sent → "+to);
+      if(pv.kind==="recap"&&f)log("D&D Recap","Sent: "+f.name+" → "+to);
+      notify("Sent. "+dndPick(DND_QUIP.send));setDndPreview(null);
+    }catch(e){notify("Email failed to send — check the connection and try again")}
+    setDndBusy(false);
+  };
+  const sendDndReview=async(f,r)=>{
+    const role=dndRoleOf("creativeOps",f.brand,hubCfg);
+    if(!role.email){setDndOv({t:"dispatch"});notify("Set the Creative Ops email first — top of Dispatch");return}
+    const tok=Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,"0")).join("");
+    const link=window.location.origin+"/api/review?tok="+tok;
+    const fileUrl=dndReqLink(r,iscis);
+    const rec={campId:f.id,assetId:r.id,campName:f.name,brand:f.brand||"",assetType:r.kind,assetLabel:r.label||"",url:fileUrl,due:r.due||"",trafficDue:dndVendorDue(f),sentTo:role.email,sentAt:new Date().toISOString(),status:"pending",feedback:"",respondedAt:null,applied:false};
+    const body="Hello,<br><br><b>"+escHtml(r.label)+"</b> for <b>"+escHtml(f.name)+"</b> ("+escHtml(f.brand||"")+") needs your review."
+      +(fileUrl?"<br><br><b>Asset:</b> <a href=\""+fileUrl+"\">"+escHtml(fileUrl)+"</a>":"")
+      +(r.due?"<br><b>Needed in hand by:</b> "+escHtml(dndFd(r.due)):"")
+      +"<br><br><a href=\""+link+"\" style=\"display:inline-block;padding:10px 22px;background:#2e2e4a;color:#4AC8E8;border:1px solid #4AC8E8;border-radius:8px;text-decoration:none;font-weight:700\">Review — Approve or Request Changes</a>"
+      +"<br><br>One click, no login. Your answer flows straight back into our system.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
+    setDndBusy(true);
+    try{
+      const r2=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:role.email,cc:"emm.caban@atticor.ai",subject:"Creative Review Needed — "+f.name+" · "+(r.label||r.kind),message:body})});
+      if(!r2.ok)throw new Error("send failed");
+      assetReviewsDirtyRef.current=true;setAssetReviews(p=>({...p,[tok]:rec}));
+      updReq(f.id,r.id,{state:"in_review",versions:[...(r.versions||[]),...((r.versions||[]).length?[]:[{v:1,fileUrl,receivedAt:new Date().toISOString(),source:"upload"}])].map((v,i,arr)=>i===arr.length-1?{...v,reviewSentAt:new Date().toISOString()}:v)});
+      dndLogAdd({fid:f.id,kind:"reviewLink",to:role.email,subject:"Review: "+(r.label||r.kind),flight:f.name});
+      log("D&D Review","Sent for review: "+f.name+" · "+(r.label||r.kind));
+      notify("Review link out. "+dndPick(DND_QUIP.send));
+    }catch(e){notify("Review email failed to send — try again")}
+    setDndBusy(false);
+  };
+  const uploadReqFile=async(f,r,file)=>{
+    if(!file)return;
+    notify("Uploading "+file.name+"…");
+    try{
+      let url="";
+      const clean=(s)=>String(s).replace(/[^A-Za-z0-9._-]+/g,"_");
+      const path="campaigns/"+f.id+"/"+r.id+"-"+clean(file.name);
+      if(file.size<=3*1024*1024){
+        const b64=await new Promise((res,rej)=>{const rd=new FileReader();rd.onerror=()=>rej(rd.error||new Error("read failed"));rd.onload=()=>res(String(rd.result).split(",")[1]||"");rd.readAsDataURL(file)});
+        const rr=await fetch("/api/storage",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"upload",bucket:"creative",path,dataB64:b64,contentType:file.type||"application/octet-stream"})});
+        const j=await rr.json().catch(()=>({}));if(!rr.ok)throw new Error(j.error||j.detail||("HTTP "+rr.status));url=j.url;
+      }else{
+        if(!storage)throw new Error("storage not loaded (large file)");
+        url=await new Promise((res,rej)=>{const ref=storage.ref(path);const t=ref.put(file);t.on("state_changed",null,rej,()=>ref.getDownloadURL().then(res).catch(rej))});
+      }
+      const v=(r.versions||[]).length+1;
+      updReq(f.id,r.id,{url,versions:[...(r.versions||[]),{v,fileUrl:url,receivedAt:new Date().toISOString(),source:"upload"}]});
+      log("D&D Asset","v"+v+" landed: "+f.name+" · "+(r.label||r.kind)+" ("+file.name+")");
+      notify("v"+v+" in: "+(r.label||r.kind)+". Review it or register it.");
+    }catch(e){notify("Upload failed: "+((e&&e.message)||e))}
+  };
+  // Register-as-ISCI: the promotion. Doom mints the code by its own
+  // conventions ({DMA}{BC}{YY}{DUR}{SEQ}{SUFFIX}), pre-filled from the
+  // flight — Emm confirms, never types from scratch. Provenance rides along.
+  const suggestIsci=(f,r)=>{
+    const mkName=String(f.markets||"").split(",")[0].trim();
+    const dmaCode=Object.keys(DM).find(k=>DM[k].toLowerCase()===mkName.toLowerCase())||"CHI";
+    const bc=((BRANDS.find(b=>b.name===f.brand)||{}).code||"PL");
+    const lbl=(String(r.label||"")+" "+String(r.spec||"")).toLowerCase();
+    const suffix=/banner|display|300|728/.test(lbl)?"B":/\btv\b|television|ctv/.test(lbl)?"T":/radio/.test(lbl)?"R":/audio|stream/.test(lbl)?"S":"T";
+    const dur=(lbl.match(/:(\d\d)/)||[])[1]||"30";
+    const prefix=dmaCode+bc+"26"+dur;
+    let mx=0;iscis.forEach(i=>{const m=String(i.code||"").match(new RegExp("^"+prefix+"(\\d{3})"));if(m)mx=Math.max(mx,+m[1])});
+    return{fid:f.id,rid:r.id,code:prefix+String(mx+1).padStart(3,"0")+suffix,title:r.label||"",dur,suffix,dma:dmaCode,url:dndReqLink(r,iscis)};
+  };
+  const confirmMint=()=>{
+    const m=dndMint;if(!m)return;
+    if(!m.code.trim()||!m.title.trim()){notify("Code and title, minimum. The registry has standards.");return}
+    setIscis(p=>[{code:m.code.trim().toUpperCase(),dma:m.dma,brand:(flights.find(f=>f.id===m.fid)||{}).brand||"",suffix:m.suffix,dur:m.dur,title:m.title.trim(),fileUrl:m.url||"",active:true,tags:["D&D"],addedAt:new Date().toISOString()},...p]);
+    updReq(m.fid,m.rid,{isci:m.code.trim().toUpperCase()+"|"+m.dma,state:"approved"});
+    log("D&D Register","Minted ISCI "+m.code+" from "+(flights.find(f=>f.id===m.fid)||{}).name);
+    notify("Registered: "+m.code+". Traffic-ready.");
+    setDndMint(null);
+  };
+  const addUtm=(f,el)=>{
+    const medium=el.medium;const src=(f.traffic[0]||{}).vendor||f.partner||"vendor";
+    const linked=(f.reqs||[]).map(r=>isciByKey(r.isci)).filter(Boolean);
+    const content=linked.length?(linked[0].title||linked[0].code):((f.reqs||[]).find(r=>/banner|display/i.test(r.label||""))||{}).label||"";
+    const url=dndUtmBuild(f,src,medium,content);
+    dndTouch();setFlights(p=>p.map(x=>x.id!==f.id?x:{...x,updated:Date.now(),utms:[...(x.utms||[]),{id:campUid(),platform:el.label,medium,content,url,created:new Date().toISOString()}]}));
+    log("D&D UTM","Generated: "+f.name+" · "+el.label);
+  };
+  const runAgain=(f)=>{
+    const nl=window.prompt("New launch date for the re-run (YYYY-MM-DD):","");
+    if(!nl||!/^\d{4}-\d{2}-\d{2}$/.test(nl.trim()))return;
+    const start=nl.trim();
+    const dur=(f.flightStart&&f.flightEnd)?(new Date(f.flightEnd+"T00:00:00")-new Date(f.flightStart+"T00:00:00"))/864e5:null;
+    const end=dur!=null?campMinusDays(start,-dur):"";
+    dndTouch();const id=campUid();
+    const nf={...f,id,name:f.name.replace(/\s*\d{4}$/,"")+" "+start.slice(0,4),status:"approach",flightStart:start,flightEnd:end,trafficDue:"",briefSentAt:null,notionId:null,notionUrl:"",created:Date.now(),updated:Date.now(),
+      reqs:(f.reqs||[]).map(r=>({...r,id:campUid(),state:"needed",url:"",versions:[],confirmations:[],due:""})),
+      traffic:(f.traffic||[]).map(t=>({...t,id:campUid(),state:"pending",legacy:"",sentAt:null,dispatchId:null,due:""})),utms:[]};
+    nf.reqs.forEach(r=>{r.due=r.kind==="web"?dndVendorDue(nf):dndCreativeDue(nf)});
+    nf.traffic.forEach(t=>{t.due=dndVendorDue(nf)});
+    setFlights(p=>[nf,...p]);
+    log("D&D","Re-run: "+nf.name);
+    setDndOv({t:"dossier",fid:id});
+    notify("Cloned onto "+dndFd(start)+" — every date recomputed. "+dndPick(DND_QUIP.intake));
+  };
+  // auto-wrap: a flight whose end has passed files itself into the Record.
+  React.useEffect(()=>{
+    if(!dbLoaded)return;
+    const t=new Date();t.setHours(0,0,0,0);
+    setFlights(p=>{
+      let ch=false;
+      const next=p.map(f=>{
+        if(f.status!=="wrapped"&&f.flightEnd&&new Date(f.flightEnd+"T00:00:00")<t){ch=true;return{...f,status:"wrapped",updated:Date.now()}}
+        if(f.status==="approach"&&f.flightStart&&new Date(f.flightStart+"T00:00:00")<=t&&(f.traffic||[]).every(x=>x.state==="sent")){ch=true;return{...f,status:"live",updated:Date.now()}}
+        return f;
+      });
+      if(ch)flightsDirtyRef.current=true;
+      return ch?next:p;
+    });
+  },[dbLoaded]);
+
+  // ── The Underworld office itself. Called as a FUNCTION (no hooks inside —
+  // it renders conditionally; all state lives above at App level). ──
+  const DndHub=()=>{
+    const HD={bg:"#0b0b16",bg2:"#141426",card:"#17172a",bd:"#2e2e4a",flame:"#4AC8E8",ember:"#FF8C42",rose:"#E85A7A",soul:"#5BC4A0",smoke:"#8E8EA8",bone:"#ECECF4",gold:"#D4A040",lilac:"#C4A0C8",dim:"#5c5c78"};
+    const serif={fontFamily:"'Cormorant Garamond',serif"};
+    const inp={padding:"6px 10px",borderRadius:5,border:"1px solid "+HD.bd,background:"rgba(11,11,22,.7)",color:HD.bone,fontSize:13,outline:"none",fontFamily:"'DM Sans',sans-serif"};
+    const mini=(color)=>({background:"none",border:"1px solid "+(color||HD.bd),borderRadius:5,color:color||HD.flame,fontSize:11,fontWeight:700,cursor:"pointer",padding:"4px 10px",whiteSpace:"nowrap"});
+    const flab={display:"block",fontSize:9,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:HD.dim,marginBottom:3};
+    const secH=(t,c)=><div style={{fontSize:10,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",color:c||HD.gold,borderBottom:"2px solid "+(c||HD.gold)+"55",paddingBottom:5,margin:"18px 0 10px"}}>{t}</div>;
+    const today=new Date();today.setHours(0,0,0,0);
+    const win0=today.getTime()-10*864e5,win1=today.getTime()+135*864e5;
+    const pos=(iso)=>{const d=campIsoD(iso);if(!d)return null;const t=new Date(d+"T00:00:00").getTime();return Math.max(0,Math.min(100,(t-win0)/(win1-win0)*100))};
+    const active=flights.filter(f=>f.status!=="wrapped");
+    const wrapped=flights.filter(f=>f.status==="wrapped");
+    const owedOf=(f)=>dndLedger.filter(x=>x.fid===f.id);
+    const flightById=(id)=>flights.find(f=>f.id===id);
+    // month markers inside the window
+    const months=[];{let d=new Date(today.getFullYear(),today.getMonth(),1);for(let i=0;i<6;i++){const t=d.getTime();if(t>win1)break;months.push({label:d.toLocaleDateString("en-US",{month:"short"}).toUpperCase(),pct:Math.max(0,(t-win0)/(win1-win0)*100)});d=new Date(d.getFullYear(),d.getMonth()+1,1)}}
+    const ovOpen=(o)=>dndGo(o);
+    const close=()=>{setDndOv(null);setDndPreview(null);setDndMint(null)};
+
+    // ═══ DECK ═══
+    const Deck=()=><div>
+      {dndTws.length>0&&<div style={{marginBottom:14}}>
+        <div style={{fontSize:10,fontWeight:800,letterSpacing:2.5,color:HD.ember,textTransform:"uppercase",marginBottom:7,display:"flex",alignItems:"center",gap:7}}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={HD.ember} strokeWidth="2.4"><path d="M12 3 2 21h20L12 3Z"/><path d="M12 10v5"/></svg>
+          Tripwires — what needs you today
+        </div>
+        {dndTws.slice(0,4).map(tw=><div key={tw.fid+tw.sev} onClick={()=>tw.fid&&ovOpen({t:"dossier",fid:tw.fid})} style={{display:"flex",alignItems:"center",gap:12,borderLeft:"3px solid "+(tw.sev==="red"?HD.rose:tw.sev==="gold"?HD.ember:HD.rose),borderRadius:"0 8px 8px 0",background:"rgba(23,23,42,.7)",padding:"9px 13px",marginBottom:6,fontSize:13,lineHeight:1.5,cursor:"pointer",color:HD.bone}}>
+          <span style={{flex:1}}>{tw.msg}</span>
+          <button style={mini(tw.sev==="red"?HD.rose:HD.ember)}>{tw.fix} →</button>
+        </div>)}
+        <div style={{fontSize:11,color:HD.dim,fontStyle:"italic"}}>The <b style={{color:HD.smoke}}>PDV clause</b> is armed on every deal: a launch with no traffic on record trips red here — before the air date, not after it.</div>
+      </div>}
+      {(()=>{const late=dndLedger.filter(x=>x.days!=null&&x.days<0),next7=dndLedger.filter(x=>x.days!=null&&x.days>=0&&x.days<=7),ahead=dndLedger.filter(x=>x.days==null||x.days>7);
+        const lgRow=(x)=><div key={x.key} onClick={()=>ovOpen({t:"dossier",fid:x.fid})} style={{display:"grid",gridTemplateColumns:"110px minmax(200px,1.3fr) minmax(140px,.9fr) 108px 56px minmax(200px,1.2fr)",gap:12,alignItems:"center",padding:"7px 14px",borderTop:"1px solid rgba(46,46,74,.5)",fontSize:12.5,cursor:"pointer"}}>
+          <span style={{fontSize:10,fontWeight:800,letterSpacing:.5,textTransform:"uppercase",border:"1px solid",borderRadius:99,padding:"2px 9px",textAlign:"center",color:x.who==="You"?HD.lilac:x.who==="SEO/Web"?HD.flame:x.who==="Creative Ops"?HD.gold:HD.ember,borderColor:"currentColor"}}>{x.who}</span>
+          <span style={{color:HD.bone,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{x.what}</span>
+          <span style={{color:HD.smoke,fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{x.flight}</span>
+          <span style={{fontWeight:800,fontSize:12,color:x.days!=null&&x.days<0?HD.rose:x.days!=null&&x.days<=3?HD.ember:x.days!=null&&x.days<=7?HD.gold:HD.smoke}}>{x.due?dndFd(x.due):"—"}</span>
+          <span style={{fontWeight:800,fontSize:11.5,color:x.days!=null&&x.days<0?HD.rose:x.days!=null&&x.days<=7?HD.ember:HD.smoke}}>{x.days==null?"—":x.days<0?Math.abs(x.days)+"d late":x.days+"d"}</span>
+          <span style={{color:HD.dim,fontSize:11,fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{x.orElse}</span>
+        </div>;
+        const div=(t,c)=><div style={{fontSize:9,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:c||HD.dim,padding:"6px 14px 2px",background:"rgba(11,11,22,.5)",borderTop:"1px solid rgba(46,46,74,.5)"}}>{t}</div>;
+        return dndLedger.length?<div style={{marginBottom:16}}>
+          <div style={{fontSize:10,fontWeight:800,letterSpacing:2.5,color:HD.gold,textTransform:"uppercase",marginBottom:7,display:"flex",alignItems:"center",gap:7}}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={HD.gold} strokeWidth="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            The ledger — every commitment, by name, soonest first
+          </div>
+          <div style={{border:"1px solid "+HD.bd,borderRadius:10,overflow:"hidden",background:"rgba(23,23,42,.45)"}}>
+            <div style={{display:"grid",gridTemplateColumns:"110px minmax(200px,1.3fr) minmax(140px,.9fr) 108px 56px minmax(200px,1.2fr)",gap:12,padding:"7px 14px",fontSize:9,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:HD.dim,background:"rgba(11,11,22,.5)"}}>
+              <span>Owes it</span><span>What</span><span>Deal</span><span>Hard date</span><span></span><span>Or else</span>
+            </div>
+            {late.length>0&&div("Late",HD.rose)}{late.map(lgRow)}
+            {next7.length>0&&div("Next seven days",HD.ember)}{next7.map(lgRow)}
+            {ahead.length>0&&div("Ahead")}{ahead.slice(0,6).map(lgRow)}
+            {ahead.length>6&&<div style={{fontSize:11,color:HD.dim,padding:"6px 14px"}}>+{ahead.length-6} more ahead — they'll climb this list as their dates close in.</div>}
+          </div>
+        </div>:<div style={{...serif,fontStyle:"italic",fontSize:16,color:HD.soul,margin:"6px 0 16px"}}>Nobody owes anything. Suspicious… but I'll allow it.</div>})()}
+      <div style={{position:"relative",marginLeft:212,height:26,borderBottom:"1px solid "+HD.bd}}>
+        {months.map(m=><span key={m.label+m.pct} style={{position:"absolute",left:m.pct+"%",top:4,fontSize:10,fontWeight:800,letterSpacing:2.5,color:HD.smoke,borderLeft:"1px solid rgba(46,46,74,.8)",paddingLeft:7}}>{m.label}</span>)}
+      </div>
+      <div style={{position:"relative"}}>
+        <div style={{position:"absolute",left:"calc(212px + (100% - 212px)*"+(((today.getTime()-win0)/(win1-win0))).toFixed(4)+")",top:-26,bottom:0,width:2,background:"linear-gradient(180deg,"+HD.flame+",rgba(74,200,232,.12))",zIndex:5,pointerEvents:"none"}}>
+          <span style={{position:"absolute",top:-1,left:-34,background:HD.flame,color:"#0b0b16",fontSize:9,fontWeight:800,letterSpacing:1,borderRadius:3,padding:"2px 7px",whiteSpace:"nowrap"}}>TODAY</span>
+        </div>
+        {BRANDS.map(b=>{
+          const mine=active.filter(f=>f.brand===b.name);if(!mine.length)return null;
+          const owedCt=mine.filter(f=>owedOf(f).length).length;
+          const cost=mine.reduce((t,f)=>t+(parseFloat(String(f.cost).replace(/[^0-9.]/g,""))||0),0);
+          const rows=[...mine].sort((x,y)=>(owedOf(y).length?1:0)-(owedOf(x).length?1:0)||String(x.flightStart||"9999").localeCompare(String(y.flightStart||"9999")));
+          return<div key={b.code} style={{marginTop:14}}>
+            <div style={{display:"flex",alignItems:"baseline",gap:12,padding:"3px 0 5px",borderBottom:"2px solid "+b.color}}>
+              <span style={{...serif,fontSize:19,fontWeight:700,color:b.color}}>{b.name}</span>
+              <span style={{fontSize:11,color:HD.dim,fontWeight:600}}>{owedCt?owedCt+" deal"+(owedCt>1?"s":"")+" owed":"nothing owed"} · {mine.length-owedCt} fed{cost?" · ":""}{cost?<b style={{color:HD.gold}}>${cost>=1000?(cost/1000).toFixed(cost>=10000?0:1)+"k":cost} committed</b>:null}</span>
+            </div>
+            {rows.map(f=>{
+              const opens=owedOf(f);
+              const p0=pos(f.flightStart),p1=f.flightEnd?pos(f.flightEnd):100;
+              const cd=pos(dndCreativeDue(f)),vd=pos(dndVendorDue(f));
+              const isLive=f.status==="live"&&!opens.length;
+              const mk=String(f.markets||"").split(",").map(s=>s.trim()).filter(Boolean);
+              return<div key={f.id} style={{display:"flex",minHeight:42,borderBottom:"1px solid rgba(46,46,74,.35)"}}>
+                <div style={{width:212,flex:"none",display:"flex",alignItems:"center",fontSize:10,fontWeight:800,letterSpacing:1.6,color:HD.smoke,textTransform:"uppercase",paddingRight:12,overflow:"hidden"}}>
+                  {mk[0]||"—"}{mk.length>1&&<span style={{fontWeight:600,letterSpacing:0,textTransform:"none",color:HD.dim,marginLeft:5}}>+{mk.length-1}</span>}
+                </div>
+                <div style={{position:"relative",flex:1}}>
+                  {p0==null?<div onClick={()=>ovOpen({t:"dossier",fid:f.id})} style={{position:"absolute",top:"50%",transform:"translateY(-50%)",right:6,border:"1.5px dashed rgba(232,90,122,.6)",borderRadius:6,color:HD.rose,fontSize:11.5,fontWeight:700,padding:"4px 11px",cursor:"pointer",background:"rgba(232,90,122,.05)"}}>{f.name} · set the flight →</div>
+                  :isLive?<div onClick={()=>ovOpen({t:"dossier",fid:f.id})} style={{position:"absolute",top:"50%",transform:"translateY(-50%)",left:Math.max(0,p0)+"%",width:Math.max(6,(p1==null?100:p1)-Math.max(0,p0))+"%",height:17,borderRadius:5,display:"flex",alignItems:"center",padding:"0 9px",fontSize:11,fontWeight:700,color:HD.soul,background:"linear-gradient(90deg,rgba(91,196,160,.15),rgba(91,196,160,.06))",border:"1px solid rgba(91,196,160,.45)",cursor:"pointer",whiteSpace:"nowrap",overflow:"hidden"}}>{f.name} · live · fed</div>
+                  :<React.Fragment>
+                    {cd!=null&&cd<p0&&<div style={{position:"absolute",top:"50%",left:cd+"%",width:(p0-cd)+"%",borderTop:"2px dashed rgba(142,142,168,.4)"}}/>}
+                    {cd!=null&&<div title={"Creative returns · "+dndFd(dndCreativeDue(f))} style={{position:"absolute",top:"50%",left:cd+"%",transform:"translate(-50%,-50%) rotate(45deg)",width:8,height:8,borderRadius:2,background:HD.ember,zIndex:4}}/>}
+                    {vd!=null&&<div title={"Package to vendor · "+dndFd(dndVendorDue(f))} style={{position:"absolute",top:"50%",left:vd+"%",transform:"translate(-50%,-50%) rotate(45deg)",width:8,height:8,borderRadius:2,background:HD.gold,zIndex:4,outline:"2px solid rgba(212,160,64,.3)",outlineOffset:2}}/>}
+                    <div onClick={()=>ovOpen({t:"dossier",fid:f.id})} style={{position:"absolute",top:"50%",transform:"translateY(-50%)",left:p0+"%",width:Math.max(9,(p1==null?p0+18:p1)-p0)+"%",height:24,borderRadius:6,display:"flex",alignItems:"center",gap:7,padding:"0 9px",fontSize:12,fontWeight:700,color:HD.bone,background:"linear-gradient(90deg,rgba(23,23,42,.95),rgba(17,17,32,.95))",border:"1px solid "+(opens.length?HD.ember:b.color),cursor:"pointer",whiteSpace:"nowrap",overflow:"hidden",zIndex:2}}>
+                      {f.name}
+                      {opens.length>0&&<span style={{fontSize:9,fontWeight:800,letterSpacing:.8,borderRadius:3,padding:"1px 6px",background:"rgba(255,140,66,.15)",color:HD.ember}}>owed: {opens.slice(0,2).map(o=>o.what.split("—")[0].trim()).join(" + ")}{opens.length>2?" +"+(opens.length-2):""}</span>}
+                    </div>
+                  </React.Fragment>}
+                </div>
+              </div>})}
+          </div>})}
+        <div style={{display:"flex",gap:20,alignItems:"center",margin:"12px 0 4px 212px",fontSize:10.5,color:HD.dim,flexWrap:"wrap"}}>
+          <span><span style={{display:"inline-block",width:8,height:8,borderRadius:2,transform:"rotate(45deg)",background:HD.ember,marginRight:5}}/>creative returns (T−11)</span>
+          <span><span style={{display:"inline-block",width:8,height:8,borderRadius:2,transform:"rotate(45deg)",background:HD.gold,marginRight:5}}/>package to vendor (T−7)</span>
+          <span style={{color:HD.soul}}>▬ live &amp; fed</span>
+          <span style={{color:HD.rose}}>┄ needs dates</span>
+          <span style={{marginLeft:"auto"}}>wrapped deals live in ◂ The Record</span>
+        </div>
+      </div>
+    </div>;
+
+    // ═══ MONTH ═══
+    const MonthView=()=>{
+      const y=dndCalM.getFullYear(),m=dndCalM.getMonth();
+      const ev={};const put=(iso,e)=>{const d=campIsoD(iso);if(!d)return;(ev[d]=ev[d]||[]).push(e)};
+      active.forEach(f=>{
+        const bc=getBrandColor(f.brand);
+        put(f.flightStart,{c:HD.soul,bc,t:"▲ Launch — "+f.name,fid:f.id});
+        put(f.flightEnd,{c:HD.smoke,bc,t:f.name+" wraps",fid:f.id});
+        put(dndVendorDue(f),{c:HD.gold,bc,t:"◆ Package → "+((f.traffic[0]||{}).vendor||"vendor")+" — "+f.name,fid:f.id});
+        put(dndCreativeDue(f),{c:HD.ember,bc,t:"◆ Creative returns — "+f.name,fid:f.id});
+        (f.reqs||[]).forEach(r=>{if(r.due&&!dndReqInHand(r,iscis))put(r.due,{c:HD.ember,bc,t:(r.label||r.kind)+" due — "+f.name,fid:f.id})});
+      });
+      const startDow=new Date(y,m,1).getDay();
+      const cells=[];for(let i=0;i<42;i++)cells.push(new Date(y,m,1-startDow+i));
+      const iso=(d)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+      const ti=iso(new Date());
+      return<div>
+        <div style={{display:"flex",alignItems:"center",gap:10,margin:"2px 0 10px"}}>
+          <span style={{...serif,fontSize:20,fontWeight:700,color:HD.gold}}>{dndCalM.toLocaleDateString("en-US",{month:"long",year:"numeric"})}</span>
+          <button style={mini()} onClick={()=>setDndCalM(new Date(y,m-1,1))}>‹</button>
+          <button style={mini()} onClick={()=>setDndCalM(new Date(y,m+1,1))}>›</button>
+          <span style={{fontSize:11,color:HD.dim,marginLeft:8}}>same deals, month-shaped — click anything to open its dossier</span>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:5}}>
+          {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=><div key={d} style={{fontSize:9,fontWeight:800,letterSpacing:1.5,color:HD.dim,textTransform:"uppercase",textAlign:"center",padding:"3px 0"}}>{d}</div>)}
+          {cells.map((d,i)=>{const di=iso(d);const inM=d.getMonth()===m;const es=ev[di]||[];
+            return<div key={i} style={{minHeight:76,borderRadius:7,border:"1px solid "+(di===ti?HD.flame:"rgba(46,46,74,.5)"),background:inM?"linear-gradient(145deg,#17172a,#12121f)":"rgba(23,23,42,.25)",padding:"4px 5px",overflow:"hidden"}}>
+              <div style={{fontSize:9.5,fontWeight:800,color:di===ti?HD.flame:inM?HD.smoke:HD.bd,marginBottom:3}}>{d.getDate()}</div>
+              {es.slice(0,3).map((e,j)=><div key={j} onClick={()=>ovOpen({t:"dossier",fid:e.fid})} title={e.t} style={{fontSize:8.5,fontWeight:700,color:e.c,background:"rgba(11,11,22,.5)",borderLeft:"2px solid "+e.bc,borderRadius:2,padding:"1.5px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}}>{e.t}</div>)}
+              {es.length>3&&<div style={{fontSize:8,color:HD.dim,fontWeight:700}}>+{es.length-3}</div>}
+            </div>})}
+        </div>
+      </div>;
+    };
+
+    // ═══ DOSSIER ═══
+    const Dossier=(fid)=>{
+      const f=flightById(fid);
+      if(!f)return<div style={{...serif,fontSize:17,fontStyle:"italic",color:HD.smoke}}>That deal isn't on the books anymore.</div>;
+      const bcol=getBrandColor(f.brand)||HD.lilac;
+      const bMarkets=(((BRANDS.find(b=>b.name===f.brand)||{}).markets)||[]).map(mm=>DM[mm]||mm);
+      const mk=String(f.markets||"").split(",").map(s=>s.trim()).filter(Boolean);
+      const laneReqs=(kind)=>(f.reqs||[]).filter(r=>r.kind===kind);
+      const tr0=(f.traffic||[])[0];
+      const roleM=dndRoleOf("merch",f.brand,hubCfg);
+      const stChip=(r)=>{const inH=dndReqInHand(r,iscis);const n=dndDaysTo(r.due);
+        const c=inH?HD.soul:r.state==="in_review"?HD.lilac:n!=null&&n<0?HD.rose:n!=null&&n<=3?HD.ember:HD.smoke;
+        const t=inH?"in hand":r.state==="in_review"?"in review":r.state==="changes"?"changes sent":r.state==="requested"?"requested":r.state==="ordered"?"ordered":r.state==="mailed"?"mailed":"owed"+(n!=null?" · "+(n<0?Math.abs(n)+"d late":n+"d"):"");
+        return<span style={{fontSize:11.5,fontWeight:800,color:c,whiteSpace:"nowrap"}}>{t}</span>};
+      const laneHead=(t,c)=><div style={{fontSize:9,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:c,margin:"12px 0 2px"}}>{t}</div>;
+      const reqRow=(r)=>{
+        const inH=dndReqInHand(r,iscis);
+        const lk=dndReqLink(r,iscis);
+        const linked=isciByKey(r.isci);
+        const lastV=(r.versions||[])[(r.versions||[]).length-1];
+        return<div key={r.id} style={{display:"grid",gridTemplateColumns:"minmax(170px,1.25fr) 92px minmax(190px,1.1fr)",gap:10,alignItems:"start",padding:"9px 2px",borderBottom:"1px solid rgba(46,46,74,.45)"}}>
+          <div style={{minWidth:0}}>
+            <input value={r.label} onChange={e=>updReq(f.id,r.id,{label:e.target.value})} style={{fontWeight:700,color:HD.bone,background:"transparent",border:"none",outline:"none",fontSize:13.5,fontFamily:"'DM Sans',sans-serif",width:"100%",padding:0}}/>
+            <input value={r.spec||""} placeholder="spec — sizes · format · destination · deliver-to" onChange={e=>updReq(f.id,r.id,{spec:e.target.value})} style={{fontSize:10.5,color:HD.smoke,background:"transparent",border:"none",outline:"none",fontFamily:"'DM Sans',sans-serif",width:"100%",padding:0,marginTop:1}}/>
+            {r.kind==="creative"&&(r.versions||[]).length>0&&<div style={{fontSize:10,color:HD.lilac,marginTop:2}}>{(r.versions||[]).map(v=>"v"+v.v+(v.verdict?" · "+(v.verdict==="approved"?"✓":"✏ "+(v.feedback||"changes")):"")).join(" → ")}</div>}
+            {r.kind==="merch"&&<div style={{fontSize:10,color:HD.dim,marginTop:2}}>request → ordered → mailed · {roleM.label} confirms each step</div>}
+            <div style={{display:"flex",gap:6,alignItems:"center",marginTop:4}}>
+              <input type="date" value={campIsoD(r.due)} onChange={e=>updReq(f.id,r.id,{due:e.target.value})} style={{...inp,padding:"2px 6px",fontSize:10.5}}/>
+              <button onClick={()=>delReq(f.id,r.id)} title="Remove — your call, always" style={{background:"none",border:"none",color:HD.dim,cursor:"pointer",fontSize:13,fontWeight:800}}>×</button>
+            </div>
+          </div>
+          <div style={{paddingTop:2}}>{stChip(r)}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:5,minWidth:0}}>
+            {r.kind==="creative"&&(()=>{
+              const lbl=((r.label||"")+" "+(r.spec||"")).toLowerCase();
+              const want=/banner|display|300|728/.test(lbl)?["B","D"]:/\btv\b|television|ctv|ott/.test(lbl)?["T"]:/radio/.test(lbl)?["R"]:/audio|stream/.test(lbl)?(f.brand==="Wettermark Keith"?["R","S"]:["S","R"]):null;
+              const mkts=mk.map(x=>x.toLowerCase());
+              const pool=iscis.filter(i=>{
+                if(i.brand!==f.brand||!i.active||i.suffix==="O")return false;
+                if(want&&!want.includes(i.suffix))return false;
+                if(!mkts.length)return true;
+                const mn=(DM[i.dma]||i.dma||"").toLowerCase();
+                return mn&&mkts.includes(mn);
+              }).sort((x,y)=>(y.fileUrl?1:0)-(x.fileUrl?1:0)||String(x.code).localeCompare(String(y.code)));
+              return<select value={r.isci||""} onChange={e=>updReq(f.id,r.id,{isci:e.target.value})} title="A file on the linked ISCI is the evidence — that's what in-hand means" style={{...inp,padding:"4px 6px",fontSize:11,width:"100%",color:r.isci?HD.soul:HD.dim}}>
+                <option value="">{"link "+(want?({T:"TV",R:"Radio",S:"Streaming",B:"display",D:"digital"})[want[0]]+" ":"")+"ISCI…"}</option>
+                {linked&&!pool.some(x=>isciKeyOf(x)===r.isci)&&<option value={r.isci}>{linked.code} · {String(linked.title||"").slice(0,20)}</option>}
+                {pool.map(x=><option key={isciKeyOf(x)} value={isciKeyOf(x)}>{x.fileUrl?"◆ ":""}{x.code} · {String(x.title||"untitled").slice(0,18)}{x.dur?" :"+x.dur:""}</option>)}
+              </select>})()}
+            <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
+              {lk?<a href={lk} target="_blank" rel="noreferrer" style={{fontSize:11,color:HD.flame,textDecoration:"none",fontWeight:800}}>◆ open</a>
+                :r.kind!=="web"&&<label style={{...mini(),fontSize:10,padding:"3px 8px"}}>📎 file<input type="file" style={{display:"none"}} onChange={e=>uploadReqFile(f,r,e.target.files&&e.target.files[0])}/></label>}
+              {r.kind==="creative"&&!inH&&lk&&r.state!=="in_review"&&<button style={mini(HD.lilac)} disabled={dndBusy} onClick={()=>sendDndReview(f,r)}>review</button>}
+              {r.kind==="creative"&&(r.state==="approved"||lk)&&!linked&&<button style={mini(HD.soul)} onClick={()=>setDndMint(suggestIsci(f,r))}>Register as ISCI</button>}
+              {r.kind==="merch"&&["requested","ordered","mailed"].includes(r.state)&&(()=>{
+                const nxt=r.state==="requested"?"ordered":r.state==="ordered"?"mailed":"received";
+                return<button style={mini(HD.gold)} title={roleM.label+" confirmed it — stamped with the date"} onClick={()=>updReq(f.id,r.id,{state:nxt,confirmations:[...(r.confirmations||[]),{state:nxt,at:new Date().toISOString(),via:"manual"}]})}>{roleM.label} says: {nxt} ✓</button>})()}
+              {r.kind==="web"&&r.state==="requested"&&<button style={mini(HD.flame)} title="SEO confirmed — method recorded" onClick={()=>updReq(f.id,r.id,{state:"verified",confirmations:[...(r.confirmations||[]),{state:"verified",at:new Date().toISOString(),via:"seo_confirm"}]})}>verified ✓</button>}
+            </div>
+          </div>
+        </div>};
+      const utmEligible=DND_UTM_ELIGIBLE(f);
+      return<div>
+        <div style={{...serif,fontSize:30,fontWeight:700,color:HD.bone,lineHeight:1.1}}>
+          <input value={f.name} onChange={e=>updFlight(f.id,{name:e.target.value})} style={{...serif,fontSize:30,fontWeight:700,color:HD.bone,background:"transparent",border:"none",outline:"none",width:"100%",padding:0}}/>
+        </div>
+        <div style={{display:"flex",gap:7,flexWrap:"wrap",margin:"9px 0 4px"}}>
+          <span style={{fontSize:10,fontWeight:800,letterSpacing:1,textTransform:"uppercase",borderRadius:99,padding:"3px 10px",border:"1px solid "+bcol,color:bcol}}>{f.brand}</span>
+          <span style={{fontSize:10,fontWeight:800,letterSpacing:1,textTransform:"uppercase",borderRadius:99,padding:"3px 10px",border:"1px solid "+(f.status==="live"?HD.soul:HD.bd),color:f.status==="live"?HD.soul:HD.smoke}}>{f.status==="live"?"Live":f.status==="wrapped"?"Wrapped":f.flightStart?"On approach — launches "+dndFd(f.flightStart):"No dates"}</span>
+          {f.cost&&<span style={{fontSize:10,fontWeight:800,borderRadius:99,padding:"3px 10px",border:"1px solid "+HD.gold,color:HD.gold}}>${f.cost}</span>}
+          {f.notionUrl&&<a href={f.notionUrl} target="_blank" rel="noreferrer" style={{fontSize:10,fontWeight:800,letterSpacing:1,textTransform:"uppercase",borderRadius:99,padding:"3px 10px",border:"1px solid "+HD.bd,color:HD.flame,textDecoration:"none"}}>Notion ↗</a>}
+        </div>
+        <div style={{...serif,fontStyle:"italic",color:HD.lilac,fontSize:13.5,margin:"6px 0 14px"}}>{dndPick(DND_QUIP.dossier)}</div>
+
+        {secH("The facts — change one and every date re-arms")}
+        <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"flex-end"}}>
+          <div><label style={flab}>Flight start</label><input type="date" value={campIsoD(f.flightStart)} onChange={e=>updFlight(f.id,{flightStart:e.target.value})} style={inp}/></div>
+          <div><label style={flab}>Flight end</label><input type="date" value={campIsoD(f.flightEnd)} onChange={e=>updFlight(f.id,{flightEnd:e.target.value})} style={inp}/></div>
+          <div><label style={flab}>Package due (T−7 default)</label><input type="date" value={campIsoD(f.trafficDue)||dndVendorDue(f)} onChange={e=>updFlight(f.id,{trafficDue:e.target.value})} style={{...inp,borderColor:"rgba(212,160,64,.55)"}}/></div>
+          <div style={{minWidth:170}}><label style={flab}>Markets (DMA)</label>
+            <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+              {bMarkets.map(mn=>{const on=mk.some(x=>x.toLowerCase()===mn.toLowerCase());
+                return<button key={mn} onClick={()=>{const nx=on?mk.filter(x=>x.toLowerCase()!==mn.toLowerCase()):[...mk,mn];updFlight(f.id,{markets:nx.join(", ")})}} style={{...mini(on?HD.soul:undefined),color:on?HD.soul:HD.dim,fontSize:10,padding:"3px 9px"}}>{mn}{on?" ✓":""}</button>})}
+            </div>
+          </div>
+        </div>
+        <div style={{fontSize:10.5,color:HD.dim,fontStyle:"italic",margin:"6px 0 2px"}}>House lead times: package to the vendor a week before launch; creative returns four days before that. Dates roll off weekends. Your dates override everything.</div>
+        <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"flex-end",marginTop:8}}>
+          <div style={{flex:"2 1 200px"}}><label style={flab}>Stations / outlets · units</label><input value={f.stations||""} onChange={e=>updFlight(f.id,{stations:e.target.value})} style={{...inp,width:"100%"}}/></div>
+          <div style={{flex:"1 1 140px"}}><label style={flab}>Partner contact</label><input value={f.contact||""} onChange={e=>updFlight(f.id,{contact:e.target.value})} placeholder="who receives the package" style={{...inp,width:"100%"}}/></div>
+          <div style={{flex:"1 1 140px"}}><label style={flab}>Obligations</label><input value={f.promoObligations||""} onChange={e=>updFlight(f.id,{promoObligations:e.target.value})} placeholder="mentions · booth · tickets" style={{...inp,width:"100%"}}/></div>
+        </div>
+
+        {secH("The run of show")}
+        <div style={{position:"relative",paddingLeft:20,marginBottom:6}}>
+          <div style={{position:"absolute",left:5,top:8,bottom:8,width:2,background:"linear-gradient(180deg,"+HD.soul+","+HD.gold+" 45%,rgba(142,142,168,.3))"}}/>
+          {[
+            {dot:f.briefSentAt?HD.soul:HD.smoke,when:f.briefSentAt?dndFd(f.briefSentAt):"—",what:f.briefSentAt?"Brief out — sent to Creative Ops, hard dates attached. ✓":"Brief not sent yet — the clock hasn't started for creative.",act:!f.briefSentAt&&laneReqs("creative").some(r=>!dndReqInHand(r,iscis))?{l:"Preview brief →",c:HD.gold,fn:()=>openDndPreview("brief",f)}:null},
+            {dot:HD.ember,when:dndFd(dndCreativeDue(f)),what:"Creative returns assets"+(laneReqs("creative").filter(r=>!dndReqInHand(r,iscis)).length?" — "+laneReqs("creative").filter(r=>!dndReqInHand(r,iscis)).map(r=>r.label).join(", ")+" still owed.":" — everything in."),act:laneReqs("creative").some(r=>!dndReqInHand(r,iscis))&&f.briefSentAt?{l:"Chase →",c:HD.ember,fn:()=>openDndPreview("brief",f)}:null},
+            {dot:HD.gold,when:dndFd(dndVendorDue(f)),what:"Package to "+((tr0||{}).vendor||"the vendor")+" — from HERE: linked ISCIs, files, URLs. Previewed first, like everything.",act:tr0&&tr0.state!=="sent"?{l:"Preview send →",c:HD.gold,fn:()=>openDndPreview("package",f,{tr:tr0,to:f.contact})}:null},
+            {dot:tr0&&tr0.state==="sent"?HD.soul:HD.smoke,when:dndFd(f.flightStart),what:tr0&&tr0.state==="sent"?"Launch — traffic on record"+(tr0.legacy?" ("+tr0.legacy+")":" · sent "+dndFd(tr0.sentAt))+". The tripwire is satisfied.":"Launch — the tripwire checks traffic history before this day arrives.",act:null},
+            {dot:"rgba(142,142,168,.4)",when:dndFd(f.flightEnd),what:"Wrap — files itself into The Record.",act:null}
+          ].map((s2,i)=><div key={i} style={{position:"relative",display:"flex",alignItems:"baseline",gap:10,padding:"6px 0",fontSize:13}}>
+            <span style={{position:"absolute",left:-18.5,top:11,width:8,height:8,borderRadius:2,transform:"rotate(45deg)",background:s2.dot}}/>
+            <span style={{flex:"none",width:100,fontWeight:800,fontSize:11.5,color:s2.dot===HD.smoke?HD.dim:s2.dot}}>{s2.when}</span>
+            <span style={{flex:1,lineHeight:1.45,color:HD.bone}}>{s2.what}</span>
+            {s2.act&&<button style={mini(s2.act.c)} disabled={dndBusy} onClick={s2.act.fn}>{s2.act.l}</button>}
+          </div>)}
+        </div>
+
+        {secH("What it needs — link what already exists")}
+        {laneReqs("creative").length>0&&laneHead("Creative lane — Creative Ops · brief → versions → review → register","#E85A7A")}
+        {laneReqs("creative").map(reqRow)}
+        {laneReqs("merch").length>0&&laneHead("Merch lane — "+roleM.label+" · request → ordered → mailed",HD.lilac)}
+        {laneReqs("merch").map(reqRow)}
+        {laneReqs("merch").length>0&&laneReqs("merch").some(r=>r.state==="needed")&&<button style={{...mini(HD.lilac),marginTop:6}} disabled={dndBusy} onClick={()=>openDndPreview("merch",f)}>Preview request → {roleM.label}</button>}
+        {laneReqs("web").length>0&&laneHead("Web & tracking lane — SEO/Web · request → verify",HD.flame)}
+        {laneReqs("web").map(reqRow)}
+        {laneReqs("web").length>0&&laneReqs("web").some(r=>r.state==="needed")&&<button style={{...mini(HD.flame),marginTop:6}} disabled={dndBusy} onClick={()=>openDndPreview("seo",f)}>Preview request → SEO/Web</button>}
+        <div style={{display:"flex",gap:8,alignItems:"center",marginTop:12,flexWrap:"wrap"}}>
+          <select value="" onChange={e=>{const v=e.target.value;if(!v)return;dndTouch();setFlights(p=>p.map(x=>x.id!==f.id?x:{...x,updated:Date.now(),reqs:[...(x.reqs||[]),v==="Merch"?dndMkReq("merch","Merch — event/booth","",dndCreativeDue(f),"merch"):v==="Pixel"?dndMkReq("web","Pixel","",dndVendorDue(f),"seo"):dndMkReq("creative",v,"",dndCreativeDue(f))]}))}} style={{...inp,minWidth:160}}>
+            <option value="">+ Add a need…</option>
+            <option>:30 Radio</option><option>:30 TV</option><option>:15 spot</option><option>Display banner</option><option>Sponsor tag</option><option>Social graphic</option><option>Social video</option><option>OOH artwork</option><option value="Merch">Merch (→ {roleM.label})</option><option value="Pixel">Pixel (→ SEO/Web)</option>
+          </select>
+          <span style={{fontSize:10.5,color:HD.dim,fontStyle:"italic"}}>Seeds propose; you decide. Doom automates the bookkeeping — never the judgment.</span>
+        </div>
+
+        {secH("Traffic lane — you · the package goes out from HERE at T−7",HD.gold)}
+        {(f.traffic||[]).map(t=><div key={t.id} style={{display:"flex",gap:10,alignItems:"center",padding:"7px 0",borderBottom:"1px solid rgba(46,46,74,.45)",fontSize:13}}>
+          <input value={t.vendor} onChange={e=>updTraffic(f.id,t.id,{vendor:e.target.value})} style={{...inp,width:170}}/>
+          <span style={{fontSize:11.5,fontWeight:800,color:t.state==="sent"?HD.soul:dndDaysTo(t.due)!=null&&dndDaysTo(t.due)<0?HD.rose:HD.gold}}>{t.state==="sent"?("sent"+(t.legacy?" · "+t.legacy:" "+dndFd(t.sentAt))):"due "+dndFd(t.due)}</span>
+          {t.state!=="sent"&&<button style={mini(HD.gold)} disabled={dndBusy} onClick={()=>openDndPreview("package",f,{tr:t,to:f.contact})}>Preview send → {t.vendor||"vendor"}</button>}
+        </div>)}
+
+        {secH("Tracking — generated, never typed",HD.flame)}
+        {utmEligible.length===0&&<div style={{fontSize:12,color:HD.dim,fontStyle:"italic"}}>This deal has no trackable channels — so no URLs exist. No streaming channel, no streaming UTM. Ever.</div>}
+        {utmEligible.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
+          {utmEligible.map(el=><button key={el.medium} style={mini(HD.flame)} onClick={()=>addUtm(f,el)}>+ {el.label} URL</button>)}
+          <span style={{fontSize:10.5,color:HD.dim,alignSelf:"center"}}>destination baked into {f.brand} · content from the linked creative</span>
+        </div>}
+        {(f.utms||[]).map(u=><div key={u.id} style={{display:"flex",gap:8,alignItems:"center",fontSize:11,marginBottom:4}}>
+          <span style={{fontWeight:800,color:HD.flame,flex:"none",width:88}}>{u.platform}</span>
+          <code style={{flex:1,fontSize:10,color:HD.smoke,background:"rgba(11,11,22,.6)",border:"1px solid "+HD.bd,borderRadius:5,padding:"5px 8px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.url}</code>
+          <button style={mini()} onClick={()=>dndCopy(u.url,"URL copied")}>copy</button>
+          <button onClick={()=>{dndTouch();setFlights(p=>p.map(x=>x.id!==f.id?x:{...x,utms:(x.utms||[]).filter(y=>y.id!==u.id)}))}} style={{background:"none",border:"none",color:HD.dim,cursor:"pointer",fontWeight:800}}>×</button>
+        </div>)}
+
+        <div style={{marginTop:16}}>
+          <label style={flab}>Notes — what the next person needs</label>
+          <textarea value={f.notes||""} onChange={e=>updFlight(f.id,{notes:e.target.value})} style={{...inp,width:"100%",minHeight:52,resize:"vertical"}}/>
+        </div>
+        <div style={{display:"flex",gap:8,marginTop:12,flexWrap:"wrap"}}>
+          {f.status==="wrapped"&&<button style={mini(HD.soul)} onClick={()=>runAgain(f)}>Run it again →</button>}
+          {f.status==="wrapped"&&<button style={mini(HD.lilac)} onClick={()=>openDndPreview("recap",f)}>Preview recap → Jessica</button>}
+          <span style={{marginLeft:"auto"}}><button style={mini(HD.rose)} onClick={()=>delFlight(f)}>Tear it up</button></span>
+        </div>
+        <div style={{marginTop:12,border:"1px solid rgba(91,196,160,.3)",borderRadius:8,background:"rgba(91,196,160,.04)",padding:"9px 12px",fontSize:11,lineHeight:1.6,color:HD.smoke}}>
+          <b style={{color:HD.soul}}>What changes itself</b> — link an ISCI → in hand · a review comes back approved → approved · {roleM.label} confirms mailed → merch moves · the package send writes the traffic record → the PDV tripwire stands down · launch passes → live · flight-end passes → The Record. <b style={{color:HD.bone}}>What it actually needs stays your call. Always.</b>
+        </div>
+      </div>;
+    };
+
+    // ═══ REGISTRY ═══
+    const Registry=()=>{
+      const q=dndRegQ.toLowerCase();
+      const hit=(s2)=>!q||String(s2).toLowerCase().includes(q);
+      const usedBy={};flights.forEach(f=>(f.reqs||[]).forEach(r=>{if(r.isci)(usedBy[r.isci]=usedBy[r.isci]||[]).push(f)}));
+      const MEDIA_W={T:"TV",R:"Radio",S:"Streaming",D:"Digital",B:"Display"};
+      const MEDIA_C={T:HD.flame,R:HD.gold,S:HD.lilac,D:HD.soul,B:"#9b7bb0"};
+      return<div>
+        <div style={{...serif,fontSize:26,fontWeight:700,color:HD.bone}}>The Registry</div>
+        <div style={{...serif,fontStyle:"italic",color:HD.lilac,fontSize:13.5,margin:"4px 0 12px"}}>{dndPick(DND_QUIP.registry)} What a deal still <i>needs</i> lives on that deal — a row here is a real thing.</div>
+        <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+          <input value={dndRegQ} onChange={e=>setDndRegQ(e.target.value)} placeholder="Search codes, titles, deals, URLs…" style={{...inp,minWidth:210,flex:1}}/>
+          <select value={dndRegBrand} onChange={e=>setDndRegBrand(e.target.value)} style={inp}><option value="">All brands</option>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select>
+          <select value={dndRegKind} onChange={e=>setDndRegKind(e.target.value)} style={inp}><option value="">Everything</option><option value="isci">Broadcast &amp; display (ISCI)</option><option value="file">Files</option><option value="utm">UTMs</option><option value="tag">Taglines</option></select>
+        </div>
+        {BRANDS.map(b=>{
+          if(dndRegBrand&&b.name!==dndRegBrand)return null;
+          const bSpots=(!dndRegKind||dndRegKind==="isci")?iscis.filter(i=>i.active&&i.suffix!=="O"&&i.brand===b.name&&hit(i.code+" "+(i.title||"")+" "+(DM[i.dma]||i.dma||""))):[];
+          const bFiles=[];const bUtms=[];
+          flights.forEach(f=>{if(f.brand!==b.name)return;
+            if(!dndRegKind||dndRegKind==="file")(f.reqs||[]).forEach(r=>{if(r.url&&hit((r.label||"")+" "+f.name))bFiles.push([f,r])});
+            if(!dndRegKind||dndRegKind==="utm")(f.utms||[]).forEach(u=>{if(hit(u.platform+" "+u.url+" "+f.name))bUtms.push([f,u])});
+          });
+          const bTags=(!dndRegKind||dndRegKind==="tag")?taglines.filter(t=>t.active!==false&&t.brand===b.name&&hit(t.text)):[];
+          if(!bSpots.length&&!bFiles.length&&!bUtms.length&&!bTags.length)return null;
+          const dmas=[...new Set(bSpots.map(i=>i.dma))];
+          const cap=dndRegBrand||q?9999:8;
+          return<div key={b.code} style={{marginBottom:24}}>
+            <div style={{...serif,fontSize:19,fontWeight:700,color:b.color,borderBottom:"2px solid "+b.color,paddingBottom:4,marginBottom:8}}>{b.name}<span style={{fontFamily:"'DM Sans',sans-serif",fontSize:10.5,fontWeight:700,color:HD.dim,marginLeft:10}}>{bSpots.length} spots · {bFiles.length} files · {bUtms.length} URLs · {bTags.length} taglines</span></div>
+            {dmas.map(dc=>{const rows=bSpots.filter(i=>i.dma===dc);
+              return<div key={dc} style={{marginBottom:8}}>
+                <div style={{fontSize:9.5,fontWeight:800,letterSpacing:1.8,textTransform:"uppercase",color:HD.smoke,margin:"6px 0 3px"}}>{DM[dc]||dc}</div>
+                {rows.slice(0,cap).map(i=>{const key=isciKeyOf(i);const cs=usedBy[key]||[];
+                  return<div key={key} style={{display:"grid",gridTemplateColumns:"52px 138px minmax(120px,1.2fr) 36px minmax(90px,.9fr) 62px",gap:9,alignItems:"center",padding:"5px 4px",borderBottom:"1px solid rgba(46,46,74,.4)",fontSize:12}}>
+                    <span style={{fontSize:9,fontWeight:800,color:MEDIA_C[i.suffix]||HD.smoke}}>{MEDIA_W[i.suffix]||i.suffix||"—"}</span>
+                    <span onClick={()=>dndCopy(i.code,"ISCI copied")} style={{fontFamily:"ui-monospace,monospace",fontWeight:700,color:HD.bone,cursor:"pointer",fontSize:11.5}}>{i.code}</span>
+                    <span style={{color:i.title?HD.bone:HD.dim,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11.5}}>{i.title||"untitled"}</span>
+                    <span style={{color:HD.smoke,fontSize:11}}>{i.dur?":"+i.dur:""}</span>
+                    <span style={{fontSize:10.5,color:cs.length?HD.lilac:HD.bd,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{cs.length?cs.map(c=>c.name).slice(0,1).join("")+(cs.length>1?" +"+(cs.length-1):""):"—"}</span>
+                    {i.fileUrl?<a href={i.fileUrl} target="_blank" rel="noreferrer" style={{fontSize:10.5,color:HD.flame,textDecoration:"none",fontWeight:800}}>◆ open</a>:<span style={{fontSize:10.5,color:HD.dim}}>no file</span>}
+                  </div>})}
+                {rows.length>cap&&<div style={{fontSize:10.5,color:HD.dim,padding:"3px 4px"}}>+{rows.length-cap} more — search or filter by brand to see all</div>}
+              </div>})}
+            {bFiles.length>0&&<div style={{fontSize:9.5,fontWeight:800,letterSpacing:1.8,textTransform:"uppercase",color:HD.lilac,margin:"8px 0 3px"}}>Files</div>}
+            {bFiles.map(([f,r])=><div key={r.id} style={{display:"flex",gap:9,alignItems:"center",padding:"5px 4px",borderBottom:"1px solid rgba(46,46,74,.4)",fontSize:12}}>
+              <span style={{fontWeight:700,color:HD.bone,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.label}</span>
+              <span onClick={()=>ovOpen({t:"dossier",fid:f.id})} style={{fontSize:11,color:HD.lilac,cursor:"pointer"}}>{f.name}</span>
+              <a href={r.url} target="_blank" rel="noreferrer" style={{fontSize:10.5,color:HD.flame,textDecoration:"none",fontWeight:800}}>◆ open</a>
+            </div>)}
+            {bUtms.length>0&&<div style={{fontSize:9.5,fontWeight:800,letterSpacing:1.8,textTransform:"uppercase",color:HD.flame,margin:"8px 0 3px"}}>Tracking URLs</div>}
+            {bUtms.map(([f,u])=><div key={u.id} style={{display:"flex",gap:9,alignItems:"center",padding:"5px 4px",borderBottom:"1px solid rgba(46,46,74,.4)",fontSize:11}}>
+              <span style={{fontWeight:800,color:HD.flame,width:80,flex:"none"}}>{u.platform}</span>
+              <code style={{flex:1,fontSize:10,color:HD.smoke,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.url}</code>
+              <button style={mini()} onClick={()=>dndCopy(u.url,"URL copied")}>copy</button>
+            </div>)}
+            {bTags.length>0&&<div style={{fontSize:9.5,fontWeight:800,letterSpacing:1.8,textTransform:"uppercase",color:HD.lilac,margin:"8px 0 3px"}}>Taglines</div>}
+            {bTags.map(t=><div key={t.id} style={{display:"flex",gap:9,alignItems:"center",padding:"4px",fontSize:13}}>
+              <span style={{...serif,fontStyle:"italic",color:HD.bone,flex:1}}>“{t.text}”</span>
+              <button style={mini()} onClick={()=>dndCopy(t.text,"Tagline copied")}>copy</button>
+              <button onClick={()=>{taglinesDirtyRef.current=true;setTaglines(p=>p.map(x=>x.id===t.id?{...x,active:false}:x))}} style={mini(HD.gold)}>retire</button>
+            </div>)}
+            <div style={{display:"flex",gap:6,marginTop:6}}>
+              <input id={"dndtag_"+b.code} placeholder={"New "+b.name+" tagline…"} style={{...inp,flex:1,fontSize:12}} onKeyDown={e=>{if(e.key==="Enter"){const v=e.target.value.trim();if(!v)return;taglinesDirtyRef.current=true;setTaglines(p=>[...p,{id:campUid(),text:v,brand:b.name,active:true,added:new Date().toISOString()}]);e.target.value="";log("Tagline","Added: "+v)}}}/>
+            </div>
+          </div>})}
+        <div style={{fontSize:10.5,color:HD.dim,marginTop:6}}>Broadcast &amp; display rows ARE the ISCI Registry, read live — never retyped. A new upload or a registered spot lands here by itself.</div>
+      </div>;
+    };
+
+    // ═══ RECORD ═══
+    const RecordPg=()=>{
+      const byMonth={};wrapped.forEach(f=>{const k=dndMonthKey(f)||"undated";(byMonth[k]=byMonth[k]||[]).push(f)});
+      const keys=Object.keys(byMonth).sort().reverse();
+      return<div>
+        <div style={{...serif,fontSize:26,fontWeight:700,color:HD.bone}}>The Record</div>
+        <div style={{...serif,fontStyle:"italic",color:HD.lilac,fontSize:13.5,margin:"4px 0 14px"}}>{dndPick(DND_QUIP.record)}</div>
+        {keys.length===0&&<div style={{fontSize:13,color:HD.dim,fontStyle:"italic"}}>Nothing wrapped yet. Give it time — everything wraps eventually. I'd know.</div>}
+        {keys.map(k=><div key={k} style={{marginBottom:18}}>
+          <div style={{...serif,fontSize:17,fontWeight:700,color:HD.gold,borderBottom:"1px solid rgba(212,160,64,.4)",paddingBottom:3,marginBottom:6}}>{k==="undated"?"Undated":new Date(k+"-02T00:00:00").toLocaleDateString("en-US",{month:"long",year:"numeric"})}</div>
+          {byMonth[k].map(f=><div key={f.id} style={{display:"flex",gap:10,alignItems:"baseline",padding:"7px 4px",borderBottom:"1px solid rgba(46,46,74,.4)",fontSize:13}}>
+            <span style={{flex:"none",width:92,fontSize:10.5,fontWeight:800,color:HD.dim}}>{f.flightStart?dndFd(f.flightStart):""}</span>
+            <span style={{flex:1,minWidth:0}}>
+              <b style={{color:HD.bone,cursor:"pointer"}} onClick={()=>ovOpen({t:"dossier",fid:f.id})}>{f.name}</b>
+              <span style={{color:HD.smoke,fontSize:12}}> · {f.brand}{f.markets?" · "+f.markets:""}{f.cost?" · $"+f.cost:""}</span>
+            </span>
+            <button style={mini(HD.lilac)} onClick={()=>openDndPreview("recap",f)}>Recap →</button>
+            <button style={mini(HD.soul)} onClick={()=>runAgain(f)}>Run it again →</button>
+          </div>)}
+        </div>)}
+        <div style={{marginTop:10,border:"1px solid rgba(74,200,232,.3)",borderRadius:8,background:"rgba(74,200,232,.04)",padding:"9px 12px",fontSize:11,lineHeight:1.6,color:HD.smoke}}>
+          <b style={{color:HD.flame}}>History is inherited, not typed.</b> A deal files itself here the day its flight ends. Recaps draft themselves from what actually ran — preview, then send.
+        </div>
+      </div>;
+    };
+
+    // ═══ DISPATCH ═══
+    const Dispatch=()=>{
+      const pendingRev=Object.entries(assetReviews).filter(([t,r])=>r.status==="pending").sort((a,b)=>String(b[1].sentAt).localeCompare(String(a[1].sentAt)));
+      const answered=Object.entries(assetReviews).filter(([t,r])=>r.status==="approved"||r.status==="changes").sort((a,b)=>String(b[1].respondedAt).localeCompare(String(a[1].respondedAt))).slice(0,8);
+      const merchDef=(hubCfg.merch||{}).default||{};
+      return<div>
+        <div style={{...serif,fontSize:26,fontWeight:700,color:HD.bone}}>Dispatch</div>
+        <div style={{...serif,fontStyle:"italic",color:HD.lilac,fontSize:13.5,margin:"4px 0 12px"}}>{dndPick(DND_QUIP.dispatch)}</div>
+        {secH("The Monday rollup — your status, drafted for you",HD.gold)}
+        <div style={{display:"flex",gap:10,alignItems:"center",fontSize:12.5,color:HD.smoke}}>
+          <span style={{flex:1}}>What launched · what's late · who owes what — one email to Jessica, drafted from the ledger. You preview, you send.</span>
+          <button style={mini(HD.gold)} disabled={dndBusy} onClick={()=>openDndPreview("rollup",null)}>Preview this week's →</button>
+        </div>
+        {secH("Out — awaiting an answer",HD.ember)}
+        {pendingRev.length===0&&<div style={{fontSize:12,color:HD.dim,fontStyle:"italic"}}>Nothing out. Everyone answered. Refreshing, honestly.</div>}
+        {pendingRev.map(([tok,r])=>{const age=Math.floor((Date.now()-new Date(r.sentAt).getTime())/864e5);
+          return<div key={tok} style={{display:"flex",gap:10,alignItems:"baseline",padding:"6px 0",borderBottom:"1px solid rgba(46,46,74,.4)",fontSize:12.5}}>
+            <span style={{flex:"none",width:86,fontSize:10.5,fontWeight:800,color:age>=3?HD.rose:HD.dim}}>{dndFd(r.sentAt)}</span>
+            <span style={{flex:1,color:HD.bone}}>Review · <b>{r.assetLabel||r.assetType}</b> — {r.campName}{age>=3?<b style={{color:HD.rose}}> · {age}d, no answer</b>:null}</span>
+          </div>})}
+        {secH("In — answered, already applied",HD.soul)}
+        {answered.length===0&&<div style={{fontSize:12,color:HD.dim,fontStyle:"italic"}}>No verdicts yet.</div>}
+        {answered.map(([tok,r])=><div key={tok} style={{display:"flex",gap:10,alignItems:"baseline",padding:"6px 0",borderBottom:"1px solid rgba(46,46,74,.4)",fontSize:12.5}}>
+          <span style={{flex:"none",width:86,fontSize:10.5,fontWeight:800,color:HD.dim}}>{dndFd(r.respondedAt)}</span>
+          <span style={{flex:1,color:HD.bone}}><b style={{color:r.status==="approved"?HD.soul:HD.rose}}>{r.status==="approved"?"✓ Approved":"✏ Changes"}</b> — {r.assetLabel||r.assetType} · {r.campName}{r.feedback?<i style={{color:HD.smoke}}> · “{r.feedback}”</i>:null}</span>
+        </div>)}
+        {secH("The paper trail — every send, stamped",HD.lilac)}
+        {dndLog.slice(0,14).map(l=><div key={l.id} style={{display:"flex",gap:10,alignItems:"baseline",padding:"5px 0",borderBottom:"1px solid rgba(46,46,74,.35)",fontSize:12}}>
+          <span style={{flex:"none",width:86,fontSize:10,fontWeight:800,color:HD.dim}}>{dndFd(l.at)}</span>
+          <span style={{flex:"none",fontSize:9.5,fontWeight:800,textTransform:"uppercase",letterSpacing:1,color:HD.flame,width:72}}>{l.kind}</span>
+          <span style={{flex:1,color:HD.smoke,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.subject} → {l.to}</span>
+        </div>)}
+        {dndLog.length===0&&<div style={{fontSize:12,color:HD.dim,fontStyle:"italic"}}>Nothing sent yet from this wing.</div>}
+        {secH("Addresses — people are settings, never schema",HD.flame)}
+        <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+          <div style={{flex:"1 1 200px"}}><label style={flab}>Creative Ops</label><input value={hubCfg.creativeOpsEmail||""} onChange={e=>saveCfg({creativeOpsEmail:e.target.value})} placeholder="creativeops@…" style={{...inp,width:"100%"}}/></div>
+          <div style={{flex:"1 1 200px"}}><label style={flab}>SEO / Web</label><input value={hubCfg.seoEmail||""} onChange={e=>saveCfg({seoEmail:e.target.value})} placeholder="seo@…" style={{...inp,width:"100%"}}/></div>
+          <div style={{flex:"1 1 200px"}}><label style={flab}>Jessica (rollups &amp; recaps)</label><input value={hubCfg.jessicaEmail||""} onChange={e=>saveCfg({jessicaEmail:e.target.value})} placeholder="jessica@…" style={{...inp,width:"100%"}}/></div>
+        </div>
+        <div style={{marginTop:10}}>
+          <label style={flab}>Merch — default owner</label>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <input value={merchDef.person||""} onChange={e=>saveMerchRole("default",{person:e.target.value})} placeholder="Hazel" style={{...inp,width:140}}/>
+            <input value={merchDef.email||""} onChange={e=>saveMerchRole("default",{email:e.target.value})} placeholder="email" style={{...inp,flex:1,minWidth:180}}/>
+          </div>
+          <div style={{fontSize:10.5,color:HD.dim,margin:"8px 0 4px"}}>Per-brand overrides — brand managers pop up (Victoria Tuttle for Keches, and whoever's next):</div>
+          {BRANDS.map(b=>{const cur=((hubCfg.merch||{}).byBrand||{})[b.name]||{};
+            return<div key={b.code} style={{display:"flex",gap:8,alignItems:"center",marginBottom:4}}>
+              <span style={{fontSize:10.5,fontWeight:800,color:b.color,width:130,flex:"none"}}>{b.name}</span>
+              <input value={cur.person||""} onChange={e=>saveMerchRole(b.name,{person:e.target.value})} placeholder="(default)" style={{...inp,width:130,fontSize:11}}/>
+              <input value={cur.email||""} onChange={e=>saveMerchRole(b.name,{email:e.target.value})} placeholder="email" style={{...inp,flex:1,fontSize:11}}/>
+            </div>})}
+        </div>
+      </div>;
+    };
+
+    // ═══ INTAKE ═══
+    const Intake=()=>{
+      const bMarkets=(((BRANDS.find(b=>b.name===dnc.brand)||{}).markets)||[]).map(mm=>DM[mm]||mm);
+      const pill=(on,c)=>({border:"1px solid "+(on?(c||HD.flame):HD.bd),borderRadius:99,background:on?"rgba(74,200,232,.08)":"none",color:on?(c||HD.flame):HD.dim,fontSize:11,fontWeight:700,cursor:"pointer",padding:"5px 12px"});
+      return<div>
+        <div style={{...serif,fontSize:26,fontWeight:700,color:HD.bone}}>A deal is born</div>
+        <div style={{...serif,fontStyle:"italic",color:HD.lilac,fontSize:13.5,margin:"4px 0 14px"}}>{dndPick(DND_QUIP.intake)} Three doors in — whichever it walks through, the dates compute and the tripwires arm.</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+          <div style={{border:"1px solid rgba(212,160,64,.45)",borderRadius:10,padding:13,background:"rgba(11,11,22,.4)"}}>
+            <div style={{fontSize:12.5,fontWeight:800,color:HD.gold,marginBottom:5}}>From a contract — the fine print, read for you</div>
+            <textarea value={contractText} onChange={e=>setContractText(e.target.value)} placeholder="Paste the contract / media plan / kickoff email…" style={{...inp,width:"100%",minHeight:54,resize:"vertical",fontSize:11.5}}/>
+            <div style={{display:"flex",gap:8,marginTop:6,alignItems:"center"}}>
+              <label style={mini(HD.gold)}>Drop PDF<input type="file" accept="application/pdf" style={{display:"none"}} onChange={e=>contractPdf(e.target.files&&e.target.files[0])}/></label>
+              <button style={mini(HD.gold)} disabled={parsing} onClick={parseContract}>{parsing?"Reading…":"Read the fine print →"}</button>
+              <span style={{fontSize:10,color:HD.dim}}>fills the form — you check, you don't type</span>
+            </div>
+          </div>
+          <div style={{border:"1px solid rgba(74,200,232,.45)",borderRadius:10,padding:13,background:"rgba(11,11,22,.4)"}}>
+            <div style={{fontSize:12.5,fontWeight:800,color:HD.flame,marginBottom:5}}>From Notion — the pipe</div>
+            <div style={{fontSize:11.5,color:HD.smoke,lineHeight:1.55}}>The 2026 slate flows in on its own every 15 minutes and updates in place. A blank in Notion never erases a date set here. Nothing to do — that's the point.</div>
+            <div style={{fontSize:10.5,color:HD.dim,marginTop:8}}>{flights.filter(f=>f.notionId).length} deals carry Notion ids · form entries below also file themselves INTO Notion</div>
+          </div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
+          <div style={{gridColumn:"span 2"}}><label style={flab}>Deal / campaign</label><input value={dnc.name} onChange={e=>setDnc(p=>({...p,name:e.target.value}))} style={{...inp,width:"100%"}}/></div>
+          <div><label style={flab}>Brand</label><select value={dnc.brand} onChange={e=>setDnc(p=>({...p,brand:e.target.value,markets:[]}))} style={{...inp,width:"100%"}}>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select></div>
+          <div><label style={flab}>Requested by</label><input value={dnc.requestedBy} onChange={e=>setDnc(p=>({...p,requestedBy:e.target.value}))} placeholder="brand manager" style={{...inp,width:"100%"}}/></div>
+          <div style={{gridColumn:"span 2"}}><label style={flab}>Markets — Doom knows {dnc.brand}'s DMAs</label>
+            <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{bMarkets.map(mn=>{const on=dnc.markets.includes(mn);
+              return<button key={mn} onClick={()=>setDnc(p=>({...p,markets:on?p.markets.filter(x=>x!==mn):[...p.markets,mn]}))} style={pill(on,HD.soul)}>{mn}{on?" ✓":""}</button>})}</div>
+          </div>
+          <div><label style={flab}>Flight start</label><input type="date" value={dnc.flightStart} onChange={e=>setDnc(p=>({...p,flightStart:e.target.value}))} style={{...inp,width:"100%"}}/></div>
+          <div><label style={flab}>Flight end</label><input type="date" value={dnc.flightEnd} onChange={e=>setDnc(p=>({...p,flightEnd:e.target.value}))} style={{...inp,width:"100%"}}/></div>
+          <div><label style={flab}>Package due <span style={{color:HD.gold}}>(blank = T−7)</span></label><input type="date" value={dnc.trafficDue} onChange={e=>setDnc(p=>({...p,trafficDue:e.target.value}))} style={{...inp,width:"100%",borderColor:"rgba(212,160,64,.5)"}}/></div>
+          <div><label style={flab}>Cost $</label><input value={dnc.cost} onChange={e=>setDnc(p=>({...p,cost:e.target.value}))} style={{...inp,width:"100%"}}/></div>
+          <div style={{gridColumn:"span 2"}}><label style={flab}>Stations / outlets · units</label><input value={dnc.stations} onChange={e=>setDnc(p=>({...p,stations:e.target.value}))} style={{...inp,width:"100%"}}/></div>
+          <div><label style={flab}>Partner / vendor</label><input value={dnc.partner} onChange={e=>setDnc(p=>({...p,partner:e.target.value}))} style={{...inp,width:"100%"}}/></div>
+          <div><label style={flab}>Contact (gets the package)</label><input value={dnc.contact} onChange={e=>setDnc(p=>({...p,contact:e.target.value}))} placeholder="name · email" style={{...inp,width:"100%"}}/></div>
+          <div style={{gridColumn:"span 4"}}><label style={flab}>Promo obligations — mentions · booth · tickets · added value</label><input value={dnc.promoObligations} onChange={e=>setDnc(p=>({...p,promoObligations:e.target.value}))} style={{...inp,width:"100%"}}/></div>
+        </div>
+        <div style={{marginTop:12}}><label style={flab}>Channels — each one asks its own questions</label>
+          <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{DND_CHANNELS.map(ch=>{const on=dnc.channels.includes(ch);
+            return<button key={ch} onClick={()=>setDnc(p=>({...p,channels:on?p.channels.filter(x=>x!==ch):[...p.channels,ch]}))} style={pill(on)}>{ch}</button>})}</div>
+          {dnc.channels.map(ch=><div key={ch} style={{display:"flex",gap:8,alignItems:"center",marginTop:6}}>
+            <span style={{fontSize:10.5,fontWeight:800,color:HD.flame,width:110,flex:"none"}}>{ch} →</span>
+            <input value={dnc.channelDetail[ch]||""} onChange={e=>setDnc(p=>({...p,channelDetail:{...p.channelDetail,[ch]:e.target.value}}))} placeholder={DND_CH_HINT[ch]} style={{...inp,flex:1,fontSize:11.5}}/>
+          </div>)}
+        </div>
+        <div style={{marginTop:10}}><label style={flab}>Spot lengths &amp; other needs</label>
+          <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+            {[":15",":30",":60","Host Read"].map(sp=>{const on=dnc.spots.includes(sp);
+              return<button key={sp} onClick={()=>setDnc(p=>({...p,spots:on?p.spots.filter(x=>x!==sp):[...p.spots,sp]}))} style={pill(on,HD.gold)}>{sp}</button>})}
+            {["Merch","Pixel","Tag","Social video"].map(x=>{const on=dnc.extras.includes(x);
+              return<button key={x} onClick={()=>setDnc(p=>({...p,extras:on?p.extras.filter(y=>y!==x):[...p.extras,x]}))} style={pill(on,HD.lilac)}>{x}</button>})}
+          </div>
+        </div>
+        <div style={{marginTop:10}}><label style={flab}>Notes / creative direction</label><input value={dnc.desc} onChange={e=>setDnc(p=>({...p,desc:e.target.value}))} placeholder="tone · mandatories · what worked before" style={{...inp,width:"100%"}}/></div>
+        <div style={{display:"flex",gap:12,alignItems:"center",marginTop:16}}>
+          <label style={{fontSize:11.5,color:HD.smoke,display:"flex",alignItems:"center",gap:6,cursor:"pointer"}}><input type="checkbox" checked={dnc.toNotion} onChange={e=>setDnc(p=>({...p,toNotion:e.target.checked}))}/>also file it into Notion</label>
+          <span style={{flex:1,fontSize:10.5,color:HD.dim,fontStyle:"italic"}}>Dates compute backward, known needs seed in as proposals, tripwires arm. What it actually needs stays your call.</span>
+          <button onClick={createFlight} style={{background:"linear-gradient(135deg,"+HD.flame+",#2a9fc0)",border:"none",borderRadius:7,color:"#0b0b16",fontSize:13,fontWeight:800,padding:"10px 20px",cursor:"pointer"}}>Make the deal — and arm the tripwires</button>
+        </div>
+      </div>;
+    };
+
+    // ═══ SHELL ═══
+    const panel=(w,body)=><React.Fragment>
+      <div onClick={close} style={{position:"fixed",inset:0,background:"rgba(5,5,12,.78)",backdropFilter:"blur(3px)",zIndex:40}}/>
+      <div style={{position:"fixed",top:0,bottom:0,right:0,width:w,maxWidth:"95vw",background:"linear-gradient(165deg,#17172a,#101020 70%,#17172a)",borderLeft:"1px solid "+HD.bd,boxShadow:"-18px 0 60px rgba(0,0,0,.75)",zIndex:50,overflowY:"auto",padding:"24px 28px 40px"}}>
+        <button onClick={close} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:HD.smoke,fontSize:20,fontWeight:800,cursor:"pointer"}}>×</button>
+        {body}
+      </div>
+    </React.Fragment>;
+    return<div style={{minHeight:"100vh",background:"linear-gradient(165deg,#0b0b16 0%,#141426 45%,#0b0b16 100%)",color:HD.bone,fontFamily:"'DM Sans',sans-serif",fontSize:14}}>
+      <div style={{display:"flex",alignItems:"center",gap:16,padding:"14px 26px 11px",borderBottom:"1px solid rgba(46,46,74,.7)"}}>
+        <div>
+          <div style={{...serif,fontSize:24,fontWeight:700,background:"linear-gradient(90deg,"+HD.bone+","+HD.flame+")",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",whiteSpace:"nowrap"}}>Deals &amp; Deadlines</div>
+          <div style={{fontSize:8.5,letterSpacing:3,color:HD.lilac,textTransform:"uppercase",marginTop:-2}}>The Underworld Office · Atticor Marketing Ops</div>
+        </div>
+        <div style={{...serif,fontStyle:"italic",color:HD.lilac,fontSize:14,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{dndPick(DND_QUIP.deck)}</div>
+        <div style={{flex:1}}/>
+        <div style={{display:"flex",gap:3,background:"rgba(11,11,22,.7)",border:"1px solid "+HD.bd,borderRadius:99,padding:3}}>
+          <button onClick={()=>setDndView("deck")} style={{border:"none",borderRadius:99,fontSize:11,fontWeight:800,padding:"5px 13px",cursor:"pointer",background:dndView==="deck"?"linear-gradient(135deg,"+HD.flame+",#2a9fc0)":"none",color:dndView==="deck"?"#0b0b16":HD.smoke}}>The deck</button>
+          <button onClick={()=>setDndView("month")} style={{border:"none",borderRadius:99,fontSize:11,fontWeight:800,padding:"5px 13px",cursor:"pointer",background:dndView==="month"?"linear-gradient(135deg,"+HD.flame+",#2a9fc0)":"none",color:dndView==="month"?"#0b0b16":HD.smoke}}>The month</button>
+        </div>
+        <button style={mini()} onClick={()=>ovOpen({t:"record"})}>◂ The Record</button>
+        <button style={mini()} onClick={()=>ovOpen({t:"registry"})}>The Registry</button>
+        <button style={mini()} onClick={()=>ovOpen({t:"dispatch"})}>Dispatch</button>
+        <button onClick={()=>ovOpen({t:"intake"})} style={{background:"linear-gradient(135deg,"+HD.flame+",#2a9fc0)",border:"none",borderRadius:7,color:"#0b0b16",fontSize:12.5,fontWeight:800,padding:"9px 16px",cursor:"pointer",boxShadow:"0 3px 14px rgba(74,200,232,.25)"}}>+ New deal</button>
+        <button onClick={()=>navigateHash("")} style={{background:"none",border:"none",color:HD.smoke,fontSize:11.5,fontWeight:700,cursor:"pointer"}}>← Doom</button>
+      </div>
+      <div style={{padding:"16px 26px 40px"}}>
+        {dndView==="deck"?Deck():MonthView()}
+      </div>
+      {dndOv&&dndOv.t==="dossier"&&panel(700,Dossier(dndOv.fid))}
+      {dndOv&&dndOv.t==="registry"&&panel(860,Registry())}
+      {dndOv&&dndOv.t==="record"&&panel(660,RecordPg())}
+      {dndOv&&dndOv.t==="dispatch"&&panel(660,Dispatch())}
+      {dndOv&&dndOv.t==="intake"&&panel(880,Intake())}
+      {dndPreview&&<React.Fragment>
+        <div style={{position:"fixed",inset:0,background:"rgba(5,5,12,.82)",zIndex:60}} onClick={()=>setDndPreview(null)}/>
+        <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:720,maxWidth:"94vw",maxHeight:"88vh",overflowY:"auto",background:"linear-gradient(150deg,#17172a,#101020)",border:"1px solid "+HD.bd,borderRadius:14,boxShadow:"0 24px 80px rgba(0,0,0,.85)",zIndex:61,padding:"22px 26px"}}>
+          <div style={{...serif,fontSize:20,fontWeight:700,color:HD.bone,marginBottom:8}}>This is the exact email. Nothing has been sent.</div>
+          <div style={{fontSize:12,color:HD.smoke,marginBottom:2}}><b style={{color:HD.bone}}>To:</b> {dndPreview.needsTo?<input value={dndPreview.to||""} onChange={e=>setDndPreview(p=>({...p,to:e.target.value,needsTo:false}))} placeholder="who gets it?" style={{...inp,fontSize:12,padding:"3px 8px"}}/>:dndPreview.to} · <b style={{color:HD.bone}}>CC:</b> emm.caban@atticor.ai</div>
+          {dndPreview.needsTo&&<input autoFocus value={dndPreview.to||""} onChange={e=>setDndPreview(p=>({...p,to:e.target.value}))} placeholder="email address for this send" style={{...inp,width:"100%",margin:"6px 0"}}/>}
+          <div style={{fontSize:12,color:HD.smoke,marginBottom:10}}><b style={{color:HD.bone}}>Subject:</b> {dndPreview.subject}</div>
+          <div style={{background:"#fff",color:"#1a1a2e",borderRadius:10,padding:"16px 18px",fontSize:13,lineHeight:1.55,maxHeight:340,overflowY:"auto"}} dangerouslySetInnerHTML={{__html:dndPreview.body}}/>
+          {dndPreview.kind==="brief"&&<div style={{display:"inline-flex",alignItems:"center",gap:7,border:"1px solid "+HD.bd,borderRadius:7,padding:"6px 11px",fontSize:11,fontWeight:700,color:HD.gold,marginTop:10}}>📎 CreativeBrief_{String(dndPreview.fName).replace(/[^A-Za-z0-9]+/g,"_")}.pdf — branded, specs + hard dates inside</div>}
+          <div style={{display:"flex",gap:10,alignItems:"center",marginTop:14}}>
+            <span style={{flex:1,fontSize:11,color:HD.dim,fontStyle:"italic"}}>{dndPreview.kind==="package"?"Sending writes the traffic record — born carrying this deal's id. That's what stands the PDV tripwire down.":"Sending starts the clock and logs the dispatch."}</span>
+            <button style={mini()} onClick={()=>setDndPreview(null)}>Cancel</button>
+            <button disabled={dndBusy} onClick={confirmDndSend} style={{background:"linear-gradient(135deg,"+HD.flame+",#2a9fc0)",border:"none",borderRadius:7,color:"#0b0b16",fontSize:12.5,fontWeight:800,padding:"9px 18px",cursor:"pointer"}}>{dndBusy?"Sending…":"Send it"}</button>
+          </div>
+        </div>
+      </React.Fragment>}
+      {dndMint&&<React.Fragment>
+        <div style={{position:"fixed",inset:0,background:"rgba(5,5,12,.82)",zIndex:60}} onClick={()=>setDndMint(null)}/>
+        <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:520,maxWidth:"94vw",background:"linear-gradient(150deg,#17172a,#101020)",border:"1px solid "+HD.bd,borderRadius:14,zIndex:61,padding:"22px 26px"}}>
+          <div style={{...serif,fontSize:20,fontWeight:700,color:HD.bone}}>Register as ISCI</div>
+          <div style={{fontSize:11.5,color:HD.smoke,margin:"6px 0 12px"}}>Doom mints by its own conventions — pre-filled from the deal. Confirm, don't type. Provenance rides along.</div>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+            <div><label style={flab}>Code</label><input value={dndMint.code} onChange={e=>setDndMint(p=>({...p,code:e.target.value}))} style={{...inp,width:170,fontFamily:"ui-monospace,monospace"}}/></div>
+            <div style={{flex:1,minWidth:160}}><label style={flab}>Title</label><input value={dndMint.title} onChange={e=>setDndMint(p=>({...p,title:e.target.value}))} style={{...inp,width:"100%"}}/></div>
+            <div><label style={flab}>Len</label><input value={dndMint.dur} onChange={e=>setDndMint(p=>({...p,dur:e.target.value}))} style={{...inp,width:56}}/></div>
+          </div>
+          <div style={{fontSize:10.5,color:HD.dim,marginTop:8}}>{DM[dndMint.dma]||dndMint.dma} · suffix {dndMint.suffix} · {dndMint.url?"file attached from the returned version":"no file yet — it can attach later in the ISCI Registry"}</div>
+          <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:14}}>
+            <button style={mini()} onClick={()=>setDndMint(null)}>Cancel</button>
+            <button onClick={confirmMint} style={{background:"linear-gradient(135deg,"+HD.soul+",#3f9a7c)",border:"none",borderRadius:7,color:"#0b0b16",fontSize:12.5,fontWeight:800,padding:"8px 16px",cursor:"pointer"}}>Mint it</button>
+          </div>
+        </div>
+      </React.Fragment>}
+      {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#17172a",color:HD.bone,padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.5)",zIndex:9999,border:"1px solid "+HD.bd}}>{toast}</div>}
+    </div>;
+  };
+
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"campaigns",l:"Deals & Deadlines",e:"🔥"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
@@ -12549,6 +13854,14 @@ Rules:
   </div></div>;
   if(authed&&mustChangePw)return<ForcedPwChange/>;
   if(!dbLoaded)return null; // HTML loader stays visible until data is ready
+  if(isMopsHub)return<React.Fragment>
+    {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
+    {syncError&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ A save just failed ({COL_LABEL(syncError.col)}) — your last change may NOT have been saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Reload</button></div>}
+    {/* Called as a function, not <DndHub/> — defined inside App, a component
+        identity change every render would remount the hub and drop input
+        focus (same note as OohHub below). All its state lives at App level. */}
+    {DndHub()}
+  </React.Fragment>;
   if(isOohHub)return<React.Fragment>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
     {syncError&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ A save just failed ({COL_LABEL(syncError.col)}) — your last change may NOT have been saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setSyncError(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
@@ -12580,7 +13893,7 @@ Rules:
           {estHits.map(e=><div key={e.num} onClick={()=>{setGlobalSearch("");setPg("est")}} style={{padding:"5px 8px",fontSize:14,color:"#9B8EAD",cursor:"pointer",borderBottom:"1px solid #3a2955"}} onMouseEnter={e=>e.target.style.background="#4a3565"} onMouseLeave={e=>e.target.style.background="transparent"}><span style={{fontWeight:700}}>{e.num}</span> <span style={{color:"#9B8EAD"}}>{e.market}</span></div>)}
         </div>})()}
       </div>
-      <nav style={{flex:1,minHeight:0,overflowY:"auto",padding:"3px 0",scrollbarWidth:"thin",scrollbarColor:"#4a3565 transparent"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:(pg===n.id&&!isOohHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 12px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative",transition:"all .15s",letterSpacing:a?.3:0}} onMouseEnter={e=>{if(!a)e.currentTarget.style.background="rgba(155,123,176,.06)"}} onMouseLeave={e=>{if(!a)e.currentTarget.style.background="transparent"}}><span style={{fontSize:14}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:12,fontWeight:800,padding:"1px 6px",borderRadius:10,background:typeof badge==="number"?"#E85A7A":"#D4A040",color:"#fff",boxShadow:typeof badge==="number"?"0 2px 8px rgba(232,90,122,.3)":"0 2px 8px rgba(212,160,64,.3)"}}>{badge}</span>}</button>})}</nav>
+      <nav style={{flex:1,minHeight:0,overflowY:"auto",padding:"3px 0",scrollbarWidth:"thin",scrollbarColor:"#4a3565 transparent"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:n.id==="campaigns"?isMopsHub:(pg===n.id&&!isOohHub&&!isMopsHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="campaigns"){const ct=dndLedger.filter(x=>x.days!=null&&x.days<=3).length;return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 12px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative",transition:"all .15s",letterSpacing:a?.3:0}} onMouseEnter={e=>{if(!a)e.currentTarget.style.background="rgba(155,123,176,.06)"}} onMouseLeave={e=>{if(!a)e.currentTarget.style.background="transparent"}}><span style={{fontSize:14}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:12,fontWeight:800,padding:"1px 6px",borderRadius:10,background:typeof badge==="number"?"#E85A7A":"#D4A040",color:"#fff",boxShadow:typeof badge==="number"?"0 2px 8px rgba(232,90,122,.3)":"0 2px 8px rgba(212,160,64,.3)"}}>{badge}</span>}</button>})}</nav>
       <div style={{padding:"10px 12px",borderTop:"1px solid rgba(212,160,64,.1)",fontSize:12,color:"#6B5E80"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,color:"#D4A040",letterSpacing:1}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #4a3565",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#9B8EAD",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:syncError?"#E85A7A":"#5BC4A0"}}>{syncError?"Save failed":"Synced "+(Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago")}</span>}</div><div style={{marginTop:2,color:"#6B5E80",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>Signed in as <span style={{color:"#9B8EAD",fontWeight:700}}>{currentUser()}</span></span><span style={{display:"flex",gap:8}}><button onClick={()=>setShowChangePw(true)} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Change PIN</button><button onClick={signOut} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Sign out</button></span></div></div>
     </div>
     <div style={{flex:1,overflowY:"auto",padding:16}}>
