@@ -688,6 +688,7 @@ const DOOM={
     docs:["You actually need help? That's… not surprising.","I'd explain it myself but I have better things to do.","Read the docs. Or don't. I'm not your mother.","Even Pegasus could figure this out. Probably."],
     tracker:["I can see everything you haven't done.","This board doesn't lie. Unlike your excuses.","Green means done. See any? Exactly.","I keep score, Wonderboy. Always have.","Your progress — or lack thereof."],
     ooh:["Billboards. Because subtlety was never the goal.","Outdoor media. At least these can't reply to your emails.","OOH. Three letters. Still more organized than your inbox.","I manage 300+ boards. What do you manage?"],
+    campaigns:["Notion says it's planned. I'll believe it when it airs.","The marketing team's grand designs. I just make them real.","All of 2026, pulled straight from the mothership.","Plans are cute. Traffic dates are binding.","I read Notion so you don't have to."],
     vault:["The dusty scroll room. Mind the cobwebs.","Every ghost of WK past, filed away by yours truly.","Yes, I keep records older than Hercules' first heroic act.","Someone else's mess, finally organized. By me. Obviously.","The archive. Where bad rotations come to be remembered.","You're cataloging history now? How quaint.","I've been holding onto these scrolls. Try not to lose them again."]
   }
 };
@@ -11308,8 +11309,120 @@ Rules:
     </div>;
   };
 
+  // ── 2026 CAMPAIGNS — read-only pull from Notion ───────
+  // Notion stays the source of truth for campaign planning; this page just
+  // shows it through a traffic lens. Nothing here writes back to Notion and
+  // nothing is saved to Firestore — close the page, nothing happened.
+  const CampaignsPg=()=>{
+    const[camp,setCamp]=useState(null);
+    const[cErr,setCErr]=useState("");
+    const[cBusy,setCBusy]=useState(false);
+    const[showDone,setShowDone]=useState(false);
+    const loadCamps=async(force)=>{setCBusy(true);setCErr("");try{const r=await fetch("/api/campaigns"+(force?"?refresh=1":""),{credentials:"include"});const d=await r.json().catch(()=>({}));if(!r.ok){setCErr(d.message||d.error||("Failed to load campaigns ("+r.status+")"));setCBusy(false);return}setCamp(d);setCBusy(false)}catch(e){setCErr("Network error reaching /api/campaigns");setCBusy(false)}};
+    React.useEffect(()=>{loadCamps(false)},[]);
+    const cIso=(s)=>s?String(s).slice(0,10):null;
+    const cDays=(s)=>{const i=cIso(s);if(!i)return null;const d=new Date(i+"T00:00:00");if(isNaN(d.getTime()))return null;const t=new Date();t.setHours(0,0,0,0);return Math.round((d.getTime()-t.getTime())/864e5)};
+    const cFd=(s)=>{const i=cIso(s);return i?fD(i):"—"};
+    const cLbl=(n)=>n==null?"":n<0?Math.abs(n)+"d ago":n===0?"today":n===1?"tomorrow":"in "+n+"d";
+    // Which bucket a row lands in. Paid media = anything carrying spots,
+    // broadcast asset needs, a traffic due date, or a media category — the
+    // rows that eventually become rotations in this very app. Social =
+    // Campaign Management channels. Everything else is parked here for
+    // reference until we decide what Doom should do with it.
+    const cBucket=(c)=>{
+      if(c.src==="mgmt"){const ch=c.channels||[];return ch.some(x=>["TV","Radio","OOH","CTV/OTT","Media"].indexOf(x)>=0)?"paid":"social"}
+      if(/Radio|TV|Media/i.test(c.category||""))return"paid";
+      if((c.spots||[]).length||(c.assets||[]).some(a=>/Spot|Tag/i.test(a))||c.trafficDue)return"paid";
+      return"park";
+    };
+    const cNext=(c)=>c.trafficDue||c.flightStart||c.eventDate||c.launch||c.targetLaunch||null;
+    const cLast=(c)=>c.flightEnd||c.eventDate||c.completed||cNext(c);
+    const cDone=(c)=>{const s=c.status||"";if(s==="Completed"||s==="Complete"||s==="Denied")return true;const n=cDays(cLast(c));return n!=null&&n<0};
+    const cStatus=(s)=>({"In Flight":"#5BC4A0","Active":"#5BC4A0","Confirmed":"#4AC8E8","Completed":"#6B5E80","Complete":"#6B5E80","Pending Review":"#D4A040","Out for Approval":"#D4A040","Planning":"#D4A040","On Hold":"#D4A040","Draft":"#9B8EAD","Not Started":"#9B8EAD","Blocked":"#E85A7A","Denied":"#E85A7A"}[s]||"#9B8EAD");
+    const cBrand=(b)=>getBrandColor(b==="Lerner and Rowe"?"Lerner & Rowe":b==="Keches and Keller"?"Keches Law Group":b||"");
+    const pill=(t,c)=><span key={t} style={{fontSize:10,fontWeight:700,padding:"1px 7px",borderRadius:99,background:c+"18",color:c,border:"1px solid "+c+"30",whiteSpace:"nowrap"}}>{t}</span>;
+    const Row=(c)=>{
+      const nd=cNext(c);const n=cDays(nd);
+      const tdN=cDays(c.trafficDue);
+      const hot=(tdN!=null&&tdN<=14)||(c.trafficDue==null&&n!=null&&n>=0&&n<=14&&cBucket(c)==="paid");
+      const done=cDone(c);
+      const mkts=(c.dmas&&c.dmas.length?c.dmas:(c.markets||[])).join(", ");
+      return<div key={c.id} style={{display:"flex",gap:12,padding:"10px 14px",borderTop:"1px solid #2d1f42",borderLeft:"3px solid "+cBrand(c.brand),opacity:done?.55:1,alignItems:"flex-start"}}>
+        <div style={{minWidth:86,textAlign:"center",paddingTop:2}}>
+          <div style={{fontSize:12,fontWeight:800,color:done?"#6B5E80":hot?"#E85A7A":n!=null&&n<=30?"#D4A040":"#5BC4A0"}}>{n!=null?cLbl(n):"no date"}</div>
+          <div style={{fontSize:10,color:"#6B5E80"}}>{cFd(nd)}</div>
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{display:"flex",alignItems:"baseline",gap:8,flexWrap:"wrap"}}>
+            {c.url?<a href={c.url} target="_blank" rel="noreferrer" style={{fontSize:14,fontWeight:700,color:"#4AC8E8",textDecoration:"none"}}>{c.name||"Untitled"}</a>
+              :<span style={{fontSize:14,fontWeight:700,color:"#E8DFF0"}}>{c.name||"Untitled"}</span>}
+            <span style={{fontSize:10,fontWeight:800,padding:"1px 8px",borderRadius:4,background:cStatus(c.status)+"22",color:cStatus(c.status),textTransform:"uppercase",letterSpacing:.5}}>{c.status||"—"}</span>
+            {c.rush&&<span style={{fontSize:10,fontWeight:800,padding:"1px 8px",borderRadius:4,background:"#E85A7A22",color:"#E85A7A"}}>RUSH 48HR</span>}
+          </div>
+          <div style={{fontSize:12,color:"#9B8EAD",marginTop:2}}>
+            {c.brand&&<span style={{color:cBrand(c.brand),fontWeight:700}}>{c.brand}</span>}
+            {mkts&&<span> · {mkts}</span>}
+            {c.category&&<span> · {c.category}</span>}
+            {(c.channels||[]).length>0&&<span> · {c.channels.join(", ")}</span>}
+            {c.flightStart&&<span> · Flight {cFd(c.flightStart)}{c.flightEnd?" – "+cFd(c.flightEnd):""}</span>}
+            {c.trafficDue&&<span style={{color:tdN!=null&&tdN<=14?"#E85A7A":"#D4A040",fontWeight:700}}> · Traffic due {cFd(c.trafficDue)}</span>}
+          </div>
+          {((c.spots||[]).length>0||(c.assets||[]).length>0||(c.partners||[]).length>0)&&<div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:5}}>
+            {(c.spots||[]).map(s=>pill(s,"#D4A040"))}
+            {(c.assets||[]).map(a=>pill(a,"#9b7bb0"))}
+            {(c.partners||[]).map(p=>pill(p,"#4AC8E8"))}
+          </div>}
+          {c.stations&&<div style={{fontSize:11,color:"#6B5E80",marginTop:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>📻 {c.stations}</div>}
+        </div>
+      </div>;
+    };
+    const Section=({title,sub,list})=>{
+      const open=list.filter(c=>!cDone(c)).sort((a,b)=>{const x=cNext(a),y=cNext(b);if(!x&&!y)return 0;if(!x)return 1;if(!y)return -1;return String(x).localeCompare(String(y))});
+      const done=list.filter(cDone).sort((a,b)=>String(cNext(b)||"").localeCompare(String(cNext(a)||"")));
+      return<div style={{marginBottom:16}}>
+        <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:6}}>
+          <span style={{fontSize:15,fontWeight:800,color:"#F0E8F8",fontFamily:"'Cormorant Garamond',serif",letterSpacing:.5}}>{title}</span>
+          <span style={{fontSize:11,color:"#6B5E80"}}>{sub} · {open.length} open{done.length?" · "+done.length+" finished":""}</span>
+        </div>
+        {open.length===0&&(!showDone||done.length===0)?<Cd style={{padding:16,textAlign:"center",color:"#6B5E80",fontSize:12,fontStyle:"italic"}}>{doomPick(DOOM.empty)}</Cd>
+        :<Cd style={{padding:0,overflow:"hidden"}}>{open.map(Row)}{showDone&&done.map(Row)}</Cd>}
+      </div>;
+    };
+    const all=(camp&&camp.campaigns)||[];
+    const paid=all.filter(c=>cBucket(c)==="paid");
+    const social=all.filter(c=>cBucket(c)==="social");
+    const park=all.filter(c=>cBucket(c)==="park");
+    const notConfigured=cErr&&/not_configured|NOTION_API_KEY/i.test(cErr);
+    return<div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,gap:8,flexWrap:"wrap"}}>
+        <PageHead title="2026 Campaigns" pgKey="campaigns" sub="Pulled live from Notion — read-only. Sorted by whatever needs traffic next."/>
+        <div style={{display:"flex",gap:6,alignItems:"center"}}>
+          <Btn small onClick={()=>setShowDone(p=>!p)}>{showDone?"Hide finished":"Show finished"}</Btn>
+          <Btn small disabled={cBusy} onClick={()=>{notify("Pulling fresh from Notion…");loadCamps(true)}}>{cBusy?"Refreshing…":"Refresh"}</Btn>
+        </div>
+      </div>
+      {cErr&&<Cd style={{padding:14,marginBottom:12,border:"1px solid #E85A7A",background:"rgba(232,90,122,.08)"}}>
+        <div style={{color:"#E85A7A",fontWeight:700,fontSize:13}}>{notConfigured?"Notion isn't connected yet.":"Couldn't load campaigns."}</div>
+        <div style={{color:"#9B8EAD",fontSize:12,marginTop:4,lineHeight:1.5}}>{notConfigured
+          ?"One-time setup: create an internal integration at notion.so/my-integrations, add its secret as NOTION_API_KEY in the Vercel project settings, and share both Notion databases (2026 Partnerships, Campaigns & Events + Campaign Management) with the integration via each database's ••• → Connections menu."
+          :cErr}</div>
+      </Cd>}
+      {camp&&(camp.errors||[]).length>0&&<Cd style={{padding:"8px 12px",marginBottom:12,border:"1px solid #D4A040",background:"rgba(212,160,64,.08)"}}>
+        <span style={{color:"#D4A040",fontSize:12,fontWeight:600}}>⚠ Partial pull — {camp.errors.map(e=>e.src+" database: "+e.error).join(" · ")}. If a database was just shared with the integration, hit Refresh.</span>
+      </Cd>}
+      {!camp&&!cErr?<Cd style={{padding:30,textAlign:"center",color:"#9B8EAD",fontStyle:"italic"}}>{doomPick(DOOM.loading)}</Cd>
+      :camp&&all.length===0&&!cErr?<Cd style={{padding:30,textAlign:"center",color:"#9B8EAD"}}>Notion answered, but with nothing. {doomPick(DOOM.empty)}</Cd>
+      :camp&&<div>
+        <Section title="📺 Paid Media & Partnerships" sub="spots, stations, flights — the rows that become rotations" list={paid}/>
+        <Section title="📱 Paid Social & Digital" sub="Campaign Management — handled in-platform, shown for awareness" list={social}/>
+        <Section title="🎪 Events, Community & Everything Else" sub="parked here for reference — Notion owns these" list={park}/>
+        <div style={{fontSize:10,color:"#6B5E80",textAlign:"right"}}>Pulled {camp.fetched?new Date(camp.fetched).toLocaleString():"—"}{camp.cached?" (cached ≤5 min)":""}</div>
+      </div>}
+    </div>;
+  };
+
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"cal",l:"Calendar",e:"🗓"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"cal",l:"Calendar",e:"🗓"},{id:"campaigns",l:"2026 Campaigns",e:"📣"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
@@ -12399,6 +12512,13 @@ Rules:
         <BookMarginNote author="muses">It saves itself, no button to press<br/>But heed the banners — avoid the mess!</BookMarginNote>
       </div>,damageEffects:<>{<BookDroolStain style={{bottom:16,left:24,width:72,height:72,opacity:.2}}/>}</>},
 
+      {title:"2026 Campaigns: The Notion Pull",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>The 2026 Campaigns page (📣 in the sidebar) pulls campaign plans straight from Notion — the <b>2026 Partnerships, Campaigns &amp; Events</b> board and the <b>Campaign Management</b> database. Doom only reads. Nothing is ever written back to Notion, and nothing from this page is saved to Firestore.</p>
+        <p>Rows are grouped by what they mean for traffic: <b>Paid Media &amp; Partnerships</b> (spots, stations, flights — the rows that become rotations here), <b>Paid Social &amp; Digital</b> (handled in-platform, shown for awareness), and <b>Events &amp; Community</b> (parked for reference — Notion owns those). Every row links back to its Notion page.</p>
+        <p>Rows sort by whatever needs traffic next; traffic due dates and near-term flight starts within 14 days glow. Data refreshes when you open the page (with a 5-minute server cache) — the Refresh button forces a fresh pull. Setup lives in Vercel: a NOTION_API_KEY plus both databases shared with the integration.</p>
+        <BookMarginNote author="meg">Notion plans it. I make sure it actually airs.</BookMarginNote>
+      </div>,damageEffects:<>{<BookInkSplatter style={{bottom:24,right:16,opacity:.4}}/>}{<BookLipstickMark style={{top:32,left:24,opacity:.4,transform:"rotate(-12deg)"}}/>}</>},
+
       {title:"End of the Line",content:<div style={{display:"flex",flexDirection:"column",gap:14,textAlign:"center",paddingTop:24}}>
         <p style={{fontSize:17,fontFamily:"'Cinzel',serif",color:"#4a1a1a"}}>Thus concludes the operating manual for Doom & Deliverables.</p>
         <p style={{fontStyle:"italic",color:"#5a4a3a",fontSize:12}}>May your rotations total 100%, your confirmations come swiftly, and your ISCIs never drop below the safeguard.</p>
@@ -13402,6 +13522,7 @@ Rules:
           {pg==="notif"&&pages["notif"]}
           {pg==="team"&&isManagerRole()&&<TeamPg/>}
           {pg==="cal"&&<CalendarPg/>}
+          {pg==="campaigns"&&<CampaignsPg/>}
           {pg==="docs"&&<DocsPg/>}
         </MDiv>
       </AnimatePresence>
