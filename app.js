@@ -12285,6 +12285,64 @@ Rules:
           </div>})}
       </div>;
     };
+    // ── Assets: the registry. Every asset in the system, one row each,
+    //    ISCI-Registry-shaped: identity first (name · type · category ·
+    //    brand · DMA), the file right there, its campaign one click away. ──
+    const AssetsPg=()=>{
+      const q=(mopsAssetQ||"").toLowerCase();
+      const rows=[];
+      campaigns.forEach(c=>{
+        if(c.status==="Wrapped"&&!mopsAssetWrapped)return;
+        (c.assets||[]).forEach(a=>{
+          if(mopsAssetBrand&&c.brand!==mopsAssetBrand)return;
+          if(mopsAssetType&&a.type!==mopsAssetType)return;
+          if(mopsAssetMissing&&assetInHand(a))return;
+          if(q){const hay=((a.label||"")+" "+a.type+" "+(a.cat||"")+" "+c.name+" "+(c.markets||"")+" "+(a.isci||"")).toLowerCase();if(!hay.includes(q))return}
+          rows.push([c,a]);
+        });
+      });
+      rows.sort((x,y)=>String(x[1].due||"9999").localeCompare(String(y[1].due||"9999")));
+      const total=rows.length;
+      const inHand=rows.filter(([c,a])=>assetInHand(a)).length;
+      const brandCats=(b)=>((typeof customFields!=="undefined"&&customFields[b]&&customFields[b].categories)||[]);
+      return<div>
+        <div style={{display:"flex",alignItems:"center",gap:16}}><div style={{flex:1}}><PageHead title="Assets" pgKey="isci" sub="Every asset in the system, one row each — the file lives on the row."/></div><div style={{fontSize:13,fontWeight:700,color:inHand===total?"#5BC4A0":"#D4A040",whiteSpace:"nowrap"}}>{inHand}/{total} in hand</div></div>
+        <div style={{display:"flex",gap:8,margin:"10px 0 14px",flexWrap:"wrap",alignItems:"center"}}>
+          <input value={mopsAssetQ} onChange={e=>setMopsAssetQ(e.target.value)} placeholder="Search assets, campaigns, ISCIs…" style={{...mIn,minWidth:220}}/>
+          <select value={mopsAssetBrand} onChange={e=>setMopsAssetBrand(e.target.value)} style={mIn}><option value="">All brands</option>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select>
+          <select value={mopsAssetType} onChange={e=>setMopsAssetType(e.target.value)} style={mIn}><option value="">All types</option>{CAMP_ASSET_TYPES.map(x=><option key={x.t} value={x.t}>{x.t}</option>)}</select>
+          <label style={{fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:5,cursor:"pointer"}}><input type="checkbox" checked={mopsAssetMissing} onChange={e=>setMopsAssetMissing(e.target.checked)}/>missing only</label>
+          <label style={{fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:5,cursor:"pointer"}}><input type="checkbox" checked={mopsAssetWrapped} onChange={e=>setMopsAssetWrapped(e.target.checked)}/>include wrapped</label>
+        </div>
+        <Cd style={{padding:0,overflow:"hidden"}}>
+        <div style={{display:"grid",gridTemplateColumns:"26px minmax(150px,1.4fr) 110px 120px minmax(110px,1fr) minmax(130px,1.2fr) 100px 96px 150px",gap:10,padding:"9px 14px",borderBottom:"2px solid #4a3565",fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",color:"#6B5E80"}}>
+          <div></div><div>Asset</div><div>Type</div><div>Category</div><div>Brand · DMA</div><div>Campaign</div><div>Owner</div><div>Due</div><div>File</div>
+        </div>
+        {rows.length===0&&<div style={{fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:15,color:"#9B8EAD",padding:"18px 14px"}}>{doomPick(DOOM.empty)}</div>}
+        {rows.map(([c,a])=>{const inH=assetInHand(a);const n=campDTo(a.due);const col=inH?"#5BC4A0":n!=null&&n<0?"#E85A7A":n!=null&&n<=10?"#D4A040":"#9B8EAD";const lk=assetLink(a);const linked=isciByKey(a.isci);
+          return<div key={a.id} style={{display:"grid",gridTemplateColumns:"26px minmax(150px,1.4fr) 110px 120px minmax(110px,1fr) minmax(130px,1.2fr) 100px 96px 150px",gap:10,padding:"9px 14px",borderTop:"1px solid #2d1f42",alignItems:"center",background:inH?"rgba(91,196,160,.03)":n!=null&&n<0?"rgba(232,90,122,.05)":"transparent"}}>
+            <span onClick={()=>{updAsset(c.id,a.id,{status:inH?"needed":"done"});notify(inH?"Back to owed: "+(a.label||a.type):"✓ In hand: "+(a.label||a.type))}} style={{cursor:"pointer"}}>{box(inH,col==="#9B8EAD"?"#4a3565":col)}</span>
+            <input value={a.label} placeholder={a.type} onChange={e=>updAsset(c.id,a.id,{label:e.target.value})} style={{fontWeight:700,color:"#F0E8F8",background:"transparent",border:"none",outline:"none",fontSize:14,fontFamily:"'DM Sans',sans-serif",width:"100%"}}/>
+            <span style={{fontSize:11,fontWeight:700,color:campTypeMeta(a.type).c}}>{a.type}</span>
+            <select value={a.cat||""} onChange={e=>updAsset(c.id,a.id,{cat:e.target.value})} style={{background:"transparent",border:"none",color:a.cat?"#C4A0C8":"#6B5E80",fontSize:12,outline:"none",cursor:"pointer",width:"100%"}}>
+              <option value="">— category</option>
+              {[...new Set([...(brandCats(c.brand)),a.cat||""].filter(Boolean))].map(x=><option key={x} value={x}>{x}</option>)}
+            </select>
+            <span style={{fontSize:11,color:"#9B8EAD"}}><b style={{color:getBrandColor(c.brand)}}>{c.brand}</b>{c.markets?<span> · {c.markets}</span>:null}</span>
+            <span onClick={()=>mopsGo("c/"+c.id)} style={{fontSize:13,fontWeight:700,color:"#E8DFF0",cursor:"pointer",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</span>
+            <span style={{fontSize:11,color:"#C4A0C8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{inH?"—":(a.owner||"—")}</span>
+            <span style={{fontSize:11,fontWeight:700,color:col}}>{a.due?campFd(a.due):"—"}</span>
+            <span style={{display:"flex",gap:5,alignItems:"center"}}>
+              {lk?<a href={lk} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4AC8E8",textDecoration:"none",fontWeight:700}}>◆ open</a>
+                :<label style={{fontSize:10,color:"#4AC8E8",fontWeight:700,cursor:"pointer",border:"1px solid #4a3565",borderRadius:4,padding:"2px 7px",whiteSpace:"nowrap"}}>📎<input type="file" style={{display:"none"}} onChange={e=>uploadAssetFile(c,a,e.target.files&&e.target.files[0])}/></label>}
+              {linked&&<span title={"Linked ISCI: "+linked.code+" — "+(linked.title||"")} style={{fontSize:10,color:"#5BC4A0",fontWeight:700}}>{linked.code}</span>}
+              {!inH&&lk&&a.status!=="review"&&<button onClick={()=>sendReview(c,a)} style={{background:"none",border:"1px solid #C4A0C8",borderRadius:4,color:"#C4A0C8",fontSize:9,fontWeight:700,cursor:"pointer",padding:"2px 6px"}}>review</button>}
+            </span>
+          </div>})}
+        </Cd>
+        <div style={{fontSize:11,color:"#6B5E80",marginTop:10}}>◆ means the file itself is attached — uploaded here, or riding on a linked ISCI from the registry. Click a campaign name for the full picture.</div>
+      </div>;
+    };
     // ── Shell ──
     const mopsNav=[
       {id:"",l:"The War Room",e:"🏛"},
