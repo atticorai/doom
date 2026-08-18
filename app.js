@@ -12071,14 +12071,24 @@ Rules:
                   </select>}
                 {(a.type==="Broadcast Spot"||a.type==="Digital Banner"||a.type==="Station-Made Creative")?(()=>{
                   const mkts=String(c.markets||"").toLowerCase();
+                  // ":30 TV" on a Chicago campaign lists Chicago TV ISCIs and
+                  // nothing else — the label names the medium, the ISCI
+                  // suffix (T/R/S/D/B) confirms it.
+                  const mw=((a.label||"")+" "+a.type).toLowerCase();
+                  const want=a.type==="Digital Banner"?["B","D"]
+                    :/\btv\b|television|ctv|ott/.test(mw)?["T"]
+                    :/radio/.test(mw)?["R"]
+                    :/audio|stream/.test(mw)?(c.brand==="Wettermark Keith"?["R","S"]:["S","R"])
+                    :null;
                   const pool=iscis.filter(i=>{
                     if(i.brand!==c.brand||!i.active||i.suffix==="O")return false;
+                    if(want&&!want.includes(i.suffix))return false;
                     if(!mkts)return true;
                     const mn=((typeof DM!=="undefined"&&DM[i.dma])||i.dma||"").toLowerCase();
                     return mn&&mkts.includes(mn);
-                  });
+                  }).sort((x,y)=>(y.fileUrl?1:0)-(x.fileUrl?1:0)||String(x.code).localeCompare(String(y.code)));
                   return<select value={a.isci||""} onChange={e=>updAsset(c.id,a.id,{isci:e.target.value})} title="A creative file on the linked ISCI counts as in hand" style={{...mIn,padding:"4px 6px",fontSize:11,width:"100%",color:a.isci?"#5BC4A0":"#6B5E80"}}>
-                    <option value="">link ISCI…</option>
+                    <option value="">{"link "+(want?({T:"TV",R:"Radio",S:"Streaming",B:"banner",D:"digital"})[want[0]]+" ":"")+"ISCI…"}</option>
                     {linked&&!pool.some(x=>isciKeyOf(x)===a.isci)&&<option value={a.isci}>{linked.code} · {String(linked.title||"").slice(0,20)}</option>}
                     {pool.map(x=><option key={isciKeyOf(x)} value={isciKeyOf(x)}>{x.fileUrl?"◆ ":""}{x.code} · {String(x.title||"untitled").slice(0,20)}{x.dur?" :"+x.dur:""}</option>)}
                   </select>})()
@@ -12285,62 +12295,103 @@ Rules:
           </div>})}
       </div>;
     };
-    // ── Assets: the registry. Every asset in the system, one row each,
-    //    ISCI-Registry-shaped: identity first (name · type · category ·
-    //    brand · DMA), the file right there, its campaign one click away. ──
+    // ── Assets: the registry of things that EXIST. Broadcast and display
+    //    creative reads live from the ISCI Registry (never retyped, never
+    //    duplicated per campaign); uploaded files, UTM strings and taglines
+    //    ride with their brand. Needs live on campaign pages — a row here
+    //    means you can open, copy, or traffic it right now. ──
     const AssetsPg=()=>{
       const q=(mopsAssetQ||"").toLowerCase();
-      const rows=[];
+      const kind=mopsAssetType; // "" all · isci · file · utm · tag
+      const usedBy={};
+      campaigns.forEach(c=>(c.assets||[]).forEach(a=>{if(a.isci)(usedBy[a.isci]=usedBy[a.isci]||[]).push(c)}));
+      const MEDIA_W={T:"TV",R:"Radio",S:"Streaming",D:"Digital",B:"Banner"};
+      const MEDIA_C={T:"#4AC8E8",R:"#D4A040",S:"#C4A0C8",D:"#5BC4A0",B:"#9b7bb0"};
+      const hit=(s)=>!q||String(s).toLowerCase().includes(q);
+      const spotRows=(!kind||kind==="isci")?iscis.filter(i=>i.active&&i.suffix!=="O"&&(!mopsAssetBrand||i.brand===mopsAssetBrand)&&hit(i.code+" "+(i.title||"")+" "+((typeof DM!=="undefined"&&DM[i.dma])||i.dma||"")+" "+i.brand+" "+(usedBy[isciKeyOf(i)]||[]).map(c=>c.name).join(" "))):[];
+      const fileRows=[],utmRows=[];
       campaigns.forEach(c=>{
-        if(c.status==="Wrapped"&&!mopsAssetWrapped)return;
-        (c.assets||[]).forEach(a=>{
-          if(mopsAssetBrand&&c.brand!==mopsAssetBrand)return;
-          if(mopsAssetType&&a.type!==mopsAssetType)return;
-          if(mopsAssetMissing&&assetInHand(a))return;
-          if(q){const hay=((a.label||"")+" "+a.type+" "+(a.cat||"")+" "+c.name+" "+(c.markets||"")+" "+(a.isci||"")).toLowerCase();if(!hay.includes(q))return}
-          rows.push([c,a]);
-        });
+        if(mopsAssetBrand&&c.brand!==mopsAssetBrand)return;
+        if(!kind||kind==="file")(c.assets||[]).forEach(a=>{if(a.url&&hit((a.label||a.type)+" "+a.type+" "+c.name+" "+(c.markets||"")))fileRows.push([c,a])});
+        if(!kind||kind==="utm")(c.utms||[]).forEach(u=>{if(hit(u.platform+" "+(u.content||"")+" "+u.url+" "+c.name))utmRows.push([c,u])});
       });
-      rows.sort((x,y)=>String(x[1].due||"9999").localeCompare(String(y[1].due||"9999")));
-      const total=rows.length;
-      const inHand=rows.filter(([c,a])=>assetInHand(a)).length;
-      const brandCats=(b)=>((typeof customFields!=="undefined"&&customFields[b]&&customFields[b].categories)||[]);
+      const tagRows=(!kind||kind==="tag")?taglines.filter(t=>t.active!==false&&(!mopsAssetBrand||!t.brand||t.brand===mopsAssetBrand)&&hit(t.text+" "+(t.brand||""))):[];
+      const total=spotRows.length+fileRows.length+utmRows.length+tagRows.length;
+      const hcell={fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",color:"#6B5E80"};
+      const S_COLS="58px 160px minmax(180px,1.5fr) 44px minmax(150px,1.2fr) 96px";
+      const secLbl=(t)=><div style={{fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:"#9B8EAD",margin:"14px 0 4px"}}>{t}</div>;
+      const usedCell=(key)=>{const cs=usedBy[key]||[];return cs.length?<span>{cs.slice(0,2).map((c,i)=><span key={c.id}>{i>0?", ":""}<span onClick={()=>mopsGo("c/"+c.id)} style={{color:"#C4A0C8",cursor:"pointer"}}>{c.name}</span></span>)}{cs.length>2&&<span style={{color:"#6B5E80"}}> +{cs.length-2}</span>}</span>:<span style={{color:"#4a3565"}}>—</span>};
       return<div>
-        <div style={{display:"flex",alignItems:"center",gap:16}}><div style={{flex:1}}><PageHead title="Assets" pgKey="isci" sub="Every asset in the system, one row each — the file lives on the row."/></div><div style={{fontSize:13,fontWeight:700,color:inHand===total?"#5BC4A0":"#D4A040",whiteSpace:"nowrap"}}>{inHand}/{total} in hand</div></div>
-        <div style={{display:"flex",gap:8,margin:"10px 0 14px",flexWrap:"wrap",alignItems:"center"}}>
-          <input value={mopsAssetQ} onChange={e=>setMopsAssetQ(e.target.value)} placeholder="Search assets, campaigns, ISCIs…" style={{...mIn,minWidth:220}}/>
+        <div style={{display:"flex",alignItems:"center",gap:16}}><div style={{flex:1}}><PageHead title="Assets" pgKey="isci" sub="The registry — every real thing on file. Broadcast creative reads live from the ISCI Registry; what a campaign still needs lives on that campaign."/></div><div style={{fontSize:13,fontWeight:700,color:"#D4A040",whiteSpace:"nowrap"}}>{total} on file</div></div>
+        <div style={{display:"flex",gap:8,margin:"10px 0 16px",flexWrap:"wrap",alignItems:"center"}}>
+          <input value={mopsAssetQ} onChange={e=>setMopsAssetQ(e.target.value)} placeholder="Search codes, titles, campaigns, URLs…" style={{...mIn,minWidth:220}}/>
           <select value={mopsAssetBrand} onChange={e=>setMopsAssetBrand(e.target.value)} style={mIn}><option value="">All brands</option>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select>
-          <select value={mopsAssetType} onChange={e=>setMopsAssetType(e.target.value)} style={mIn}><option value="">All types</option>{CAMP_ASSET_TYPES.map(x=><option key={x.t} value={x.t}>{x.t}</option>)}</select>
-          <label style={{fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:5,cursor:"pointer"}}><input type="checkbox" checked={mopsAssetMissing} onChange={e=>setMopsAssetMissing(e.target.checked)}/>missing only</label>
-          <label style={{fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:5,cursor:"pointer"}}><input type="checkbox" checked={mopsAssetWrapped} onChange={e=>setMopsAssetWrapped(e.target.checked)}/>include wrapped</label>
+          <select value={mopsAssetType} onChange={e=>setMopsAssetType(e.target.value)} style={mIn}><option value="">Everything</option><option value="isci">Broadcast &amp; display (ISCI)</option><option value="file">Files &amp; links</option><option value="utm">UTMs</option><option value="tag">Taglines</option></select>
         </div>
-        <Cd style={{padding:0,overflow:"hidden"}}>
-        <div style={{display:"grid",gridTemplateColumns:"26px minmax(150px,1.4fr) 110px 120px minmax(110px,1fr) minmax(130px,1.2fr) 100px 96px 150px",gap:10,padding:"9px 14px",borderBottom:"2px solid #4a3565",fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",color:"#6B5E80"}}>
-          <div></div><div>Asset</div><div>Type</div><div>Category</div><div>Brand · DMA</div><div>Campaign</div><div>Owner</div><div>Due</div><div>File</div>
-        </div>
-        {rows.length===0&&<div style={{fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:15,color:"#9B8EAD",padding:"18px 14px"}}>{doomPick(DOOM.empty)}</div>}
-        {rows.map(([c,a])=>{const inH=assetInHand(a);const n=campDTo(a.due);const col=inH?"#5BC4A0":n!=null&&n<0?"#E85A7A":n!=null&&n<=10?"#D4A040":"#9B8EAD";const lk=assetLink(a);const linked=isciByKey(a.isci);
-          return<div key={a.id} style={{display:"grid",gridTemplateColumns:"26px minmax(150px,1.4fr) 110px 120px minmax(110px,1fr) minmax(130px,1.2fr) 100px 96px 150px",gap:10,padding:"9px 14px",borderTop:"1px solid #2d1f42",alignItems:"center",background:inH?"rgba(91,196,160,.03)":n!=null&&n<0?"rgba(232,90,122,.05)":"transparent"}}>
-            <span onClick={()=>{updAsset(c.id,a.id,{status:inH?"needed":"done"});notify(inH?"Back to owed: "+(a.label||a.type):"✓ In hand: "+(a.label||a.type))}} style={{cursor:"pointer"}}>{box(inH,col==="#9B8EAD"?"#4a3565":col)}</span>
-            <input value={a.label} placeholder={a.type} onChange={e=>updAsset(c.id,a.id,{label:e.target.value})} style={{fontWeight:700,color:"#F0E8F8",background:"transparent",border:"none",outline:"none",fontSize:14,fontFamily:"'DM Sans',sans-serif",width:"100%"}}/>
-            <span style={{fontSize:11,fontWeight:700,color:campTypeMeta(a.type).c}}>{a.type}</span>
-            <select value={a.cat||""} onChange={e=>updAsset(c.id,a.id,{cat:e.target.value})} style={{background:"transparent",border:"none",color:a.cat?"#C4A0C8":"#6B5E80",fontSize:12,outline:"none",cursor:"pointer",width:"100%"}}>
-              <option value="">— category</option>
-              {[...new Set([...(brandCats(c.brand)),a.cat||""].filter(Boolean))].map(x=><option key={x} value={x}>{x}</option>)}
-            </select>
-            <span style={{fontSize:11,color:"#9B8EAD"}}><b style={{color:getBrandColor(c.brand)}}>{c.brand}</b>{c.markets?<span> · {c.markets}</span>:null}</span>
-            <span onClick={()=>mopsGo("c/"+c.id)} style={{fontSize:13,fontWeight:700,color:"#E8DFF0",cursor:"pointer",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</span>
-            <span style={{fontSize:11,color:"#C4A0C8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{inH?"—":(a.owner||"—")}</span>
-            <span style={{fontSize:11,fontWeight:700,color:col}}>{a.due?campFd(a.due):"—"}</span>
-            <span style={{display:"flex",gap:5,alignItems:"center"}}>
-              {lk?<a href={lk} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4AC8E8",textDecoration:"none",fontWeight:700}}>◆ open</a>
-                :<label style={{fontSize:10,color:"#4AC8E8",fontWeight:700,cursor:"pointer",border:"1px solid #4a3565",borderRadius:4,padding:"2px 7px",whiteSpace:"nowrap"}}>📎<input type="file" style={{display:"none"}} onChange={e=>uploadAssetFile(c,a,e.target.files&&e.target.files[0])}/></label>}
-              {linked&&<span title={"Linked ISCI: "+linked.code+" — "+(linked.title||"")} style={{fontSize:10,color:"#5BC4A0",fontWeight:700}}>{linked.code}</span>}
-              {!inH&&lk&&a.status!=="review"&&<button onClick={()=>sendReview(c,a)} style={{background:"none",border:"1px solid #C4A0C8",borderRadius:4,color:"#C4A0C8",fontSize:9,fontWeight:700,cursor:"pointer",padding:"2px 6px"}}>review</button>}
-            </span>
+        {total===0&&<div style={{...serif,fontStyle:"italic",fontSize:15,color:"#9B8EAD",padding:"18px 0"}}>{doomPick(DOOM.empty)}</div>}
+        {BRANDS.map(b=>{
+          if(mopsAssetBrand&&b.name!==mopsAssetBrand)return null;
+          const bSpots=spotRows.filter(i=>i.brand===b.name);
+          const bFiles=fileRows.filter(([c])=>c.brand===b.name);
+          const bUtms=utmRows.filter(([c])=>c.brand===b.name);
+          const bTags=tagRows.filter(t=>t.brand===b.name);
+          if(!bSpots.length&&!bFiles.length&&!bUtms.length&&!bTags.length)return null;
+          const dmas=[...new Set(bSpots.map(i=>i.dma))].sort((x,y)=>b.markets.indexOf(x)-b.markets.indexOf(y));
+          return<div key={b.code} style={{marginBottom:32}}>
+            <div style={{...serif,fontSize:22,fontWeight:700,color:b.color,borderBottom:"3px solid "+b.color,paddingBottom:6,marginBottom:10}}>{b.name}<span style={{fontFamily:"'DM Sans',sans-serif",fontSize:11,fontWeight:700,color:"#6B5E80",marginLeft:12}}>{bSpots.length} spot{bSpots.length!==1?"s":""} · {bFiles.length} file{bFiles.length!==1?"s":""} · {bUtms.length} UTM{bUtms.length!==1?"s":""} · {bTags.length} tagline{bTags.length!==1?"s":""}</span></div>
+            {dmas.map(dc=>{const rows=bSpots.filter(i=>i.dma===dc);
+              return<div key={dc} style={{marginBottom:12}}>
+                <div style={{fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:"#9B8EAD",margin:"0 0 4px"}}>{(typeof DM!=="undefined"&&DM[dc])||dc}</div>
+                <Cd style={{padding:0,overflow:"hidden"}}>
+                  <div style={{display:"grid",gridTemplateColumns:S_COLS,gap:10,padding:"7px 14px",borderBottom:"2px solid #4a3565"}}>
+                    <div style={hcell}>Media</div><div style={hcell}>ISCI</div><div style={hcell}>Title</div><div style={hcell}>Len</div><div style={hcell}>In campaigns</div><div style={hcell}>File</div>
+                  </div>
+                  {rows.map(i=>{const key=isciKeyOf(i);
+                    return<div key={key} style={{display:"grid",gridTemplateColumns:S_COLS,gap:10,padding:"8px 14px",borderTop:"1px solid #2d1f42",alignItems:"center"}}>
+                      <span style={{fontSize:10,fontWeight:800,color:MEDIA_C[i.suffix]||"#9B8EAD"}}>{MEDIA_W[i.suffix]||i.suffix||"—"}</span>
+                      <span onClick={()=>copyText(i.code,"ISCI copied")} title="Click to copy" style={{fontSize:13,fontWeight:700,color:"#F0E8F8",fontFamily:"monospace",cursor:"pointer"}}>{i.code}</span>
+                      <span style={{fontSize:13,color:i.title?"#E8DFF0":"#6B5E80",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{i.title||"untitled"}</span>
+                      <span style={{fontSize:12,color:"#9B8EAD"}}>{i.dur?":"+i.dur:"—"}</span>
+                      <span style={{fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{usedCell(key)}</span>
+                      {i.fileUrl?<a href={i.fileUrl} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4AC8E8",textDecoration:"none",fontWeight:700}}>◆ open</a>:<span title="No file on the ISCI — attach it in the ISCI Registry" style={{fontSize:11,color:"#6B5E80"}}>no file</span>}
+                    </div>})}
+                </Cd>
+              </div>})}
+            {bFiles.length>0&&<div>
+              {secLbl("Files & links")}
+              <Cd style={{padding:0,overflow:"hidden"}}>
+                {bFiles.map(([c,a],ri)=><div key={a.id} style={{display:"grid",gridTemplateColumns:"minmax(160px,1.2fr) 120px minmax(130px,1fr) minmax(150px,1.2fr) 96px",gap:10,padding:"8px 14px",borderTop:ri?"1px solid #2d1f42":"none",alignItems:"center"}}>
+                  <span style={{fontSize:13,fontWeight:700,color:"#F0E8F8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.label||a.type}</span>
+                  <span style={{fontSize:11,fontWeight:700,color:campTypeMeta(a.type).c}}>{a.type}</span>
+                  <span style={{fontSize:12,color:"#9B8EAD",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.markets||"—"}</span>
+                  <span onClick={()=>mopsGo("c/"+c.id)} style={{fontSize:12,color:"#C4A0C8",cursor:"pointer",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</span>
+                  <a href={a.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4AC8E8",textDecoration:"none",fontWeight:700}}>◆ open</a>
+                </div>)}
+              </Cd>
+            </div>}
+            {bUtms.length>0&&<div>
+              {secLbl("UTM tracking URLs")}
+              <Cd style={{padding:0,overflow:"hidden"}}>
+                {bUtms.map(([c,u],ri)=><div key={u.id} style={{display:"grid",gridTemplateColumns:"110px minmax(110px,.8fr) minmax(180px,1.6fr) minmax(140px,1fr) 70px",gap:10,padding:"8px 14px",borderTop:ri?"1px solid #2d1f42":"none",alignItems:"center"}}>
+                  <span style={{fontSize:11,fontWeight:700,color:"#4AC8E8"}}>{u.platform}</span>
+                  <span style={{fontSize:12,color:"#9B8EAD",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.content||"—"}</span>
+                  <span style={{fontSize:10,color:"#9B8EAD",fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.url}</span>
+                  <span onClick={()=>mopsGo("c/"+c.id)} style={{fontSize:12,color:"#C4A0C8",cursor:"pointer",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</span>
+                  <button onClick={()=>copyText(u.url,"UTM copied")} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#4AC8E8",fontSize:10,fontWeight:700,cursor:"pointer",padding:"1px 8px"}}>copy</button>
+                </div>)}
+              </Cd>
+            </div>}
+            {bTags.length>0&&<div>
+              {secLbl("Taglines")}
+              <Cd style={{padding:0,overflow:"hidden"}}>
+                {bTags.map((t,ri)=><div key={t.id} style={{display:"flex",gap:10,padding:"8px 14px",borderTop:ri?"1px solid #2d1f42":"none",alignItems:"center"}}>
+                  <span style={{...serif,fontSize:15,fontStyle:"italic",color:"#E8DFF0",flex:1}}>“{t.text}”</span>
+                  <button onClick={()=>copyText(t.text,"Tagline copied")} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#4AC8E8",fontSize:10,fontWeight:700,cursor:"pointer",padding:"1px 8px"}}>copy</button>
+                </div>)}
+              </Cd>
+            </div>}
           </div>})}
-        </Cd>
-        <div style={{fontSize:11,color:"#6B5E80",marginTop:10}}>◆ means the file itself is attached — uploaded here, or riding on a linked ISCI from the registry. Click a campaign name for the full picture.</div>
+        <div style={{fontSize:11,color:"#6B5E80",marginTop:4}}>Broadcast rows are the ISCI Registry itself — titles and files live there, and every campaign that links a code shows in its row. Nothing here is retyped.</div>
       </div>;
     };
     // ── Shell ──
