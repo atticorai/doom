@@ -936,7 +936,7 @@ const MUSES=[
   {name:"Terpsichore",role:"Rotation Balance",color:"#4AC8E8",icon:"💃",voice:["The dance of percentages must be balanced!","Your rotation rhythm is… off-beat.","Let me choreograph something better.","50/50 is boring. Give me drama in the splits."]},
   {name:"Clio",role:"History",color:"#5BC4A0",icon:"📜",voice:["The historical record shows… interesting patterns.","I've been keeping track. You should be concerned.","Let history guide your next move.","Your traffic history tells quite the epic."]}
 ];
-const MuseCard=({muse,content,loading})=><div style={{background:"linear-gradient(145deg,#17172a,#101020)",border:"1px solid "+muse.color+"30",borderRadius:12,padding:14,flex:"1 1 280px",minWidth:280,position:"relative",overflow:"hidden"}}>
+const MuseCard=({muse,content,loading})=><div style={{background:"linear-gradient(145deg,#101014,#0a0a0e)",border:"1px solid "+muse.color+"30",borderRadius:12,padding:14,flex:"1 1 280px",minWidth:280,position:"relative",overflow:"hidden"}}>
   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${muse.color},${muse.color}44)`}}/>
   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
     <span style={{fontSize:20}}>{muse.icon}</span>
@@ -11907,7 +11907,7 @@ Rules:
     const body="Hello,<br><br><b>"+escHtml(r.label)+"</b> for <b>"+escHtml(f.name)+"</b> ("+escHtml(f.brand||"")+") needs your review."
       +(fileUrl?"<br><br><b>Asset:</b> <a href=\""+fileUrl+"\">"+escHtml(fileUrl)+"</a>":"")
       +(r.due?"<br><b>Needed in hand by:</b> "+escHtml(dndFd(r.due)):"")
-      +"<br><br><a href=\""+link+"\" style=\"display:inline-block;padding:10px 22px;background:#2e2e4a;color:#4AC8E8;border:1px solid #4AC8E8;border-radius:8px;text-decoration:none;font-weight:700\">Review — Approve or Request Changes</a>"
+      +"<br><br><a href=\""+link+"\" style=\"display:inline-block;padding:10px 22px;background:#26262e;color:#4AC8E8;border:1px solid #4AC8E8;border-radius:8px;text-decoration:none;font-weight:700\">Review — Approve or Request Changes</a>"
       +"<br><br>One click, no login. Your answer flows straight back into our system.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
     setDndBusy(true);
     try{
@@ -12009,9 +12009,9 @@ Rules:
   // ── The Underworld office itself. Called as a FUNCTION (no hooks inside —
   // it renders conditionally; all state lives above at App level). ──
   const DndHub=()=>{
-    const HD={bg:"#0b0b16",bg2:"#141426",card:"#17172a",bd:"#2e2e4a",flame:"#4AC8E8",ember:"#FF8C42",rose:"#E85A7A",soul:"#5BC4A0",smoke:"#8E8EA8",bone:"#ECECF4",gold:"#D4A040",lilac:"#C4A0C8",dim:"#5c5c78"};
+    const HD={bg:"#050508",bg2:"#0d0d12",card:"#101014",bd:"#26262e",flame:"#4AC8E8",ember:"#FF8C42",rose:"#E85A7A",soul:"#5BC4A0",smoke:"#8C93A0",bone:"#ECECEF",gold:"#D4A040",lilac:"#B9C7D6",dim:"#565664"};
     const serif={fontFamily:"'Cormorant Garamond',serif"};
-    const inp={padding:"6px 10px",borderRadius:5,border:"1px solid "+HD.bd,background:"rgba(11,11,22,.7)",color:HD.bone,fontSize:13,outline:"none",fontFamily:"'DM Sans',sans-serif"};
+    const inp={padding:"6px 10px",borderRadius:5,border:"1px solid "+HD.bd,background:"rgba(6,6,9,.7)",color:HD.bone,fontSize:13,outline:"none",fontFamily:"'DM Sans',sans-serif"};
     const mini=(color)=>({background:"none",border:"1px solid "+(color||HD.bd),borderRadius:5,color:color||HD.flame,fontSize:11,fontWeight:700,cursor:"pointer",padding:"4px 10px",whiteSpace:"nowrap"});
     const flab={display:"block",fontSize:9,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:HD.dim,marginBottom:3};
     const secH=(t,c)=><div style={{...serif,fontSize:16.5,fontWeight:700,letterSpacing:.4,color:HD.bone,borderBottom:"3px double "+(c||HD.gold)+"77",paddingBottom:4,margin:"18px 0 10px"}}>{t}</div>;
@@ -12049,7 +12049,7 @@ Rules:
           const f0=arr[0];
           const worst=arr.reduce((m,x)=>((x.days==null?999:x.days)<(m.days==null?999:m.days)?x:m),arr[0]);
           const whoG={};arr.forEach(x=>{(whoG[x.who]=whoG[x.who]||[]).push(x)});
-          return<div key={f0.fid} onClick={()=>ovOpen({t:"dossier",fid:f0.fid})} style={{display:"grid",gridTemplateColumns:"minmax(160px,.9fr) minmax(300px,1.8fr) 104px 56px minmax(160px,.95fr)",gap:12,alignItems:"center",padding:"8px 14px",borderTop:"1px solid rgba(46,46,74,.4)",borderLeft:"3px solid "+(worst.days!=null&&worst.days<0?HD.rose:worst.days!=null&&worst.days<=3?HD.ember:"transparent"),fontSize:12.5,cursor:"pointer"}}>
+          return<div key={f0.fid} onClick={()=>ovOpen({t:"dossier",fid:f0.fid})} style={{display:"grid",gridTemplateColumns:"minmax(160px,.9fr) minmax(300px,1.8fr) 104px 56px minmax(160px,.95fr)",gap:12,alignItems:"center",padding:"8px 14px",borderTop:"1px solid rgba(38,38,46,.4)",borderLeft:"3px solid "+(worst.days!=null&&worst.days<0?HD.rose:worst.days!=null&&worst.days<=3?HD.ember:"transparent"),fontSize:12.5,cursor:"pointer"}}>
             <span style={{...serif,fontSize:15.5,fontWeight:700,color:HD.bone,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textShadow:"0 1px 0 rgba(0,0,0,.8)"}}>{f0.flight}</span>
             <span style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"baseline",minWidth:0}}>
               {Object.entries(whoG).map(([who,xs])=><span key={who} style={{display:"inline-flex",gap:6,alignItems:"baseline",minWidth:0}}>
@@ -12092,7 +12092,7 @@ Rules:
           </div>
         </div>})()}
       <div style={{position:"relative",marginLeft:212,height:26,borderBottom:"1px solid "+HD.bd}}>
-        {months.map(m=><span key={m.label+m.pct} style={{...serif,position:"absolute",left:m.pct+"%",top:2,fontSize:12.5,fontWeight:700,letterSpacing:3.5,color:HD.smoke,borderLeft:"1px solid rgba(46,46,74,.8)",paddingLeft:7}}>{m.label}</span>)}
+        {months.map(m=><span key={m.label+m.pct} style={{...serif,position:"absolute",left:m.pct+"%",top:2,fontSize:12.5,fontWeight:700,letterSpacing:3.5,color:HD.smoke,borderLeft:"1px solid rgba(38,38,46,.8)",paddingLeft:7}}>{m.label}</span>)}
       </div>
       <div style={{position:"relative"}}>
         <div style={{position:"absolute",left:"calc(212px + (100% - 212px)*"+(((today.getTime()-win0)/(win1-win0))).toFixed(4)+")",top:-26,bottom:0,width:2,background:"linear-gradient(180deg,"+HD.flame+",rgba(74,200,232,.12))",boxShadow:"0 0 12px rgba(74,200,232,.55)",zIndex:5,pointerEvents:"none"}}>
@@ -12114,7 +12114,7 @@ Rules:
               const cd=pos(dndCreativeDue(f)),vd=pos(dndVendorDue(f));
               const isLive=f.status==="live"&&!opens.length;
               const mk=String(f.markets||"").split(",").map(s=>s.trim()).filter(Boolean);
-              return<div key={f.id} style={{display:"flex",minHeight:42,borderBottom:"1px solid rgba(46,46,74,.35)"}}>
+              return<div key={f.id} style={{display:"flex",minHeight:42,borderBottom:"1px solid rgba(38,38,46,.35)"}}>
                 <div style={{width:212,flex:"none",display:"flex",alignItems:"center",fontSize:10,fontWeight:800,letterSpacing:1.6,color:HD.smoke,textTransform:"uppercase",paddingRight:12,overflow:"hidden"}}>
                   {mk[0]||"—"}{mk.length>1&&<span style={{fontWeight:600,letterSpacing:0,textTransform:"none",color:HD.dim,marginLeft:5}}>+{mk.length-1}</span>}
                 </div>
@@ -12125,7 +12125,7 @@ Rules:
                     {cd!=null&&cd<p0&&<div style={{position:"absolute",top:"50%",left:cd+"%",width:(p0-cd)+"%",borderTop:"2px dashed rgba(142,142,168,.4)"}}/>}
                     {cd!=null&&<div title={"Creative returns · "+dndFd(dndCreativeDue(f))} style={{position:"absolute",top:"50%",left:cd+"%",transform:"translate(-50%,-50%) rotate(45deg)",width:8,height:8,borderRadius:2,background:HD.ember,zIndex:4}}/>}
                     {vd!=null&&<div title={"Package to vendor · "+dndFd(dndVendorDue(f))} style={{position:"absolute",top:"50%",left:vd+"%",transform:"translate(-50%,-50%) rotate(45deg)",width:8,height:8,borderRadius:2,background:HD.gold,zIndex:4,outline:"2px solid rgba(212,160,64,.3)",outlineOffset:2}}/>}
-                    <div onClick={()=>ovOpen({t:"dossier",fid:f.id})} style={{position:"absolute",top:"50%",transform:"translateY(-50%)",left:p0+"%",width:Math.max(9,(p1==null?p0+18:p1)-p0)+"%",height:24,borderRadius:6,display:"flex",alignItems:"center",gap:7,padding:"0 9px",fontSize:12,fontWeight:700,color:HD.bone,background:"linear-gradient(90deg,rgba(23,23,42,.95),rgba(17,17,32,.95))",border:"1px solid "+(opens.length?HD.ember:b.color),cursor:"pointer",whiteSpace:"nowrap",overflow:"hidden",zIndex:2}}>
+                    <div onClick={()=>ovOpen({t:"dossier",fid:f.id})} style={{position:"absolute",top:"50%",transform:"translateY(-50%)",left:p0+"%",width:Math.max(9,(p1==null?p0+18:p1)-p0)+"%",height:24,borderRadius:6,display:"flex",alignItems:"center",gap:7,padding:"0 9px",fontSize:12,fontWeight:700,color:HD.bone,background:"linear-gradient(90deg,rgba(13,13,17,.95),rgba(17,17,32,.95))",border:"1px solid "+(opens.length?HD.ember:b.color),cursor:"pointer",whiteSpace:"nowrap",overflow:"hidden",zIndex:2}}>
                       {f.name}
                       {opens.length>0&&<span style={{fontSize:9,fontWeight:800,letterSpacing:.8,borderRadius:3,padding:"1px 6px",background:"rgba(255,140,66,.15)",color:HD.ember}}>owed: {opens.slice(0,2).map(o=>o.what.split("—")[0].trim()).join(" + ")}{opens.length>2?" +"+(opens.length-2):""}</span>}
                     </div>
@@ -12169,9 +12169,9 @@ Rules:
         <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:5}}>
           {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=><div key={d} style={{fontSize:9,fontWeight:800,letterSpacing:1.5,color:HD.dim,textTransform:"uppercase",textAlign:"center",padding:"3px 0"}}>{d}</div>)}
           {cells.map((d,i)=>{const di=iso(d);const inM=d.getMonth()===m;const es=ev[di]||[];
-            return<div key={i} style={{minHeight:76,borderRadius:7,border:"1px solid "+(di===ti?HD.flame:"rgba(46,46,74,.5)"),background:inM?"linear-gradient(145deg,#17172a,#12121f)":"rgba(23,23,42,.25)",padding:"4px 5px",overflow:"hidden"}}>
+            return<div key={i} style={{minHeight:76,borderRadius:7,border:"1px solid "+(di===ti?HD.flame:"rgba(38,38,46,.5)"),background:inM?"linear-gradient(145deg,#101014,#0c0c10)":"rgba(13,13,17,.25)",padding:"4px 5px",overflow:"hidden"}}>
               <div style={{fontSize:9.5,fontWeight:800,color:di===ti?HD.flame:inM?HD.smoke:HD.bd,marginBottom:3}}>{d.getDate()}</div>
-              {es.slice(0,3).map((e,j)=><div key={j} onClick={()=>ovOpen({t:"dossier",fid:e.fid})} title={e.t} style={{fontSize:8.5,fontWeight:700,color:e.c,background:"rgba(11,11,22,.5)",borderLeft:"2px solid "+e.bc,borderRadius:2,padding:"1.5px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}}>{e.t}</div>)}
+              {es.slice(0,3).map((e,j)=><div key={j} onClick={()=>ovOpen({t:"dossier",fid:e.fid})} title={e.t} style={{fontSize:8.5,fontWeight:700,color:e.c,background:"rgba(6,6,9,.5)",borderLeft:"2px solid "+e.bc,borderRadius:2,padding:"1.5px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}}>{e.t}</div>)}
               {es.length>3&&<div style={{fontSize:8,color:HD.dim,fontWeight:700}}>+{es.length-3}</div>}
             </div>})}
         </div>
@@ -12198,7 +12198,7 @@ Rules:
         const lk=dndReqLink(r,iscis);
         const linked=isciByKey(r.isci);
         const lastV=(r.versions||[])[(r.versions||[]).length-1];
-        return<div key={r.id} style={{display:"grid",gridTemplateColumns:"minmax(170px,1.25fr) 92px minmax(190px,1.1fr)",gap:10,alignItems:"start",padding:"9px 2px",borderBottom:"1px solid rgba(46,46,74,.45)"}}>
+        return<div key={r.id} style={{display:"grid",gridTemplateColumns:"minmax(170px,1.25fr) 92px minmax(190px,1.1fr)",gap:10,alignItems:"start",padding:"9px 2px",borderBottom:"1px solid rgba(38,38,46,.45)"}}>
           <div style={{minWidth:0}}>
             <input value={r.label} onChange={e=>updReq(f.id,r.id,{label:e.target.value})} style={{fontWeight:700,color:HD.bone,background:"transparent",border:"none",outline:"none",fontSize:13.5,fontFamily:"'DM Sans',sans-serif",width:"100%",padding:0}}/>
             <input value={r.spec||""} placeholder="spec — sizes · format · destination · deliver-to" onChange={e=>updReq(f.id,r.id,{spec:e.target.value})} style={{fontSize:10.5,color:HD.smoke,background:"transparent",border:"none",outline:"none",fontFamily:"'DM Sans',sans-serif",width:"100%",padding:0,marginTop:1}}/>
@@ -12306,7 +12306,7 @@ Rules:
         </div>
 
         {secH("Traffic lane — you · the package goes out from HERE at T−7",HD.gold)}
-        {(f.traffic||[]).map(t=><div key={t.id} style={{display:"flex",gap:10,alignItems:"center",padding:"7px 0",borderBottom:"1px solid rgba(46,46,74,.45)",fontSize:13}}>
+        {(f.traffic||[]).map(t=><div key={t.id} style={{display:"flex",gap:10,alignItems:"center",padding:"7px 0",borderBottom:"1px solid rgba(38,38,46,.45)",fontSize:13}}>
           <input value={t.vendor} onChange={e=>updTraffic(f.id,t.id,{vendor:e.target.value})} style={{...inp,width:170}}/>
           <span style={{fontSize:11.5,fontWeight:800,color:t.state==="sent"?HD.soul:dndDaysTo(t.due)!=null&&dndDaysTo(t.due)<0?HD.rose:HD.gold}}>{t.state==="sent"?("sent"+(t.legacy?" · "+t.legacy:" "+dndFd(t.sentAt))):"due "+dndFd(t.due)}</span>
           {t.state!=="sent"&&<button style={mini(HD.gold)} disabled={dndBusy} onClick={()=>openDndPreview("package",f,{tr:t,to:f.contact})}>Preview send → {t.vendor||"vendor"}</button>}
@@ -12320,7 +12320,7 @@ Rules:
         </div>}
         {(f.utms||[]).map(u=><div key={u.id} style={{display:"flex",gap:8,alignItems:"center",fontSize:11,marginBottom:4}}>
           <span style={{fontWeight:800,color:HD.flame,flex:"none",width:88}}>{u.platform}</span>
-          <code style={{flex:1,fontSize:10,color:HD.smoke,background:"rgba(11,11,22,.6)",border:"1px solid "+HD.bd,borderRadius:5,padding:"5px 8px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.url}</code>
+          <code style={{flex:1,fontSize:10,color:HD.smoke,background:"rgba(6,6,9,.6)",border:"1px solid "+HD.bd,borderRadius:5,padding:"5px 8px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.url}</code>
           <button style={mini()} onClick={()=>dndCopy(u.url,"URL copied")}>copy</button>
           <button onClick={()=>{dndTouch();setFlights(p=>p.map(x=>x.id!==f.id?x:{...x,utms:(x.utms||[]).filter(y=>y.id!==u.id)}))}} style={{background:"none",border:"none",color:HD.dim,cursor:"pointer",fontWeight:800}}>×</button>
         </div>)}
@@ -12373,7 +12373,7 @@ Rules:
               return<div key={dc} style={{marginBottom:8}}>
                 <div style={{fontSize:9.5,fontWeight:800,letterSpacing:1.8,textTransform:"uppercase",color:HD.smoke,margin:"6px 0 3px"}}>{DM[dc]||dc}</div>
                 {rows.slice(0,cap).map(i=>{const key=isciKeyOf(i);const cs=usedBy[key]||[];
-                  return<div key={key} style={{display:"grid",gridTemplateColumns:"52px 138px minmax(120px,1.2fr) 36px minmax(90px,.9fr) 62px",gap:9,alignItems:"center",padding:"5px 4px",borderBottom:"1px solid rgba(46,46,74,.4)",fontSize:12}}>
+                  return<div key={key} style={{display:"grid",gridTemplateColumns:"52px 138px minmax(120px,1.2fr) 36px minmax(90px,.9fr) 62px",gap:9,alignItems:"center",padding:"5px 4px",borderBottom:"1px solid rgba(38,38,46,.4)",fontSize:12}}>
                     <span style={{fontSize:9,fontWeight:800,color:MEDIA_C[i.suffix]||HD.smoke}}>{MEDIA_W[i.suffix]||i.suffix||"—"}</span>
                     <span onClick={()=>dndCopy(i.code,"ISCI copied")} style={{fontFamily:"ui-monospace,monospace",fontWeight:700,color:HD.bone,cursor:"pointer",fontSize:11.5}}>{i.code}</span>
                     <span style={{color:i.title?HD.bone:HD.dim,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11.5}}>{i.title||"untitled"}</span>
@@ -12384,13 +12384,13 @@ Rules:
                 {rows.length>cap&&<div style={{fontSize:10.5,color:HD.dim,padding:"3px 4px"}}>+{rows.length-cap} more — search or filter by brand to see all</div>}
               </div>})}
             {bFiles.length>0&&<div style={{fontSize:9.5,fontWeight:800,letterSpacing:1.8,textTransform:"uppercase",color:HD.lilac,margin:"8px 0 3px"}}>Files</div>}
-            {bFiles.map(([f,r])=><div key={r.id} style={{display:"flex",gap:9,alignItems:"center",padding:"5px 4px",borderBottom:"1px solid rgba(46,46,74,.4)",fontSize:12}}>
+            {bFiles.map(([f,r])=><div key={r.id} style={{display:"flex",gap:9,alignItems:"center",padding:"5px 4px",borderBottom:"1px solid rgba(38,38,46,.4)",fontSize:12}}>
               <span style={{fontWeight:700,color:HD.bone,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.label}</span>
               <span onClick={()=>ovOpen({t:"dossier",fid:f.id})} style={{fontSize:11,color:HD.lilac,cursor:"pointer"}}>{f.name}</span>
               <a href={r.url} target="_blank" rel="noreferrer" style={{fontSize:10.5,color:HD.flame,textDecoration:"none",fontWeight:800}}>◆ open</a>
             </div>)}
             {bUtms.length>0&&<div style={{fontSize:9.5,fontWeight:800,letterSpacing:1.8,textTransform:"uppercase",color:HD.flame,margin:"8px 0 3px"}}>Tracking URLs</div>}
-            {bUtms.map(([f,u])=><div key={u.id} style={{display:"flex",gap:9,alignItems:"center",padding:"5px 4px",borderBottom:"1px solid rgba(46,46,74,.4)",fontSize:11}}>
+            {bUtms.map(([f,u])=><div key={u.id} style={{display:"flex",gap:9,alignItems:"center",padding:"5px 4px",borderBottom:"1px solid rgba(38,38,46,.4)",fontSize:11}}>
               <span style={{fontWeight:800,color:HD.flame,width:80,flex:"none"}}>{u.platform}</span>
               <code style={{flex:1,fontSize:10,color:HD.smoke,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.url}</code>
               <button style={mini()} onClick={()=>dndCopy(u.url,"URL copied")}>copy</button>
@@ -12419,7 +12419,7 @@ Rules:
         {keys.length===0&&<div style={{fontSize:13,color:HD.dim,fontStyle:"italic"}}>Nothing wrapped yet. Give it time — everything wraps eventually. I'd know.</div>}
         {keys.map(k=><div key={k} style={{marginBottom:18}}>
           <div style={{...serif,fontSize:17,fontWeight:700,color:HD.gold,borderBottom:"1px solid rgba(212,160,64,.4)",paddingBottom:3,marginBottom:6}}>{k==="undated"?"Undated":new Date(k+"-02T00:00:00").toLocaleDateString("en-US",{month:"long",year:"numeric"})}</div>
-          {byMonth[k].map(f=><div key={f.id} style={{display:"flex",gap:10,alignItems:"baseline",padding:"7px 4px",borderBottom:"1px solid rgba(46,46,74,.4)",fontSize:13}}>
+          {byMonth[k].map(f=><div key={f.id} style={{display:"flex",gap:10,alignItems:"baseline",padding:"7px 4px",borderBottom:"1px solid rgba(38,38,46,.4)",fontSize:13}}>
             <span style={{flex:"none",width:92,fontSize:10.5,fontWeight:800,color:HD.dim}}>{f.flightStart?dndFd(f.flightStart):""}</span>
             <span style={{flex:1,minWidth:0}}>
               <b style={{color:HD.bone,cursor:"pointer"}} onClick={()=>ovOpen({t:"dossier",fid:f.id})}>{f.name}</b>
@@ -12451,18 +12451,18 @@ Rules:
         {secH("Out — awaiting an answer",HD.ember)}
         {pendingRev.length===0&&<div style={{fontSize:12,color:HD.dim,fontStyle:"italic"}}>Nothing out. Everyone answered. Refreshing, honestly.</div>}
         {pendingRev.map(([tok,r])=>{const age=Math.floor((Date.now()-new Date(r.sentAt).getTime())/864e5);
-          return<div key={tok} style={{display:"flex",gap:10,alignItems:"baseline",padding:"6px 0",borderBottom:"1px solid rgba(46,46,74,.4)",fontSize:12.5}}>
+          return<div key={tok} style={{display:"flex",gap:10,alignItems:"baseline",padding:"6px 0",borderBottom:"1px solid rgba(38,38,46,.4)",fontSize:12.5}}>
             <span style={{flex:"none",width:86,fontSize:10.5,fontWeight:800,color:age>=3?HD.rose:HD.dim}}>{dndFd(r.sentAt)}</span>
             <span style={{flex:1,color:HD.bone}}>Review · <b>{r.assetLabel||r.assetType}</b> — {r.campName}{age>=3?<b style={{color:HD.rose}}> · {age}d, no answer</b>:null}</span>
           </div>})}
         {secH("In — answered, already applied",HD.soul)}
         {answered.length===0&&<div style={{fontSize:12,color:HD.dim,fontStyle:"italic"}}>No verdicts yet.</div>}
-        {answered.map(([tok,r])=><div key={tok} style={{display:"flex",gap:10,alignItems:"baseline",padding:"6px 0",borderBottom:"1px solid rgba(46,46,74,.4)",fontSize:12.5}}>
+        {answered.map(([tok,r])=><div key={tok} style={{display:"flex",gap:10,alignItems:"baseline",padding:"6px 0",borderBottom:"1px solid rgba(38,38,46,.4)",fontSize:12.5}}>
           <span style={{flex:"none",width:86,fontSize:10.5,fontWeight:800,color:HD.dim}}>{dndFd(r.respondedAt)}</span>
           <span style={{flex:1,color:HD.bone}}><b style={{color:r.status==="approved"?HD.soul:HD.rose}}>{r.status==="approved"?"✓ Approved":"✏ Changes"}</b> — {r.assetLabel||r.assetType} · {r.campName}{r.feedback?<i style={{color:HD.smoke}}> · “{r.feedback}”</i>:null}</span>
         </div>)}
         {secH("The paper trail — every send, stamped",HD.lilac)}
-        {dndLog.slice(0,14).map(l=><div key={l.id} style={{display:"flex",gap:10,alignItems:"baseline",padding:"5px 0",borderBottom:"1px solid rgba(46,46,74,.35)",fontSize:12}}>
+        {dndLog.slice(0,14).map(l=><div key={l.id} style={{display:"flex",gap:10,alignItems:"baseline",padding:"5px 0",borderBottom:"1px solid rgba(38,38,46,.35)",fontSize:12}}>
           <span style={{flex:"none",width:86,fontSize:10,fontWeight:800,color:HD.dim}}>{dndFd(l.at)}</span>
           <span style={{flex:"none",fontSize:9.5,fontWeight:800,textTransform:"uppercase",letterSpacing:1,color:HD.flame,width:72}}>{l.kind}</span>
           <span style={{flex:1,color:HD.smoke,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.subject} → {l.to}</span>
@@ -12499,7 +12499,7 @@ Rules:
         <div style={{...serif,fontSize:26,fontWeight:700,color:HD.bone}}>A deal is born</div>
         <div style={{...serif,fontStyle:"italic",color:HD.lilac,fontSize:13.5,margin:"4px 0 14px"}}>{dndPick(DND_QUIP.intake)} Three doors in — whichever it walks through, the dates compute and the tripwires arm.</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-          <div style={{border:"1px solid rgba(212,160,64,.45)",borderRadius:10,padding:13,background:"rgba(11,11,22,.4)"}}>
+          <div style={{border:"1px solid rgba(212,160,64,.45)",borderRadius:10,padding:13,background:"rgba(6,6,9,.4)"}}>
             <div style={{fontSize:12.5,fontWeight:800,color:HD.gold,marginBottom:5}}>From a contract — the fine print, read for you</div>
             <textarea value={contractText} onChange={e=>setContractText(e.target.value)} placeholder="Paste the contract / media plan / kickoff email…" style={{...inp,width:"100%",minHeight:54,resize:"vertical",fontSize:11.5}}/>
             <div style={{display:"flex",gap:8,marginTop:6,alignItems:"center"}}>
@@ -12508,7 +12508,7 @@ Rules:
               <span style={{fontSize:10,color:HD.dim}}>fills the form — you check, you don't type</span>
             </div>
           </div>
-          <div style={{border:"1px solid rgba(74,200,232,.45)",borderRadius:10,padding:13,background:"rgba(11,11,22,.4)"}}>
+          <div style={{border:"1px solid rgba(74,200,232,.45)",borderRadius:10,padding:13,background:"rgba(6,6,9,.4)"}}>
             <div style={{fontSize:12.5,fontWeight:800,color:HD.flame,marginBottom:5}}>From Notion — the pipe</div>
             <div style={{fontSize:11.5,color:HD.smoke,lineHeight:1.55}}>The 2026 slate flows in on its own every 15 minutes and updates in place. A blank in Notion never erases a date set here. Nothing to do — that's the point.</div>
             <div style={{fontSize:10.5,color:HD.dim,marginTop:8}}>{flights.filter(f=>f.notionId).length} deals carry Notion ids · form entries below also file themselves INTO Notion</div>
@@ -12559,7 +12559,7 @@ Rules:
     // ═══ SHELL ═══
     const panel=(w,body)=><React.Fragment>
       <div onClick={close} style={{position:"fixed",inset:0,background:"rgba(5,5,12,.78)",backdropFilter:"blur(3px)",zIndex:40}}/>
-      <div style={{position:"fixed",top:0,bottom:0,right:0,width:w,maxWidth:"95vw",background:"linear-gradient(165deg,#17172a,#101020 70%,#17172a)",borderLeft:"1px solid "+HD.bd,boxShadow:"-18px 0 60px rgba(0,0,0,.75)",zIndex:50,overflowY:"auto",padding:"24px 28px 40px"}}>
+      <div style={{position:"fixed",top:0,bottom:0,right:0,width:w,maxWidth:"95vw",background:"linear-gradient(165deg,#101014,#0a0a0e 70%,#101014)",borderLeft:"1px solid "+HD.bd,boxShadow:"-18px 0 60px rgba(0,0,0,.75)",zIndex:50,overflowY:"auto",padding:"24px 28px 40px"}}>
         <button onClick={close} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:HD.smoke,fontSize:20,fontWeight:800,cursor:"pointer"}}>×</button>
         {body}
       </div>
@@ -12577,7 +12577,7 @@ Rules:
         </div>
         <div style={{...serif,fontStyle:"italic",color:HD.lilac,fontSize:15.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textShadow:"0 0 18px rgba(196,160,200,.25)"}}>{dndPick(DND_QUIP.deck)}</div>
         <div style={{flex:1}}/>
-        <div style={{display:"flex",gap:3,background:"rgba(11,11,22,.7)",border:"1px solid "+HD.bd,borderRadius:99,padding:3}}>
+        <div style={{display:"flex",gap:3,background:"rgba(6,6,9,.7)",border:"1px solid "+HD.bd,borderRadius:99,padding:3}}>
           <button onClick={()=>setDndView("deck")} style={{border:"none",borderRadius:99,fontSize:11,fontWeight:800,padding:"5px 13px",cursor:"pointer",background:dndView==="deck"?"linear-gradient(135deg,"+HD.flame+",#2a9fc0)":"none",color:dndView==="deck"?"#0b0b16":HD.smoke}}>The deck</button>
           <button onClick={()=>setDndView("month")} style={{border:"none",borderRadius:99,fontSize:11,fontWeight:800,padding:"5px 13px",cursor:"pointer",background:dndView==="month"?"linear-gradient(135deg,"+HD.flame+",#2a9fc0)":"none",color:dndView==="month"?"#0b0b16":HD.smoke}}>The month</button>
         </div>
@@ -12587,7 +12587,7 @@ Rules:
         <button onClick={()=>ovOpen({t:"intake"})} style={{background:"linear-gradient(135deg,"+HD.flame+",#2a9fc0)",border:"none",borderRadius:7,color:"#0b0b16",fontSize:12.5,fontWeight:800,padding:"9px 16px",cursor:"pointer",boxShadow:"0 3px 14px rgba(74,200,232,.25)"}}>+ New deal</button>
         <button onClick={()=>navigateHash("")} style={{background:"none",border:"none",color:HD.smoke,fontSize:11.5,fontWeight:700,cursor:"pointer"}}>← Doom</button>
       </div>
-      <div style={{height:1,background:"linear-gradient(90deg,rgba(74,200,232,.55),rgba(46,46,74,.45) 35%,rgba(46,46,74,.45) 70%,rgba(255,140,66,.4))"}}/>
+      <div style={{height:1,background:"linear-gradient(90deg,rgba(74,200,232,.55),rgba(38,38,46,.45) 35%,rgba(38,38,46,.45) 70%,rgba(255,140,66,.4))"}}/>
       <div style={{padding:"16px 26px 40px"}}>
         {dndView==="deck"?Deck():MonthView()}
       </div>
@@ -12598,7 +12598,7 @@ Rules:
       {dndOv&&dndOv.t==="intake"&&panel(880,Intake())}
       {dndPreview&&<React.Fragment>
         <div style={{position:"fixed",inset:0,background:"rgba(5,5,12,.82)",zIndex:60}} onClick={()=>setDndPreview(null)}/>
-        <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:720,maxWidth:"94vw",maxHeight:"88vh",overflowY:"auto",background:"linear-gradient(150deg,#17172a,#101020)",border:"1px solid "+HD.bd,borderRadius:14,boxShadow:"0 24px 80px rgba(0,0,0,.85)",zIndex:61,padding:"22px 26px"}}>
+        <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:720,maxWidth:"94vw",maxHeight:"88vh",overflowY:"auto",background:"linear-gradient(150deg,#101014,#0a0a0e)",border:"1px solid "+HD.bd,borderRadius:14,boxShadow:"0 24px 80px rgba(0,0,0,.85)",zIndex:61,padding:"22px 26px"}}>
           <div style={{...serif,fontSize:20,fontWeight:700,color:HD.bone,marginBottom:8}}>This is the exact email. Nothing has been sent.</div>
           <div style={{fontSize:12,color:HD.smoke,marginBottom:2}}><b style={{color:HD.bone}}>To:</b> {dndPreview.needsTo?<input value={dndPreview.to||""} onChange={e=>setDndPreview(p=>({...p,to:e.target.value,needsTo:false}))} placeholder="who gets it?" style={{...inp,fontSize:12,padding:"3px 8px"}}/>:dndPreview.to} · <b style={{color:HD.bone}}>CC:</b> emm.caban@atticor.ai</div>
           {dndPreview.needsTo&&<input autoFocus value={dndPreview.to||""} onChange={e=>setDndPreview(p=>({...p,to:e.target.value}))} placeholder="email address for this send" style={{...inp,width:"100%",margin:"6px 0"}}/>}
@@ -12614,7 +12614,7 @@ Rules:
       </React.Fragment>}
       {dndMint&&<React.Fragment>
         <div style={{position:"fixed",inset:0,background:"rgba(5,5,12,.82)",zIndex:60}} onClick={()=>setDndMint(null)}/>
-        <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:520,maxWidth:"94vw",background:"linear-gradient(150deg,#17172a,#101020)",border:"1px solid "+HD.bd,borderRadius:14,zIndex:61,padding:"22px 26px"}}>
+        <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:520,maxWidth:"94vw",background:"linear-gradient(150deg,#101014,#0a0a0e)",border:"1px solid "+HD.bd,borderRadius:14,zIndex:61,padding:"22px 26px"}}>
           <div style={{...serif,fontSize:20,fontWeight:700,color:HD.bone}}>Register as ISCI</div>
           <div style={{fontSize:11.5,color:HD.smoke,margin:"6px 0 12px"}}>Doom mints by its own conventions — pre-filled from the deal. Confirm, don't type. Provenance rides along.</div>
           <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
@@ -12629,7 +12629,7 @@ Rules:
           </div>
         </div>
       </React.Fragment>}
-      {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#17172a",color:HD.bone,padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.5)",zIndex:9999,border:"1px solid "+HD.bd}}>{toast}</div>}
+      {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#101014",color:HD.bone,padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.5)",zIndex:9999,border:"1px solid "+HD.bd}}>{toast}</div>}
     </div>;
   };
 
