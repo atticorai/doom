@@ -11502,6 +11502,7 @@ Rules:
   const assetLink=(a)=>{if(a.url)return a.url;const l=isciByKey(a.isci);return(l&&l.fileUrl)||""};
   const CampaignsPg=()=>{
     const[view,setView]=useState("board");
+    const[hubBrand,setHubBrand]=useState(""); // "" = all brands; every tab scopes to this
     const[expanded,setExpanded]=useState(null);
     const[showWrapped,setShowWrapped]=useState(false);
     const[adding,setAdding]=useState(false);
@@ -11510,7 +11511,7 @@ Rules:
     const[mailOpen,setMailOpen]=useState(null);
     const[busy,setBusy]=useState(false);
     const[nc,setNc]=useState({name:"",brand:"Postman Law",markets:"",flightStart:"",flightEnd:"",trafficDue:"",channels:[],desc:"",toNotion:true});
-    const[regBrand,setRegBrand]=useState("");const[regType,setRegType]=useState("");const[regMissing,setRegMissing]=useState(false);
+    const[regType,setRegType]=useState("");const[regMissing,setRegMissing]=useState(false);
     const[feed,setFeed]=useState(null);const[feedErr,setFeedErr]=useState("");const[feedBusy,setFeedBusy]=useState(false);
     const loadFeed=async(force)=>{setFeedBusy(true);setFeedErr("");try{const r=await fetch("/api/campaigns"+(force?"?refresh=1":""),{credentials:"include"});const d=await r.json().catch(()=>({}));if(!r.ok){setFeedErr(d.message||d.error||("Failed to load ("+r.status+")"));setFeedBusy(false);return}setFeed(d);setFeedBusy(false)}catch(e){setFeedErr("Network error reaching /api/campaigns");setFeedBusy(false)}};
     React.useEffect(()=>{if(view==="source"&&!feed&&!feedBusy&&!feedErr)loadFeed(false)},[view]);
@@ -11752,13 +11753,15 @@ Rules:
         </div>}
       </Cd>;
     };
-    const active=campaigns.filter(c=>c.status!=="Wrapped").sort((a,b)=>{const x=a.trafficDue||a.flightStart||"9999",y=b.trafficDue||b.flightStart||"9999";return String(x).localeCompare(String(y))});
-    const wrapped=campaigns.filter(c=>c.status==="Wrapped");
+    const inBrand=(c)=>!hubBrand||c.brand===hubBrand;
+    const active=campaigns.filter(c=>c.status!=="Wrapped"&&inBrand(c)).sort((a,b)=>{const x=a.trafficDue||a.flightStart||"9999",y=b.trafficDue||b.flightStart||"9999";return String(x).localeCompare(String(y))});
+    const wrapped=campaigns.filter(c=>c.status==="Wrapped"&&inBrand(c));
     // ── Timeline ──
     const Timeline=()=>{
       const items=[];
       campaigns.forEach(c=>{
         if(c.status==="Wrapped")return;
+        if(hubBrand&&c.brand!==hubBrand)return;
         if(c.trafficDue)items.push({d:campIsoD(c.trafficDue),kind:"Traffic due",color:"#D4A040",label:c.name,brand:c.brand,cid:c.id});
         if(c.flightStart)items.push({d:campIsoD(c.flightStart),kind:"Launch",color:"#5BC4A0",label:c.name,brand:c.brand,cid:c.id});
         (c.assets||[]).forEach(a=>{if(a.due&&!assetInHand(a))items.push({d:campIsoD(a.due),kind:a.type+(a.label?" · "+a.label:""),color:campTypeMeta(a.type).c,label:c.name,brand:c.brand,cid:c.id})});
@@ -11788,17 +11791,17 @@ Rules:
     const Registry=()=>{
       const rows=[];
       campaigns.forEach(c=>{if(c.status==="Wrapped")return;(c.assets||[]).forEach(a=>{
-        if(regBrand&&c.brand!==regBrand)return;
+        if(hubBrand&&c.brand!==hubBrand)return;
         if(regType&&a.type!==regType)return;
         if(regMissing&&assetInHand(a))return;
         rows.push([c,a]);
       })});
       rows.sort((x,y)=>String(x[1].due||"9999").localeCompare(String(y[1].due||"9999")));
-      const total=campaigns.filter(c=>c.status!=="Wrapped").reduce((t,c)=>t+(c.assets||[]).filter(a=>a.status!=="na").length,0);
-      const have=campaigns.filter(c=>c.status!=="Wrapped").reduce((t,c)=>t+(c.assets||[]).filter(a=>a.status!=="na"&&assetInHand(a)).length,0);
+      const scope=campaigns.filter(c=>c.status!=="Wrapped"&&(!hubBrand||c.brand===hubBrand));
+      const total=scope.reduce((t,c)=>t+(c.assets||[]).filter(a=>a.status!=="na").length,0);
+      const have=scope.reduce((t,c)=>t+(c.assets||[]).filter(a=>a.status!=="na"&&assetInHand(a)).length,0);
       return<div>
         <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
-          <select value={regBrand} onChange={e=>setRegBrand(e.target.value)} style={cSel}><option value="">All brands</option>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select>
           <select value={regType} onChange={e=>setRegType(e.target.value)} style={cSel}><option value="">All types</option>{CAMP_ASSET_TYPES.map(x=><option key={x.t} value={x.t}>{x.t}</option>)}</select>
           <label style={{fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:5,cursor:"pointer"}}><input type="checkbox" checked={regMissing} onChange={e=>setRegMissing(e.target.checked)}/>missing only</label>
           <span style={{marginLeft:"auto",fontSize:12,fontWeight:700,color:have===total?"#5BC4A0":"#D4A040"}}>{have}/{total} assets in hand across active campaigns</span>
@@ -11822,20 +11825,20 @@ Rules:
           </div>
           {starters.length>0&&taglines.length===0&&<div style={{marginTop:8,fontSize:12,color:"#9B8EAD"}}>Known from the Notion asset library: {starters.map((s,i)=><span key={s}>{i?" · ":""}<button onClick={()=>add(s,"")} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",fontSize:12,fontWeight:600,padding:0}}>＋ {s}</button></span>)}</div>}
         </Cd>
-        {taglines.length===0?<Cd style={{padding:30,textAlign:"center",color:"#9B8EAD",fontStyle:"italic"}}>The tagline vault is empty. Feed it.</Cd>
-        :<Cd style={{padding:0,overflow:"hidden"}}>{taglines.map((t,i)=><div key={t.id} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",borderTop:i?"1px solid #2d1f42":"none",opacity:t.active===false?.45:1}}>
+        {(()=>{const shown=taglines.filter(t=>!hubBrand||!t.brand||t.brand===hubBrand);return shown.length===0?<Cd style={{padding:30,textAlign:"center",color:"#9B8EAD",fontStyle:"italic"}}>{hubBrand?"No "+hubBrand+" taglines yet.":"The tagline vault is empty. Feed it."}</Cd>
+        :<Cd style={{padding:0,overflow:"hidden"}}>{shown.map((t,i)=><div key={t.id} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",borderTop:i?"1px solid #2d1f42":"none",opacity:t.active===false?.45:1}}>
           <span style={{fontSize:13,fontWeight:600,color:"#E8DFF0",flex:1,fontStyle:"italic"}}>“{t.text}”</span>
           <span style={{fontSize:11,fontWeight:700,color:t.brand?getBrandColor(t.brand):"#9B8EAD"}}>{t.brand||"All brands"}</span>
           <button onClick={()=>copyText(t.text,"Tagline copied")} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#4AC8E8",fontSize:10,fontWeight:700,cursor:"pointer",padding:"1px 7px"}}>copy</button>
           <button onClick={()=>{taglinesDirtyRef.current=true;setTaglines(p=>p.map(x=>x.id===t.id?{...x,active:x.active===false}:x))}} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:t.active===false?"#5BC4A0":"#D4A040",fontSize:10,fontWeight:700,cursor:"pointer",padding:"1px 7px"}}>{t.active===false?"revive":"retire"}</button>
           <button onClick={()=>{if(!confirm("Delete this tagline?"))return;taglinesDirtyRef.current=true;setTaglines(p=>p.filter(x=>x.id!==t.id))}} style={{background:"none",border:"none",color:"#6B5E80",cursor:"pointer",fontSize:13,fontWeight:800}}>×</button>
-        </div>)}</Cd>}
+        </div>)}</Cd>})()}
         <div style={{fontSize:10,color:"#6B5E80",marginTop:6}}>Active taglines ride along automatically in every creative brief for their brand.</div>
       </div>;
     };
     // ── Source: the Notion pipe, status only — sync is automatic ──
     const SourceTab=()=>{
-      const all=(feed&&feed.campaigns)||[];
+      const all=((feed&&feed.campaigns)||[]).filter(r=>!hubBrand||campBrandFix(r.brand)===hubBrand);
       const tracked=new Set(campaigns.map(c=>c.notionId).filter(Boolean));
       const notConfigured=feedErr&&/not_configured|NOTION_API_KEY/i.test(feedErr);
       return<div>
@@ -11868,9 +11871,13 @@ Rules:
         <PageHead title="Campaign Hub" pgKey="campaigns" sub="Marketing Ops mission control — campaigns sync in from Notion, the Hub answers 'do we have the assets,' and the work gets pushed to whoever owes it."/>
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
           {tab("board","Board")}{tab("timeline","Timeline")}{tab("registry","Asset Registry")}{tab("taglines","Taglines")}{tab("source","Source")}
-          {view==="board"&&<Btn small primary onClick={()=>setAdding(a=>!a)}>{adding?"Cancel":"＋ New campaign"}</Btn>}
+          {view==="board"&&<Btn small primary onClick={()=>{setAdding(a=>!a);if(hubBrand)setNc(p=>({...p,brand:hubBrand}))}}>{adding?"Cancel":"＋ New campaign"}</Btn>}
           <button onClick={()=>setCfgOpen(o=>!o)} title="Hub settings" style={{background:"none",border:"1px solid #4a3565",borderRadius:99,color:cfgOpen?"#D4A040":"#9B8EAD",cursor:"pointer",fontSize:13,padding:"4px 9px"}}>⚙</button>
         </div>
+      </div>
+      <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+        <button onClick={()=>setHubBrand("")} style={{padding:"4px 12px",borderRadius:99,border:"1px solid "+(hubBrand===""?"#C4A0C8":"#4a3565"),background:hubBrand===""?"rgba(196,160,200,.15)":"transparent",color:hubBrand===""?"#C4A0C8":"#6B5E80",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:.5}}>ALL BRANDS</button>
+        {BRANDS.map(b=>{const on=hubBrand===b.name;const n=campaigns.filter(c=>c.brand===b.name&&c.status!=="Wrapped").length;return<button key={b.code} onClick={()=>setHubBrand(on?"":b.name)} style={{padding:"4px 12px",borderRadius:99,border:"1px solid "+(on?b.color:"#4a3565"),background:on?b.color+"22":"transparent",color:on?b.color:"#6B5E80",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:.5}}>{b.name}{n>0?" · "+n:""}</button>})}
       </div>
       {cfgOpen&&<Cd style={{padding:12,marginBottom:10}}>
         <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end"}}>
@@ -11901,7 +11908,21 @@ Rules:
           <div style={{fontSize:12,color:"#9B8EAD",marginBottom:14,lineHeight:1.6}}>Campaigns sync in from Notion automatically once the key is set (see <b>Source</b>).<br/>Or start one by hand — it lands here <i>and</i> in Notion.</div>
           <div style={{display:"flex",gap:8,justifyContent:"center"}}><Btn primary onClick={()=>setAdding(true)}>＋ New campaign</Btn><Btn onClick={()=>setView("source")}>Check the Notion pipe</Btn></div>
         </Cd>}
-        {active.map(CampCard)}
+        {hubBrand?active.map(CampCard):[...BRANDS.map(b=>b.name),"__other__"].map(bn=>{
+          const rows=active.filter(c=>bn==="__other__"?!BRANDS.some(b=>b.name===c.brand):c.brand===bn);
+          if(!rows.length)return null;
+          const col=bn==="__other__"?"#9B8EAD":getBrandColor(bn);
+          return<div key={bn} style={{marginBottom:16}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+              <span style={{width:10,height:10,borderRadius:3,background:col,boxShadow:"0 0 8px "+col+"55"}}/>
+              <span style={{fontSize:16,fontWeight:800,color:col,letterSpacing:1.2,textTransform:"uppercase",fontFamily:"'Cormorant Garamond',serif"}}>{bn==="__other__"?"Other":bn}</span>
+              <span style={{fontSize:11,color:"#6B5E80"}}>· {rows.length} campaign{rows.length!==1?"s":""}</span>
+              <span style={{flex:1,height:1,background:"linear-gradient(90deg,"+col+"33,transparent)"}}/>
+            </div>
+            {rows.map(CampCard)}
+          </div>;
+        })}
+        {campaigns.length>0&&active.length===0&&!adding&&<Cd style={{padding:24,textAlign:"center",color:"#9B8EAD",fontStyle:"italic"}}>{hubBrand?"No active "+hubBrand+" campaigns. A rare moment of peace.":"No active campaigns."}</Cd>}
         {wrapped.length>0&&<div style={{marginTop:10}}>
           <button onClick={()=>setShowWrapped(p=>!p)} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"#4AC8E8",fontWeight:600,padding:0}}>{showWrapped?"Hide":"Show"} {wrapped.length} wrapped campaign{wrapped.length>1?"s":""}</button>
           {showWrapped&&wrapped.map(CampCard)}
