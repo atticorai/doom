@@ -4399,7 +4399,12 @@ const App=()=>{
       // and per-creative tables count the board under each creative it rotates.
       const _crsOf=(p)=>(Array.isArray(p.design)&&p.design.length)?p.design:(isciTitle(p.isci)?[isciTitle(p.isci)]:(p.isci?[p.isci]:[]));
       const _crOf=(p)=>_crsOf(p)[0]||"";
-      const scope=fl.filter(p=>_crsOf(p).length);
+      // One pin per PHYSICAL board: later flight rows of the same unit (-F2/-F3) are
+      // the same face, so dedupe them — otherwise a board with two flights counts twice
+      // and the map disagrees with the proposal's board counts.
+      const _baseId=(id)=>String(id).replace(/-F\d+$/,"");
+      const _seenB=new Set();
+      const scope=fl.filter(p=>_crsOf(p).length).filter(p=>{const b=_baseId(p.boardId);if(_seenB.has(b))return false;_seenB.add(b);return true});
       if(!scope.length){notify("Assign a creative or ISCI to the boards first");return}
       const mktLabel=om?(DM[om]||om):"All Markets";
       // One creative = one legend entry. Canonicalize: strip size suffixes ("- 14x48",
@@ -4419,8 +4424,8 @@ const App=()=>{
         "Always Show Up (Bulletin)":"#1D4ED8","Always Show Up (Digital Bulletin)":"#60A5FA",
         "Lockup (Bulletin)":"#B45309","Lockup (Digital Bulletin)":"#F59E0B",
         "Bring the Fight (Poster)":"#15803D","Bring the Fight (Digital Poster)":"#34D399",
-        "It's Personal CK (Bulletin)":"#0F172A","It's Personal CK (Digital Bulletin)":"#475569",
-        "It's Personal CK (Poster)":"#94A3B8","It's Personal CK (Digital Poster)":"#B7BDC9"};
+        "It's Personal CK (Bulletin)":"#581C87","It's Personal CK (Digital Bulletin)":"#8B5CF6",
+        "It's Personal CK (Poster)":"#C084FC","It's Personal CK (Digital Poster)":"#E879F9"};
       const crColor=(t)=>{if(CR_COLORS[t])return CR_COLORS[t];const i=titles.indexOf(t);return i>=0?CREATIVE_PALETTE[i%CREATIVE_PALETTE.length]:creativeColor(t)};
       const pins=scope.map((p,pi)=>{const co=WK_COORDS[p.boardId];const crs=cidsAll[pi];return{panel:String(p.panel),sub:p.submarket||"",loc:p.location||"",size:p.size||"",dma:oohMarket(p.dma),creative:crs[0],creatives:crs,colors:crs.map(crColor),color:crColor(crs[0]),lat:co?co[0]:null,lng:co?co[1]:null,approx:isApproxCoord(p.boardId)}});
       // Spacing check applies to SINGLE-creative (static) boards — rotation boards show
