@@ -11656,20 +11656,21 @@ Rules:
   };
   // Builders are pure: they produce the exact email. Nothing sends until the
   // preview modal's Send button — you always see it first.
+  const campFdY=(s)=>{const i=campIsoD(s);if(!i)return s||"";const d=new Date(i+"T00:00:00");return isNaN(d.getTime())?s:d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})};
   const buildBriefEmail=(c)=>{
     const to=(hubCfg.creativeOpsEmail||"").trim();
     if(!to){mopsGo("dispatch");notify("Set the Creative Ops email first — first box on the Dispatch page");return null}
     const missing=(c.assets||[]).filter(a=>!assetInHand(a)&&a.owner!=="SEO / Web");
     if(!missing.length){notify("Nothing missing on this one. "+doomPick(DOOM.sprinkle));return null}
     const tl=taglines.filter(t=>t.active!==false&&(!t.brand||t.brand===c.brand));
-    const rows=missing.map(a=>"<tr><td style='padding:6px 10px;border:1px solid #ddd'><b>"+escHtml(a.type)+"</b>"+(a.label?" — "+escHtml(a.label):"")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.due||"ASAP")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.owner||"")+"</td></tr>").join("");
+    const rows=missing.map(a=>"<tr><td style='padding:6px 10px;border:1px solid #ddd'><b>"+escHtml(a.type)+"</b>"+(a.label?" — "+escHtml(a.label):"")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.due?campFdY(a.due):"ASAP")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.owner||"")+"</td></tr>").join("");
     const body="Hello,<br><br>Creative brief for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+(c.markets?" — "+escHtml(c.markets):"")+").<br><br>"
-      +(c.flightStart?"<b>Flight:</b> "+escHtml(c.flightStart)+(c.flightEnd?" to "+escHtml(c.flightEnd):"")+"<br>":"")
-      +(c.trafficDue?"<b>Traffic goes out:</b> "+escHtml(c.trafficDue)+"<br>":"")
+      +(c.flightStart?"<b>Flight:</b> "+escHtml(campFdY(c.flightStart))+(c.flightEnd?" to "+escHtml(campFdY(c.flightEnd)):"")+"<br>":"")
+      +(c.trafficDue?"<b>Traffic goes out:</b> "+escHtml(campFdY(c.trafficDue))+"<br>":"")
       +(c.stations?"<b>Stations / outlets:</b> "+escHtml(c.stations)+"<br>":"")
       +(c.notes?"<b>Notes:</b> "+escHtml(c.notes)+"<br>":"")
       +"<br><b>Assets needed, with your hard due dates:</b><table style='border-collapse:collapse;font-size:13px'><tr><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Asset</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Deliver by</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Owner</th></tr>"+rows+"</table>"
-      +"<br>These dates are set so traffic can go out on time"+(c.trafficDue?" ("+escHtml(c.trafficDue)+")":"")+(c.flightStart?" for the "+escHtml(c.flightStart)+" launch":"")+"."
+      +"<br>These dates are set so traffic can go out on time"+(c.trafficDue?" ("+escHtml(campFdY(c.trafficDue))+")":"")+(c.flightStart?" for the "+escHtml(campFdY(c.flightStart))+" launch":"")+"."
       +(tl.length?"<br><br><b>Approved tagline library"+(c.brand?" — "+escHtml(c.brand):"")+":</b><br>"+tl.map(t=>"• "+escHtml(t.text)).join("<br>"):"")
       +"<br><br>Reply to this email with questions; finished files can come back on this thread.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
     return{to,subject:"Creative Brief — "+c.name+(c.brand?" ("+c.brand+")":""),body};
@@ -11679,9 +11680,9 @@ Rules:
     if(!to){mopsGo("dispatch");notify("Set the SEO / Web email first — on the Dispatch page");return null}
     const items=(c.assets||[]).filter(a=>!assetInHand(a)&&a.owner==="SEO / Web");
     if(!items.length){notify("No pixel / landing page / tracking items open on this one.");return null}
-    const rows=items.map(a=>"<tr><td style='padding:6px 10px;border:1px solid #ddd'><b>"+escHtml(a.type)+"</b>"+(a.label?" — "+escHtml(a.label):"")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.due||"ASAP")+"</td></tr>").join("");
+    const rows=items.map(a=>"<tr><td style='padding:6px 10px;border:1px solid #ddd'><b>"+escHtml(a.type)+"</b>"+(a.label?" — "+escHtml(a.label):"")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.due?campFdY(a.due):"ASAP")+"</td></tr>").join("");
     const body="Hello,<br><br>Tracking / web request for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+(c.markets?" — "+escHtml(c.markets):"")+").<br><br>"
-      +(c.flightStart?"<b>Launch:</b> "+escHtml(c.flightStart)+"<br>":"")
+      +(c.flightStart?"<b>Launch:</b> "+escHtml(campFdY(c.flightStart))+"<br>":"")
       +(c.notes?"<b>Notes:</b> "+escHtml(c.notes)+"<br>":"")
       +"<br><b>Needed, with hard due dates:</b><table style='border-collapse:collapse;font-size:13px'><tr><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Item</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Deliver by</th></tr>"+rows+"</table>"
       +"<br>Reply with the pixel snippets / page URLs on this thread and I'll register them.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
