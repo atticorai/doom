@@ -2658,14 +2658,23 @@ const App=()=>{
       const _ih=(x)=>x.status==="done"||x.status==="na"||(x.isci&&iscis.some(i=>i.code+"|"+(i.dma||"")===x.isci&&i.fileUrl));
       const open=(c.assets||[]).filter(x=>!_ih(x));
       const dd=(s)=>{const d=_pDate(s);if(!d)return null;d.setHours(0,0,0,0);return Math.round((d-today)/864e5)};
-      const nm=(x)=>x.type+(x.label?" ("+x.label+")":"");
+      const nm=(x)=>x.label||x.type;
       if(open.length){
+        // One line per campaign: launch pressure, overdue and due-soon
+        // assets all summarized together instead of stacking as separate
+        // alerts for the same campaign.
         const late=open.filter(x=>{const n=dd(x.due);return n!=null&&n<0});
         const soon=open.filter(x=>{const n=dd(x.due);return n!=null&&n>=0&&n<=7});
-        if(late.length)a.push({type:"campaign",severity:"critical",overdue:true,days:Math.min.apply(null,late.map(x=>dd(x.due))),key:"camp-late-"+c.id,msg:`Campaign · ${c.name} · ${late.length} asset${late.length>1?"s":""} OVERDUE — ${late.slice(0,3).map(nm).join(", ")}${late.length>3?" +"+(late.length-3)+" more":""}`});
-        else if(soon.length)a.push({type:"campaign",severity:soon.some(x=>dd(x.due)<=2)?"critical":"warning",days:Math.min.apply(null,soon.map(x=>dd(x.due))),key:"camp-soon-"+c.id,msg:`Campaign · ${c.name} · ${soon.length} asset${soon.length>1?"s":""} due within 7d — ${soon.slice(0,3).map(nm).join(", ")}`});
         const ln=dd(c.flightStart);
-        if(ln!=null&&ln>=0&&ln<=7)a.push({type:"campaign",severity:"critical",days:ln,key:"camp-launch-"+c.id,msg:`Campaign · ${c.name} launches ${fD(String(c.flightStart).slice(0,10))} with ${open.length} asset${open.length>1?"s":""} outstanding`});
+        const launching=ln!=null&&ln>=0&&ln<=7;
+        if(late.length||soon.length||launching){
+          const bits=[];
+          if(launching)bits.push("launches "+fD(String(c.flightStart).slice(0,10))+" · "+open.length+" asset"+(open.length>1?"s":"")+" outstanding");
+          if(late.length)bits.push(late.length+" OVERDUE ("+late.slice(0,3).map(nm).join(", ")+(late.length>3?" +"+(late.length-3):"")+")");
+          if(soon.length)bits.push(soon.length+" due within 7d ("+soon.slice(0,3).map(nm).join(", ")+")");
+          const days=Math.min.apply(null,[...late.map(x=>dd(x.due)),...soon.map(x=>dd(x.due)),...(launching?[ln]:[])]);
+          a.push({type:"campaign",severity:(late.length||launching)?"critical":"warning",overdue:late.length>0,days,key:"camp-"+c.id,msg:"Campaign · "+c.name+" — "+bits.join(" · ")});
+        }
       }
     });
     // Overdue creative-due alerts survive the age-out — they already bound
@@ -11926,20 +11935,25 @@ Rules:
       let missing=0,late=0,soon=0,review=0,inHand=0,total=0;
       const attention=[];
       act.forEach(c=>{
+        // One campaign = ONE attention line. Everything urgent about it gets
+        // summarized into a single sentence, not scattered as separate rows.
+        const opens=[];
         (c.assets||[]).forEach(a=>{
           if(a.status==="na")return;total++;
           if(assetInHand(a)){inHand++;return}
-          missing++;
-          if(a.status==="review")review++;
-          const n=dTo(a.due);
-          if(n!=null&&n<0){late++;attention.push({p:0,t:a.type+(a.label?" · "+a.label:"")+" — "+Math.abs(n)+"d late",c,color:"#E85A7A"})}
-          else if(n!=null&&n<=7){soon++;attention.push({p:1,t:a.type+(a.label?" · "+a.label:"")+" — due "+dLbl(n),c,color:"#D4A040"})}
+          missing++;if(a.status==="review")review++;opens.push(a);
         });
-        const open=(c.assets||[]).filter(a=>a.status!=="na"&&!assetInHand(a)).length;
-        const ln=dTo(c.flightStart);
-        if(ln!=null&&ln>=0&&ln<=14&&open)attention.push({p:0,t:"Launches "+dLbl(ln)+" with "+open+" asset"+(open>1?"s":"")+" open",c,color:"#E85A7A"});
-        const td=dTo(c.trafficDue);
-        if(td!=null&&td>=0&&td<=7)attention.push({p:1,t:"Traffic due "+dLbl(td),c,color:"#D4A040"});
+        const nm=(a)=>a.label||a.type;
+        const lateA=opens.filter(a=>{const n=dTo(a.due);return n!=null&&n<0});
+        const soonA=opens.filter(a=>{const n=dTo(a.due);return n!=null&&n>=0&&n<=7});
+        late+=lateA.length;soon+=soonA.length;
+        const ln=dTo(c.flightStart),td=dTo(c.trafficDue);
+        const bits=[];
+        if(ln!=null&&ln>=0&&ln<=14&&opens.length)bits.push("launches "+dLbl(ln)+" · "+opens.length+" asset"+(opens.length>1?"s":"")+" open");
+        if(td!=null&&td>=0&&td<=7)bits.push("traffic due "+dLbl(td));
+        if(lateA.length)bits.push(lateA.map(nm).slice(0,3).join(", ")+" LATE");
+        if(soonA.length&&!lateA.length)bits.push("needs "+soonA.map(nm).slice(0,3).join(", ")+" by "+cFd(soonA[0].due));
+        if(bits.length)attention.push({p:(lateA.length||(ln!=null&&ln<=7&&opens.length))?0:1,t:bits.join(" — "),c,color:(lateA.length||(ln!=null&&ln<=7&&opens.length))?"#E85A7A":"#D4A040"});
       });
       attention.sort((a,b)=>a.p-b.p);
       const horizon=[];
