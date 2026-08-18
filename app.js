@@ -1015,9 +1015,10 @@ const useHash=()=>{
 const App=()=>{
   const[routeHash,navigateHash]=useHash();
   const isOohHub=routeHash.startsWith('ooh');
+  const isMopsHub=routeHash.startsWith('mops');
   const[pg,setPgRaw]=useState("dash");
   const prevPgRef=React.useRef("dash");
-  const setPg=(p)=>{if(p==="oohHub"){navigateHash("ooh");return}prevPgRef.current=pg;setPgRaw(p)};
+  const setPg=(p)=>{if(p==="oohHub"){navigateHash("ooh");return}if(p==="campaigns"){navigateHash("mops");return}prevPgRef.current=pg;setPgRaw(p)};
   const[lightMode,setLightMode]=useState(()=>localStorage.getItem("dd_light")==="1");
   useEffect(()=>{
     var s=document.getElementById("dd-theme-style");
@@ -11542,580 +11543,574 @@ Rules:
     </div>;
   };
 
-  // ── MARKETING OPS: CAMPAIGN HUB ───────────────────────
-  // The department's operating floor. Campaigns flow in from Notion on their
-  // own (and from the intake form, which writes BACK to Notion); every
-  // campaign carries its asset checklist; the Hub answers "do we have them?"
-  // and pushes the work out — creative briefs to Creative Ops, pixel/page
-  // requests to SEO/Web, review links to whoever must approve, asset
-  // packages to anyone. The Registry tab is the asset ledger across all
-  // campaigns and reads the ISCI Registry: link an asset to its ISCI and a
-  // file on the ISCI counts as the asset being in hand.
+  // ── MARKETING OPS HUB ─────────────────────────────────
+  // A full sub-app on Doom's OOH Hub pattern: hash-routed (#mops…), its own
+  // sidebar, real pages — the War Room landing (direction C), a desk per
+  // brand broken up by DMA, a full page per campaign (nothing expands),
+  // Calendar, Intake (form + contract reader + the Notion pipe), Dispatch
+  // (sends + review round-trips) and History. All state lives at App level
+  // and MopsHub is CALLED as a function — a component defined inside App
+  // gets a new identity every render and remounts, dropping input focus
+  // (the OOH Hub note; the old Campaign Hub page had exactly that bug).
   const isciKeyOf=(i)=>i.code+"|"+(i.dma||"");
   const isciByKey=(k)=>k?iscis.find(i=>isciKeyOf(i)===k):null;
   const assetInHand=(a)=>{if(a.status==="done"||a.status==="na")return true;const l=isciByKey(a.isci);return!!(l&&l.fileUrl)};
   const assetLink=(a)=>{if(a.url)return a.url;const l=isciByKey(a.isci);return(l&&l.fileUrl)||""};
-  const CampaignsPg=()=>{
-    const[view,setView]=useState("command");
-    const[hubBrand,setHubBrand]=useState(""); // "" = all brands; every tab scopes to this
-    const[expanded,setExpanded]=useState(null);
-    const[showWrapped,setShowWrapped]=useState(false);
-    const[adding,setAdding]=useState(false);
-    
-    const[utmOpen,setUtmOpen]=useState(null);
-    const[mailOpen,setMailOpen]=useState(null);
-    const[busy,setBusy]=useState(false);
-    const[nc,setNc]=useState({name:"",brand:"Postman Law",markets:"",flightStart:"",flightEnd:"",trafficDue:"",channels:[],desc:"",toNotion:true});
-        const[feed,setFeed]=useState(null);const[feedErr,setFeedErr]=useState("");const[feedBusy,setFeedBusy]=useState(false);
-    const loadFeed=async(force)=>{setFeedBusy(true);setFeedErr("");try{const r=await fetch("/api/campaigns"+(force?"?refresh=1":""),{credentials:"include"});const d=await r.json().catch(()=>({}));if(!r.ok){setFeedErr(d.message||d.error||("Failed to load ("+r.status+")"));setFeedBusy(false);return}setFeed(d);setFeedBusy(false)}catch(e){setFeedErr("Network error reaching /api/campaigns");setFeedBusy(false)}};
-    React.useEffect(()=>{if(view==="source"&&!feed&&!feedBusy&&!feedErr)loadFeed(false)},[view]);
-    const dTo=(s)=>{const i=campIsoD(s);if(!i)return null;const d=new Date(i+"T00:00:00");if(isNaN(d.getTime()))return null;const t=new Date();t.setHours(0,0,0,0);return Math.round((d.getTime()-t.getTime())/864e5)};
-    const dLbl=(n)=>n==null?"":n<0?Math.abs(n)+"d late":n===0?"today":n===1?"tomorrow":"in "+n+"d";
-    const cFd=(s)=>campIsoD(s)?fD(campIsoD(s)):"—";
-    const aMeta=(id)=>CAMP_ASTATUS.find(s=>s[0]===id)||CAMP_ASTATUS[0];
-    const touch=()=>{campaignsDirtyRef.current=true};
-    const updCamp=(id,patch)=>{touch();setCampaigns(p=>p.map(c=>c.id===id?{...c,...patch,updated:Date.now()}:c))};
-    const updAsset=(cid,aid,patch)=>{touch();setCampaigns(p=>p.map(c=>c.id!==cid?c:{...c,updated:Date.now(),assets:(c.assets||[]).map(a=>a.id===aid?{...a,...patch}:a)}))};
-    const delAsset=(cid,aid)=>{touch();setCampaigns(p=>p.map(c=>c.id!==cid?c:{...c,updated:Date.now(),assets:(c.assets||[]).filter(a=>a.id!==aid)}))};
-    const addAsset=(cid,type)=>{touch();setCampaigns(p=>p.map(c=>c.id!==cid?c:{...c,updated:Date.now(),assets:[...(c.assets||[]),campMkAsset(type,"",c.trafficDue||campMinusDays(c.flightStart,7))]}))};
-    const delCampaign=(c)=>{if(!confirm('Delete campaign "'+c.name+'" and its asset list? This can\'t be undone.'))return;touch();setCampaigns(p=>p.filter(x=>x.id!==c.id));log("Campaign","Deleted: "+c.name);notify("Deleted. "+doomPick(DOOM.sprinkle))};
-    const saveCfg=(patch)=>{hubCfgDirtyRef.current=true;setHubCfg(p=>({...p,...patch}))};
-    // ── Intake: keeps the record in Doom AND writes it to Notion ──
-    const createCampaign=async()=>{
-      const nm=nc.name.trim();if(!nm){notify("A campaign needs a name. Even Hercules had one.");return}
-      touch();const id=campUid();
-      const due=nc.trafficDue||campMinusDays(nc.flightStart,7);
-      const assets=[];const dd={};
-      nc.channels.forEach(ch=>(CAMP_CHANNEL_SEEDS[ch]||[]).forEach(([t,l])=>{const k=t+"|"+l;if(dd[k])return;dd[k]=1;assets.push(campMkAsset(t,l,due))}));
-      setCampaigns(p=>[{id,name:nm,brand:nc.brand,markets:nc.markets.trim(),status:"Planning",flightStart:nc.flightStart,flightEnd:nc.flightEnd,trafficDue:nc.trafficDue,channels:nc.channels,stations:"",notes:nc.desc.trim(),notionUrl:"",notionId:null,assets,utms:[],created:Date.now(),updated:Date.now()},...p]);
-      log("Campaign","Created: "+nm);setExpanded(id);setAdding(false);
-      const wantNotion=nc.toNotion;
-      setNc({name:"",brand:nc.brand,markets:"",flightStart:"",flightEnd:"",trafficDue:"",channels:[],desc:"",toNotion:true});
-      if(wantNotion){
-        try{
-          const r=await fetch("/api/campaigns",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({name:nm,brand:nc.brand,channels:nc.channels,markets:nc.markets.trim(),launch:nc.flightStart,flightEnd:nc.flightEnd,trafficDue:nc.trafficDue,description:nc.desc.trim()})});
-          const d=await r.json().catch(()=>({}));
-          if(r.ok&&d&&d.id){touch();setCampaigns(p=>p.map(c=>c.id===id?{...c,notionId:d.id,notionUrl:d.url||""}:c));notify("Tracking: "+nm+" — created in Doom and Notion")}
-          else notify("Tracking: "+nm+" — saved in Doom; Notion push failed ("+(d.message||d.error||r.status)+")");
-        }catch(e){notify("Tracking: "+nm+" — saved in Doom; Notion unreachable")}
-      }else notify("Tracking: "+nm);
-    };
-    // ── Push work out: brief → Creative Ops, request → SEO/Web ──
-    const sendBrief=async(c)=>{
-      const to=(hubCfg.creativeOpsEmail||"").trim();
-      if(!to){setView("toolkit");notify("Set the Creative Ops email first — first box on the Toolkit tab");return}
-      const missing=(c.assets||[]).filter(a=>!assetInHand(a)&&a.owner!=="SEO / Web");
-      if(!missing.length){notify("Nothing missing on this one. "+doomPick(DOOM.sprinkle));return}
-      const tl=taglines.filter(t=>t.active!==false&&(!t.brand||t.brand===c.brand));
-      const rows=missing.map(a=>"<tr><td style='padding:6px 10px;border:1px solid #ddd'><b>"+escHtml(a.type)+"</b>"+(a.label?" — "+escHtml(a.label):"")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.due||"ASAP")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.owner||"")+"</td></tr>").join("");
-      const body="Hello,<br><br>Creative brief for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+(c.markets?" — "+escHtml(c.markets):"")+").<br><br>"
-        +(c.flightStart?"<b>Flight:</b> "+escHtml(c.flightStart)+(c.flightEnd?" to "+escHtml(c.flightEnd):"")+"<br>":"")
-        +(c.trafficDue?"<b>Traffic goes out:</b> "+escHtml(c.trafficDue)+"<br>":"")
-        +(c.stations?"<b>Stations / outlets:</b> "+escHtml(c.stations)+"<br>":"")
-        +(c.notes?"<b>Notes:</b> "+escHtml(c.notes)+"<br>":"")
-        +"<br><b>Assets needed, with your hard due dates:</b><table style='border-collapse:collapse;font-size:13px'><tr><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Asset</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Deliver by</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Owner</th></tr>"+rows+"</table>"
-        +"<br>These dates are set so traffic can go out on time"+(c.trafficDue?" ("+escHtml(c.trafficDue)+")":"")+(c.flightStart?" for the "+escHtml(c.flightStart)+" launch":"")+"."
-        +(tl.length?"<br><br><b>Approved tagline library"+(c.brand?" — "+escHtml(c.brand):"")+":</b><br>"+tl.map(t=>"• "+escHtml(t.text)).join("<br>"):"")
-        +"<br><br>Reply to this email with questions; finished files can come back on this thread.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
-      setBusy(true);
+  const[mopsBusy,setMopsBusy]=useState(false);
+  const[mopsUtmOpen,setMopsUtmOpen]=useState(false);
+  const[mopsMailOpen,setMopsMailOpen]=useState(false);
+  const[nc,setNc]=useState({name:"",brand:"Postman Law",markets:"",flightStart:"",flightEnd:"",trafficDue:"",channels:[],desc:"",toNotion:true});
+  const[contractText,setContractText]=useState("");
+  const[parsing,setParsing]=useState(false);
+  const[feed,setFeed]=useState(null);
+  const[feedErr,setFeedErr]=useState("");
+  const[feedBusy,setFeedBusy]=useState(false);
+  const mopsGo=(sub)=>{navigateHash("mops"+(sub?"/"+sub:""))};
+  const loadFeed=async(force)=>{setFeedBusy(true);setFeedErr("");try{const r=await fetch("/api/campaigns"+(force?"?refresh=1":""),{credentials:"include"});const d=await r.json().catch(()=>({}));if(!r.ok){setFeedErr(d.message||d.error||("Failed to load ("+r.status+")"));setFeedBusy(false);return}setFeed(d);setFeedBusy(false)}catch(e){setFeedErr("Network error reaching /api/campaigns");setFeedBusy(false)}};
+  const campDTo=(s)=>{const i=campIsoD(s);if(!i)return null;const d=new Date(i+"T00:00:00");if(isNaN(d.getTime()))return null;const t=new Date();t.setHours(0,0,0,0);return Math.round((d.getTime()-t.getTime())/864e5)};
+  const campDLbl=(n)=>n==null?"":n<0?Math.abs(n)+" days late":n===0?"today":n===1?"tomorrow":"in "+n+" days";
+  const campFd=(s)=>campIsoD(s)?fD(campIsoD(s)):"—";
+  const campTouch=()=>{campaignsDirtyRef.current=true};
+  const updCamp=(id,patch)=>{campTouch();setCampaigns(p=>p.map(c=>c.id===id?{...c,...patch,updated:Date.now()}:c))};
+  const updAsset=(cid,aid,patch)=>{campTouch();setCampaigns(p=>p.map(c=>c.id!==cid?c:{...c,updated:Date.now(),assets:(c.assets||[]).map(a=>a.id===aid?{...a,...patch}:a)}))};
+  const delAsset=(cid,aid)=>{campTouch();setCampaigns(p=>p.map(c=>c.id!==cid?c:{...c,updated:Date.now(),assets:(c.assets||[]).filter(a=>a.id!==aid)}))};
+  const addAsset=(cid,type)=>{campTouch();setCampaigns(p=>p.map(c=>c.id!==cid?c:{...c,updated:Date.now(),assets:[...(c.assets||[]),campMkAsset(type,"",c.trafficDue||campMinusDays(c.flightStart,7))]}))};
+  const delCampaign=(c)=>{if(!confirm('Delete campaign "'+c.name+'" and its asset list? This can\'t be undone.'))return;campTouch();setCampaigns(p=>p.filter(x=>x.id!==c.id));log("Campaign","Deleted: "+c.name);notify("Deleted. "+doomPick(DOOM.sprinkle));mopsGo("")};
+  const saveCfg=(patch)=>{hubCfgDirtyRef.current=true;setHubCfg(p=>({...p,...patch}))};
+  const campHealthOf=(c)=>{
+    const live=(c.assets||[]).filter(a=>a.status!=="na");
+    const have=live.filter(assetInHand).length;
+    const opens=live.filter(a=>!assetInHand(a));
+    const late=opens.filter(a=>{const n=campDTo(a.due);return n!=null&&n<0}).length;
+    return{have,total:live.length,opens,late};
+  };
+  const campNeedsSentence=(c)=>{
+    const h=campHealthOf(c);
+    if(!h.total)return"no assets listed yet";
+    if(!h.opens.length)return"everything in hand";
+    const parts=h.opens.slice(0,3).map(a=>{const n=campDTo(a.due);return(a.label||a.type).toLowerCase()+(a.due?" by "+campFd(a.due):"")});
+    return"needs "+parts.join(", ")+(h.opens.length>3?" +"+(h.opens.length-3)+" more":"");
+  };
+  const createCampaign=async()=>{
+    const nm=nc.name.trim();if(!nm){notify("A campaign needs a name. Even Hercules had one.");return}
+    campTouch();const id=campUid();
+    const due=nc.trafficDue||campMinusDays(nc.flightStart,7);
+    const assets=[];const dd={};
+    nc.channels.forEach(ch=>(CAMP_CHANNEL_SEEDS[ch]||[]).forEach(([t,l])=>{const k=t+"|"+l;if(dd[k])return;dd[k]=1;assets.push(campMkAsset(t,l,due))}));
+    setCampaigns(p=>[{id,name:nm,brand:nc.brand,markets:nc.markets.trim(),status:"Planning",flightStart:nc.flightStart,flightEnd:nc.flightEnd,trafficDue:nc.trafficDue,channels:nc.channels,stations:"",notes:nc.desc.trim(),notionUrl:"",notionId:null,assets,utms:[],created:Date.now(),updated:Date.now()},...p]);
+    log("Campaign","Created: "+nm);
+    const snap={...nc};
+    setNc({name:"",brand:nc.brand,markets:"",flightStart:"",flightEnd:"",trafficDue:"",channels:[],desc:"",toNotion:true});
+    mopsGo("c/"+id);
+    if(snap.toNotion){
       try{
-        const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to,cc:"emm.caban@atticor.ai",subject:"Creative Brief — "+c.name+(c.brand?" ("+c.brand+")":""),message:body})});
-        if(!r.ok)throw new Error("send failed");
-        touch();setCampaigns(p=>p.map(x=>x.id!==c.id?x:{...x,briefSentAt:new Date().toISOString(),updated:Date.now(),assets:(x.assets||[]).map(a=>(!assetInHand(a)&&a.status==="needed"&&a.owner!=="SEO / Web")?{...a,status:"requested"}:a)}));
-        log("Campaign Brief","Sent to Creative Ops: "+c.name+" — "+missing.length+" asset(s)");
-        notify("Brief sent to Creative Ops. "+doomPick(DOOM.send));
-      }catch(e){notify("Brief email failed to send — check the connection and try again")}
-      setBusy(false);
+        const r=await fetch("/api/campaigns",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({name:nm,brand:snap.brand,channels:snap.channels,markets:snap.markets.trim(),launch:snap.flightStart,flightEnd:snap.flightEnd,trafficDue:snap.trafficDue,description:snap.desc.trim()})});
+        const d=await r.json().catch(()=>({}));
+        if(r.ok&&d&&d.id){campTouch();setCampaigns(p=>p.map(c=>c.id===id?{...c,notionId:d.id,notionUrl:d.url||""}:c));notify("Tracking: "+nm+" — created in Doom and filed in Notion")}
+        else notify("Tracking: "+nm+" — saved in Doom; Notion push failed ("+(d.message||d.error||r.status)+")");
+      }catch(e){notify("Tracking: "+nm+" — saved in Doom; Notion unreachable")}
+    }else notify("Tracking: "+nm);
+  };
+  const contractPdf=async(file)=>{
+    if(!file)return;
+    try{
+      if(typeof pdfjsLib==="undefined"||!pdfjsLib.getDocument)throw new Error("no pdfjs");
+      const buf=await file.arrayBuffer();
+      const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+      let t="";for(let i=1;i<=Math.min(pdf.numPages,12);i++){const pg2=await pdf.getPage(i);const tc=await pg2.getTextContent();t+=tc.items.map(it=>it.str).join(" ")+"\n"}
+      setContractText(t.replace(/\s+/g," ").trim());
+      notify("PDF text extracted — now hit Read It.");
+    }catch(e){notify("Couldn't read that PDF here — paste the text instead.")}
+  };
+  const parseContract=async()=>{
+    const text=contractText.trim();
+    if(text.length<40){notify("Paste the contract, media plan, or kickoff email first — or upload the PDF.");return}
+    setParsing(true);
+    try{
+      const CONTRACT_PROMPT='Extract advertising campaign details from this contract / media plan / email. Return ONLY a JSON object, no prose:\n{\n "name": "short campaign name",\n "brand": one of ["Postman Law","Wettermark Keith","Lerner & Rowe","Parrish DeVaughn","Keches Law Group"] or "",\n "markets": ["DMA or city names"],\n "flightStart": "YYYY-MM-DD" or "",\n "flightEnd": "YYYY-MM-DD" or "",\n "trafficDue": "YYYY-MM-DD" or "" (materials/traffic deadline if stated),\n "channels": array from ["TV","Radio","Streaming Audio","OOH","Paid Social","Paid Search","CTV/OTT","Email/SMS","Website"],\n "stations": "comma list of stations/outlets",\n "spots": [":30",":15"],\n "notes": "anything operationally important — spot counts, added value, costs, contacts"\n}\n\nText (may be messy OCR):\n';
+      const resp=await fetch("/api/planner",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-5",max_tokens:1500,messages:[{role:"user",content:CONTRACT_PROMPT+text.substring(0,6000)}]})});
+      const data=await resp.json();
+      if(!resp.ok)throw new Error(data.error||("planner "+resp.status));
+      const aiText=(data.content||[]).map(x=>x.text||"").join("");
+      const jsonStr=(aiText.match(/\{[\s\S]*\}/)||[])[0]||"";
+      const p=JSON.parse(jsonStr);
+      setNc({name:p.name||"",brand:BRANDS.some(b=>b.name===p.brand)?p.brand:"Postman Law",
+        markets:Array.isArray(p.markets)?p.markets.join(", "):"",
+        flightStart:campIsoD(p.flightStart),flightEnd:campIsoD(p.flightEnd),trafficDue:campIsoD(p.trafficDue),
+        channels:Array.isArray(p.channels)?p.channels.filter(x=>CAMP_CHANNELS.includes(x)):[],
+        desc:[p.notes||"",p.stations?"Stations: "+p.stations:"",Array.isArray(p.spots)&&p.spots.length?"Spots: "+p.spots.join(", "):""].filter(Boolean).join(" | "),
+        toNotion:true});
+      setContractText("");
+      log("Campaign","Parsed from contract: "+(p.name||"untitled"));
+      notify("Contract read. Check the prefill below, then Create.");
+    }catch(e){notify("Couldn't parse that — "+(/configured/.test(String(e.message||e))?"the AI key isn't set in Vercel yet.":"try cleaner text, or enter it manually."))}
+    setParsing(false);
+  };
+  const sendBrief=async(c)=>{
+    const to=(hubCfg.creativeOpsEmail||"").trim();
+    if(!to){mopsGo("dispatch");notify("Set the Creative Ops email first — first box on the Dispatch page");return}
+    const missing=(c.assets||[]).filter(a=>!assetInHand(a)&&a.owner!=="SEO / Web");
+    if(!missing.length){notify("Nothing missing on this one. "+doomPick(DOOM.sprinkle));return}
+    const tl=taglines.filter(t=>t.active!==false&&(!t.brand||t.brand===c.brand));
+    const rows=missing.map(a=>"<tr><td style='padding:6px 10px;border:1px solid #ddd'><b>"+escHtml(a.type)+"</b>"+(a.label?" — "+escHtml(a.label):"")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.due||"ASAP")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.owner||"")+"</td></tr>").join("");
+    const body="Hello,<br><br>Creative brief for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+(c.markets?" — "+escHtml(c.markets):"")+").<br><br>"
+      +(c.flightStart?"<b>Flight:</b> "+escHtml(c.flightStart)+(c.flightEnd?" to "+escHtml(c.flightEnd):"")+"<br>":"")
+      +(c.trafficDue?"<b>Traffic goes out:</b> "+escHtml(c.trafficDue)+"<br>":"")
+      +(c.stations?"<b>Stations / outlets:</b> "+escHtml(c.stations)+"<br>":"")
+      +(c.notes?"<b>Notes:</b> "+escHtml(c.notes)+"<br>":"")
+      +"<br><b>Assets needed, with your hard due dates:</b><table style='border-collapse:collapse;font-size:13px'><tr><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Asset</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Deliver by</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Owner</th></tr>"+rows+"</table>"
+      +"<br>These dates are set so traffic can go out on time"+(c.trafficDue?" ("+escHtml(c.trafficDue)+")":"")+(c.flightStart?" for the "+escHtml(c.flightStart)+" launch":"")+"."
+      +(tl.length?"<br><br><b>Approved tagline library"+(c.brand?" — "+escHtml(c.brand):"")+":</b><br>"+tl.map(t=>"• "+escHtml(t.text)).join("<br>"):"")
+      +"<br><br>Reply to this email with questions; finished files can come back on this thread.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
+    setMopsBusy(true);
+    try{
+      const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to,cc:"emm.caban@atticor.ai",subject:"Creative Brief — "+c.name+(c.brand?" ("+c.brand+")":""),message:body})});
+      if(!r.ok)throw new Error("send failed");
+      campTouch();setCampaigns(p=>p.map(x=>x.id!==c.id?x:{...x,briefSentAt:new Date().toISOString(),updated:Date.now(),assets:(x.assets||[]).map(a=>(!assetInHand(a)&&a.status==="needed"&&a.owner!=="SEO / Web")?{...a,status:"requested"}:a)}));
+      log("Campaign Brief","Sent to Creative Ops: "+c.name+" — "+missing.length+" asset(s)");
+      notify("Brief sent to Creative Ops. "+doomPick(DOOM.send));
+    }catch(e){notify("Brief email failed to send — check the connection and try again")}
+    setMopsBusy(false);
+  };
+  const sendSeoRequest=async(c)=>{
+    const to=(hubCfg.seoEmail||"").trim();
+    if(!to){mopsGo("dispatch");notify("Set the SEO / Web email first — on the Dispatch page");return}
+    const items=(c.assets||[]).filter(a=>!assetInHand(a)&&a.owner==="SEO / Web");
+    if(!items.length){notify("No pixel / landing page / tracking items open on this one.");return}
+    const rows=items.map(a=>"<tr><td style='padding:6px 10px;border:1px solid #ddd'><b>"+escHtml(a.type)+"</b>"+(a.label?" — "+escHtml(a.label):"")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.due||"ASAP")+"</td></tr>").join("");
+    const body="Hello,<br><br>Tracking / web request for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+(c.markets?" — "+escHtml(c.markets):"")+").<br><br>"
+      +(c.flightStart?"<b>Launch:</b> "+escHtml(c.flightStart)+"<br>":"")
+      +(c.notes?"<b>Notes:</b> "+escHtml(c.notes)+"<br>":"")
+      +"<br><b>Needed, with hard due dates:</b><table style='border-collapse:collapse;font-size:13px'><tr><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Item</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Deliver by</th></tr>"+rows+"</table>"
+      +"<br>Reply with the pixel snippets / page URLs on this thread and I'll register them.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
+    setMopsBusy(true);
+    try{
+      const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to,cc:"emm.caban@atticor.ai",subject:"Tracking / Web Request — "+c.name+(c.brand?" ("+c.brand+")":""),message:body})});
+      if(!r.ok)throw new Error("send failed");
+      campTouch();setCampaigns(p=>p.map(x=>x.id!==c.id?x:{...x,updated:Date.now(),assets:(x.assets||[]).map(a=>(items.some(i=>i.id===a.id)&&a.status==="needed")?{...a,status:"requested"}:a)}));
+      log("Campaign Request","Sent to SEO/Web: "+c.name+" — "+items.length+" item(s)");
+      notify("Request sent to SEO / Web. "+doomPick(DOOM.send));
+    }catch(e){notify("Request email failed to send — try again")}
+    setMopsBusy(false);
+  };
+  const sendReview=async(c,a)=>{
+    const to=(hubCfg.creativeOpsEmail||"").trim();
+    if(!to){mopsGo("dispatch");notify("Set the Creative Ops email first — first box on the Dispatch page");return}
+    const tok=Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,"0")).join("");
+    const link=window.location.origin+"/api/review?tok="+tok;
+    const fileUrl=assetLink(a);
+    const rec={campId:c.id,assetId:a.id,campName:c.name,brand:c.brand||"",assetType:a.type,assetLabel:a.label||"",url:fileUrl,due:a.due||"",trafficDue:c.trafficDue||"",sentTo:to,sentAt:new Date().toISOString(),status:"pending",feedback:"",respondedAt:null,applied:false};
+    const body="Hello,<br><br>A "+escHtml(a.type.toLowerCase())+(a.label?" — <b>"+escHtml(a.label)+"</b>":"")+" for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+") needs your review."
+      +(fileUrl?"<br><br><b>Asset:</b> <a href=\""+fileUrl+"\">"+escHtml(fileUrl)+"</a>":"")
+      +(a.due?"<br><b>Needed in hand by:</b> "+escHtml(a.due):"")
+      +(c.trafficDue?"<br><b>Traffic goes out:</b> "+escHtml(c.trafficDue):"")
+      +"<br><br><a href=\""+link+"\" style=\"display:inline-block;padding:10px 22px;background:#9b7bb0;color:#fff;border-radius:8px;text-decoration:none;font-weight:700\">Review — Approve or Request Changes</a>"
+      +"<br><br>One click, no login. Your answer flows straight back into our system.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
+    setMopsBusy(true);
+    try{
+      const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to,cc:"emm.caban@atticor.ai",subject:"Creative Review Needed — "+c.name+(a.label?" · "+a.label:""),message:body})});
+      if(!r.ok)throw new Error("send failed");
+      assetReviewsDirtyRef.current=true;setAssetReviews(p=>({...p,[tok]:rec}));
+      updAsset(c.id,a.id,{status:"review",reviewToken:tok});
+      log("Creative Review","Sent for review: "+c.name+" · "+(a.label||a.type)+" → "+to);
+      notify("Review request sent. "+doomPick(DOOM.send));
+    }catch(e){notify("Review email failed to send — try again")}
+    setMopsBusy(false);
+  };
+  const sendAssets=async(c,to)=>{
+    const addr=(to||"").trim();
+    if(!addr||!/@/.test(addr)){notify("Give me a real email address first.");return}
+    const withLinks=(c.assets||[]).map(a=>({a,link:assetLink(a)})).filter(x=>x.link);
+    if(!withLinks.length){notify("None of this campaign's assets have files or links yet.");return}
+    const rows=withLinks.map(x=>"• <b>"+escHtml(x.a.type)+"</b>"+(x.a.label?" — "+escHtml(x.a.label):"")+": <a href=\""+x.link+"\">"+escHtml(x.link)+"</a>").join("<br>");
+    const body="Hello,<br><br>Assets for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+(c.markets?" — "+escHtml(c.markets):"")+"):<br><br>"+rows
+      +(c.flightStart?"<br><br><b>Flight:</b> "+escHtml(c.flightStart)+(c.flightEnd?" to "+escHtml(c.flightEnd):""):"")
+      +"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
+    setMopsBusy(true);
+    try{
+      const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:addr,cc:"emm.caban@atticor.ai",subject:"Assets — "+c.name+(c.brand?" ("+c.brand+")":""),message:body})});
+      if(!r.ok)throw new Error("send failed");
+      log("Campaign Assets","Emailed "+withLinks.length+" asset link(s): "+c.name+" → "+addr);
+      notify("Assets sent. "+doomPick(DOOM.send));setMopsMailOpen(false);
+    }catch(e){notify("Asset email failed to send — try again")}
+    setMopsBusy(false);
+  };
+  const copyText=(txt,msg)=>{try{navigator.clipboard.writeText(txt);notify(msg||"Copied")}catch(e){window.prompt("Copy:",txt)}};
+  const[mopsCalM,setMopsCalM]=useState(()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),1)});
+  const[mopsUtmPlat,setMopsUtmPlat]=useState(UTM_PLATFORMS[0].p);
+  const[mopsUtmBase,setMopsUtmBase]=useState("");
+  const[mopsUtmContent,setMopsUtmContent]=useState("");
+  const[mopsMailTo,setMopsMailTo]=useState("");
+  // ── Marketing Ops Hub pages (direction C: words, checkboxes, time) ──
+  const MopsHub=()=>{
+    const sub=routeHash.replace(/^mops\/?/,'');
+    const serif={fontFamily:"'Cormorant Garamond',serif"};
+    const mIn={padding:"6px 10px",borderRadius:4,border:"1px solid #4a3565",background:"rgba(30,18,51,.6)",color:"#E8DFF0",fontSize:13,outline:"none"};
+    const box=(filled,color)=><div style={{width:15,height:15,minWidth:15,border:"2px solid "+(filled?"#5BC4A0":color),borderRadius:3,background:filled?"rgba(91,196,160,.25)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>{filled&&<svg width="9" height="9" viewBox="0 0 10 10"><path d="M1 5l3 3 5-7" stroke="#5BC4A0" strokeWidth="2" fill="none"/></svg>}</div>;
+    const secHead=(title,color,sub2)=><div style={{borderBottom:"3px solid "+color,paddingBottom:8,marginBottom:12}}>
+      <div style={{...serif,fontSize:21,fontWeight:700,color}}>{title}</div>
+      {sub2&&<div style={{fontSize:12,color:"#9B8EAD"}}>{sub2}</div>}
+    </div>;
+    const activeCamps=campaigns.filter(c=>c.status!=="Wrapped");
+    const openOf=(c)=>(c.assets||[]).filter(a=>a.status!=="na"&&!assetInHand(a));
+    const hardDate=(c)=>{
+      const ds=[campDTo(c.trafficDue),...openOf(c).map(a=>campDTo(a.due))].filter(n=>n!=null);
+      return ds.length?Math.min.apply(null,ds):null;
     };
-    const sendSeoRequest=async(c)=>{
-      const to=(hubCfg.seoEmail||"").trim();
-      if(!to){setView("toolkit");notify("Set the SEO / Web email first — on the Toolkit tab");return}
-      const items=(c.assets||[]).filter(a=>!assetInHand(a)&&a.owner==="SEO / Web");
-      if(!items.length){notify("No pixel / landing page / tracking items open on this one.");return}
-      const rows=items.map(a=>"<tr><td style='padding:6px 10px;border:1px solid #ddd'><b>"+escHtml(a.type)+"</b>"+(a.label?" — "+escHtml(a.label):"")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.due||"ASAP")+"</td></tr>").join("");
-      const body="Hello,<br><br>Tracking / web request for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+(c.markets?" — "+escHtml(c.markets):"")+").<br><br>"
-        +(c.flightStart?"<b>Launch:</b> "+escHtml(c.flightStart)+"<br>":"")
-        +(c.notes?"<b>Notes:</b> "+escHtml(c.notes)+"<br>":"")
-        +"<br><b>Needed, with hard due dates:</b><table style='border-collapse:collapse;font-size:13px'><tr><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Item</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Deliver by</th></tr>"+rows+"</table>"
-        +"<br>Reply with the pixel snippets / page URLs on this thread and I'll register them.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
-      setBusy(true);
-      try{
-        const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to,cc:"emm.caban@atticor.ai",subject:"Tracking / Web Request — "+c.name+(c.brand?" ("+c.brand+")":""),message:body})});
-        if(!r.ok)throw new Error("send failed");
-        touch();setCampaigns(p=>p.map(x=>x.id!==c.id?x:{...x,updated:Date.now(),assets:(x.assets||[]).map(a=>(items.some(i=>i.id===a.id)&&a.status==="needed")?{...a,status:"requested"}:a)}));
-        log("Campaign Request","Sent to SEO/Web: "+c.name+" — "+items.length+" item(s)");
-        notify("Request sent to SEO / Web. "+doomPick(DOOM.send));
-      }catch(e){notify("Request email failed to send — try again")}
-      setBusy(false);
-    };
-    // ── Review loop: email a token link, the answer flows back on its own ──
-    const sendReview=async(c,a)=>{
-      const to=(hubCfg.creativeOpsEmail||"").trim();
-      if(!to){setView("toolkit");notify("Set the Creative Ops email first — first box on the Toolkit tab");return}
-      const tok=Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,"0")).join("");
-      const link=window.location.origin+"/api/review?tok="+tok;
-      const fileUrl=assetLink(a);
-      const rec={campId:c.id,assetId:a.id,campName:c.name,brand:c.brand||"",assetType:a.type,assetLabel:a.label||"",url:fileUrl,due:a.due||"",trafficDue:c.trafficDue||"",sentTo:to,sentAt:new Date().toISOString(),status:"pending",feedback:"",respondedAt:null,applied:false};
-      const body="Hello,<br><br>A "+escHtml(a.type.toLowerCase())+(a.label?" — <b>"+escHtml(a.label)+"</b>":"")+" for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+") needs your review."
-        +(fileUrl?"<br><br><b>Asset:</b> <a href=\""+fileUrl+"\">"+escHtml(fileUrl)+"</a>":"")
-        +(a.due?"<br><b>Needed in hand by:</b> "+escHtml(a.due):"")
-        +(c.trafficDue?"<br><b>Traffic goes out:</b> "+escHtml(c.trafficDue):"")
-        +"<br><br><a href=\""+link+"\" style=\"display:inline-block;padding:10px 22px;background:#9b7bb0;color:#fff;border-radius:8px;text-decoration:none;font-weight:700\">Review — Approve or Request Changes</a>"
-        +"<br><br>One click, no login. Your answer flows straight back into our system.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
-      setBusy(true);
-      try{
-        const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to,cc:"emm.caban@atticor.ai",subject:"Creative Review Needed — "+c.name+(a.label?" · "+a.label:""),message:body})});
-        if(!r.ok)throw new Error("send failed");
-        assetReviewsDirtyRef.current=true;setAssetReviews(p=>({...p,[tok]:rec}));
-        updAsset(c.id,a.id,{status:"review",reviewToken:tok});
-        log("Creative Review","Sent for review: "+c.name+" · "+(a.label||a.type)+" → "+to);
-        notify("Review request sent. "+doomPick(DOOM.send));
-      }catch(e){notify("Review email failed to send — try again")}
-      setBusy(false);
-    };
-    // ── Email assets out — the whole package, links resolved from the
-    //    asset itself or its linked ISCI ──
-    const sendAssets=async(c,to)=>{
-      const addr=(to||"").trim();
-      if(!addr||!/@/.test(addr)){notify("Give me a real email address first.");return}
-      const withLinks=(c.assets||[]).map(a=>({a,link:assetLink(a)})).filter(x=>x.link);
-      if(!withLinks.length){notify("None of this campaign's assets have files or links yet.");return}
-      const rows=withLinks.map(x=>"• <b>"+escHtml(x.a.type)+"</b>"+(x.a.label?" — "+escHtml(x.a.label):"")+": <a href=\""+x.link+"\">"+escHtml(x.link)+"</a>").join("<br>");
-      const body="Hello,<br><br>Assets for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+(c.markets?" — "+escHtml(c.markets):"")+"):<br><br>"+rows
-        +(c.flightStart?"<br><br><b>Flight:</b> "+escHtml(c.flightStart)+(c.flightEnd?" to "+escHtml(c.flightEnd):""):"")
-        +"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
-      setBusy(true);
-      try{
-        const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:addr,cc:"emm.caban@atticor.ai",subject:"Assets — "+c.name+(c.brand?" ("+c.brand+")":""),message:body})});
-        if(!r.ok)throw new Error("send failed");
-        log("Campaign Assets","Emailed "+withLinks.length+" asset link(s): "+c.name+" → "+addr);
-        notify("Assets sent. "+doomPick(DOOM.send));setMailOpen(null);
-      }catch(e){notify("Asset email failed to send — try again")}
-      setBusy(false);
-    };
-    const copyText=(txt,msg)=>{try{navigator.clipboard.writeText(txt);notify(msg||"Copied")}catch(e){window.prompt("Copy:",txt)}};
-    const health=(c)=>{
-      const live=(c.assets||[]).filter(a=>a.status!=="na");
-      const have=live.filter(assetInHand).length;
-      const late=live.filter(a=>!assetInHand(a)&&a.due&&dTo(a.due)!=null&&dTo(a.due)<0).length;
-      const soon=live.filter(a=>!assetInHand(a)&&a.due&&dTo(a.due)!=null&&dTo(a.due)>=0&&dTo(a.due)<=7).length;
-      return{have,total:live.length,missing:live.length-have,late,soon,risk:c.status==="Wrapped"?"#6B5E80":late?"#E85A7A":soon?"#D4A040":"#5BC4A0"};
-    };
-    const cIn={padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:12,outline:"none"};
-    const cSel={...cIn,padding:"4px 6px"};
-    const lab=(t,gold)=><div style={{fontSize:9,color:gold?"#D4A040":"#6B5E80",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>{t}</div>;
-    const brandIscis=(brand)=>iscis.filter(i=>i.brand===brand&&i.active&&i.suffix!=="O");
-    // ── Contract ingestion: paste or PDF → Claude → prefilled intake ──
-    const[contractOpen,setContractOpen]=useState(false);
-    const[contractText,setContractText]=useState("");
-    const[parsing,setParsing]=useState(false);
-    const contractPdf=async(file)=>{
-      if(!file)return;
-      try{
-        if(typeof pdfjsLib==="undefined"||!pdfjsLib.getDocument)throw new Error("no pdfjs");
-        const buf=await file.arrayBuffer();
-        const pdf=await pdfjsLib.getDocument({data:buf}).promise;
-        let t="";for(let i=1;i<=Math.min(pdf.numPages,12);i++){const pg=await pdf.getPage(i);const tc=await pg.getTextContent();t+=tc.items.map(it=>it.str).join(" ")+"\n"}
-        setContractText(t.replace(/\s+/g," ").trim());
-        notify("PDF text extracted — now hit Read It.");
-      }catch(e){notify("Couldn't read that PDF here — paste the text instead.")}
-    };
-    const parseContract=async()=>{
-      const text=contractText.trim();
-      if(text.length<40){notify("Paste the contract, media plan, or kickoff email first — or upload the PDF.");return}
-      setParsing(true);
-      try{
-        const CONTRACT_PROMPT='Extract advertising campaign details from this contract / media plan / email. Return ONLY a JSON object, no prose:\n{\n "name": "short campaign name",\n "brand": one of ["Postman Law","Wettermark Keith","Lerner & Rowe","Parrish DeVaughn","Keches Law Group"] or "",\n "markets": ["DMA or city names"],\n "flightStart": "YYYY-MM-DD" or "",\n "flightEnd": "YYYY-MM-DD" or "",\n "trafficDue": "YYYY-MM-DD" or "" (materials/traffic deadline if stated),\n "channels": array from ["TV","Radio","Streaming Audio","OOH","Paid Social","Paid Search","CTV/OTT","Email/SMS","Website"],\n "stations": "comma list of stations/outlets",\n "spots": [":30",":15"],\n "notes": "anything operationally important — spot counts, added value, costs, contacts"\n}\n\nText (may be messy OCR):\n';
-        const resp=await fetch("/api/planner",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-5",max_tokens:1500,messages:[{role:"user",content:CONTRACT_PROMPT+text.substring(0,6000)}]})});
-        const data=await resp.json();
-        if(!resp.ok)throw new Error(data.error||("planner "+resp.status));
-        const aiText=(data.content||[]).map(c=>c.text||"").join("");
-        const jsonStr=(aiText.match(/\{[\s\S]*\}/)||[])[0]||"";
-        const p=JSON.parse(jsonStr);
-        setNc({name:p.name||"",brand:BRANDS.some(b=>b.name===p.brand)?p.brand:(hubBrand||"Postman Law"),
-          markets:Array.isArray(p.markets)?p.markets.join(", "):"",
-          flightStart:campIsoD(p.flightStart),flightEnd:campIsoD(p.flightEnd),trafficDue:campIsoD(p.trafficDue),
-          channels:Array.isArray(p.channels)?p.channels.filter(c=>CAMP_CHANNELS.includes(c)):[],
-          desc:[p.notes||"",p.stations?"Stations: "+p.stations:"",Array.isArray(p.spots)&&p.spots.length?"Spots: "+p.spots.join(", "):""].filter(Boolean).join(" | "),
-          toNotion:true});
-        setContractOpen(false);setAdding(true);setContractText("");
-        log("Campaign","Parsed from contract: "+(p.name||"untitled"));
-        notify("Contract read. Check the prefill, then Create.");
-      }catch(e){notify("Couldn't parse that — "+(/configured/.test(String(e.message||e))?"the AI key isn't set in Vercel yet.":"try cleaner text, or enter it manually."))}
-      setParsing(false);
-    };
-    const AssetRow=(c,a,i,showCamp)=>{
-      const st=aMeta(a.status);const tm=campTypeMeta(a.type);const n=dTo(a.due);
-      const inHand=assetInHand(a);const lateA=!inHand&&n!=null&&n<0;const lk=assetLink(a);
-      const linked=isciByKey(a.isci);
-      return<div key={a.id} style={{display:"flex",gap:6,alignItems:"center",padding:"6px 10px",borderTop:i?"1px solid #2d1f42":"none",flexWrap:"wrap",background:lateA?"rgba(232,90,122,.05)":inHand?"rgba(91,196,160,.03)":"transparent"}}>
-        <span title={inHand?"In hand":"Missing"} style={{fontSize:12,minWidth:16}}>{inHand?"✅":"⬜"}</span>
-        {showCamp&&<span onClick={()=>{setView("campaigns");setExpanded(c.id)}} style={{fontSize:11,fontWeight:700,color:getBrandColor(c.brand),cursor:"pointer",minWidth:110,maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</span>}
-        <select value={a.type} onChange={e=>updAsset(c.id,a.id,{type:e.target.value})} style={{...cSel,color:tm.c,fontWeight:700,minWidth:118}}>{CAMP_ASSET_TYPES.map(x=><option key={x.t} value={x.t}>{x.t}</option>)}</select>
-        <input value={a.label||""} placeholder="label / version…" onChange={e=>updAsset(c.id,a.id,{label:e.target.value})} style={{...cIn,flex:"1 1 100px",minWidth:90}}/>
-        {(a.type==="Broadcast Spot"||a.type==="Digital Banner"||a.type==="Station-Made Creative")&&<select value={a.isci||""} onChange={e=>updAsset(c.id,a.id,{isci:e.target.value})} title="Link to ISCI Registry — a file on the ISCI counts as in hand" style={{...cSel,maxWidth:150,color:linked?"#5BC4A0":"#9B8EAD"}}>
-          <option value="">⛓ link ISCI…</option>
-          {brandIscis(c.brand).map(x=><option key={isciKeyOf(x)} value={isciKeyOf(x)}>{x.code}{x.fileUrl?" 📎":""} {String(x.title||"").slice(0,18)}</option>)}
-        </select>}
-        <input value={a.owner||""} placeholder="owner" onChange={e=>updAsset(c.id,a.id,{owner:e.target.value})} style={{...cIn,width:110}}/>
-        <input type="date" value={campIsoD(a.due)} onChange={e=>updAsset(c.id,a.id,{due:e.target.value})} style={{...cIn,borderColor:lateA?"#E85A7A":"#4a3565"}}/>
-        {a.due&&!inHand&&<span style={{fontSize:10,fontWeight:700,color:lateA?"#E85A7A":n<=7?"#D4A040":"#6B5E80",minWidth:44}}>{dLbl(n)}</span>}
-        <select value={a.status} onChange={e=>updAsset(c.id,a.id,{status:e.target.value})} style={{...cSel,color:st[2],fontWeight:700}}>{CAMP_ASTATUS.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}</select>
-        <input value={a.url||""} placeholder="link" onChange={e=>updAsset(c.id,a.id,{url:e.target.value})} style={{...cIn,width:76}}/>
-        {lk&&<a href={lk} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4AC8E8",textDecoration:"none",fontWeight:700}}>↗</a>}
-        {!inHand&&a.status!=="review"&&<button onClick={()=>sendReview(c,a)} disabled={busy} title="Email a one-click review link to Creative Ops" style={{background:"rgba(196,160,200,.12)",border:"1px solid #C4A0C8",borderRadius:5,cursor:"pointer",fontSize:10,fontWeight:700,color:"#C4A0C8",padding:"2px 7px",whiteSpace:"nowrap"}}>👁 review</button>}
-        {a.status==="review"&&<span style={{fontSize:10,fontWeight:700,color:"#C4A0C8",whiteSpace:"nowrap"}}>👁 out for review</span>}
-        <button onClick={()=>delAsset(c.id,a.id)} style={{background:"none",border:"none",color:"#6B5E80",cursor:"pointer",fontSize:13,fontWeight:800,padding:"0 2px"}}>×</button>
-      </div>;
-    };
-    // ── UTM builder box (per campaign) ──
-    const UtmBox=({c})=>{
-      const[plat,setPlat]=useState(UTM_PLATFORMS[0].p);
-      const[base,setBase]=useState(CAMP_BRAND_URLS[c.brand]||"https://");
-      const[content,setContent]=useState("");
-      const[term,setTerm]=useState("");
-      const gen=()=>{const p=UTM_PLATFORMS.find(x=>x.p===plat);if(!p)return;const url=campUtmBuild(c,p,base,content,term);touch();setCampaigns(prev=>prev.map(x=>x.id!==c.id?x:{...x,updated:Date.now(),utms:[...(x.utms||[]),{id:campUid(),platform:plat,content:content.trim(),url,created:new Date().toISOString()}]}));log("UTM","Generated: "+c.name+" · "+plat+(content?" · "+content:""));setContent("")};
-      return<div style={{border:"1px solid #2d1f42",borderRadius:8,padding:10,marginTop:8,background:"rgba(74,200,232,.03)"}}>
-        <div style={{fontSize:11,fontWeight:800,color:"#4AC8E8",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>UTM Builder — lowercase standard, GA-readable</div>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"flex-end"}}>
-          <div>{lab("Platform")}<select value={plat} onChange={e=>setPlat(e.target.value)} style={cSel}>{UTM_PLATFORMS.map(x=><option key={x.p} value={x.p}>{x.p}</option>)}</select></div>
-          <div style={{flex:"1 1 160px"}}>{lab("Landing URL")}<input value={base} onChange={e=>setBase(e.target.value)} style={{...cIn,width:"100%"}}/></div>
-          <div style={{flex:"1 1 110px"}}>{lab("Content (creative / ISCI)")}<input value={content} placeholder="e.g. :30 riverfest" onChange={e=>setContent(e.target.value)} style={{...cIn,width:"100%"}}/></div>
-          <div style={{width:90}}>{lab("Term (opt)")}<input value={term} onChange={e=>setTerm(e.target.value)} style={{...cIn,width:"100%"}}/></div>
-          <Btn small primary onClick={gen}>Generate</Btn>
-        </div>
-        {(c.utms||[]).length>0&&<div style={{marginTop:8,borderTop:"1px solid #2d1f42"}}>
-          {(c.utms||[]).map((u,i)=><div key={u.id} style={{display:"flex",gap:8,alignItems:"center",padding:"5px 0",borderTop:i?"1px solid #2d1f42":"none"}}>
-            <span style={{fontSize:10,fontWeight:700,color:"#4AC8E8",minWidth:90}}>{u.platform}</span>
-            <span style={{fontSize:10,color:"#9B8EAD",flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"monospace"}}>{u.url}</span>
-            <button onClick={()=>copyText(u.url,"UTM copied")} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#4AC8E8",fontSize:10,fontWeight:700,cursor:"pointer",padding:"1px 7px"}}>copy</button>
-            <button onClick={()=>{touch();setCampaigns(prev=>prev.map(x=>x.id!==c.id?x:{...x,utms:(x.utms||[]).filter(y=>y.id!==u.id)}))}} style={{background:"none",border:"none",color:"#6B5E80",cursor:"pointer",fontSize:12,fontWeight:800}}>×</button>
-          </div>)}
-          <div style={{marginTop:4}}><Btn small onClick={()=>copyText((c.utms||[]).map(u=>u.platform+(u.content?" ("+u.content+")":"")+": "+u.url).join("\n"),"All UTMs copied")}>📋 Copy all</Btn></div>
-        </div>}
-      </div>;
-    };
-    // ── Board card ──
-    const CampCard=(c)=>{
-      const h=health(c);const open=expanded===c.id;
-      const seoOpen=(c.assets||[]).some(a=>!assetInHand(a)&&a.owner==="SEO / Web");
-      return<Cd key={c.id} style={{marginBottom:8,borderLeft:"3px solid "+getBrandColor(c.brand),opacity:c.status==="Wrapped"?.55:1}}>
-        <div onClick={()=>setExpanded(open?null:c.id)} style={{padding:"12px 16px",cursor:"pointer"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-            <span style={{width:9,height:9,borderRadius:99,background:h.risk,boxShadow:"0 0 8px "+h.risk+"77",flexShrink:0}}/>
-            <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:"#F0E8F8",letterSpacing:.3,flex:"1 1 auto",minWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</span>
-            {(()=>{const sc=({Planning:"#C4A0C8","In Progress":"#4AC8E8",Ready:"#D4A040",Live:"#5BC4A0",Wrapped:"#6B5E80"})[c.status]||"#9B8EAD";return<span style={{fontSize:10,fontWeight:800,letterSpacing:1,textTransform:"uppercase",padding:"2px 9px",borderRadius:99,background:sc+"1a",color:sc,border:"1px solid "+sc+"40",whiteSpace:"nowrap"}}>{c.status}</span>})()}
-            {h.total===0?<span style={{fontSize:11,color:"#6B5E80",fontStyle:"italic",whiteSpace:"nowrap"}}>no assets yet</span>
-              :h.missing===0?<span style={{fontSize:11,fontWeight:800,padding:"2px 9px",borderRadius:99,background:"rgba(91,196,160,.12)",color:"#5BC4A0",border:"1px solid rgba(91,196,160,.3)",whiteSpace:"nowrap"}}>✓ all {h.total} in hand</span>
-              :<span style={{fontSize:11,fontWeight:800,padding:"2px 9px",borderRadius:99,background:"rgba(232,90,122,.12)",color:"#E85A7A",border:"1px solid rgba(232,90,122,.3)",whiteSpace:"nowrap"}}>✗ {h.missing} missing{h.late?" · "+h.late+" late":""}</span>}
-            <span style={{fontSize:11,color:"#6B5E80"}}>{open?"▲":"▼"}</span>
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:12,marginTop:6,flexWrap:"wrap",paddingLeft:19}}>
-            <span style={{fontSize:11,fontWeight:700,color:getBrandColor(c.brand)}}>{c.brand}</span>
-            {c.markets&&<span style={{fontSize:11,color:"#9B8EAD"}}>{c.markets}</span>}
-            {c.flightStart&&<span style={{fontSize:11,color:"#9B8EAD"}}>✈ {cFd(c.flightStart)}{c.flightEnd?" – "+cFd(c.flightEnd):""}</span>}
-            {c.trafficDue&&<span style={{fontSize:11,fontWeight:700,color:dTo(c.trafficDue)!=null&&dTo(c.trafficDue)<=7?"#E85A7A":"#D4A040"}}>▶ traffic {cFd(c.trafficDue)}</span>}
-            {h.total>0&&<span style={{display:"inline-flex",alignItems:"center",gap:6,marginLeft:"auto"}}><span style={{fontSize:10,color:"#6B5E80"}}>{h.have}/{h.total}</span><span style={{width:90,height:5,borderRadius:99,background:"#1e1233",overflow:"hidden"}}><span style={{display:"block",height:"100%",width:Math.round(h.have/Math.max(1,h.total)*100)+"%",background:h.risk,transition:"width .3s"}}/></span></span>}
-          </div>
-        </div>
-        {open&&<div style={{padding:"0 14px 12px",borderTop:"1px solid #2d1f42"}}>
-          <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end",margin:"10px 0"}}>
-            <div style={{flex:"2 1 180px"}}>{lab("Campaign")}<input value={c.name} onChange={e=>updCamp(c.id,{name:e.target.value})} style={{...cIn,width:"100%"}}/></div>
-            <div>{lab("Status")}<select value={c.status} onChange={e=>updCamp(c.id,{status:e.target.value})} style={cSel}>{CAMP_CSTATUS.map(s=><option key={s} value={s}>{s}</option>)}</select></div>
-            <div style={{flex:"1 1 120px"}}>{lab("Markets")}<input value={c.markets||""} onChange={e=>updCamp(c.id,{markets:e.target.value})} style={{...cIn,width:"100%"}}/></div>
-            <div>{lab("Flight start")}<input type="date" value={campIsoD(c.flightStart)} onChange={e=>updCamp(c.id,{flightStart:e.target.value})} style={cIn}/></div>
-            <div>{lab("Flight end")}<input type="date" value={campIsoD(c.flightEnd)} onChange={e=>updCamp(c.id,{flightEnd:e.target.value})} style={cIn}/></div>
-            <div>{lab("Traffic due",true)}<input type="date" value={campIsoD(c.trafficDue)} onChange={e=>updCamp(c.id,{trafficDue:e.target.value})} style={{...cIn,borderColor:"#D4A040"}}/></div>
-          </div>
-          {(c.assets||[]).length>0&&<div style={{border:"1px solid #2d1f42",borderRadius:8,overflow:"hidden",marginBottom:8}}>
-            {(c.assets||[]).map((a,i)=>AssetRow(c,a,i,false))}
-          </div>}
-          <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
-            <select value="" onChange={e=>{if(e.target.value)addAsset(c.id,e.target.value)}} style={cSel}>
-              <option value="">+ Add asset…</option>
-              {CAMP_ASSET_TYPES.map(x=><option key={x.t} value={x.t}>{x.t}</option>)}
-            </select>
-            <Btn small primary disabled={busy||h.missing===0} onClick={()=>sendBrief(c)}>📤 Brief → Creative Ops</Btn>
-            {seoOpen&&<Btn small color="#4AC8E8" primary disabled={busy} onClick={()=>sendSeoRequest(c)}>🎯 Request → SEO / Web</Btn>}
-            <Btn small onClick={()=>setMailOpen(mailOpen===c.id?null:c.id)}>✉ Email assets</Btn>
-            <Btn small onClick={()=>setUtmOpen(utmOpen===c.id?null:c.id)}>🔗 UTMs{(c.utms||[]).length?" ("+(c.utms||[]).length+")":""}</Btn>
-            {c.briefSentAt&&<span style={{fontSize:10,color:"#5BC4A0",fontWeight:600}}>brief sent {String(c.briefSentAt).slice(0,10)}</span>}
-            {c.notionUrl&&<a href={c.notionUrl} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4AC8E8",textDecoration:"none",fontWeight:600}}>Notion ↗</a>}
-            <span style={{marginLeft:"auto"}}><Btn small danger onClick={()=>delCampaign(c)}>Delete</Btn></span>
-          </div>
-          {mailOpen===c.id&&<div style={{display:"flex",gap:6,marginTop:8,alignItems:"center"}}>
-            <input id={"mailto_"+c.id} defaultValue={hubCfg.creativeOpsEmail||""} placeholder="who gets the asset package?" style={{...cIn,flex:1}}/>
-            <Btn small primary disabled={busy} onClick={()=>sendAssets(c,document.getElementById("mailto_"+c.id).value)}>Send all links</Btn>
-          </div>}
-          {utmOpen===c.id&&<UtmBox c={c}/>}
-          <div style={{marginTop:8}}><input value={c.notes||""} placeholder="notes — stations, contacts, anything the next person needs" onChange={e=>updCamp(c.id,{notes:e.target.value})} style={{...cIn,width:"100%"}}/></div>
-        </div>}
-      </Cd>;
-    };
-    const inBrand=(c)=>!hubBrand||c.brand===hubBrand;
-    const active=campaigns.filter(c=>c.status!=="Wrapped"&&inBrand(c)).sort((a,b)=>{const x=a.trafficDue||a.flightStart||"9999",y=b.trafficDue||b.flightStart||"9999";return String(x).localeCompare(String(y))});
-    const wrapped=campaigns.filter(c=>c.status==="Wrapped"&&inBrand(c));
-    const Taglines=()=>{
-      const[txt,setTxt]=useState("");const[tb,setTb]=useState("");
-      const add=(text,brand)=>{const t=(text||"").trim();if(!t)return;taglinesDirtyRef.current=true;setTaglines(p=>[...p,{id:campUid(),text:t,brand:brand||"",active:true,added:new Date().toISOString()}]);log("Tagline","Added: "+t)};
-      const starters=["No Win No Fee","Serving Up Southern Justice","You Dont Need Louder Lawyers"].filter(s=>!taglines.some(t=>t.text===s));
-      return<div>
-        <Cd style={{padding:12,marginBottom:10}}>
-          <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end"}}>
-            <div style={{flex:"2 1 220px"}}>{lab("New tagline")}<input value={txt} onChange={e=>setTxt(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){add(txt,tb);setTxt("")}}} style={{...cIn,width:"100%"}}/></div>
-            <div>{lab("Brand")}<select value={tb} onChange={e=>setTb(e.target.value)} style={cSel}><option value="">All brands</option>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select></div>
-            <Btn small primary onClick={()=>{add(txt,tb);setTxt("")}}>Add</Btn>
-          </div>
-          {starters.length>0&&taglines.length===0&&<div style={{marginTop:8,fontSize:12,color:"#9B8EAD"}}>Known from the Notion asset library: {starters.map((s,i)=><span key={s}>{i?" · ":""}<button onClick={()=>add(s,"")} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",fontSize:12,fontWeight:600,padding:0}}>＋ {s}</button></span>)}</div>}
-        </Cd>
-        {(()=>{const shown=taglines.filter(t=>!hubBrand||!t.brand||t.brand===hubBrand);return shown.length===0?<Cd style={{padding:30,textAlign:"center",color:"#9B8EAD",fontStyle:"italic"}}>{hubBrand?"No "+hubBrand+" taglines yet.":"The tagline vault is empty. Feed it."}</Cd>
-        :<Cd style={{padding:0,overflow:"hidden"}}>{shown.map((t,i)=><div key={t.id} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",borderTop:i?"1px solid #2d1f42":"none",opacity:t.active===false?.45:1}}>
-          <span style={{fontSize:13,fontWeight:600,color:"#E8DFF0",flex:1,fontStyle:"italic"}}>“{t.text}”</span>
-          <span style={{fontSize:11,fontWeight:700,color:t.brand?getBrandColor(t.brand):"#9B8EAD"}}>{t.brand||"All brands"}</span>
-          <button onClick={()=>copyText(t.text,"Tagline copied")} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#4AC8E8",fontSize:10,fontWeight:700,cursor:"pointer",padding:"1px 7px"}}>copy</button>
-          <button onClick={()=>{taglinesDirtyRef.current=true;setTaglines(p=>p.map(x=>x.id===t.id?{...x,active:x.active===false}:x))}} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:t.active===false?"#5BC4A0":"#D4A040",fontSize:10,fontWeight:700,cursor:"pointer",padding:"1px 7px"}}>{t.active===false?"revive":"retire"}</button>
-          <button onClick={()=>{if(!confirm("Delete this tagline?"))return;taglinesDirtyRef.current=true;setTaglines(p=>p.filter(x=>x.id!==t.id))}} style={{background:"none",border:"none",color:"#6B5E80",cursor:"pointer",fontSize:13,fontWeight:800}}>×</button>
-        </div>)}</Cd>})()}
-        <div style={{fontSize:10,color:"#6B5E80",marginTop:6}}>Active taglines ride along automatically in every creative brief for their brand.</div>
-      </div>;
-    };
-    // ── Source: the Notion pipe, status only — sync is automatic ──
-    const SourceTab=()=>{
-      const all=((feed&&feed.campaigns)||[]).filter(r=>!hubBrand||campBrandFix(r.brand)===hubBrand);
-      const tracked=new Set(campaigns.map(c=>c.notionId).filter(Boolean));
-      const notConfigured=feedErr&&/not_configured|NOTION_API_KEY/i.test(feedErr);
-      return<div>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,gap:8,flexWrap:"wrap"}}>
-          <span style={{fontSize:12,color:"#9B8EAD"}}>Doom re-pulls this feed every 15 minutes and folds new campaigns onto the Board by itself. Finished and denied rows are left where they lie.</span>
-          <Btn small disabled={feedBusy} onClick={()=>loadFeed(true)}>{feedBusy?"Pulling…":"Pull now"}</Btn>
-        </div>
-        {feedErr&&<Cd style={{padding:14,marginBottom:12,border:"1px solid #E85A7A",background:"rgba(232,90,122,.08)"}}>
-          <div style={{color:"#E85A7A",fontWeight:700,fontSize:13}}>{notConfigured?"Notion isn't connected yet.":"Couldn't reach the Notion feed."}</div>
-          <div style={{color:"#9B8EAD",fontSize:12,marginTop:4,lineHeight:1.5}}>{notConfigured?"One-time setup: create an internal integration at notion.so/my-integrations, add its secret as NOTION_API_KEY in the Vercel project settings, and share both campaign databases with the integration (••• → Connections on each). Everything else in the Hub works without it.":feedErr}</div>
-        </Cd>}
-        {!feed&&!feedErr?<Cd style={{padding:30,textAlign:"center",color:"#9B8EAD",fontStyle:"italic"}}>{doomPick(DOOM.loading)}</Cd>
-        :feed&&<Cd style={{padding:0,overflow:"hidden"}}>
-          {all.map((r,i)=>{const done=/Denied|Completed|Complete$/.test(String(r.status||""));
-            return<div key={r.id} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",borderTop:i?"1px solid #2d1f42":"none",borderLeft:"3px solid "+getBrandColor(campBrandFix(r.brand)),opacity:done?.45:1,flexWrap:"wrap"}}>
-              <div style={{flex:1,minWidth:180}}>
-                {r.url?<a href={r.url} target="_blank" rel="noreferrer" style={{fontSize:13,fontWeight:700,color:"#4AC8E8",textDecoration:"none"}}>{r.name||"Untitled"}</a>:<span style={{fontSize:13,fontWeight:700,color:"#E8DFF0"}}>{r.name||"Untitled"}</span>}
-                <span style={{fontSize:10,fontWeight:700,color:"#9B8EAD",marginLeft:8}}>{r.status||"—"}</span>
-                <div style={{fontSize:11,color:"#9B8EAD",marginTop:1}}>{campBrandFix(r.brand)}{(r.dmas||r.markets||[]).length?" · "+(r.dmas&&r.dmas.length?r.dmas:r.markets).join(", "):""}{r.flightStart?" · Flight "+cFd(r.flightStart):""}</div>
-              </div>
-              {tracked.has(r.id)?<span style={{fontSize:11,fontWeight:700,color:"#5BC4A0"}}>✓ on the Board</span>:done?<span style={{fontSize:11,color:"#6B5E80"}}>skipped (finished)</span>:<span style={{fontSize:11,color:"#D4A040"}}>syncing…</span>}
-            </div>})}
-        </Cd>}
-        {feed&&<div style={{fontSize:10,color:"#6B5E80",textAlign:"right",marginTop:6}}>Pulled {feed.fetched?new Date(feed.fetched).toLocaleString():"—"}{feed.cached?" (cached ≤5 min)":""}</div>}
-      </div>;
-    };
-    // ── Command: what's in flight, what we're waiting on, what's next.
-    //    Every number is a sentence and every row goes somewhere. ──
-    const Command=()=>{
-      const act=campaigns.filter(c=>c.status!=="Wrapped"&&inBrand(c));
-      const liveN=act.filter(c=>c.status==="Live").length;
-      const waiting=[];
-      let missingTotal=0;
-      act.forEach(c=>{
-        const opens=(c.assets||[]).filter(a=>a.status!=="na"&&!assetInHand(a));
-        if(!opens.length)return;
-        missingTotal+=opens.length;
-        const worst=Math.min.apply(null,opens.map(a=>{const n=dTo(a.due);return n==null?999:n}));
-        waiting.push({c,opens,worst});
+    // ── War Room ──
+    const WarRoom=()=>{
+      const urgent=[],horizon=[],live=[];
+      activeCamps.forEach(c=>{
+        const opens=openOf(c);const hd=hardDate(c);const ln=campDTo(c.flightStart);
+        if(!opens.length&&(c.status==="Live"||(ln!=null&&ln<0)))live.push(c);
+        else if(opens.length&&((hd!=null&&hd<=10)||(ln!=null&&ln>=0&&ln<=10)))urgent.push(c);
+        else horizon.push(c);
       });
-      waiting.sort((a,b)=>a.worst-b.worst);
-      const launches=act.filter(c=>c.flightStart&&dTo(c.flightStart)!=null&&dTo(c.flightStart)>=0).sort((a,b)=>campIsoD(a.flightStart).localeCompare(campIsoD(b.flightStart)));
-      const nextL=launches[0];
-      const horizon=[];
-      act.forEach(c=>{
-        const push=(iso,kind,color)=>{const n=dTo(iso);if(n!=null&&n>=0&&n<=14)horizon.push({d:campIsoD(iso),n,kind,color,c})};
-        push(c.flightStart,"✈ Launch","#5BC4A0");push(c.trafficDue,"▶ Traffic due","#D4A040");
-        (c.assets||[]).forEach(a=>{if(a.due&&!assetInHand(a)){const n=dTo(a.due);if(n!=null&&n>=0&&n<=14)horizon.push({d:campIsoD(a.due),n,kind:(a.label||a.type),color:campTypeMeta(a.type).c,c})}});
-      });
-      horizon.sort((a,b)=>a.n-b.n);
-      const openCamp=(c)=>{setView("campaigns");setExpanded(c.id)};
-      const urg=(n)=>n==null?"#9B8EAD":n<0?"#E85A7A":n<=7?"#D4A040":"#9B8EAD";
+      urgent.sort((a,b)=>(hardDate(a)??99)-(hardDate(b)??99));
+      horizon.sort((a,b)=>String(a.trafficDue||a.flightStart||"9999").localeCompare(String(b.trafficDue||b.flightStart||"9999")));
+      const needCard=(c,color,strong)=><div key={c.id} style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid "+(strong?"rgba(232,90,122,.4)":"#4a3565"),borderRadius:6,padding:"16px 18px",display:"flex",flexDirection:"column",gap:8,marginBottom:12}}>
+        <div onClick={()=>mopsGo("c/"+c.id)} style={{...serif,fontSize:strong?21:19,fontWeight:700,color:"#F0E8F8",cursor:"pointer"}}>{c.name}</div>
+        <div style={{fontSize:12,fontWeight:700,color:getBrandColor(c.brand),textTransform:"uppercase",letterSpacing:1}}>{c.brand}{c.markets?" · "+c.markets:""}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:7,fontSize:14}}>
+          {openOf(c).slice(0,4).map(a=>{const n=campDTo(a.due);const col=n!=null&&n<0?"#E85A7A":n!=null&&n<=10?(strong?"#E85A7A":"#D4A040"):"#D4A040";
+            return<div key={a.id} onClick={()=>updAsset(c.id,a.id,{status:"done"})} title="Click the box when it's in hand" style={{display:"flex",gap:9,alignItems:"center"}}>{box(false,col)}<div>{a.label||a.type}{a.due?<span> — <b style={{color:col}}>{campFd(a.due)}</b></span>:null}{a.status==="review"?<span style={{color:"#C4A0C8"}}> · out for review</span>:null}</div></div>})}
+          {openOf(c).length>4&&<div style={{fontSize:12,color:"#9B8EAD"}}>+{openOf(c).length-4} more on the campaign page</div>}
+          {c.trafficDue&&<div style={{display:"flex",gap:9,alignItems:"center",color:"#9B8EAD"}}>{box(false,"#4a3565")}<div>Traffic out — {campFd(c.trafficDue)}</div></div>}
+        </div>
+        {strong&&<div onClick={()=>sendBrief(c)} style={{fontSize:12,fontWeight:700,color:"#1e1233",background:"linear-gradient(135deg,#D4A040,#c08f2f)",borderRadius:4,padding:"8px 0",textAlign:"center",marginTop:4,cursor:"pointer"}}>{mopsBusy?"Sending…":"Send the brief"}</div>}
+      </div>;
       return<div>
-        <Cd style={{padding:"14px 18px",marginBottom:14,borderLeft:"3px solid #D4A040"}}>
-          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:19,color:"#F0E8F8",lineHeight:1.5}}>
-            <b style={{color:"#C4A0C8"}}>{act.length}</b> campaign{act.length!==1?"s":""} in flight{liveN?<span> — <b style={{color:"#5BC4A0"}}>{liveN}</b> live in market</span>:null}
-            {nextL&&<span> · next launch <b style={{color:"#5BC4A0"}}>{nextL.name}</b> {cFd(nextL.flightStart)}</span>}
-            {missingTotal
-              ?<span> · waiting on <b style={{color:"#E85A7A"}}>{missingTotal} asset{missingTotal!==1?"s":""}</b> across {waiting.length} campaign{waiting.length!==1?"s":""}</span>
-              :<span> · <b style={{color:"#5BC4A0"}}>every asset in hand</b></span>}
-          </div>
-          <div style={{fontSize:12,color:"#C4A0C8",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",marginTop:4}}>{doomPick(DOOM.pg.campaigns||DOOM.sprinkle)}</div>
-        </Cd>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(340px,1fr))",gap:14}}>
+        <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:22}}>
+          <div style={{...serif,fontSize:34,fontWeight:700,color:"#F0E8F8"}}>The War Room</div>
+          <div style={{fontSize:13,color:"#9B8EAD"}}>time marches left to right — a campaign lives in exactly one column</div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:18}}>
           <div>
-            <div style={{fontSize:12,fontWeight:800,color:"#E85A7A",textTransform:"uppercase",letterSpacing:1.5,marginBottom:6}}>Waiting on — by campaign, worst first</div>
-            {waiting.length===0?<Cd style={{padding:22,textAlign:"center",color:"#5BC4A0",fontWeight:600,fontSize:13,fontStyle:"italic"}}>Nothing outstanding. Mark the occasion.</Cd>
-            :<Cd style={{padding:0,overflow:"hidden"}}>
-              {waiting.map((w,i)=><div key={w.c.id} onClick={()=>openCamp(w.c)} style={{padding:"10px 14px",borderTop:i?"1px solid #2d1f42":"none",cursor:"pointer",borderLeft:"3px solid "+getBrandColor(w.c.brand)}}>
-                <div style={{display:"flex",alignItems:"baseline",gap:8,flexWrap:"wrap"}}>
-                  <span style={{fontSize:13,fontWeight:700,color:"#E8DFF0"}}>{w.c.name}</span>
-                  <span style={{fontSize:10,fontWeight:700,color:getBrandColor(w.c.brand)}}>{w.c.brand}</span>
-                  {w.c.flightStart&&<span style={{fontSize:10,color:"#6B5E80"}}>✈ {cFd(w.c.flightStart)}</span>}
-                  {w.c.trafficDue&&<span style={{fontSize:10,fontWeight:700,color:urg(dTo(w.c.trafficDue))}}>▶ {cFd(w.c.trafficDue)}</span>}
-                  <span style={{marginLeft:"auto",fontSize:10,color:"#4AC8E8",fontWeight:700}}>open →</span>
-                </div>
-                <div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:5}}>
-                  {w.opens.map(a=>{const n=dTo(a.due);const col=urg(n);
-                    return<span key={a.id} style={{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:99,background:col+"14",color:col,border:"1px solid "+col+"35"}}>
-                      {a.label||a.type}{a.due?" · "+cFd(a.due):""}{n!=null&&n<0?" ⚠":""}{a.status==="review"?" 👁":""}
-                    </span>})}
-                </div>
+            {secHead("Act now","#E85A7A","hard dates inside ten days")}
+            {urgent.length===0&&<div style={{...serif,fontStyle:"italic",fontSize:15,color:"#5BC4A0",padding:"14px 4px"}}>Nothing on fire. Savor it.</div>}
+            {urgent.map(c=>needCard(c,"#E85A7A",true))}
+          </div>
+          <div>
+            {secHead("On the horizon","#D4A040","owed later, or waiting on dates")}
+            {horizon.length===0&&<div style={{...serif,fontStyle:"italic",fontSize:15,color:"#9B8EAD",padding:"14px 4px"}}>A clear horizon.</div>}
+            {horizon.map(c=>{const opens=openOf(c);
+              return opens.length?needCard(c,"#D4A040",false)
+              :<div key={c.id} style={{background:"rgba(45,31,66,.45)",border:"1px dashed #4a3565",borderRadius:6,padding:"13px 16px",marginBottom:12}}>
+                <div onClick={()=>mopsGo("c/"+c.id)} style={{...serif,fontSize:17,fontWeight:700,color:"#C4A0C8",cursor:"pointer"}}>{c.name}</div>
+                <div style={{fontSize:12,color:"#9B8EAD",marginTop:3}}>{c.brand}{c.markets?" · "+c.markets:""} — {c.flightStart?"launches "+campFd(c.flightStart):"no dates yet"}</div>
+              </div>})}
+          </div>
+          <div>
+            {secHead("Live — nothing owed","#5BC4A0","airing now, every asset in hand")}
+            <div style={{background:"rgba(91,196,160,.05)",border:"1px solid rgba(91,196,160,.25)",borderRadius:6,padding:"14px 16px",display:"flex",flexDirection:"column",gap:11,fontSize:14}}>
+              {live.length===0&&<div style={{color:"#9B8EAD",fontStyle:"italic"}}>Nothing airing yet.</div>}
+              {live.map(c=><div key={c.id}>
+                <b onClick={()=>mopsGo("c/"+c.id)} style={{color:"#F0E8F8",cursor:"pointer"}}>{c.name}</b>
+                <div style={{fontSize:12,color:"#9B8EAD"}}>{c.brand}{c.markets?" · "+c.markets:""}{c.flightEnd?" · through "+campFd(c.flightEnd):""}</div>
               </div>)}
-            </Cd>}
+            </div>
+            <div onClick={()=>mopsGo("history")} style={{fontSize:12,color:"#6B5E80",textAlign:"center",padding:"10px 0",cursor:"pointer"}}>{campaigns.filter(c=>c.status==="Wrapped").length} wrapped campaigns live in History →</div>
           </div>
-          <div>
-            <div style={{fontSize:12,fontWeight:800,color:"#D4A040",textTransform:"uppercase",letterSpacing:1.5,marginBottom:6}}>Next 14 days</div>
-            {horizon.length===0?<Cd style={{padding:22,textAlign:"center",color:"#9B8EAD",fontSize:13,fontStyle:"italic"}}>A quiet fortnight ahead.</Cd>
-            :<Cd style={{padding:0,overflow:"hidden"}}>{horizon.slice(0,10).map((it,i)=><div key={i} onClick={()=>openCamp(it.c)} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",borderTop:i?"1px solid #2d1f42":"none",cursor:"pointer"}}>
-              <span style={{minWidth:58,fontSize:11,fontWeight:800,color:it.n<=3?"#E85A7A":it.n<=7?"#D4A040":"#5BC4A0"}}>{cFd(it.d)}</span>
-              <span style={{minWidth:48,fontSize:10,color:"#6B5E80"}}>{dLbl(it.n)}</span>
-              <span style={{fontSize:11,fontWeight:700,color:it.color,whiteSpace:"nowrap"}}>{it.kind}</span>
-              <span style={{fontSize:12,color:"#E8DFF0",flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{it.c.name}</span>
-              <span style={{fontSize:10,fontWeight:700,color:getBrandColor(it.c.brand)}}>{it.c.brand}</span>
-            </div>)}</Cd>}
-            {!hubBrand&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10}}>
-              {BRANDS.map(b=>{const bc=campaigns.filter(c=>c.brand===b.name&&c.status!=="Wrapped");if(!bc.length)return null;const miss=bc.reduce((t,c)=>t+(c.assets||[]).filter(a=>a.status!=="na"&&!assetInHand(a)).length,0);
-                return<button key={b.code} onClick={()=>setHubBrand(b.name)} style={{padding:"6px 12px",borderRadius:8,border:"1px solid "+b.color+"40",background:b.color+"0d",cursor:"pointer",textAlign:"left"}}>
-                  <div style={{fontSize:11,fontWeight:800,color:b.color}}>{b.name}</div>
-                  <div style={{fontSize:10,color:miss?"#E85A7A":"#5BC4A0",fontWeight:700}}>{bc.length} active · {miss?miss+" asset"+(miss>1?"s":"")+" outstanding":"all in hand"}</div>
-                </button>})}
-            </div>}
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",borderTop:"1px solid #4a3565",paddingTop:14,marginTop:22}}>
+          <div style={{...serif,fontSize:15,fontStyle:"italic",color:"#C4A0C8"}}>{doomPick(DOOM.pg.campaigns||DOOM.sprinkle)}</div>
+          <div style={{fontSize:12,color:"#6B5E80"}}>tick a box when the thing is in hand — everything else follows</div>
+        </div>
+      </div>;
+    };
+    // ── Brand desk: one brand, broken up by DMA ──
+    const BrandDesk=(code)=>{
+      const b=BRANDS.find(x=>x.code===code);if(!b)return<div/>;
+      const mine=activeCamps.filter(c=>c.brand===b.name);
+      const wrappedMine=campaigns.filter(c=>c.status==="Wrapped"&&c.brand===b.name);
+      const dmaNames=b.markets.map(m=>(typeof DM!=="undefined"&&DM[m])||m);
+      const inDma=(c,dn)=>String(c.markets||"").toLowerCase().includes(dn.toLowerCase());
+      const unplaced=mine.filter(c=>!dmaNames.some(dn=>inDma(c,dn)));
+      const row=(c,dn)=>{const opens=openOf(c);const others=dn?dmaNames.filter(x=>x!==dn&&inDma(c,x)):[];
+        return<div key={c.id+(dn||"")} onClick={()=>mopsGo("c/"+c.id)} style={{display:"flex",gap:14,alignItems:"baseline",padding:"11px 14px",borderBottom:"1px solid #2d1f42",cursor:"pointer"}}>
+          <div style={{...serif,fontSize:17,fontWeight:700,color:"#F0E8F8",minWidth:210}}>{c.name}</div>
+          <div style={{fontSize:12,color:"#9B8EAD",minWidth:120}}>{c.flightStart?campFd(c.flightStart)+(c.flightEnd?" – "+campFd(c.flightEnd):""):"no flight yet"}</div>
+          <div style={{fontSize:13,flex:1,color:opens.length?"#E8DFF0":"#5BC4A0"}}>{campNeedsSentence(c)}{others.length?<span style={{color:"#6B5E80"}}> · shared with {others.join(", ")}</span>:null}</div>
+          <div style={{fontSize:11,fontWeight:700,color:opens.length?(hardDate(c)!=null&&hardDate(c)<=10?"#E85A7A":"#D4A040"):"#5BC4A0"}}>{c.status==="Live"?"LIVE":opens.length?"OWED":"READY"}</div>
+        </div>};
+      const bTags=taglines.filter(t=>!t.brand||t.brand===b.name);
+      return<div>
+        <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:22}}>
+          <div style={{...serif,fontSize:34,fontWeight:700,color:b.color}}>{b.name}</div>
+          <div style={{fontSize:13,color:"#9B8EAD"}}>{mine.length} active campaign{mine.length!==1?"s":""} · {wrappedMine.length} wrapped this year</div>
+        </div>
+        {dmaNames.map(dn=>{const rows=mine.filter(c=>inDma(c,dn));if(!rows.length)return null;
+          return<div key={dn} style={{marginBottom:20}}>
+            <div style={{fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:"#9B8EAD",borderBottom:"2px solid "+b.color+"55",paddingBottom:6,marginBottom:2}}>{dn}</div>
+            {rows.map(c=>row(c,dn))}
+          </div>})}
+        {unplaced.length>0&&<div style={{marginBottom:20}}>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:"#9B8EAD",borderBottom:"2px solid "+b.color+"55",paddingBottom:6,marginBottom:2}}>{unplaced.some(c=>c.markets)?"Other / multi-market":"No market set"}</div>
+          {unplaced.map(c=>row(c,null))}
+        </div>}
+        {mine.length===0&&<div style={{...serif,fontStyle:"italic",fontSize:16,color:"#9B8EAD",padding:"20px 0"}}>Nothing active for {b.name}. When Notion or Intake brings one in, it lands here under its DMA.</div>}
+        <div style={{marginTop:26}}>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:"#C4A0C8",borderBottom:"2px solid rgba(196,160,200,.3)",paddingBottom:6,marginBottom:8}}>Tagline library</div>
+          {bTags.length===0&&<div style={{fontSize:13,color:"#6B5E80",fontStyle:"italic"}}>None on file for this brand yet — add one below; it rides along in every brief.</div>}
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            {bTags.map(t=><div key={t.id} style={{display:"flex",gap:10,alignItems:"center",opacity:t.active===false?.45:1}}>
+              <span style={{...serif,fontSize:15,fontStyle:"italic",color:"#E8DFF0",flex:1}}>“{t.text}”</span>
+              <button onClick={()=>copyText(t.text,"Tagline copied")} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#4AC8E8",fontSize:10,fontWeight:700,cursor:"pointer",padding:"1px 8px"}}>copy</button>
+              <button onClick={()=>{taglinesDirtyRef.current=true;setTaglines(p=>p.map(x=>x.id===t.id?{...x,active:x.active===false}:x))}} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:t.active===false?"#5BC4A0":"#D4A040",fontSize:10,fontWeight:700,cursor:"pointer",padding:"1px 8px"}}>{t.active===false?"revive":"retire"}</button>
+            </div>)}
+          </div>
+          <div style={{display:"flex",gap:8,marginTop:10}}>
+            <input id={"tagadd_"+b.code} placeholder={"New "+b.name+" tagline…"} style={{...mIn,flex:1}} onKeyDown={e=>{if(e.key==="Enter"){const v=e.target.value.trim();if(!v)return;taglinesDirtyRef.current=true;setTaglines(p=>[...p,{id:campUid(),text:v,brand:b.name,active:true,added:new Date().toISOString()}]);e.target.value="";log("Tagline","Added: "+v)}}}/>
+            <Btn small onClick={()=>{const el=document.getElementById("tagadd_"+b.code);const v=el.value.trim();if(!v)return;taglinesDirtyRef.current=true;setTaglines(p=>[...p,{id:campUid(),text:v,brand:b.name,active:true,added:new Date().toISOString()}]);el.value="";log("Tagline","Added: "+v)}}>Add</Btn>
           </div>
         </div>
       </div>;
     };
-    // ── Toolkit: send settings, tagline library, the Notion pipe ──
-    const Toolkit=()=>{
-      const sec=(t,c)=><div style={{fontSize:12,fontWeight:800,color:c||"#D4A040",textTransform:"uppercase",letterSpacing:1.5,margin:"18px 0 6px"}}>{t}</div>;
-      return<div>
-        <div style={{fontSize:12,fontWeight:800,color:"#4AC8E8",textTransform:"uppercase",letterSpacing:1.5,marginBottom:6}}>Send settings</div>
-        <Cd style={{padding:12}}>
+    // ── Campaign page: a full page, nothing expands ──
+    const CampaignPage=(id)=>{
+      const c=campaigns.find(x=>x.id===id);
+      if(!c)return<div style={{...serif,fontSize:18,color:"#9B8EAD",fontStyle:"italic"}}>That campaign isn't here anymore. <span onClick={()=>mopsGo("")} style={{color:"#4AC8E8",cursor:"pointer"}}>Back to the War Room →</span></div>;
+      const bcode=(BRANDS.find(b=>b.name===c.brand)||{}).code||"";
+      const seoOpen=(c.assets||[]).some(a=>!assetInHand(a)&&a.owner==="SEO / Web");
+      const lbl=(t,gold)=><div style={{fontSize:9,color:gold?"#D4A040":"#6B5E80",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>{t}</div>;
+      return<div style={{maxWidth:860}}>
+        <div onClick={()=>mopsGo(bcode?"b/"+bcode:"")} style={{fontSize:12,color:"#4AC8E8",cursor:"pointer",marginBottom:14}}>← {c.brand||"War Room"} desk</div>
+        <input value={c.name} onChange={e=>updCamp(c.id,{name:e.target.value})} style={{...serif,fontSize:32,fontWeight:700,color:"#F0E8F8",background:"transparent",border:"none",outline:"none",width:"100%",padding:0}}/>
+        <div style={{display:"flex",gap:18,flexWrap:"wrap",alignItems:"flex-end",margin:"14px 0 22px"}}>
+          <div>{lbl("Status")}<select value={c.status} onChange={e=>updCamp(c.id,{status:e.target.value})} style={mIn}>{CAMP_CSTATUS.map(s=><option key={s} value={s}>{s}</option>)}</select></div>
+          <div style={{minWidth:180}}>{lbl("Markets (DMA)")}<input value={c.markets||""} onChange={e=>updCamp(c.id,{markets:e.target.value})} style={{...mIn,width:"100%"}}/></div>
+          <div>{lbl("Flight start")}<input type="date" value={campIsoD(c.flightStart)} onChange={e=>updCamp(c.id,{flightStart:e.target.value})} style={mIn}/></div>
+          <div>{lbl("Flight end")}<input type="date" value={campIsoD(c.flightEnd)} onChange={e=>updCamp(c.id,{flightEnd:e.target.value})} style={mIn}/></div>
+          <div>{lbl("Traffic due",true)}<input type="date" value={campIsoD(c.trafficDue)} onChange={e=>updCamp(c.id,{trafficDue:e.target.value})} style={{...mIn,borderColor:"#D4A040"}}/></div>
+        </div>
+        {secHead("What it needs","#D4A040",(c.assets||[]).length?null:"add the first asset below — or send the brief and let the checklist drive")}
+        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
+          {(c.assets||[]).map(a=>{const inH=assetInHand(a);const n=campDTo(a.due);const col=inH?"#5BC4A0":n!=null&&n<0?"#E85A7A":n!=null&&n<=10?"#D4A040":"#9B8EAD";const lk=assetLink(a);
+            return<div key={a.id} style={{display:"flex",gap:11,alignItems:"center",fontSize:15,opacity:a.status==="na"?.45:1}}>
+              <span onClick={()=>updAsset(c.id,a.id,{status:inH?"needed":"done"})}>{box(inH,col==="#9B8EAD"?"#4a3565":col)}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <b style={{color:"#F0E8F8"}}>{a.label||a.type}</b>{a.label?<span style={{color:"#6B5E80",fontSize:12}}> · {a.type}</span>:null}
+                {inH?<span style={{color:"#5BC4A0"}}> — in hand{a.isci&&isciByKey(a.isci)&&isciByKey(a.isci).fileUrl&&a.status!=="done"?" (file on "+a.isci.split("|")[0]+")":""}</span>
+                  :<span style={{color:"#9B8EAD"}}> — owed{a.due?<span> by <b style={{color:col}}>{campFd(a.due)}</b></span>:null}{a.owner?" ("+a.owner+")":""}{a.status==="review"?<span style={{color:"#C4A0C8"}}> · out for review</span>:null}{a.status==="requested"?" · requested":""}</span>}
+              </div>
+              <input type="date" value={campIsoD(a.due)} onChange={e=>updAsset(c.id,a.id,{due:e.target.value})} style={{...mIn,padding:"3px 6px",fontSize:11}}/>
+              {(a.type==="Broadcast Spot"||a.type==="Digital Banner"||a.type==="Station-Made Creative")&&<select value={a.isci||""} onChange={e=>updAsset(c.id,a.id,{isci:e.target.value})} title="Link to the ISCI Registry — a file on the ISCI counts as in hand" style={{...mIn,padding:"3px 6px",fontSize:11,maxWidth:130,color:a.isci?"#5BC4A0":"#6B5E80"}}>
+                <option value="">link ISCI…</option>
+                {iscis.filter(i=>i.brand===c.brand&&i.active&&i.suffix!=="O").map(x=><option key={isciKeyOf(x)} value={isciKeyOf(x)}>{x.code}{x.fileUrl?" ◆":""}</option>)}
+              </select>}
+              {lk&&<a href={lk} target="_blank" rel="noreferrer" style={{fontSize:12,color:"#4AC8E8",textDecoration:"none",fontWeight:700}}>open ↗</a>}
+              {!inH&&a.status!=="review"&&<button onClick={()=>sendReview(c,a)} disabled={mopsBusy} style={{background:"rgba(196,160,200,.12)",border:"1px solid #C4A0C8",borderRadius:4,cursor:"pointer",fontSize:10,fontWeight:700,color:"#C4A0C8",padding:"3px 9px",whiteSpace:"nowrap"}}>send for review</button>}
+              <button onClick={()=>delAsset(c.id,a.id)} style={{background:"none",border:"none",color:"#6B5E80",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button>
+            </div>})}
+        </div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:22}}>
+          <select value="" onChange={e=>{if(e.target.value)addAsset(c.id,e.target.value)}} style={mIn}>
+            <option value="">+ Add asset…</option>
+            {CAMP_ASSET_TYPES.map(x=><option key={x.t} value={x.t}>{x.t}</option>)}
+          </select>
+          <Btn small primary disabled={mopsBusy} onClick={()=>sendBrief(c)}>Brief → Creative Ops</Btn>
+          {seoOpen&&<Btn small color="#4AC8E8" primary disabled={mopsBusy} onClick={()=>sendSeoRequest(c)}>Request → SEO / Web</Btn>}
+          <Btn small onClick={()=>{setMopsMailOpen(o=>!o);setMopsMailTo(hubCfg.creativeOpsEmail||"")}}>Email assets</Btn>
+          <Btn small onClick={()=>setMopsUtmOpen(o=>!o)}>UTMs{(c.utms||[]).length?" ("+(c.utms||[]).length+")":""}</Btn>
+          {c.briefSentAt&&<span style={{fontSize:11,color:"#5BC4A0",fontWeight:600}}>brief sent {String(c.briefSentAt).slice(0,10)}</span>}
+          {c.notionUrl&&<a href={c.notionUrl} target="_blank" rel="noreferrer" style={{fontSize:12,color:"#4AC8E8",textDecoration:"none",fontWeight:600}}>Notion ↗</a>}
+          <span style={{marginLeft:"auto"}}><Btn small danger onClick={()=>delCampaign(c)}>Delete</Btn></span>
+        </div>
+        {mopsMailOpen&&<div style={{display:"flex",gap:8,marginBottom:14,alignItems:"center"}}>
+          <input value={mopsMailTo} onChange={e=>setMopsMailTo(e.target.value)} placeholder="who gets the asset package?" style={{...mIn,flex:1}}/>
+          <Btn small primary disabled={mopsBusy} onClick={()=>sendAssets(c,mopsMailTo)}>Send all links</Btn>
+        </div>}
+        {mopsUtmOpen&&<div style={{border:"1px solid #2d1f42",borderRadius:6,padding:14,marginBottom:14,background:"rgba(74,200,232,.03)"}}>
+          <div style={{fontSize:11,fontWeight:800,color:"#4AC8E8",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>UTM builder — lowercase standard, GA-readable</div>
           <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end"}}>
-            <div style={{flex:"1 1 220px"}}>{lab("Creative Ops email — briefs & reviews go here")}<input value={hubCfg.creativeOpsEmail||""} placeholder="creative-ops@…" onChange={e=>saveCfg({creativeOpsEmail:e.target.value})} style={{...cIn,width:"100%"}}/></div>
-            <div style={{flex:"1 1 220px"}}>{lab("SEO / Web email — pixel & page requests go here")}<input value={hubCfg.seoEmail||""} placeholder="seo-team@…" onChange={e=>saveCfg({seoEmail:e.target.value})} style={{...cIn,width:"100%"}}/></div>
-            <span style={{fontSize:11,color:"#6B5E80"}}>Saved automatically. You're CC'd on everything the Hub sends.</span>
+            <div>{lbl("Platform")}<select value={mopsUtmPlat} onChange={e=>setMopsUtmPlat(e.target.value)} style={mIn}>{UTM_PLATFORMS.map(x=><option key={x.p} value={x.p}>{x.p}</option>)}</select></div>
+            <div style={{flex:"1 1 180px"}}>{lbl("Landing URL")}<input value={mopsUtmBase||CAMP_BRAND_URLS[c.brand]||"https://"} onChange={e=>setMopsUtmBase(e.target.value)} style={{...mIn,width:"100%"}}/></div>
+            <div style={{flex:"1 1 120px"}}>{lbl("Content (creative / ISCI)")}<input value={mopsUtmContent} onChange={e=>setMopsUtmContent(e.target.value)} style={{...mIn,width:"100%"}}/></div>
+            <Btn small primary onClick={()=>{const p=UTM_PLATFORMS.find(x=>x.p===mopsUtmPlat);if(!p)return;const url=campUtmBuild(c,p,mopsUtmBase||CAMP_BRAND_URLS[c.brand]||"https://",mopsUtmContent,"");campTouch();setCampaigns(prev=>prev.map(x=>x.id!==c.id?x:{...x,updated:Date.now(),utms:[...(x.utms||[]),{id:campUid(),platform:mopsUtmPlat,content:mopsUtmContent.trim(),url,created:new Date().toISOString()}]}));log("UTM","Generated: "+c.name+" · "+mopsUtmPlat);setMopsUtmContent("")}}>Generate</Btn>
           </div>
-        </Cd>
-        {sec("Tagline library","#C4A0C8")}
-        <Taglines/>
-        {sec("The Notion pipe","#9b7bb0")}
-        <SourceTab/>
+          {(c.utms||[]).length>0&&<div style={{marginTop:10,display:"flex",flexDirection:"column",gap:5}}>
+            {(c.utms||[]).map(u=><div key={u.id} style={{display:"flex",gap:8,alignItems:"center"}}>
+              <span style={{fontSize:10,fontWeight:700,color:"#4AC8E8",minWidth:100}}>{u.platform}</span>
+              <span style={{fontSize:10,color:"#9B8EAD",flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"monospace"}}>{u.url}</span>
+              <button onClick={()=>copyText(u.url,"UTM copied")} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#4AC8E8",fontSize:10,fontWeight:700,cursor:"pointer",padding:"1px 8px"}}>copy</button>
+              <button onClick={()=>{campTouch();setCampaigns(prev=>prev.map(x=>x.id!==c.id?x:{...x,utms:(x.utms||[]).filter(y=>y.id!==u.id)}))}} style={{background:"none",border:"none",color:"#6B5E80",cursor:"pointer",fontSize:12,fontWeight:800}}>×</button>
+            </div>)}
+            <div><Btn small onClick={()=>copyText((c.utms||[]).map(u=>u.platform+(u.content?" ("+u.content+")":"")+": "+u.url).join("\n"),"All UTMs copied")}>Copy all</Btn></div>
+          </div>}
+        </div>}
+        <div>{lbl("Notes — stations, spot counts, contacts, anything the next person needs")}<textarea value={c.notes||""} onChange={e=>updCamp(c.id,{notes:e.target.value})} style={{...mIn,width:"100%",minHeight:60,resize:"vertical",fontFamily:"'DM Sans',sans-serif"}}/></div>
+        {c.stations&&<div style={{fontSize:12,color:"#9B8EAD",marginTop:8}}><b style={{color:"#C4A0C8"}}>Stations / outlets:</b> {c.stations}</div>}
       </div>;
     };
-    const CalendarTab=()=>{
-      const[calM,setCalM]=useState(()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),1)});
+    // ── Calendar ──
+    const MopsCalendar=()=>{
       const ev={};
       const put=(iso,e)=>{if(!iso)return;(ev[iso]=ev[iso]||[]).push(e)};
-      campaigns.forEach(c=>{
-        if(c.status==="Wrapped")return;
-        if(hubBrand&&c.brand!==hubBrand)return;
+      activeCamps.forEach(c=>{
         const bc=getBrandColor(c.brand);
-        put(campIsoD(c.flightStart),{color:"#5BC4A0",bc,t:"✈ "+c.name,cid:c.id});
-        put(campIsoD(c.trafficDue),{color:"#D4A040",bc,t:"▶ Traffic — "+c.name,cid:c.id});
-        put(campIsoD(c.flightEnd),{color:"#6B5E80",bc,t:"⏹ Ends — "+c.name,cid:c.id});
-        (c.assets||[]).forEach(a=>{if(a.due&&!assetInHand(a))put(campIsoD(a.due),{color:campTypeMeta(a.type).c,bc,t:a.type+(a.label?" · "+a.label:"")+" — "+c.name,cid:c.id})});
+        put(campIsoD(c.flightStart),{color:"#5BC4A0",bc,t:"Launch — "+c.name,cid:c.id});
+        put(campIsoD(c.trafficDue),{color:"#D4A040",bc,t:"Traffic — "+c.name,cid:c.id});
+        put(campIsoD(c.flightEnd),{color:"#6B5E80",bc,t:"Ends — "+c.name,cid:c.id});
+        (c.assets||[]).forEach(a=>{if(a.due&&!assetInHand(a))put(campIsoD(a.due),{color:campTypeMeta(a.type).c,bc,t:(a.label||a.type)+" — "+c.name,cid:c.id})});
       });
-      const y=calM.getFullYear(),m=calM.getMonth();
+      const y=mopsCalM.getFullYear(),m=mopsCalM.getMonth();
       const startDow=new Date(y,m,1).getDay();
       const cells=[];for(let i=0;i<42;i++)cells.push(new Date(y,m,1-startDow+i));
       const iso=(d)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
       const todayIso=iso(new Date());
       return<div>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
-          <Btn small onClick={()=>setCalM(new Date(y,m-1,1))}>‹</Btn>
-          <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:"#F0E8F8",minWidth:180,textAlign:"center",letterSpacing:1}}>{calM.toLocaleDateString("en-US",{month:"long",year:"numeric"})}</span>
-          <Btn small onClick={()=>setCalM(new Date(y,m+1,1))}>›</Btn>
-          <Btn small onClick={()=>{const d=new Date();setCalM(new Date(d.getFullYear(),d.getMonth(),1))}}>Today</Btn>
-          <span style={{marginLeft:"auto",fontSize:11,color:"#6B5E80"}}>✈ launch · ▶ traffic due · ⏹ flight ends · colored = asset due</span>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,flexWrap:"wrap"}}>
+          <Btn small onClick={()=>setMopsCalM(new Date(y,m-1,1))}>‹</Btn>
+          <span style={{...serif,fontSize:26,fontWeight:700,color:"#F0E8F8",minWidth:200,textAlign:"center",letterSpacing:1}}>{mopsCalM.toLocaleDateString("en-US",{month:"long",year:"numeric"})}</span>
+          <Btn small onClick={()=>setMopsCalM(new Date(y,m+1,1))}>›</Btn>
+          <Btn small onClick={()=>{const d=new Date();setMopsCalM(new Date(d.getFullYear(),d.getMonth(),1))}}>Today</Btn>
+          <span style={{marginLeft:"auto",fontSize:11,color:"#6B5E80"}}>green launch · gold traffic due · colored = asset owed · edge = brand</span>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4}}>
           {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=><div key={d} style={{fontSize:10,fontWeight:800,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1,textAlign:"center",padding:"4px 0"}}>{d}</div>)}
           {cells.map((d,i)=>{const di=iso(d);const inM=d.getMonth()===m;const es=ev[di]||[];const isT=di===todayIso;
             return<div key={i} style={{minHeight:88,borderRadius:8,border:"1px solid "+(isT?"#D4A040":"#2d1f42"),background:inM?"linear-gradient(145deg,#2d1f42,#261840)":"rgba(45,31,66,.25)",padding:"4px 5px",overflow:"hidden",boxShadow:isT?"0 0 12px rgba(212,160,64,.15)":"none"}}>
               <div style={{fontSize:10,fontWeight:800,color:isT?"#D4A040":inM?"#9B8EAD":"#4a3565",marginBottom:2}}>{d.getDate()}</div>
-              {es.slice(0,3).map((e,j)=><div key={j} onClick={()=>{setView("campaigns");setExpanded(e.cid)}} title={e.t} style={{fontSize:9,fontWeight:700,color:e.color,background:e.color+"14",borderLeft:"2px solid "+e.bc,borderRadius:3,padding:"1px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}}>{e.t}</div>)}
+              {es.slice(0,3).map((e,j)=><div key={j} onClick={()=>mopsGo("c/"+e.cid)} title={e.t} style={{fontSize:9,fontWeight:700,color:e.color,background:e.color+"14",borderLeft:"2px solid "+e.bc,borderRadius:3,padding:"1px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}}>{e.t}</div>)}
               {es.length>3&&<div style={{fontSize:9,color:"#6B5E80",fontWeight:700}}>+{es.length-3} more</div>}
             </div>})}
         </div>
       </div>;
     };
-    const tab=(id,label)=><button key={id} onClick={()=>setView(id)} style={{padding:"5px 14px",borderRadius:99,border:"1px solid "+(view===id?"#D4A040":"#4a3565"),background:view===id?"rgba(212,160,64,.12)":"transparent",color:view===id?"#D4A040":"#9B8EAD",fontSize:12,fontWeight:700,cursor:"pointer"}}>{label}</button>;
-    return<div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,gap:8,flexWrap:"wrap"}}>
-        <PageHead title="Campaign Hub" pgKey="campaigns" sub="Marketing Ops mission control — campaigns in, assets tracked, work pushed out to whoever owes it."/>
-        <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-          {tab("command","Command")}{tab("campaigns","Campaigns")}{tab("calendar","Calendar")}{tab("toolkit","Toolkit")}
-          <Btn small primary onClick={()=>{setView("campaigns");setAdding(a=>!a);setContractOpen(false);if(hubBrand)setNc(p=>({...p,brand:hubBrand}))}}>{adding?"Cancel":"＋ New campaign"}</Btn>
-          <Btn small color="#4AC8E8" primary onClick={()=>{setView("campaigns");setContractOpen(o=>!o);setAdding(false)}}>📄 From contract</Btn>
+    // ── Intake ──
+    const Intake=()=>{
+      const tracked=new Set(campaigns.map(c=>c.notionId).filter(Boolean));
+      const notConfigured=feedErr&&/not_configured|NOTION_API_KEY/i.test(feedErr);
+      const lbl=(t,gold)=><div style={{fontSize:9,color:gold?"#D4A040":"#6B5E80",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>{t}</div>;
+      return<div style={{maxWidth:900}}>
+        <div style={{...serif,fontSize:34,fontWeight:700,color:"#F0E8F8",marginBottom:4}}>Intake</div>
+        <div style={{fontSize:13,color:"#9B8EAD",marginBottom:22}}>Three doors in, zero retyping: the Notion pipe feeds the desks on its own; a contract can be read straight into the form; the form files itself in Notion.</div>
+        {secHead("From a contract","#4AC8E8","paste the contract, media plan, or kickoff email — or upload the PDF")}
+        <textarea value={contractText} onChange={e=>setContractText(e.target.value)} placeholder="Paste contract / media plan / email text here…" style={{...mIn,width:"100%",minHeight:100,fontFamily:"'DM Sans',sans-serif",resize:"vertical"}}/>
+        <div style={{display:"flex",gap:8,margin:"8px 0 24px",alignItems:"center",flexWrap:"wrap"}}>
+          <label style={{fontSize:12,color:"#4AC8E8",fontWeight:700,cursor:"pointer",border:"1px solid #4a3565",borderRadius:4,padding:"6px 14px"}}>Upload PDF<input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>contractPdf(e.target.files&&e.target.files[0])}/></label>
+          <Btn primary disabled={parsing} onClick={parseContract}>{parsing?"Reading…":"Read it"}</Btn>
+          <span style={{fontSize:11,color:"#6B5E80"}}>It fills the form below; nothing is created until you review and hit Create.</span>
         </div>
+        {secHead("The form","#C4A0C8","lands on the brand's desk and files itself in Notion")}
+        <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"flex-end"}}>
+          <div style={{flex:"2 1 220px"}}>{lbl("Campaign name *")}<input value={nc.name} onChange={e=>setNc(p=>({...p,name:e.target.value}))} style={{...mIn,width:"100%"}}/></div>
+          <div>{lbl("Brand *")}<select value={nc.brand} onChange={e=>setNc(p=>({...p,brand:e.target.value}))} style={mIn}>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select></div>
+          <div style={{flex:"1 1 150px"}}>{lbl("Markets (DMA)")}<input value={nc.markets} placeholder="Chicago, Denver…" onChange={e=>setNc(p=>({...p,markets:e.target.value}))} style={{...mIn,width:"100%"}}/></div>
+          <div>{lbl("Flight start")}<input type="date" value={nc.flightStart} onChange={e=>setNc(p=>({...p,flightStart:e.target.value}))} style={mIn}/></div>
+          <div>{lbl("Flight end")}<input type="date" value={nc.flightEnd} onChange={e=>setNc(p=>({...p,flightEnd:e.target.value}))} style={mIn}/></div>
+          <div>{lbl("Traffic due",true)}<input type="date" value={nc.trafficDue} onChange={e=>setNc(p=>({...p,trafficDue:e.target.value}))} style={{...mIn,borderColor:"#D4A040"}}/></div>
+        </div>
+        <div style={{marginTop:12}}>{lbl("Channels — each one writes the first draft of the checklist")}<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{CAMP_CHANNELS.map(ch=>{const on=nc.channels.includes(ch);return<button key={ch} onClick={()=>setNc(p=>({...p,channels:on?p.channels.filter(x=>x!==ch):[...p.channels,ch]}))} style={{padding:"5px 14px",borderRadius:99,border:"1px solid "+(on?"#9b7bb0":"#4a3565"),background:on?"rgba(155,123,176,.18)":"transparent",color:on?"#C4A0C8":"#6B5E80",fontSize:12,fontWeight:700,cursor:"pointer"}}>{ch}</button>})}</div></div>
+        <div style={{display:"flex",gap:10,marginTop:12,alignItems:"center",flexWrap:"wrap"}}>
+          <input value={nc.desc} placeholder="description — stations, spot counts, contacts" onChange={e=>setNc(p=>({...p,desc:e.target.value}))} style={{...mIn,flex:1,minWidth:240}}/>
+          <label style={{fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:6,cursor:"pointer"}}><input type="checkbox" checked={nc.toNotion} onChange={e=>setNc(p=>({...p,toNotion:e.target.checked}))}/>file in Notion too</label>
+          <Btn primary onClick={createCampaign}>Create campaign</Btn>
+        </div>
+        <div style={{marginTop:28}}>
+          {secHead("The Notion pipe","#9b7bb0","re-pulled every 15 minutes; new rows land on the desks by themselves")}
+          <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}><Btn small disabled={feedBusy} onClick={()=>loadFeed(true)}>{feedBusy?"Pulling…":"Pull now"}</Btn></div>
+          {feedErr&&<div style={{border:"1px solid #E85A7A",background:"rgba(232,90,122,.08)",borderRadius:6,padding:14,marginBottom:10}}>
+            <div style={{color:"#E85A7A",fontWeight:700,fontSize:13}}>{notConfigured?"Notion isn't connected yet.":"Couldn't reach the Notion feed."}</div>
+            <div style={{color:"#9B8EAD",fontSize:12,marginTop:4,lineHeight:1.5}}>{notConfigured?"Needs the NOTION_API_KEY in Vercel — the two-minute admin ask. Everything else here works without it; your 2026 slate is already seeded.":feedErr}</div>
+          </div>}
+          {feed&&<div style={{display:"flex",flexDirection:"column"}}>
+            {((feed&&feed.campaigns)||[]).map((r,i)=>{const done=/Denied|Completed|Complete$/.test(String(r.status||""));
+              return<div key={r.id} style={{display:"flex",gap:10,alignItems:"baseline",padding:"7px 10px",borderBottom:"1px solid #2d1f42",opacity:done?.45:1}}>
+                <span style={{fontSize:13,fontWeight:700,color:"#E8DFF0",flex:1}}>{r.name||"Untitled"}</span>
+                <span style={{fontSize:11,color:getBrandColor(campBrandFix(r.brand)),fontWeight:700}}>{campBrandFix(r.brand)||"—"}</span>
+                <span style={{fontSize:11,color:"#9B8EAD"}}>{r.status||""}</span>
+                {tracked.has(r.id)?<span style={{fontSize:11,fontWeight:700,color:"#5BC4A0"}}>on the desks</span>:done?<span style={{fontSize:11,color:"#6B5E80"}}>skipped</span>:<span style={{fontSize:11,color:"#D4A040"}}>syncing…</span>}
+              </div>})}
+          </div>}
+          {!feed&&!feedErr&&<div style={{fontSize:13,color:"#9B8EAD",fontStyle:"italic"}}>{doomPick(DOOM.loading)}</div>}
+        </div>
+      </div>;
+    };
+    // ── Dispatch ──
+    const Dispatch=()=>{
+      const revs=Object.entries(assetReviews).sort((a,b)=>String(b[1].sentAt||"").localeCompare(String(a[1].sentAt||"")));
+      const lbl=(t)=><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>{t}</div>;
+      return<div style={{maxWidth:860}}>
+        <div style={{...serif,fontSize:34,fontWeight:700,color:"#F0E8F8",marginBottom:4}}>Dispatch</div>
+        <div style={{fontSize:13,color:"#9B8EAD",marginBottom:22}}>Everything the Hub sends, and where it goes. You're CC'd on all of it.</div>
+        {secHead("Where things go","#4AC8E8")}
+        <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:26}}>
+          <div style={{flex:"1 1 260px"}}>{lbl("Creative Ops — briefs & review links")}<input value={hubCfg.creativeOpsEmail||""} placeholder="creative-ops@…" onChange={e=>saveCfg({creativeOpsEmail:e.target.value})} style={{...mIn,width:"100%"}}/></div>
+          <div style={{flex:"1 1 260px"}}>{lbl("SEO / Web — pixel & landing page requests")}<input value={hubCfg.seoEmail||""} placeholder="seo-team@…" onChange={e=>saveCfg({seoEmail:e.target.value})} style={{...mIn,width:"100%"}}/></div>
+        </div>
+        {secHead("Reviews in flight","#C4A0C8","one-click approve-or-feedback links; answers land back on the campaign by themselves")}
+        {revs.length===0&&<div style={{fontSize:13,color:"#6B5E80",fontStyle:"italic"}}>Nothing out for review. Send one from any asset line.</div>}
+        <div style={{display:"flex",flexDirection:"column"}}>
+          {revs.slice(0,20).map(([tok,r])=><div key={tok} style={{display:"flex",gap:10,alignItems:"baseline",padding:"8px 10px",borderBottom:"1px solid #2d1f42"}}>
+            <span style={{fontSize:13,fontWeight:700,color:"#E8DFF0",flex:1}}>{r.assetLabel||r.assetType} <span style={{color:"#6B5E80",fontWeight:500}}>· {r.campName}</span></span>
+            <span style={{fontSize:11,color:"#9B8EAD"}}>{String(r.sentAt||"").slice(0,10)}</span>
+            {r.status==="pending"&&<span style={{fontSize:11,fontWeight:700,color:"#D4A040"}}>awaiting answer</span>}
+            {r.status==="approved"&&<span style={{fontSize:11,fontWeight:700,color:"#5BC4A0"}}>approved</span>}
+            {r.status==="changes"&&<span style={{fontSize:11,fontWeight:700,color:"#E85A7A"}} title={r.feedback}>changes: {String(r.feedback||"").slice(0,40)}{String(r.feedback||"").length>40?"…":""}</span>}
+          </div>)}
+        </div>
+      </div>;
+    };
+    // ── History ──
+    const HistoryPg=()=>{
+      const wrapped=campaigns.filter(c=>c.status==="Wrapped");
+      return<div style={{maxWidth:860}}>
+        <div style={{...serif,fontSize:34,fontWeight:700,color:"#F0E8F8",marginBottom:4}}>History</div>
+        <div style={{fontSize:13,color:"#9B8EAD",marginBottom:22}}>{wrapped.length} wrapped campaigns — the record this year, by brand.</div>
+        {BRANDS.map(b=>{const rows=wrapped.filter(c=>c.brand===b.name);if(!rows.length)return null;
+          return<div key={b.code} style={{marginBottom:18}}>
+            <div style={{fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:b.color,borderBottom:"2px solid "+b.color+"44",paddingBottom:5,marginBottom:2}}>{b.name}</div>
+            {rows.map(c=><div key={c.id} style={{display:"flex",gap:12,alignItems:"baseline",padding:"8px 10px",borderBottom:"1px solid #2d1f42"}}>
+              <span onClick={()=>mopsGo("c/"+c.id)} style={{...serif,fontSize:16,fontWeight:700,color:"#C4A0C8",cursor:"pointer",flex:1}}>{c.name}</span>
+              <span style={{fontSize:12,color:"#9B8EAD"}}>{c.markets}</span>
+              <span style={{fontSize:12,color:"#6B5E80"}}>{c.flightStart?campFd(c.flightStart)+(c.flightEnd?" – "+campFd(c.flightEnd):""):""}</span>
+              <button onClick={()=>updCamp(c.id,{status:"Planning"})} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#5BC4A0",fontSize:10,fontWeight:700,cursor:"pointer",padding:"2px 9px"}}>revive</button>
+            </div>)}
+          </div>})}
+      </div>;
+    };
+    // ── Shell ──
+    const mopsNav=[
+      {id:"",l:"The War Room"},
+      {id:"cal",l:"Calendar"},
+      {id:"intake",l:"Intake"},
+      {id:"dispatch",l:"Dispatch"},
+      {id:"history",l:"History"}
+    ];
+    const deskOf=(c)=>"b/"+c;
+    let body;
+    if(sub.startsWith("c/"))body=CampaignPage(sub.slice(2));
+    else if(sub.startsWith("b/"))body=BrandDesk(sub.slice(2));
+    else if(sub==="cal")body=MopsCalendar();
+    else if(sub==="intake")body=Intake();
+    else if(sub==="dispatch")body=Dispatch();
+    else if(sub==="history")body=HistoryPg();
+    else body=WarRoom();
+    return<div style={{display:"flex",height:"100vh",background:"radial-gradient(ellipse at 50% 0%, #2a1a3e 0%, #1e1233 60%)",overflow:"hidden"}}>
+      <div style={{width:216,background:"linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
+        <div style={{padding:"16px 14px 12px",borderBottom:"1px solid rgba(212,160,64,.15)"}}>
+          <div style={{...serif,fontSize:19,fontWeight:700,color:"#D4A040",letterSpacing:.5}}>Marketing Ops</div>
+          <div style={{fontSize:8,color:"#9B8EAD",fontWeight:600,letterSpacing:2}}>DOOM & DELIVERABLES</div>
+        </div>
+        <div style={{flex:1,overflowY:"auto",padding:"8px 0"}}>
+          {mopsNav.map(n=>{const a=(n.id===""&&(sub===""||sub.startsWith("c/")))||(n.id!==""&&sub===n.id);
+            return<button key={n.id||"war"} onClick={()=>mopsGo(n.id)} style={{display:"block",width:"100%",padding:"9px 16px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent"}}>{n.l}</button>})}
+          <div style={{padding:"14px 16px 5px",fontSize:9,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:"#4a3565"}}>Desks</div>
+          {BRANDS.map(b=>{const a=sub==="b/"+b.code;const n=activeCamps.filter(c=>c.brand===b.name).length;const miss=activeCamps.filter(c=>c.brand===b.name).reduce((t,c)=>t+openOf(c).length,0);
+            return<button key={b.code} onClick={()=>mopsGo(deskOf(b.code))} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"8px 16px",border:"none",background:a?"linear-gradient(90deg,"+b.color+"1f,transparent)":"transparent",color:a?b.color:"#6B5E80",fontSize:12,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid "+b.color:"3px solid transparent"}}>
+              <span style={{width:7,height:7,borderRadius:2,background:b.color,opacity:n?1:.3}}/>{b.name}
+              {miss>0&&<span style={{marginLeft:"auto",fontSize:10,fontWeight:800,color:"#E85A7A"}}>{miss}</span>}
+              {miss===0&&n>0&&<span style={{marginLeft:"auto",fontSize:10,color:"#5BC4A0"}}>✓</span>}
+            </button>})}
+        </div>
+        <button onClick={()=>{navigateHash("");}} style={{margin:"0 0 0 0",padding:"12px 16px",border:"none",borderTop:"1px solid rgba(155,123,176,.15)",background:"transparent",color:"#9B8EAD",fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left"}}>← Back to Doom</button>
       </div>
-      <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
-        <button onClick={()=>setHubBrand("")} style={{padding:"4px 12px",borderRadius:99,border:"1px solid "+(hubBrand===""?"#C4A0C8":"#4a3565"),background:hubBrand===""?"rgba(196,160,200,.15)":"transparent",color:hubBrand===""?"#C4A0C8":"#6B5E80",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:.5}}>ALL BRANDS</button>
-        {BRANDS.map(b=>{const on=hubBrand===b.name;const n=campaigns.filter(c=>c.brand===b.name&&c.status!=="Wrapped").length;return<button key={b.code} onClick={()=>setHubBrand(on?"":b.name)} style={{padding:"4px 12px",borderRadius:99,border:"1px solid "+(on?b.color:"#4a3565"),background:on?b.color+"22":"transparent",color:on?b.color:"#6B5E80",fontSize:11,fontWeight:800,cursor:"pointer",letterSpacing:.5}}>{b.name}{n>0?" · "+n:""}</button>})}
-      </div>
-      {view==="command"&&<Command/>}
-      {view==="campaigns"&&<div>
-        {contractOpen&&<Cd style={{padding:14,marginBottom:10,borderLeft:"3px solid #4AC8E8"}}>
-          <div style={{fontSize:12,fontWeight:800,color:"#4AC8E8",textTransform:"uppercase",letterSpacing:1.5,marginBottom:6}}>📄 Campaign from a contract</div>
-          <div style={{fontSize:12,color:"#9B8EAD",marginBottom:8,lineHeight:1.5}}>Paste the contract, media plan, or kickoff email — or upload the PDF. Doom reads it and fills in the intake form for you to check.</div>
-          <textarea value={contractText} onChange={e=>setContractText(e.target.value)} placeholder="Paste contract / media plan / email text here…" style={{...cIn,width:"100%",minHeight:110,fontFamily:"'DM Sans',sans-serif",resize:"vertical"}}/>
-          <div style={{display:"flex",gap:8,marginTop:8,alignItems:"center",flexWrap:"wrap"}}>
-            <label style={{fontSize:12,color:"#4AC8E8",fontWeight:700,cursor:"pointer",border:"1px solid #4a3565",borderRadius:6,padding:"5px 12px"}}>Upload PDF<input type="file" accept=".pdf" style={{display:"none"}} onChange={e=>contractPdf(e.target.files&&e.target.files[0])}/></label>
-            <Btn primary disabled={parsing} onClick={parseContract}>{parsing?"Reading…":"Read it"}</Btn>
-            <span style={{fontSize:11,color:"#6B5E80"}}>Nothing is created until you review and hit Create.</span>
-          </div>
-        </Cd>}
-        {adding&&<Cd style={{padding:14,marginBottom:10,borderLeft:"3px solid #9b7bb0"}}>
-          <div style={{fontSize:12,fontWeight:800,color:"#C4A0C8",textTransform:"uppercase",letterSpacing:1.5,marginBottom:8}}>New campaign — lands in Doom and files itself in Notion</div>
-          <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end"}}>
-            <div style={{flex:"2 1 200px"}}>{lab("Campaign name *")}<input autoFocus value={nc.name} onChange={e=>setNc(p=>({...p,name:e.target.value}))} style={{...cIn,width:"100%"}}/></div>
-            <div>{lab("Brand *")}<select value={nc.brand} onChange={e=>setNc(p=>({...p,brand:e.target.value}))} style={cSel}>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select></div>
-            <div style={{flex:"1 1 140px"}}>{lab("Markets")}<input value={nc.markets} placeholder="Chicago, Denver…" onChange={e=>setNc(p=>({...p,markets:e.target.value}))} style={{...cIn,width:"100%"}}/></div>
-            <div>{lab("Flight start")}<input type="date" value={nc.flightStart} onChange={e=>setNc(p=>({...p,flightStart:e.target.value}))} style={cIn}/></div>
-            <div>{lab("Flight end")}<input type="date" value={nc.flightEnd} onChange={e=>setNc(p=>({...p,flightEnd:e.target.value}))} style={cIn}/></div>
-            <div>{lab("Traffic due",true)}<input type="date" value={nc.trafficDue} onChange={e=>setNc(p=>({...p,trafficDue:e.target.value}))} style={{...cIn,borderColor:"#D4A040"}}/></div>
-          </div>
-          <div style={{marginTop:10}}>{lab("Channels — each one writes the first draft of the asset checklist")}<div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{CAMP_CHANNELS.map(ch=>{const on=nc.channels.includes(ch);return<button key={ch} onClick={()=>setNc(p=>({...p,channels:on?p.channels.filter(x=>x!==ch):[...p.channels,ch]}))} style={{padding:"4px 12px",borderRadius:99,border:"1px solid "+(on?"#9b7bb0":"#4a3565"),background:on?"rgba(155,123,176,.18)":"transparent",color:on?"#C4A0C8":"#6B5E80",fontSize:11,fontWeight:700,cursor:"pointer"}}>{ch}</button>})}</div></div>
-          <div style={{display:"flex",gap:8,marginTop:10,alignItems:"center",flexWrap:"wrap"}}>
-            <input value={nc.desc} placeholder="description — stations, spot counts, contacts, anything the next person needs" onChange={e=>setNc(p=>({...p,desc:e.target.value}))} style={{...cIn,flex:1,minWidth:220}}/>
-            <label style={{fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:5,cursor:"pointer"}}><input type="checkbox" checked={nc.toNotion} onChange={e=>setNc(p=>({...p,toNotion:e.target.checked}))}/>file in Notion too</label>
-            <Btn primary onClick={createCampaign}>Create campaign</Btn>
-          </div>
-        </Cd>}
-        {campaigns.length===0&&!adding&&!contractOpen&&<Cd style={{padding:36,textAlign:"center"}}>
-          <div style={{fontSize:15,color:"#E8DFF0",fontWeight:700,marginBottom:6}}>The board fills itself.</div>
-          <div style={{fontSize:12,color:"#9B8EAD",marginBottom:14,lineHeight:1.6}}>Campaigns sync in from Notion automatically once the key is set (Toolkit tab).<br/>Or add one — by hand or straight from a contract.</div>
-        </Cd>}
-        {hubBrand?active.map(CampCard):[...BRANDS.map(b=>b.name),"__other__"].map(bn=>{
-          const rows=active.filter(c=>bn==="__other__"?!BRANDS.some(b=>b.name===c.brand):c.brand===bn);
-          if(!rows.length)return null;
-          const col=bn==="__other__"?"#9B8EAD":getBrandColor(bn);
-          return<div key={bn} style={{marginBottom:16}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-              <span style={{width:10,height:10,borderRadius:3,background:col,boxShadow:"0 0 8px "+col+"55"}}/>
-              <span style={{fontSize:16,fontWeight:800,color:col,letterSpacing:1.2,textTransform:"uppercase",fontFamily:"'Cormorant Garamond',serif"}}>{bn==="__other__"?"Other":bn}</span>
-              <span style={{fontSize:11,color:"#6B5E80"}}>· {rows.length} campaign{rows.length!==1?"s":""}</span>
-              <span style={{flex:1,height:1,background:"linear-gradient(90deg,"+col+"33,transparent)"}}/>
-            </div>
-            {rows.map(CampCard)}
-          </div>;
-        })}
-        {campaigns.length>0&&active.length===0&&!adding&&<Cd style={{padding:24,textAlign:"center",color:"#9B8EAD",fontStyle:"italic"}}>{hubBrand?"No active "+hubBrand+" campaigns. A rare moment of peace.":"No active campaigns."}</Cd>}
-        {wrapped.length>0&&<div style={{marginTop:10}}>
-          <button onClick={()=>setShowWrapped(p=>!p)} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"#4AC8E8",fontWeight:600,padding:0}}>{showWrapped?"Hide":"Show"} {wrapped.length} wrapped campaign{wrapped.length>1?"s":""}</button>
-          {showWrapped&&wrapped.map(CampCard)}
-        </div>}
-      </div>}
-      {view==="calendar"&&<CalendarTab/>}
-      {view==="toolkit"&&<Toolkit/>}
+      <div style={{flex:1,overflowY:"auto",padding:"32px 40px"}}>{body}</div>
     </div>;
   };
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"campaigns",l:"Campaign Hub",e:"📣"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"campaigns",l:"Marketing Ops",e:"📣"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
@@ -13205,11 +13200,11 @@ Rules:
         <BookMarginNote author="muses">It saves itself, no button to press<br/>But heed the banners — avoid the mess!</BookMarginNote>
       </div>,damageEffects:<>{<BookDroolStain style={{bottom:16,left:24,width:72,height:72,opacity:.2}}/>}</>},
 
-      {title:"The Campaign Hub",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p>The Campaign Hub (📣) is Marketing Ops mission control, in four rooms. <b>Command</b> is where you land: one sentence that says what's in flight and what's missing, a "waiting on" list grouped by campaign that names every outstanding asset and its date, and the next fourteen days. <b>Campaigns</b> is the working board, grouped by brand. <b>Calendar</b> is the month grid — launches, traffic due dates, and open assets on their days. <b>Toolkit</b> holds the send settings, the tagline library, and the Notion pipe.</p>
-        <p>Campaigns arrive three ways, none of them retyping: they sync in from Notion automatically; the intake form files what you create back into Notion; or <b>📄 From contract</b> reads a pasted contract, media plan, or kickoff email (PDF upload included) and fills the form for you to check. Channels seed the asset checklist. Broadcast and banner assets link to the ISCI Registry — a creative file on the ISCI counts as in hand, no bookkeeping.</p>
-        <p>Then the Hub pushes the work out: a creative brief to Creative Ops with hard due dates and the brand's taglines, pixel and landing-page requests to SEO/Web, the full asset package to anyone, and one-click review links whose approve-or-feedback answers flow back into asset statuses on their own. One campaign never makes more than one alert line — overdue assets and at-risk launches summarize into a single sentence on Command Center, and assets due this week badge the sidebar.</p>
-        <BookMarginNote author="meg">Four rooms. No excuses. I'll be in all of them.</BookMarginNote>
+      {title:"The Marketing Ops Hub",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>Marketing Ops (📣) is its own hub inside Doom, on the OOH Hub pattern — its own sidebar, its own pages. <b>The War Room</b> is where you land: three columns, time marching left to right — act now, on the horizon, live with nothing owed. Every campaign lives in exactly one column, labeled brand and DMA, with its needs written as words and checkboxes: tick the box when the thing is in hand.</p>
+        <p><b>A desk per brand</b> breaks that brand's campaigns up by DMA — one line each with flight, needs, and status — plus the brand's tagline library, which rides along in every brief. Click any campaign anywhere and it opens as a full <b>campaign page</b> (nothing expands in place): the checklist, ISCI links (a file on the linked ISCI counts as in hand automatically), the send buttons — brief to Creative Ops with hard due dates, requests to SEO/Web, review links, the asset package — and the UTM builder.</p>
+        <p><b>Intake</b> has three doors, none of them retyping: the Notion pipe syncs campaigns onto the desks every 15 minutes; a pasted contract or uploaded PDF is read by AI straight into the form; and the form files what you create back into Notion. <b>Calendar</b> is the month grid. <b>Dispatch</b> holds the send addresses and every review in flight with its answer. <b>History</b> is the wrapped record by brand. Overdue assets and at-risk launches still alert on Command Center — one line per campaign — and assets due this week badge the sidebar.</p>
+        <BookMarginNote author="meg">My own wing of the palace. About time.</BookMarginNote>
       </div>,damageEffects:<>{<BookInkSplatter style={{bottom:24,right:16,opacity:.4}}/>}{<BookLipstickMark style={{top:32,left:24,opacity:.4,transform:"rotate(-12deg)"}}/>}</>},
 
       {title:"End of the Line",content:<div style={{display:"flex",flexDirection:"column",gap:14,textAlign:"center",paddingTop:24}}>
@@ -13397,6 +13392,15 @@ Rules:
   </div></div>;
   if(authed&&mustChangePw)return<ForcedPwChange/>;
   if(!dbLoaded)return null; // HTML loader stays visible until data is ready
+  if(isMopsHub)return<React.Fragment>
+    {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
+    {syncError&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ A save just failed ({COL_LABEL(syncError.col)}) — your last change may NOT have been saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Reload</button></div>}
+    {/* Called as a function, not <MopsHub/> — defined inside App, a component
+        identity change every render would remount the hub and drop input
+        focus (same note as OohHub below). All its state lives at App level. */}
+    {MopsHub()}
+    {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#2d1f42",color:"#E8DFF0",padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.3)",zIndex:9999,border:"1px solid #4a3565"}}>{toast}</div>}
+  </React.Fragment>;
   if(isOohHub)return<React.Fragment>
     {dbLoaded&&!loadCompleteRef.current&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>Database load failed — changes will NOT be saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Retry</button></div>}
     {syncError&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:"#E85A7A",color:"#fff",padding:"8px 16px",fontSize:13,fontWeight:700,textAlign:"center"}}>⚠ A save just failed ({COL_LABEL(syncError.col)}) — your last change may NOT have been saved. <button onClick={()=>window.location.reload()} style={{marginLeft:8,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Reload</button> <button onClick={()=>setSyncError(null)} style={{marginLeft:6,padding:"2px 10px",borderRadius:4,border:"1px solid #fff",background:"transparent",color:"#fff",cursor:"pointer",fontWeight:700}}>Dismiss</button></div>}
@@ -13428,7 +13432,7 @@ Rules:
           {estHits.map(e=><div key={e.num} onClick={()=>{setGlobalSearch("");setPg("est")}} style={{padding:"5px 8px",fontSize:14,color:"#9B8EAD",cursor:"pointer",borderBottom:"1px solid #3a2955"}} onMouseEnter={e=>e.target.style.background="#4a3565"} onMouseLeave={e=>e.target.style.background="transparent"}><span style={{fontWeight:700}}>{e.num}</span> <span style={{color:"#9B8EAD"}}>{e.market}</span></div>)}
         </div>})()}
       </div>
-      <nav style={{flex:1,minHeight:0,overflowY:"auto",padding:"3px 0",scrollbarWidth:"thin",scrollbarColor:"#4a3565 transparent"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:(pg===n.id&&!isOohHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="campaigns"){const st=(()=>{const d=new Date();d.setHours(0,0,0,0);return d.getTime()})();const ct=(campaigns||[]).reduce((t,c)=>{if(c.status==="Wrapped")return t;return t+(c.assets||[]).filter(a=>{if(a.status==="done"||a.status==="na"||!a.due)return false;const d=new Date(String(a.due).slice(0,10)+"T00:00:00");if(isNaN(d.getTime()))return false;return Math.round((d.getTime()-st)/86400000)<=7}).length},0);return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 12px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative",transition:"all .15s",letterSpacing:a?.3:0}} onMouseEnter={e=>{if(!a)e.currentTarget.style.background="rgba(155,123,176,.06)"}} onMouseLeave={e=>{if(!a)e.currentTarget.style.background="transparent"}}><span style={{fontSize:14}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:12,fontWeight:800,padding:"1px 6px",borderRadius:10,background:typeof badge==="number"?"#E85A7A":"#D4A040",color:"#fff",boxShadow:typeof badge==="number"?"0 2px 8px rgba(232,90,122,.3)":"0 2px 8px rgba(212,160,64,.3)"}}>{badge}</span>}</button>})}</nav>
+      <nav style={{flex:1,minHeight:0,overflowY:"auto",padding:"3px 0",scrollbarWidth:"thin",scrollbarColor:"#4a3565 transparent"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:n.id==="campaigns"?isMopsHub:(pg===n.id&&!isOohHub&&!isMopsHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="campaigns"){const st=(()=>{const d=new Date();d.setHours(0,0,0,0);return d.getTime()})();const ct=(campaigns||[]).reduce((t,c)=>{if(c.status==="Wrapped")return t;return t+(c.assets||[]).filter(a=>{if(a.status==="done"||a.status==="na"||!a.due)return false;const d=new Date(String(a.due).slice(0,10)+"T00:00:00");if(isNaN(d.getTime()))return false;return Math.round((d.getTime()-st)/86400000)<=7}).length},0);return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 12px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative",transition:"all .15s",letterSpacing:a?.3:0}} onMouseEnter={e=>{if(!a)e.currentTarget.style.background="rgba(155,123,176,.06)"}} onMouseLeave={e=>{if(!a)e.currentTarget.style.background="transparent"}}><span style={{fontSize:14}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:12,fontWeight:800,padding:"1px 6px",borderRadius:10,background:typeof badge==="number"?"#E85A7A":"#D4A040",color:"#fff",boxShadow:typeof badge==="number"?"0 2px 8px rgba(232,90,122,.3)":"0 2px 8px rgba(212,160,64,.3)"}}>{badge}</span>}</button>})}</nav>
       <div style={{padding:"10px 12px",borderTop:"1px solid rgba(212,160,64,.1)",fontSize:12,color:"#6B5E80"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,color:"#D4A040",letterSpacing:1}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #4a3565",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#9B8EAD",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:syncError?"#E85A7A":"#5BC4A0"}}>{syncError?"Save failed":"Synced "+(Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago")}</span>}</div><div style={{marginTop:2,color:"#6B5E80",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>Signed in as <span style={{color:"#9B8EAD",fontWeight:700}}>{currentUser()}</span></span><span style={{display:"flex",gap:8}}><button onClick={()=>setShowChangePw(true)} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Change PIN</button><button onClick={signOut} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Sign out</button></span></div></div>
     </div>
     <div style={{flex:1,overflowY:"auto",padding:16}}>
@@ -14214,7 +14218,6 @@ Rules:
           {pg==="planner"&&PlannerPg()}
           {pg==="notif"&&pages["notif"]}
           {pg==="team"&&isManagerRole()&&<TeamPg/>}
-          {pg==="campaigns"&&<CampaignsPg/>}
           {pg==="docs"&&<DocsPg/>}
         </MDiv>
       </AnimatePresence>
