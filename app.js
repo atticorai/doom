@@ -11757,7 +11757,7 @@ Rules:
           <option value="">⛓ link ISCI…</option>
           {brandIscis(c.brand).map(x=><option key={isciKeyOf(x)} value={isciKeyOf(x)}>{x.code}{x.fileUrl?" 📎":""} {String(x.title||"").slice(0,18)}</option>)}
         </select>}
-        <input value={a.owner||""} placeholder="owner" onChange={e=>updAsset(c.id,a.id,{owner:e.target.value})} style={{...cIn,width:84}}/>
+        <input value={a.owner||""} placeholder="owner" onChange={e=>updAsset(c.id,a.id,{owner:e.target.value})} style={{...cIn,width:110}}/>
         <input type="date" value={campIsoD(a.due)} onChange={e=>updAsset(c.id,a.id,{due:e.target.value})} style={{...cIn,borderColor:lateA?"#E85A7A":"#4a3565"}}/>
         {a.due&&!inHand&&<span style={{fontSize:10,fontWeight:700,color:lateA?"#E85A7A":n<=7?"#D4A040":"#6B5E80",minWidth:44}}>{dLbl(n)}</span>}
         <select value={a.status} onChange={e=>updAsset(c.id,a.id,{status:e.target.value})} style={{...cSel,color:st[2],fontWeight:700}}>{CAMP_ASTATUS.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}</select>
