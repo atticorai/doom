@@ -822,7 +822,6 @@ const CAMPAIGN_SEED=[
   _CS("Stars & Strings – Audacy","Lerner & Rowe","Planning","Chicago, Denver, Minneapolis","2026-10-25","2026-11-21","","62288def1b23478cb8b99e432d01e5d2","WUSN-FM Chicago (127x :30s); KQMT-FM Denver (187x); KQKS-HD2 Denver (435x); KMNB-FM Minneapolis (444x)",[["Broadcast Spot",":30 Radio"],["Digital Banner","Event banner"],["Social Graphic","Promo graphic"]]),
   _CS("ChiGivesBack Toy Drive – B96","Lerner & Rowe","Planning","Chicago","2026-11-20","2026-12-31","","89c0c7d9b15145cc9d8676a0d8f2aefc","B96 / Audacy",[["Broadcast Spot",":30 Radio"]]),
   _CS("Minnesota Star Tribune – MN Rising + Minnesota's Best","Postman Law","Planning","Minneapolis","","","","dcbcd39f227d43a7ae8d95b2e3d7668c","StarTribune.com, MN Rising, Minnesota's Best, Daily Delivery Podcast, Strib Varsity",[["Broadcast Spot",":30"],["Broadcast Spot",":15"],["Digital Banner",""],["Social Graphic",""]]),
-  _CS("Personal Injury – Postman Law TikTok","Postman Law","Planning","Chicago, Cincinnati, Denver, Minneapolis","","","","327991a2b60380de9367e59f1d2807ba","TikTok",[["Social Video","Vertical cutdowns"]]),
   // ── In market — the always-on brand campaigns ──
   _CS("Personal Injury – Chicago","Postman Law","Live","Chicago","2026-01-22","","","24c991a2b60380f198d3da36c22b8038","",[["Broadcast Spot",":30 TV","done"],["Broadcast Spot",":30 Radio","done"]]),
   _CS("Personal Injury – Cincinnati","Postman Law","Live","Cincinnati","2026-01-22","","","24c991a2b6038087ac9de6182b84ef49","",[["Broadcast Spot",":30 TV","done"],["Broadcast Spot",":30 Radio","done"]]),
@@ -1651,6 +1650,11 @@ const App=()=>{
               if(diff){changed=true;next=next.map(x=>x.id===c.id?{...x,...upd,updated:Date.now()}:x)}
             }else{
               if(/Denied|Completed|Complete$/.test(String(row.status||"")))return;
+              // Only rows with traffic substance become campaigns here — a
+              // paid-social record with no dates, spots, or media channels is
+              // the marketing team's to run, not Marketing Ops traffic work.
+              const trafficky=(row.channels||[]).some(ch=>["TV","Radio","OOH","CTV/OTT","Media"].includes(ch))||row.flightStart||row.trafficDue||(row.assets||[]).length||(row.spots||[]).length;
+              if(!trafficky)return;
               changed=true;next=[campFromNotion(row),...next];
             }
           });
@@ -11559,7 +11563,8 @@ Rules:
   const[mopsBusy,setMopsBusy]=useState(false);
   const[mopsUtmOpen,setMopsUtmOpen]=useState(false);
   const[mopsMailOpen,setMopsMailOpen]=useState(false);
-  const[nc,setNc]=useState({name:"",brand:"Postman Law",markets:"",flightStart:"",flightEnd:"",trafficDue:"",channels:[],desc:"",toNotion:true});
+  const NC_EMPTY={name:"",brand:"Postman Law",markets:"",flightStart:"",flightEnd:"",trafficDue:"",channels:[],spots:[],assetTypes:[],stations:"",partner:"",contact:"",cost:"",desc:"",toNotion:true};
+  const[nc,setNc]=useState(NC_EMPTY);
   const[contractText,setContractText]=useState("");
   const[parsing,setParsing]=useState(false);
   const[feed,setFeed]=useState(null);
@@ -11596,15 +11601,18 @@ Rules:
     campTouch();const id=campUid();
     const due=nc.trafficDue||campMinusDays(nc.flightStart,7);
     const assets=[];const dd={};
-    nc.channels.forEach(ch=>(CAMP_CHANNEL_SEEDS[ch]||[]).forEach(([t,l])=>{const k=t+"|"+l;if(dd[k])return;dd[k]=1;assets.push(campMkAsset(t,l,due))}));
-    setCampaigns(p=>[{id,name:nm,brand:nc.brand,markets:nc.markets.trim(),status:"Planning",flightStart:nc.flightStart,flightEnd:nc.flightEnd,trafficDue:nc.trafficDue,channels:nc.channels,stations:"",notes:nc.desc.trim(),notionUrl:"",notionId:null,assets,utms:[],created:Date.now(),updated:Date.now()},...p]);
+    const seed=(t,l)=>{const k=t+"|"+l;if(dd[k])return;dd[k]=1;assets.push(campMkAsset(t,l,due))};
+    nc.spots.forEach(s=>seed("Broadcast Spot",s+" spot"));
+    nc.assetTypes.forEach(t=>seed(t,""));
+    nc.channels.forEach(ch=>(CAMP_CHANNEL_SEEDS[ch]||[]).forEach(([t,l])=>{if(t==="Broadcast Spot"&&nc.spots.length)return;seed(t,l)}));
+    setCampaigns(p=>[{id,name:nm,brand:nc.brand,markets:nc.markets.trim(),status:"Planning",flightStart:nc.flightStart,flightEnd:nc.flightEnd,trafficDue:nc.trafficDue,channels:nc.channels,stations:nc.stations.trim(),partner:nc.partner.trim(),contact:nc.contact.trim(),cost:nc.cost,notes:nc.desc.trim(),notionUrl:"",notionId:null,assets,utms:[],created:Date.now(),updated:Date.now()},...p]);
     log("Campaign","Created: "+nm);
     const snap={...nc};
-    setNc({name:"",brand:nc.brand,markets:"",flightStart:"",flightEnd:"",trafficDue:"",channels:[],desc:"",toNotion:true});
+    setNc({...NC_EMPTY,brand:nc.brand});
     mopsGo("c/"+id);
     if(snap.toNotion){
       try{
-        const r=await fetch("/api/campaigns",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({name:nm,brand:snap.brand,channels:snap.channels,markets:snap.markets.trim(),launch:snap.flightStart,flightEnd:snap.flightEnd,trafficDue:snap.trafficDue,description:snap.desc.trim()})});
+        const r=await fetch("/api/campaigns",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({name:nm,brand:snap.brand,channels:snap.channels,markets:snap.markets.trim(),launch:snap.flightStart,flightEnd:snap.flightEnd,trafficDue:snap.trafficDue,description:[snap.desc.trim(),snap.stations?"Stations: "+snap.stations.trim():"",snap.partner?"Partner: "+snap.partner.trim():"",snap.contact?"Contact: "+snap.contact.trim():"",snap.cost?"Cost: $"+snap.cost:"",snap.spots.length?"Spots: "+snap.spots.join(", "):""].filter(Boolean).join(" | ")})});
         const d=await r.json().catch(()=>({}));
         if(r.ok&&d&&d.id){campTouch();setCampaigns(p=>p.map(c=>c.id===id?{...c,notionId:d.id,notionUrl:d.url||""}:c));notify("Tracking: "+nm+" — created in Doom and filed in Notion")}
         else notify("Tracking: "+nm+" — saved in Doom; Notion push failed ("+(d.message||d.error||r.status)+")");
@@ -11646,11 +11654,13 @@ Rules:
     }catch(e){notify("Couldn't parse that — "+(/configured/.test(String(e.message||e))?"the AI key isn't set in Vercel yet.":"try cleaner text, or enter it manually."))}
     setParsing(false);
   };
-  const sendBrief=async(c)=>{
+  // Builders are pure: they produce the exact email. Nothing sends until the
+  // preview modal's Send button — you always see it first.
+  const buildBriefEmail=(c)=>{
     const to=(hubCfg.creativeOpsEmail||"").trim();
-    if(!to){mopsGo("dispatch");notify("Set the Creative Ops email first — first box on the Dispatch page");return}
+    if(!to){mopsGo("dispatch");notify("Set the Creative Ops email first — first box on the Dispatch page");return null}
     const missing=(c.assets||[]).filter(a=>!assetInHand(a)&&a.owner!=="SEO / Web");
-    if(!missing.length){notify("Nothing missing on this one. "+doomPick(DOOM.sprinkle));return}
+    if(!missing.length){notify("Nothing missing on this one. "+doomPick(DOOM.sprinkle));return null}
     const tl=taglines.filter(t=>t.active!==false&&(!t.brand||t.brand===c.brand));
     const rows=missing.map(a=>"<tr><td style='padding:6px 10px;border:1px solid #ddd'><b>"+escHtml(a.type)+"</b>"+(a.label?" — "+escHtml(a.label):"")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.due||"ASAP")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.owner||"")+"</td></tr>").join("");
     const body="Hello,<br><br>Creative brief for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+(c.markets?" — "+escHtml(c.markets):"")+").<br><br>"
@@ -11662,35 +11672,42 @@ Rules:
       +"<br>These dates are set so traffic can go out on time"+(c.trafficDue?" ("+escHtml(c.trafficDue)+")":"")+(c.flightStart?" for the "+escHtml(c.flightStart)+" launch":"")+"."
       +(tl.length?"<br><br><b>Approved tagline library"+(c.brand?" — "+escHtml(c.brand):"")+":</b><br>"+tl.map(t=>"• "+escHtml(t.text)).join("<br>"):"")
       +"<br><br>Reply to this email with questions; finished files can come back on this thread.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
-    setMopsBusy(true);
-    try{
-      const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to,cc:"emm.caban@atticor.ai",subject:"Creative Brief — "+c.name+(c.brand?" ("+c.brand+")":""),message:body})});
-      if(!r.ok)throw new Error("send failed");
-      campTouch();setCampaigns(p=>p.map(x=>x.id!==c.id?x:{...x,briefSentAt:new Date().toISOString(),updated:Date.now(),assets:(x.assets||[]).map(a=>(!assetInHand(a)&&a.status==="needed"&&a.owner!=="SEO / Web")?{...a,status:"requested"}:a)}));
-      log("Campaign Brief","Sent to Creative Ops: "+c.name+" — "+missing.length+" asset(s)");
-      notify("Brief sent to Creative Ops. "+doomPick(DOOM.send));
-    }catch(e){notify("Brief email failed to send — check the connection and try again")}
-    setMopsBusy(false);
+    return{to,subject:"Creative Brief — "+c.name+(c.brand?" ("+c.brand+")":""),body};
   };
-  const sendSeoRequest=async(c)=>{
+  const buildSeoEmail=(c)=>{
     const to=(hubCfg.seoEmail||"").trim();
-    if(!to){mopsGo("dispatch");notify("Set the SEO / Web email first — on the Dispatch page");return}
+    if(!to){mopsGo("dispatch");notify("Set the SEO / Web email first — on the Dispatch page");return null}
     const items=(c.assets||[]).filter(a=>!assetInHand(a)&&a.owner==="SEO / Web");
-    if(!items.length){notify("No pixel / landing page / tracking items open on this one.");return}
+    if(!items.length){notify("No pixel / landing page / tracking items open on this one.");return null}
     const rows=items.map(a=>"<tr><td style='padding:6px 10px;border:1px solid #ddd'><b>"+escHtml(a.type)+"</b>"+(a.label?" — "+escHtml(a.label):"")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.due||"ASAP")+"</td></tr>").join("");
     const body="Hello,<br><br>Tracking / web request for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+(c.markets?" — "+escHtml(c.markets):"")+").<br><br>"
       +(c.flightStart?"<b>Launch:</b> "+escHtml(c.flightStart)+"<br>":"")
       +(c.notes?"<b>Notes:</b> "+escHtml(c.notes)+"<br>":"")
       +"<br><b>Needed, with hard due dates:</b><table style='border-collapse:collapse;font-size:13px'><tr><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Item</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Deliver by</th></tr>"+rows+"</table>"
       +"<br>Reply with the pixel snippets / page URLs on this thread and I'll register them.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
+    return{to,subject:"Tracking / Web Request — "+c.name+(c.brand?" ("+c.brand+")":""),body};
+  };
+  const openPreview=(kind,c)=>{
+    const e=kind==="brief"?buildBriefEmail(c):buildSeoEmail(c);
+    if(!e)return;
+    setMopsPreview({kind,cId:c.id,cName:c.name,...e});
+  };
+  const confirmSend=async()=>{
+    const pv=mopsPreview;if(!pv)return;
+    const c=campaigns.find(x=>x.id===pv.cId);if(!c){setMopsPreview(null);return}
     setMopsBusy(true);
     try{
-      const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to,cc:"emm.caban@atticor.ai",subject:"Tracking / Web Request — "+c.name+(c.brand?" ("+c.brand+")":""),message:body})});
+      const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:pv.to,cc:"emm.caban@atticor.ai",subject:pv.subject,message:pv.body})});
       if(!r.ok)throw new Error("send failed");
-      campTouch();setCampaigns(p=>p.map(x=>x.id!==c.id?x:{...x,updated:Date.now(),assets:(x.assets||[]).map(a=>(items.some(i=>i.id===a.id)&&a.status==="needed")?{...a,status:"requested"}:a)}));
-      log("Campaign Request","Sent to SEO/Web: "+c.name+" — "+items.length+" item(s)");
-      notify("Request sent to SEO / Web. "+doomPick(DOOM.send));
-    }catch(e){notify("Request email failed to send — try again")}
+      if(pv.kind==="brief"){
+        campTouch();setCampaigns(p=>p.map(x=>x.id!==c.id?x:{...x,briefSentAt:new Date().toISOString(),updated:Date.now(),assets:(x.assets||[]).map(a=>(!assetInHand(a)&&a.status==="needed"&&a.owner!=="SEO / Web")?{...a,status:"requested"}:a)}));
+        log("Campaign Brief","Sent to Creative Ops: "+c.name);
+      }else{
+        campTouch();setCampaigns(p=>p.map(x=>x.id!==c.id?x:{...x,updated:Date.now(),assets:(x.assets||[]).map(a=>(!assetInHand(a)&&a.owner==="SEO / Web"&&a.status==="needed")?{...a,status:"requested"}:a)}));
+        log("Campaign Request","Sent to SEO/Web: "+c.name);
+      }
+      notify("Sent. "+doomPick(DOOM.send));setMopsPreview(null);
+    }catch(e){notify("Email failed to send — check the connection and try again")}
     setMopsBusy(false);
   };
   const sendReview=async(c,a)=>{
@@ -11736,11 +11753,35 @@ Rules:
     setMopsBusy(false);
   };
   const copyText=(txt,msg)=>{try{navigator.clipboard.writeText(txt);notify(msg||"Copied")}catch(e){window.prompt("Copy:",txt)}};
+  // Where assets LIVE: drop the real file on its line — it uploads into
+  // Doom's storage and the line flips to in-hand. (Or link an ISCI that
+  // already carries the creative, or paste a URL.)
+  const uploadAssetFile=async(c,a,file)=>{
+    if(!file)return;
+    notify("Uploading "+file.name+"…");
+    try{
+      let url="";
+      const clean=(s)=>String(s).replace(/[^A-Za-z0-9._-]+/g,"_");
+      const path="campaigns/"+c.id+"/"+a.id+"-"+clean(file.name);
+      if(file.size<=3*1024*1024){
+        const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(r.error||new Error("read failed"));r.onload=()=>res(String(r.result).split(",")[1]||"");r.readAsDataURL(file)});
+        const r=await fetch("/api/storage",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({action:"upload",bucket:"creative",path,dataB64:b64,contentType:file.type||"application/octet-stream"})});
+        const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||j.detail||("HTTP "+r.status));url=j.url;
+      }else{
+        if(!storage)throw new Error("storage not loaded (large file)");
+        url=await new Promise((res,rej)=>{const ref=storage.ref(path);const t=ref.put(file);t.on("state_changed",null,rej,()=>ref.getDownloadURL().then(res).catch(rej))});
+      }
+      updAsset(c.id,a.id,{url,status:"done"});
+      log("Campaign Asset","Uploaded: "+c.name+" · "+(a.label||a.type)+" ("+file.name+")");
+      notify("✓ In hand: "+(a.label||a.type));
+    }catch(e){notify("Upload failed: "+((e&&e.message)||e))}
+  };
   const[mopsCalM,setMopsCalM]=useState(()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),1)});
   const[mopsUtmPlat,setMopsUtmPlat]=useState(UTM_PLATFORMS[0].p);
   const[mopsUtmBase,setMopsUtmBase]=useState("");
   const[mopsUtmContent,setMopsUtmContent]=useState("");
   const[mopsMailTo,setMopsMailTo]=useState("");
+  const[mopsPreview,setMopsPreview]=useState(null); // {kind:"brief"|"seo",cId,to,subject,body} — every send shows the email first
   // ── Marketing Ops Hub pages (direction C: words, checkboxes, time) ──
   const MopsHub=()=>{
     const sub=routeHash.replace(/^mops\/?/,'');
@@ -11768,16 +11809,16 @@ Rules:
       });
       urgent.sort((a,b)=>(hardDate(a)??99)-(hardDate(b)??99));
       horizon.sort((a,b)=>String(a.trafficDue||a.flightStart||"9999").localeCompare(String(b.trafficDue||b.flightStart||"9999")));
-      const needCard=(c,color,strong)=><div key={c.id} style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid "+(strong?"rgba(232,90,122,.4)":"#4a3565"),borderRadius:6,padding:"16px 18px",display:"flex",flexDirection:"column",gap:8,marginBottom:12}}>
-        <div onClick={()=>mopsGo("c/"+c.id)} style={{...serif,fontSize:strong?21:19,fontWeight:700,color:"#F0E8F8",cursor:"pointer"}}>{c.name}</div>
+      const needCard=(c,color,strong)=><div key={c.id} onClick={()=>mopsGo("c/"+c.id)} title="Open the campaign page" style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid "+(strong?"rgba(232,90,122,.4)":"#4a3565"),borderRadius:6,padding:"16px 18px",display:"flex",flexDirection:"column",gap:8,marginBottom:12,cursor:"pointer"}}>
+        <div style={{...serif,fontSize:strong?21:19,fontWeight:700,color:"#F0E8F8"}}>{c.name}</div>
         <div style={{fontSize:12,fontWeight:700,color:getBrandColor(c.brand),textTransform:"uppercase",letterSpacing:1}}>{c.brand}{c.markets?" · "+c.markets:""}</div>
         <div style={{display:"flex",flexDirection:"column",gap:7,fontSize:14}}>
           {openOf(c).slice(0,4).map(a=>{const n=campDTo(a.due);const col=n!=null&&n<0?"#E85A7A":n!=null&&n<=10?(strong?"#E85A7A":"#D4A040"):"#D4A040";
-            return<div key={a.id} onClick={()=>updAsset(c.id,a.id,{status:"done"})} title="Click the box when it's in hand" style={{display:"flex",gap:9,alignItems:"center"}}>{box(false,col)}<div>{a.label||a.type}{a.due?<span> — <b style={{color:col}}>{campFd(a.due)}</b></span>:null}{a.status==="review"?<span style={{color:"#C4A0C8"}}> · out for review</span>:null}</div></div>})}
+            return<div key={a.id} style={{display:"flex",gap:9,alignItems:"center"}}>{box(false,col)}<div>{a.label||a.type}{a.due?<span> — <b style={{color:col}}>{campFd(a.due)}</b></span>:null}{a.status==="review"?<span style={{color:"#C4A0C8"}}> · out for review</span>:null}</div></div>})}
           {openOf(c).length>4&&<div style={{fontSize:12,color:"#9B8EAD"}}>+{openOf(c).length-4} more on the campaign page</div>}
           {c.trafficDue&&<div style={{display:"flex",gap:9,alignItems:"center",color:"#9B8EAD"}}>{box(false,"#4a3565")}<div>Traffic out — {campFd(c.trafficDue)}</div></div>}
         </div>
-        {strong&&<div onClick={()=>sendBrief(c)} style={{fontSize:12,fontWeight:700,color:"#1e1233",background:"linear-gradient(135deg,#D4A040,#c08f2f)",borderRadius:4,padding:"8px 0",textAlign:"center",marginTop:4,cursor:"pointer"}}>{mopsBusy?"Sending…":"Send the brief"}</div>}
+        {strong&&<div onClick={(e)=>{e.stopPropagation();openPreview("brief",c)}} title="Shows you the email first — nothing sends until you approve it" style={{fontSize:12,fontWeight:700,color:"#1e1233",background:"linear-gradient(135deg,#D4A040,#c08f2f)",borderRadius:4,padding:"8px 0",textAlign:"center",marginTop:4,cursor:"pointer"}}>Preview the brief →</div>}
       </div>;
       return<div>
         <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:22}}>
@@ -11814,7 +11855,7 @@ Rules:
         </div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",borderTop:"1px solid #4a3565",paddingTop:14,marginTop:22}}>
           <div style={{...serif,fontSize:15,fontStyle:"italic",color:"#C4A0C8"}}>{doomPick(DOOM.pg.campaigns||DOOM.sprinkle)}</div>
-          <div style={{fontSize:12,color:"#6B5E80"}}>tick a box when the thing is in hand — everything else follows</div>
+          <div style={{fontSize:12,color:"#6B5E80"}}>click a campaign to open it — checking things off happens there, on purpose</div>
         </div>
       </div>;
     };
@@ -11876,6 +11917,15 @@ Rules:
       return<div style={{maxWidth:860}}>
         <div onClick={()=>mopsGo(bcode?"b/"+bcode:"")} style={{fontSize:12,color:"#4AC8E8",cursor:"pointer",marginBottom:14}}>← {c.brand||"War Room"} desk</div>
         <input value={c.name} onChange={e=>updCamp(c.id,{name:e.target.value})} style={{...serif,fontSize:32,fontWeight:700,color:"#F0E8F8",background:"transparent",border:"none",outline:"none",width:"100%",padding:0}}/>
+        {(()=>{const opens=openOf(c);let mv;
+          if(!(c.assets||[]).length)mv={t:"List what it needs — add assets below. Until it has a checklist, nobody is watching anything.",col:"#C4A0C8"};
+          else if(!c.flightStart&&!c.trafficDue)mv={t:"No dates. Set the flight or the traffic-due below — a checklist without a date can't protect you.",col:"#D4A040"};
+          else if(opens.length&&opens.some(a=>a.owner!=="SEO / Web"&&a.status==="needed"))mv={t:"Missing "+opens.length+" — preview the brief and get Creative Ops moving.",col:"#E85A7A"};
+          else if(opens.length&&opens.some(a=>a.status==="review"))mv={t:"Out for review — the answer lands here by itself. Nudge if it drags.",col:"#C4A0C8"};
+          else if(opens.length)mv={t:"Requested and waiting. Chase when the dates get tight — I'll flag it if they do.",col:"#D4A040"};
+          else if(c.trafficDue&&campDTo(c.trafficDue)!=null&&campDTo(c.trafficDue)>=0)mv={t:"Everything in hand. Traffic goes out "+campFd(c.trafficDue)+" — build it in the Traffic Center.",col:"#5BC4A0"};
+          else mv={t:c.status==="Live"?"Live and fed. Nothing owed.":"Everything in hand.",col:"#5BC4A0"};
+          return<div style={{...serif,fontSize:16,fontStyle:"italic",color:mv.col,marginTop:6,borderLeft:"3px solid "+mv.col,paddingLeft:12}}>Next move: {mv.t}</div>})()}
         <div style={{display:"flex",gap:18,flexWrap:"wrap",alignItems:"flex-end",margin:"14px 0 22px"}}>
           <div>{lbl("Status")}<select value={c.status} onChange={e=>updCamp(c.id,{status:e.target.value})} style={mIn}>{CAMP_CSTATUS.map(s=><option key={s} value={s}>{s}</option>)}</select></div>
           <div style={{minWidth:180}}>{lbl("Markets (DMA)")}<input value={c.markets||""} onChange={e=>updCamp(c.id,{markets:e.target.value})} style={{...mIn,width:"100%"}}/></div>
@@ -11887,17 +11937,37 @@ Rules:
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
           {(c.assets||[]).map(a=>{const inH=assetInHand(a);const n=campDTo(a.due);const col=inH?"#5BC4A0":n!=null&&n<0?"#E85A7A":n!=null&&n<=10?"#D4A040":"#9B8EAD";const lk=assetLink(a);
             return<div key={a.id} style={{display:"flex",gap:11,alignItems:"center",fontSize:15,opacity:a.status==="na"?.45:1}}>
-              <span onClick={()=>updAsset(c.id,a.id,{status:inH?"needed":"done"})}>{box(inH,col==="#9B8EAD"?"#4a3565":col)}</span>
-              <div style={{flex:1,minWidth:0}}>
-                <b style={{color:"#F0E8F8"}}>{a.label||a.type}</b>{a.label?<span style={{color:"#6B5E80",fontSize:12}}> · {a.type}</span>:null}
-                {inH?<span style={{color:"#5BC4A0"}}> — in hand{a.isci&&isciByKey(a.isci)&&isciByKey(a.isci).fileUrl&&a.status!=="done"?" (file on "+a.isci.split("|")[0]+")":""}</span>
-                  :<span style={{color:"#9B8EAD"}}> — owed{a.due?<span> by <b style={{color:col}}>{campFd(a.due)}</b></span>:null}{a.owner?" ("+a.owner+")":""}{a.status==="review"?<span style={{color:"#C4A0C8"}}> · out for review</span>:null}{a.status==="requested"?" · requested":""}</span>}
+              <span onClick={()=>{updAsset(c.id,a.id,{status:inH?"needed":"done"});notify(inH?"Back to owed: "+(a.label||a.type):"✓ In hand: "+(a.label||a.type))}} title={inH?"Click to mark it owed again":"Click when it's in hand"}>{box(inH,col==="#9B8EAD"?"#4a3565":col)}</span>
+              <div style={{flex:1,minWidth:0,display:"flex",alignItems:"baseline",gap:6,flexWrap:"wrap"}}>
+                <input value={a.label} placeholder={a.type} onChange={e=>updAsset(c.id,a.id,{label:e.target.value})} title="Name this asset — click to edit" style={{fontWeight:700,color:"#F0E8F8",background:"transparent",border:"none",borderBottom:"1px dashed #4a3565",outline:"none",fontSize:15,fontFamily:"'DM Sans',sans-serif",width:Math.max(80,((a.label||a.type).length+2)*8)+"px"}}/>
+                {a.label?<span style={{color:"#6B5E80",fontSize:12}}>{a.type}</span>:null}
+                {inH?<span style={{color:"#5BC4A0"}}>— in hand{a.isci&&isciByKey(a.isci)&&isciByKey(a.isci).fileUrl&&a.status!=="done"?" (file on "+a.isci.split("|")[0]+")":""}</span>
+                  :<span style={{color:"#9B8EAD"}}>— owed{a.due?<span> by <b style={{color:col}}>{campFd(a.due)}</b></span>:null} by</span>}
+                {!inH&&<select value={a.owner||""} onChange={e=>updAsset(c.id,a.id,{owner:e.target.value})} title="Who owes this" style={{background:"transparent",border:"none",borderBottom:"1px dashed #4a3565",color:"#C4A0C8",fontSize:13,fontWeight:700,outline:"none",cursor:"pointer"}}>
+                  {[...new Set(["Creative Ops","SEO / Web","Hazel","Station","Vendor / Station","Me",a.owner||""].filter(Boolean))].map(o=><option key={o} value={o}>{o}</option>)}
+                </select>}
+                {!inH&&a.status==="review"&&<span style={{color:"#C4A0C8",fontSize:13}}>· out for review</span>}
+                {!inH&&a.status==="requested"&&<span style={{color:"#9B8EAD",fontSize:13}}>· requested</span>}
               </div>
               <input type="date" value={campIsoD(a.due)} onChange={e=>updAsset(c.id,a.id,{due:e.target.value})} style={{...mIn,padding:"3px 6px",fontSize:11}}/>
-              {(a.type==="Broadcast Spot"||a.type==="Digital Banner"||a.type==="Station-Made Creative")&&<select value={a.isci||""} onChange={e=>updAsset(c.id,a.id,{isci:e.target.value})} title="Link to the ISCI Registry — a file on the ISCI counts as in hand" style={{...mIn,padding:"3px 6px",fontSize:11,maxWidth:130,color:a.isci?"#5BC4A0":"#6B5E80"}}>
-                <option value="">link ISCI…</option>
-                {iscis.filter(i=>i.brand===c.brand&&i.active&&i.suffix!=="O").map(x=><option key={isciKeyOf(x)} value={isciKeyOf(x)}>{x.code}{x.fileUrl?" ◆":""}</option>)}
-              </select>}
+              {(a.type==="Broadcast Spot"||a.type==="Digital Banner"||a.type==="Station-Made Creative")&&(()=>{
+                // ISCIs are market-specific (code+DMA is the identity): offer
+                // only this campaign's brand AND markets, titled so they mean
+                // something. ◆ marks a creative file already on the ISCI.
+                const mkts=String(c.markets||"").toLowerCase();
+                const pool=iscis.filter(i=>{
+                  if(i.brand!==c.brand||!i.active||i.suffix==="O")return false;
+                  if(!mkts)return true;
+                  const mn=((typeof DM!=="undefined"&&DM[i.dma])||i.dma||"").toLowerCase();
+                  return mn&&mkts.includes(mn);
+                });
+                const cur=isciByKey(a.isci);
+                return<select value={a.isci||""} onChange={e=>updAsset(c.id,a.id,{isci:e.target.value})} title="Link to the ISCI Registry — a file on the ISCI counts as in hand" style={{...mIn,padding:"3px 6px",fontSize:11,maxWidth:230,color:a.isci?"#5BC4A0":"#6B5E80"}}>
+                  <option value="">link ISCI…</option>
+                  {cur&&!pool.some(x=>isciKeyOf(x)===a.isci)&&<option value={a.isci}>{cur.code} · {String(cur.title||"").slice(0,22)}</option>}
+                  {pool.map(x=><option key={isciKeyOf(x)} value={isciKeyOf(x)}>{x.fileUrl?"◆ ":""}{x.code} · {String(x.title||"untitled").slice(0,22)}{x.dur?" :"+x.dur:""}{x.category?" · "+x.category:""}</option>)}
+                </select>})()}
+              {!inH&&<label title="Upload the actual file — it lives in Doom's storage from then on" style={{fontSize:11,color:"#4AC8E8",fontWeight:700,cursor:"pointer",border:"1px solid #4a3565",borderRadius:4,padding:"3px 9px",whiteSpace:"nowrap"}}>📎 file<input type="file" style={{display:"none"}} onChange={e=>uploadAssetFile(c,a,e.target.files&&e.target.files[0])}/></label>}
               {lk&&<a href={lk} target="_blank" rel="noreferrer" style={{fontSize:12,color:"#4AC8E8",textDecoration:"none",fontWeight:700}}>open ↗</a>}
               {!inH&&a.status!=="review"&&<button onClick={()=>sendReview(c,a)} disabled={mopsBusy} style={{background:"rgba(196,160,200,.12)",border:"1px solid #C4A0C8",borderRadius:4,cursor:"pointer",fontSize:10,fontWeight:700,color:"#C4A0C8",padding:"3px 9px",whiteSpace:"nowrap"}}>send for review</button>}
               <button onClick={()=>delAsset(c.id,a.id)} style={{background:"none",border:"none",color:"#6B5E80",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button>
@@ -11908,8 +11978,8 @@ Rules:
             <option value="">+ Add asset…</option>
             {CAMP_ASSET_TYPES.map(x=><option key={x.t} value={x.t}>{x.t}</option>)}
           </select>
-          <Btn small primary disabled={mopsBusy} onClick={()=>sendBrief(c)}>Brief → Creative Ops</Btn>
-          {seoOpen&&<Btn small color="#4AC8E8" primary disabled={mopsBusy} onClick={()=>sendSeoRequest(c)}>Request → SEO / Web</Btn>}
+          <Btn small primary disabled={mopsBusy} onClick={()=>openPreview("brief",c)}>Preview brief → Creative Ops</Btn>
+          {seoOpen&&<Btn small color="#4AC8E8" primary disabled={mopsBusy} onClick={()=>openPreview("seo",c)}>Preview request → SEO / Web</Btn>}
           <Btn small onClick={()=>{setMopsMailOpen(o=>!o);setMopsMailTo(hubCfg.creativeOpsEmail||"")}}>Email assets</Btn>
           <Btn small onClick={()=>setMopsUtmOpen(o=>!o)}>UTMs{(c.utms||[]).length?" ("+(c.utms||[]).length+")":""}</Btn>
           {c.briefSentAt&&<span style={{fontSize:11,color:"#5BC4A0",fontWeight:600}}>brief sent {String(c.briefSentAt).slice(0,10)}</span>}
@@ -11939,7 +12009,12 @@ Rules:
           </div>}
         </div>}
         <div>{lbl("Notes — stations, spot counts, contacts, anything the next person needs")}<textarea value={c.notes||""} onChange={e=>updCamp(c.id,{notes:e.target.value})} style={{...mIn,width:"100%",minHeight:60,resize:"vertical",fontFamily:"'DM Sans',sans-serif"}}/></div>
-        {c.stations&&<div style={{fontSize:12,color:"#9B8EAD",marginTop:8}}><b style={{color:"#C4A0C8"}}>Stations / outlets:</b> {c.stations}</div>}
+        <div style={{display:"flex",gap:10,marginTop:10,flexWrap:"wrap"}}>
+          <div style={{flex:"2 1 240px"}}><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Stations / outlets</div><input value={c.stations||""} onChange={e=>updCamp(c.id,{stations:e.target.value})} style={{...mIn,width:"100%"}}/></div>
+          <div style={{flex:"1 1 150px"}}><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Partner / vendor</div><input value={c.partner||""} onChange={e=>updCamp(c.id,{partner:e.target.value})} style={{...mIn,width:"100%"}}/></div>
+          <div style={{flex:"1 1 150px"}}><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Contact</div><input value={c.contact||""} onChange={e=>updCamp(c.id,{contact:e.target.value})} style={{...mIn,width:"100%"}}/></div>
+          <div style={{width:100}}><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Cost ($)</div><input value={c.cost||""} onChange={e=>updCamp(c.id,{cost:e.target.value.replace(/[^0-9.]/g,"")})} style={{...mIn,width:"100%"}}/></div>
+        </div>
       </div>;
     };
     // ── Calendar ──
@@ -12002,8 +12077,16 @@ Rules:
           <div>{lbl("Traffic due",true)}<input type="date" value={nc.trafficDue} onChange={e=>setNc(p=>({...p,trafficDue:e.target.value}))} style={{...mIn,borderColor:"#D4A040"}}/></div>
         </div>
         <div style={{marginTop:12}}>{lbl("Channels — each one writes the first draft of the checklist")}<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{CAMP_CHANNELS.map(ch=>{const on=nc.channels.includes(ch);return<button key={ch} onClick={()=>setNc(p=>({...p,channels:on?p.channels.filter(x=>x!==ch):[...p.channels,ch]}))} style={{padding:"5px 14px",borderRadius:99,border:"1px solid "+(on?"#9b7bb0":"#4a3565"),background:on?"rgba(155,123,176,.18)":"transparent",color:on?"#C4A0C8":"#6B5E80",fontSize:12,fontWeight:700,cursor:"pointer"}}>{ch}</button>})}</div></div>
+        <div style={{marginTop:12}}>{lbl("Spot lengths — each one becomes a checklist line")}<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{[":05",":10",":15",":30",":60","Host Read"].map(s=>{const on=nc.spots.includes(s);return<button key={s} onClick={()=>setNc(p=>({...p,spots:on?p.spots.filter(x=>x!==s):[...p.spots,s]}))} style={{padding:"5px 14px",borderRadius:99,border:"1px solid "+(on?"#D4A040":"#4a3565"),background:on?"rgba(212,160,64,.15)":"transparent",color:on?"#D4A040":"#6B5E80",fontSize:12,fontWeight:700,cursor:"pointer"}}>{s}</button>})}</div></div>
+        <div style={{marginTop:12}}>{lbl("Other assets needed — tags, banners, pages, pixels, merch…")}<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{CAMP_ASSET_TYPES.filter(x=>x.t!=="Broadcast Spot"&&x.t!=="Other").map(x=>{const on=nc.assetTypes.includes(x.t);return<button key={x.t} onClick={()=>setNc(p=>({...p,assetTypes:on?p.assetTypes.filter(y=>y!==x.t):[...p.assetTypes,x.t]}))} style={{padding:"5px 14px",borderRadius:99,border:"1px solid "+(on?x.c:"#4a3565"),background:on?x.c+"1f":"transparent",color:on?x.c:"#6B5E80",fontSize:12,fontWeight:700,cursor:"pointer"}}>{x.t}</button>})}</div></div>
+        <div style={{display:"flex",gap:10,marginTop:12,flexWrap:"wrap"}}>
+          <div style={{flex:"2 1 260px"}}>{lbl("Stations / outlets")}<input value={nc.stations} placeholder="WEBN, WLW, WKFS… or iHeart / Audacy" onChange={e=>setNc(p=>({...p,stations:e.target.value}))} style={{...mIn,width:"100%"}}/></div>
+          <div style={{flex:"1 1 160px"}}>{lbl("Partner / vendor")}<input value={nc.partner} placeholder="iHeart, Audacy, ESPN…" onChange={e=>setNc(p=>({...p,partner:e.target.value}))} style={{...mIn,width:"100%"}}/></div>
+          <div style={{flex:"1 1 160px"}}>{lbl("Contact")}<input value={nc.contact} placeholder="who to chase" onChange={e=>setNc(p=>({...p,contact:e.target.value}))} style={{...mIn,width:"100%"}}/></div>
+          <div style={{width:110}}>{lbl("Cost ($)")}<input value={nc.cost} placeholder="0" onChange={e=>setNc(p=>({...p,cost:e.target.value.replace(/[^0-9.]/g,"")}))} style={{...mIn,width:"100%"}}/></div>
+        </div>
         <div style={{display:"flex",gap:10,marginTop:12,alignItems:"center",flexWrap:"wrap"}}>
-          <input value={nc.desc} placeholder="description — stations, spot counts, contacts" onChange={e=>setNc(p=>({...p,desc:e.target.value}))} style={{...mIn,flex:1,minWidth:240}}/>
+          <input value={nc.desc} placeholder="anything else the next person needs to know" onChange={e=>setNc(p=>({...p,desc:e.target.value}))} style={{...mIn,flex:1,minWidth:240}}/>
           <label style={{fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:6,cursor:"pointer"}}><input type="checkbox" checked={nc.toNotion} onChange={e=>setNc(p=>({...p,toNotion:e.target.checked}))}/>file in Notion too</label>
           <Btn primary onClick={createCampaign}>Create campaign</Btn>
         </div>
@@ -12029,26 +12112,64 @@ Rules:
     };
     // ── Dispatch ──
     const Dispatch=()=>{
-      const revs=Object.entries(assetReviews).sort((a,b)=>String(b[1].sentAt||"").localeCompare(String(a[1].sentAt||"")));
       const lbl=(t)=><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>{t}</div>;
-      return<div style={{maxWidth:860}}>
+      const needBrief=activeCamps.filter(c=>(c.assets||[]).some(a=>!assetInHand(a)&&a.owner!=="SEO / Web"&&a.status==="needed"));
+      const needSeo=activeCamps.filter(c=>(c.assets||[]).some(a=>!assetInHand(a)&&a.owner==="SEO / Web"&&a.status==="needed"));
+      const reviewable=[];activeCamps.forEach(c=>(c.assets||[]).forEach(a=>{if(!assetInHand(a)&&a.status!=="review"&&assetLink(a))reviewable.push([c,a])}));
+      const revs=Object.entries(assetReviews).sort((a,b)=>String(b[1].sentAt||"").localeCompare(String(a[1].sentAt||"")));
+      const sent=(auditLog||[]).filter(e=>["Campaign Brief","Campaign Request","Creative Review","Campaign Assets"].includes(e.a)).slice(0,12);
+      return<div style={{maxWidth:880}}>
         <div style={{...serif,fontSize:34,fontWeight:700,color:"#F0E8F8",marginBottom:4}}>Dispatch</div>
-        <div style={{fontSize:13,color:"#9B8EAD",marginBottom:22}}>Everything the Hub sends, and where it goes. You're CC'd on all of it.</div>
-        {secHead("Where things go","#4AC8E8")}
-        <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:26}}>
+        <div style={{fontSize:13,color:"#9B8EAD",marginBottom:22}}>The outbox. What's ready to go out, what's out awaiting an answer, what already went. Every send shows you the email before it moves; you're CC'd on all of it.</div>
+        {secHead("Ready to go out","#D4A040",needBrief.length+needSeo.length?null:"nothing queued — when a campaign needs something, its send lands here")}
+        <div style={{display:"flex",flexDirection:"column",marginBottom:24}}>
+          {needBrief.map(c=><div key={"b"+c.id} style={{display:"flex",gap:12,alignItems:"center",padding:"9px 10px",borderBottom:"1px solid #2d1f42"}}>
+            <span onClick={()=>mopsGo("c/"+c.id)} style={{...serif,fontSize:16,fontWeight:700,color:"#F0E8F8",cursor:"pointer",flex:1}}>{c.name}</span>
+            <span style={{fontSize:12,color:"#9B8EAD"}}>{(c.assets||[]).filter(a=>!assetInHand(a)&&a.owner!=="SEO / Web").length} asset(s) for Creative Ops</span>
+            <Btn small primary disabled={mopsBusy} onClick={()=>openPreview("brief",c)}>Preview brief</Btn>
+          </div>)}
+          {needSeo.map(c=><div key={"s"+c.id} style={{display:"flex",gap:12,alignItems:"center",padding:"9px 10px",borderBottom:"1px solid #2d1f42"}}>
+            <span onClick={()=>mopsGo("c/"+c.id)} style={{...serif,fontSize:16,fontWeight:700,color:"#F0E8F8",cursor:"pointer",flex:1}}>{c.name}</span>
+            <span style={{fontSize:12,color:"#9B8EAD"}}>{(c.assets||[]).filter(a=>!assetInHand(a)&&a.owner==="SEO / Web").length} pixel / page item(s)</span>
+            <Btn small color="#4AC8E8" primary disabled={mopsBusy} onClick={()=>openPreview("seo",c)}>Preview request</Btn>
+          </div>)}
+          {reviewable.map(([c,a])=><div key={"r"+a.id} style={{display:"flex",gap:12,alignItems:"center",padding:"9px 10px",borderBottom:"1px solid #2d1f42"}}>
+            <span onClick={()=>mopsGo("c/"+c.id)} style={{fontSize:14,fontWeight:700,color:"#E8DFF0",cursor:"pointer",flex:1}}>{a.label||a.type} <span style={{color:"#6B5E80",fontWeight:500}}>· {c.name}</span></span>
+            <span style={{fontSize:12,color:"#9B8EAD"}}>has a file — needs eyes</span>
+            <Btn small color="#C4A0C8" primary disabled={mopsBusy} onClick={()=>sendReview(c,a)}>Send for review</Btn>
+          </div>)}
+        </div>
+        {secHead("Out — awaiting answers","#C4A0C8")}
+        {revs.filter(([t,r])=>r.status==="pending").length===0&&<div style={{fontSize:13,color:"#6B5E80",fontStyle:"italic",marginBottom:16}}>Nothing waiting on anyone.</div>}
+        <div style={{display:"flex",flexDirection:"column",marginBottom:24}}>
+          {revs.filter(([t,r])=>r.status==="pending").map(([tok,r])=><div key={tok} style={{display:"flex",gap:10,alignItems:"baseline",padding:"8px 10px",borderBottom:"1px solid #2d1f42"}}>
+            <span style={{fontSize:13,fontWeight:700,color:"#E8DFF0",flex:1}}>{r.assetLabel||r.assetType} <span style={{color:"#6B5E80",fontWeight:500}}>· {r.campName}</span></span>
+            <span style={{fontSize:11,color:"#9B8EAD"}}>sent {String(r.sentAt||"").slice(0,10)} to {r.sentTo}</span>
+            <span style={{fontSize:11,fontWeight:700,color:"#D4A040"}}>awaiting answer</span>
+          </div>)}
+        </div>
+        {secHead("Answered","#5BC4A0")}
+        <div style={{display:"flex",flexDirection:"column",marginBottom:24}}>
+          {revs.filter(([t,r])=>r.status!=="pending").slice(0,8).map(([tok,r])=><div key={tok} style={{display:"flex",gap:10,alignItems:"baseline",padding:"8px 10px",borderBottom:"1px solid #2d1f42"}}>
+            <span style={{fontSize:13,fontWeight:700,color:"#E8DFF0",flex:1}}>{r.assetLabel||r.assetType} <span style={{color:"#6B5E80",fontWeight:500}}>· {r.campName}</span></span>
+            {r.status==="approved"&&<span style={{fontSize:11,fontWeight:700,color:"#5BC4A0"}}>approved {String(r.respondedAt||"").slice(0,10)}</span>}
+            {r.status==="changes"&&<span style={{fontSize:11,fontWeight:700,color:"#E85A7A"}} title={r.feedback}>changes: {String(r.feedback||"").slice(0,50)}{String(r.feedback||"").length>50?"…":""}</span>}
+          </div>)}
+          {revs.filter(([t,r])=>r.status!=="pending").length===0&&<div style={{fontSize:13,color:"#6B5E80",fontStyle:"italic"}}>No verdicts yet.</div>}
+        </div>
+        {secHead("Sent","#9b7bb0","the recent record — the full trail lives in Doom's Audit Log")}
+        <div style={{display:"flex",flexDirection:"column",marginBottom:24}}>
+          {sent.length===0&&<div style={{fontSize:13,color:"#6B5E80",fontStyle:"italic"}}>Nothing sent yet.</div>}
+          {sent.map((e,i)=><div key={i} style={{display:"flex",gap:10,alignItems:"baseline",padding:"7px 10px",borderBottom:"1px solid #2d1f42"}}>
+            <span style={{fontSize:11,color:"#6B5E80",minWidth:78}}>{String(e.ts||"").slice(0,10)}</span>
+            <span style={{fontSize:11,fontWeight:700,color:"#C4A0C8",minWidth:110}}>{e.a}</span>
+            <span style={{fontSize:12,color:"#9B8EAD",flex:1}}>{e.d}</span>
+          </div>)}
+        </div>
+        {secHead("Addresses","#4AC8E8")}
+        <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
           <div style={{flex:"1 1 260px"}}>{lbl("Creative Ops — briefs & review links")}<input value={hubCfg.creativeOpsEmail||""} placeholder="creative-ops@…" onChange={e=>saveCfg({creativeOpsEmail:e.target.value})} style={{...mIn,width:"100%"}}/></div>
           <div style={{flex:"1 1 260px"}}>{lbl("SEO / Web — pixel & landing page requests")}<input value={hubCfg.seoEmail||""} placeholder="seo-team@…" onChange={e=>saveCfg({seoEmail:e.target.value})} style={{...mIn,width:"100%"}}/></div>
-        </div>
-        {secHead("Reviews in flight","#C4A0C8","one-click approve-or-feedback links; answers land back on the campaign by themselves")}
-        {revs.length===0&&<div style={{fontSize:13,color:"#6B5E80",fontStyle:"italic"}}>Nothing out for review. Send one from any asset line.</div>}
-        <div style={{display:"flex",flexDirection:"column"}}>
-          {revs.slice(0,20).map(([tok,r])=><div key={tok} style={{display:"flex",gap:10,alignItems:"baseline",padding:"8px 10px",borderBottom:"1px solid #2d1f42"}}>
-            <span style={{fontSize:13,fontWeight:700,color:"#E8DFF0",flex:1}}>{r.assetLabel||r.assetType} <span style={{color:"#6B5E80",fontWeight:500}}>· {r.campName}</span></span>
-            <span style={{fontSize:11,color:"#9B8EAD"}}>{String(r.sentAt||"").slice(0,10)}</span>
-            {r.status==="pending"&&<span style={{fontSize:11,fontWeight:700,color:"#D4A040"}}>awaiting answer</span>}
-            {r.status==="approved"&&<span style={{fontSize:11,fontWeight:700,color:"#5BC4A0"}}>approved</span>}
-            {r.status==="changes"&&<span style={{fontSize:11,fontWeight:700,color:"#E85A7A"}} title={r.feedback}>changes: {String(r.feedback||"").slice(0,40)}{String(r.feedback||"").length>40?"…":""}</span>}
-          </div>)}
         </div>
       </div>;
     };
@@ -12107,6 +12228,22 @@ Rules:
         <button onClick={()=>{navigateHash("");}} style={{margin:"0 0 0 0",padding:"12px 16px",border:"none",borderTop:"1px solid rgba(155,123,176,.15)",background:"transparent",color:"#9B8EAD",fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left"}}>← Back to Doom</button>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:"32px 40px"}}>{body}</div>
+      {mopsPreview&&<div onClick={()=>setMopsPreview(null)} style={{position:"fixed",inset:0,background:"rgba(20,10,35,.75)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+        <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid #4a3565",borderRadius:10,maxWidth:640,width:"100%",maxHeight:"84vh",display:"flex",flexDirection:"column",boxShadow:"0 12px 48px rgba(0,0,0,.5)"}}>
+          <div style={{padding:"16px 20px",borderBottom:"1px solid #4a3565"}}>
+            <div style={{...serif,fontSize:20,fontWeight:700,color:"#F0E8F8"}}>This is the exact email. Nothing has been sent.</div>
+            <div style={{fontSize:12,color:"#9B8EAD",marginTop:6,lineHeight:1.7}}><b style={{color:"#C4A0C8"}}>To:</b> {mopsPreview.to} &nbsp; <b style={{color:"#C4A0C8"}}>CC:</b> emm.caban@atticor.ai<br/><b style={{color:"#C4A0C8"}}>Subject:</b> {mopsPreview.subject}</div>
+          </div>
+          <div style={{padding:16,overflowY:"auto",flex:1}}>
+            <div style={{background:"#ffffff",color:"#222",borderRadius:6,padding:"16px 18px",fontSize:13,lineHeight:1.6,fontFamily:"'DM Sans',sans-serif"}} dangerouslySetInnerHTML={{__html:mopsPreview.body}}/>
+          </div>
+          <div style={{padding:"12px 20px",borderTop:"1px solid #4a3565",display:"flex",gap:10,justifyContent:"flex-end",alignItems:"center"}}>
+            <span style={{marginRight:"auto",fontSize:11,color:"#6B5E80"}}>Edit the campaign first if something's off — this preview follows it.</span>
+            <Btn onClick={()=>setMopsPreview(null)}>Cancel</Btn>
+            <Btn primary disabled={mopsBusy} onClick={confirmSend}>{mopsBusy?"Sending…":"Send it"}</Btn>
+          </div>
+        </div>
+      </div>}
     </div>;
   };
   // ── NAV ───────────────────────────────────────────────
