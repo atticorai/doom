@@ -11920,26 +11920,38 @@ Rules:
           <div>
             {secHead("Act now","#E85A7A","hard dates inside ten days")}
             {urgent.length===0&&<div style={{...serif,fontStyle:"italic",fontSize:15,color:"#5BC4A0",padding:"14px 4px"}}>Nothing on fire. Savor it.</div>}
-            {urgent.map(c=>needCard(c,true))}
+            {BRANDS.map(b=>{const rows=urgent.filter(c=>c.brand===b.name);if(!rows.length)return null;
+              return<div key={b.code} style={{marginBottom:6}}>
+                <div style={{fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:b.color,margin:"2px 0 8px"}}>{b.name}</div>
+                {rows.map(c=>needCard(c,true))}
+              </div>})}
           </div>
           <div>
             {secHead("On the horizon","#D4A040","owed later, or waiting on dates")}
             {horizon.length===0&&<div style={{...serif,fontStyle:"italic",fontSize:15,color:"#9B8EAD",padding:"14px 4px"}}>A clear horizon.</div>}
-            {horizon.map(c=>{const opens=openOf(c);
+            {BRANDS.map(b=>{const bRows=horizon.filter(c=>c.brand===b.name);if(!bRows.length)return null;
+              return<div key={b.code} style={{marginBottom:6}}>
+                <div style={{fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:b.color,margin:"2px 0 8px"}}>{b.name}</div>
+                {bRows.map(c=>{const opens=openOf(c);
               return opens.length?needCard(c,false)
               :<div key={c.id} onClick={()=>mopsGo("c/"+c.id)} style={{background:"rgba(45,31,66,.45)",border:"1px dashed #4a3565",borderRadius:6,padding:"13px 16px",marginBottom:12,cursor:"pointer"}}>
                 <div style={{...serif,fontSize:17,fontWeight:700,color:"#C4A0C8"}}>{c.name}</div>
                 <div style={{fontSize:12,color:"#9B8EAD",marginTop:3}}>{c.brand}{c.markets?" · "+c.markets:""} — {c.flightStart?"launches "+campFd(c.flightStart):"no dates yet — open it and set the flight"}</div>
               </div>})}
+              </div>})}
           </div>
           <div>
             {secHead("Live — nothing owed","#5BC4A0","airing now, every asset in hand")}
-            <div style={{background:"rgba(91,196,160,.05)",border:"1px solid rgba(91,196,160,.25)",borderRadius:6,padding:"14px 16px",display:"flex",flexDirection:"column",gap:11,fontSize:14}}>
+            <div style={{background:"rgba(91,196,160,.05)",border:"1px solid rgba(91,196,160,.25)",borderRadius:6,padding:"14px 16px",display:"flex",flexDirection:"column",gap:12,fontSize:14}}>
               {live.length===0&&<div style={{color:"#9B8EAD",fontStyle:"italic"}}>Nothing airing yet.</div>}
-              {live.map(c=><div key={c.id} onClick={()=>mopsGo("c/"+c.id)} style={{cursor:"pointer"}}>
-                <b style={{color:"#F0E8F8"}}>{c.name}</b>
-                <div style={{fontSize:12,color:"#9B8EAD"}}>{c.brand}{c.markets?" · "+c.markets:""}{c.flightEnd?" · through "+campFd(c.flightEnd):""}</div>
-              </div>)}
+              {BRANDS.map(b=>{const rows=live.filter(c=>c.brand===b.name);if(!rows.length)return null;
+                return<div key={b.code}>
+                  <div style={{fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:b.color,marginBottom:6}}>{b.name}</div>
+                  {rows.map(c=><div key={c.id} onClick={()=>mopsGo("c/"+c.id)} style={{cursor:"pointer",marginBottom:8}}>
+                    <b style={{color:"#F0E8F8"}}>{c.name}</b>
+                    <div style={{fontSize:12,color:"#9B8EAD"}}>{c.markets||""}{c.flightEnd?" · through "+campFd(c.flightEnd):""}</div>
+                  </div>)}
+                </div>})}
             </div>
             <div onClick={()=>mopsGo("history")} style={{fontSize:12,color:"#6B5E80",textAlign:"center",padding:"10px 0",cursor:"pointer"}}>{campaigns.filter(c=>c.status==="Wrapped").length} wrapped campaigns live in History →</div>
           </div>
@@ -11966,34 +11978,37 @@ Rules:
     const BrandDesk=(code)=>{
       const b=BRANDS.find(x=>x.code===code);if(!b)return<div/>;
       const mine=activeCamps.filter(c=>c.brand===b.name);
-      const wrappedMine=campaigns.filter(c=>c.status==="Wrapped"&&c.brand===b.name);
+      const needy=mine.filter(c=>openOf(c).length);
+      const fed=mine.length-needy.length;
+      const wrappedMine=campaigns.filter(c=>c.status==="Wrapped"&&c.brand===b.name).length;
       const dmaNames=b.markets.map(m=>(typeof DM!=="undefined"&&DM[m])||m);
       const inDma=(c,dn)=>String(c.markets||"").toLowerCase().includes(dn.toLowerCase());
-      const unplaced=mine.filter(c=>!dmaNames.some(dn=>inDma(c,dn)));
-      const row=(c,dn)=>{const opens=openOf(c);const others=dn?dmaNames.filter(x=>x!==dn&&inDma(c,x)):[];
-        return<div key={c.id+(dn||"")} onClick={()=>mopsGo("c/"+c.id)} style={{display:"flex",gap:14,alignItems:"baseline",padding:"11px 14px",borderBottom:"1px solid #2d1f42",cursor:"pointer"}}>
-          <div style={{...serif,fontSize:17,fontWeight:700,color:"#F0E8F8",minWidth:210}}>{c.name}</div>
-          <div style={{fontSize:12,color:"#9B8EAD",minWidth:120}}>{c.flightStart?campFd(c.flightStart)+(c.flightEnd?" – "+campFd(c.flightEnd):""):"no flight yet"}</div>
-          <div style={{fontSize:13,flex:1,color:opens.length?"#E8DFF0":"#5BC4A0"}}>{campNeedsSentence(c)}{others.length?<span style={{color:"#6B5E80"}}> · shared with {others.join(", ")}</span>:null}</div>
-          <div style={{fontSize:11,fontWeight:700,color:opens.length?(hardDate(c)!=null&&hardDate(c)<=10?"#E85A7A":"#D4A040"):"#5BC4A0"}}>{c.status==="Live"?"LIVE":opens.length?"OWED":"READY"}</div>
+      const unplaced=needy.filter(c=>!dmaNames.some(dn=>inDma(c,dn)));
+      const row=(c,dn)=>{const opens=openOf(c);const hd=hardDate(c);const urgentRow=hd!=null&&hd<=10;const others=dn?dmaNames.filter(x=>x!==dn&&inDma(c,x)):[];
+        return<div key={c.id+(dn||"")} onClick={()=>mopsGo("c/"+c.id)} style={{display:"flex",gap:14,alignItems:"baseline",padding:"12px 14px",borderBottom:"1px solid #2d1f42",cursor:"pointer",borderLeft:"3px solid "+(urgentRow?"#E85A7A":"#D4A040")}}>
+          <div style={{...serif,fontSize:18,fontWeight:700,color:"#F0E8F8",minWidth:220}}>{c.name}</div>
+          <div style={{fontSize:12,color:"#9B8EAD",minWidth:110}}>{c.flightStart?campFd(c.flightStart)+(c.flightEnd?" – "+campFd(c.flightEnd):""):"no flight yet"}</div>
+          <div style={{fontSize:14,flex:1,color:"#E8DFF0"}}>{campProse(c)}{others.length?<span style={{color:"#6B5E80",fontSize:12}}> · shared with {others.join(", ")}</span>:null}</div>
+          <div style={{fontSize:11,fontWeight:800,color:urgentRow?"#E85A7A":"#D4A040",whiteSpace:"nowrap"}}>{urgentRow?"ACT NOW":"OWED"}</div>
         </div>};
       const bTags=taglines.filter(t=>!t.brand||t.brand===b.name);
       return<div>
-        <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:22}}>
+        <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:6}}>
           <div style={{...serif,fontSize:34,fontWeight:700,color:b.color}}>{b.name}</div>
-          <div style={{fontSize:13,color:"#9B8EAD"}}>{mine.length} active campaign{mine.length!==1?"s":""} · {wrappedMine.length} wrapped this year</div>
+          <div style={{fontSize:13,color:"#9B8EAD"}}>{needy.length?needy.length+" campaign"+(needy.length!==1?"s":"")+" waiting on assets":"nothing owed"}</div>
         </div>
-        {dmaNames.map(dn=>{const rows=mine.filter(c=>inDma(c,dn));if(!rows.length)return null;
-          return<div key={dn} style={{marginBottom:20}}>
-            <div style={{fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:"#9B8EAD",borderBottom:"2px solid "+b.color+"55",paddingBottom:6,marginBottom:2}}>{dn}</div>
+        <div style={{fontSize:12,color:"#6B5E80",marginBottom:20}}>{fed>0?fed+" more live and fed — they're in the War Room, not here. ":""}{wrappedMine?wrappedMine+" wrapped this year in History.":""}</div>
+        {needy.length===0&&<div style={{...serif,fontStyle:"italic",fontSize:17,color:"#5BC4A0",padding:"18px 0"}}>Every {b.name} campaign has what it needs. A rare sight — enjoy it.</div>}
+        {dmaNames.map(dn=>{const rows=needy.filter(c=>inDma(c,dn));if(!rows.length)return null;
+          return<div key={dn} style={{marginBottom:22}}>
+            <div style={{fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:"#9B8EAD",borderBottom:"2px solid "+b.color+"55",paddingBottom:6}}>{dn}</div>
             {rows.map(c=>row(c,dn))}
           </div>})}
-        {unplaced.length>0&&<div style={{marginBottom:20}}>
-          <div style={{fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:"#9B8EAD",borderBottom:"2px solid "+b.color+"55",paddingBottom:6,marginBottom:2}}>{unplaced.some(c=>c.markets)?"Other / multi-market":"No market set"}</div>
+        {unplaced.length>0&&<div style={{marginBottom:22}}>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:"#9B8EAD",borderBottom:"2px solid "+b.color+"55",paddingBottom:6}}>No market set</div>
           {unplaced.map(c=>row(c,null))}
         </div>}
-        {mine.length===0&&<div style={{...serif,fontStyle:"italic",fontSize:16,color:"#9B8EAD",padding:"20px 0"}}>Nothing active for {b.name}. When Notion or Intake brings one in, it lands here under its DMA.</div>}
-        <div style={{marginTop:26}}>
+        <div style={{marginTop:30}}>
           <div style={{fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:"#C4A0C8",borderBottom:"2px solid rgba(196,160,200,.3)",paddingBottom:6,marginBottom:8}}>Tagline library</div>
           {bTags.length===0&&<div style={{fontSize:13,color:"#6B5E80",fontStyle:"italic"}}>None on file for this brand yet — add one below; it rides along in every brief.</div>}
           <div style={{display:"flex",flexDirection:"column",gap:6}}>
