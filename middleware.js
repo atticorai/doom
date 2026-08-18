@@ -74,7 +74,6 @@ export default async function middleware(request) {
     pathname === '/api/send-traffic' ||
     pathname === '/api/db' ||
     pathname === '/api/users' ||
-    pathname === '/api/calendar' ||
     pathname === '/api/campaigns' ||
     pathname === '/api/db-inspect' ||
     pathname === '/api/legacy-assets-export' ||
