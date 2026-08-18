@@ -12030,11 +12030,11 @@ Rules:
     // ═══ DECK ═══
     const Deck=()=><div>
       {dndTws.length>0&&<div style={{marginBottom:14}}>
-        <div style={{...serif,fontSize:18,fontWeight:700,color:HD.bone,borderBottom:"3px double rgba(255,140,66,.5)",paddingBottom:4,marginBottom:8,display:"flex",alignItems:"center",gap:8}}>
+        <div style={{...serif,fontSize:19,fontWeight:700,letterSpacing:2,color:HD.bone,borderBottom:"4px double rgba(255,140,66,.6)",paddingBottom:4,marginBottom:8,display:"flex",alignItems:"baseline",gap:8,textShadow:"0 0 22px rgba(255,140,66,.28)"}}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={HD.ember} strokeWidth="2.4"><path d="M12 3 2 21h20L12 3Z"/><path d="M12 10v5"/></svg>
-          Tripwires <span style={{fontSize:12.5,fontStyle:"italic",color:HD.smoke,fontWeight:500}}>— what needs you today</span>
+          TRIPWIRES <span style={{fontFamily:"'DM Sans',sans-serif",fontSize:9.5,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",color:HD.ember,marginLeft:4}}>what needs you today</span>
         </div>
-        {dndTws.slice(0,4).map(tw=><div key={tw.fid+tw.sev} onClick={()=>tw.fid&&ovOpen({t:"dossier",fid:tw.fid})} style={{display:"flex",alignItems:"center",gap:12,borderLeft:"3px solid "+(tw.sev==="red"?HD.rose:tw.sev==="gold"?HD.ember:HD.rose),borderRadius:"0 8px 8px 0",background:"linear-gradient(90deg,rgba(23,23,42,.9),rgba(16,16,30,.85))",padding:"9px 13px",marginBottom:6,fontSize:13,lineHeight:1.5,cursor:"pointer",color:HD.bone,animation:tw.sev==="red"?"ddpulse 2.2s infinite":"none",boxShadow:tw.sev==="gold"?"0 0 14px rgba(255,140,66,.16)":"none"}}>
+        {dndTws.slice(0,4).map(tw=><div key={tw.fid+tw.sev} onClick={()=>tw.fid&&ovOpen({t:"dossier",fid:tw.fid})} style={{display:"flex",alignItems:"center",gap:12,borderLeft:"4px solid "+(tw.sev==="red"?HD.rose:HD.ember),borderRadius:"0 8px 8px 0",background:"linear-gradient(90deg,"+(tw.sev==="red"?"rgba(232,90,122,.14)":"rgba(255,140,66,.12)")+",rgba(10,10,18,.94) 320px)",padding:"9px 13px",marginBottom:6,fontSize:13,lineHeight:1.5,cursor:"pointer",color:HD.bone,animation:tw.sev==="red"?"ddpulse 2.2s infinite":"none",boxShadow:tw.sev==="gold"?"0 0 14px rgba(255,140,66,.16)":"none"}}>
           <span style={{flex:1}}>{tw.msg}</span>
           <button style={mini(tw.sev==="red"?HD.rose:HD.ember)}>{tw.fix} →</button>
         </div>)}
@@ -12063,20 +12063,20 @@ Rules:
           </div>};
         const bs=BRANDS.filter(b=>dndLedger.some(x=>x.brand===b.name)).sort((a,b2)=>minD(dndLedger.filter(x=>x.brand===a.name))-minD(dndLedger.filter(x=>x.brand===b2.name)));
         return<div style={{marginBottom:16}}>
-          <div style={{...serif,fontSize:18,fontWeight:700,color:HD.bone,borderBottom:"3px double rgba(176,141,63,.55)",paddingBottom:4,marginBottom:8,display:"flex",alignItems:"center",gap:8}}>
+          <div style={{...serif,fontSize:19,fontWeight:700,letterSpacing:2,color:HD.bone,borderBottom:"4px double rgba(176,141,63,.65)",paddingBottom:4,marginBottom:8,display:"flex",alignItems:"baseline",gap:8,textShadow:"0 0 22px rgba(176,141,63,.25)"}}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={HD.gold} strokeWidth="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-            The Ledger <span style={{fontSize:12.5,fontStyle:"italic",color:HD.smoke,fontWeight:500}}>— brand, then DMA, then the deal · one line per deal, soonest first</span>
+            THE LEDGER <span style={{fontFamily:"'DM Sans',sans-serif",fontSize:9.5,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",color:HD.gold,marginLeft:4}}>brand → DMA → the deal · one line each · soonest first</span>
           </div>
-          <div style={{border:"1px solid "+HD.bd,borderTop:"1px solid rgba(236,236,244,.14)",borderRadius:10,overflow:"hidden",background:"linear-gradient(180deg,rgba(23,23,42,.6),rgba(14,14,26,.5))",boxShadow:"0 18px 40px -22px rgba(0,0,0,.9), inset 0 1px 0 rgba(236,236,244,.05)"}}>
-            <div style={{display:"grid",gridTemplateColumns:"minmax(160px,.9fr) minmax(300px,1.8fr) 104px 56px minmax(160px,.95fr)",gap:12,padding:"7px 14px",fontSize:9,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:HD.dim,background:"rgba(11,11,22,.5)"}}>
-              <span style={{...serif,fontStyle:"italic",fontSize:12.5,fontWeight:600,letterSpacing:1,textTransform:"none"}}>Deal</span><span style={{...serif,fontStyle:"italic",fontSize:12.5,fontWeight:600,letterSpacing:1,textTransform:"none"}}>Who owes what</span><span style={{...serif,fontStyle:"italic",fontSize:12.5,fontWeight:600,letterSpacing:1,textTransform:"none"}}>Hard date</span><span></span><span style={{...serif,fontStyle:"italic",fontSize:12.5,fontWeight:600,letterSpacing:1,textTransform:"none"}}>Or else</span>
+          <div style={{border:"1px solid "+HD.bd,borderTop:"1px solid rgba(236,236,244,.14)",borderRadius:10,overflow:"hidden",background:"linear-gradient(180deg,rgba(14,14,22,.85),rgba(8,8,14,.8))",boxShadow:"0 18px 40px -22px rgba(0,0,0,.9), inset 0 1px 0 rgba(236,236,244,.05)"}}>
+            <div style={{display:"grid",gridTemplateColumns:"minmax(160px,.9fr) minmax(300px,1.8fr) 104px 56px minmax(160px,.95fr)",gap:12,padding:"7px 14px",fontSize:9,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:HD.dim,background:"rgba(4,4,8,.6)"}}>
+              <span style={{fontSize:9.5,fontWeight:800,letterSpacing:2.2,textTransform:"uppercase",color:HD.dim}}>Deal</span><span style={{fontSize:9.5,fontWeight:800,letterSpacing:2.2,textTransform:"uppercase",color:HD.dim}}>Who owes what</span><span style={{fontSize:9.5,fontWeight:800,letterSpacing:2.2,textTransform:"uppercase",color:HD.dim}}>Hard date</span><span></span><span style={{fontSize:9.5,fontWeight:800,letterSpacing:2.2,textTransform:"uppercase",color:HD.dim}}>Or else</span>
             </div>
             {bs.map(b=>{
               const items=dndLedger.filter(x=>x.brand===b.name);
               const worst=minD(items);
               const dmas=[...new Set(items.map(x=>x.mkts||"no market set"))].sort((p2,q2)=>minD(items.filter(x=>(x.mkts||"no market set")===p2))-minD(items.filter(x=>(x.mkts||"no market set")===q2)));
               return<div key={b.code}>
-                <div style={{display:"flex",gap:11,alignItems:"baseline",padding:"7px 14px 5px",background:"rgba(11,11,22,.65)",borderTop:"1px solid "+HD.bd,boxShadow:"inset 3px 0 0 "+b.color}}>
+                <div style={{display:"flex",gap:11,alignItems:"baseline",padding:"7px 14px 5px",background:"rgba(4,4,8,.75)",borderTop:"1px solid "+HD.bd,boxShadow:"inset 3px 0 0 "+b.color}}>
                   <span style={{...serif,fontSize:15.5,fontWeight:700,color:b.color}}>{b.name}</span>
                   <span style={{fontSize:10.5,fontWeight:700,color:worst<0?HD.rose:worst<=3?HD.ember:HD.dim}}>{[...new Set(items.map(x=>x.fid))].length} deal{[...new Set(items.map(x=>x.fid))].length!==1?"s":""} owed · worst {cnt(worst)}</span>
                 </div>
@@ -12092,7 +12092,7 @@ Rules:
           </div>
         </div>})()}
       <div style={{position:"relative",marginLeft:212,height:26,borderBottom:"1px solid "+HD.bd}}>
-        {months.map(m=><span key={m.label+m.pct} style={{...serif,position:"absolute",left:m.pct+"%",top:2,fontSize:13,fontStyle:"italic",fontWeight:600,letterSpacing:3,color:HD.smoke,borderLeft:"1px solid rgba(46,46,74,.8)",paddingLeft:7}}>{m.label}</span>)}
+        {months.map(m=><span key={m.label+m.pct} style={{...serif,position:"absolute",left:m.pct+"%",top:2,fontSize:12.5,fontWeight:700,letterSpacing:3.5,color:HD.smoke,borderLeft:"1px solid rgba(46,46,74,.8)",paddingLeft:7}}>{m.label}</span>)}
       </div>
       <div style={{position:"relative"}}>
         <div style={{position:"absolute",left:"calc(212px + (100% - 212px)*"+(((today.getTime()-win0)/(win1-win0))).toFixed(4)+")",top:-26,bottom:0,width:2,background:"linear-gradient(180deg,"+HD.flame+",rgba(74,200,232,.12))",boxShadow:"0 0 12px rgba(74,200,232,.55)",zIndex:5,pointerEvents:"none"}}>
@@ -12104,7 +12104,7 @@ Rules:
           const cost=mine.reduce((t,f)=>t+(parseFloat(String(f.cost).replace(/[^0-9.]/g,""))||0),0);
           const rows=[...mine].sort((x,y)=>(owedOf(y).length?1:0)-(owedOf(x).length?1:0)||String(x.flightStart||"9999").localeCompare(String(y.flightStart||"9999")));
           return<div key={b.code} style={{marginTop:14}}>
-            <div style={{display:"flex",alignItems:"baseline",gap:12,padding:"3px 0 5px",borderBottom:"3px double "+b.color,boxShadow:"0 10px 22px -16px "+b.color}}>
+            <div style={{display:"flex",alignItems:"baseline",gap:12,padding:"3px 0 5px",borderBottom:"3px double "+b.color,boxShadow:"0 5px 12px -11px "+b.color}}>
               <span style={{...serif,fontSize:19,fontWeight:700,color:b.color}}>{b.name}</span>
               <span style={{fontSize:11,color:HD.dim,fontWeight:600}}>{owedCt?owedCt+" deal"+(owedCt>1?"s":"")+" owed":"nothing owed"} · {mine.length-owedCt} fed{cost?" · ":""}{cost?<b style={{color:HD.gold}}>${cost>=1000?(cost/1000).toFixed(cost>=10000?0:1)+"k":cost} committed</b>:null}</span>
             </div>
@@ -12564,7 +12564,7 @@ Rules:
         {body}
       </div>
     </React.Fragment>;
-    return<div style={{minHeight:"100vh",background:"radial-gradient(1100px 480px at 76% -12%,rgba(74,200,232,.09),transparent 60%),radial-gradient(900px 420px at 10% 108%,rgba(255,140,66,.06),transparent 60%),linear-gradient(168deg,#07070d 0%,#0e0e1a 45%,#07070d 100%)",color:HD.bone,fontFamily:"'DM Sans',sans-serif",fontSize:14}}>
+    return<div style={{minHeight:"100vh",background:"radial-gradient(1100px 480px at 76% -12%,rgba(74,200,232,.09),transparent 60%),radial-gradient(900px 420px at 10% 108%,rgba(255,140,66,.06),transparent 60%),linear-gradient(168deg,#040406 0%,#0a0a10 45%,#040406 100%)",color:HD.bone,fontFamily:"'DM Sans',sans-serif",fontSize:14}}>
       <style>{"@keyframes ddflick{0%,100%{opacity:1;transform:scaleY(1)}42%{opacity:.72;transform:scaleY(.93)}55%{opacity:.95;transform:scaleY(1.02)}68%{opacity:.8;transform:scaleY(.96)}}@keyframes ddpulse{0%,100%{box-shadow:0 0 16px rgba(232,90,122,.22)}50%{box-shadow:0 0 26px rgba(232,90,122,.42)}}"}</style>
       <div style={{display:"flex",alignItems:"center",gap:16,padding:"14px 26px 11px",borderBottom:"none"}}>
         <svg width="22" height="30" viewBox="0 0 22 30" style={{animation:"ddflick 2.8s infinite",transformOrigin:"50% 100%",filter:"drop-shadow(0 0 10px rgba(74,200,232,.7))",flex:"none"}}>
