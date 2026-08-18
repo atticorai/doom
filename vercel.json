@@ -5,6 +5,9 @@
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
+  "crons": [
+    { "path": "/api/heartbeat", "schedule": "0 12 * * *" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

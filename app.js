@@ -2399,6 +2399,22 @@ const App=()=>{
 
   const dismissAlert=(key)=>setAlertsDismissed(p=>[...p,key]);
 
+  // ── ALERT HEARTBEAT FEED ──────────────────────────────
+  // The daily email digest (api/heartbeat.js, run by a Vercel cron) can't do
+  // the browser-side alert math, so every session writes the computed feed
+  // down. The cron re-ages it against the calendar each morning and emails
+  // what's overdue / due soon — so Doom still nags on days nobody opens it.
+  // Dismissed alerts never reach the feed (the memo already filters them).
+  const alertFeedRef=React.useRef("");
+  React.useEffect(()=>{
+    if(!dbLoaded)return;if(!saveRef.current)return;
+    const items=alerts.map(a=>({key:a.key,msg:a.msg,days:a.days,severity:a.severity,overdue:!!a.overdue}));
+    const sig=JSON.stringify(items);
+    if(sig===alertFeedRef.current)return;
+    alertFeedRef.current=sig;
+    saveToDb("alertFeed",{computedAt:new Date().toISOString(),items}).catch(e=>{console.error("alertFeed save failed:",e)});
+  },[alerts,dbLoaded]);
+
   // Creative Brief — a report for the creative team: what sizes to build for a
   // batch of boards due to post, plus placement guidance so the same creative
   // isn't clustered (over-saturation). Opened from a Command Center alert.
