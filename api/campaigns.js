@@ -114,6 +114,53 @@ async function queryAll(dsId, token) {
   return rows;
 }
 
+
+// ── CREATE (POST with a name) ──────────────────────────────────────
+// The Hub's intake form keeps the record in Doom AND files it in Notion so
+// the marketing team sees it where they already work. Targets the Campaign
+// Management data source; DMA market names are folded to the states that
+// database tracks.
+const MGMT_DS = '23a991a2-b603-8040-a004-000bc84cdca8';
+const NOTION_BRAND = { 'Lerner & Rowe': 'Lerner and Rowe', 'Keches Law Group': 'Keches Law' };
+const NOTION_CHANNELS = ['Paid Search', 'Paid Social', 'Organic Social', 'TV', 'Radio', 'OOH', 'CTV/OTT', 'SEO', 'Email/SMS', 'Lead Gen', 'Media', 'Website'];
+const CHANNEL_MAP = { 'Streaming Audio': 'Media' };
+const DMA_STATE = { 'Chicago': 'Illinois', 'Cincinnati': 'Ohio', 'Denver': 'Colorado', 'Minneapolis': 'Minnesota', 'Birmingham': 'Alabama', 'Huntsville': 'Alabama', 'Montgomery': 'Alabama', 'Dothan': 'Alabama', 'Gadsden': 'Alabama', 'Knoxville': 'Tennessee', 'Chattanooga': 'Tennessee', 'Nashville': 'Tennessee', 'Oklahoma City': 'Oklahoma', 'Tulsa': 'Oklahoma', 'Boston': 'Massachusetts', 'Phoenix': 'Arizona', 'Tucson': 'Arizona', 'Flagstaff': 'Arizona', 'Yuma': 'Arizona', 'Bullhead': 'Arizona', 'Las Vegas': 'Nevada', 'Reno': 'Nevada', 'Albuquerque': 'New Mexico', 'Seattle': 'Washington', 'Panama City': 'Florida' };
+
+async function createInNotion(body, token) {
+  const name = String(body.name || '').trim().slice(0, 200);
+  if (!name) { const e = new Error('missing_name'); e.code = 400; throw e; }
+  const brand = NOTION_BRAND[body.brand] || body.brand || null;
+  const channels = (Array.isArray(body.channels) ? body.channels : [])
+    .map(c => CHANNEL_MAP[c] || c).filter(c => NOTION_CHANNELS.includes(c));
+  const states = [...new Set(String(body.markets || '').split(',').map(s => s.trim()).filter(Boolean)
+    .map(m => DMA_STATE[m] || null).filter(Boolean))];
+  const descBits = [String(body.description || '').trim()];
+  if (body.markets) descBits.push('Markets: ' + String(body.markets).trim());
+  if (body.trafficDue) descBits.push('Traffic due: ' + String(body.trafficDue).slice(0, 10));
+  descBits.push('Filed from Doom & Deliverables Campaign Hub.');
+  const properties = {
+    'Campaign Name': { title: [{ text: { content: name } }] },
+    'Status': { status: { name: 'Planning' } },
+    'Campaign Description': { rich_text: [{ text: { content: descBits.filter(Boolean).join(' | ').slice(0, 1900) } }] },
+  };
+  if (brand) properties['Brand'] = { select: { name: brand } };
+  if (channels.length) properties['Channels'] = { multi_select: channels.map(c => ({ name: c })) };
+  if (states.length) properties['Target Markets'] = { multi_select: states.map(s => ({ name: s })) };
+  if (body.launch) properties['Target Launch Date'] = { date: { start: String(body.launch).slice(0, 10) } };
+  const resp = await fetch('https://api.notion.com/v1/pages', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Notion-Version': NOTION_VERSION,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ parent: { type: 'data_source_id', data_source_id: MGMT_DS }, properties }),
+  });
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok) { const e = new Error('Notion ' + resp.status + ': ' + String(data.message || '').slice(0, 300)); e.code = 502; throw e; }
+  return { id: data.id, url: data.url || null };
+}
+
 // 5-minute in-memory cache — Notion planning data doesn't change minute to
 // minute, and this keeps a busy day of page opens well under rate limits.
 let CACHE = { ts: 0, data: null };
@@ -126,6 +173,16 @@ module.exports = async function handler(req, res) {
   const token = (process.env.NOTION_API_KEY || process.env.NOTION_TOKEN || '').trim();
   if (!token) {
     return res.status(500).json({ error: 'not_configured', message: 'NOTION_API_KEY is not set in the Vercel environment.' });
+  }
+
+  if (req.method === 'POST' && req.body && req.body.name) {
+    try {
+      const created = await createInNotion(req.body, token);
+      CACHE = { ts: 0, data: null }; // the next pull should see the new row
+      return res.status(200).json(created);
+    } catch (e) {
+      return res.status(e.code === 400 ? 400 : 502).json({ error: 'create_failed', message: String(e.message || e) });
+    }
   }
 
   const force = (req.query && req.query.refresh) || (req.body && req.body.refresh);

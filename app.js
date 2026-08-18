@@ -694,6 +694,112 @@ const DOOM={
 };
 const doomPick=(arr)=>arr[Math.floor(Math.random()*arr.length)];
 
+// ── MARKETING OPS: shared constants & pure helpers ─────
+// Everything the Campaign Hub knows about assets, channels, and UTMs lives
+// here at module scope so the sync effects, the alerts engine, and the page
+// all speak the same vocabulary. "Assets" is the broad sense from the role:
+// spots, tags, banners, pages, pixels, UTMs, station-made creative, merch.
+const CAMP_ASSET_TYPES=[
+  {t:"Broadcast Spot",c:"#E85A7A",o:"Creative Ops"},
+  {t:"Tag",c:"#D4A040",o:"Hazel"},
+  {t:"Digital Banner",c:"#4AC8E8",o:"Creative Ops"},
+  {t:"Social Graphic",c:"#C4A0C8",o:"Creative Ops"},
+  {t:"Social Video",c:"#9b7bb0",o:"Creative Ops"},
+  {t:"Landing Page",c:"#5BC4A0",o:"SEO / Web"},
+  {t:"Pixel",c:"#4AC8E8",o:"SEO / Web"},
+  {t:"UTM / Tracking URL",c:"#5BC4A0",o:"Me"},
+  {t:"Station-Made Creative",c:"#E85A7A",o:"Station"},
+  {t:"OOH Artwork",c:"#9b7bb0",o:"Creative Ops"},
+  {t:"Merch Artwork",c:"#D4A040",o:"Creative Ops"},
+  {t:"Contract",c:"#D4A040",o:"Me"},
+  {t:"Other",c:"#9B8EAD",o:""}
+];
+const CAMP_ASTATUS=[["needed","Needed","#9B8EAD"],["requested","Requested","#4AC8E8"],["wip","In Progress","#D4A040"],["review","In Review","#C4A0C8"],["done","In Hand","#5BC4A0"],["na","N/A","#6B5E80"]];
+const CAMP_CSTATUS=["Planning","In Progress","Ready","Live","Wrapped"];
+// New-campaign channels and the assets each one implies. Picking channels on
+// the intake form writes the first draft of the checklist — nobody types it.
+const CAMP_CHANNELS=["TV","Radio","Streaming Audio","OOH","Paid Social","Paid Search","CTV/OTT","Email/SMS","Website"];
+const CAMP_CHANNEL_SEEDS={
+  "TV":[["Broadcast Spot",":30 TV"]],
+  "Radio":[["Broadcast Spot",":30 Radio"]],
+  "Streaming Audio":[["Broadcast Spot",":30 Audio"],["Digital Banner","Companion banner"],["UTM / Tracking URL","Streaming URLs"]],
+  "OOH":[["OOH Artwork",""]],
+  "Paid Social":[["Social Graphic",""],["Social Video",""]],
+  "Paid Search":[["Landing Page",""],["UTM / Tracking URL","Search URLs"]],
+  "CTV/OTT":[["Broadcast Spot",":30 CTV"]],
+  "Email/SMS":[["Other","Email creative"]],
+  "Website":[["Landing Page",""],["Pixel",""],["UTM / Tracking URL",""]]
+};
+// UTM platforms — lowercase standard params (utm_source/medium/campaign/
+// content/term) so GA actually reads them; the legacy capitalized strings in
+// the traffic builders are per-buyer formats and stay untouched.
+const UTM_PLATFORMS=[
+  {p:"Meta",s:"meta",m:"paid-social"},
+  {p:"Google Ads",s:"google",m:"ppc"},
+  {p:"Bing",s:"bing",m:"ppc"},
+  {p:"StackAdapt",s:"stackadapt",m:"display"},
+  {p:"Pandora / SiriusXM",s:"siriusxm",m:"streaming-audio"},
+  {p:"Spotify",s:"spotify",m:"streaming-audio"},
+  {p:"Paramount+",s:"paramount",m:"video-streaming"},
+  {p:"ESPN",s:"espn",m:"display"},
+  {p:"iHeart",s:"iheart",m:"display"},
+  {p:"Email",s:"newsletter",m:"email"},
+  {p:"Event / Partner",s:"event",m:"event"}
+];
+const CAMP_BRAND_URLS={"Postman Law":"https://www.postmanlaw.com","Wettermark Keith":"https://www.wkfirm.com","Lerner & Rowe":"https://lernerandrowe.com","Parrish DeVaughn":"https://www.parrishdevaughn.com","Keches Law Group":"https://www.kecheslaw.com"};
+const campUid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const campBrandFix=(b)=>b==="Lerner and Rowe"?"Lerner & Rowe":b==="Keches and Keller"||b==="Keches Law"?"Keches Law Group":b||"";
+const campIsoD=(s)=>s?String(s).slice(0,10):"";
+const campMinusDays=(iso,n)=>{const d=campIsoD(iso);if(!d)return"";const x=new Date(d+"T00:00:00");if(isNaN(x.getTime()))return"";x.setDate(x.getDate()-n);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
+const campTypeMeta=(t)=>CAMP_ASSET_TYPES.find(x=>x.t===t)||CAMP_ASSET_TYPES[CAMP_ASSET_TYPES.length-1];
+const campMkAsset=(type,label,due)=>{const m=campTypeMeta(type);return{id:campUid(),type:m.t,label:label||"",owner:m.o,status:"needed",due:due||"",url:"",isci:"",notes:""}};
+// Seed a checklist from a Notion row's declared needs (Asset Types Needed +
+// Spot Lengths), or from picked channels on the intake form.
+const campSeedFromNotionRow=(r)=>{
+  const due=campIsoD(r.trafficDue)||campMinusDays(r.flightStart,7);
+  const seeds=[];const seen={};
+  (r.assets||[]).forEach(a=>{
+    const type=/Spot/i.test(a)?"Broadcast Spot":({"Tag":"Tag","Digital Banner":"Digital Banner","Social Graphic":"Social Graphic","Social Video":"Social Video","Merch Artwork":"Merch Artwork"})[a]||"Other";
+    seeds.push([type,a]);seen[a]=1;
+  });
+  (r.spots||[]).forEach(s=>{if(!seeds.some(x=>x[0]==="Broadcast Spot"&&String(x[1]).indexOf(s)>=0))seeds.push(["Broadcast Spot",s+" spot"])});
+  (r.channels||[]).forEach(ch=>{if(!(r.assets||[]).length&&CAMP_CHANNEL_SEEDS[ch])CAMP_CHANNEL_SEEDS[ch].forEach(([t,l])=>seeds.push([t,l]))});
+  const out=[];const dedup={};
+  seeds.forEach(([t,l])=>{const k=t+"|"+l;if(dedup[k])return;dedup[k]=1;out.push(campMkAsset(t,l,due))});
+  return out;
+};
+const campNotionFields=(r)=>{
+  // Only fields Notion actually has — a blank in Notion never clobbers a
+  // date someone set by hand in Doom.
+  const f={};
+  if(r.name)f.name=r.name;
+  const b=campBrandFix(r.brand);if(b)f.brand=b;
+  const mk=(r.dmas&&r.dmas.length?r.dmas:(r.markets||[])).join(", ");if(mk)f.markets=mk;
+  if(r.flightStart)f.flightStart=campIsoD(r.flightStart);
+  if(r.flightEnd)f.flightEnd=campIsoD(r.flightEnd);
+  if(r.trafficDue)f.trafficDue=campIsoD(r.trafficDue);
+  if(r.stations)f.stations=r.stations;
+  if(r.url)f.notionUrl=r.url;
+  return f;
+};
+const campFromNotion=(r)=>({
+  id:campUid(),name:r.name||"Untitled",brand:campBrandFix(r.brand),
+  markets:(r.dmas&&r.dmas.length?r.dmas:(r.markets||[])).join(", "),
+  status:"Planning",flightStart:campIsoD(r.flightStart),flightEnd:campIsoD(r.flightEnd),
+  trafficDue:campIsoD(r.trafficDue),stations:r.stations||"",notes:r.notes||"",
+  notionUrl:r.url||"",notionId:r.id,assets:campSeedFromNotionRow(r),utms:[],
+  created:Date.now(),updated:Date.now()
+});
+const campUtmBuild=(c,plat,base,content,term)=>{
+  const s=(x)=>String(x||"").trim().toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+  const bcode=((BRANDS.find(b=>b.name===c.brand)||{}).code||"").toLowerCase();
+  const year=(campIsoD(c.flightStart)||"").slice(0,4)||String(new Date().getFullYear());
+  const q=["utm_source="+encodeURIComponent(plat.s),"utm_medium="+encodeURIComponent(plat.m),"utm_campaign="+encodeURIComponent(s(bcode+"-"+c.name)+"-"+year)];
+  if(content)q.push("utm_content="+encodeURIComponent(s(content)));
+  if(term)q.push("utm_term="+encodeURIComponent(s(term)));
+  return String(base||"").replace(/\/+$/,"")+"/?"+q.join("&");
+};
+
 // ── MUSE CHARACTERS (AI Planner narrators) ───────────
 const MUSES=[
   {name:"Calliope",role:"Coverage",color:"#E85A7A",icon:"🎭",voice:["Let me tell you a tale of market coverage…","Honey, your coverage has gaps wider than the Aegean.","Now THIS is a story worth telling.","The muse of eloquence sees… room for improvement."]},
@@ -938,6 +1044,12 @@ const App=()=>{
   const[workMonth,setWorkMonth]=useState(()=>nextTrafficMonth());
   const[campaigns,setCampaigns]=useState([]);
   const campaignsDirtyRef=React.useRef(false); // set by Campaign Hub mutators; gates the save so an untouched session can never overwrite
+  const[taglines,setTaglines]=useState([]);
+  const taglinesDirtyRef=React.useRef(false);
+  const[hubCfg,setHubCfg]=useState({creativeOpsEmail:"",seoEmail:""});
+  const hubCfgDirtyRef=React.useRef(false);
+  const[assetReviews,setAssetReviews]=useState({});
+  const assetReviewsDirtyRef=React.useRef(false);
   const[alertsDismissed,setAlertsDismissed]=useState([]);
   const[oohContracts,setOohContracts]=useState({...OOH_CONTRACTS_INIT,...(typeof LR_CONTRACTS!=="undefined"?LR_CONTRACTS:{}),...(typeof KE_CONTRACTS!=="undefined"?KE_CONTRACTS:{})});
   const[oohCreativeFiles,setOohCreativeFiles]=useState([]);// every uploaded OOH creative as a STANDALONE file: {n,u,dma,c,fam,w,h}
@@ -1179,6 +1291,9 @@ const App=()=>{
           setTrafficHistory(d);trafficFbCountRef.current=d.length
         }trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
         if(docs.campaigns?.data){const d=JSON.parse(docs.campaigns.data);if(Array.isArray(d)&&d.length)setCampaigns(d)}
+        if(docs.taglines?.data){const d=JSON.parse(docs.taglines.data);if(Array.isArray(d)&&d.length)setTaglines(d)}
+        if(docs.campaignHubCfg?.data){try{const d=JSON.parse(docs.campaignHubCfg.data);if(d&&typeof d==="object")setHubCfg(p=>({...p,...d}))}catch(_e){}}
+        if(docs.assetReviews?.data){try{const d=JSON.parse(docs.assetReviews.data);if(d&&typeof d==="object")setAssetReviews(d)}catch(_e){}}
         if(docs.workMonth?.data){
           // Restore the saved month only if it's the current trafficking target or
           // LATER (user deliberately looking ahead). If the saved month is behind
@@ -1458,6 +1573,96 @@ const App=()=>{
   },[dbLoaded,trafficHistory]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(workMonth)saveToDb("workMonth",workMonth)},[workMonth,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(!campaignsDirtyRef.current)return;saveToDb("campaigns",campaigns)},[campaigns,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(!taglinesDirtyRef.current)return;saveToDb("taglines",taglines)},[taglines,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(!hubCfgDirtyRef.current)return;saveToDb("campaignHubCfg",hubCfg)},[hubCfg,dbLoaded]);
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(!assetReviewsDirtyRef.current)return;saveToDb("assetReviews",assetReviews)},[assetReviews,dbLoaded]);
+  // ── NOTION → CAMPAIGN SYNC ────────────────────────────
+  // Nothing manual: new Notion rows become Board campaigns by themselves
+  // (with the checklist seeded from what Notion says is needed), and Notion
+  // edits to a campaign's dates flow through. A blank in Notion never
+  // clobbers a value set by hand, user-owned state (assets, statuses, notes,
+  // UTMs) is never touched, and finished/denied rows are never materialized.
+  React.useEffect(()=>{
+    if(!dbLoaded)return;
+    let stop=false;
+    const sync=async()=>{
+      try{
+        const r=await fetch("/api/campaigns",{credentials:"include"});
+        if(!r.ok)return;
+        const d=await r.json().catch(()=>null);
+        if(stop||!d||!Array.isArray(d.campaigns))return;
+        setCampaigns(prev=>{
+          let changed=false;
+          const byNid={};prev.forEach(c=>{if(c.notionId)byNid[c.notionId]=c});
+          let next=[...prev];
+          d.campaigns.forEach(row=>{
+            if(!row||!row.id||!row.name)return;
+            if(byNid[row.id]){
+              const c=byNid[row.id];
+              const upd=campNotionFields(row);
+              const diff=Object.keys(upd).some(k=>String(c[k]==null?"":c[k])!==String(upd[k]==null?"":upd[k]));
+              if(diff){changed=true;next=next.map(x=>x.id===c.id?{...x,...upd,updated:Date.now()}:x)}
+            }else{
+              if(/Denied|Completed|Complete$/.test(String(row.status||"")))return;
+              changed=true;next=[campFromNotion(row),...next];
+            }
+          });
+          if(changed){campaignsDirtyRef.current=true;return next}
+          return prev;
+        });
+      }catch(e){}
+    };
+    sync();
+    const id=setInterval(sync,15*60*1000);
+    return()=>{stop=true;clearInterval(id)};
+  },[dbLoaded]);
+  // ── CREATIVE REVIEW RESPONSES → ASSET STATUS ──────────
+  // The review portal (api/review.js) writes verdicts server-side; this poll
+  // folds them back into the campaign assets: approved → in hand, changes →
+  // back to in-progress with the feedback attached. Small clobber window if
+  // a reviewer answers in the seconds between read and save — acceptable at
+  // this scale, and the reviewer's page confirms receipt either way.
+  React.useEffect(()=>{
+    if(!dbLoaded)return;
+    let stop=false;
+    const poll=async()=>{
+      try{
+        const snap=await db.collection("appData").doc("assetReviews").get();
+        const raw=snap&&snap.exists?snap.data():null;
+        const map=raw&&raw.data?JSON.parse(raw.data):null;
+        if(stop||!map)return;
+        const pending=Object.entries(map).filter(([t,r])=>r&&(r.status==="approved"||r.status==="changes")&&!r.applied);
+        if(!pending.length)return;
+        setCampaigns(prev=>{
+          let changed=false;
+          const next=prev.map(c=>{
+            const hits=pending.filter(([t,r])=>r.campId===c.id);
+            if(!hits.length)return c;
+            changed=true;
+            return{...c,updated:Date.now(),assets:(c.assets||[]).map(a=>{
+              const hit=hits.find(([t,r])=>r.assetId===a.id);
+              if(!hit)return a;
+              const rr=hit[1];
+              return rr.status==="approved"
+                ?{...a,status:"done",notes:((a.notes||"")+" ✓ Approved "+String(rr.respondedAt||"").slice(0,10)).trim()}
+                :{...a,status:"wip",notes:((a.notes||"")+" ✏ Changes: "+(rr.feedback||"")).trim()};
+            })};
+          });
+          if(changed)campaignsDirtyRef.current=true;
+          return changed?next:prev;
+        });
+        const upd={...map};pending.forEach(([t])=>{upd[t]={...upd[t],applied:true}});
+        assetReviewsDirtyRef.current=true;setAssetReviews(upd);
+        pending.forEach(([t,r])=>log("Creative Review",(r.status==="approved"?"Approved":"Changes requested")+": "+r.campName+" · "+(r.assetLabel||r.assetType)+(r.feedback?" — "+r.feedback:"")));
+        notify(pending.length===1
+          ?((pending[0][1].status==="approved"?"✓ Approved: ":"✏ Changes requested: ")+(pending[0][1].assetLabel||pending[0][1].assetType)+" — "+pending[0][1].campName)
+          :pending.length+" review responses came back — check the Hub");
+      }catch(e){}
+    };
+    poll();
+    const id=setInterval(poll,5*60*1000);
+    return()=>{stop=true;clearInterval(id)};
+  },[dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(confirmations).length>0)saveToDb("confirmations",confirmations)},[confirmations,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(oohRemindersSent).length>0)saveToDb("oohRemindersSent",oohRemindersSent)},[oohRemindersSent,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;if(Object.keys(confirmRemindersSent).length>0)saveToDb("confirmRemindersSent",confirmRemindersSent)},[confirmRemindersSent,dbLoaded]);
@@ -2402,7 +2607,10 @@ const App=()=>{
     // set overdue:true so the age-out filter below keeps them visible.
     (campaigns||[]).forEach(c=>{
       if(c.status==="Wrapped")return;
-      const open=(c.assets||[]).filter(x=>x.status!=="done"&&x.status!=="na");
+      // Same in-hand rule as the Hub: delivered, N/A, or linked to an ISCI
+      // that already has a creative file.
+      const _ih=(x)=>x.status==="done"||x.status==="na"||(x.isci&&iscis.some(i=>i.code+"|"+(i.dma||"")===x.isci&&i.fileUrl));
+      const open=(c.assets||[]).filter(x=>!_ih(x));
       const dd=(s)=>{const d=_pDate(s);if(!d)return null;d.setHours(0,0,0,0);return Math.round((d-today)/864e5)};
       const nm=(x)=>x.type+(x.label?" ("+x.label+")":"");
       if(open.length){
@@ -2417,7 +2625,7 @@ const App=()=>{
     // Overdue creative-due alerts survive the age-out — they already bound
     // themselves by the posting date and must stay visible until handled.
     return a.filter(x=>!alertsDismissed.includes(x.key)&&(x.days>=-1||x.overdue)).sort((a,b)=>a.days-b.days);
-  },[alertsDismissed,oohContracts,campaigns]);
+  },[alertsDismissed,oohContracts,campaigns,iscis]);
 
   const dismissAlert=(key)=>setAlertsDismissed(p=>[...p,key]);
 
@@ -11279,91 +11487,225 @@ Rules:
     </div>;
   };
 
-  // ── CAMPAIGN HUB ──────────────────────────────────────
-  // The Marketing Ops layer. Every campaign, every asset it needs — assets in
-  // the broad sense: spots, tags, banners, landing pages, pixels, UTMs,
-  // station-made creative, merch — who owns each one, and when it's due.
-  // Notion stays where the marketing team plans; the Notion Feed tab pulls
-  // those plans in read-only, and one click adopts a row into a tracked Doom
-  // campaign. Tracked campaigns persist to Firestore ("campaigns") behind a
-  // dirty flag so a session that never touched them can never overwrite them.
-  const CAMP_ASSET_TYPES=[
-    {t:"Broadcast Spot",c:"#E85A7A",o:"Creative Ops"},
-    {t:"Tag",c:"#D4A040",o:"Hazel"},
-    {t:"Digital Banner",c:"#4AC8E8",o:"Creative Ops"},
-    {t:"Social Graphic",c:"#C4A0C8",o:"Creative Ops"},
-    {t:"Social Video",c:"#9b7bb0",o:"Creative Ops"},
-    {t:"Landing Page",c:"#5BC4A0",o:"Me"},
-    {t:"Pixel",c:"#4AC8E8",o:"Me"},
-    {t:"UTM / Tracking URL",c:"#5BC4A0",o:"Me"},
-    {t:"Station-Made Creative",c:"#E85A7A",o:"Station"},
-    {t:"OOH Artwork",c:"#9b7bb0",o:"Creative Ops"},
-    {t:"Merch Artwork",c:"#D4A040",o:"Creative Ops"},
-    {t:"Other",c:"#9B8EAD",o:""}
-  ];
-  const CAMP_ASTATUS=[["needed","Needed","#9B8EAD"],["requested","Requested","#4AC8E8"],["wip","In Progress","#D4A040"],["review","In Review","#C4A0C8"],["done","Delivered","#5BC4A0"],["na","N/A","#6B5E80"]];
-  const CAMP_CSTATUS=["Planning","In Progress","Ready","Live","Wrapped"];
+  // ── MARKETING OPS: CAMPAIGN HUB ───────────────────────
+  // The department's operating floor. Campaigns flow in from Notion on their
+  // own (and from the intake form, which writes BACK to Notion); every
+  // campaign carries its asset checklist; the Hub answers "do we have them?"
+  // and pushes the work out — creative briefs to Creative Ops, pixel/page
+  // requests to SEO/Web, review links to whoever must approve, asset
+  // packages to anyone. The Registry tab is the asset ledger across all
+  // campaigns and reads the ISCI Registry: link an asset to its ISCI and a
+  // file on the ISCI counts as the asset being in hand.
+  const isciKeyOf=(i)=>i.code+"|"+(i.dma||"");
+  const isciByKey=(k)=>k?iscis.find(i=>isciKeyOf(i)===k):null;
+  const assetInHand=(a)=>{if(a.status==="done"||a.status==="na")return true;const l=isciByKey(a.isci);return!!(l&&l.fileUrl)};
+  const assetLink=(a)=>{if(a.url)return a.url;const l=isciByKey(a.isci);return(l&&l.fileUrl)||""};
   const CampaignsPg=()=>{
     const[view,setView]=useState("board");
     const[expanded,setExpanded]=useState(null);
     const[showWrapped,setShowWrapped]=useState(false);
     const[adding,setAdding]=useState(false);
-    const[nc,setNc]=useState({name:"",brand:"Postman Law",markets:"",flightStart:"",flightEnd:"",trafficDue:""});
-    const[feed,setFeed]=useState(null);
-    const[feedErr,setFeedErr]=useState("");
-    const[feedBusy,setFeedBusy]=useState(false);
+    const[cfgOpen,setCfgOpen]=useState(false);
+    const[utmOpen,setUtmOpen]=useState(null);
+    const[mailOpen,setMailOpen]=useState(null);
+    const[busy,setBusy]=useState(false);
+    const[nc,setNc]=useState({name:"",brand:"Postman Law",markets:"",flightStart:"",flightEnd:"",trafficDue:"",channels:[],desc:"",toNotion:true});
+    const[regBrand,setRegBrand]=useState("");const[regType,setRegType]=useState("");const[regMissing,setRegMissing]=useState(false);
+    const[feed,setFeed]=useState(null);const[feedErr,setFeedErr]=useState("");const[feedBusy,setFeedBusy]=useState(false);
     const loadFeed=async(force)=>{setFeedBusy(true);setFeedErr("");try{const r=await fetch("/api/campaigns"+(force?"?refresh=1":""),{credentials:"include"});const d=await r.json().catch(()=>({}));if(!r.ok){setFeedErr(d.message||d.error||("Failed to load ("+r.status+")"));setFeedBusy(false);return}setFeed(d);setFeedBusy(false)}catch(e){setFeedErr("Network error reaching /api/campaigns");setFeedBusy(false)}};
-    React.useEffect(()=>{if(view==="notion"&&!feed&&!feedBusy&&!feedErr)loadFeed(false)},[view]);
-    const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
-    const cIso=(s)=>s?String(s).slice(0,10):"";
-    const dTo=(s)=>{const i=cIso(s);if(!i)return null;const d=new Date(i+"T00:00:00");if(isNaN(d.getTime()))return null;const t=new Date();t.setHours(0,0,0,0);return Math.round((d.getTime()-t.getTime())/864e5)};
+    React.useEffect(()=>{if(view==="source"&&!feed&&!feedBusy&&!feedErr)loadFeed(false)},[view]);
+    const dTo=(s)=>{const i=campIsoD(s);if(!i)return null;const d=new Date(i+"T00:00:00");if(isNaN(d.getTime()))return null;const t=new Date();t.setHours(0,0,0,0);return Math.round((d.getTime()-t.getTime())/864e5)};
     const dLbl=(n)=>n==null?"":n<0?Math.abs(n)+"d late":n===0?"today":n===1?"tomorrow":"in "+n+"d";
-    const cFd=(s)=>cIso(s)?fD(cIso(s)):"—";
-    const brandFix=(b)=>b==="Lerner and Rowe"?"Lerner & Rowe":b==="Keches and Keller"?"Keches Law Group":b||"";
+    const cFd=(s)=>campIsoD(s)?fD(campIsoD(s)):"—";
     const aMeta=(id)=>CAMP_ASTATUS.find(s=>s[0]===id)||CAMP_ASTATUS[0];
-    const tMeta=(t)=>CAMP_ASSET_TYPES.find(x=>x.t===t)||CAMP_ASSET_TYPES[CAMP_ASSET_TYPES.length-1];
     const touch=()=>{campaignsDirtyRef.current=true};
     const updCamp=(id,patch)=>{touch();setCampaigns(p=>p.map(c=>c.id===id?{...c,...patch,updated:Date.now()}:c))};
     const updAsset=(cid,aid,patch)=>{touch();setCampaigns(p=>p.map(c=>c.id!==cid?c:{...c,updated:Date.now(),assets:(c.assets||[]).map(a=>a.id===aid?{...a,...patch}:a)}))};
     const delAsset=(cid,aid)=>{touch();setCampaigns(p=>p.map(c=>c.id!==cid?c:{...c,updated:Date.now(),assets:(c.assets||[]).filter(a=>a.id!==aid)}))};
-    const addAsset=(cid,type)=>{const m=tMeta(type);touch();setCampaigns(p=>p.map(c=>c.id!==cid?c:{...c,updated:Date.now(),assets:[...(c.assets||[]),{id:uid(),type:m.t,label:"",owner:m.o,status:"needed",due:c.trafficDue||"",url:"",notes:""}]}))};
+    const addAsset=(cid,type)=>{touch();setCampaigns(p=>p.map(c=>c.id!==cid?c:{...c,updated:Date.now(),assets:[...(c.assets||[]),campMkAsset(type,"",c.trafficDue||campMinusDays(c.flightStart,7))]}))};
     const delCampaign=(c)=>{if(!confirm('Delete campaign "'+c.name+'" and its asset list? This can\'t be undone.'))return;touch();setCampaigns(p=>p.filter(x=>x.id!==c.id));log("Campaign","Deleted: "+c.name);notify("Deleted. "+doomPick(DOOM.sprinkle))};
-    const createCampaign=()=>{const nm=nc.name.trim();if(!nm){notify("A campaign needs a name. Even Hercules had one.");return}touch();const id=uid();setCampaigns(p=>[{id,name:nm,brand:nc.brand,markets:nc.markets.trim(),status:"Planning",flightStart:nc.flightStart,flightEnd:nc.flightEnd,trafficDue:nc.trafficDue,stations:"",notes:"",notionUrl:"",notionId:null,assets:[],created:Date.now(),updated:Date.now()},...p]);log("Campaign","Created: "+nm);notify("Tracking: "+nm);setNc({name:"",brand:nc.brand,markets:"",flightStart:"",flightEnd:"",trafficDue:""});setAdding(false);setExpanded(id)};
-    const adoptRow=(r)=>{
-      const seeds=[];
-      const seen={};
-      (r.assets||[]).forEach(a=>{
-        const type=/Spot/i.test(a)?"Broadcast Spot":({"Tag":"Tag","Digital Banner":"Digital Banner","Social Graphic":"Social Graphic","Social Video":"Social Video","Merch Artwork":"Merch Artwork"})[a]||"Other";
-        seeds.push({type,label:a});seen[a]=1;
-      });
-      (r.spots||[]).forEach(s=>{if(!seen[s+" Spot"]&&!seeds.some(x=>x.type==="Broadcast Spot"&&x.label.indexOf(s)>=0))seeds.push({type:"Broadcast Spot",label:s+" spot"})});
-      const due=r.trafficDue||r.flightStart||"";
-      const assets=seeds.map(s=>({id:uid(),type:s.type,label:s.label,owner:tMeta(s.type).o,status:"needed",due,url:"",notes:""}));
-      touch();const id=uid();
-      setCampaigns(p=>[{id,name:r.name||"Untitled",brand:brandFix(r.brand),markets:(r.dmas&&r.dmas.length?r.dmas:(r.markets||[])).join(", "),status:"Planning",flightStart:cIso(r.flightStart),flightEnd:cIso(r.flightEnd),trafficDue:cIso(r.trafficDue),stations:r.stations||"",notes:r.notes||"",notionUrl:r.url||"",notionId:r.id,assets,created:Date.now(),updated:Date.now()},...p]);
-      log("Campaign","Adopted from Notion: "+(r.name||""));notify("Now tracking: "+(r.name||"campaign"));setView("board");setExpanded(id);
+    const saveCfg=(patch)=>{hubCfgDirtyRef.current=true;setHubCfg(p=>({...p,...patch}))};
+    // ── Intake: keeps the record in Doom AND writes it to Notion ──
+    const createCampaign=async()=>{
+      const nm=nc.name.trim();if(!nm){notify("A campaign needs a name. Even Hercules had one.");return}
+      touch();const id=campUid();
+      const due=nc.trafficDue||campMinusDays(nc.flightStart,7);
+      const assets=[];const dd={};
+      nc.channels.forEach(ch=>(CAMP_CHANNEL_SEEDS[ch]||[]).forEach(([t,l])=>{const k=t+"|"+l;if(dd[k])return;dd[k]=1;assets.push(campMkAsset(t,l,due))}));
+      setCampaigns(p=>[{id,name:nm,brand:nc.brand,markets:nc.markets.trim(),status:"Planning",flightStart:nc.flightStart,flightEnd:nc.flightEnd,trafficDue:nc.trafficDue,channels:nc.channels,stations:"",notes:nc.desc.trim(),notionUrl:"",notionId:null,assets,utms:[],created:Date.now(),updated:Date.now()},...p]);
+      log("Campaign","Created: "+nm);setExpanded(id);setAdding(false);
+      const wantNotion=nc.toNotion;
+      setNc({name:"",brand:nc.brand,markets:"",flightStart:"",flightEnd:"",trafficDue:"",channels:[],desc:"",toNotion:true});
+      if(wantNotion){
+        try{
+          const r=await fetch("/api/campaigns",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({name:nm,brand:nc.brand,channels:nc.channels,markets:nc.markets.trim(),launch:nc.flightStart,flightEnd:nc.flightEnd,trafficDue:nc.trafficDue,description:nc.desc.trim()})});
+          const d=await r.json().catch(()=>({}));
+          if(r.ok&&d&&d.id){touch();setCampaigns(p=>p.map(c=>c.id===id?{...c,notionId:d.id,notionUrl:d.url||""}:c));notify("Tracking: "+nm+" — created in Doom and Notion")}
+          else notify("Tracking: "+nm+" — saved in Doom; Notion push failed ("+(d.message||d.error||r.status)+")");
+        }catch(e){notify("Tracking: "+nm+" — saved in Doom; Notion unreachable")}
+      }else notify("Tracking: "+nm);
     };
-    const copyHandoff=(c)=>{
-      const open=(c.assets||[]).filter(a=>a.status!=="done"&&a.status!=="na");
-      const head="ASSETS NEEDED — "+c.name+(c.brand?" ("+c.brand+")":"")+(c.markets?" — "+c.markets:"");
-      const dates=(c.flightStart?"Flight: "+c.flightStart+(c.flightEnd?" to "+c.flightEnd:""):"")+(c.trafficDue?(c.flightStart?" · ":"")+"Traffic due: "+c.trafficDue:"");
-      const lines=[head].concat(dates?[dates]:[]).concat([""]).concat(open.length?open.map(a=>"• "+a.type+(a.label?" — "+a.label:"")+(a.due?" — due "+a.due:"")+(a.owner?" ("+a.owner+")":"")):["(nothing outstanding)"]);
-      const txt=lines.join("\n");
-      try{navigator.clipboard.writeText(txt);notify("Asset list copied — paste it wherever the handoff happens")}catch(e){window.prompt("Copy the asset list:",txt)}
+    // ── Push work out: brief → Creative Ops, request → SEO/Web ──
+    const sendBrief=async(c)=>{
+      const to=(hubCfg.creativeOpsEmail||"").trim();
+      if(!to){setCfgOpen(true);notify("Set the Creative Ops email first — gear icon, top right");return}
+      const missing=(c.assets||[]).filter(a=>!assetInHand(a)&&a.owner!=="SEO / Web");
+      if(!missing.length){notify("Nothing missing on this one. "+doomPick(DOOM.sprinkle));return}
+      const tl=taglines.filter(t=>t.active!==false&&(!t.brand||t.brand===c.brand));
+      const rows=missing.map(a=>"<tr><td style='padding:6px 10px;border:1px solid #ddd'><b>"+escHtml(a.type)+"</b>"+(a.label?" — "+escHtml(a.label):"")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.due||"ASAP")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.owner||"")+"</td></tr>").join("");
+      const body="Hello,<br><br>Creative brief for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+(c.markets?" — "+escHtml(c.markets):"")+").<br><br>"
+        +(c.flightStart?"<b>Flight:</b> "+escHtml(c.flightStart)+(c.flightEnd?" to "+escHtml(c.flightEnd):"")+"<br>":"")
+        +(c.trafficDue?"<b>Traffic goes out:</b> "+escHtml(c.trafficDue)+"<br>":"")
+        +(c.stations?"<b>Stations / outlets:</b> "+escHtml(c.stations)+"<br>":"")
+        +(c.notes?"<b>Notes:</b> "+escHtml(c.notes)+"<br>":"")
+        +"<br><b>Assets needed, with your hard due dates:</b><table style='border-collapse:collapse;font-size:13px'><tr><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Asset</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Deliver by</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Owner</th></tr>"+rows+"</table>"
+        +"<br>These dates are set so traffic can go out on time"+(c.trafficDue?" ("+escHtml(c.trafficDue)+")":"")+(c.flightStart?" for the "+escHtml(c.flightStart)+" launch":"")+"."
+        +(tl.length?"<br><br><b>Approved tagline library"+(c.brand?" — "+escHtml(c.brand):"")+":</b><br>"+tl.map(t=>"• "+escHtml(t.text)).join("<br>"):"")
+        +"<br><br>Reply to this email with questions; finished files can come back on this thread.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
+      setBusy(true);
+      try{
+        const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to,cc:"emm.caban@atticor.ai",subject:"Creative Brief — "+c.name+(c.brand?" ("+c.brand+")":""),message:body})});
+        if(!r.ok)throw new Error("send failed");
+        touch();setCampaigns(p=>p.map(x=>x.id!==c.id?x:{...x,briefSentAt:new Date().toISOString(),updated:Date.now(),assets:(x.assets||[]).map(a=>(!assetInHand(a)&&a.status==="needed"&&a.owner!=="SEO / Web")?{...a,status:"requested"}:a)}));
+        log("Campaign Brief","Sent to Creative Ops: "+c.name+" — "+missing.length+" asset(s)");
+        notify("Brief sent to Creative Ops. "+doomPick(DOOM.send));
+      }catch(e){notify("Brief email failed to send — check the connection and try again")}
+      setBusy(false);
     };
+    const sendSeoRequest=async(c)=>{
+      const to=(hubCfg.seoEmail||"").trim();
+      if(!to){setCfgOpen(true);notify("Set the SEO / Web email first — gear icon, top right");return}
+      const items=(c.assets||[]).filter(a=>!assetInHand(a)&&a.owner==="SEO / Web");
+      if(!items.length){notify("No pixel / landing page / tracking items open on this one.");return}
+      const rows=items.map(a=>"<tr><td style='padding:6px 10px;border:1px solid #ddd'><b>"+escHtml(a.type)+"</b>"+(a.label?" — "+escHtml(a.label):"")+"</td><td style='padding:6px 10px;border:1px solid #ddd'>"+escHtml(a.due||"ASAP")+"</td></tr>").join("");
+      const body="Hello,<br><br>Tracking / web request for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+(c.markets?" — "+escHtml(c.markets):"")+").<br><br>"
+        +(c.flightStart?"<b>Launch:</b> "+escHtml(c.flightStart)+"<br>":"")
+        +(c.notes?"<b>Notes:</b> "+escHtml(c.notes)+"<br>":"")
+        +"<br><b>Needed, with hard due dates:</b><table style='border-collapse:collapse;font-size:13px'><tr><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Item</th><th style='padding:6px 10px;border:1px solid #ddd;text-align:left'>Deliver by</th></tr>"+rows+"</table>"
+        +"<br>Reply with the pixel snippets / page URLs on this thread and I'll register them.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
+      setBusy(true);
+      try{
+        const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to,cc:"emm.caban@atticor.ai",subject:"Tracking / Web Request — "+c.name+(c.brand?" ("+c.brand+")":""),message:body})});
+        if(!r.ok)throw new Error("send failed");
+        touch();setCampaigns(p=>p.map(x=>x.id!==c.id?x:{...x,updated:Date.now(),assets:(x.assets||[]).map(a=>(items.some(i=>i.id===a.id)&&a.status==="needed")?{...a,status:"requested"}:a)}));
+        log("Campaign Request","Sent to SEO/Web: "+c.name+" — "+items.length+" item(s)");
+        notify("Request sent to SEO / Web. "+doomPick(DOOM.send));
+      }catch(e){notify("Request email failed to send — try again")}
+      setBusy(false);
+    };
+    // ── Review loop: email a token link, the answer flows back on its own ──
+    const sendReview=async(c,a)=>{
+      const to=(hubCfg.creativeOpsEmail||"").trim();
+      if(!to){setCfgOpen(true);notify("Set the Creative Ops email first — gear icon, top right");return}
+      const tok=Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,"0")).join("");
+      const link=window.location.origin+"/api/review?tok="+tok;
+      const fileUrl=assetLink(a);
+      const rec={campId:c.id,assetId:a.id,campName:c.name,brand:c.brand||"",assetType:a.type,assetLabel:a.label||"",url:fileUrl,due:a.due||"",trafficDue:c.trafficDue||"",sentTo:to,sentAt:new Date().toISOString(),status:"pending",feedback:"",respondedAt:null,applied:false};
+      const body="Hello,<br><br>A "+escHtml(a.type.toLowerCase())+(a.label?" — <b>"+escHtml(a.label)+"</b>":"")+" for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+") needs your review."
+        +(fileUrl?"<br><br><b>Asset:</b> <a href=\""+fileUrl+"\">"+escHtml(fileUrl)+"</a>":"")
+        +(a.due?"<br><b>Needed in hand by:</b> "+escHtml(a.due):"")
+        +(c.trafficDue?"<br><b>Traffic goes out:</b> "+escHtml(c.trafficDue):"")
+        +"<br><br><a href=\""+link+"\" style=\"display:inline-block;padding:10px 22px;background:#9b7bb0;color:#fff;border-radius:8px;text-decoration:none;font-weight:700\">Review — Approve or Request Changes</a>"
+        +"<br><br>One click, no login. Your answer flows straight back into our system.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
+      setBusy(true);
+      try{
+        const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to,cc:"emm.caban@atticor.ai",subject:"Creative Review Needed — "+c.name+(a.label?" · "+a.label:""),message:body})});
+        if(!r.ok)throw new Error("send failed");
+        assetReviewsDirtyRef.current=true;setAssetReviews(p=>({...p,[tok]:rec}));
+        updAsset(c.id,a.id,{status:"review",reviewToken:tok});
+        log("Creative Review","Sent for review: "+c.name+" · "+(a.label||a.type)+" → "+to);
+        notify("Review request sent. "+doomPick(DOOM.send));
+      }catch(e){notify("Review email failed to send — try again")}
+      setBusy(false);
+    };
+    // ── Email assets out — the whole package, links resolved from the
+    //    asset itself or its linked ISCI ──
+    const sendAssets=async(c,to)=>{
+      const addr=(to||"").trim();
+      if(!addr||!/@/.test(addr)){notify("Give me a real email address first.");return}
+      const withLinks=(c.assets||[]).map(a=>({a,link:assetLink(a)})).filter(x=>x.link);
+      if(!withLinks.length){notify("None of this campaign's assets have files or links yet.");return}
+      const rows=withLinks.map(x=>"• <b>"+escHtml(x.a.type)+"</b>"+(x.a.label?" — "+escHtml(x.a.label):"")+": <a href=\""+x.link+"\">"+escHtml(x.link)+"</a>").join("<br>");
+      const body="Hello,<br><br>Assets for <b>"+escHtml(c.name)+"</b> ("+escHtml(c.brand||"")+(c.markets?" — "+escHtml(c.markets):"")+"):<br><br>"+rows
+        +(c.flightStart?"<br><br><b>Flight:</b> "+escHtml(c.flightStart)+(c.flightEnd?" to "+escHtml(c.flightEnd):""):"")
+        +"<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
+      setBusy(true);
+      try{
+        const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:addr,cc:"emm.caban@atticor.ai",subject:"Assets — "+c.name+(c.brand?" ("+c.brand+")":""),message:body})});
+        if(!r.ok)throw new Error("send failed");
+        log("Campaign Assets","Emailed "+withLinks.length+" asset link(s): "+c.name+" → "+addr);
+        notify("Assets sent. "+doomPick(DOOM.send));setMailOpen(null);
+      }catch(e){notify("Asset email failed to send — try again")}
+      setBusy(false);
+    };
+    const copyText=(txt,msg)=>{try{navigator.clipboard.writeText(txt);notify(msg||"Copied")}catch(e){window.prompt("Copy:",txt)}};
     const health=(c)=>{
       const live=(c.assets||[]).filter(a=>a.status!=="na");
-      const done=live.filter(a=>a.status==="done").length;
-      const late=live.filter(a=>a.status!=="done"&&a.due&&dTo(a.due)!=null&&dTo(a.due)<0).length;
-      const soon=live.filter(a=>a.status!=="done"&&a.due&&dTo(a.due)!=null&&dTo(a.due)>=0&&dTo(a.due)<=7).length;
-      return{done,total:live.length,late,soon,risk:c.status==="Wrapped"?"#6B5E80":late?"#E85A7A":soon?"#D4A040":"#5BC4A0"};
+      const have=live.filter(assetInHand).length;
+      const late=live.filter(a=>!assetInHand(a)&&a.due&&dTo(a.due)!=null&&dTo(a.due)<0).length;
+      const soon=live.filter(a=>!assetInHand(a)&&a.due&&dTo(a.due)!=null&&dTo(a.due)>=0&&dTo(a.due)<=7).length;
+      return{have,total:live.length,missing:live.length-have,late,soon,risk:c.status==="Wrapped"?"#6B5E80":late?"#E85A7A":soon?"#D4A040":"#5BC4A0"};
     };
     const cIn={padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:12,outline:"none"};
     const cSel={...cIn,padding:"4px 6px"};
-    const pill=(t,c,k)=><span key={k||t} style={{fontSize:10,fontWeight:700,padding:"1px 7px",borderRadius:99,background:c+"18",color:c,border:"1px solid "+c+"30",whiteSpace:"nowrap"}}>{t}</span>;
-    // ── Board: the tracked campaigns, expandable, fully editable ──
+    const lab=(t,gold)=><div style={{fontSize:9,color:gold?"#D4A040":"#6B5E80",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>{t}</div>;
+    const brandIscis=(brand)=>iscis.filter(i=>i.brand===brand&&i.active&&i.suffix!=="O");
+    // ── Asset row (shared by Board card and Registry) ──
+    const AssetRow=(c,a,i,showCamp)=>{
+      const st=aMeta(a.status);const tm=campTypeMeta(a.type);const n=dTo(a.due);
+      const inHand=assetInHand(a);const lateA=!inHand&&n!=null&&n<0;const lk=assetLink(a);
+      const linked=isciByKey(a.isci);
+      return<div key={a.id} style={{display:"flex",gap:6,alignItems:"center",padding:"6px 10px",borderTop:i?"1px solid #2d1f42":"none",flexWrap:"wrap",background:lateA?"rgba(232,90,122,.05)":inHand?"rgba(91,196,160,.03)":"transparent"}}>
+        <span title={inHand?"In hand":"Missing"} style={{fontSize:12,minWidth:16}}>{inHand?"✅":"⬜"}</span>
+        {showCamp&&<span onClick={()=>{setView("board");setExpanded(c.id)}} style={{fontSize:11,fontWeight:700,color:getBrandColor(c.brand),cursor:"pointer",minWidth:110,maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</span>}
+        <select value={a.type} onChange={e=>updAsset(c.id,a.id,{type:e.target.value})} style={{...cSel,color:tm.c,fontWeight:700,minWidth:118}}>{CAMP_ASSET_TYPES.map(x=><option key={x.t} value={x.t}>{x.t}</option>)}</select>
+        <input value={a.label||""} placeholder="label / version…" onChange={e=>updAsset(c.id,a.id,{label:e.target.value})} style={{...cIn,flex:"1 1 100px",minWidth:90}}/>
+        {(a.type==="Broadcast Spot"||a.type==="Digital Banner"||a.type==="Station-Made Creative")&&<select value={a.isci||""} onChange={e=>updAsset(c.id,a.id,{isci:e.target.value})} title="Link to ISCI Registry — a file on the ISCI counts as in hand" style={{...cSel,maxWidth:150,color:linked?"#5BC4A0":"#9B8EAD"}}>
+          <option value="">⛓ link ISCI…</option>
+          {brandIscis(c.brand).map(x=><option key={isciKeyOf(x)} value={isciKeyOf(x)}>{x.code}{x.fileUrl?" 📎":""} {String(x.title||"").slice(0,18)}</option>)}
+        </select>}
+        <input value={a.owner||""} placeholder="owner" onChange={e=>updAsset(c.id,a.id,{owner:e.target.value})} style={{...cIn,width:84}}/>
+        <input type="date" value={campIsoD(a.due)} onChange={e=>updAsset(c.id,a.id,{due:e.target.value})} style={{...cIn,borderColor:lateA?"#E85A7A":"#4a3565"}}/>
+        {a.due&&!inHand&&<span style={{fontSize:10,fontWeight:700,color:lateA?"#E85A7A":n<=7?"#D4A040":"#6B5E80",minWidth:44}}>{dLbl(n)}</span>}
+        <select value={a.status} onChange={e=>updAsset(c.id,a.id,{status:e.target.value})} style={{...cSel,color:st[2],fontWeight:700}}>{CAMP_ASTATUS.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}</select>
+        <input value={a.url||""} placeholder="link" onChange={e=>updAsset(c.id,a.id,{url:e.target.value})} style={{...cIn,width:76}}/>
+        {lk&&<a href={lk} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4AC8E8",textDecoration:"none",fontWeight:700}}>↗</a>}
+        {!inHand&&a.status!=="review"&&<button onClick={()=>sendReview(c,a)} disabled={busy} title="Email a one-click review link to Creative Ops" style={{background:"rgba(196,160,200,.12)",border:"1px solid #C4A0C8",borderRadius:5,cursor:"pointer",fontSize:10,fontWeight:700,color:"#C4A0C8",padding:"2px 7px",whiteSpace:"nowrap"}}>👁 review</button>}
+        {a.status==="review"&&<span style={{fontSize:10,fontWeight:700,color:"#C4A0C8",whiteSpace:"nowrap"}}>👁 out for review</span>}
+        <button onClick={()=>delAsset(c.id,a.id)} style={{background:"none",border:"none",color:"#6B5E80",cursor:"pointer",fontSize:13,fontWeight:800,padding:"0 2px"}}>×</button>
+      </div>;
+    };
+    // ── UTM builder box (per campaign) ──
+    const UtmBox=({c})=>{
+      const[plat,setPlat]=useState(UTM_PLATFORMS[0].p);
+      const[base,setBase]=useState(CAMP_BRAND_URLS[c.brand]||"https://");
+      const[content,setContent]=useState("");
+      const[term,setTerm]=useState("");
+      const gen=()=>{const p=UTM_PLATFORMS.find(x=>x.p===plat);if(!p)return;const url=campUtmBuild(c,p,base,content,term);touch();setCampaigns(prev=>prev.map(x=>x.id!==c.id?x:{...x,updated:Date.now(),utms:[...(x.utms||[]),{id:campUid(),platform:plat,content:content.trim(),url,created:new Date().toISOString()}]}));log("UTM","Generated: "+c.name+" · "+plat+(content?" · "+content:""));setContent("")};
+      return<div style={{border:"1px solid #2d1f42",borderRadius:8,padding:10,marginTop:8,background:"rgba(74,200,232,.03)"}}>
+        <div style={{fontSize:11,fontWeight:800,color:"#4AC8E8",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>UTM Builder — lowercase standard, GA-readable</div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"flex-end"}}>
+          <div>{lab("Platform")}<select value={plat} onChange={e=>setPlat(e.target.value)} style={cSel}>{UTM_PLATFORMS.map(x=><option key={x.p} value={x.p}>{x.p}</option>)}</select></div>
+          <div style={{flex:"1 1 160px"}}>{lab("Landing URL")}<input value={base} onChange={e=>setBase(e.target.value)} style={{...cIn,width:"100%"}}/></div>
+          <div style={{flex:"1 1 110px"}}>{lab("Content (creative / ISCI)")}<input value={content} placeholder="e.g. :30 riverfest" onChange={e=>setContent(e.target.value)} style={{...cIn,width:"100%"}}/></div>
+          <div style={{width:90}}>{lab("Term (opt)")}<input value={term} onChange={e=>setTerm(e.target.value)} style={{...cIn,width:"100%"}}/></div>
+          <Btn small primary onClick={gen}>Generate</Btn>
+        </div>
+        {(c.utms||[]).length>0&&<div style={{marginTop:8,borderTop:"1px solid #2d1f42"}}>
+          {(c.utms||[]).map((u,i)=><div key={u.id} style={{display:"flex",gap:8,alignItems:"center",padding:"5px 0",borderTop:i?"1px solid #2d1f42":"none"}}>
+            <span style={{fontSize:10,fontWeight:700,color:"#4AC8E8",minWidth:90}}>{u.platform}</span>
+            <span style={{fontSize:10,color:"#9B8EAD",flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"monospace"}}>{u.url}</span>
+            <button onClick={()=>copyText(u.url,"UTM copied")} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#4AC8E8",fontSize:10,fontWeight:700,cursor:"pointer",padding:"1px 7px"}}>copy</button>
+            <button onClick={()=>{touch();setCampaigns(prev=>prev.map(x=>x.id!==c.id?x:{...x,utms:(x.utms||[]).filter(y=>y.id!==u.id)}))}} style={{background:"none",border:"none",color:"#6B5E80",cursor:"pointer",fontSize:12,fontWeight:800}}>×</button>
+          </div>)}
+          <div style={{marginTop:4}}><Btn small onClick={()=>copyText((c.utms||[]).map(u=>u.platform+(u.content?" ("+u.content+")":"")+": "+u.url).join("\n"),"All UTMs copied")}>📋 Copy all</Btn></div>
+        </div>}
+      </div>;
+    };
+    // ── Board card ──
     const CampCard=(c)=>{
       const h=health(c);const open=expanded===c.id;
+      const seoOpen=(c.assets||[]).some(a=>!assetInHand(a)&&a.owner==="SEO / Web");
       return<Cd key={c.id} style={{marginBottom:8,borderLeft:"3px solid "+getBrandColor(c.brand),opacity:c.status==="Wrapped"?.55:1}}>
         <div onClick={()=>setExpanded(open?null:c.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",cursor:"pointer",flexWrap:"wrap"}}>
           <span style={{width:8,height:8,borderRadius:99,background:h.risk,boxShadow:"0 0 6px "+h.risk+"66",flexShrink:0}}/>
@@ -11372,62 +11714,59 @@ Rules:
           {c.markets&&<span style={{fontSize:11,color:"#9B8EAD"}}>{c.markets}</span>}
           {c.flightStart&&<span style={{fontSize:11,color:"#9B8EAD"}}>✈ {cFd(c.flightStart)}{c.flightEnd?" – "+cFd(c.flightEnd):""}</span>}
           {c.trafficDue&&<span style={{fontSize:11,fontWeight:700,color:dTo(c.trafficDue)!=null&&dTo(c.trafficDue)<=7?"#E85A7A":"#D4A040"}}>▶ traffic {cFd(c.trafficDue)}</span>}
-          <span style={{fontSize:11,color:h.total?"#9B8EAD":"#6B5E80",marginLeft:"auto"}}>{h.total?h.done+"/"+h.total+" assets":"no assets yet"}{h.late?" · "+h.late+" late":""}</span>
-          {h.total>0&&<span style={{width:56,height:5,borderRadius:99,background:"#1e1233",overflow:"hidden",flexShrink:0}}><span style={{display:"block",height:"100%",width:Math.round(h.done/h.total*100)+"%",background:h.risk}}/></span>}
+          <span style={{marginLeft:"auto",fontSize:11,fontWeight:800,color:h.total===0?"#6B5E80":h.missing===0?"#5BC4A0":"#E85A7A"}}>{h.total===0?"no assets yet":h.missing===0?"✓ all "+h.total+" in hand":h.have+"/"+h.total+" in hand · "+h.missing+" missing"}{h.late?" · "+h.late+" late":""}</span>
+          {h.total>0&&<span style={{width:56,height:5,borderRadius:99,background:"#1e1233",overflow:"hidden",flexShrink:0}}><span style={{display:"block",height:"100%",width:Math.round(h.have/h.total*100)+"%",background:h.risk}}/></span>}
           <span style={{fontSize:11,color:"#6B5E80"}}>{open?"▲":"▼"}</span>
         </div>
         {open&&<div style={{padding:"0 14px 12px",borderTop:"1px solid #2d1f42"}}>
           <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end",margin:"10px 0"}}>
-            <div style={{flex:"2 1 180px"}}><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>Campaign</div><input value={c.name} onChange={e=>updCamp(c.id,{name:e.target.value})} style={{...cIn,width:"100%"}}/></div>
-            <div><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>Status</div><select value={c.status} onChange={e=>updCamp(c.id,{status:e.target.value})} style={cSel}>{CAMP_CSTATUS.map(s=><option key={s} value={s}>{s}</option>)}</select></div>
-            <div style={{flex:"1 1 130px"}}><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>Markets</div><input value={c.markets||""} onChange={e=>updCamp(c.id,{markets:e.target.value})} style={{...cIn,width:"100%"}}/></div>
-            <div><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>Flight start</div><input type="date" value={cIso(c.flightStart)} onChange={e=>updCamp(c.id,{flightStart:e.target.value})} style={cIn}/></div>
-            <div><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>Flight end</div><input type="date" value={cIso(c.flightEnd)} onChange={e=>updCamp(c.id,{flightEnd:e.target.value})} style={cIn}/></div>
-            <div><div style={{fontSize:9,color:"#D4A040",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>Traffic due</div><input type="date" value={cIso(c.trafficDue)} onChange={e=>updCamp(c.id,{trafficDue:e.target.value})} style={{...cIn,borderColor:"#D4A040"}}/></div>
+            <div style={{flex:"2 1 180px"}}>{lab("Campaign")}<input value={c.name} onChange={e=>updCamp(c.id,{name:e.target.value})} style={{...cIn,width:"100%"}}/></div>
+            <div>{lab("Status")}<select value={c.status} onChange={e=>updCamp(c.id,{status:e.target.value})} style={cSel}>{CAMP_CSTATUS.map(s=><option key={s} value={s}>{s}</option>)}</select></div>
+            <div style={{flex:"1 1 120px"}}>{lab("Markets")}<input value={c.markets||""} onChange={e=>updCamp(c.id,{markets:e.target.value})} style={{...cIn,width:"100%"}}/></div>
+            <div>{lab("Flight start")}<input type="date" value={campIsoD(c.flightStart)} onChange={e=>updCamp(c.id,{flightStart:e.target.value})} style={cIn}/></div>
+            <div>{lab("Flight end")}<input type="date" value={campIsoD(c.flightEnd)} onChange={e=>updCamp(c.id,{flightEnd:e.target.value})} style={cIn}/></div>
+            <div>{lab("Traffic due",true)}<input type="date" value={campIsoD(c.trafficDue)} onChange={e=>updCamp(c.id,{trafficDue:e.target.value})} style={{...cIn,borderColor:"#D4A040"}}/></div>
           </div>
           {(c.assets||[]).length>0&&<div style={{border:"1px solid #2d1f42",borderRadius:8,overflow:"hidden",marginBottom:8}}>
-            {(c.assets||[]).map((a,i)=>{const st=aMeta(a.status);const tm=tMeta(a.type);const n=dTo(a.due);const lateA=a.status!=="done"&&a.status!=="na"&&n!=null&&n<0;
-              return<div key={a.id} style={{display:"flex",gap:6,alignItems:"center",padding:"6px 10px",borderTop:i?"1px solid #2d1f42":"none",flexWrap:"wrap",background:lateA?"rgba(232,90,122,.05)":"transparent"}}>
-                <select value={a.type} onChange={e=>updAsset(c.id,a.id,{type:e.target.value})} style={{...cSel,color:tm.c,fontWeight:700,minWidth:120}}>{CAMP_ASSET_TYPES.map(x=><option key={x.t} value={x.t}>{x.t}</option>)}</select>
-                <input value={a.label||""} placeholder="label / version / ISCI…" onChange={e=>updAsset(c.id,a.id,{label:e.target.value})} style={{...cIn,flex:"1 1 120px",minWidth:100}}/>
-                <input value={a.owner||""} placeholder="owner" onChange={e=>updAsset(c.id,a.id,{owner:e.target.value})} style={{...cIn,width:90}}/>
-                <input type="date" value={cIso(a.due)} onChange={e=>updAsset(c.id,a.id,{due:e.target.value})} style={{...cIn,borderColor:lateA?"#E85A7A":"#4a3565"}}/>
-                {a.due&&a.status!=="done"&&a.status!=="na"&&<span style={{fontSize:10,fontWeight:700,color:lateA?"#E85A7A":n<=7?"#D4A040":"#6B5E80",minWidth:44}}>{dLbl(n)}</span>}
-                <select value={a.status} onChange={e=>updAsset(c.id,a.id,{status:e.target.value})} style={{...cSel,color:st[2],fontWeight:700}}>{CAMP_ASTATUS.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}</select>
-                <input value={a.url||""} placeholder="link" onChange={e=>updAsset(c.id,a.id,{url:e.target.value})} style={{...cIn,width:80}}/>
-                {a.url&&<a href={a.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4AC8E8",textDecoration:"none",fontWeight:700}}>↗</a>}
-                <button onClick={()=>delAsset(c.id,a.id)} style={{background:"none",border:"none",color:"#6B5E80",cursor:"pointer",fontSize:13,fontWeight:800,padding:"0 2px"}}>×</button>
-              </div>})}
+            {(c.assets||[]).map((a,i)=>AssetRow(c,a,i,false))}
           </div>}
           <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
             <select value="" onChange={e=>{if(e.target.value)addAsset(c.id,e.target.value)}} style={cSel}>
               <option value="">+ Add asset…</option>
               {CAMP_ASSET_TYPES.map(x=><option key={x.t} value={x.t}>{x.t}</option>)}
             </select>
-            <Btn small onClick={()=>copyHandoff(c)}>📋 Copy asset list</Btn>
-            {c.notionUrl&&<a href={c.notionUrl} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4AC8E8",textDecoration:"none",fontWeight:600}}>Open in Notion ↗</a>}
+            <Btn small primary disabled={busy||h.missing===0} onClick={()=>sendBrief(c)}>📤 Brief → Creative Ops</Btn>
+            {seoOpen&&<Btn small color="#4AC8E8" primary disabled={busy} onClick={()=>sendSeoRequest(c)}>🎯 Request → SEO / Web</Btn>}
+            <Btn small onClick={()=>setMailOpen(mailOpen===c.id?null:c.id)}>✉ Email assets</Btn>
+            <Btn small onClick={()=>setUtmOpen(utmOpen===c.id?null:c.id)}>🔗 UTMs{(c.utms||[]).length?" ("+(c.utms||[]).length+")":""}</Btn>
+            {c.briefSentAt&&<span style={{fontSize:10,color:"#5BC4A0",fontWeight:600}}>brief sent {String(c.briefSentAt).slice(0,10)}</span>}
+            {c.notionUrl&&<a href={c.notionUrl} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4AC8E8",textDecoration:"none",fontWeight:600}}>Notion ↗</a>}
             <span style={{marginLeft:"auto"}}><Btn small danger onClick={()=>delCampaign(c)}>Delete</Btn></span>
           </div>
+          {mailOpen===c.id&&<div style={{display:"flex",gap:6,marginTop:8,alignItems:"center"}}>
+            <input id={"mailto_"+c.id} defaultValue={hubCfg.creativeOpsEmail||""} placeholder="who gets the asset package?" style={{...cIn,flex:1}}/>
+            <Btn small primary disabled={busy} onClick={()=>sendAssets(c,document.getElementById("mailto_"+c.id).value)}>Send all links</Btn>
+          </div>}
+          {utmOpen===c.id&&<UtmBox c={c}/>}
           <div style={{marginTop:8}}><input value={c.notes||""} placeholder="notes — stations, contacts, anything the next person needs" onChange={e=>updCamp(c.id,{notes:e.target.value})} style={{...cIn,width:"100%"}}/></div>
         </div>}
       </Cd>;
     };
     const active=campaigns.filter(c=>c.status!=="Wrapped").sort((a,b)=>{const x=a.trafficDue||a.flightStart||"9999",y=b.trafficDue||b.flightStart||"9999";return String(x).localeCompare(String(y))});
     const wrapped=campaigns.filter(c=>c.status==="Wrapped");
-    // ── Timeline: everything with a date, grouped by urgency ──
+    // ── Timeline ──
     const Timeline=()=>{
       const items=[];
       campaigns.forEach(c=>{
         if(c.status==="Wrapped")return;
-        if(c.trafficDue)items.push({d:cIso(c.trafficDue),kind:"Traffic due",color:"#D4A040",label:c.name,brand:c.brand,cid:c.id});
-        if(c.flightStart)items.push({d:cIso(c.flightStart),kind:"Launch",color:"#5BC4A0",label:c.name,brand:c.brand,cid:c.id});
-        (c.assets||[]).forEach(a=>{if(a.due&&a.status!=="done"&&a.status!=="na")items.push({d:cIso(a.due),kind:a.type+(a.label?" · "+a.label:""),color:tMeta(a.type).c,label:c.name,brand:c.brand,cid:c.id})});
+        if(c.trafficDue)items.push({d:campIsoD(c.trafficDue),kind:"Traffic due",color:"#D4A040",label:c.name,brand:c.brand,cid:c.id});
+        if(c.flightStart)items.push({d:campIsoD(c.flightStart),kind:"Launch",color:"#5BC4A0",label:c.name,brand:c.brand,cid:c.id});
+        (c.assets||[]).forEach(a=>{if(a.due&&!assetInHand(a))items.push({d:campIsoD(a.due),kind:a.type+(a.label?" · "+a.label:""),color:campTypeMeta(a.type).c,label:c.name,brand:c.brand,cid:c.id})});
       });
       items.sort((a,b)=>a.d.localeCompare(b.d));
       const groups=[["🔥 Past due",(n)=>n<0,"#E85A7A"],["This week",(n)=>n>=0&&n<=7,"#E85A7A"],["Next week",(n)=>n>7&&n<=14,"#D4A040"],["This month",(n)=>n>14&&n<=31,"#C4A0C8"],["Later",(n)=>n>31,"#5BC4A0"]];
-      const any=items.length>0;
       return<div>
-        {!any&&<Cd style={{padding:30,textAlign:"center",color:"#9B8EAD",fontStyle:"italic"}}>Nothing on the timeline. Give your campaigns dates and this fills itself in.</Cd>}
+        {items.length===0&&<Cd style={{padding:30,textAlign:"center",color:"#9B8EAD",fontStyle:"italic"}}>Nothing on the timeline yet. It fills itself in as campaigns sync.</Cd>}
         {groups.map(([title,fn,col])=>{
           const rows=items.filter(it=>{const n=dTo(it.d);return n!=null&&fn(n)});
           if(!rows.length)return null;
@@ -11445,72 +11784,122 @@ Rules:
           </div>})}
       </div>;
     };
-    // ── Notion feed: read-only pull, one click to adopt ──
-    const NotionFeed=()=>{
+    // ── Registry: every asset across every campaign, one ledger ──
+    const Registry=()=>{
+      const rows=[];
+      campaigns.forEach(c=>{if(c.status==="Wrapped")return;(c.assets||[]).forEach(a=>{
+        if(regBrand&&c.brand!==regBrand)return;
+        if(regType&&a.type!==regType)return;
+        if(regMissing&&assetInHand(a))return;
+        rows.push([c,a]);
+      })});
+      rows.sort((x,y)=>String(x[1].due||"9999").localeCompare(String(y[1].due||"9999")));
+      const total=campaigns.filter(c=>c.status!=="Wrapped").reduce((t,c)=>t+(c.assets||[]).filter(a=>a.status!=="na").length,0);
+      const have=campaigns.filter(c=>c.status!=="Wrapped").reduce((t,c)=>t+(c.assets||[]).filter(a=>a.status!=="na"&&assetInHand(a)).length,0);
+      return<div>
+        <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
+          <select value={regBrand} onChange={e=>setRegBrand(e.target.value)} style={cSel}><option value="">All brands</option>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select>
+          <select value={regType} onChange={e=>setRegType(e.target.value)} style={cSel}><option value="">All types</option>{CAMP_ASSET_TYPES.map(x=><option key={x.t} value={x.t}>{x.t}</option>)}</select>
+          <label style={{fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:5,cursor:"pointer"}}><input type="checkbox" checked={regMissing} onChange={e=>setRegMissing(e.target.checked)}/>missing only</label>
+          <span style={{marginLeft:"auto",fontSize:12,fontWeight:700,color:have===total?"#5BC4A0":"#D4A040"}}>{have}/{total} assets in hand across active campaigns</span>
+        </div>
+        {rows.length===0?<Cd style={{padding:30,textAlign:"center",color:"#9B8EAD"}}>Nothing matches. {doomPick(DOOM.empty)}</Cd>
+        :<Cd style={{padding:0,overflow:"hidden"}}>{rows.map(([c,a],i)=>AssetRow(c,a,i,true))}</Cd>}
+        <div style={{fontSize:10,color:"#6B5E80",marginTop:6}}>⛓ Broadcast and banner assets can link to the ISCI Registry — a creative file on the linked ISCI automatically counts the asset as in hand.</div>
+      </div>;
+    };
+    // ── Taglines ──
+    const Taglines=()=>{
+      const[txt,setTxt]=useState("");const[tb,setTb]=useState("");
+      const add=(text,brand)=>{const t=(text||"").trim();if(!t)return;taglinesDirtyRef.current=true;setTaglines(p=>[...p,{id:campUid(),text:t,brand:brand||"",active:true,added:new Date().toISOString()}]);log("Tagline","Added: "+t)};
+      const starters=["No Win No Fee","Serving Up Southern Justice","You Dont Need Louder Lawyers"].filter(s=>!taglines.some(t=>t.text===s));
+      return<div>
+        <Cd style={{padding:12,marginBottom:10}}>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end"}}>
+            <div style={{flex:"2 1 220px"}}>{lab("New tagline")}<input value={txt} onChange={e=>setTxt(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){add(txt,tb);setTxt("")}}} style={{...cIn,width:"100%"}}/></div>
+            <div>{lab("Brand")}<select value={tb} onChange={e=>setTb(e.target.value)} style={cSel}><option value="">All brands</option>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select></div>
+            <Btn small primary onClick={()=>{add(txt,tb);setTxt("")}}>Add</Btn>
+          </div>
+          {starters.length>0&&taglines.length===0&&<div style={{marginTop:8,fontSize:12,color:"#9B8EAD"}}>Known from the Notion asset library: {starters.map((s,i)=><span key={s}>{i?" · ":""}<button onClick={()=>add(s,"")} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",fontSize:12,fontWeight:600,padding:0}}>＋ {s}</button></span>)}</div>}
+        </Cd>
+        {taglines.length===0?<Cd style={{padding:30,textAlign:"center",color:"#9B8EAD",fontStyle:"italic"}}>The tagline vault is empty. Feed it.</Cd>
+        :<Cd style={{padding:0,overflow:"hidden"}}>{taglines.map((t,i)=><div key={t.id} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",borderTop:i?"1px solid #2d1f42":"none",opacity:t.active===false?.45:1}}>
+          <span style={{fontSize:13,fontWeight:600,color:"#E8DFF0",flex:1,fontStyle:"italic"}}>“{t.text}”</span>
+          <span style={{fontSize:11,fontWeight:700,color:t.brand?getBrandColor(t.brand):"#9B8EAD"}}>{t.brand||"All brands"}</span>
+          <button onClick={()=>copyText(t.text,"Tagline copied")} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#4AC8E8",fontSize:10,fontWeight:700,cursor:"pointer",padding:"1px 7px"}}>copy</button>
+          <button onClick={()=>{taglinesDirtyRef.current=true;setTaglines(p=>p.map(x=>x.id===t.id?{...x,active:x.active===false}:x))}} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:t.active===false?"#5BC4A0":"#D4A040",fontSize:10,fontWeight:700,cursor:"pointer",padding:"1px 7px"}}>{t.active===false?"revive":"retire"}</button>
+          <button onClick={()=>{if(!confirm("Delete this tagline?"))return;taglinesDirtyRef.current=true;setTaglines(p=>p.filter(x=>x.id!==t.id))}} style={{background:"none",border:"none",color:"#6B5E80",cursor:"pointer",fontSize:13,fontWeight:800}}>×</button>
+        </div>)}</Cd>}
+        <div style={{fontSize:10,color:"#6B5E80",marginTop:6}}>Active taglines ride along automatically in every creative brief for their brand.</div>
+      </div>;
+    };
+    // ── Source: the Notion pipe, status only — sync is automatic ──
+    const SourceTab=()=>{
       const all=(feed&&feed.campaigns)||[];
       const tracked=new Set(campaigns.map(c=>c.notionId).filter(Boolean));
       const notConfigured=feedErr&&/not_configured|NOTION_API_KEY/i.test(feedErr);
-      const nNext=(r)=>r.trafficDue||r.flightStart||r.eventDate||r.launch||r.targetLaunch||null;
-      const rows=all.slice().sort((a,b)=>String(nNext(a)||"9999").localeCompare(String(nNext(b)||"9999")));
       return<div>
-        <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}><Btn small disabled={feedBusy} onClick={()=>loadFeed(true)}>{feedBusy?"Pulling…":"Refresh from Notion"}</Btn></div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,gap:8,flexWrap:"wrap"}}>
+          <span style={{fontSize:12,color:"#9B8EAD"}}>Doom re-pulls this feed every 15 minutes and folds new campaigns onto the Board by itself. Finished and denied rows are left where they lie.</span>
+          <Btn small disabled={feedBusy} onClick={()=>loadFeed(true)}>{feedBusy?"Pulling…":"Pull now"}</Btn>
+        </div>
         {feedErr&&<Cd style={{padding:14,marginBottom:12,border:"1px solid #E85A7A",background:"rgba(232,90,122,.08)"}}>
-          <div style={{color:"#E85A7A",fontWeight:700,fontSize:13}}>{notConfigured?"Notion isn't connected yet.":"Couldn't load the Notion feed."}</div>
-          <div style={{color:"#9B8EAD",fontSize:12,marginTop:4,lineHeight:1.5}}>{notConfigured?"One-time setup: create an internal integration at notion.so/my-integrations, add its secret as NOTION_API_KEY in the Vercel project settings, and share both Notion databases (2026 Partnerships, Campaigns & Events + Campaign Management) with the integration via each database's ••• → Connections menu. You can still add campaigns by hand meanwhile.":feedErr}</div>
+          <div style={{color:"#E85A7A",fontWeight:700,fontSize:13}}>{notConfigured?"Notion isn't connected yet.":"Couldn't reach the Notion feed."}</div>
+          <div style={{color:"#9B8EAD",fontSize:12,marginTop:4,lineHeight:1.5}}>{notConfigured?"One-time setup: create an internal integration at notion.so/my-integrations, add its secret as NOTION_API_KEY in the Vercel project settings, and share both campaign databases with the integration (••• → Connections on each). Everything else in the Hub works without it.":feedErr}</div>
         </Cd>}
-        {feed&&(feed.errors||[]).length>0&&<Cd style={{padding:"8px 12px",marginBottom:12,border:"1px solid #D4A040",background:"rgba(212,160,64,.08)"}}><span style={{color:"#D4A040",fontSize:12,fontWeight:600}}>⚠ Partial pull — {feed.errors.map(e=>e.src+": "+e.error).join(" · ")}</span></Cd>}
         {!feed&&!feedErr?<Cd style={{padding:30,textAlign:"center",color:"#9B8EAD",fontStyle:"italic"}}>{doomPick(DOOM.loading)}</Cd>
-        :feed&&rows.length===0&&!feedErr?<Cd style={{padding:30,textAlign:"center",color:"#9B8EAD"}}>Notion answered, but with nothing. {doomPick(DOOM.empty)}</Cd>
         :feed&&<Cd style={{padding:0,overflow:"hidden"}}>
-          {rows.map((r,i)=>{const isT=tracked.has(r.id);const nd=nNext(r);const n=dTo(nd);
-            return<div key={r.id} style={{display:"flex",gap:10,alignItems:"center",padding:"9px 12px",borderTop:i?"1px solid #2d1f42":"none",borderLeft:"3px solid "+getBrandColor(brandFix(r.brand)),flexWrap:"wrap",opacity:/Completed|Denied|Complete/.test(r.status||"")?.5:1}}>
-              <div style={{minWidth:70,textAlign:"center"}}><div style={{fontSize:11,fontWeight:800,color:n!=null&&n<0?"#6B5E80":n!=null&&n<=14?"#E85A7A":"#5BC4A0"}}>{n!=null?dLbl(n):"no date"}</div><div style={{fontSize:9,color:"#6B5E80"}}>{nd?cFd(nd):""}</div></div>
+          {all.map((r,i)=>{const done=/Denied|Completed|Complete$/.test(String(r.status||""));
+            return<div key={r.id} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",borderTop:i?"1px solid #2d1f42":"none",borderLeft:"3px solid "+getBrandColor(campBrandFix(r.brand)),opacity:done?.45:1,flexWrap:"wrap"}}>
               <div style={{flex:1,minWidth:180}}>
-                <div style={{display:"flex",gap:8,alignItems:"baseline",flexWrap:"wrap"}}>
-                  {r.url?<a href={r.url} target="_blank" rel="noreferrer" style={{fontSize:13,fontWeight:700,color:"#4AC8E8",textDecoration:"none"}}>{r.name||"Untitled"}</a>:<span style={{fontSize:13,fontWeight:700,color:"#E8DFF0"}}>{r.name||"Untitled"}</span>}
-                  <span style={{fontSize:10,fontWeight:700,color:"#9B8EAD"}}>{r.status||"—"}</span>
-                </div>
-                <div style={{fontSize:11,color:"#9B8EAD",marginTop:1}}>
-                  {r.brand&&<span style={{color:getBrandColor(brandFix(r.brand)),fontWeight:700}}>{r.brand}</span>}
-                  {(r.dmas||r.markets||[]).length>0&&<span> · {(r.dmas&&r.dmas.length?r.dmas:r.markets).join(", ")}</span>}
-                  {r.category&&<span> · {r.category}</span>}
-                  {(r.channels||[]).length>0&&<span> · {r.channels.join(", ")}</span>}
-                  {r.flightStart&&<span> · Flight {cFd(r.flightStart)}{r.flightEnd?" – "+cFd(r.flightEnd):""}</span>}
-                </div>
-                {((r.spots||[]).length>0||(r.assets||[]).length>0)&&<div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:3}}>{(r.spots||[]).map((s,j)=>pill(s,"#D4A040","s"+j))}{(r.assets||[]).map((a,j)=>pill(a,"#9b7bb0","a"+j))}</div>}
+                {r.url?<a href={r.url} target="_blank" rel="noreferrer" style={{fontSize:13,fontWeight:700,color:"#4AC8E8",textDecoration:"none"}}>{r.name||"Untitled"}</a>:<span style={{fontSize:13,fontWeight:700,color:"#E8DFF0"}}>{r.name||"Untitled"}</span>}
+                <span style={{fontSize:10,fontWeight:700,color:"#9B8EAD",marginLeft:8}}>{r.status||"—"}</span>
+                <div style={{fontSize:11,color:"#9B8EAD",marginTop:1}}>{campBrandFix(r.brand)}{(r.dmas||r.markets||[]).length?" · "+(r.dmas&&r.dmas.length?r.dmas:r.markets).join(", "):""}{r.flightStart?" · Flight "+cFd(r.flightStart):""}</div>
               </div>
-              {isT?<span style={{fontSize:11,fontWeight:700,color:"#5BC4A0",whiteSpace:"nowrap"}}>✓ Tracking</span>
-                :<Btn small primary onClick={()=>adoptRow(r)}>＋ Track in Doom</Btn>}
+              {tracked.has(r.id)?<span style={{fontSize:11,fontWeight:700,color:"#5BC4A0"}}>✓ on the Board</span>:done?<span style={{fontSize:11,color:"#6B5E80"}}>skipped (finished)</span>:<span style={{fontSize:11,color:"#D4A040"}}>syncing…</span>}
             </div>})}
         </Cd>}
-        {feed&&<div style={{fontSize:10,color:"#6B5E80",textAlign:"right",marginTop:6}}>Pulled {feed.fetched?new Date(feed.fetched).toLocaleString():"—"}{feed.cached?" (cached ≤5 min)":""} — read-only, nothing is ever written back to Notion.</div>}
+        {feed&&<div style={{fontSize:10,color:"#6B5E80",textAlign:"right",marginTop:6}}>Pulled {feed.fetched?new Date(feed.fetched).toLocaleString():"—"}{feed.cached?" (cached ≤5 min)":""}</div>}
       </div>;
     };
     const tab=(id,label)=><button key={id} onClick={()=>setView(id)} style={{padding:"5px 14px",borderRadius:99,border:"1px solid "+(view===id?"#D4A040":"#4a3565"),background:view===id?"rgba(212,160,64,.12)":"transparent",color:view===id?"#D4A040":"#9B8EAD",fontSize:12,fontWeight:700,cursor:"pointer"}}>{label}</button>;
     return<div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,gap:8,flexWrap:"wrap"}}>
-        <PageHead title="Campaign Hub" pgKey="campaigns" sub="Every campaign, every asset it needs — spots, tags, banners, pages, pixels, UTMs — who owns it and when it's due."/>
+        <PageHead title="Campaign Hub" pgKey="campaigns" sub="Marketing Ops mission control — campaigns sync in from Notion, the Hub answers 'do we have the assets,' and the work gets pushed to whoever owes it."/>
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-          {tab("board","Board")}{tab("timeline","Timeline")}{tab("notion","Notion Feed")}
+          {tab("board","Board")}{tab("timeline","Timeline")}{tab("registry","Asset Registry")}{tab("taglines","Taglines")}{tab("source","Source")}
           {view==="board"&&<Btn small primary onClick={()=>setAdding(a=>!a)}>{adding?"Cancel":"＋ New campaign"}</Btn>}
+          <button onClick={()=>setCfgOpen(o=>!o)} title="Hub settings" style={{background:"none",border:"1px solid #4a3565",borderRadius:99,color:cfgOpen?"#D4A040":"#9B8EAD",cursor:"pointer",fontSize:13,padding:"4px 9px"}}>⚙</button>
         </div>
       </div>
+      {cfgOpen&&<Cd style={{padding:12,marginBottom:10}}>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end"}}>
+          <div style={{flex:"1 1 200px"}}>{lab("Creative Ops email — briefs & reviews go here")}<input value={hubCfg.creativeOpsEmail||""} placeholder="creative-ops@…" onChange={e=>saveCfg({creativeOpsEmail:e.target.value})} style={{...cIn,width:"100%"}}/></div>
+          <div style={{flex:"1 1 200px"}}>{lab("SEO / Web email — pixel & page requests go here")}<input value={hubCfg.seoEmail||""} placeholder="seo-team@…" onChange={e=>saveCfg({seoEmail:e.target.value})} style={{...cIn,width:"100%"}}/></div>
+          <span style={{fontSize:11,color:"#6B5E80"}}>Saved automatically. You're CC'd on everything the Hub sends.</span>
+        </div>
+      </Cd>}
       {view==="board"&&<div>
         {adding&&<Cd style={{padding:12,marginBottom:10}}>
           <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end"}}>
-            <div style={{flex:"2 1 180px"}}><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>Campaign name</div><input autoFocus value={nc.name} onChange={e=>setNc(p=>({...p,name:e.target.value}))} onKeyDown={e=>{if(e.key==="Enter")createCampaign()}} style={{...cIn,width:"100%"}}/></div>
-            <div><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>Brand</div><select value={nc.brand} onChange={e=>setNc(p=>({...p,brand:e.target.value}))} style={cSel}>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select></div>
-            <div style={{flex:"1 1 120px"}}><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>Markets</div><input value={nc.markets} placeholder="Chicago, Denver…" onChange={e=>setNc(p=>({...p,markets:e.target.value}))} style={{...cIn,width:"100%"}}/></div>
-            <div><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>Flight start</div><input type="date" value={nc.flightStart} onChange={e=>setNc(p=>({...p,flightStart:e.target.value}))} style={cIn}/></div>
-            <div><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>Flight end</div><input type="date" value={nc.flightEnd} onChange={e=>setNc(p=>({...p,flightEnd:e.target.value}))} style={cIn}/></div>
-            <div><div style={{fontSize:9,color:"#D4A040",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>Traffic due</div><input type="date" value={nc.trafficDue} onChange={e=>setNc(p=>({...p,trafficDue:e.target.value}))} style={{...cIn,borderColor:"#D4A040"}}/></div>
+            <div style={{flex:"2 1 180px"}}>{lab("Campaign name")}<input autoFocus value={nc.name} onChange={e=>setNc(p=>({...p,name:e.target.value}))} style={{...cIn,width:"100%"}}/></div>
+            <div>{lab("Brand")}<select value={nc.brand} onChange={e=>setNc(p=>({...p,brand:e.target.value}))} style={cSel}>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select></div>
+            <div style={{flex:"1 1 120px"}}>{lab("Markets")}<input value={nc.markets} placeholder="Chicago, Denver…" onChange={e=>setNc(p=>({...p,markets:e.target.value}))} style={{...cIn,width:"100%"}}/></div>
+            <div>{lab("Flight start")}<input type="date" value={nc.flightStart} onChange={e=>setNc(p=>({...p,flightStart:e.target.value}))} style={cIn}/></div>
+            <div>{lab("Flight end")}<input type="date" value={nc.flightEnd} onChange={e=>setNc(p=>({...p,flightEnd:e.target.value}))} style={cIn}/></div>
+            <div>{lab("Traffic due",true)}<input type="date" value={nc.trafficDue} onChange={e=>setNc(p=>({...p,trafficDue:e.target.value}))} style={{...cIn,borderColor:"#D4A040"}}/></div>
+          </div>
+          <div style={{marginTop:8}}>{lab("Channels — each one seeds the asset checklist")}<div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{CAMP_CHANNELS.map(ch=>{const on=nc.channels.includes(ch);return<button key={ch} onClick={()=>setNc(p=>({...p,channels:on?p.channels.filter(x=>x!==ch):[...p.channels,ch]}))} style={{padding:"3px 10px",borderRadius:99,border:"1px solid "+(on?"#9b7bb0":"#4a3565"),background:on?"rgba(155,123,176,.18)":"transparent",color:on?"#C4A0C8":"#6B5E80",fontSize:11,fontWeight:700,cursor:"pointer"}}>{ch}</button>})}</div></div>
+          <div style={{display:"flex",gap:8,marginTop:8,alignItems:"center",flexWrap:"wrap"}}>
+            <input value={nc.desc} placeholder="description / what this is" onChange={e=>setNc(p=>({...p,desc:e.target.value}))} style={{...cIn,flex:1,minWidth:200}}/>
+            <label style={{fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:5,cursor:"pointer"}}><input type="checkbox" checked={nc.toNotion} onChange={e=>setNc(p=>({...p,toNotion:e.target.checked}))}/>also create in Notion</label>
             <Btn primary onClick={createCampaign}>Create</Btn>
           </div>
         </Cd>}
         {campaigns.length===0&&!adding&&<Cd style={{padding:36,textAlign:"center"}}>
-          <div style={{fontSize:15,color:"#E8DFF0",fontWeight:700,marginBottom:6}}>Nothing tracked yet.</div>
-          <div style={{fontSize:12,color:"#9B8EAD",marginBottom:14,lineHeight:1.6}}>Pull the <b>Notion Feed</b> and adopt the 2026 campaigns that are yours, or start one by hand.<br/>Each campaign carries its own asset checklist — the fail-safe that didn't exist before.</div>
-          <div style={{display:"flex",gap:8,justifyContent:"center"}}><Btn primary onClick={()=>setView("notion")}>Open Notion Feed</Btn><Btn onClick={()=>setAdding(true)}>＋ New campaign</Btn></div>
+          <div style={{fontSize:15,color:"#E8DFF0",fontWeight:700,marginBottom:6}}>The board fills itself.</div>
+          <div style={{fontSize:12,color:"#9B8EAD",marginBottom:14,lineHeight:1.6}}>Campaigns sync in from Notion automatically once the key is set (see <b>Source</b>).<br/>Or start one by hand — it lands here <i>and</i> in Notion.</div>
+          <div style={{display:"flex",gap:8,justifyContent:"center"}}><Btn primary onClick={()=>setAdding(true)}>＋ New campaign</Btn><Btn onClick={()=>setView("source")}>Check the Notion pipe</Btn></div>
         </Cd>}
         {active.map(CampCard)}
         {wrapped.length>0&&<div style={{marginTop:10}}>
@@ -11519,7 +11908,9 @@ Rules:
         </div>}
       </div>}
       {view==="timeline"&&<Timeline/>}
-      {view==="notion"&&<NotionFeed/>}
+      {view==="registry"&&<Registry/>}
+      {view==="taglines"&&<Taglines/>}
+      {view==="source"&&<SourceTab/>}
     </div>;
   };
 
@@ -12615,10 +13006,10 @@ Rules:
       </div>,damageEffects:<>{<BookDroolStain style={{bottom:16,left:24,width:72,height:72,opacity:.2}}/>}</>},
 
       {title:"The Campaign Hub",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p>The Campaign Hub (📣 in the sidebar) is Marketing Ops mission control: every campaign, every asset it needs, who owns each one, and when it's due. "Assets" means the broad sense — spots, tags, digital banners, social graphics, landing pages, pixels, UTM tracking URLs, station-made creative, OOH artwork, merch. Each asset moves through Needed → Requested → In Progress → In Review → Delivered.</p>
-        <p><b>Board</b> is the working view: expand a campaign to edit its dates, add assets, set owners and due dates, and hit <b>Copy asset list</b> to paste a clean handoff into an email or chat. <b>Timeline</b> lays every launch, traffic due date, and open asset out chronologically — past due, this week, next week, and beyond. <b>Notion Feed</b> pulls the marketing team's plans read-only (2026 Partnerships, Campaigns &amp; Events + Campaign Management); <b>Track in Doom</b> adopts a row into a full campaign with its asset checklist pre-seeded from what Notion says is needed. Nothing is ever written back to Notion.</p>
-        <p>Assets due within 7 days badge the sidebar; overdue assets and launches inside a week with open items surface as Command Center alerts, so nothing launches unwatched again. Campaigns save to Firestore automatically like everything else. One-time Notion setup lives in Vercel: a NOTION_API_KEY plus both databases shared with the integration.</p>
-        <BookMarginNote author="meg">Notion plans it. I make sure it actually airs.</BookMarginNote>
+        <p>The Campaign Hub (📣) is Marketing Ops mission control. Campaigns flow in from Notion automatically — new rows appear on the Board with their asset checklist pre-seeded, and date changes follow — while the intake form works the other direction: a campaign created in Doom is filed into Notion's Campaign Management database at the same time. Assets mean the broad sense: spots, tags, banners, landing pages, pixels, UTM tracking URLs, station-made creative, merch.</p>
+        <p>The Board answers "do we have them?" for every campaign — broadcast and banner assets can link to the ISCI Registry, so a creative file on the ISCI counts as in hand with no bookkeeping. One button pushes a <b>creative brief</b> (missing assets, hard due dates, the brand's tagline library) to Creative Ops; another pushes pixel and landing-page requests to SEO/Web; <b>Email assets</b> sends the whole link package anywhere. Every asset can go out for review: the reviewer gets a one-click approve-or-feedback page, no login, and their answer flows back into the asset's status on its own.</p>
+        <p>The <b>Asset Registry</b> tab is the ledger across all campaigns, filterable by brand, type, and missing-only. <b>Taglines</b> holds the approved lines per brand and rides along in every brief. <b>Timeline</b> lays out every launch, traffic due date, and open asset by urgency. Overdue assets and launches within a week with open items alert on Command Center; assets due this week badge the sidebar. Set the Creative Ops and SEO/Web emails once under ⚙ — you're CC'd on everything the Hub sends.</p>
+        <BookMarginNote author="meg">Notion plans it. I make sure it actually happens.</BookMarginNote>
       </div>,damageEffects:<>{<BookInkSplatter style={{bottom:24,right:16,opacity:.4}}/>}{<BookLipstickMark style={{top:32,left:24,opacity:.4,transform:"rotate(-12deg)"}}/>}</>},
 
       {title:"End of the Line",content:<div style={{display:"flex",flexDirection:"column",gap:14,textAlign:"center",paddingTop:24}}>
