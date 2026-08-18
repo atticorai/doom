@@ -799,6 +799,52 @@ const campUtmBuild=(c,plat,base,content,term)=>{
   if(term)q.push("utm_term="+encodeURIComponent(s(term)));
   return String(base||"").replace(/\/+$/,"")+"/?"+q.join("&");
 };
+// ── CAMPAIGN SEED — the real 2026 slate, pulled from Notion 8/18/2026 ──
+// The Hub shouldn't open empty while the Notion key waits on workspace
+// permissions, so the actual campaign rows ride along as seed data (house
+// pattern: seed loads first, Firestore wins once the user touches anything).
+// Each seed carries its real Notion page id, so the day the API sync goes
+// live it updates these records in place instead of duplicating them.
+const _campDash=(h)=>h&&h.length===32?h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20):h||null;
+const _CS=(name,brand,status,markets,fs,fe,td,nid,sta,assets)=>({
+  id:campUid(),name,brand,markets:markets||"",status,flightStart:fs||"",flightEnd:fe||"",trafficDue:td||"",
+  stations:sta||"",notes:"",notionUrl:nid?"https://app.notion.com/"+nid:"",notionId:_campDash(nid),
+  assets:(assets||[]).map(a=>({id:campUid(),type:a[0],label:a[1]||"",owner:campTypeMeta(a[0]).o,status:a[2]||"needed",due:a[3]||td||campMinusDays(fs,7)||"",url:"",isci:"",notes:""})),
+  utms:[],created:Date.now(),updated:Date.now(),seeded:true
+});
+const CAMPAIGN_SEED=[
+  // ── Upcoming / open — the ones that need eyes ──
+  _CS("MN State Fair","Postman Law","Planning","Minneapolis","2026-09-01","2026-10-31","2026-08-25","c6dfa3b19f26460595d63d4bf588cbf0","iHeart",[["Broadcast Spot",":30 Radio"],["Digital Banner","Fair promo"]]),
+  _CS("WEBN Riverfest (Western & Southern Fireworks)","Postman Law","Live","Cincinnati","2026-08-01","2026-09-06","","f341ec7d594a4362a73be543528d980a","WEBN, WLW, WKFS, WCKY, WKRC, WSAI, The Project, The Beat",[["Broadcast Spot",":30 Radio","done"]]),
+  _CS("Bears Fumble Recovery + ESPN Chicago","Lerner & Rowe","Live","Chicago","2026-08-01","2026-12-31","","6a766176ac934853aa23cea1f6e5a337","ESPN 1000, 100.3 FM HD2, ESPN Chicago App, Sirius XM, Chicago Bears App, NFL+, 20+ affiliates",[["Broadcast Spot",":15","done"],["Broadcast Spot",":30","done"],["Broadcast Spot",":60","done"],["Broadcast Spot","Host Read","done"]]),
+  _CS("White Sox Injury Report – ESPN Chicago","Lerner & Rowe","Live","Chicago","2026-02-01","2026-09-30","","4d10ba5bf8d64cfcaa7245b095328d25","ESPN 1000, ESPN Chicago App, MLB App, MLB.com, Sirius XM, 100.3 HD2",[["Broadcast Spot",":30 Radio","done"],["Tag","Sponsor tag","done"]]),
+  _CS("Sister Strut – iHeart","Lerner & Rowe","Planning","Chicago","2026-10-01","2026-10-31","","dd2ce1d06b19494aae7ba565dfaeea5a","iHeart",[["Broadcast Spot",":30 Radio"]]),
+  _CS("Stars & Strings – Audacy","Lerner & Rowe","Planning","Chicago, Denver, Minneapolis","2026-10-25","2026-11-21","","62288def1b23478cb8b99e432d01e5d2","WUSN-FM Chicago (127x :30s); KQMT-FM Denver (187x); KQKS-HD2 Denver (435x); KMNB-FM Minneapolis (444x)",[["Broadcast Spot",":30 Radio"],["Digital Banner","Event banner"],["Social Graphic","Promo graphic"]]),
+  _CS("ChiGivesBack Toy Drive – B96","Lerner & Rowe","Planning","Chicago","2026-11-20","2026-12-31","","89c0c7d9b15145cc9d8676a0d8f2aefc","B96 / Audacy",[["Broadcast Spot",":30 Radio"]]),
+  _CS("Minnesota Star Tribune – MN Rising + Minnesota's Best","Postman Law","Planning","Minneapolis","","","","dcbcd39f227d43a7ae8d95b2e3d7668c","StarTribune.com, MN Rising, Minnesota's Best, Daily Delivery Podcast, Strib Varsity",[["Broadcast Spot",":30"],["Broadcast Spot",":15"],["Digital Banner",""],["Social Graphic",""]]),
+  _CS("Personal Injury – Postman Law TikTok","Postman Law","Planning","Chicago, Cincinnati, Denver, Minneapolis","","","","327991a2b60380de9367e59f1d2807ba","TikTok",[["Social Video","Vertical cutdowns"]]),
+  // ── In market — the always-on brand campaigns ──
+  _CS("Personal Injury – Chicago","Postman Law","Live","Chicago","2026-01-22","","","24c991a2b60380f198d3da36c22b8038","",[["Broadcast Spot",":30 TV","done"],["Broadcast Spot",":30 Radio","done"]]),
+  _CS("Personal Injury – Cincinnati","Postman Law","Live","Cincinnati","2026-01-22","","","24c991a2b6038087ac9de6182b84ef49","",[["Broadcast Spot",":30 TV","done"],["Broadcast Spot",":30 Radio","done"]]),
+  _CS("Personal Injury – Denver","Postman Law","Live","Denver","2026-01-22","","","247991a2b6038069bf31c6bfca0d33e3","",[["Broadcast Spot",":30 TV","done"],["Broadcast Spot",":30 Radio","done"]]),
+  _CS("Personal Injury – Minneapolis","Postman Law","Live","Minneapolis","2026-01-22","","","24c991a2b60380dda197c344147289dc","",[["Broadcast Spot",":30 TV","done"],["Broadcast Spot",":30 Radio","done"]]),
+  _CS("Personal Injury – Wettermark Keith","Wettermark Keith","Live","Birmingham, Huntsville, Knoxville, Chattanooga, Montgomery, Dothan","2026-02-13","","","2af991a2b6038056866be4c86ec5f3d3","",[["Broadcast Spot",":30 TV","done"],["Broadcast Spot",":30 Radio","done"]]),
+  _CS("Personal Injury Workers Comp – Chicago","Postman Law","Live","Chicago","2026-01-08","","","30c991a2b60380509771e8059a1af642","",[["Broadcast Spot",":30 TV","done"],["Broadcast Spot",":30 Radio","done"]]),
+  // ── Wrapped 2026 — the record so far ──
+  _CS("Black Music Month – Radio One Cincinnati","Postman Law","Wrapped","Cincinnati","2026-06-01","2026-06-30","","586afe1088884ca4a6c179ccfc52a8d6","WIZF, WOSL, WDBZ",[["Tag","Sponsor tag","done"],["Digital Banner","","done"]]),
+  _CS("Gas Card Promotion – ROI360+ / iHeart + Audacy","Postman Law","Wrapped","Chicago, Minneapolis, Denver","2026-06-13","2026-07-06","2026-06-12","a0ea4bbb14b2462f88331c6384e7075d","iHeart + Audacy (DEN, MSP, CHI)",[["Broadcast Spot",":30 Radio","done"]]),
+  _CS("9Cares Colorado Shares (Spring + Fall)","Postman Law","Wrapped","Denver","2026-03-01","2026-11-30","","c5b3db932034418c82ff71dbbcf98165","9NEWS broadcast + 9news.com",[["Broadcast Spot",":30 TV","done"],["Digital Banner","9news.com","done"]]),
+  _CS("Windy City Smokeout – Audacy","Postman Law","Wrapped","Chicago","","","","ab94592624194461a69ac9d24a7beb7f","Audacy",[]),
+  _CS("Twin Cities Irish Fest","Postman Law","Wrapped","Minneapolis","2026-08-07","2026-08-09","","d3f560a6922448bdb820a5727ceb72c5","",[]),
+  _CS("Fiesta Del Sol","Postman Law","Wrapped","Chicago","","","","eec3427fcbe24f61afee451b2503bbde","",[]),
+  _CS("OCA 5K Panda Run","Postman Law","Wrapped","Denver","","","","cbc498f064234ef184817fd755d8644d","",[]),
+  _CS("Gas Tank Family – Audacy","Postman Law","Wrapped","Minneapolis","2026-03-16","2026-03-31","","cab425cfee304d79bae33252dd9bec33","Audacy",[["Broadcast Spot",":30 Radio","done"]]),
+  _CS("Reds Opening Weekend","Postman Law","Wrapped","Cincinnati","2026-03-01","2026-03-31","","bbb82a36cf7b4dc1be081dfd694ecb66","",[]),
+  _CS("Teamsters Convention – Las Vegas","Postman Law","Wrapped","All markets","2026-06-01","2026-06-30","","02cdd5bf6969457da265ea354b917b56","",[]),
+  _CS("Corned Beef & Cabbage Dinner – Plumbers 130","Postman Law","Wrapped","Chicago","2026-01-01","2026-03-31","","12f244ed2679483c930e1ab654d9ecaa","Audacy St. Patrick's Day Guide",[]),
+  _CS("OCA CNY Gala (Year of the Horse)","Postman Law","Wrapped","Denver","2026-02-01","2026-02-28","","2cad5e631a92412db89050201b8ea245","",[]),
+  _CS("Center for Disability & Elder Law Gala","Postman Law","Wrapped","Chicago","2026-02-01","2026-02-28","","fad31b3fa02f4398a0978cafab0002da","",[])
+];
 
 // ── MUSE CHARACTERS (AI Planner narrators) ───────────
 const MUSES=[
@@ -1290,7 +1336,7 @@ const App=()=>{
           d.forEach(h=>{if(h&&(h.media==="Streaming Audio"||h.media==="Digital Streaming")&&Array.isArray(h.iscis)){h.iscis.forEach(r=>{if(r&&typeof r.url==="string"&&r.url.indexOf("wkfirm.com")>-1){r.url=r.url.replace("https://seriousinjury.wkfirm.com/nashville-personal-injury-lawyers?","https://www.wkfirm.com/?").replace("&Placement=","&utm_term=")}})}});
           setTrafficHistory(d);trafficFbCountRef.current=d.length
         }trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
-        if(docs.campaigns?.data){const d=JSON.parse(docs.campaigns.data);if(Array.isArray(d)&&d.length)setCampaigns(d)}
+        {const _cd=docs.campaigns?.data?JSON.parse(docs.campaigns.data):null;if(Array.isArray(_cd)&&_cd.length)setCampaigns(_cd);else setCampaigns(CAMPAIGN_SEED)}
         if(docs.taglines?.data){const d=JSON.parse(docs.taglines.data);if(Array.isArray(d)&&d.length)setTaglines(d)}
         if(docs.campaignHubCfg?.data){try{const d=JSON.parse(docs.campaignHubCfg.data);if(d&&typeof d==="object")setHubCfg(p=>({...p,...d}))}catch(_e){}}
         if(docs.assetReviews?.data){try{const d=JSON.parse(docs.assetReviews.data);if(d&&typeof d==="object")setAssetReviews(d)}catch(_e){}}
@@ -11501,7 +11547,7 @@ Rules:
   const assetInHand=(a)=>{if(a.status==="done"||a.status==="na")return true;const l=isciByKey(a.isci);return!!(l&&l.fileUrl)};
   const assetLink=(a)=>{if(a.url)return a.url;const l=isciByKey(a.isci);return(l&&l.fileUrl)||""};
   const CampaignsPg=()=>{
-    const[view,setView]=useState("board");
+    const[view,setView]=useState("overview");
     const[hubBrand,setHubBrand]=useState(""); // "" = all brands; every tab scopes to this
     const[expanded,setExpanded]=useState(null);
     const[showWrapped,setShowWrapped]=useState(false);
@@ -11708,16 +11754,23 @@ Rules:
       const h=health(c);const open=expanded===c.id;
       const seoOpen=(c.assets||[]).some(a=>!assetInHand(a)&&a.owner==="SEO / Web");
       return<Cd key={c.id} style={{marginBottom:8,borderLeft:"3px solid "+getBrandColor(c.brand),opacity:c.status==="Wrapped"?.55:1}}>
-        <div onClick={()=>setExpanded(open?null:c.id)} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",cursor:"pointer",flexWrap:"wrap"}}>
-          <span style={{width:8,height:8,borderRadius:99,background:h.risk,boxShadow:"0 0 6px "+h.risk+"66",flexShrink:0}}/>
-          <span style={{fontSize:14,fontWeight:700,color:"#E8DFF0",flex:"1 1 200px",minWidth:0}}>{c.name}</span>
-          <span style={{fontSize:11,fontWeight:700,color:getBrandColor(c.brand)}}>{c.brand}</span>
-          {c.markets&&<span style={{fontSize:11,color:"#9B8EAD"}}>{c.markets}</span>}
-          {c.flightStart&&<span style={{fontSize:11,color:"#9B8EAD"}}>✈ {cFd(c.flightStart)}{c.flightEnd?" – "+cFd(c.flightEnd):""}</span>}
-          {c.trafficDue&&<span style={{fontSize:11,fontWeight:700,color:dTo(c.trafficDue)!=null&&dTo(c.trafficDue)<=7?"#E85A7A":"#D4A040"}}>▶ traffic {cFd(c.trafficDue)}</span>}
-          <span style={{marginLeft:"auto",fontSize:11,fontWeight:800,color:h.total===0?"#6B5E80":h.missing===0?"#5BC4A0":"#E85A7A"}}>{h.total===0?"no assets yet":h.missing===0?"✓ all "+h.total+" in hand":h.have+"/"+h.total+" in hand · "+h.missing+" missing"}{h.late?" · "+h.late+" late":""}</span>
-          {h.total>0&&<span style={{width:56,height:5,borderRadius:99,background:"#1e1233",overflow:"hidden",flexShrink:0}}><span style={{display:"block",height:"100%",width:Math.round(h.have/h.total*100)+"%",background:h.risk}}/></span>}
-          <span style={{fontSize:11,color:"#6B5E80"}}>{open?"▲":"▼"}</span>
+        <div onClick={()=>setExpanded(open?null:c.id)} style={{padding:"12px 16px",cursor:"pointer"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+            <span style={{width:9,height:9,borderRadius:99,background:h.risk,boxShadow:"0 0 8px "+h.risk+"77",flexShrink:0}}/>
+            <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:"#F0E8F8",letterSpacing:.3,flex:"1 1 auto",minWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</span>
+            {(()=>{const sc=({Planning:"#C4A0C8","In Progress":"#4AC8E8",Ready:"#D4A040",Live:"#5BC4A0",Wrapped:"#6B5E80"})[c.status]||"#9B8EAD";return<span style={{fontSize:10,fontWeight:800,letterSpacing:1,textTransform:"uppercase",padding:"2px 9px",borderRadius:99,background:sc+"1a",color:sc,border:"1px solid "+sc+"40",whiteSpace:"nowrap"}}>{c.status}</span>})()}
+            {h.total===0?<span style={{fontSize:11,color:"#6B5E80",fontStyle:"italic",whiteSpace:"nowrap"}}>no assets yet</span>
+              :h.missing===0?<span style={{fontSize:11,fontWeight:800,padding:"2px 9px",borderRadius:99,background:"rgba(91,196,160,.12)",color:"#5BC4A0",border:"1px solid rgba(91,196,160,.3)",whiteSpace:"nowrap"}}>✓ all {h.total} in hand</span>
+              :<span style={{fontSize:11,fontWeight:800,padding:"2px 9px",borderRadius:99,background:"rgba(232,90,122,.12)",color:"#E85A7A",border:"1px solid rgba(232,90,122,.3)",whiteSpace:"nowrap"}}>✗ {h.missing} missing{h.late?" · "+h.late+" late":""}</span>}
+            <span style={{fontSize:11,color:"#6B5E80"}}>{open?"▲":"▼"}</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:12,marginTop:6,flexWrap:"wrap",paddingLeft:19}}>
+            <span style={{fontSize:11,fontWeight:700,color:getBrandColor(c.brand)}}>{c.brand}</span>
+            {c.markets&&<span style={{fontSize:11,color:"#9B8EAD"}}>{c.markets}</span>}
+            {c.flightStart&&<span style={{fontSize:11,color:"#9B8EAD"}}>✈ {cFd(c.flightStart)}{c.flightEnd?" – "+cFd(c.flightEnd):""}</span>}
+            {c.trafficDue&&<span style={{fontSize:11,fontWeight:700,color:dTo(c.trafficDue)!=null&&dTo(c.trafficDue)<=7?"#E85A7A":"#D4A040"}}>▶ traffic {cFd(c.trafficDue)}</span>}
+            {h.total>0&&<span style={{display:"inline-flex",alignItems:"center",gap:6,marginLeft:"auto"}}><span style={{fontSize:10,color:"#6B5E80"}}>{h.have}/{h.total}</span><span style={{width:90,height:5,borderRadius:99,background:"#1e1233",overflow:"hidden"}}><span style={{display:"block",height:"100%",width:Math.round(h.have/Math.max(1,h.total)*100)+"%",background:h.risk,transition:"width .3s"}}/></span></span>}
+          </div>
         </div>
         {open&&<div style={{padding:"0 14px 12px",borderTop:"1px solid #2d1f42"}}>
           <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end",margin:"10px 0"}}>
@@ -11865,12 +11918,121 @@ Rules:
         {feed&&<div style={{fontSize:10,color:"#6B5E80",textAlign:"right",marginTop:6}}>Pulled {feed.fetched?new Date(feed.fetched).toLocaleString():"—"}{feed.cached?" (cached ≤5 min)":""}</div>}
       </div>;
     };
+    // ── Overview: the ops room you land in ──
+    const Overview=()=>{
+      const scope=campaigns.filter(c=>inBrand(c));
+      const act=scope.filter(c=>c.status!=="Wrapped");
+      const liveN=act.filter(c=>c.status==="Live").length;
+      let missing=0,late=0,soon=0,review=0,inHand=0,total=0;
+      const attention=[];
+      act.forEach(c=>{
+        (c.assets||[]).forEach(a=>{
+          if(a.status==="na")return;total++;
+          if(assetInHand(a)){inHand++;return}
+          missing++;
+          if(a.status==="review")review++;
+          const n=dTo(a.due);
+          if(n!=null&&n<0){late++;attention.push({p:0,t:a.type+(a.label?" · "+a.label:"")+" — "+Math.abs(n)+"d late",c,color:"#E85A7A"})}
+          else if(n!=null&&n<=7){soon++;attention.push({p:1,t:a.type+(a.label?" · "+a.label:"")+" — due "+dLbl(n),c,color:"#D4A040"})}
+        });
+        const open=(c.assets||[]).filter(a=>a.status!=="na"&&!assetInHand(a)).length;
+        const ln=dTo(c.flightStart);
+        if(ln!=null&&ln>=0&&ln<=14&&open)attention.push({p:0,t:"Launches "+dLbl(ln)+" with "+open+" asset"+(open>1?"s":"")+" open",c,color:"#E85A7A"});
+        const td=dTo(c.trafficDue);
+        if(td!=null&&td>=0&&td<=7)attention.push({p:1,t:"Traffic due "+dLbl(td),c,color:"#D4A040"});
+      });
+      attention.sort((a,b)=>a.p-b.p);
+      const horizon=[];
+      act.forEach(c=>{
+        const push=(iso,kind,color)=>{const n=dTo(iso);if(n!=null&&n>=0&&n<=14)horizon.push({d:campIsoD(iso),n,kind,color,c})};
+        push(c.flightStart,"✈ Launch","#5BC4A0");push(c.trafficDue,"▶ Traffic due","#D4A040");
+        (c.assets||[]).forEach(a=>{if(a.due&&!assetInHand(a)){const n=dTo(a.due);if(n!=null&&n>=0&&n<=14)horizon.push({d:campIsoD(a.due),n,kind:a.type,color:campTypeMeta(a.type).c,c})}});
+      });
+      horizon.sort((a,b)=>a.n-b.n);
+      const tiles=[["Active campaigns",act.length,"#C4A0C8"],["Live now",liveN,"#5BC4A0"],["Assets in hand",total?inHand+"/"+total:"—",total&&inHand===total?"#5BC4A0":"#D4A040"],["Missing",missing,missing?"#E85A7A":"#5BC4A0"],["Due ≤ 7d",soon,soon?"#D4A040":"#6B5E80"],["Late",late,late?"#E85A7A":"#6B5E80"],["Out for review",review,review?"#C4A0C8":"#6B5E80"]];
+      return<div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(118px,1fr))",gap:8,marginBottom:14}}>
+          {tiles.map(([l,v,col])=><Cd key={l} style={{padding:"12px 10px",textAlign:"center",borderTop:"2px solid "+col}}>
+            <div style={{fontSize:26,fontWeight:700,color:col,fontFamily:"'Cormorant Garamond',serif",lineHeight:1}}>{v}</div>
+            <div style={{fontSize:9,fontWeight:700,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1,marginTop:4}}>{l}</div>
+          </Cd>)}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:14}}>
+          <div>
+            <div style={{fontSize:12,fontWeight:800,color:"#E85A7A",textTransform:"uppercase",letterSpacing:1.5,marginBottom:6}}>⚡ Needs attention</div>
+            {attention.length===0?<Cd style={{padding:22,textAlign:"center",color:"#5BC4A0",fontWeight:600,fontSize:13,fontStyle:"italic"}}>Nothing on fire. Suspicious… but enjoy it.</Cd>
+            :<Cd style={{padding:0,overflow:"hidden"}}>{attention.slice(0,9).map((it,i)=><div key={i} onClick={()=>{setView("board");setExpanded(it.c.id)}} style={{display:"flex",gap:10,alignItems:"center",padding:"9px 12px",borderTop:i?"1px solid #2d1f42":"none",cursor:"pointer",borderLeft:"3px solid "+it.color}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,fontWeight:700,color:it.color}}>{it.t}</div>
+                <div style={{fontSize:11,color:"#9B8EAD",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{it.c.name} · <span style={{color:getBrandColor(it.c.brand),fontWeight:700}}>{it.c.brand}</span></div>
+              </div>
+              <span style={{fontSize:11,color:"#4AC8E8",fontWeight:700,whiteSpace:"nowrap"}}>open →</span>
+            </div>)}</Cd>}
+          </div>
+          <div>
+            <div style={{fontSize:12,fontWeight:800,color:"#D4A040",textTransform:"uppercase",letterSpacing:1.5,marginBottom:6}}>🗓 Next 14 days</div>
+            {horizon.length===0?<Cd style={{padding:22,textAlign:"center",color:"#9B8EAD",fontSize:13,fontStyle:"italic"}}>A quiet fortnight ahead.</Cd>
+            :<Cd style={{padding:0,overflow:"hidden"}}>{horizon.slice(0,9).map((it,i)=><div key={i} onClick={()=>{setView("board");setExpanded(it.c.id)}} style={{display:"flex",gap:10,alignItems:"center",padding:"9px 12px",borderTop:i?"1px solid #2d1f42":"none",cursor:"pointer"}}>
+              <span style={{minWidth:58,fontSize:11,fontWeight:800,color:it.n<=3?"#E85A7A":it.n<=7?"#D4A040":"#5BC4A0"}}>{cFd(it.d)}</span>
+              <span style={{minWidth:48,fontSize:10,color:"#6B5E80"}}>{dLbl(it.n)}</span>
+              <span style={{fontSize:11,fontWeight:700,color:it.color,whiteSpace:"nowrap"}}>{it.kind}</span>
+              <span style={{fontSize:12,color:"#E8DFF0",flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{it.c.name}</span>
+            </div>)}</Cd>}
+            {!hubBrand&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10}}>
+              {BRANDS.map(b=>{const bc=campaigns.filter(c=>c.brand===b.name&&c.status!=="Wrapped");if(!bc.length)return null;const miss=bc.reduce((t,c)=>t+(c.assets||[]).filter(a=>a.status!=="na"&&!assetInHand(a)).length,0);
+                return<button key={b.code} onClick={()=>setHubBrand(b.name)} style={{padding:"6px 12px",borderRadius:8,border:"1px solid "+b.color+"40",background:b.color+"0d",cursor:"pointer",textAlign:"left"}}>
+                  <div style={{fontSize:11,fontWeight:800,color:b.color}}>{b.name}</div>
+                  <div style={{fontSize:10,color:miss?"#E85A7A":"#5BC4A0",fontWeight:700}}>{bc.length} active · {miss?miss+" missing":"all in hand"}</div>
+                </button>})}
+            </div>}
+          </div>
+        </div>
+      </div>;
+    };
+    // ── Calendar: the month grid Jessica asked for ──
+    const CalendarTab=()=>{
+      const[calM,setCalM]=useState(()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),1)});
+      const ev={};
+      const put=(iso,e)=>{if(!iso)return;(ev[iso]=ev[iso]||[]).push(e)};
+      campaigns.forEach(c=>{
+        if(c.status==="Wrapped")return;
+        if(hubBrand&&c.brand!==hubBrand)return;
+        const bc=getBrandColor(c.brand);
+        put(campIsoD(c.flightStart),{color:"#5BC4A0",bc,t:"✈ "+c.name,cid:c.id});
+        put(campIsoD(c.trafficDue),{color:"#D4A040",bc,t:"▶ Traffic — "+c.name,cid:c.id});
+        put(campIsoD(c.flightEnd),{color:"#6B5E80",bc,t:"⏹ Ends — "+c.name,cid:c.id});
+        (c.assets||[]).forEach(a=>{if(a.due&&!assetInHand(a))put(campIsoD(a.due),{color:campTypeMeta(a.type).c,bc,t:a.type+(a.label?" · "+a.label:"")+" — "+c.name,cid:c.id})});
+      });
+      const y=calM.getFullYear(),m=calM.getMonth();
+      const startDow=new Date(y,m,1).getDay();
+      const cells=[];for(let i=0;i<42;i++)cells.push(new Date(y,m,1-startDow+i));
+      const iso=(d)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+      const todayIso=iso(new Date());
+      return<div>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
+          <Btn small onClick={()=>setCalM(new Date(y,m-1,1))}>‹</Btn>
+          <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:"#F0E8F8",minWidth:180,textAlign:"center",letterSpacing:1}}>{calM.toLocaleDateString("en-US",{month:"long",year:"numeric"})}</span>
+          <Btn small onClick={()=>setCalM(new Date(y,m+1,1))}>›</Btn>
+          <Btn small onClick={()=>{const d=new Date();setCalM(new Date(d.getFullYear(),d.getMonth(),1))}}>Today</Btn>
+          <span style={{marginLeft:"auto",fontSize:11,color:"#6B5E80"}}>✈ launch · ▶ traffic due · ⏹ flight ends · colored = asset due</span>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4}}>
+          {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=><div key={d} style={{fontSize:10,fontWeight:800,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1,textAlign:"center",padding:"4px 0"}}>{d}</div>)}
+          {cells.map((d,i)=>{const di=iso(d);const inM=d.getMonth()===m;const es=ev[di]||[];const isT=di===todayIso;
+            return<div key={i} style={{minHeight:88,borderRadius:8,border:"1px solid "+(isT?"#D4A040":"#2d1f42"),background:inM?"linear-gradient(145deg,#2d1f42,#261840)":"rgba(45,31,66,.25)",padding:"4px 5px",overflow:"hidden",boxShadow:isT?"0 0 12px rgba(212,160,64,.15)":"none"}}>
+              <div style={{fontSize:10,fontWeight:800,color:isT?"#D4A040":inM?"#9B8EAD":"#4a3565",marginBottom:2}}>{d.getDate()}</div>
+              {es.slice(0,3).map((e,j)=><div key={j} onClick={()=>{setView("board");setExpanded(e.cid)}} title={e.t} style={{fontSize:9,fontWeight:700,color:e.color,background:e.color+"14",borderLeft:"2px solid "+e.bc,borderRadius:3,padding:"1px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}}>{e.t}</div>)}
+              {es.length>3&&<div style={{fontSize:9,color:"#6B5E80",fontWeight:700}}>+{es.length-3} more</div>}
+            </div>})}
+        </div>
+      </div>;
+    };
     const tab=(id,label)=><button key={id} onClick={()=>setView(id)} style={{padding:"5px 14px",borderRadius:99,border:"1px solid "+(view===id?"#D4A040":"#4a3565"),background:view===id?"rgba(212,160,64,.12)":"transparent",color:view===id?"#D4A040":"#9B8EAD",fontSize:12,fontWeight:700,cursor:"pointer"}}>{label}</button>;
     return<div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,gap:8,flexWrap:"wrap"}}>
         <PageHead title="Campaign Hub" pgKey="campaigns" sub="Marketing Ops mission control — campaigns sync in from Notion, the Hub answers 'do we have the assets,' and the work gets pushed to whoever owes it."/>
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-          {tab("board","Board")}{tab("timeline","Timeline")}{tab("registry","Asset Registry")}{tab("taglines","Taglines")}{tab("source","Source")}
+          {tab("overview","Overview")}{tab("board","Board")}{tab("calendar","Calendar")}{tab("timeline","Timeline")}{tab("registry","Asset Registry")}{tab("taglines","Taglines")}{tab("source","Source")}
           {view==="board"&&<Btn small primary onClick={()=>{setAdding(a=>!a);if(hubBrand)setNc(p=>({...p,brand:hubBrand}))}}>{adding?"Cancel":"＋ New campaign"}</Btn>}
           <button onClick={()=>setCfgOpen(o=>!o)} title="Hub settings" style={{background:"none",border:"1px solid #4a3565",borderRadius:99,color:cfgOpen?"#D4A040":"#9B8EAD",cursor:"pointer",fontSize:13,padding:"4px 9px"}}>⚙</button>
         </div>
@@ -11928,6 +12090,8 @@ Rules:
           {showWrapped&&wrapped.map(CampCard)}
         </div>}
       </div>}
+      {view==="overview"&&<Overview/>}
+      {view==="calendar"&&<CalendarTab/>}
       {view==="timeline"&&<Timeline/>}
       {view==="registry"&&<Registry/>}
       {view==="taglines"&&<Taglines/>}
