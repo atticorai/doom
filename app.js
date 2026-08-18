@@ -4652,11 +4652,11 @@ const App=()=>{
       <div style={{display:"grid",gridTemplateColumns:all.length===1?"1fr":"1fr 1fr",gap:4}}>
         {all.slice(0,4).map((ph,i)=><div key={i} style={{position:"relative"}}>
           <img src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={()=>setModal({type:"oohPhoto",id,photos:all,startIdx:i})}/>
-          {ph.label&&<div style={{position:"absolute",bottom:2,left:2,background:"rgba(0,0,0,0.7)",color:"#fff",padding:"1px 4px",borderRadius:3,fontSize:10}}>{ph.label}</div>}
-          {!ph.hardcoded&&<button onClick={(e)=>{e.stopPropagation();if(confirm("Delete this photo?"))deleteOohPhoto(id,i-hardcoded.length)}} style={{position:"absolute",top:2,right:2,background:"rgba(220,38,38,0.85)",color:"#fff",border:"none",borderRadius:"50%",width:18,height:18,fontSize:11,fontWeight:800,cursor:"pointer",lineHeight:"18px",padding:0}}>×</button>}
+          {ph.label&&<div style={{position:"absolute",bottom:2,left:2,background:"rgba(0,0,0,0.7)",color:"#1b161f",padding:"1px 4px",borderRadius:3,fontSize:10}}>{ph.label}</div>}
+          {!ph.hardcoded&&<button onClick={(e)=>{e.stopPropagation();if(confirm("Delete this photo?"))deleteOohPhoto(id,i-hardcoded.length)}} style={{position:"absolute",top:2,right:2,background:"rgba(220,38,38,0.85)",color:"#1b161f",border:"none",borderRadius:"50%",width:18,height:18,fontSize:11,fontWeight:800,cursor:"pointer",lineHeight:"18px",padding:0}}>×</button>}
         </div>)}
       </div>
-      {all.length>4&&<div style={{fontSize:11,color:"#64748b",textAlign:"center",marginTop:2}}>+{all.length-4} more</div>}
+      {all.length>4&&<div style={{fontSize:11,color:"#948B7E",textAlign:"center",marginTop:2}}>+{all.length-4} more</div>}
     </div>;
     return null;
   };
@@ -4680,7 +4680,7 @@ const App=()=>{
     const dmas=markets; // markets read by full name (Birmingham, Montgomery…); GAD folds into Birmingham
     const subs=[...new Set(activePops.map(p=>p.submarket))].sort();
     const vendors=[...new Set(activePops.map(p=>p.vendor))].sort();
-    const marketColor=(mkt)=>{const b=activePops.find(p=>oohMarket(p.dma)===mkt);return b?(dmaColors[b.dma]||"#64748b"):"#64748b"};
+    const marketColor=(mkt)=>{const b=activePops.find(p=>oohMarket(p.dma)===mkt);return b?(dmaColors[b.dma]||"#948B7E"):"#948B7E"};
     const btypes=[...new Set(activePops.map(p=>oohBoardType(p.type,p.size)))].sort();
     const fl=activePops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true)&&(typeF?oohBoardType(p.type,p.size)===typeF:true));
     // Creative-production spec sheet for the boards in view — shared generator,
@@ -4832,7 +4832,7 @@ const App=()=>{
       const wWin=window.open("","","width=1000,height=820");
       let _oohHtml="";
       const w={document:{write:s=>{_oohHtml+=s},close:()=>{if(wWin){wWin.document.write(_oohHtml);wWin.document.close()}}}};
-      w.document.write('<html><head><title>WK OOH Traffic — '+escHtml(mktLabel)+' — '+escHtml(vendorName)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#1d1822;color:#fff;padding:6px 10px;border-radius:5px}.sub{margin-top:8px;font-size:12px;font-weight:bold;color:#444;border-bottom:2px solid #999}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:8px;font-size:11px;font-weight:bold}@media print{body{margin:14px}.dl{display:none}table{page-break-inside:auto}tr{page-break-inside:avoid}}</style></head><body>');
+      w.document.write('<html><head><title>WK OOH Traffic — '+escHtml(mktLabel)+' — '+escHtml(vendorName)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#1d1822;color:#fff;padding:6px 10px;border-radius:5px}.sub{margin-top:8px;font-size:12px;font-weight:bold;color:#444;border-bottom:2px solid #999}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#262012;padding:8px;margin-top:8px;font-size:11px;font-weight:bold}@media print{body{margin:14px}.dl{display:none}table{page-break-inside:auto}tr{page-break-inside:avoid}}</style></head><body>');
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
       w.document.write('<div style="text-align:center;margin-bottom:12px"><h2>WETTERMARK KEITH</h2><div class="tag">PERSONAL INJURY LAWYERS — OOH TRAFFIC INSTRUCTIONS'+(resendOnly?' · <span style="color:#b00">REVISION — CORRECTED CREATIVE ONLY</span>':'')+'</div></div>');
       const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v||"")+'</span></div>');
@@ -4915,7 +4915,7 @@ const App=()=>{
           const _loc=_tbd?'<b style="color:#7c3aed">'+(tbdCounts[_tkeyOf(p)]||1)+' rotating unit'+((tbdCounts[_tkeyOf(p)]||1)!==1?'s':'')+' — Lamar selects locations</b>':(escHtml(p.location||"")+(_bonus?' <b style="color:#7c3aed">★ Bonus (no charge)</b>':'')+(_boaz?' <b style="color:#1d4ed8">◄ Boaz — traffic as Huntsville</b>':'')+(_keep?' <b style="color:#15803d">★ Perm glitter-disc — already installed</b>':''));
           // Distinct row tint per category so the vendor can scan: Boaz = blue,
           // glitter-disc = green, TBD/rotary/bonus = amber.
-          const _bg=_boaz?'#dbeafe':(_keep?'#dcfce7':(_rot?'#fff3bf':(_rev&&!resendOnly?'#fce7f3':'')));
+          const _bg=_boaz?'#151d26':(_keep?'#152019':(_rot?'#fff3bf':(_rev&&!resendOnly?'#251520':'')));
           const _crCellOut=_keep?'<b style="color:#15803d">KEEP CURRENT CREATIVE</b><br><span style="color:#555;font-size:9px">Perm glitter-disc — already up, do not retraffic</span>':crCell;
           const _isciOut=_keep?'<b style="color:#15803d">Keep current</b>':escHtml(_tbd?"—":(p.isci||"—"));
           w.document.write('<tr'+(_bg?' style="background:'+_bg+'"':'')+'><td style="font-family:monospace;font-weight:700">'+_panelCell+'</td><td>'+_loc+'</td><td>'+escHtml(p.type||"")+'</td><td>'+escHtml(_tbd?"—":(p.size||""))+'</td><td style="text-align:right">'+(_tbd?"":(p.impressions?Number(p.impressions).toLocaleString():""))+'</td><td>'+_crCellOut+'</td><td style="font-family:monospace">'+_isciOut+'</td><td>'+escHtml((typeof OOH_RENEWAL_DATES!=="undefined"&&OOH_RENEWAL_DATES[p.panel])||(p.installDate?fmtD(p.installDate):"")||oPostDates||"")+'</td></tr>')});
@@ -5027,7 +5027,7 @@ const App=()=>{
     const PhotoModal=({p,onClose})=>{
       const close=POP_IMGS[p.closeImg];const dist=POP_IMGS[p.distImg];
       return<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.85)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={onClose}>
-        <div onClick={e=>e.stopPropagation()} style={{background:"#F1EBDD",borderRadius:12,padding:16,maxWidth:820,width:"100%",maxHeight:"90vh",overflow:"auto"}}>
+        <div onClick={e=>e.stopPropagation()} style={{background:"#F1EBDD",borderRadius:4,padding:16,maxWidth:820,width:"100%",maxHeight:"90vh",overflow:"auto"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:12}}>
             <div>
               <div style={{fontSize:13,fontWeight:800,color:"#1d1822"}}>Panel {p.panel} — {p.submarket}</div>
@@ -5039,26 +5039,26 @@ const App=()=>{
             <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#948B7E"}}>✕</button>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",marginBottom:4}}>CLOSE-UP</div>{close&&<img src={close} style={{width:"100%",borderRadius:8,border:"1px solid #3d3542"}} alt="Close-up"/>}</div>
-            <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",marginBottom:4}}>DISTANCE</div>{dist&&<img src={dist} style={{width:"100%",borderRadius:8,border:"1px solid #3d3542"}} alt="Distance"/>}</div>
+            <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",marginBottom:4}}>CLOSE-UP</div>{close&&<img src={close} style={{width:"100%",borderRadius:4,border:"1px solid #3d3542"}} alt="Close-up"/>}</div>
+            <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",marginBottom:4}}>DISTANCE</div>{dist&&<img src={dist} style={{width:"100%",borderRadius:4,border:"1px solid #3d3542"}} alt="Distance"/>}</div>
           </div>
         </div>
       </div>;
     };
 
     const CardGrid=()=><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
-      {fl.map((p,i)=>{const c=dmaColors[p.dma]||"#64748b";const closeImg=POP_IMGS[p.closeImg];const uploadedPhotos=oohPhotos[p.boardId]||[];const hasAnyPhoto=closeImg||uploadedPhotos.length>0;
+      {fl.map((p,i)=>{const c=dmaColors[p.dma]||"#948B7E";const closeImg=POP_IMGS[p.closeImg];const uploadedPhotos=oohPhotos[p.boardId]||[];const hasAnyPhoto=closeImg||uploadedPhotos.length>0;
         const allPhotosForCard=[...(closeImg?[{url:closeImg,label:"Close-up",hardcoded:true}]:[]),...(POP_IMGS[p.distImg]?[{url:POP_IMGS[p.distImg],label:"Distance",hardcoded:true}]:[]),...uploadedPhotos];
         const heroImg=uploadedPhotos.length>0?uploadedPhotos[uploadedPhotos.length-1].url:closeImg;
         const dark=isDarkBoard(p.boardId);
-        return<div key={p.boardId} style={{border:"1px solid #3d3542",borderRadius:9,overflow:"hidden",background:dark?"#e5e7eb":"#F1EBDD",borderLeft:`4px solid ${dark?"#6b7280":c}`,filter:dark?"grayscale(1)":"none",opacity:dark?0.72:1,position:"relative"}}>
-          {dark&&<div style={{position:"absolute",top:6,left:6,zIndex:2,background:"#374151",color:"#e5e7eb",padding:"1px 7px",borderRadius:10,fontSize:10,fontWeight:800,letterSpacing:.5}}>🌑 DARK · UNLIT</div>}
+        return<div key={p.boardId} style={{border:"1px solid #3d3542",borderRadius:4,overflow:"hidden",background:dark?"#2e2833":"#F1EBDD",borderLeft:`4px solid ${dark?"#948B7E":c}`,filter:dark?"grayscale(1)":"none",opacity:dark?0.72:1,position:"relative"}}>
+          {dark&&<div style={{position:"absolute",top:6,left:6,zIndex:2,background:"#C9BCA6",color:"#2e2833",padding:"1px 7px",borderRadius:4,fontSize:10,fontWeight:800,letterSpacing:.5}}>🌑 DARK · UNLIT</div>}
           {hasAnyPhoto?<div style={{position:"relative",cursor:"pointer",height:120,overflow:"hidden"}} onClick={()=>setModal({type:"oohPhoto",id:p.boardId,photos:allPhotosForCard,startIdx:0})}>
             <img src={heroImg} style={{width:"100%",height:"100%",objectFit:"cover"}} alt={p.panel}/>
-            <div style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.7)",color:"#fff",padding:"2px 8px",borderRadius:12,fontSize:13}}>📷 {allPhotosForCard.length} photo{allPhotosForCard.length>1?"s":""}</div>
-            <div style={{position:"absolute",bottom:6,left:6,background:"rgba(0,0,0,0.7)",color:"#fff",padding:"2px 8px",borderRadius:12,fontSize:14,fontWeight:700}}>{p.impressions.toLocaleString()} wkly</div>
+            <div style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.7)",color:"#1b161f",padding:"2px 8px",borderRadius:4,fontSize:13}}>📷 {allPhotosForCard.length} photo{allPhotosForCard.length>1?"s":""}</div>
+            <div style={{position:"absolute",bottom:6,left:6,background:"rgba(0,0,0,0.7)",color:"#1b161f",padding:"2px 8px",borderRadius:4,fontSize:14,fontWeight:700}}>{p.impressions.toLocaleString()} wkly</div>
           </div>:<div style={{padding:"8px 10px",background:"#0e0c10",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <span style={{fontSize:12,color:"#64748b"}}>No photos yet</span>
+            <span style={{fontSize:12,color:"#948B7E"}}>No photos yet</span>
             <OohPhotoUpload id={p.boardId}/>
           </div>}
           {hasAnyPhoto&&<div style={{display:"flex",justifyContent:"flex-end",padding:"3px 8px",background:"#0e0c10"}} onClick={e=>e.stopPropagation()}><OohPhotoUpload id={p.boardId}/></div>}
@@ -5072,7 +5072,7 @@ const App=()=>{
                 </div>
                 <div style={{fontSize:14,color:"#948B7E",marginTop:2,display:"flex",alignItems:"center",gap:6}}><MediaBadge type={p.type}/>{p.type} · {p.size} · {p.submarket}</div>
               </div>
-              <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.bg})(),color:(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.color})()}}>{(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.label})()}</span>{p.isci&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#dbeafe",color:"#AFC2DE",fontWeight:600,marginLeft:3}}>ISCI ✓</span>}
+              <span style={{fontSize:13,padding:"2px 6px",borderRadius:4,fontWeight:600,background:(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.bg})(),color:(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.color})()}}>{(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.label})()}</span>{p.isci&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#151d26",color:"#AFC2DE",fontWeight:600,marginLeft:3}}>ISCI ✓</span>}
             </div>
             <div style={{fontSize:14,color:"#948B7E",marginTop:4}}>{p.location}</div>
             <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #3d3542"}}>
@@ -5080,12 +5080,12 @@ const App=()=>{
               <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>TAB#</div><div style={{fontSize:14,fontWeight:600,color:"#948B7E"}}>{p.tab}</div></div>
               <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Contract</div><div style={{fontSize:14,fontWeight:600,color:"#948B7E"}}>{p.contract}</div></div>
             </div>
-            <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:p.isci?"#1f3530":"#fffbeb",border:`1px solid ${p.isci?"#bbf7d0":"#fde68a"}`}}>
+            <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:p.isci?"#1f3530":"#262012",border:`1px solid ${p.isci?"#bbf7d0":"#fde68a"}`}}>
               {editId===p.boardId?
                 <div style={{display:"flex",gap:3,alignItems:"center"}}>
                   {(()=>{const opts=iscis.filter(i=>i.suffix==="O"&&i.dma===p.dma&&i.active).sort((a,b)=>a.code.localeCompare(b.code));return<select value={editVal} onChange={e=>{setEditVal(e.target.value);saveEdit(p.boardId,e.target.value)}} autoFocus style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:13,background:"#0e0c10",color:"#E9E3D6"}} onKeyDown={e=>{if(e.key==="Escape")cancelEdit()}}><option value="">{opts.length?("— pick "+(p.dma||"")+" ISCI —"):("No "+(p.dma||"")+" ISCIs registered yet")}</option>{opts.map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}</option>)}</select>})()}
-                  <button onClick={()=>saveEdit(p.boardId)} style={{padding:"2px 6px",background:"#6FA287",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✓</button>
-                  <button onClick={cancelEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
+                  <button onClick={()=>saveEdit(p.boardId)} style={{padding:"2px 6px",background:"#6FA287",color:"#1b161f",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✓</button>
+                  <button onClick={cancelEdit} style={{padding:"2px 6px",background:"#7d766b",color:"#1b161f",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
                 </div>:
                 <div onClick={()=>startEdit(p.boardId,p.isci)} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   {p.isci?<div><div style={{fontSize:14,fontWeight:700,fontFamily:"monospace",color:"#6FA287"}}>{p.isci}</div><div style={{fontSize:13,color:"#948B7E"}}>{isciTitle(p.isci)}</div></div>
@@ -5097,7 +5097,7 @@ const App=()=>{
             {/* Per-board creative rotation — class-specific (bulletin 2 · poster/junior 3 · rotary/digital rotation) */}
             {(()=>{const bc=boardClass(p.type,p.size);const slots=bc.slots;const dl=Array.isArray(p.design)?p.design:[];const uc=bc.unit.charAt(0).toUpperCase()+bc.unit.slice(1);return<div style={{marginTop:5,padding:"5px 7px",borderRadius:5,background:dl.length?"#2a1f3e":"#0e0c10",border:`1px solid ${dl.length?"#9b7bb0":"#3d3542"}`,borderLeft:`3px solid ${bc.color}`}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                <span style={{fontSize:11,fontWeight:800,color:bc.color,display:"flex",alignItems:"center",gap:4}}>{bc.icon} {bc.label}{bc.rotates&&<span style={{fontSize:9,fontWeight:700,color:"#fff",background:bc.color,padding:"0 5px",borderRadius:7}}>ROTATES</span>}</span>
+                <span style={{fontSize:11,fontWeight:800,color:bc.color,display:"flex",alignItems:"center",gap:4}}>{bc.icon} {bc.label}{bc.rotates&&<span style={{fontSize:9,fontWeight:700,color:"#1b161f",background:bc.color,padding:"0 5px",borderRadius:7}}>ROTATES</span>}</span>
                 <span style={{fontSize:11,fontWeight:700,color:dl.length>=slots?"#6FA287":"#B08D3F"}}>{dl.length}/{slots} {bc.unit}{slots>1?"s":""}</span>
               </div>
               <div style={{fontSize:10,color:"#6B5E80",marginBottom:3}}>{bc.spec} · {p.size}{p.vendorRef?<span style={{marginLeft:4}} title="Lamar's 2026 Design reference">· Lamar: {p.vendorRef}</span>:""}</div>
@@ -5129,12 +5129,12 @@ const App=()=>{
                     </select></div>)}
                   {dup&&<div style={{fontSize:10,color:"#93323C",fontWeight:700}}>⚠ Same creative picked twice — that's a wasted rotation slot.</div>}
                   <div style={{display:"flex",gap:3,justifyContent:"flex-end"}}>
-                    <button onClick={()=>saveDEdit(p.boardId)} style={{padding:"2px 8px",background:"#9b7bb0",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✓ Save</button>
-                    <button onClick={cancelDEdit} style={{padding:"2px 8px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
+                    <button onClick={()=>saveDEdit(p.boardId)} style={{padding:"2px 8px",background:"#9b7bb0",color:"#1b161f",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✓ Save</button>
+                    <button onClick={cancelDEdit} style={{padding:"2px 8px",background:"#7d766b",color:"#1b161f",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
                   </div>
                 </div>;})():
                 <div onClick={()=>startDEdit(p)} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",gap:4}}>
-                  {dl.length?(()=>{const pcts=bc.rotates?designPcts(dl,p.designPct):null;return <div style={{display:"flex",flexWrap:"wrap",gap:3,alignItems:"center"}}>{dl.map((c,k)=><React.Fragment key={k}>{bc.rotates&&k>0&&<span style={{fontSize:11,color:bc.color}}>→</span>}<span style={{fontSize:12,fontWeight:700,color:"#fff",background:creativeColor(c),padding:"1px 6px",borderRadius:8}}>{c}{pcts?" · "+pcts[k]+"%":""}</span></React.Fragment>)}{(new Set(dl).size!==dl.length)&&<span style={{fontSize:10,color:"#93323C",fontWeight:700}} title="Same creative more than once">⚠ dup</span>}</div>;})()
+                  {dl.length?(()=>{const pcts=bc.rotates?designPcts(dl,p.designPct):null;return <div style={{display:"flex",flexWrap:"wrap",gap:3,alignItems:"center"}}>{dl.map((c,k)=><React.Fragment key={k}>{bc.rotates&&k>0&&<span style={{fontSize:11,color:bc.color}}>→</span>}<span style={{fontSize:12,fontWeight:700,color:"#1b161f",background:creativeColor(c),padding:"1px 6px",borderRadius:4}}>{c}{pcts?" · "+pcts[k]+"%":""}</span></React.Fragment>)}{(new Set(dl).size!==dl.length)&&<span style={{fontSize:10,color:"#93323C",fontWeight:700}} title="Same creative more than once">⚠ dup</span>}</div>;})()
                   :<div style={{fontSize:13,color:"#9b7bb0",fontStyle:"italic"}}>Click to add {slots} {bc.unit}{slots>1?"s":""}</div>}
                   <span style={{fontSize:13,color:"#948B7E",flexShrink:0}}>✎</span>
                 </div>
@@ -5167,7 +5167,7 @@ const App=()=>{
           <Btn small onClick={()=>setViewMode("ref")} primary={viewMode==="ref"}>📋 Reference</Btn>
           <Btn small onClick={()=>setViewMode("traffic")} primary={viewMode==="traffic"} color="#B08D3F">📡 Traffic</Btn>
           <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"} color="#9b7bb0">📑 Contracts</Btn>
-          {archivedPops.length>0&&<Btn small onClick={()=>setViewMode("archive")} primary={viewMode==="archive"} color="#6b7280">🗄 Archive ({archivedPops.length})</Btn>}
+          {archivedPops.length>0&&<Btn small onClick={()=>setViewMode("archive")} primary={viewMode==="archive"} color="#948B7E">🗄 Archive ({archivedPops.length})</Btn>}
         </div>
       </div>
       <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
@@ -5187,19 +5187,19 @@ const App=()=>{
         <span style={{fontSize:11,color:"#948B7E",fontWeight:700}}>Traffic report — start date:</span>
         <input type="date" value={oohReportDate} onChange={e=>setOohReportDate(e.target.value)} style={{padding:"3px 6px",borderRadius:5,border:"1px solid #3d3542",background:"#0e0c10",color:"#E9E3D6",fontSize:12}}/>
         {oohReportDate&&<button onClick={()=>setOohReportDate("")} style={{padding:"2px 7px",borderRadius:5,border:"1px solid #3d3542",background:"transparent",color:"#948B7E",fontSize:11,cursor:"pointer"}}>clear</button>}
-        {(()=>{const n=fl.filter(p=>!oohReportDate||p.installDate===oohReportDate).length;return <button onClick={printCardTrafficReport} style={{padding:"4px 12px",borderRadius:6,border:"none",background:"#9b7bb0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>📄 Pull Traffic Report ({n})</button>})()}
+        {(()=>{const n=fl.filter(p=>!oohReportDate||p.installDate===oohReportDate).length;return <button onClick={printCardTrafficReport} style={{padding:"4px 12px",borderRadius:6,border:"none",background:"#9b7bb0",color:"#1b161f",fontSize:12,fontWeight:700,cursor:"pointer"}}>📄 Pull Traffic Report ({n})</button>})()}
       </div>
       {/* DMA stats */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
         {dmas.map(d=>{const all=activePops.filter(p=>oohMarket(p.dma)===d);const p=all.filter(x=>x.isci).length;const impr=all.reduce((a,x)=>a+x.impressions,0);const c=marketColor(d);
-          return<div key={d} onClick={()=>setOm(om===d?"":d)} style={{padding:"10px 12px",borderRadius:9,border:om===d?`2px solid ${c}`:"1px solid #E9E3D6",background:om===d?c+"0a":"#fff",cursor:"pointer"}}>
-            <div style={{fontSize:13,fontWeight:700,color:c,textTransform:"uppercase",letterSpacing:1}}>{d}</div>
+          return<div key={d} onClick={()=>setOm(om===d?"":d)} style={{padding:"10px 12px",borderRadius:4,border:om===d?`2px solid ${c}`:"1px solid #3d3542",borderTop:om===d?`2px solid ${c}`:"1px solid rgba(233,227,214,.14)",background:om===d?"linear-gradient(180deg,"+c+"1a,rgba(18,14,20,.92))":"linear-gradient(180deg,#1d1822,#131016)",boxShadow:"0 12px 26px -18px rgba(0,0,0,.9)",cursor:"pointer"}}>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:15,fontWeight:700,color:c,textTransform:"uppercase",letterSpacing:2.5,borderBottom:"1px solid "+c+"44",paddingBottom:2,marginBottom:2}}>{d}</div>
             <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{all.length}</div>
             <div style={{fontSize:14,color:c,fontWeight:600}}>{impr.toLocaleString()} wkly</div>
-            <div style={{fontSize:13,color:p===all.length?"#6FA287":"#9ca3af"}}>{p}/{all.length} ISCI assigned</div>
+            <div style={{fontSize:13,color:p===all.length?"#6FA287":"#948B7E"}}>{p}/{all.length} ISCI assigned</div>
           </div>;
         })}
-        <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #3d3542",background:"linear-gradient(135deg,#fffbeb,#fef3c7)"}}>
+        <div style={{padding:"10px 12px",borderRadius:4,border:"1px solid #3d3542",background:"linear-gradient(135deg,#262012,#262012)"}}>
           <div style={{fontSize:13,fontWeight:700,color:"#B08D3F",textTransform:"uppercase",letterSpacing:1}}>ALL DMAs</div>
           <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{activePops.length}</div>
           <div style={{fontSize:14,color:"#B08D3F",fontWeight:600}}>{totalImpr.toLocaleString()} wkly</div>
@@ -5208,8 +5208,8 @@ const App=()=>{
       </div>
       {/* Board mix by format class — informational, drives the per-board creative requirements */}
       {(()=>{const groups={};fl.forEach(p=>{const bc=boardClass(p.type,p.size);(groups[bc.key]=groups[bc.key]||{bc,boards:[]}).boards.push(p)});const order=["bulletin","static","junior","rotary","digital"];const entries=order.filter(k=>groups[k]).map(k=>groups[k]);if(!entries.length)return null;
-        return<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{entries.map(({bc,boards})=>{const need=boards.length;const done=boards.filter(p=>Array.isArray(p.design)&&p.design.length).length;const pct=need?Math.round(done/need*100):0;const poolN=(oohCreatives[creativePoolKey(boards[0].type,boards[0].size)]||[]).length;return<div key={bc.key} title={bc.spec} style={{flex:"1 1 150px",minWidth:150,padding:"7px 10px",borderRadius:8,background:"#0e0c10",border:`1px solid #3d3542`,borderLeft:`3px solid ${bc.color}`}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:12,fontWeight:800,color:bc.color,display:"flex",alignItems:"center",gap:4}}>{bc.icon} {bc.label}{bc.rotates&&<span style={{fontSize:8,fontWeight:700,color:"#fff",background:bc.color,padding:"0 4px",borderRadius:6}}>ROT</span>}</span><span style={{fontSize:16,fontWeight:800,color:"#F1EBDD"}}>{boards.length}</span></div>
+        return<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{entries.map(({bc,boards})=>{const need=boards.length;const done=boards.filter(p=>Array.isArray(p.design)&&p.design.length).length;const pct=need?Math.round(done/need*100):0;const poolN=(oohCreatives[creativePoolKey(boards[0].type,boards[0].size)]||[]).length;return<div key={bc.key} title={bc.spec} style={{flex:"1 1 150px",minWidth:150,padding:"7px 10px",borderRadius:4,background:"#0e0c10",border:`1px solid #3d3542`,borderLeft:`3px solid ${bc.color}`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:12,fontWeight:800,color:bc.color,display:"flex",alignItems:"center",gap:4}}>{bc.icon} {bc.label}{bc.rotates&&<span style={{fontSize:8,fontWeight:700,color:"#1b161f",background:bc.color,padding:"0 4px",borderRadius:6}}>ROT</span>}</span><span style={{fontSize:16,fontWeight:800,color:"#F1EBDD"}}>{boards.length}</span></div>
           <div style={{fontSize:10,color:"#6B5E80",margin:"2px 0 4px"}}>1 of {poolN} creatives each · spread by location</div>
           <div style={{height:5,borderRadius:3,background:"#1d1822",overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:pct===100?"#6FA287":bc.color}}/></div>
           <div style={{fontSize:10,color:pct===100?"#6FA287":"#948B7E",marginTop:2,fontWeight:600}}>{done}/{need} boards named · {pct}%</div>
@@ -5221,10 +5221,10 @@ const App=()=>{
           <div style={{fontSize:14,fontWeight:700}}>📍 WK OOH Board Locations</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
             <Btn small color="#9b7bb0" onClick={printCreativeMap}>🗺 Download Creative Map</Btn>
-            {oohMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={oohClusterRadius} onChange={e=>setOohClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#AFC2DE",minWidth:30}}>{oohClusterRadius} mi</span></div>}
+            {oohMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#7d766b"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={oohClusterRadius} onChange={e=>setOohClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#AFC2DE",minWidth:30}}>{oohClusterRadius} mi</span></div>}
             <div style={{display:"flex",gap:0,border:"1px solid #3d3542",borderRadius:6,overflow:"hidden"}}>
-              <button onClick={()=>setOohMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:oohMapMode==="market"?"rgba(176,141,63,.2)":"transparent",color:oohMapMode==="market"?"#B08D3F":"#94a3b8"}}>📍 By Market</button>
-              <button onClick={()=>setOohMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:oohMapMode==="creative"?"rgba(175,194,222,.2)":"transparent",color:oohMapMode==="creative"?"#AFC2DE":"#94a3b8"}}>🎨 By Creative</button>
+              <button onClick={()=>setOohMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:oohMapMode==="market"?"rgba(176,141,63,.2)":"transparent",color:oohMapMode==="market"?"#B08D3F":"#7d766b"}}>📍 By Market</button>
+              <button onClick={()=>setOohMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:oohMapMode==="creative"?"rgba(175,194,222,.2)":"transparent",color:oohMapMode==="creative"?"#AFC2DE":"#7d766b"}}>🎨 By Creative</button>
             </div>
           </div>
         </div>
@@ -5239,19 +5239,19 @@ const App=()=>{
           // two different creatives could land on the same swatch). Same list drives
           // the map pins, legend, and conflict rows so colors always agree.
           const crTitles=[...new Set(pins.flatMap(p=>p.creatives))].sort();
-          const crColor=(t)=>{const i=crTitles.indexOf(t);return i>=0?CREATIVE_PALETTE[i%CREATIVE_PALETTE.length]:"#475569"};
-          return<><OohMap pins={oohMapMode==="creative"?pinsWithStatus.filter(p=>p.creatives.length):pinsWithStatus} colorFn={p=>oohMapMode==="creative"?(p.creative?crColor(p.creative):"#475569"):(marketColor(p.market)||"#B08D3F")} height={420}/>
+          const crColor=(t)=>{const i=crTitles.indexOf(t);return i>=0?CREATIVE_PALETTE[i%CREATIVE_PALETTE.length]:"#A89F93"};
+          return<><OohMap pins={oohMapMode==="creative"?pinsWithStatus.filter(p=>p.creatives.length):pinsWithStatus} colorFn={p=>oohMapMode==="creative"?(p.creative?crColor(p.creative):"#A89F93"):(marketColor(p.market)||"#B08D3F")} height={420}/>
           {oohMapMode==="market"?
             <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>{markets.map(m=><div key={m} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:marketColor(m)}}/>{m}</div>)}</div>
             :
             (()=>{const titles=[...new Set(pins.flatMap(p=>p.creatives))].sort();const untaggedCnt=pins.filter(p=>!p.creatives.length).length;return<div style={{marginTop:6}}>
               {clustered.size>0?<div style={{textAlign:"center",fontSize:13,color:"#F4C242",fontWeight:600,marginBottom:6,padding:"4px 8px",background:"rgba(244,194,66,.1)",border:"1px solid rgba(244,194,66,.3)",borderRadius:4}}>⚠ {clustered.size} board{clustered.size!==1?"s":""} within {oohClusterRadius} mi of another running the SAME creative — spread them out</div>:titles.length>0&&<div style={{textAlign:"center",fontSize:13,color:"#6FA287",fontWeight:600,marginBottom:6}}>✓ No same-creative boards within {oohClusterRadius} mi — clean spread</div>}
               {titles.length===0?
-                <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No creative assigned yet — name your creatives per board (🎨 on each card/row; bulletins 2, posters/juniors 3) to see them colored and check for bunching.</div>
+                <div style={{textAlign:"center",fontSize:13,color:"#7d766b",fontStyle:"italic"}}>No creative assigned yet — name your creatives per board (🎨 on each card/row; bulletins 2, posters/juniors 3) to see them colored and check for bunching.</div>
                 :
                 <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-                  {titles.map(t=>{const cnt=pins.filter(p=>p.creatives.includes(t)).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:crColor(t),border:"1px solid #3d3542"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
-                  {untaggedCnt>0&&<div style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:"#475569",border:"1px solid #3d3542"}}/><span style={{color:"#94a3b8"}}>no creative ({untaggedCnt})</span></div>}
+                  {titles.map(t=>{const cnt=pins.filter(p=>p.creatives.includes(t)).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:crColor(t),border:"1px solid #3d3542"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#7d766b"}}>({cnt})</span></div>})}
+                  {untaggedCnt>0&&<div style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:"#A89F93",border:"1px solid #3d3542"}}/><span style={{color:"#7d766b"}}>no creative ({untaggedCnt})</span></div>}
                 </div>
               }
               {conflicts.length>0&&<div style={{marginTop:8,border:"1px solid rgba(244,194,66,.3)",borderRadius:6,overflow:"hidden"}}>
@@ -5263,7 +5263,7 @@ const App=()=>{
                   <span style={{fontWeight:700,color:c.d<=1?"#93323C":"#B08D3F",flexShrink:0}}>{c.d.toFixed(1)} mi</span>
                 </div>)}</div>
               </div>}
-              {approxConflicts.length>0&&<div style={{marginTop:6,border:"1px dashed rgba(201,188,166,.25)",borderRadius:12,overflow:"hidden"}}>
+              {approxConflicts.length>0&&<div style={{marginTop:6,border:"1px dashed rgba(201,188,166,.25)",borderRadius:4,overflow:"hidden"}}>
                 <div style={{padding:"5px 10px",background:"rgba(155,123,176,.1)",fontSize:11,fontWeight:700,color:"#948B7E"}}>~ {approxConflicts.length} possible pair{approxConflicts.length!==1?"s":""} involving approx-located boards — <b>verify the exact spot</b> before trusting</div>
                 <div style={{maxHeight:120,overflowY:"auto"}}>{approxConflicts.slice(0,40).map((c,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"3px 10px",borderTop:"1px solid #1d1822",fontSize:11,opacity:.8}}>
                   <span style={{width:8,height:8,borderRadius:4,background:crColor(c.shared[0]),flexShrink:0}}/>
@@ -5292,7 +5292,7 @@ const App=()=>{
             <TD><span style={{fontSize:14,fontWeight:600}}>{p.vendor}</span></TD><TD><span style={{fontSize:13,display:"flex",alignItems:"center",gap:6}}><MediaBadge type={p.type}/>{p.type}</span></TD><TD>{p.size}</TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:180,display:"inline-block"}}>{p.location}</span></TD>
             <TD b>{p.impressions.toLocaleString()}</TD><TD>{p.installDate}</TD>
-            <TD><span style={{fontFamily:"monospace",fontSize:14,color:p.isci?"#6FA287":"#9ca3af",fontWeight:p.isci?700:400}}>{p.isci||"—"}</span></TD>
+            <TD><span style={{fontFamily:"monospace",fontSize:14,color:p.isci?"#6FA287":"#7d766b",fontWeight:p.isci?700:400}}>{p.isci||"—"}</span></TD>
             <TD><span style={{fontSize:13,fontFamily:"monospace"}}>{p.contract||"—"}</span></TD>
             <TD><span style={{fontSize:13}}>{p.tab||"—"}</span></TD>
             <TD>{co?<span style={{fontSize:11,color:"#6FA287",fontFamily:"monospace"}}>{co[0].toFixed(3)}, {co[1].toFixed(3)}</span>:<span style={{fontSize:13,color:"#948B7E"}}>—</span>}</TD>
@@ -5318,7 +5318,7 @@ const App=()=>{
           const wWin=window.open("","","width=900,height=700");
           let _oohHtml="";
           const w={document:{write:s=>{_oohHtml+=s},close:()=>{if(wWin){wWin.document.write(_oohHtml);wWin.document.close()}}},print:()=>{if(wWin)wWin.print()}};
-          w.document.write("<html><head><title>OOH Traffic - "+escHtml(dmaLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#93323C}.grn{color:#6FA287}.amb{color:#B08D3F}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
+          w.document.write("<html><head><title>OOH Traffic - "+escHtml(dmaLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#93323C}.grn{color:#6FA287}.amb{color:#B08D3F}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#262012;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
           w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">WETTERMARK KEITH</h2><div style="font-weight:bold;color:#555">PERSONAL INJURY LAWYERS</div></div>');
           const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
           w.document.write(hd("Agency","Atticor Group LLC"));w.document.write(hd("Client","Wettermark Keith"));
@@ -5355,16 +5355,16 @@ const App=()=>{
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
             <div style={{fontSize:14,fontWeight:800}}>📡 OOH Traffic Instructions — {dmaLabel}</div>
             <div style={{display:"flex",gap:4,alignItems:"center"}}>
-              <span style={{fontSize:11,color:"#94a3b8"}}>Vendor:</span>
-              {vendors.map(v=><button key={v} onClick={()=>setOVend(oVend===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:oVend===v?"2px solid #B08D3F":"1px solid #3d3542",background:oVend===v?"rgba(217,119,6,.15)":"transparent",color:oVend===v?"#B08D3F":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
+              <span style={{fontSize:11,color:"#7d766b"}}>Vendor:</span>
+              {vendors.map(v=><button key={v} onClick={()=>setOVend(oVend===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:oVend===v?"2px solid #B08D3F":"1px solid #3d3542",background:oVend===v?"rgba(217,119,6,.15)":"transparent",color:oVend===v?"#B08D3F":"#7d766b",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
             </div>
           </div>
           <div style={{display:"flex",gap:4,marginBottom:8}}>
-            <button onClick={()=>setTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:trafficMode==="units"?"2px solid #6FA287":"1px solid #3d3542",background:trafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:trafficMode==="units"?"#6FA287":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
-            <button onClick={()=>setTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:trafficMode==="panels"?"2px solid #AFC2DE":"1px solid #3d3542",background:trafficMode==="panels"?"rgba(37,99,235,.15)":"transparent",color:trafficMode==="panels"?"#60a5fa":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
+            <button onClick={()=>setTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:trafficMode==="units"?"2px solid #6FA287":"1px solid #3d3542",background:trafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:trafficMode==="units"?"#6FA287":"#7d766b",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
+            <button onClick={()=>setTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:trafficMode==="panels"?"2px solid #AFC2DE":"1px solid #3d3542",background:trafficMode==="panels"?"rgba(37,99,235,.15)":"transparent",color:trafficMode==="panels"?"#60a5fa":"#7d766b",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
             <div style={{marginLeft:"auto",display:"flex",gap:3,alignItems:"center"}}>
-              <span style={{fontSize:11,color:"#94a3b8"}}>Type:</span>
-              {(()=>{const cats=[...new Set(vendorBoards.map(p=>oohBoardType(p.type,p.size)))].sort();return cats.map(c=>{const col=OOH_BTYPE_COLORS[c]||OOH_BTYPE_COLORS.Other;const matches=vendorBoards.filter(p=>oohBoardType(p.type,p.size)===c).length;return<button key={c} onClick={()=>setOohTypeF&&setOohTypeF(oohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:oohTypeF===c?"2px solid "+col.border:"1px solid #3d3542",background:oohTypeF===c?col.bg:"transparent",color:oohTypeF===c?col.fg:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
+              <span style={{fontSize:11,color:"#7d766b"}}>Type:</span>
+              {(()=>{const cats=[...new Set(vendorBoards.map(p=>oohBoardType(p.type,p.size)))].sort();return cats.map(c=>{const col=OOH_BTYPE_COLORS[c]||OOH_BTYPE_COLORS.Other;const matches=vendorBoards.filter(p=>oohBoardType(p.type,p.size)===c).length;return<button key={c} onClick={()=>setOohTypeF&&setOohTypeF(oohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:oohTypeF===c?"2px solid "+col.border:"1px solid #3d3542",background:oohTypeF===c?col.bg:"transparent",color:oohTypeF===c?col.fg:"#948B7E",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
@@ -5372,7 +5372,7 @@ const App=()=>{
             <Inp label="Version / Links" value={oVersion} onChange={e=>setOVersion(e.target.value)} placeholder="e.g., Knoxville Static Posters"/>
             <Inp label="Comments" value={oComments} onChange={e=>setOComments(e.target.value)} placeholder="Optional"/>
           </div>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {dmaLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} panels | Broadcast: {workMonth}</div>
+          <div style={{fontSize:12,color:"#7d766b",marginBottom:6}}>Market: {dmaLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} panels | Broadcast: {workMonth}</div>
           {usePanelMode&&oLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(37,99,235,.08)",borderRadius:5,border:"1px solid rgba(37,99,235,.2)"}}>
             <span style={{fontSize:11,color:"#AFC2DE"}}>Quick assign creative to all {oLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
             {oohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6",width:200}}/>}
@@ -5388,7 +5388,7 @@ const App=()=>{
           </tr></thead>
             <tbody>{oLines.map((l,i)=>{const bd=usePanelMode?vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel):null;return<tr key={i}>
               <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={oPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/></TD>
-              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{const v=e.target.value;upL(i,"panel",v);const b=vendorPanels.find(p=>p.panel===v);if(b&&!l.isci){const cr=(Array.isArray(b.design)&&b.design.length)?b.design.map(c=>fullCreativeName(b,c)).join(" / "):(b.isci?(b.isci+(isciTitle(b.isci)?" - "+isciTitle(b.isci):"")):"");if(cr)upL(i,"isci",cr)}}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.dma} - {p.sub} - {p.type}{(Array.isArray(p.design)&&p.design.length)?" · 🎨"+p.design.join("/"):""}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
+              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{const v=e.target.value;upL(i,"panel",v);const b=vendorPanels.find(p=>p.panel===v);if(b&&!l.isci){const cr=(Array.isArray(b.design)&&b.design.length)?b.design.map(c=>fullCreativeName(b,c)).join(" / "):(b.isci?(b.isci+(isciTitle(b.isci)?" - "+isciTitle(b.isci):"")):"");if(cr)upL(i,"isci",cr)}}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.dma} - {p.sub} - {p.type}{(Array.isArray(p.design)&&p.design.length)?" · 🎨"+p.design.join("/"):""}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#948B7E",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
               {usePanelMode&&<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #3d3542",borderRadius:3,fontSize:11,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
               {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">All</option>{dmas.map(d=><option key={d} value={d}>{d}</option>)}</select></TD>}
               {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
@@ -5401,7 +5401,7 @@ const App=()=>{
             <Btn small onClick={addLine}>+ Add Line</Btn>
             {usePanelMode&&<Btn small onClick={()=>{const used=oLines.map(l=>l.panel).filter(Boolean);const unassigned=vendorPanels.filter(p=>!used.includes(p.panel));if(!unassigned.length){notify("All panels already added");return}const nl=unassigned.map(p=>({flight:oPostDates||"",panel:p.panel,isci:(Array.isArray(p.design)&&p.design.length)?p.design.map(c=>fullCreativeName(p,c)).join(" / "):"",units:"",notes:""}));setOLines(p=>[...p,...nl]);notify(unassigned.length+" panels added (creative pre-filled where set)")}} color="#AFC2DE">+ Add All {trafficVendor||""} Panels</Btn>}
             <Btn small primary color="#B08D3F" onClick={printOoh} disabled={!oLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
-            <span style={{marginLeft:"auto",fontSize:12,color:"#94a3b8"}}>{usePanelMode?totalPanels+" panels":""+oLines.filter(l=>l.isci).length+" creatives | "+totalUnits+" units"}{trafficVendor?" | "+trafficVendor:""}</span>
+            <span style={{marginLeft:"auto",fontSize:12,color:"#7d766b"}}>{usePanelMode?totalPanels+" panels":""+oLines.filter(l=>l.isci).length+" creatives | "+totalUnits+" units"}{trafficVendor?" | "+trafficVendor:""}</span>
           </div>
         </Cd>;
        })():
@@ -5426,12 +5426,12 @@ const App=()=>{
           <div style={{fontSize:14,color:"#948B7E",marginBottom:10}}>Track contract dates, status, and renewal deadlines per vendor contract</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
             {uniqueContracts.map(cNum=>{const c=oohContracts[cNum]||{num:cNum};const cs=contractStatus(c);const boards=pops.filter(p=>p.contract===cNum);const dmasInContract=[...new Set(boards.map(p=>p.dma))];const totalImprC=boards.reduce((a,p)=>a+p.impressions,0);const taggedC=boards.filter(p=>p.isci).length;
-              return<div key={cNum} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#F1EBDD"}}>
+              return<div key={cNum} style={{border:`1px solid ${cs.color}30`,borderRadius:4,overflow:"hidden",background:"#F1EBDD"}}>
                 <div style={{padding:"10px 14px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div style={{display:"flex",gap:6,alignItems:"center"}}>
                       <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#F1EBDD"}}>{cNum}</span>
-                      <span style={{fontSize:13,padding:"2px 8px",borderRadius:10,fontWeight:700,background:cs.color+"18",color:cs.color}}>{cs.label}</span>
+                      <span style={{fontSize:13,padding:"2px 8px",borderRadius:4,fontWeight:700,background:cs.color+"18",color:cs.color}}>{cs.label}</span>
                     </div>
                     <button onClick={()=>editContract===cNum?setEditContract(null):startContractEdit(cNum)} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#948B7E"}}>✎ Edit</button>
                   </div>
@@ -5458,7 +5458,7 @@ const App=()=>{
                     <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:13,fontWeight:700,color:cs.color}}>{cs.daysLeft!==undefined?cs.daysLeft:"—"}</div></div>
                   </div>
                   <div style={{display:"flex",gap:4,marginBottom:6,flexWrap:"wrap"}}>
-                    {dmasInContract.map(d=><B key={d} l={d} c={dmaColors[d]||"#64748b"}/>)}
+                    {dmasInContract.map(d=><B key={d} l={d} c={dmaColors[d]||"#948B7E"}/>)}
                   </div>
                   <div style={{display:"flex",gap:12,fontSize:14,color:"#948B7E"}}>
                     <span><strong>{boards.length}</strong> boards</span>
@@ -5471,7 +5471,7 @@ const App=()=>{
             })}
           </div>
           {/* Contract timeline bar */}
-          <div style={{marginTop:14,padding:12,background:"#0e0c10",borderRadius:8,border:"1px solid #3d3542"}}>
+          <div style={{marginTop:14,padding:12,background:"#0e0c10",borderRadius:4,border:"1px solid #3d3542"}}>
             <div style={{fontSize:13,fontWeight:700,marginBottom:8}}>Contract Timeline</div>
             {uniqueContracts.map(cNum=>{const c=oohContracts[cNum]||{};const cs=contractStatus(c);if(!c.startDate||!c.endDate)return null;
               const start=new Date(c.startDate);const end=new Date(c.endDate);const rangeStart=new Date("2025-10-01");const rangeEnd=new Date("2026-12-31");const total=rangeEnd-rangeStart;
@@ -5507,8 +5507,8 @@ const App=()=>{
             <TD>{editId===p.boardId?
               <div style={{display:"flex",gap:2,alignItems:"center"}}>
                 <input value={editVal} onChange={e=>setEditVal(e.target.value)} style={{width:120,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:14,fontFamily:"monospace"}} autoFocus onKeyDown={e=>{if(e.key==="Enter")saveEdit(p.boardId);if(e.key==="Escape")cancelEdit()}}/>
-                <button onClick={()=>saveEdit(p.boardId)} style={{padding:"1px 4px",background:"#6FA287",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✓</button>
-                <button onClick={cancelEdit} style={{padding:"1px 4px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✕</button>
+                <button onClick={()=>saveEdit(p.boardId)} style={{padding:"1px 4px",background:"#6FA287",color:"#1b161f",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✓</button>
+                <button onClick={cancelEdit} style={{padding:"1px 4px",background:"#7d766b",color:"#1b161f",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✕</button>
               </div>:
               <span onClick={()=>startEdit(p.boardId,p.isci)} style={{cursor:"pointer",fontFamily:"monospace",fontSize:14,color:p.isci?"#6FA287":"#B08D3F",fontWeight:p.isci?700:400}}>
                 {p.isci||"—"} <span style={{fontSize:14,color:"#948B7E"}}>✎</span>
@@ -5517,11 +5517,11 @@ const App=()=>{
             <TD>{dEditId===p.boardId?
               <div style={{display:"flex",flexDirection:"column",gap:2,alignItems:"stretch"}}>
                 {Array.from({length:creativeSlots(p.type,p.size)}).map((_,k)=><select key={k} value={(dEditVal&&dEditVal[k])||""} onChange={e=>{if(e.target.value==="__new__"){const v=addCreativeConcept(p);if(v)setDSlot(k,v)}else setDSlot(k,e.target.value)}} style={{width:160,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12}} autoFocus={k===0}><option value="">— pick creative {k+1} —</option>{poolFor(p).map(c=><option key={c} value={c}>{c}</option>)}<option value="__new__">➕ Add new…</option></select>)}
-                <div style={{display:"flex",gap:2}}><button onClick={()=>saveDEdit(p.boardId)} style={{padding:"1px 6px",background:"#9b7bb0",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✓</button>
-                <button onClick={cancelDEdit} style={{padding:"1px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✕</button></div>
+                <div style={{display:"flex",gap:2}}><button onClick={()=>saveDEdit(p.boardId)} style={{padding:"1px 6px",background:"#9b7bb0",color:"#1b161f",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✓</button>
+                <button onClick={cancelDEdit} style={{padding:"1px 6px",background:"#7d766b",color:"#1b161f",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✕</button></div>
               </div>:
               <span onClick={()=>startDEdit(p)} style={{cursor:"pointer",fontSize:13}} title={p.vendorRef?("Lamar: "+p.vendorRef):""}>
-                {(Array.isArray(p.design)&&p.design.length)?<span style={{display:"inline-flex",flexWrap:"wrap",gap:2,alignItems:"center"}}>{p.design.map((c,k)=><React.Fragment key={k}>{boardClass(p.type,p.size).rotates&&k>0&&<span style={{fontSize:10,color:boardClass(p.type,p.size).color}}>→</span>}<span style={{color:"#fff",background:creativeColor(c),padding:"0 5px",borderRadius:7,fontWeight:700,fontSize:11}}>{c}</span></React.Fragment>)}</span>:<span style={{color:"#9b7bb0",fontStyle:"italic"}}>+ add {creativeSlots(p.type,p.size)} <span style={{color:boardClass(p.type,p.size).color}}>{boardClass(p.type,p.size).icon}</span></span>} <span style={{fontSize:14,color:"#948B7E"}}>✎</span>
+                {(Array.isArray(p.design)&&p.design.length)?<span style={{display:"inline-flex",flexWrap:"wrap",gap:2,alignItems:"center"}}>{p.design.map((c,k)=><React.Fragment key={k}>{boardClass(p.type,p.size).rotates&&k>0&&<span style={{fontSize:10,color:boardClass(p.type,p.size).color}}>→</span>}<span style={{color:"#1b161f",background:creativeColor(c),padding:"0 5px",borderRadius:7,fontWeight:700,fontSize:11}}>{c}</span></React.Fragment>)}</span>:<span style={{color:"#9b7bb0",fontStyle:"italic"}}>+ add {creativeSlots(p.type,p.size)} <span style={{color:boardClass(p.type,p.size).color}}>{boardClass(p.type,p.size).icon}</span></span>} <span style={{fontSize:14,color:"#948B7E"}}>✎</span>
               </span>
             }</TD>
             <TD><button onClick={()=>setPhotoPanel(p)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,padding:0}} title="View Photos">📷</button></TD>
@@ -5657,7 +5657,7 @@ const App=()=>{
     };
 
     const CardGrid=()=><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
-      {fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const flightClean=p.flight.split('(')[0].trim();const pop=PL_POPS[p.unit];const exp=plArchived(p);
+      {fl.map((p,i)=>{const c=mktColors[p.market]||"#948B7E";const flightClean=p.flight.split('(')[0].trim();const pop=PL_POPS[p.unit];const exp=plArchived(p);
         const _popTitle=(typeof POP_TITLES!=='undefined'&&POP_TITLES[p.unit])||"PoP Photo";
         const _popAlts=((typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[p.unit])||[]).map((u,i)=>({url:u,label:((typeof POP_TITLES_ALT!=='undefined'&&POP_TITLES_ALT[p.unit])||[])[i]||"PoP Photo (alt "+(i+1)+")",hardcoded:true}));
         const allCardPhotos=POP_PHOTOS[p.unit]?[{url:POP_PHOTOS[p.unit],label:_popTitle,hardcoded:true},..._popAlts,...(oohPhotos[p.unit]||[])]:[..._popAlts,...(oohPhotos[p.unit]||[])];
@@ -5670,7 +5670,7 @@ const App=()=>{
           if(!allCardPhotos.length)return;
           setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0});
         };
-        return<div key={i} onClick={openCardPop} style={{border:"1px solid #3d3542",borderRadius:9,overflow:"hidden",background:exp?"#e5e0ec":"#F1EBDD",borderLeft:`4px solid ${exp?"#948B7E":c}`,cursor:allCardPhotos.length?"pointer":"default",opacity:exp?0.6:1,filter:exp?"grayscale(0.8)":"none"}}>
+        return<div key={i} onClick={openCardPop} style={{border:"1px solid #3d3542",borderRadius:4,overflow:"hidden",background:exp?"#e5e0ec":"#F1EBDD",borderLeft:`4px solid ${exp?"#948B7E":c}`,cursor:allCardPhotos.length?"pointer":"default",opacity:exp?0.6:1,filter:exp?"grayscale(0.8)":"none"}}>
           <div style={{padding:10}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
               <div>
@@ -5680,11 +5680,11 @@ const App=()=>{
                   {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#0e0c10",color:"#948B7E",fontWeight:600}}>INHERITED</span>}
                   {p.plan==="expired"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#3a2f2f",color:"#c9b8b8",fontWeight:700}}>⧗ EXPIRED · ARCHIVED</span>}
                   {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#3a2f2f",color:"#c9b8b8",fontWeight:700}}>⧗ ARCHIVED</span>}
-                  {pop&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#dbeafe",color:"#AFC2DE",fontWeight:600}}>PoP ✓</span>}
+                  {pop&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#151d26",color:"#AFC2DE",fontWeight:600}}>PoP ✓</span>}
                 </div>
                 <div style={{fontSize:14,color:"#948B7E",marginTop:2}}>{p.media} · {p.size} · {p.vendor}</div>
               </div>
-              <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:exp?"#e5e7eb":p.status==="posted"?"#dcfce7":"#fef3c7",color:exp?"#6b7280":p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span>
+              <span style={{fontSize:13,padding:"2px 6px",borderRadius:4,fontWeight:600,background:exp?"#2e2833":p.status==="posted"?"#152019":"#262012",color:exp?"#948B7E":p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span>
             </div>
             <div style={{fontSize:14,color:"#948B7E",marginTop:6}}>{p.location}</div>
             <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #3d3542"}}>
@@ -5714,17 +5714,17 @@ const App=()=>{
                   {(oohPhotos[p.unit]||[]).slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #3d3542",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:oohPhotos[p.unit],startIdx:pi})}}/>)}
                 </div>
               </div>:<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:12,color:"#64748b"}}>No PoP photos</span>
+                <span style={{fontSize:12,color:"#948B7E"}}>No PoP photos</span>
                 <OohPhotoUpload id={p.unit}/>
               </div>}
             </div>}
-            {(()=>{const dl=(p.isciList&&p.isciList.length)?p.isciList:(p.isci?[p.isci]:[]);const rot=plRotates(p);const has=dl.length>0;return <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:has?"#1f3530":"#fffbeb",border:`1px solid ${has?"#bbf7d0":"#fde68a"}`}}>
+            {(()=>{const dl=(p.isciList&&p.isciList.length)?p.isciList:(p.isci?[p.isci]:[]);const rot=plRotates(p);const has=dl.length>0;return <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:has?"#1f3530":"#262012",border:`1px solid ${has?"#bbf7d0":"#fde68a"}`}}>
               {plEditId===p.unit?
                 (rot?
                   <div onClick={e=>e.stopPropagation()}>
                     <div style={{fontSize:11,fontWeight:700,color:"#9b7bb0",marginBottom:3}}>↻ Rotation — digital board</div>
                     {(plEditList||[]).map((code,k)=><div key={k} style={{display:"flex",gap:3,alignItems:"center",marginBottom:2}}>
-                      <select value={code||""} onChange={e=>plSetRow(k,e.target.value)} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:12,background:"#fff"}}>
+                      <select value={code||""} onChange={e=>plSetRow(k,e.target.value)} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:12,background:"#1b161f"}}>
                         <option value="">— select ISCI —</option>
                         {plOohIscisFor(p.market).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?" 🎬":""}</option>)}
                       </select>
@@ -5734,17 +5734,17 @@ const App=()=>{
                     <div style={{display:"flex",gap:3,marginTop:3}}>
                       <button onClick={plAddRow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#AFC2DE",border:"1px solid #3d3542",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>+ Add</button>
                       <button onClick={plEvenSplitNow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#6FA287",border:"1px solid #3d3542",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>⚖ Even</button>
-                      <button onClick={()=>savePlRotation(p.unit)} style={{marginLeft:"auto",padding:"2px 8px",background:"#6FA287",color:"#fff",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✓ Save</button>
-                      <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✕</button>
+                      <button onClick={()=>savePlRotation(p.unit)} style={{marginLeft:"auto",padding:"2px 8px",background:"#6FA287",color:"#1b161f",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✓ Save</button>
+                      <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#7d766b",color:"#1b161f",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✕</button>
                     </div>
                   </div>
                 :
                   <div style={{display:"flex",gap:3,alignItems:"center"}} onClick={e=>e.stopPropagation()}>
-                    <select value={p.isci||""} autoFocus onChange={e=>setPlIsci(p.unit,e.target.value)} onBlur={cancelPlEdit} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:13,background:"#fff"}}>
+                    <select value={p.isci||""} autoFocus onChange={e=>setPlIsci(p.unit,e.target.value)} onBlur={cancelPlEdit} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:13,background:"#1b161f"}}>
                       <option value="">— select ISCI —</option>
                       {plOohIscisFor(p.market).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?" 🎬":""}</option>)}
                     </select>
-                    <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
+                    <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#7d766b",color:"#1b161f",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
                   </div>)
                 :
                 <div onClick={(e)=>{e.stopPropagation();startPlEdit(p.unit,p.isci)}} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -5798,8 +5798,8 @@ const App=()=>{
       {/* Market stat cards */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
         {mkts.map(m=>{const allM=plPanels.filter(p=>p.market===m);const all=allM.filter(p=>p.plan!=="expired");const arch=allM.length-all.length;const impr=all.reduce((a,p)=>a+(p.impressions*p.numUnits),0);const u=new Set(all.map(p=>p.unit)).size;const p2026=all.filter(x=>x.plan==="2026").length;const pops=all.filter(x=>PL_POPS[x.unit]).length;const isciCount=all.filter(x=>x.isci).length;
-          const c=mktColors[m]||"#64748b";
-          return<div key={m} onClick={()=>setMktF(mktF===m?"":m)} style={{padding:"10px 12px",borderRadius:9,border:mktF===m?`2px solid ${c}`:"1px solid #E9E3D6",background:mktF===m?c+"0a":"#fff",cursor:"pointer"}}>
+          const c=mktColors[m]||"#948B7E";
+          return<div key={m} onClick={()=>setMktF(mktF===m?"":m)} style={{padding:"10px 12px",borderRadius:4,border:mktF===m?`2px solid ${c}`:"1px solid #E9E3D6",background:mktF===m?c+"0a":"#1b161f",cursor:"pointer"}}>
             <div style={{fontSize:13,fontWeight:700,color:c,textTransform:"uppercase",letterSpacing:1}}>{mktNames[m]}</div>
             <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{all.length}{arch>0&&<span style={{fontSize:12,fontWeight:600,color:"#948B7E"}}> +{arch} arch</span>}</div>
             <div style={{fontSize:14,color:"#948B7E"}}>{u} unique units</div>
@@ -5807,7 +5807,7 @@ const App=()=>{
             <div style={{fontSize:13,color:"#948B7E",marginTop:2}}>{pops?`${pops} PoP · `:"" }{isciCount}/{all.length} ISCI</div>
           </div>;
         })}
-        <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #3d3542",background:"linear-gradient(135deg,#faf5ff,#F1EBDD)"}}>
+        <div style={{padding:"10px 12px",borderRadius:4,border:"1px solid #3d3542",background:"linear-gradient(135deg,#1a1620,#F1EBDD)"}}>
           <div style={{fontSize:13,fontWeight:700,color:"#9b7bb0",textTransform:"uppercase",letterSpacing:1}}>ALL MARKETS</div>
           <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{plPanels.filter(p=>p.plan!=="expired").length}{(()=>{const a=plPanels.filter(p=>p.plan==="expired").length;return a>0?<span style={{fontSize:12,fontWeight:600,color:"#948B7E"}}> +{a} arch</span>:null})()}</div>
           <div style={{fontSize:14,color:"#9b7bb0",fontWeight:600}}>{totalImpr.toLocaleString()} wkly</div>
@@ -5821,27 +5821,27 @@ const App=()=>{
           <div style={{fontSize:14,fontWeight:700}}>📍 PL OOH Board Locations</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
             <button onClick={downloadPlMap} title="Open a printable street map (Save as PDF) with the recommended boards starred" style={{padding:"4px 11px",fontSize:11,fontWeight:800,cursor:"pointer",border:"none",borderRadius:6,background:"#B08D3F",color:"#0e0c10"}}>⬇ Download Map</button>
-            {plMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={plClusterRadius} onChange={e=>setPlClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#AFC2DE",minWidth:30}}>{plClusterRadius} mi</span></div>}
+            {plMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#7d766b"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={plClusterRadius} onChange={e=>setPlClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#AFC2DE",minWidth:30}}>{plClusterRadius} mi</span></div>}
             <div style={{display:"flex",gap:0,border:"1px solid #3d3542",borderRadius:6,overflow:"hidden"}}>
-              <button onClick={()=>setPlMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:plMapMode==="market"?"rgba(155,123,176,.2)":"transparent",color:plMapMode==="market"?"#C9BCA6":"#94a3b8"}}>📍 By Market</button>
-              <button onClick={()=>setPlMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:plMapMode==="creative"?"rgba(175,194,222,.2)":"transparent",color:plMapMode==="creative"?"#AFC2DE":"#94a3b8"}}>🎨 By Creative</button>
+              <button onClick={()=>setPlMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:plMapMode==="market"?"rgba(155,123,176,.2)":"transparent",color:plMapMode==="market"?"#C9BCA6":"#7d766b"}}>📍 By Market</button>
+              <button onClick={()=>setPlMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:plMapMode==="creative"?"rgba(175,194,222,.2)":"transparent",color:plMapMode==="creative"?"#AFC2DE":"#7d766b"}}>🎨 By Creative</button>
             </div>
           </div>
         </div>
         {(()=>{
           const clusters=plMapMode==="creative"?findClusters(mapPins,plClusterRadius):{};
           const pinsWithStatus=mapPins.map(p=>{let st=p.creative?"Creative: "+p.creative:"Untagged";if(clusters[p.id])st+=" · ⚠ "+clusters[p.id]+" neighbor"+(clusters[p.id]>1?"s":"")+" w/ same creative";return{...p,status:st}});
-          return<><OohMap pins={pinsWithStatus} colorFn={p=>plMapMode==="creative"?creativeColor(p.creative):(mktColors[p.market]||"#64748b")} height={420}/>
+          return<><OohMap pins={pinsWithStatus} colorFn={p=>plMapMode==="creative"?creativeColor(p.creative):(mktColors[p.market]||"#948B7E")} height={420}/>
           {plMapMode==="market"?
             <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>{Object.entries(mktColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{mktNames[k]}</div>)}</div>
             :
             (()=>{const titles=[...new Set(mapPins.map(p=>p.creative).filter(Boolean))].sort();const clusterCnt=Object.keys(clusters).length;return<div style={{marginTop:6}}>
               {clusterCnt>0&&<div style={{textAlign:"center",fontSize:13,color:"#F4C242",fontWeight:600,marginBottom:6,padding:"4px 8px",background:"rgba(244,194,66,.1)",border:"1px solid rgba(244,194,66,.3)",borderRadius:4}}>⚠ {clusterCnt} unit{clusterCnt!==1?"s":""} within {plClusterRadius} mi of another running the same creative</div>}
               {titles.length===0?
-                <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No creatives tagged yet — all units untagged.</div>
+                <div style={{textAlign:"center",fontSize:13,color:"#7d766b",fontStyle:"italic"}}>No creatives tagged yet — all units untagged.</div>
                 :
                 <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-                  {titles.map(t=>{const cnt=mapPins.filter(p=>p.creative===t).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #3d3542"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
+                  {titles.map(t=>{const cnt=mapPins.filter(p=>p.creative===t).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #3d3542"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#7d766b"}}>({cnt})</span></div>})}
                 </div>
               }
             </div>})()
@@ -5857,12 +5857,12 @@ const App=()=>{
           }}>📥 Export CSV</Btn>
         </div>
         <div style={{overflowX:"auto",maxHeight:500}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Mkt</TH><TH>Unit / Face</TH><TH>Vendor</TH><TH>Media Type</TH><TH>Size</TH><TH>Location</TH><TH>Flight</TH><TH>Status</TH><TH>ISCI</TH><TH>PoP Date</TH><TH>Contract</TH><TH>Impr/Wk</TH><TH>Coords</TH></tr></thead>
-          <tbody>{fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const pop=PL_POPS[p.unit];return<tr key={i} style={{background:pop?"#1f254011":""}}>
+          <tbody>{fl.map((p,i)=>{const c=mktColors[p.market]||"#948B7E";const pop=PL_POPS[p.unit];return<tr key={i} style={{background:pop?"#1f254011":""}}>
             <TD b>{i+1}</TD><TD><B l={p.market} c={c}/></TD><TD m b>{p.unit}</TD><TD><span style={{fontSize:14,fontWeight:600}}>{p.vendor}</span></TD><TD><span style={{fontSize:13}}>{p.media}</span></TD><TD>{p.size}</TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:200,display:"inline-block"}}>{p.location}</span></TD>
             <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{p.flight.split('(')[0].trim()}</span></TD>
-            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
-            <TD><span style={{fontFamily:"monospace",fontSize:14,color:p.isci?"#6FA287":"#9ca3af",fontWeight:p.isci?700:400,cursor:"pointer"}} onClick={()=>startPlEdit(p.unit,p.isci)}>{p.isci||"— assign"}</span></TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:4,fontWeight:600,background:p.status==="posted"?"#152019":"#262012",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
+            <TD><span style={{fontFamily:"monospace",fontSize:14,color:p.isci?"#6FA287":"#7d766b",fontWeight:p.isci?700:400,cursor:"pointer"}} onClick={()=>startPlEdit(p.unit,p.isci)}>{p.isci||"— assign"}</span></TD>
             <TD>{pop?<span style={{fontSize:14,fontWeight:600,color:"#AFC2DE"}}>{pop.popDate} ✓</span>:<span style={{fontSize:13,color:"#948B7E"}}>—</span>}</TD>
             <TD><span style={{fontSize:13,fontFamily:"monospace"}}>{pop?pop.contract:"—"}</span></TD>
             <TD b>{(p.impressions*p.numUnits).toLocaleString()}</TD>
@@ -5889,7 +5889,7 @@ const App=()=>{
           const wWin=window.open("","","width=900,height=700");
           let _oohHtml="";
           const w={document:{write:s=>{_oohHtml+=s},close:()=>{if(wWin){wWin.document.write(_oohHtml);wWin.document.close()}}},print:()=>{if(wWin)wWin.print()}};
-          w.document.write("<html><head><title>OOH Traffic - PL "+escHtml(mktLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#93323C}.grn{color:#6FA287}.amb{color:#B08D3F}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
+          w.document.write("<html><head><title>OOH Traffic - PL "+escHtml(mktLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#93323C}.grn{color:#6FA287}.amb{color:#B08D3F}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#262012;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
           w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">POSTMAN LAW</h2></div>');
           const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
           w.document.write(hd("Agency","Atticor"));w.document.write(hd("Client","Postman Law"));
@@ -5923,16 +5923,16 @@ const App=()=>{
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
             <div style={{fontSize:14,fontWeight:800}}>📡 OOH Traffic Instructions — PL {mktLabel}</div>
             <div style={{display:"flex",gap:4,alignItems:"center"}}>
-              <span style={{fontSize:11,color:"#94a3b8"}}>Vendor:</span>
-              {plVendors.map(v=><button key={v} onClick={()=>setVendF(vendF===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:vendF===v?"2px solid #9b7bb0":"1px solid #3d3542",background:vendF===v?"rgba(124,59,237,.15)":"transparent",color:vendF===v?"#C9BCA6":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
+              <span style={{fontSize:11,color:"#7d766b"}}>Vendor:</span>
+              {plVendors.map(v=><button key={v} onClick={()=>setVendF(vendF===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:vendF===v?"2px solid #9b7bb0":"1px solid #3d3542",background:vendF===v?"rgba(124,59,237,.15)":"transparent",color:vendF===v?"#C9BCA6":"#7d766b",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
             </div>
           </div>
           <div style={{display:"flex",gap:4,marginBottom:8}}>
-            <button onClick={()=>setPlOohTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:plOohTrafficMode==="units"?"2px solid #6FA287":"1px solid #3d3542",background:plOohTrafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:plOohTrafficMode==="units"?"#6FA287":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
-            <button onClick={()=>setPlOohTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:plOohTrafficMode==="panels"?"2px solid #9b7bb0":"1px solid #3d3542",background:plOohTrafficMode==="panels"?"rgba(124,59,237,.15)":"transparent",color:plOohTrafficMode==="panels"?"#C9BCA6":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
+            <button onClick={()=>setPlOohTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:plOohTrafficMode==="units"?"2px solid #6FA287":"1px solid #3d3542",background:plOohTrafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:plOohTrafficMode==="units"?"#6FA287":"#7d766b",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
+            <button onClick={()=>setPlOohTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:plOohTrafficMode==="panels"?"2px solid #9b7bb0":"1px solid #3d3542",background:plOohTrafficMode==="panels"?"rgba(124,59,237,.15)":"transparent",color:plOohTrafficMode==="panels"?"#C9BCA6":"#7d766b",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
             <div style={{marginLeft:"auto",display:"flex",gap:3,alignItems:"center"}}>
-              <span style={{fontSize:11,color:"#94a3b8"}}>Type:</span>
-              {(()=>{const cats=[...new Set(vendorUnits.map(p=>mediaCategory(p.media||p.type)))].sort();return cats.map(c=>{const col=MEDIA_CAT_COLORS[c];const matches=vendorUnits.filter(p=>mediaCategory(p.media||p.type)===c).length;return<button key={c} onClick={()=>setPlOohTypeF(plOohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:plOohTypeF===c?"2px solid "+col.border:"1px solid #3d3542",background:plOohTypeF===c?col.bg:"transparent",color:plOohTypeF===c?col.fg:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
+              <span style={{fontSize:11,color:"#7d766b"}}>Type:</span>
+              {(()=>{const cats=[...new Set(vendorUnits.map(p=>mediaCategory(p.media||p.type)))].sort();return cats.map(c=>{const col=MEDIA_CAT_COLORS[c];const matches=vendorUnits.filter(p=>mediaCategory(p.media||p.type)===c).length;return<button key={c} onClick={()=>setPlOohTypeF(plOohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:plOohTypeF===c?"2px solid "+col.border:"1px solid #3d3542",background:plOohTypeF===c?col.bg:"transparent",color:plOohTypeF===c?col.fg:"#948B7E",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
@@ -5940,7 +5940,7 @@ const App=()=>{
             <Inp label="Version / Links" value={plOVersion} onChange={e=>setPlOVersion(e.target.value)} placeholder="e.g., Chicago Posters"/>
             <Inp label="Comments" value={plOComments} onChange={e=>setPlOComments(e.target.value)} placeholder="Optional"/>
           </div>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {mktLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} units | Buyer: Ken Lazar | Broadcast: {workMonth}</div>
+          <div style={{fontSize:12,color:"#7d766b",marginBottom:6}}>Market: {mktLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} units | Buyer: Ken Lazar | Broadcast: {workMonth}</div>
           {usePanelMode&&plOLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(124,59,237,.08)",borderRadius:5,border:"1px solid rgba(124,59,237,.2)"}}>
             <span style={{fontSize:11,color:"#C9BCA6"}}>Quick assign creative to all {plOLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
             {plOohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6",width:200}}/>}
@@ -5957,12 +5957,12 @@ const App=()=>{
           </tr></thead>
             <tbody>{plOLines.map((l,i)=>{const bd=usePanelMode?vendorPanels.find(p=>p.panel===l.panel):null;return<tr key={i}>
               <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={plOPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/></TD>
-              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.mkt} - {p.vendor} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
+              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.mkt} - {p.vendor} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#948B7E",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
               {usePanelMode&&<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #3d3542",borderRadius:3,fontSize:11,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
               {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">All</option>{mkts.map(m=><option key={m} value={m}>{m}</option>)}</select></TD>}
               {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
               {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
-              <TD>{viewChiFaces.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:3,maxWidth:220}}>{viewChiFaces.map(f=>{const sel=(l.faces||[]).includes(f);return<span key={f} onClick={()=>{const cur=l.faces||[];upL(i,"faces",sel?cur.filter(x=>x!==f):[...cur,f])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",fontFamily:"monospace",fontWeight:sel?700:400,background:sel?"#9b7bb0":"#1d1822",color:sel?"#fff":"#948B7E",border:"1px solid "+(sel?"#9b7bb0":"#3d3542"),userSelect:"none"}}>{f}</span>})}<span onClick={()=>{const allSel=viewChiFaces.every(f=>(l.faces||[]).includes(f));upL(i,"faces",allSel?[]:[...viewChiFaces])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",background:"#0e0c10",color:"#948B7E",border:"1px solid #3d3542",userSelect:"none"}}>{viewChiFaces.every(f=>(l.faces||[]).includes(f))?"none":"all"}</span></div>:<span style={{fontSize:12,color:"#6B5E80"}}>--</span>}</TD>
+              <TD>{viewChiFaces.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:3,maxWidth:220}}>{viewChiFaces.map(f=>{const sel=(l.faces||[]).includes(f);return<span key={f} onClick={()=>{const cur=l.faces||[];upL(i,"faces",sel?cur.filter(x=>x!==f):[...cur,f])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",fontFamily:"monospace",fontWeight:sel?700:400,background:sel?"#9b7bb0":"#1d1822",color:sel?"#1b161f":"#948B7E",border:"1px solid "+(sel?"#9b7bb0":"#3d3542"),userSelect:"none"}}>{f}</span>})}<span onClick={()=>{const allSel=viewChiFaces.every(f=>(l.faces||[]).includes(f));upL(i,"faces",allSel?[]:[...viewChiFaces])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",background:"#0e0c10",color:"#948B7E",border:"1px solid #3d3542",userSelect:"none"}}>{viewChiFaces.every(f=>(l.faces||[]).includes(f))?"none":"all"}</span></div>:<span style={{fontSize:12,color:"#6B5E80"}}>--</span>}</TD>
               <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/></TD>
               <TD>{plOLines.length>1&&<button onClick={()=>delL(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#93323C"}}>✕</button>}</TD>
             </tr>})}</tbody>
@@ -5971,7 +5971,7 @@ const App=()=>{
             <Btn small onClick={addLine}>+ Add Line</Btn>
             {usePanelMode&&<Btn small onClick={()=>{const used=plOLines.map(l=>l.panel).filter(Boolean);const unassigned=vendorPanels.filter(p=>!used.includes(p.panel));if(!unassigned.length){notify("All units already added");return}const nl=unassigned.map(p=>({flight:plOPostDates||"",panel:p.panel,isci:"",units:"",faces:[],notes:""}));setPlOLines(p=>[...p,...nl]);notify(unassigned.length+" units added")}} color="#9b7bb0">+ Add All {trafficVendor||""} Units</Btn>}
             <Btn small primary color="#9b7bb0" onClick={printOoh} disabled={!plOLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
-            <span style={{marginLeft:"auto",fontSize:12,color:"#94a3b8"}}>{usePanelMode?totalPanels+" units":""+plOLines.filter(l=>l.isci).length+" creatives | "+totalUnits+" units"}{trafficVendor?" | "+trafficVendor:""}</span>
+            <span style={{marginLeft:"auto",fontSize:12,color:"#7d766b"}}>{usePanelMode?totalPanels+" units":""+plOLines.filter(l=>l.isci).length+" creatives | "+totalUnits+" units"}{trafficVendor?" | "+trafficVendor:""}</span>
           </div>
         </Cd>;
        })():
@@ -5987,7 +5987,7 @@ const App=()=>{
               <div style={{fontSize:14,fontWeight:800}}>📅 OOH Creative Calendar — Postman Law</div>
               <div style={{fontSize:14,color:"#948B7E"}}>Creative switch & rotation deadlines from Outlook marketing calendar · {OOH_CREATIVE_CAL.length} events</div>
             </div>
-            {nextUp&&<div style={{padding:"6px 12px",borderRadius:8,background:"rgba(220,38,38,.15)",border:"1px solid #fecaca"}}>
+            {nextUp&&<div style={{padding:"6px 12px",borderRadius:4,background:"rgba(220,38,38,.15)",border:"1px solid #fecaca"}}>
               <div style={{fontSize:14,fontWeight:700,color:"#93323C",textTransform:"uppercase"}}>Next Deadline</div>
               <div style={{fontSize:14,fontWeight:800,color:"#93323C"}}>{new Date(nextUp.due+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"})} — {nextUp.dmas.join("/")} {nextUp.title}</div>
               <div style={{fontSize:14,color:"#948B7E"}}>{oohCalStatus(nextUp.due).label} away</div>
@@ -5999,7 +5999,7 @@ const App=()=>{
             <label style={{display:"flex",alignItems:"center",gap:4,fontSize:14,color:"#948B7E",cursor:"pointer"}}><input type="checkbox" checked={showPast} onChange={e=>setShowPast(e.target.checked)}/> Show past events</label>
           </div>
           {/* Urgency summary */}
-          {upcoming.length>0&&<div style={{padding:8,borderRadius:8,background:"#fff7ed",border:"1px solid #fed7aa",marginBottom:10}}>
+          {upcoming.length>0&&<div style={{padding:8,borderRadius:4,background:"#fff7ed",border:"1px solid #fed7aa",marginBottom:10}}>
             <div style={{fontSize:14,fontWeight:700,color:"#ea580c",marginBottom:4}}>⚠ {upcoming.length} deadline{upcoming.length>1?"s":""} in the next 2 weeks</div>
             {upcoming.map((e,i)=>{const s=oohCalStatus(e.due);const t=oohCalType(e.type);return<div key={i} style={{display:"flex",gap:8,alignItems:"center",padding:"3px 0",fontSize:14,flexWrap:"wrap"}}>
               <span style={{fontWeight:700,color:s.status==="today"?"#93323C":s.status==="urgent"?"#ea580c":"#B08D3F"}}>{s.label}</span>
@@ -6015,10 +6015,10 @@ const App=()=>{
           <div style={{display:"flex",flexDirection:"column",gap:4}}>
             {filtered.map((e,i)=>{const s=oohCalStatus(e.due);const t=oohCalType(e.type);const dateObj=new Date(e.due+"T00:00:00");
               const urgBorder=s.status==="today"?"2px solid #93323C":s.status==="urgent"?"2px solid #ea580c":s.status==="soon"?"1px solid #fed7aa":"1px solid #E9E3D6";
-              const urgBg=s.status==="today"?"#3a1f35":s.status==="urgent"?"#fff7ed":s.status==="past"?"#1d1822":"#fff";
-              return<div key={i} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",borderRadius:8,border:urgBorder,background:urgBg,opacity:s.status==="past"?0.6:1}}>
+              const urgBg=s.status==="today"?"#3a1f35":s.status==="urgent"?"#fff7ed":s.status==="past"?"#1d1822":"#1b161f";
+              return<div key={i} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",borderRadius:4,border:urgBorder,background:urgBg,opacity:s.status==="past"?0.6:1}}>
                 <div style={{width:50,textAlign:"center",flexShrink:0}}>
-                  <div style={{fontSize:24,fontWeight:800,color:s.status==="past"?"#9ca3af":t.color,lineHeight:1}}>{dateObj.getDate()}</div>
+                  <div style={{fontSize:24,fontWeight:800,color:s.status==="past"?"#7d766b":t.color,lineHeight:1}}>{dateObj.getDate()}</div>
                   <div style={{fontSize:13,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>{dateObj.toLocaleDateString("en-US",{month:"short"})}</div>
                   <div style={{fontSize:14,color:"#948B7E"}}>{dateObj.toLocaleDateString("en-US",{weekday:"short"})}</div>
                 </div>
@@ -6029,7 +6029,7 @@ const App=()=>{
                     <span style={{fontSize:14,padding:"1px 6px",borderRadius:6,fontWeight:600,background:t.bg,color:t.color}}>{t.label}</span>
                   </div>
                   <div style={{display:"flex",gap:4,marginTop:3,alignItems:"center",flexWrap:"wrap"}}>
-                    {e.dmas.map(d=><B key={d} l={d} c={mktColors[d]||"#64748b"}/>)}
+                    {e.dmas.map(d=><B key={d} l={d} c={mktColors[d]||"#948B7E"}/>)}
                     {e.size&&<span style={{fontSize:14,padding:"1px 5px",borderRadius:4,background:"#f0f9ff",color:"#AFC2DE",fontWeight:600,border:"1px solid #bfdbfe"}}>{e.size}</span>}
                     {e.spec&&<span style={{fontSize:13,color:"#948B7E"}}>{e.spec}</span>}
                   </div>
@@ -6039,7 +6039,7 @@ const App=()=>{
                 <div style={{textAlign:"right",flexShrink:0}}>
                   {s.status==="past"?<span style={{fontSize:14,color:"#948B7E"}}>✓ Done</span>:
                    s.status==="today"?<span style={{fontSize:14,fontWeight:800,color:"#93323C",animation:"pulse 1s infinite"}}>TODAY</span>:
-                   <span style={{fontSize:13,fontWeight:700,color:s.days<=7?"#93323C":s.days<=14?"#ea580c":"#64748b"}}>{s.label}</span>}
+                   <span style={{fontSize:13,fontWeight:700,color:s.days<=7?"#93323C":s.days<=14?"#ea580c":"#948B7E"}}>{s.label}</span>}
                 </div>
               </div>;
             })}
@@ -6056,12 +6056,12 @@ const App=()=>{
           <div style={{fontSize:14,color:"#948B7E",marginBottom:10}}>Track contract dates, status, and renewal deadlines per vendor contract</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
             {plContracts.map(cNum=>{const c=oohContracts[cNum]||{num:cNum};const cs=contractStatus(c);const popUnits=Object.entries(PL_POPS).filter(([_,v])=>v.contract===cNum).map(([k])=>k);const boards=fl.filter(p=>popUnits.includes(p.unit));const mktsInContract=[...new Set(boards.map(p=>p.market))];const totalImprC=boards.reduce((a,p)=>a+(p.impressions*p.numUnits),0);
-              return<div key={cNum} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#F1EBDD"}}>
+              return<div key={cNum} style={{border:`1px solid ${cs.color}30`,borderRadius:4,overflow:"hidden",background:"#F1EBDD"}}>
                 <div style={{padding:"10px 14px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div style={{display:"flex",gap:6,alignItems:"center"}}>
                       <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#F1EBDD"}}>{cNum}</span>
-                      <span style={{fontSize:13,padding:"2px 8px",borderRadius:10,fontWeight:700,background:cs.color+"18",color:cs.color}}>{cs.label}</span>
+                      <span style={{fontSize:13,padding:"2px 8px",borderRadius:4,fontWeight:700,background:cs.color+"18",color:cs.color}}>{cs.label}</span>
                     </div>
                     <button onClick={()=>plEditContract===cNum?setPlEditContract(null):startContractEdit(cNum)} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#948B7E"}}>✎ Edit</button>
                   </div>
@@ -6088,7 +6088,7 @@ const App=()=>{
                     <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:13,fontWeight:700,color:cs.color}}>{cs.daysLeft!==undefined?cs.daysLeft:"—"}</div></div>
                   </div>
                   <div style={{display:"flex",gap:4,marginBottom:6,flexWrap:"wrap"}}>
-                    {mktsInContract.map(d=><B key={d} l={d} c={mktColors[d]||"#64748b"}/>)}
+                    {mktsInContract.map(d=><B key={d} l={d} c={mktColors[d]||"#948B7E"}/>)}
                   </div>
                   <div style={{display:"flex",gap:12,fontSize:14,color:"#948B7E"}}>
                     <span><strong>{popUnits.length}</strong> PoP units</span>
@@ -6101,7 +6101,7 @@ const App=()=>{
             })}
           </div>
           {/* Contract timeline bar */}
-          <div style={{marginTop:14,padding:12,background:"#0e0c10",borderRadius:8,border:"1px solid #3d3542"}}>
+          <div style={{marginTop:14,padding:12,background:"#0e0c10",borderRadius:4,border:"1px solid #3d3542"}}>
             <div style={{fontSize:13,fontWeight:700,marginBottom:8}}>Contract Timeline</div>
             {plContracts.map(cNum=>{const c=oohContracts[cNum]||{};const cs=contractStatus(c);if(!c.startDate||!c.endDate)return null;
               const start=new Date(c.startDate);const end=new Date(c.endDate);const rangeStart=new Date("2025-10-01");const rangeEnd=new Date("2026-12-31");const total=rangeEnd-rangeStart;
@@ -6123,7 +6123,7 @@ const App=()=>{
        })():
       <Cd><div style={{overflowX:"auto",maxHeight:520}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Mkt</TH><TH>Unit</TH><TH>Type</TH><TH>Size</TH><TH>Location</TH><TH>Flight</TH><TH>Cycles</TH><TH>Impr/Wk</TH><TH>Dir</TH><TH>Status</TH><TH>Plan</TH></tr></thead>
         <tbody>{fl.map((p,i)=>{
-          const c=mktColors[p.market]||"#64748b";const pop=PL_POPS[p.unit];
+          const c=mktColors[p.market]||"#948B7E";const pop=PL_POPS[p.unit];
           return<tr key={i} style={{background:p.status==="posted"?"#1f353011":""}}>
             <TD b>{i+1}</TD>
             <TD><B l={p.market} c={c}/></TD>
@@ -9164,7 +9164,7 @@ Rules:
       </div>}
       {/* Loading — Muses deliberating */}
       {planLoading&&<div style={{padding:24,textAlign:"center"}}>
-        <div style={{display:"flex",justifyContent:"center",gap:8,flexWrap:"wrap"}}>{MUSES.map((m,i)=><div key={i} style={{padding:"8px 12px",borderRadius:8,background:"#2d1f42",border:"1px solid "+m.color+"30",fontSize:11,color:m.color,fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif"}}>{m.icon} {doomPick(m.voice)}</div>)}</div>
+        <div style={{display:"flex",justifyContent:"center",gap:8,flexWrap:"wrap"}}>{MUSES.map((m,i)=><div key={i} style={{padding:"8px 12px",borderRadius:4,background:"#2d1f42",border:"1px solid "+m.color+"30",fontSize:11,color:m.color,fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif"}}>{m.icon} {doomPick(m.voice)}</div>)}</div>
       </div>}
     </div>;
   };
@@ -9258,7 +9258,7 @@ Rules:
     const mapPins=fl.filter(p=>p.lat&&p.lng).map(p=>({id:p.unit,lat:p.lat,lng:p.lng,location:p.location,vendor:p.vendor,size:p.size,status:p.status,impressions:p.impressions*p.numUnits,market:p.market,creative:(typeof POP_TITLES!=='undefined'&&POP_TITLES[p.unit])||""}));
 
     const CardGrid=()=><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
-      {fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const flightClean=p.flight.split('(')[0].trim();const pop=LR_POPS[p.unit];const exp=plArchived(p);
+      {fl.map((p,i)=>{const c=mktColors[p.market]||"#948B7E";const flightClean=p.flight.split('(')[0].trim();const pop=LR_POPS[p.unit];const exp=plArchived(p);
         const _popTitle=(typeof POP_TITLES!=='undefined'&&POP_TITLES[p.unit])||"PoP Photo";
         const _popAlts=((typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[p.unit])||[]).map((u,i)=>({url:u,label:((typeof POP_TITLES_ALT!=='undefined'&&POP_TITLES_ALT[p.unit])||[])[i]||"PoP Photo (alt "+(i+1)+")",hardcoded:true}));
         const allCardPhotos=POP_PHOTOS[p.unit]?[{url:POP_PHOTOS[p.unit],label:_popTitle,hardcoded:true},..._popAlts,...(oohPhotos[p.unit]||[])]:[..._popAlts,...(oohPhotos[p.unit]||[])];
@@ -9271,7 +9271,7 @@ Rules:
           if(!allCardPhotos.length)return;
           setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0});
         };
-        return<div key={i} onClick={openCardPop} style={{border:"1px solid #3d3542",borderRadius:9,overflow:"hidden",background:exp?"#e5e0ec":"#F1EBDD",borderLeft:`4px solid ${exp?"#948B7E":c}`,cursor:allCardPhotos.length?"pointer":"default",opacity:exp?0.6:1,filter:exp?"grayscale(0.8)":"none"}}>
+        return<div key={i} onClick={openCardPop} style={{border:"1px solid #3d3542",borderRadius:4,overflow:"hidden",background:exp?"#e5e0ec":"#F1EBDD",borderLeft:`4px solid ${exp?"#948B7E":c}`,cursor:allCardPhotos.length?"pointer":"default",opacity:exp?0.6:1,filter:exp?"grayscale(0.8)":"none"}}>
           <div style={{padding:10}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
               <div>
@@ -9281,11 +9281,11 @@ Rules:
                   {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#0e0c10",color:"#948B7E",fontWeight:600}}>INHERITED</span>}
                   {p.plan==="expired"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#3a2f2f",color:"#c9b8b8",fontWeight:700}}>⧗ EXPIRED · ARCHIVED</span>}
                   {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#3a2f2f",color:"#c9b8b8",fontWeight:700}}>⧗ ARCHIVED</span>}
-                  {pop&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#dbeafe",color:"#AFC2DE",fontWeight:600}}>PoP ✓</span>}
+                  {pop&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#151d26",color:"#AFC2DE",fontWeight:600}}>PoP ✓</span>}
                 </div>
                 <div style={{fontSize:14,color:"#948B7E",marginTop:2}}>{p.media} · {p.size} · {p.vendor}</div>
               </div>
-              <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:exp?"#e5e7eb":p.status==="posted"?"#dcfce7":"#fef3c7",color:exp?"#6b7280":p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span>
+              <span style={{fontSize:13,padding:"2px 6px",borderRadius:4,fontWeight:600,background:exp?"#2e2833":p.status==="posted"?"#152019":"#262012",color:exp?"#948B7E":p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span>
             </div>
             <div style={{fontSize:14,color:"#948B7E",marginTop:6}}>{p.location}</div>
             <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #3d3542"}}>
@@ -9315,17 +9315,17 @@ Rules:
                   {(oohPhotos[p.unit]||[]).slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #3d3542",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:oohPhotos[p.unit],startIdx:pi})}}/>)}
                 </div>
               </div>:<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:12,color:"#64748b"}}>No PoP photos</span>
+                <span style={{fontSize:12,color:"#948B7E"}}>No PoP photos</span>
                 <OohPhotoUpload id={p.unit}/>
               </div>}
             </div>}
-            {(()=>{const dl=(p.isciList&&p.isciList.length)?p.isciList:(p.isci?[p.isci]:[]);const rot=plRotates(p);const has=dl.length>0;return <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:has?"#1f3530":"#fffbeb",border:`1px solid ${has?"#bbf7d0":"#fde68a"}`}}>
+            {(()=>{const dl=(p.isciList&&p.isciList.length)?p.isciList:(p.isci?[p.isci]:[]);const rot=plRotates(p);const has=dl.length>0;return <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:has?"#1f3530":"#262012",border:`1px solid ${has?"#bbf7d0":"#fde68a"}`}}>
               {plEditId===p.unit?
                 (rot?
                   <div onClick={e=>e.stopPropagation()}>
                     <div style={{fontSize:11,fontWeight:700,color:"#2FBF71",marginBottom:3}}>↻ Rotation — digital board</div>
                     {(plEditList||[]).map((code,k)=><div key={k} style={{display:"flex",gap:3,alignItems:"center",marginBottom:2}}>
-                      <select value={code||""} onChange={e=>plSetRow(k,e.target.value)} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:12,background:"#fff"}}>
+                      <select value={code||""} onChange={e=>plSetRow(k,e.target.value)} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:12,background:"#1b161f"}}>
                         <option value="">— select ISCI —</option>
                         {plOohIscisFor(p.market).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?" 🎬":""}</option>)}
                       </select>
@@ -9335,17 +9335,17 @@ Rules:
                     <div style={{display:"flex",gap:3,marginTop:3}}>
                       <button onClick={plAddRow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#AFC2DE",border:"1px solid #3d3542",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>+ Add</button>
                       <button onClick={plEvenSplitNow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#6FA287",border:"1px solid #3d3542",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>⚖ Even</button>
-                      <button onClick={()=>savePlRotation(p.unit)} style={{marginLeft:"auto",padding:"2px 8px",background:"#6FA287",color:"#fff",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✓ Save</button>
-                      <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✕</button>
+                      <button onClick={()=>savePlRotation(p.unit)} style={{marginLeft:"auto",padding:"2px 8px",background:"#6FA287",color:"#1b161f",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✓ Save</button>
+                      <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#7d766b",color:"#1b161f",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✕</button>
                     </div>
                   </div>
                 :
                   <div style={{display:"flex",gap:3,alignItems:"center"}} onClick={e=>e.stopPropagation()}>
-                    <select value={p.isci||""} autoFocus onChange={e=>setPlIsci(p.unit,e.target.value)} onBlur={cancelPlEdit} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:13,background:"#fff"}}>
+                    <select value={p.isci||""} autoFocus onChange={e=>setPlIsci(p.unit,e.target.value)} onBlur={cancelPlEdit} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:13,background:"#1b161f"}}>
                       <option value="">— select ISCI —</option>
                       {plOohIscisFor(p.market).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?" 🎬":""}</option>)}
                     </select>
-                    <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
+                    <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#7d766b",color:"#1b161f",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
                   </div>)
                 :
                 <div onClick={(e)=>{e.stopPropagation();startPlEdit(p.unit,p.isci)}} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -9368,7 +9368,7 @@ Rules:
 
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
-        <div><img src={(typeof LOGO_LR!=="undefined"?LOGO_LR:"")} alt="Lerner & Rowe" style={{height:34,marginBottom:6,background:"#fff",padding:"4px 8px",borderRadius:6}}/><PageHead title="Lerner & Rowe — OOH Media Plan" pgKey="ooh"/>
+        <div><img src={(typeof LOGO_LR!=="undefined"?LOGO_LR:"")} alt="Lerner & Rowe" style={{height:34,marginBottom:6,background:"#1b161f",padding:"4px 8px",borderRadius:6}}/><PageHead title="Lerner & Rowe — OOH Media Plan" pgKey="ooh"/>
           <p style={{fontSize:13,color:"#948B7E"}}>2026 All Markets · {lrPanels.filter(p=>p.plan!=="expired").length} placements across {mkts.length} DMAs · {lrPanels.filter(p=>p.plan!=="expired"&&p.isci).length}/{lrPanels.filter(p=>p.plan!=="expired").length} ISCI assigned{(()=>{const a=lrPanels.filter(p=>p.plan==="expired").length;return a?" · "+a+" archived":""})()}</p>
         </div>
         <div style={{display:"flex",gap:4}}>
@@ -9400,8 +9400,8 @@ Rules:
       {/* Market stat cards */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
         {mkts.map(m=>{const allM=lrPanels.filter(p=>p.market===m);const all=allM.filter(p=>p.plan!=="expired");const arch=allM.length-all.length;const impr=all.reduce((a,p)=>a+(p.impressions*p.numUnits),0);const u=new Set(all.map(p=>p.unit)).size;const p2026=all.filter(x=>x.plan==="2026").length;const pops=all.filter(x=>LR_POPS[x.unit]).length;const isciCount=all.filter(x=>x.isci).length;
-          const c=mktColors[m]||"#64748b";
-          return<div key={m} onClick={()=>setMktF(mktF===m?"":m)} style={{padding:"10px 12px",borderRadius:9,border:mktF===m?`2px solid ${c}`:"1px solid #E9E3D6",background:mktF===m?c+"0a":"#fff",cursor:"pointer"}}>
+          const c=mktColors[m]||"#948B7E";
+          return<div key={m} onClick={()=>setMktF(mktF===m?"":m)} style={{padding:"10px 12px",borderRadius:4,border:mktF===m?`2px solid ${c}`:"1px solid #E9E3D6",background:mktF===m?c+"0a":"#1b161f",cursor:"pointer"}}>
             <div style={{fontSize:13,fontWeight:700,color:c,textTransform:"uppercase",letterSpacing:1}}>{mktNames[m]}</div>
             <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{all.length}{arch>0&&<span style={{fontSize:12,fontWeight:600,color:"#948B7E"}}> +{arch} arch</span>}</div>
             <div style={{fontSize:14,color:"#948B7E"}}>{u} unique units</div>
@@ -9409,7 +9409,7 @@ Rules:
             <div style={{fontSize:13,color:"#948B7E",marginTop:2}}>{pops?`${pops} PoP · `:"" }{isciCount}/{all.length} ISCI</div>
           </div>;
         })}
-        <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #3d3542",background:"linear-gradient(135deg,#faf5ff,#F1EBDD)"}}>
+        <div style={{padding:"10px 12px",borderRadius:4,border:"1px solid #3d3542",background:"linear-gradient(135deg,#1a1620,#F1EBDD)"}}>
           <div style={{fontSize:13,fontWeight:700,color:"#2FBF71",textTransform:"uppercase",letterSpacing:1}}>ALL MARKETS</div>
           <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{lrPanels.filter(p=>p.plan!=="expired").length}{(()=>{const a=lrPanels.filter(p=>p.plan==="expired").length;return a>0?<span style={{fontSize:12,fontWeight:600,color:"#948B7E"}}> +{a} arch</span>:null})()}</div>
           <div style={{fontSize:14,color:"#2FBF71",fontWeight:600}}>{totalImpr.toLocaleString()} wkly</div>
@@ -9422,27 +9422,27 @@ Rules:
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:6}}>
           <div style={{fontSize:14,fontWeight:700}}>📍 PL OOH Board Locations</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            {lrMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={lrClusterRadius} onChange={e=>setLrClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#AFC2DE",minWidth:30}}>{lrClusterRadius} mi</span></div>}
+            {lrMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#7d766b"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={lrClusterRadius} onChange={e=>setLrClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#AFC2DE",minWidth:30}}>{lrClusterRadius} mi</span></div>}
             <div style={{display:"flex",gap:0,border:"1px solid #3d3542",borderRadius:6,overflow:"hidden"}}>
-              <button onClick={()=>setLrMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:lrMapMode==="market"?"rgba(155,123,176,.2)":"transparent",color:lrMapMode==="market"?"#C9BCA6":"#94a3b8"}}>📍 By Market</button>
-              <button onClick={()=>setLrMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:lrMapMode==="creative"?"rgba(175,194,222,.2)":"transparent",color:lrMapMode==="creative"?"#AFC2DE":"#94a3b8"}}>🎨 By Creative</button>
+              <button onClick={()=>setLrMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:lrMapMode==="market"?"rgba(155,123,176,.2)":"transparent",color:lrMapMode==="market"?"#C9BCA6":"#7d766b"}}>📍 By Market</button>
+              <button onClick={()=>setLrMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:lrMapMode==="creative"?"rgba(175,194,222,.2)":"transparent",color:lrMapMode==="creative"?"#AFC2DE":"#7d766b"}}>🎨 By Creative</button>
             </div>
           </div>
         </div>
         {(()=>{
           const clusters=lrMapMode==="creative"?findClusters(mapPins,lrClusterRadius):{};
           const pinsWithStatus=mapPins.map(p=>{let st=p.creative?"Creative: "+p.creative:"Untagged";if(clusters[p.id])st+=" · ⚠ "+clusters[p.id]+" neighbor"+(clusters[p.id]>1?"s":"")+" w/ same creative";return{...p,status:st}});
-          return<><OohMap pins={pinsWithStatus} colorFn={p=>lrMapMode==="creative"?creativeColor(p.creative):(mktColors[p.market]||"#64748b")} height={420}/>
+          return<><OohMap pins={pinsWithStatus} colorFn={p=>lrMapMode==="creative"?creativeColor(p.creative):(mktColors[p.market]||"#948B7E")} height={420}/>
           {lrMapMode==="market"?
             <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>{Object.entries(mktColors).map(([k,c])=><div key={k} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:c}}/>{mktNames[k]}</div>)}</div>
             :
             (()=>{const titles=[...new Set(mapPins.map(p=>p.creative).filter(Boolean))].sort();const clusterCnt=Object.keys(clusters).length;return<div style={{marginTop:6}}>
               {clusterCnt>0&&<div style={{textAlign:"center",fontSize:13,color:"#F4C242",fontWeight:600,marginBottom:6,padding:"4px 8px",background:"rgba(244,194,66,.1)",border:"1px solid rgba(244,194,66,.3)",borderRadius:4}}>⚠ {clusterCnt} unit{clusterCnt!==1?"s":""} within {lrClusterRadius} mi of another running the same creative</div>}
               {titles.length===0?
-                <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No creatives tagged yet — all units untagged.</div>
+                <div style={{textAlign:"center",fontSize:13,color:"#7d766b",fontStyle:"italic"}}>No creatives tagged yet — all units untagged.</div>
                 :
                 <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-                  {titles.map(t=>{const cnt=mapPins.filter(p=>p.creative===t).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #3d3542"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
+                  {titles.map(t=>{const cnt=mapPins.filter(p=>p.creative===t).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #3d3542"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#7d766b"}}>({cnt})</span></div>})}
                 </div>
               }
             </div>})()
@@ -9458,12 +9458,12 @@ Rules:
           }}>📥 Export CSV</Btn>
         </div>
         <div style={{overflowX:"auto",maxHeight:500}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Mkt</TH><TH>Unit / Face</TH><TH>Vendor</TH><TH>Media Type</TH><TH>Size</TH><TH>Location</TH><TH>Flight</TH><TH>Status</TH><TH>ISCI</TH><TH>PoP Date</TH><TH>Contract</TH><TH>Impr/Wk</TH><TH>Coords</TH></tr></thead>
-          <tbody>{fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const pop=LR_POPS[p.unit];return<tr key={i} style={{background:pop?"#1f254011":""}}>
+          <tbody>{fl.map((p,i)=>{const c=mktColors[p.market]||"#948B7E";const pop=LR_POPS[p.unit];return<tr key={i} style={{background:pop?"#1f254011":""}}>
             <TD b>{i+1}</TD><TD><B l={p.market} c={c}/></TD><TD m b>{p.unit}</TD><TD><span style={{fontSize:14,fontWeight:600}}>{p.vendor}</span></TD><TD><span style={{fontSize:13}}>{p.media}</span></TD><TD>{p.size}</TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:200,display:"inline-block"}}>{p.location}</span></TD>
             <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{p.flight.split('(')[0].trim()}</span></TD>
-            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
-            <TD><span style={{fontFamily:"monospace",fontSize:14,color:p.isci?"#6FA287":"#9ca3af",fontWeight:p.isci?700:400,cursor:"pointer"}} onClick={()=>startPlEdit(p.unit,p.isci)}>{p.isci||"— assign"}</span></TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:4,fontWeight:600,background:p.status==="posted"?"#152019":"#262012",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
+            <TD><span style={{fontFamily:"monospace",fontSize:14,color:p.isci?"#6FA287":"#7d766b",fontWeight:p.isci?700:400,cursor:"pointer"}} onClick={()=>startPlEdit(p.unit,p.isci)}>{p.isci||"— assign"}</span></TD>
             <TD>{pop?<span style={{fontSize:14,fontWeight:600,color:"#AFC2DE"}}>{pop.popDate} ✓</span>:<span style={{fontSize:13,color:"#948B7E"}}>—</span>}</TD>
             <TD><span style={{fontSize:13,fontFamily:"monospace"}}>{pop?pop.contract:"—"}</span></TD>
             <TD b>{(p.impressions*p.numUnits).toLocaleString()}</TD>
@@ -9490,7 +9490,7 @@ Rules:
           const wWin=window.open("","","width=900,height=700");
           let _oohHtml="";
           const w={document:{write:s=>{_oohHtml+=s},close:()=>{if(wWin){wWin.document.write(_oohHtml);wWin.document.close()}}},print:()=>{if(wWin)wWin.print()}};
-          w.document.write("<html><head><title>OOH Traffic - PL "+escHtml(mktLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#93323C}.grn{color:#6FA287}.amb{color:#B08D3F}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
+          w.document.write("<html><head><title>OOH Traffic - PL "+escHtml(mktLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#93323C}.grn{color:#6FA287}.amb{color:#B08D3F}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#262012;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
           w.document.write('<div style="text-align:center;margin-bottom:20px"><img src="'+(typeof LOGO_LR!=="undefined"?LOGO_LR:"")+'" style="height:56px;max-width:440px"/></div>');
           const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
           w.document.write(hd("Agency","Atticor"));w.document.write(hd("Client","Lerner & Rowe"));
@@ -9525,16 +9525,16 @@ Rules:
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
             <div style={{fontSize:14,fontWeight:800}}>📡 OOH Traffic Instructions — PL {mktLabel}</div>
             <div style={{display:"flex",gap:4,alignItems:"center"}}>
-              <span style={{fontSize:11,color:"#94a3b8"}}>Vendor:</span>
-              {plVendors.map(v=><button key={v} onClick={()=>setVendF(vendF===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:vendF===v?"2px solid #2FBF71":"1px solid #3d3542",background:vendF===v?"rgba(47,191,113,.15)":"transparent",color:vendF===v?"#C9BCA6":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
+              <span style={{fontSize:11,color:"#7d766b"}}>Vendor:</span>
+              {plVendors.map(v=><button key={v} onClick={()=>setVendF(vendF===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:vendF===v?"2px solid #2FBF71":"1px solid #3d3542",background:vendF===v?"rgba(47,191,113,.15)":"transparent",color:vendF===v?"#C9BCA6":"#7d766b",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
             </div>
           </div>
           <div style={{display:"flex",gap:4,marginBottom:8}}>
-            <button onClick={()=>setLrOohTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:lrOohTrafficMode==="units"?"2px solid #6FA287":"1px solid #3d3542",background:lrOohTrafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:lrOohTrafficMode==="units"?"#6FA287":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
-            <button onClick={()=>setLrOohTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:lrOohTrafficMode==="panels"?"2px solid #2FBF71":"1px solid #3d3542",background:lrOohTrafficMode==="panels"?"rgba(47,191,113,.15)":"transparent",color:lrOohTrafficMode==="panels"?"#C9BCA6":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
+            <button onClick={()=>setLrOohTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:lrOohTrafficMode==="units"?"2px solid #6FA287":"1px solid #3d3542",background:lrOohTrafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:lrOohTrafficMode==="units"?"#6FA287":"#7d766b",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
+            <button onClick={()=>setLrOohTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:lrOohTrafficMode==="panels"?"2px solid #2FBF71":"1px solid #3d3542",background:lrOohTrafficMode==="panels"?"rgba(47,191,113,.15)":"transparent",color:lrOohTrafficMode==="panels"?"#C9BCA6":"#7d766b",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
             <div style={{marginLeft:"auto",display:"flex",gap:3,alignItems:"center"}}>
-              <span style={{fontSize:11,color:"#94a3b8"}}>Type:</span>
-              {(()=>{const cats=[...new Set(vendorUnits.map(p=>mediaCategory(p.media||p.type)))].sort();return cats.map(c=>{const col=MEDIA_CAT_COLORS[c];const matches=vendorUnits.filter(p=>mediaCategory(p.media||p.type)===c).length;return<button key={c} onClick={()=>setLrOohTypeF(lrOohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:lrOohTypeF===c?"2px solid "+col.border:"1px solid #3d3542",background:lrOohTypeF===c?col.bg:"transparent",color:lrOohTypeF===c?col.fg:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
+              <span style={{fontSize:11,color:"#7d766b"}}>Type:</span>
+              {(()=>{const cats=[...new Set(vendorUnits.map(p=>mediaCategory(p.media||p.type)))].sort();return cats.map(c=>{const col=MEDIA_CAT_COLORS[c];const matches=vendorUnits.filter(p=>mediaCategory(p.media||p.type)===c).length;return<button key={c} onClick={()=>setLrOohTypeF(lrOohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:lrOohTypeF===c?"2px solid "+col.border:"1px solid #3d3542",background:lrOohTypeF===c?col.bg:"transparent",color:lrOohTypeF===c?col.fg:"#948B7E",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
@@ -9542,7 +9542,7 @@ Rules:
             <Inp label="Version / Links" value={plOVersion} onChange={e=>setPlOVersion(e.target.value)} placeholder="e.g., Chicago Posters"/>
             <Inp label="Comments" value={plOComments} onChange={e=>setPlOComments(e.target.value)} placeholder="Optional"/>
           </div>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {mktLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} units | Buyer: Atticor Media | Broadcast: {workMonth}</div>
+          <div style={{fontSize:12,color:"#7d766b",marginBottom:6}}>Market: {mktLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} units | Buyer: Atticor Media | Broadcast: {workMonth}</div>
           {usePanelMode&&plOLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(47,191,113,.08)",borderRadius:5,border:"1px solid rgba(47,191,113,.2)"}}>
             <span style={{fontSize:11,color:"#C9BCA6"}}>Quick assign creative to all {plOLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
             {plOohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6",width:200}}/>}
@@ -9559,12 +9559,12 @@ Rules:
           </tr></thead>
             <tbody>{plOLines.map((l,i)=>{const bd=usePanelMode?vendorPanels.find(p=>p.panel===l.panel):null;return<tr key={i}>
               <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={plOPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/></TD>
-              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.mkt} - {p.vendor} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
+              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.mkt} - {p.vendor} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#948B7E",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
               {usePanelMode&&<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #3d3542",borderRadius:3,fontSize:11,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
               {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">All</option>{mkts.map(m=><option key={m} value={m}>{m}</option>)}</select></TD>}
               {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
               {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
-              <TD>{viewChiFaces.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:3,maxWidth:220}}>{viewChiFaces.map(f=>{const sel=(l.faces||[]).includes(f);return<span key={f} onClick={()=>{const cur=l.faces||[];upL(i,"faces",sel?cur.filter(x=>x!==f):[...cur,f])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",fontFamily:"monospace",fontWeight:sel?700:400,background:sel?"#2FBF71":"#1d1822",color:sel?"#fff":"#948B7E",border:"1px solid "+(sel?"#2FBF71":"#3d3542"),userSelect:"none"}}>{f}</span>})}<span onClick={()=>{const allSel=viewChiFaces.every(f=>(l.faces||[]).includes(f));upL(i,"faces",allSel?[]:[...viewChiFaces])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",background:"#0e0c10",color:"#948B7E",border:"1px solid #3d3542",userSelect:"none"}}>{viewChiFaces.every(f=>(l.faces||[]).includes(f))?"none":"all"}</span></div>:<span style={{fontSize:12,color:"#6B5E80"}}>--</span>}</TD>
+              <TD>{viewChiFaces.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:3,maxWidth:220}}>{viewChiFaces.map(f=>{const sel=(l.faces||[]).includes(f);return<span key={f} onClick={()=>{const cur=l.faces||[];upL(i,"faces",sel?cur.filter(x=>x!==f):[...cur,f])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",fontFamily:"monospace",fontWeight:sel?700:400,background:sel?"#2FBF71":"#1d1822",color:sel?"#1b161f":"#948B7E",border:"1px solid "+(sel?"#2FBF71":"#3d3542"),userSelect:"none"}}>{f}</span>})}<span onClick={()=>{const allSel=viewChiFaces.every(f=>(l.faces||[]).includes(f));upL(i,"faces",allSel?[]:[...viewChiFaces])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",background:"#0e0c10",color:"#948B7E",border:"1px solid #3d3542",userSelect:"none"}}>{viewChiFaces.every(f=>(l.faces||[]).includes(f))?"none":"all"}</span></div>:<span style={{fontSize:12,color:"#6B5E80"}}>--</span>}</TD>
               <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/></TD>
               <TD>{plOLines.length>1&&<button onClick={()=>delL(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#93323C"}}>✕</button>}</TD>
             </tr>})}</tbody>
@@ -9573,7 +9573,7 @@ Rules:
             <Btn small onClick={addLine}>+ Add Line</Btn>
             {usePanelMode&&<Btn small onClick={()=>{const used=plOLines.map(l=>l.panel).filter(Boolean);const unassigned=vendorPanels.filter(p=>!used.includes(p.panel));if(!unassigned.length){notify("All units already added");return}const nl=unassigned.map(p=>({flight:plOPostDates||"",panel:p.panel,isci:"",units:"",faces:[],notes:""}));setPlOLines(p=>[...p,...nl]);notify(unassigned.length+" units added")}} color="#2FBF71">+ Add All {trafficVendor||""} Units</Btn>}
             <Btn small primary color="#2FBF71" onClick={printOoh} disabled={!plOLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
-            <span style={{marginLeft:"auto",fontSize:12,color:"#94a3b8"}}>{usePanelMode?totalPanels+" units":""+plOLines.filter(l=>l.isci).length+" creatives | "+totalUnits+" units"}{trafficVendor?" | "+trafficVendor:""}</span>
+            <span style={{marginLeft:"auto",fontSize:12,color:"#7d766b"}}>{usePanelMode?totalPanels+" units":""+plOLines.filter(l=>l.isci).length+" creatives | "+totalUnits+" units"}{trafficVendor?" | "+trafficVendor:""}</span>
           </div>
         </Cd>;
        })():
@@ -9589,7 +9589,7 @@ Rules:
               <div style={{fontSize:14,fontWeight:800}}>📅 OOH Creative Calendar — Lerner & Rowe</div>
               <div style={{fontSize:14,color:"#948B7E"}}>Creative switch & rotation deadlines from Outlook marketing calendar · {LR_CREATIVE_CAL.length} events</div>
             </div>
-            {nextUp&&<div style={{padding:"6px 12px",borderRadius:8,background:"rgba(220,38,38,.15)",border:"1px solid #fecaca"}}>
+            {nextUp&&<div style={{padding:"6px 12px",borderRadius:4,background:"rgba(220,38,38,.15)",border:"1px solid #fecaca"}}>
               <div style={{fontSize:14,fontWeight:700,color:"#93323C",textTransform:"uppercase"}}>Next Deadline</div>
               <div style={{fontSize:14,fontWeight:800,color:"#93323C"}}>{new Date(nextUp.due+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"})} — {nextUp.dmas.join("/")} {nextUp.title}</div>
               <div style={{fontSize:14,color:"#948B7E"}}>{oohCalStatus(nextUp.due).label} away</div>
@@ -9601,7 +9601,7 @@ Rules:
             <label style={{display:"flex",alignItems:"center",gap:4,fontSize:14,color:"#948B7E",cursor:"pointer"}}><input type="checkbox" checked={showPast} onChange={e=>setShowPast(e.target.checked)}/> Show past events</label>
           </div>
           {/* Urgency summary */}
-          {upcoming.length>0&&<div style={{padding:8,borderRadius:8,background:"#fff7ed",border:"1px solid #fed7aa",marginBottom:10}}>
+          {upcoming.length>0&&<div style={{padding:8,borderRadius:4,background:"#fff7ed",border:"1px solid #fed7aa",marginBottom:10}}>
             <div style={{fontSize:14,fontWeight:700,color:"#ea580c",marginBottom:4}}>⚠ {upcoming.length} deadline{upcoming.length>1?"s":""} in the next 2 weeks</div>
             {upcoming.map((e,i)=>{const s=oohCalStatus(e.due);const t=oohCalType(e.type);return<div key={i} style={{display:"flex",gap:8,alignItems:"center",padding:"3px 0",fontSize:14,flexWrap:"wrap"}}>
               <span style={{fontWeight:700,color:s.status==="today"?"#93323C":s.status==="urgent"?"#ea580c":"#B08D3F"}}>{s.label}</span>
@@ -9617,10 +9617,10 @@ Rules:
           <div style={{display:"flex",flexDirection:"column",gap:4}}>
             {filtered.map((e,i)=>{const s=oohCalStatus(e.due);const t=oohCalType(e.type);const dateObj=new Date(e.due+"T00:00:00");
               const urgBorder=s.status==="today"?"2px solid #93323C":s.status==="urgent"?"2px solid #ea580c":s.status==="soon"?"1px solid #fed7aa":"1px solid #E9E3D6";
-              const urgBg=s.status==="today"?"#3a1f35":s.status==="urgent"?"#fff7ed":s.status==="past"?"#1d1822":"#fff";
-              return<div key={i} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",borderRadius:8,border:urgBorder,background:urgBg,opacity:s.status==="past"?0.6:1}}>
+              const urgBg=s.status==="today"?"#3a1f35":s.status==="urgent"?"#fff7ed":s.status==="past"?"#1d1822":"#1b161f";
+              return<div key={i} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",borderRadius:4,border:urgBorder,background:urgBg,opacity:s.status==="past"?0.6:1}}>
                 <div style={{width:50,textAlign:"center",flexShrink:0}}>
-                  <div style={{fontSize:24,fontWeight:800,color:s.status==="past"?"#9ca3af":t.color,lineHeight:1}}>{dateObj.getDate()}</div>
+                  <div style={{fontSize:24,fontWeight:800,color:s.status==="past"?"#7d766b":t.color,lineHeight:1}}>{dateObj.getDate()}</div>
                   <div style={{fontSize:13,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>{dateObj.toLocaleDateString("en-US",{month:"short"})}</div>
                   <div style={{fontSize:14,color:"#948B7E"}}>{dateObj.toLocaleDateString("en-US",{weekday:"short"})}</div>
                 </div>
@@ -9631,7 +9631,7 @@ Rules:
                     <span style={{fontSize:14,padding:"1px 6px",borderRadius:6,fontWeight:600,background:t.bg,color:t.color}}>{t.label}</span>
                   </div>
                   <div style={{display:"flex",gap:4,marginTop:3,alignItems:"center",flexWrap:"wrap"}}>
-                    {e.dmas.map(d=><B key={d} l={d} c={mktColors[d]||"#64748b"}/>)}
+                    {e.dmas.map(d=><B key={d} l={d} c={mktColors[d]||"#948B7E"}/>)}
                     {e.size&&<span style={{fontSize:14,padding:"1px 5px",borderRadius:4,background:"#f0f9ff",color:"#AFC2DE",fontWeight:600,border:"1px solid #bfdbfe"}}>{e.size}</span>}
                     {e.spec&&<span style={{fontSize:13,color:"#948B7E"}}>{e.spec}</span>}
                   </div>
@@ -9641,7 +9641,7 @@ Rules:
                 <div style={{textAlign:"right",flexShrink:0}}>
                   {s.status==="past"?<span style={{fontSize:14,color:"#948B7E"}}>✓ Done</span>:
                    s.status==="today"?<span style={{fontSize:14,fontWeight:800,color:"#93323C",animation:"pulse 1s infinite"}}>TODAY</span>:
-                   <span style={{fontSize:13,fontWeight:700,color:s.days<=7?"#93323C":s.days<=14?"#ea580c":"#64748b"}}>{s.label}</span>}
+                   <span style={{fontSize:13,fontWeight:700,color:s.days<=7?"#93323C":s.days<=14?"#ea580c":"#948B7E"}}>{s.label}</span>}
                 </div>
               </div>;
             })}
@@ -9659,12 +9659,12 @@ Rules:
           <div style={{fontSize:13,color:"#948B7E",marginBottom:10}}>{lrKeys.length} contract{lrKeys.length!==1?"s":""}{mktF?" · "+(mktNames[mktF]||mktF):""}{vendF?" · "+vendF:""} — vendor, dates, status, units, and the signed PDF</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
             {lrKeys.map(k=>{const c=oohContracts[k]||{num:k};const cs=contractStatus(c);const dma=(c.dmas&&c.dmas[0])||"";
-              return<div key={k} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#0e0c10"}}>
+              return<div key={k} style={{border:`1px solid ${cs.color}30`,borderRadius:4,overflow:"hidden",background:"#0e0c10"}}>
                 <div style={{padding:"9px 12px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
                       <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#0e0c10"}}>{c.num||k}</span>
-                      <span style={{fontSize:12,padding:"1px 7px",borderRadius:10,fontWeight:700,background:cs.color+"22",color:cs.color}}>{cs.label}</span>
+                      <span style={{fontSize:12,padding:"1px 7px",borderRadius:4,fontWeight:700,background:cs.color+"22",color:cs.color}}>{cs.label}</span>
                     </div>
                     <button onClick={()=>plEditContract===k?setPlEditContract(null):startContractEdit(k)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#3a2a4a"}}>✎</button>
                   </div>
@@ -9706,7 +9706,7 @@ Rules:
        })():
       <Cd><div style={{overflowX:"auto",maxHeight:520}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Mkt</TH><TH>Unit</TH><TH>Type</TH><TH>Size</TH><TH>Location</TH><TH>Flight</TH><TH>Cycles</TH><TH>Impr/Wk</TH><TH>Dir</TH><TH>Status</TH><TH>Plan</TH></tr></thead>
         <tbody>{fl.map((p,i)=>{
-          const c=mktColors[p.market]||"#64748b";const pop=LR_POPS[p.unit];
+          const c=mktColors[p.market]||"#948B7E";const pop=LR_POPS[p.unit];
           return<tr key={i} style={{background:p.status==="posted"?"#1f353011":""}}>
             <TD b>{i+1}</TD>
             <TD><B l={p.market} c={c}/></TD>
@@ -9718,8 +9718,8 @@ Rules:
             <TD b>{p.cycles}</TD>
             <TD b>{(p.impressions*p.numUnits).toLocaleString()}</TD>
             <TD>{p.facing&&p.facing!=="N/A"?<B l={p.facing} c="#8A8AC0"/>:<span style={{fontSize:13,color:"#948B7E"}}>—</span>}</TD>
-            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
-            <TD><span style={{fontSize:13,color:p.plan==="2026"?"#AFC2DE":"#9ca3af",fontWeight:p.plan==="2026"?600:400}}>{p.plan}</span></TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:4,fontWeight:600,background:p.status==="posted"?"#152019":"#262012",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
+            <TD><span style={{fontSize:13,color:p.plan==="2026"?"#AFC2DE":"#7d766b",fontWeight:p.plan==="2026"?600:400}}>{p.plan}</span></TD>
           </tr>;
         })}</tbody>
       </table></div></Cd>}
@@ -9757,7 +9757,7 @@ Rules:
     };
     return <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",flexWrap:"wrap",gap:8}}>
-        <div><img src={(typeof LOGO_PDV!=="undefined"?LOGO_PDV:"")} alt="Parrish DeVaughn" style={{height:34,marginBottom:6,background:"#fff",padding:"4px 8px",borderRadius:6}}/><PageHead title="Parrish DeVaughn — OOH Media Plan" pgKey="ooh"/>
+        <div><img src={(typeof LOGO_PDV!=="undefined"?LOGO_PDV:"")} alt="Parrish DeVaughn" style={{height:34,marginBottom:6,background:"#1b161f",padding:"4px 8px",borderRadius:6}}/><PageHead title="Parrish DeVaughn — OOH Media Plan" pgKey="ooh"/>
           <p style={{fontSize:13,color:"#948B7E"}}>Oklahoma City · {pdvPanels.length} placements ({fixed} fixed boards · {programs} rotating programs) · {totalUnits} total units · vendor CJ</p>
         </div>
         <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
@@ -9781,13 +9781,13 @@ Rules:
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:8}}>
         {mediaTypes.map(mt=>{const bs=pdvPanels.filter(p=>p.media===mt);const u=bs.reduce((a,p)=>a+(p.numUnits||1),0);
-          return <div key={mt} onClick={()=>setMediaF(mediaF===mt?"":mt)} style={{padding:"10px 12px",borderRadius:9,border:mediaF===mt?"2px solid "+ACC:"1px solid #3d3542",background:mediaF===mt?ACC+"12":"#1d1822",cursor:"pointer"}}>
+          return <div key={mt} onClick={()=>setMediaF(mediaF===mt?"":mt)} style={{padding:"10px 12px",borderRadius:4,border:mediaF===mt?"2px solid "+ACC:"1px solid #3d3542",background:mediaF===mt?ACC+"12":"#1d1822",cursor:"pointer"}}>
             <div style={{fontSize:13,fontWeight:700,color:ACC,textTransform:"uppercase",letterSpacing:1}}>{mt}</div>
             <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{bs.length}</div>
             <div style={{fontSize:14,color:"#948B7E"}}>{u} units</div>
           </div>;
         })}
-        <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #3d3542",background:"linear-gradient(135deg,#17131a,#1d1822)"}}>
+        <div style={{padding:"10px 12px",borderRadius:4,border:"1px solid #3d3542",background:"linear-gradient(135deg,#17131a,#1d1822)"}}>
           <div style={{fontSize:13,fontWeight:700,color:ACC,textTransform:"uppercase",letterSpacing:1}}>ALL OOH</div>
           <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{pdvPanels.length}</div>
           <div style={{fontSize:14,color:"#948B7E"}}>{pdvPanels.reduce((a,p)=>a+(p.numUnits||1),0)} total units</div>
@@ -9795,14 +9795,14 @@ Rules:
       </div>
       {viewMode==="cards"?
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
-          {fl.map((p,i)=>{const posted=p.status==="posted";return <div key={i} style={{border:"1px solid #3d3542",borderRadius:9,overflow:"hidden",background:"#1d1822",borderLeft:"4px solid "+ACC}}>
+          {fl.map((p,i)=>{const posted=p.status==="posted";return <div key={i} style={{border:"1px solid #3d3542",borderRadius:4,overflow:"hidden",background:"#1d1822",borderLeft:"4px solid "+ACC}}>
             <div style={{padding:10}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
                 <div>
                   <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#F1EBDD"}}>{p.unit}</span>
                   <div style={{fontSize:14,color:"#948B7E",marginTop:2}}>{p.media} · {p.size} · {p.vendor}</div>
                 </div>
-                <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:posted?"#1f3530":"#3a2f1a",color:posted?"#6FA287":"#B08D3F"}}>{p.status}</span>
+                <span style={{fontSize:13,padding:"2px 6px",borderRadius:4,fontWeight:600,background:posted?"#1f3530":"#3a2f1a",color:posted?"#6FA287":"#B08D3F"}}>{p.status}</span>
               </div>
               <div style={{fontSize:14,color:"#948B7E",marginTop:6}}>{p.location}</div>
               <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #3d3542"}}>
@@ -9822,7 +9822,7 @@ Rules:
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:240,display:"inline-block"}}>{p.location}</span></TD>
             <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{fmtFl(p.flight)}</span></TD>
             <TD>{p.cycles||"—"}</TD><TD b>{p.numUnits||1}</TD>
-            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:4,fontWeight:600,background:p.status==="posted"?"#152019":"#262012",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
           </tr>)}</tbody>
         </table></div></Cd>}
     </div>;
@@ -9864,7 +9864,7 @@ Rules:
     };
     return <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",flexWrap:"wrap",gap:8}}>
-        <div>{hasLogo?<img src={LOGO_KE} alt="Keches Law Group" style={{height:34,marginBottom:6,background:"#fff",padding:"4px 8px",borderRadius:6}}/>:<div style={{fontSize:20,fontWeight:900,color:ACC,fontFamily:"'Cormorant Garamond',serif",marginBottom:2}}>Keches Law Group</div>}<PageHead title="Keches Law Group — OOH Media Plan" pgKey="ooh"/>
+        <div>{hasLogo?<img src={LOGO_KE} alt="Keches Law Group" style={{height:34,marginBottom:6,background:"#1b161f",padding:"4px 8px",borderRadius:6}}/>:<div style={{fontSize:20,fontWeight:900,color:ACC,fontFamily:"'Cormorant Garamond',serif",marginBottom:2}}>Keches Law Group</div>}<PageHead title="Keches Law Group — OOH Media Plan" pgKey="ooh"/>
           <p style={{fontSize:13,color:"#948B7E"}}>Boston · {kePanels.length} board{kePanels.length!==1?"s":""} · {totalUnits} units · {vendorLabel} · {keKeys.length} contract{keKeys.length!==1?"s":""}</p>
         </div>
         <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
@@ -9889,7 +9889,7 @@ Rules:
       </div>}
       {viewMode!=="contracts"&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:8}}>
         {mediaTypes.map(mt=>{const bs=kePanels.filter(p=>p.media===mt);const u=bs.reduce((a,p)=>a+(p.numUnits||1),0);
-          return <div key={mt} onClick={()=>setMediaF(mediaF===mt?"":mt)} style={{padding:"10px 12px",borderRadius:9,border:mediaF===mt?"2px solid "+ACC:"1px solid #3d3542",background:mediaF===mt?ACC+"12":"#1d1822",cursor:"pointer"}}>
+          return <div key={mt} onClick={()=>setMediaF(mediaF===mt?"":mt)} style={{padding:"10px 12px",borderRadius:4,border:mediaF===mt?"2px solid "+ACC:"1px solid #3d3542",background:mediaF===mt?ACC+"12":"#1d1822",cursor:"pointer"}}>
             <div style={{fontSize:13,fontWeight:700,color:ACC,textTransform:"uppercase",letterSpacing:1}}>{mt}</div>
             <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{bs.length}</div>
             <div style={{fontSize:14,color:"#948B7E"}}>{u} units</div>
@@ -9898,14 +9898,14 @@ Rules:
       </div>}
       {viewMode==="cards"?
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
-          {fl.map((p,i)=>{const posted=p.status==="posted";return <div key={i} style={{border:"1px solid #3d3542",borderRadius:9,overflow:"hidden",background:"#1d1822",borderLeft:"4px solid "+ACC}}>
+          {fl.map((p,i)=>{const posted=p.status==="posted";return <div key={i} style={{border:"1px solid #3d3542",borderRadius:4,overflow:"hidden",background:"#1d1822",borderLeft:"4px solid "+ACC}}>
             <div style={{padding:10}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
                 <div>
                   <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#F1EBDD"}}>{p.unit}</span>
                   <div style={{fontSize:14,color:"#948B7E",marginTop:2}}>{p.media}{p.slots?" · "+p.slots+" slots":""} · {p.size} · {p.vendor}</div>
                 </div>
-                <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:posted?"#1f3530":"#3a2f1a",color:posted?"#6FA287":"#B08D3F"}}>{p.status}</span>
+                <span style={{fontSize:13,padding:"2px 6px",borderRadius:4,fontWeight:600,background:posted?"#1f3530":"#3a2f1a",color:posted?"#6FA287":"#B08D3F"}}>{p.status}</span>
               </div>
               <div style={{fontSize:14,color:"#948B7E",marginTop:6}}>{p.location}{p.facing?" ("+p.facing+")":""}</div>
               <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #3d3542"}}>
@@ -9923,7 +9923,7 @@ Rules:
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:240,display:"inline-block"}}>{p.location}</span></TD>
             <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{fmtFl(p.flight)}</span></TD>
             <TD m>{p.contract||"—"}</TD>
-            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:4,fontWeight:600,background:p.status==="posted"?"#152019":"#262012",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
           </tr>)}</tbody>
         </table></div></Cd>
       :
@@ -9932,12 +9932,12 @@ Rules:
           <div style={{fontSize:13,color:"#948B7E",marginBottom:10}}>{keKeys.length} contract{keKeys.length!==1?"s":""} · Clear Channel Outdoor · Boston — vendor, dates, status, and units. Digital dominations carry a 90-day RFR renewal window; every contract has a 60-day no-penalty out.</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
             {keKeys.map(k=>{const c=oohContracts[k]||{num:k};const cs=contractStatus(c);
-              return<div key={k} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#0e0c10"}}>
+              return<div key={k} style={{border:`1px solid ${cs.color}30`,borderRadius:4,overflow:"hidden",background:"#0e0c10"}}>
                 <div style={{padding:"9px 12px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
                       <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#0e0c10"}}>{c.num||k}</span>
-                      <span style={{fontSize:12,padding:"1px 7px",borderRadius:10,fontWeight:700,background:cs.color+"22",color:cs.color}}>{cs.label}</span>
+                      <span style={{fontSize:12,padding:"1px 7px",borderRadius:4,fontWeight:700,background:cs.color+"22",color:cs.color}}>{cs.label}</span>
                     </div>
                     <button onClick={()=>keEditK===k?setKeEditK(null):startCEdit(k)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#3a2a4a"}}>✎</button>
                   </div>
@@ -10011,7 +10011,7 @@ Rules:
         </div>
         {showOohBulk&&<Cd style={{padding:12}}>
           <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>📁 Bulk OOH Creative Upload</div>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>Drag & drop or click. Matches by <b style={{color:"#E9E3D6"}}>ISCI code</b> (whole token in the filename) <i>or</i> by WK creative convention with market + size in the name (e.g. <b style={{color:"#E9E3D6"}}>WK_Birmingham_Cause_14x48</b>). <b style={{color:"#93323C"}}>Titles alone never auto-match</b> — titles recycle across markets; those files drop to the manual-assign list. Run <b style={{color:"#B08D3F"}}>🪄 Auto-name</b> first so the ISCIs exist.</div>
+          <div style={{fontSize:12,color:"#7d766b",marginBottom:8}}>Drag & drop or click. Matches by <b style={{color:"#E9E3D6"}}>ISCI code</b> (whole token in the filename) <i>or</i> by WK creative convention with market + size in the name (e.g. <b style={{color:"#E9E3D6"}}>WK_Birmingham_Cause_14x48</b>). <b style={{color:"#93323C"}}>Titles alone never auto-match</b> — titles recycle across markets; those files drop to the manual-assign list. Run <b style={{color:"#B08D3F"}}>🪄 Auto-name</b> first so the ISCIs exist.</div>
           <DropZone multiple accept="*/*" style={{marginBottom:8}} onFiles={async(fileList)=>{
             const files=Array.from(fileList);if(!files.length){notify("No files selected");return}
             const toB64=(f)=>new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(r.error||new Error("read failed"));r.onload=()=>res(String(r.result).split(",")[1]||"");r.readAsDataURL(f)});
@@ -10068,7 +10068,7 @@ Rules:
             log("Bulk OOH Creative",matched+" files stored standalone, "+unmatched.length+" need manual ISCI, "+failed+" failed");
             notify(matched+" file(s) uploaded — all standalone"+(unmatched.length?" | "+unmatched.length+" need a manual ISCI pick below":"")+(failed?" | "+failed+" failed: "+lastErr:""));
           }}>
-            <div style={{fontSize:24}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#948B7E"}}>Drag & drop or click to select OOH creative files</div><div style={{fontSize:12,color:"#64748b"}}>.jpg, .png, .pdf, .psd, .ai, .eps — multiple allowed</div>
+            <div style={{fontSize:24}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#948B7E"}}>Drag & drop or click to select OOH creative files</div><div style={{fontSize:12,color:"#948B7E"}}>.jpg, .png, .pdf, .psd, .ai, .eps — multiple allowed</div>
           </DropZone>
           {oohUnassigned.length>0&&<div style={{marginTop:10,border:"1px solid #93323C",borderRadius:6,padding:10,background:"#1d1822"}}>
             <div style={{fontSize:13,fontWeight:700,color:"#93323C",marginBottom:2}}>⚠ {oohUnassigned.length} file(s) didn't auto-match — pick the ISCI for each. It uploads the moment you choose.</div>
@@ -10085,7 +10085,7 @@ Rules:
             </div>
             <div style={{display:"flex",gap:6,marginTop:8}}><Btn small color="#93323C" onClick={()=>setOohUnassigned([])}>Clear list</Btn></div>
           </div>}
-          <div style={{fontSize:12,color:"#94a3b8"}}>OOH ISCIs with creative: <b style={{color:"#6FA287"}}>{allOoh.filter(i=>i.fileUrl).length}</b> / {allOoh.length}</div>
+          <div style={{fontSize:12,color:"#7d766b"}}>OOH ISCIs with creative: <b style={{color:"#6FA287"}}>{allOoh.filter(i=>i.fileUrl).length}</b> / {allOoh.length}</div>
         </Cd>}
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
           <input placeholder="Search OOH ISCIs..." value={oohIsciFilter} onChange={e=>setOohIsciFilter(e.target.value)} style={{width:200,padding:"5px 8px",borderRadius:5,border:"1px solid #3d3542",fontSize:13,outline:"none",background:"#0e0c10",color:"#E9E3D6"}}/>
@@ -10119,12 +10119,12 @@ Rules:
     };
     const calAlerts=(()=>{const now=new Date();const wk=new Date(now.getTime()+7*864e5);return OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length})();
     return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#0e0c10 0%,#17131a 50%,#0e0c10 100%)",color:"#E9E3D6"}}>
-      <div style={{width:200,background:"linear-gradient(180deg,#0e0c10 0%,#241640 50%,#0e0c10 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
-        <div style={{padding:"14px 11px",borderBottom:"1px solid #1d1822"}}>
-          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:700,letterSpacing:4,color:"#B08D3F",textTransform:"uppercase"}}>Overkill &amp; OOH</div>
+      <div style={{width:200,background:"linear-gradient(180deg,#0e0c10 0%,#1c1520 50%,#0e0c10 100%)",borderRight:"1px solid rgba(176,141,63,.28)",display:"flex",flexDirection:"column",flexShrink:0}}>
+        <div style={{padding:"14px 11px",borderBottom:"3px double rgba(176,141,63,.45)"}}>
+          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:700,letterSpacing:4,color:"#B08D3F",textTransform:"uppercase",textShadow:"0 1px 0 rgba(0,0,0,.9)"}}>Overkill &amp; OOH</div>
           <div style={{fontSize:11,color:"#948B7E",letterSpacing:2,fontWeight:600}}>OUTDOOR MEDIA</div>
         </div>
-        <nav style={{flex:1,padding:"3px 0"}}>{oohNav.map(n=>{const a=subRoute===n.id;const badge=n.id==="pl"&&calAlerts?calAlerts:null;return<button key={n.id} onClick={()=>navigateHash("ooh/"+n.id)} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"6px 11px",border:"none",background:a?"#1d1822":"transparent",color:a?"#fff":"#9ca3af",fontSize:13,fontWeight:a?600:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #B08D3F":"3px solid transparent",position:"relative"}}><span style={{fontSize:13}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:14,fontWeight:800,padding:"1px 5px",borderRadius:8,background:"#B08D3F",color:"#fff"}}>{badge}</span>}</button>})}</nav>
+        <nav style={{flex:1,padding:"3px 0"}}>{oohNav.map(n=>{const a=subRoute===n.id;const badge=n.id==="pl"&&calAlerts?calAlerts:null;return<button key={n.id} onClick={()=>navigateHash("ooh/"+n.id)} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"6px 11px",border:"none",background:a?"#1d1822":"transparent",color:a?"#1b161f":"#7d766b",fontSize:13,fontWeight:a?600:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #B08D3F":"3px solid transparent",position:"relative"}}><span style={{fontSize:13}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:14,fontWeight:800,padding:"1px 5px",borderRadius:4,background:"#B08D3F",color:"#1b161f"}}>{badge}</span>}</button>})}</nav>
         <div style={{padding:"8px 11px",borderTop:"1px solid #1d1822",display:"flex",flexDirection:"column",gap:6}}>
           <button onClick={openOohSizesReport} style={{display:"flex",alignItems:"center",gap:6,width:"100%",padding:"6px 8px",border:"none",borderRadius:6,background:"#6FA287",color:"#0a2e22",fontSize:13,fontWeight:700,cursor:"pointer"}}>📐 OOH Size Report (all brands)</button>
           <button onClick={()=>{navigateHash("");setPg("dash")}} style={{display:"flex",alignItems:"center",gap:6,width:"100%",padding:"6px 8px",border:"1px solid #3d3542",borderRadius:6,background:"transparent",color:"#948B7E",fontSize:13,fontWeight:600,cursor:"pointer"}}>← Back to D&D</button>
