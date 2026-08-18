@@ -4408,9 +4408,10 @@ const App=()=>{
       // creative. The formats it runs on are listed next to the name in the legend.
       const _canon=(c)=>{let s=String(c).replace(/\s*-\s*[\d'".]+\s*x\s*[\d'".]+\s*$/i,"").trim();if(/^we always show up$/i.test(s))s="Always Show Up";if(/^partner lockup$/i.test(s))s="Lockup";return s};
       const _fmt=(p)=>/digital/i.test(p.type||"")?(/poster/i.test(p.type||"")?"Digital Poster":"Digital Bulletin"):((/poster/i.test(p.type||"")||String(p.size).trim()==="SP")?"Poster":"Bulletin");
-      const cidsAll=scope.map(p=>[...new Set(_crsOf(p).map(_canon))]);
+      // Each entry is creative + format — "Always Show Up (Bulletin)" vs "Always Show Up
+      // (Digital Bulletin)" — matching the proposal's sections one-for-one.
+      const cidsAll=scope.map(p=>[...new Set(_crsOf(p).map(c=>_canon(c)+" ("+_fmt(p)+")"))]);
       const titles=[...new Set(cidsAll.flat())].sort();
-      const titleFmts={};scope.forEach((p,pi)=>cidsAll[pi].forEach(t=>{(titleFmts[t]=titleFmts[t]||new Set()).add(_fmt(p))}));
       const crColor=(t)=>{const i=titles.indexOf(t);return i>=0?CREATIVE_PALETTE[i%CREATIVE_PALETTE.length]:creativeColor(t)};
       const pins=scope.map((p,pi)=>{const co=WK_COORDS[p.boardId];const crs=cidsAll[pi];return{panel:String(p.panel),sub:p.submarket||"",loc:p.location||"",size:p.size||"",dma:oohMarket(p.dma),creative:crs[0],creatives:crs,colors:crs.map(crColor),color:crColor(crs[0]),lat:co?co[0]:null,lng:co?co[1]:null,approx:isApproxCoord(p.boardId)}});
       // Spacing check applies to SINGLE-creative (static) boards — rotation boards show
@@ -4419,7 +4420,7 @@ const App=()=>{
       for(let a=0;a<cp.length;a++)for(let b=a+1;b<cp.length;b++){if(cp[a].creative!==cp[b].creative)continue;const d=milesBetween(cp[a].lat,cp[a].lng,cp[b].lat,cp[b].lng);if(d<=oohClusterRadius)conf.push({c:cp[a].creative,a:cp[a],b:cp[b],d})}
       conf.sort((x,y)=>x.d-y.d);
       const mapPins=pins.filter(p=>p.lat&&p.lng).map(p=>({lat:p.lat,lng:p.lng,cs:p.colors,a:p.approx,t:escHtml(p.panel+" · "+p.creatives.join(" ⇄ ")+" · "+p.loc)}));
-      const legend=titles.map(t=>`<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0;font-size:12px"><span style="width:12px;height:12px;border-radius:6px;background:${crColor(t)};border:1px solid #333"></span><b>${escHtml(t)}</b> <span style="color:#666">(${escHtml([...(titleFmts[t]||[])].sort().join(" & "))})</span> · ${pins.filter(p=>p.creatives.includes(t)).length} boards</span>`).join("")+`<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0;font-size:12px"><span style="width:14px;height:14px;border-radius:7px;background:#888;border:1px solid #333;display:inline-flex;align-items:center;justify-content:center"><span style="width:6px;height:6px;border-radius:3px;background:#eee"></span></span>ringed pin = rotation — outer ring &amp; inner dot are the creatives BOTH running on that board</span>`;
+      const legend=titles.map(t=>`<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0;font-size:12px"><span style="width:12px;height:12px;border-radius:6px;background:${crColor(t)};border:1px solid #333"></span><b>${escHtml(t)}</b> · ${pins.filter(p=>p.creatives.includes(t)).length}</span>`).join("")+`<span style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0;font-size:12px"><span style="width:14px;height:14px;border-radius:7px;background:#888;border:1px solid #333;display:inline-flex;align-items:center;justify-content:center"><span style="width:6px;height:6px;border-radius:3px;background:#eee"></span></span>ringed pin = rotation — outer ring &amp; inner dot are the creatives BOTH running on that board</span>`;
       const w=window.open("","","width=980,height=860");
       w.document.write('<html><head><title>WK OOH Creative Map — '+escHtml(mktLabel)+'</title>');
       w.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>');
