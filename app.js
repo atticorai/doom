@@ -911,13 +911,13 @@ const dndTripwires=(flights,iscis,hubCfg)=>{
 
 // ── MUSE CHARACTERS (AI Planner narrators) ───────────
 const MUSES=[
-  {name:"Calliope",role:"Coverage",color:"#E85A7A",icon:"🎭",voice:["Let me tell you a tale of market coverage…","Honey, your coverage has gaps wider than the Aegean.","Now THIS is a story worth telling.","The muse of eloquence sees… room for improvement."]},
+  {name:"Calliope",role:"Coverage",color:"#FF8C42",icon:"🎭",voice:["Let me tell you a tale of market coverage…","Honey, your coverage has gaps wider than the Aegean.","Now THIS is a story worth telling.","The muse of eloquence sees… room for improvement."]},
   {name:"Thalia",role:"Creative Mix",color:"#D4A040",icon:"🎪",voice:["Comedy and tragedy — your creative mix has both!","Too many :30s, not enough :15s. Classic mistake.","Your rotation is funnier than a satyr at a symposium.","Mix it up, darling. Variety is divine."]},
-  {name:"Melpomene",role:"Staleness",color:"#9b7bb0",icon:"🎻",voice:["*dramatic sigh* These creatives are getting old…","The tragedy! Same spots running for months.","Even the gods refresh their wardrobe, Wonderboy.","Stale creative is a tragedy I can't bear to watch."]},
+  {name:"Melpomene",role:"Staleness",color:"#C4A0C8",icon:"🎻",voice:["*dramatic sigh* These creatives are getting old…","The tragedy! Same spots running for months.","Even the gods refresh their wardrobe, Wonderboy.","Stale creative is a tragedy I can't bear to watch."]},
   {name:"Terpsichore",role:"Rotation Balance",color:"#4AC8E8",icon:"💃",voice:["The dance of percentages must be balanced!","Your rotation rhythm is… off-beat.","Let me choreograph something better.","50/50 is boring. Give me drama in the splits."]},
   {name:"Clio",role:"History",color:"#5BC4A0",icon:"📜",voice:["The historical record shows… interesting patterns.","I've been keeping track. You should be concerned.","Let history guide your next move.","Your traffic history tells quite the epic."]}
 ];
-const MuseCard=({muse,content,loading})=><div style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid "+muse.color+"30",borderRadius:12,padding:14,flex:"1 1 280px",minWidth:280,position:"relative",overflow:"hidden"}}>
+const MuseCard=({muse,content,loading})=><div style={{background:"linear-gradient(145deg,#17172a,#101020)",border:"1px solid "+muse.color+"30",borderRadius:12,padding:14,flex:"1 1 280px",minWidth:280,position:"relative",overflow:"hidden"}}>
   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${muse.color},${muse.color}44)`}}/>
   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
     <span style={{fontSize:20}}>{muse.icon}</span>
@@ -1770,7 +1770,7 @@ const App=()=>{
         pending.forEach(([t,r])=>log("Creative Review",(r.status==="approved"?"Approved":"Changes requested")+": "+r.campName+" · "+(r.assetLabel||r.assetType)+(r.feedback?" — "+r.feedback:"")));
         notify(pending.length===1
           ?((pending[0][1].status==="approved"?"✓ Approved: ":"✏ Changes: ")+(pending[0][1].assetLabel||pending[0][1].assetType)+" — "+pending[0][1].campName)
-          :pending.length+" review answers came back — check Deals & Deadlines");
+          :pending.length+" review answers came back — check Mayhem & Marketing Ops");
       }catch(e){}
     };
     poll();
@@ -2733,7 +2733,7 @@ const App=()=>{
   React.useEffect(()=>{
     if(!dbLoaded)return;if(!saveRef.current)return;
     const items=alerts.map(a=>({key:a.key,msg:a.msg,days:a.days,severity:a.severity,overdue:!!a.overdue}))
-      .concat(dndLedgerCompute(flights,iscis,hubCfg).filter(x=>x.days!=null&&x.days<=7).map(x=>({key:"dnd-"+x.key,msg:"⚑ Deals & Deadlines · "+x.who+" owes: "+x.what+" — "+x.flight+(x.due?" · due "+dndFd(x.due):""),days:x.days,severity:x.days<0?"critical":"warning",overdue:x.days<0})));
+      .concat(dndLedgerCompute(flights,iscis,hubCfg).filter(x=>x.days!=null&&x.days<=7).map(x=>({key:"dnd-"+x.key,msg:"⚑ Mayhem & Marketing Ops · "+x.who+" owes: "+x.what+" — "+x.flight+(x.due?" · due "+dndFd(x.due):""),days:x.days,severity:x.days<0?"critical":"warning",overdue:x.days<0})));
     const sig=JSON.stringify(items);
     if(sig===alertFeedRef.current)return;
     alertFeedRef.current=sig;
@@ -10102,7 +10102,7 @@ Rules:
     return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",color:"#E8DFF0"}}>
       <div style={{width:200,background:"linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
         <div style={{padding:"14px 11px",borderBottom:"1px solid #2d1f42"}}>
-          <div style={{fontSize:16,fontWeight:800,letterSpacing:1,color:"#D4A040"}}>OOH HUB</div>
+          <div style={{fontSize:16,fontWeight:800,letterSpacing:1,color:"#D4A040"}}>OVERKILL &amp; OOH</div>
           <div style={{fontSize:11,color:"#9B8EAD",letterSpacing:2,fontWeight:600}}>OUTDOOR MEDIA</div>
         </div>
         <nav style={{flex:1,padding:"3px 0"}}>{oohNav.map(n=>{const a=subRoute===n.id;const badge=n.id==="pl"&&calAlerts?calAlerts:null;return<button key={n.id} onClick={()=>navigateHash("ooh/"+n.id)} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"6px 11px",border:"none",background:a?"#2d1f42":"transparent",color:a?"#fff":"#9ca3af",fontSize:13,fontWeight:a?600:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative"}}><span style={{fontSize:13}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:14,fontWeight:800,padding:"1px 5px",borderRadius:8,background:"#D4A040",color:"#fff"}}>{badge}</span>}</button>})}</nav>
@@ -11766,7 +11766,7 @@ Rules:
       +(launched.length?"<b>Launched:</b><br>"+launched.map(f=>"• "+escHtml(f.name)+" ("+escHtml(f.brand)+(f.markets?" — "+escHtml(f.markets):"")+")").join("<br>")+"<br><br>":"")
       +(late.length?"<b>At risk / late:</b><br>"+late.map(row).join("<br>")+"<br><br>":"<b>Nothing late.</b><br><br>")
       +(week.length?"<b>Due this week:</b><br>"+week.map(row).join("<br>")+"<br><br>":"")
-      +"Full detail lives in Doom → Deals & Deadlines.<br><br>Emm";
+      +"Full detail lives in Doom → Mayhem & Marketing Ops.<br><br>Emm";
     return{to,subject:"Marketing Ops — weekly status ("+new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"})+")",body,needsTo:!to};
   };
   const buildRecap=(f)=>{
@@ -11779,7 +11779,7 @@ Rules:
       +(sent.length?"<b>Traffic:</b> delivered to "+sent.map(t=>escHtml(t.vendor)).join(", ")+"<br>":"")
       +((f.utms||[]).length?"<b>Tracking:</b> "+(f.utms||[]).length+" URL(s) in market — results to follow from GA.<br>":"")
       +(f.promoObligations?"<b>Obligations delivered:</b> "+escHtml(f.promoObligations)+"<br>":"")
-      +"<br>Full record in Doom → Deals & Deadlines → The Record.<br><br>Emm Caban<br>Atticor Marketing Operations";
+      +"<br>Full record in Doom → Mayhem & Marketing Ops → The Record.<br><br>Emm Caban<br>Atticor Marketing Operations";
     return{to,subject:"Campaign Recap — "+f.name+" ("+f.brand+")",body,needsTo:!to};
   };
   const buildBriefPdf=(f)=>{
@@ -11795,7 +11795,7 @@ Rules:
       doc.setFont("helvetica","bold");doc.setFontSize(20);doc.setTextColor(20,20,35);
       doc.text("CREATIVE BRIEF",54,y);y+=8;
       doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(120,110,140);
-      doc.text("Deals & Deadlines · Atticor Marketing Operations",54,y+12);y+=36;
+      doc.text("Mayhem & Marketing Ops · Atticor Marketing Operations",54,y+12);y+=36;
       doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(b1,b2,b3);
       doc.text(f.name,54,y);y+=18;
       doc.setFontSize(11);doc.setTextColor(60,50,80);doc.setFont("helvetica","normal");
@@ -11829,7 +11829,7 @@ Rules:
       const tl=taglines.filter(t=>t.active!==false&&(!t.brand||t.brand===f.brand));
       if(tl.length){doc.setFont("helvetica","bold");doc.setTextColor(20,20,35);doc.text("Approved taglines",54,y);y+=14;doc.setFont("helvetica","italic");doc.setTextColor(90,80,110);tl.forEach(t=>{doc.text("•  "+t.text,54,y);y+=14})}
       doc.setFontSize(8);doc.setTextColor(150,142,173);
-      doc.text("Sent from Deals & Deadlines · replies land with Emm Caban, Marketing Operations",54,760);
+      doc.text("Sent from Mayhem & Marketing Ops · replies land with Emm Caban, Marketing Operations",54,760);
       return doc.output("datauristring").split(",")[1]||null;
     }catch(e){console.warn("brief pdf failed",e);return null}
   };
@@ -11865,7 +11865,7 @@ Rules:
         // the PDV tripwire, and nothing else does.
         updTraffic(f.id,pv.trId||((f.traffic[0]||{}).id),{state:"sent",sentAt:new Date().toISOString(),dispatchId,vendor:(f.traffic.find(t=>t.id===pv.trId)||f.traffic[0]||{}).vendor});
         const isciLines=(f.reqs||[]).map(rq=>isciByKey(rq.isci)).filter(Boolean).map(l=>({code:l.code,title:l.title||"",dur:l.dur||""}));
-        setTrafficHistory(p=>[{ts:new Date().toISOString(),est:"DND-"+((BRANDS.find(b=>b.name===f.brand)||{}).code||"XX")+"-"+dndSlug(f.name).slice(0,18),brand:f.brand,market:f.markets,media:"Campaign",buyer:"Marketing Ops",month:workMonth,flight:(f.flightStart||"")+(f.flightEnd?" - "+f.flightEnd:""),version:1,comments:"Deals & Deadlines package → "+to,iscis:isciLines,stations:[((f.traffic[0]||{}).vendor)||""],isOoh:false,status:"sent",flightId:f.id},...p]);
+        setTrafficHistory(p=>[{ts:new Date().toISOString(),est:"DND-"+((BRANDS.find(b=>b.name===f.brand)||{}).code||"XX")+"-"+dndSlug(f.name).slice(0,18),brand:f.brand,market:f.markets,media:"Campaign",buyer:"Marketing Ops",month:workMonth,flight:(f.flightStart||"")+(f.flightEnd?" - "+f.flightEnd:""),version:1,comments:"Mayhem & Marketing Ops package → "+to,iscis:isciLines,stations:[((f.traffic[0]||{}).vendor)||""],isOoh:false,status:"sent",flightId:f.id},...p]);
         log("D&D Package","Sent: "+f.name+" → "+to);
       }
       if(pv.kind==="rollup")log("D&D Rollup","Weekly status sent → "+to);
@@ -12518,7 +12518,7 @@ Rules:
     return<div style={{minHeight:"100vh",background:"linear-gradient(165deg,#0b0b16 0%,#141426 45%,#0b0b16 100%)",color:HD.bone,fontFamily:"'DM Sans',sans-serif",fontSize:14}}>
       <div style={{display:"flex",alignItems:"center",gap:16,padding:"14px 26px 11px",borderBottom:"1px solid rgba(46,46,74,.7)"}}>
         <div>
-          <div style={{...serif,fontSize:24,fontWeight:700,background:"linear-gradient(90deg,"+HD.bone+","+HD.flame+")",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",whiteSpace:"nowrap"}}>Deals &amp; Deadlines</div>
+          <div style={{...serif,fontSize:24,fontWeight:700,background:"linear-gradient(90deg,"+HD.bone+","+HD.flame+")",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",whiteSpace:"nowrap"}}>Mayhem &amp; Marketing Ops</div>
           <div style={{fontSize:8.5,letterSpacing:3,color:HD.lilac,textTransform:"uppercase",marginTop:-2}}>The Underworld Office · Atticor Marketing Ops</div>
         </div>
         <div style={{...serif,fontStyle:"italic",color:HD.lilac,fontSize:14,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{dndPick(DND_QUIP.deck)}</div>
@@ -12579,7 +12579,7 @@ Rules:
   };
 
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"campaigns",l:"Deals & Deadlines",e:"🔥"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"OOH Hub",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"campaigns",l:"Mayhem & Marketing Ops",e:"🔥"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"Overkill & OOH",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
@@ -13579,7 +13579,7 @@ Rules:
 
       {title:"Managing ISCIs & Tags",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
         <p>Use the Tag Manager to assign categories, value props, and VO labels per brand. Auto-tagging suggests categories from ISCI titles — review and accept or override.</p>
-        <p>Activate/deactivate ISCIs to control which appear in the rotation builder. OOH ISCIs (suffix O) only show in the OOH Hub's separate registry.</p>
+        <p>Activate/deactivate ISCIs to control which appear in the rotation builder. OOH ISCIs (suffix O) only show in Overkill & OOH's separate registry.</p>
         <p>Safety net: if a save would drop ISCI count by more than 20%, it's blocked automatically. This prevents accidental bulk deletes.</p>
         <BookMarginNote author="hades">The safeguard exists because someone tried to nuke the data. Once.</BookMarginNote>
       </div>,damageEffects:<>{<BookBurnMark style={{top:8,right:8,width:72,height:72,opacity:.35}}/>}</>},
@@ -13606,15 +13606,15 @@ Rules:
         <BookMarginNote author="muses">Four markets built in just one go<br/>Pandora, Spotify — on with the show!</BookMarginNote>
       </div>,damageEffects:<>{<BookInkSplatter style={{bottom:16,right:16,opacity:.5}}/>}{<BookLipstickMark style={{top:40,right:40,opacity:.35,transform:"rotate(20deg) scale(.8)"}}/>}</>},
 
-      {title:"OOH Hub: Getting Around",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p>The OOH Hub is a separate app — click OOH Hub in the nav or go to #ooh. It has its own sidebar with four sections: WK OOH, PL OOH, OOH ISCI Registry, and Import/Upload.</p>
+      {title:"Overkill & OOH: Getting Around",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>Overkill & OOH is a separate app — click Overkill & OOH in the nav or go to #ooh. It has its own sidebar with four sections: WK OOH, PL OOH, OOH ISCI Registry, and Import/Upload.</p>
         <p>WK OOH: browse billboard/poster inventory across 7 markets. Use card view for photos, map view for locations, or the contract tracker for vendor management. Build OOH traffic per vendor/DMA.</p>
         <p>PL OOH: manage panels with a creative calendar. Track due dates, board switches, and flight dates. Dashboard alerts when creative is due.</p>
         <BookMarginNote author="meg">I manage 300+ boards. What do you manage?</BookMarginNote>
       </div>,damageEffects:<>{<BookBurnMark style={{bottom:8,left:8,width:96,height:96,opacity:.25}}/>}{<BookHoofMark style={{top:16,right:16,opacity:.2,transform:"rotate(-15deg) scale(.6)"}}/>}</>},
 
       {title:"OOH: Importing Contracts",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p>Go to Import/Upload in the OOH Hub. Drag and drop a vendor contract PDF (Lamar, Reagan, Outfront, etc.) or an Excel/CSV media plan. The system parses board locations, dates, and pricing automatically.</p>
+        <p>Go to Import/Upload in Overkill & OOH. Drag and drop a vendor contract PDF (Lamar, Reagan, Outfront, etc.) or an Excel/CSV media plan. The system parses board locations, dates, and pricing automatically.</p>
         <p>For unknown vendor formats, AI-assisted parsing tries to extract the data. Review the parsed results before confirming the import.</p>
         <p>OOH ISCIs are registered in the OOH ISCI Registry (suffix O) — a full-featured registry separate from the main ISCI list.</p>
         <BookMarginNote author="muses">Three hundred boards she oversees with grace<br/>Each one accounted for, in its place!</BookMarginNote>
@@ -13624,7 +13624,7 @@ Rules:
         <p>The Library archives every rotation ever built. Use brand tabs to switch between PL and WK. Coverage tracking (green checks / red X's per market × month) lives on the Traffic Tracker page.</p>
         <p>By default the Library shows only the current broadcast month and the prior month — everything older is archived. Toggle the "📦 Archived" pill in the search bar to reveal them. The cutoff updates automatically as the calendar rolls forward.</p>
         <p>Click any rotation to open it in the book viewer. From there you can re-send, copy to another month/market, edit metadata, or delete (admin password required for destructive actions). Stations are looked up fresh on every send, grouped by ownership, same rules as the Traffic Center. {trafficCount} rotation records archived across both brands.</p>
-        <p>OOH instructions open exactly as they were generated — the sheet's HTML is captured the moment you print it from the OOH Hub and re-displayed verbatim here (view, print, and PDF included). Editing an OOH record releases the snapshot so the Library reflects your edits instead.</p>
+        <p>OOH instructions open exactly as they were generated — the sheet's HTML is captured the moment you print it from Overkill & OOH and re-displayed verbatim here (view, print, and PDF included). Editing an OOH record releases the snapshot so the Library reflects your edits instead.</p>
         <BookMarginNote author="meg">I remember every version. Every mistake.</BookMarginNote>
       </div>,damageEffects:<>{<BookHoofMark style={{bottom:16,left:16,opacity:.3,transform:"rotate(15deg) scale(.7)"}}/>}</>},
 
