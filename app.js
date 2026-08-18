@@ -5022,7 +5022,7 @@ const App=()=>{
     const saveDEdit=(boardId)=>{const bd=pops.find(p=>p.boardId===boardId);const rot=!!(bd&&boardClass(bd.type,bd.size).rotates);const raw=Array.isArray(dEditVal)?dEditVal:[];const pairs=raw.map((c,i)=>[(c||"").trim(),(dEditPct&&dEditPct[i])||0]).filter(x=>x[0]);const v=pairs.map(x=>x[0]);const pct=rot?pairs.map(x=>x[1]):[];setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,design:v,designPct:pct}:p));setDEditId(null);log("OOH Creative",`${boardId} → ${(rot?pairs.map(x=>x[0]+" "+x[1]+"%"):v).join(" / ")||"(cleared)"}`);notify(`${boardId} creative ${v.length?"set":"cleared"}`)};
     const cancelDEdit=()=>{setDEditId(null);setDEditVal("");setDEditPct([])};
 
-    const dmaColors={BRM:"#B08D3F",MTG:"#ec4899",GAD:"#059669",CHA:"#AFC2DE",HSV:"#f97316",KNX:"#6366f1",DHN:"#84cc16",NSH:"#06b6d4"};
+    const dmaColors={BRM:"#B08D3F",MTG:"#A65A6B",GAD:"#6FA287",CHA:"#AFC2DE",HSV:"#C08552",KNX:"#8A8AC0",DHN:"#8FA06A",NSH:"#7FA8B8"};
 
     const PhotoModal=({p,onClose})=>{
       const close=POP_IMGS[p.closeImg];const dist=POP_IMGS[p.distImg];
@@ -5068,7 +5068,7 @@ const App=()=>{
                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
                   <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#1d1822"}}>Panel {p.panel}</span>
                   <B l={oohMarket(p.dma)} c={c}/>
-                  <B l={p.facing} c="#6366f1"/>
+                  <B l={p.facing} c="#8A8AC0"/>
                 </div>
                 <div style={{fontSize:14,color:"#948B7E",marginTop:2,display:"flex",alignItems:"center",gap:6}}><MediaBadge type={p.type}/>{p.type} · {p.size} · {p.submarket}</div>
               </div>
@@ -5156,7 +5156,7 @@ const App=()=>{
             const headers=["Board ID","Panel","DMA","Submarket","Vendor","Type","Size","Location","Zip","Impressions/Wk","Install Date","Facing","ISCI","ISCI Title","Creative","Lamar Ref","Contract","TAB#","Latitude","Longitude"];
             const rows=fl.map(p=>{const co=WK_COORDS[p.boardId];const zip=typeof WK_ZIPS!=='undefined'?(WK_ZIPS[p.submarket]||""):"";return[p.boardId,p.panel,p.dma,p.submarket,p.vendor,p.type,p.size,p.location,zip,p.impressions,p.installDate,p.facing,p.isci||"",isciTitle(p.isci),(Array.isArray(p.design)?p.design.map(c=>fullCreativeName(p,c)).join(" | "):""),p.vendorRef||"",p.contract||"",p.tab||"",co?co[0]:"",co?co[1]:""]});
             exportCsv("WK_OOH_"+(om||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
-          }} color="#059669">📥 Export</Btn>
+          }} color="#6FA287">📥 Export</Btn>
           <Btn small color="#9b7bb0" onClick={()=>{const scope=fl.filter(p=>!String(p.panel).includes("TBD"));const lbl=(om||ov||oVend)?`the ${scope.length} filtered boards`:`all ${scope.length} boards`;if(window.confirm(`Auto-name + ISCI ${lbl}?\n\n• Assigns ONE creative per board (bulletins from 2, posters/juniors from 3), spread by location so neighbours differ.\n• Generates an ISCI per market·size·creative, titled to your convention (WK <Type> - <Size> - <Market> - <Creative>).\n\nThis OVERWRITES current creative + ISCI assignments in view.`))autoNameSpread(fl)}}>🪄 Auto-name + ISCI</Btn>
           <Btn small color="#B08D3F" onClick={()=>printVendorTrafficSheet()}>📄 Vendor Sheet</Btn>
           <Btn small color="#93323C" onClick={()=>printVendorTrafficSheet({resendOnly:true})}>📄 Revision Sheet</Btn>
@@ -5394,7 +5394,7 @@ const App=()=>{
               {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
               {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
               <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/></TD>
-              <TD>{oLines.length>1&&<button onClick={()=>delL(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#ef4444"}}>✕</button>}</TD>
+              <TD>{oLines.length>1&&<button onClick={()=>delL(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#93323C"}}>✕</button>}</TD>
             </tr>})}</tbody>
           </table>
           <div style={{display:"flex",gap:6,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
@@ -5501,7 +5501,7 @@ const App=()=>{
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:200,display:"inline-block"}}>{p.location}</span></TD>
             <TD b>{p.impressions.toLocaleString()}</TD>
             <TD>{p.installDate}</TD>
-            <TD><B l={p.facing} c="#6366f1"/></TD>
+            <TD><B l={p.facing} c="#8A8AC0"/></TD>
             <TD><span style={{fontSize:13,fontFamily:"monospace"}}>{p.contract||"—"}</span></TD>
             <TD>{(()=>{const cs=contractStatus(oohContracts[p.contract]);return<span style={{fontSize:13,padding:"1px 5px",borderRadius:6,fontWeight:600,background:cs.bg,color:cs.color}}>{cs.label}</span>})()}</TD>
             <TD>{editId===p.boardId?
@@ -5621,7 +5621,7 @@ const App=()=>{
     const posted=fl.filter(p=>p.status==="posted").length;
     const upcoming=fl.filter(p=>p.status==="upcoming").length;
 
-    const mktColors={CHI:"#93323C",MSP:"#AFC2DE",CIN:"#9b7bb0",DEN:"#059669"};
+    const mktColors={CHI:"#93323C",MSP:"#AFC2DE",CIN:"#9b7bb0",DEN:"#6FA287"};
     const mktNames={CHI:"Chicago",MSP:"Minneapolis",CIN:"Cincinnati",DEN:"Denver"};
 
     // Map pins from PL_PANELS with coords
@@ -5691,7 +5691,7 @@ const App=()=>{
               <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Flight</div><div style={{fontSize:14,fontWeight:600,color:"#948B7E"}}>{flightClean||"TBD"}</div></div>
               <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Cycles</div><div style={{fontSize:14,fontWeight:600,color:"#948B7E"}}>{p.cycles||"—"}</div></div>
               <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Impr/Wk</div><div style={{fontSize:14,fontWeight:700,color:c}}>{(p.impressions*p.numUnits).toLocaleString()}</div></div>
-              {p.facing&&p.facing!=="N/A"&&p.facing!=="Various"&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#6366f1"/></div></div>}
+              {p.facing&&p.facing!=="N/A"&&p.facing!=="Various"&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#8A8AC0"/></div></div>}
               {pop&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>PoP Date</div><div style={{fontSize:14,fontWeight:600,color:"#AFC2DE"}}>{pop.popDate}</div></div>}
             </div>
             {POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #3d3542",paddingTop:6}}>
@@ -5775,7 +5775,7 @@ const App=()=>{
             const headers=["Market","Unit/Face","Vendor","Media Type","Size","Location","Zip","Flight","Cycles","Status","ISCI","ISCI Title","PoP Date","Contract","Impressions/Wk","Facing","Latitude","Longitude","Plan"];
             const rows=fl.map(p=>{const pop=PL_POPS[p.unit];const zip=typeof PL_ZIPS!=='undefined'?(PL_ZIPS[p.submarket]||PL_ZIPS[p.market]||""):"";return[p.market,p.unit,p.vendor,p.media,p.size,p.location,zip,p.flight.split('(')[0].trim(),p.cycles||"",p.status,p.isci||"",plIsciTitle(p.isci),pop?pop.popDate:"",pop?pop.contract:"",p.impressions*p.numUnits,p.facing||"",p.lat||"",p.lng||"",p.plan]});
             exportCsv("PL_OOH_"+(mktF||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
-          }} color="#059669">📥 Export</Btn>
+          }} color="#6FA287">📥 Export</Btn>
           <Btn small onClick={()=>openOohCreativeSpecs("Postman Law",fl.map(p=>({market:(typeof DM!=="undefined"&&DM[p.market])||p.market,type:p.media,size:p.size,vendor:p.vendor,contract:(typeof PL_POPS!=="undefined"&&PL_POPS[p.unit]?PL_POPS[p.unit].contract:""),start:oohFlightStart(p.flight),unit:p.unit})),"#5D3A87")} color="#6FA287">📐 Creative Specs</Btn>
           <Btn small onClick={()=>openOohSizesReport("Postman Law")} color="#6FA287">📏 Size Report</Btn>
           <Btn small onClick={printPlCardReport} color="#AFC2DE">🖨 Traffic Report</Btn>
@@ -5964,7 +5964,7 @@ const App=()=>{
               {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
               <TD>{viewChiFaces.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:3,maxWidth:220}}>{viewChiFaces.map(f=>{const sel=(l.faces||[]).includes(f);return<span key={f} onClick={()=>{const cur=l.faces||[];upL(i,"faces",sel?cur.filter(x=>x!==f):[...cur,f])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",fontFamily:"monospace",fontWeight:sel?700:400,background:sel?"#9b7bb0":"#1d1822",color:sel?"#fff":"#948B7E",border:"1px solid "+(sel?"#9b7bb0":"#3d3542"),userSelect:"none"}}>{f}</span>})}<span onClick={()=>{const allSel=viewChiFaces.every(f=>(l.faces||[]).includes(f));upL(i,"faces",allSel?[]:[...viewChiFaces])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",background:"#0e0c10",color:"#948B7E",border:"1px solid #3d3542",userSelect:"none"}}>{viewChiFaces.every(f=>(l.faces||[]).includes(f))?"none":"all"}</span></div>:<span style={{fontSize:12,color:"#6B5E80"}}>--</span>}</TD>
               <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/></TD>
-              <TD>{plOLines.length>1&&<button onClick={()=>delL(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#ef4444"}}>✕</button>}</TD>
+              <TD>{plOLines.length>1&&<button onClick={()=>delL(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#93323C"}}>✕</button>}</TD>
             </tr>})}</tbody>
           </table>
           <div style={{display:"flex",gap:6,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
@@ -9251,7 +9251,7 @@ Rules:
     const posted=fl.filter(p=>p.status==="posted").length;
     const upcoming=fl.filter(p=>p.status==="upcoming").length;
 
-    const mktColors={CHI:"#2FBF71",ABQ:"#93323C",LAS:"#B08D3F",PHX:"#AFC2DE",TUC:"#6FA287",RNO:"#a855f7",SEA:"#6366f1",YUM:"#ec4899",KGB:"#f59e0b"};
+    const mktColors={CHI:"#2FBF71",ABQ:"#93323C",LAS:"#B08D3F",PHX:"#AFC2DE",TUC:"#6FA287",RNO:"#8A8AC0",SEA:"#8A8AC0",YUM:"#A65A6B",KGB:"#C08552"};
     const mktNames={CHI:"Chicago",ABQ:"Albuquerque",LVS:"Las Vegas",PHX:"Phoenix",TUC:"Tucson",RNO:"Reno",SEA:"Seattle",YMA:"Yuma",KBH:"King/Bull"};
 
     // Map pins from LR_PANELS with coords
@@ -9292,7 +9292,7 @@ Rules:
               <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Flight</div><div style={{fontSize:14,fontWeight:600,color:"#948B7E"}}>{flightClean||"TBD"}</div></div>
               <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Cycles</div><div style={{fontSize:14,fontWeight:600,color:"#948B7E"}}>{p.cycles||"—"}</div></div>
               <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Impr/Wk</div><div style={{fontSize:14,fontWeight:700,color:c}}>{(p.impressions*p.numUnits).toLocaleString()}</div></div>
-              {p.facing&&p.facing!=="N/A"&&p.facing!=="Various"&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#6366f1"/></div></div>}
+              {p.facing&&p.facing!=="N/A"&&p.facing!=="Various"&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#8A8AC0"/></div></div>}
               {pop&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>PoP Date</div><div style={{fontSize:14,fontWeight:600,color:"#AFC2DE"}}>{pop.popDate}</div></div>}
             </div>
             {POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #3d3542",paddingTop:6}}>
@@ -9376,7 +9376,7 @@ Rules:
             const headers=["Market","Unit/Face","Vendor","Media Type","Size","Location","Zip","Flight","Cycles","Status","ISCI","ISCI Title","PoP Date","Contract","Impressions/Wk","Facing","Latitude","Longitude","Plan"];
             const rows=fl.map(p=>{const pop=LR_POPS[p.unit];const zip=typeof PL_ZIPS!=='undefined'?(PL_ZIPS[p.submarket]||PL_ZIPS[p.market]||""):"";return[p.market,p.unit,p.vendor,p.media,p.size,p.location,zip,p.flight.split('(')[0].trim(),p.cycles||"",p.status,p.isci||"",plIsciTitle(p.isci),pop?pop.popDate:"",pop?pop.contract:"",p.impressions*p.numUnits,p.facing||"",p.lat||"",p.lng||"",p.plan]});
             exportCsv("LR_OOH_"+(mktF||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
-          }} color="#059669">📥 Export</Btn>
+          }} color="#6FA287">📥 Export</Btn>
           <Btn small onClick={()=>openOohCreativeSpecs("Lerner & Rowe",fl.map(p=>({market:mktNames[p.market]||p.market,type:p.media,size:p.size,vendor:p.vendor,contract:(typeof LR_POPS!=="undefined"&&LR_POPS[p.unit]?LR_POPS[p.unit].contract:""),start:oohFlightStart(p.flight),unit:p.unit})),"#1B7A46")} color="#6FA287">📐 Creative Specs</Btn>
           <Btn small onClick={openLrVendorSpecs} color="#6FA287">📎 Vendor Specs</Btn>
           <Btn small onClick={()=>openOohSizesReport("Lerner & Rowe")} color="#6FA287">📏 Size Report</Btn>
@@ -9566,7 +9566,7 @@ Rules:
               {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
               <TD>{viewChiFaces.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:3,maxWidth:220}}>{viewChiFaces.map(f=>{const sel=(l.faces||[]).includes(f);return<span key={f} onClick={()=>{const cur=l.faces||[];upL(i,"faces",sel?cur.filter(x=>x!==f):[...cur,f])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",fontFamily:"monospace",fontWeight:sel?700:400,background:sel?"#2FBF71":"#1d1822",color:sel?"#fff":"#948B7E",border:"1px solid "+(sel?"#2FBF71":"#3d3542"),userSelect:"none"}}>{f}</span>})}<span onClick={()=>{const allSel=viewChiFaces.every(f=>(l.faces||[]).includes(f));upL(i,"faces",allSel?[]:[...viewChiFaces])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",background:"#0e0c10",color:"#948B7E",border:"1px solid #3d3542",userSelect:"none"}}>{viewChiFaces.every(f=>(l.faces||[]).includes(f))?"none":"all"}</span></div>:<span style={{fontSize:12,color:"#6B5E80"}}>--</span>}</TD>
               <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/></TD>
-              <TD>{plOLines.length>1&&<button onClick={()=>delL(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#ef4444"}}>✕</button>}</TD>
+              <TD>{plOLines.length>1&&<button onClick={()=>delL(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#93323C"}}>✕</button>}</TD>
             </tr>})}</tbody>
           </table>
           <div style={{display:"flex",gap:6,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
@@ -9717,7 +9717,7 @@ Rules:
             <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{p.flight.split('(')[0].trim()}</span></TD>
             <TD b>{p.cycles}</TD>
             <TD b>{(p.impressions*p.numUnits).toLocaleString()}</TD>
-            <TD>{p.facing&&p.facing!=="N/A"?<B l={p.facing} c="#6366f1"/>:<span style={{fontSize:13,color:"#948B7E"}}>—</span>}</TD>
+            <TD>{p.facing&&p.facing!=="N/A"?<B l={p.facing} c="#8A8AC0"/>:<span style={{fontSize:13,color:"#948B7E"}}>—</span>}</TD>
             <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
             <TD><span style={{fontSize:13,color:p.plan==="2026"?"#AFC2DE":"#9ca3af",fontWeight:p.plan==="2026"?600:400}}>{p.plan}</span></TD>
           </tr>;
@@ -9765,7 +9765,7 @@ Rules:
             const headers=["Market","Unit","Vendor","Media Type","Size","Location","Facing","Flight","Cycles","Units","Status","Contract","ISCI"];
             const rows=fl.map(p=>[mktNames[p.market]||p.market,p.unit,p.vendor,p.media,p.size,p.location,p.facing||"",fmtFl(p.flight),p.cycles||"",p.numUnits||1,p.status,p.contract||"",p.isci||""]);
             exportCsv("PDV_OOH_"+(mktF||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
-          }} color="#059669">📥 Export</Btn>
+          }} color="#6FA287">📥 Export</Btn>
           <Btn small onClick={()=>openOohCreativeSpecs("Parrish DeVaughn",fl.map(p=>({market:mktNames[p.market]||p.market,type:p.media,size:p.size,vendor:p.vendor,contract:p.contract||"",start:oohFlightStart(p.flight),unit:p.unit})),ACC)} color="#6FA287">📐 Creative Brief</Btn>
           <Btn small onClick={()=>openOohSizesReport("Parrish DeVaughn")} color="#6FA287">📏 Size Report</Btn>
           <Btn small onClick={printBoardList} color="#AFC2DE">🖨 Board List</Btn>
@@ -9809,7 +9809,7 @@ Rules:
                 <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Run Dates</div><div style={{fontSize:14,fontWeight:600,color:"#E9E3D6"}}>{fmtFl(p.flight)||"TBD"}</div></div>
                 {p.cycles&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Cycles</div><div style={{fontSize:14,fontWeight:600,color:"#E9E3D6"}}>{p.cycles}</div></div>}
                 {(p.numUnits||1)>1&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Units</div><div style={{fontSize:14,fontWeight:700,color:ACC}}>{p.numUnits}</div></div>}
-                {p.facing&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#6366f1"/></div></div>}
+                {p.facing&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#8A8AC0"/></div></div>}
               </div>
               <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:"#3a2f1a",border:"1px solid #5a4a2a",fontSize:13,color:"#B08D3F",fontStyle:"italic"}}>No creative assigned yet</div>
             </div>
@@ -9872,7 +9872,7 @@ Rules:
             const headers=["Market","Unit","Vendor","Media Type","Slots","Size","Location","Facing","Flight","Units","Status","Contract","ISCI"];
             const rows=fl.map(p=>["Boston",p.unit,p.vendor,p.media,p.slots||"",p.size,p.location,p.facing||"",fmtFl(p.flight),p.numUnits||1,p.status,p.contract||"",p.isci||""]);
             exportCsv("Keches_OOH_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
-          }} color="#059669">📥 Export</Btn>
+          }} color="#6FA287">📥 Export</Btn>
           <Btn small onClick={()=>openOohCreativeSpecs("Keches Law Group",fl.map(p=>({market:"Boston",type:p.media,size:p.size,vendor:p.vendor,contract:p.contract||"",start:oohFlightStart(p.flight),unit:p.unit})),ACC)} color="#6FA287">📐 Creative Brief</Btn>
           <Btn small onClick={()=>openOohSizesReport("Keches Law Group")} color="#6FA287">📏 Size Report</Btn>
           <Btn small onClick={printBoardList} color="#AFC2DE">🖨 Board List</Btn>
