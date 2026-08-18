@@ -1336,7 +1336,7 @@ const App=()=>{
           d.forEach(h=>{if(h&&(h.media==="Streaming Audio"||h.media==="Digital Streaming")&&Array.isArray(h.iscis)){h.iscis.forEach(r=>{if(r&&typeof r.url==="string"&&r.url.indexOf("wkfirm.com")>-1){r.url=r.url.replace("https://seriousinjury.wkfirm.com/nashville-personal-injury-lawyers?","https://www.wkfirm.com/?").replace("&Placement=","&utm_term=")}})}});
           setTrafficHistory(d);trafficFbCountRef.current=d.length
         }trafficLoadedRef.current=true}else{trafficLoadedRef.current=true}
-        {const _cd=docs.campaigns?.data?JSON.parse(docs.campaigns.data):null;if(Array.isArray(_cd)&&_cd.length)setCampaigns(_cd);else setCampaigns(CAMPAIGN_SEED)}
+        {let _cd=docs.campaigns?.data?JSON.parse(docs.campaigns.data):null;if(Array.isArray(_cd))_cd=_cd.filter(c=>c.notionId!=="327991a2-b603-80de-9367-e59f1d2807ba");if(Array.isArray(_cd)&&_cd.length)setCampaigns(_cd);else setCampaigns(CAMPAIGN_SEED)}
         if(docs.taglines?.data){const d=JSON.parse(docs.taglines.data);if(Array.isArray(d)&&d.length)setTaglines(d)}
         if(docs.campaignHubCfg?.data){try{const d=JSON.parse(docs.campaignHubCfg.data);if(d&&typeof d==="object")setHubCfg(p=>({...p,...d}))}catch(_e){}}
         if(docs.assetReviews?.data){try{const d=JSON.parse(docs.assetReviews.data);if(d&&typeof d==="object")setAssetReviews(d)}catch(_e){}}
@@ -11688,6 +11688,62 @@ Rules:
       +"<br>Reply with the pixel snippets / page URLs on this thread and I'll register them.<br><br>Thank you,<br><br>Emm Caban<br>Atticor Marketing Operations";
     return{to,subject:"Tracking / Web Request — "+c.name+(c.brand?" ("+c.brand+")":""),body};
   };
+  // The brief that lands with the team is BOTH: the email body you preview,
+  // and a branded PDF of the same content attached — a document they can
+  // save, share, and print, like Doom's traffic sheets.
+  const buildBriefPdf=(c)=>{
+    try{
+      const JS=(window.jspdf&&window.jspdf.jsPDF)?window.jspdf.jsPDF:null;
+      if(!JS)return null;
+      const doc=new JS({unit:"pt",format:"letter"});
+      const W=612;let y=54;
+      const bcol=getBrandColor(c.brand)||"#9b7bb0";
+      const hex=(h)=>{const n=parseInt(String(h).slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255]};
+      const[b1,b2,b3]=hex(bcol);
+      doc.setFillColor(b1,b2,b3);doc.rect(0,0,W,8,"F");
+      doc.setFont("helvetica","bold");doc.setFontSize(20);doc.setTextColor(30,18,51);
+      doc.text("CREATIVE BRIEF",54,y);y+=8;
+      doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(120,110,140);
+      doc.text("Doom & Deliverables · Atticor Marketing Operations",54,y+12);y+=36;
+      doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(b1,b2,b3);
+      doc.text(c.name,54,y);y+=18;
+      doc.setFontSize(11);doc.setTextColor(60,50,80);doc.setFont("helvetica","normal");
+      doc.text(String(c.brand||"")+(c.markets?"  ·  "+c.markets:""),54,y);y+=22;
+      const fact=(k,v)=>{if(!v)return;doc.setFont("helvetica","bold");doc.setTextColor(90,80,110);doc.text(k,54,y);doc.setFont("helvetica","normal");doc.setTextColor(40,30,60);doc.text(String(v),170,y);y+=16};
+      fact("Flight:",c.flightStart?campFdY(c.flightStart)+(c.flightEnd?"  to  "+campFdY(c.flightEnd):""):"");
+      fact("Traffic goes out:",c.trafficDue?campFdY(c.trafficDue):"");
+      fact("Stations / outlets:",c.stations);
+      fact("Partner:",c.partner);
+      fact("Contact:",c.contact);
+      y+=10;
+      doc.setFont("helvetica","bold");doc.setFontSize(12);doc.setTextColor(30,18,51);
+      doc.text("Assets needed — hard due dates",54,y);y+=10;
+      doc.setDrawColor(b1,b2,b3);doc.setLineWidth(1.2);doc.line(54,y,558,y);y+=16;
+      const missing=(c.assets||[]).filter(a=>!assetInHand(a)&&a.owner!=="SEO / Web");
+      doc.setFontSize(10);
+      doc.setFont("helvetica","bold");doc.setTextColor(120,110,140);
+      doc.text("ASSET",54,y);doc.text("DELIVER BY",330,y);doc.text("OWNER",440,y);y+=6;
+      doc.setDrawColor(210,205,220);doc.setLineWidth(.6);doc.line(54,y,558,y);y+=14;
+      missing.forEach(a=>{
+        doc.setFont("helvetica","bold");doc.setTextColor(40,30,60);
+        doc.text((a.label||a.type)+(a.label?"  ("+a.type+")":""),54,y,{maxWidth:260});
+        doc.setFont("helvetica","normal");doc.setTextColor(180,60,90);
+        doc.text(a.due?campFdY(a.due):"ASAP",330,y);
+        doc.setTextColor(90,80,110);doc.text(a.owner||"",440,y);
+        y+=18;
+        if(y>720){doc.addPage();y=54}
+      });
+      y+=8;
+      doc.setFont("helvetica","italic");doc.setFontSize(10);doc.setTextColor(90,80,110);
+      doc.text("These dates hold the "+(c.flightStart?campFdY(c.flightStart)+" launch":"launch")+(c.trafficDue?" — traffic goes out "+campFdY(c.trafficDue)+".":"."),54,y,{maxWidth:500});y+=24;
+      if(c.notes){doc.setFont("helvetica","bold");doc.setTextColor(30,18,51);doc.text("Notes",54,y);y+=14;doc.setFont("helvetica","normal");doc.setTextColor(60,50,80);doc.text(String(c.notes),54,y,{maxWidth:500});y+=30}
+      const tl=taglines.filter(t=>t.active!==false&&(!t.brand||t.brand===c.brand));
+      if(tl.length){doc.setFont("helvetica","bold");doc.setTextColor(30,18,51);doc.text("Approved taglines",54,y);y+=14;doc.setFont("helvetica","italic");doc.setTextColor(90,80,110);tl.forEach(t=>{doc.text("\u2022  "+t.text,54,y);y+=14})}
+      doc.setFontSize(8);doc.setTextColor(150,142,173);
+      doc.text("Sent from Doom & Deliverables · reply lands with Emm Caban, Marketing Operations",54,760);
+      return doc.output("datauristring").split(",")[1]||null;
+    }catch(e){console.warn("brief pdf failed",e);return null}
+  };
   const openPreview=(kind,c)=>{
     const e=kind==="brief"?buildBriefEmail(c):buildSeoEmail(c);
     if(!e)return;
@@ -11698,7 +11754,9 @@ Rules:
     const c=campaigns.find(x=>x.id===pv.cId);if(!c){setMopsPreview(null);return}
     setMopsBusy(true);
     try{
-      const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:pv.to,cc:"emm.caban@atticor.ai",subject:pv.subject,message:pv.body})});
+      const payload={to:pv.to,cc:"emm.caban@atticor.ai",subject:pv.subject,message:pv.body};
+      if(pv.kind==="brief"){const b64=buildBriefPdf(c);if(b64){payload.pdfBase64=b64;payload.pdfName="CreativeBrief_"+String(c.name).replace(/[^A-Za-z0-9]+/g,"_")+".pdf"}}
+      const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       if(!r.ok)throw new Error("send failed");
       if(pv.kind==="brief"){
         campTouch();setCampaigns(p=>p.map(x=>x.id!==c.id?x:{...x,briefSentAt:new Date().toISOString(),updated:Date.now(),assets:(x.assets||[]).map(a=>(!assetInHand(a)&&a.status==="needed"&&a.owner!=="SEO / Web")?{...a,status:"requested"}:a)}));
@@ -11959,7 +12017,7 @@ Rules:
       const bcode=(BRANDS.find(b=>b.name===c.brand)||{}).code||"";
       const seoOpen=(c.assets||[]).some(a=>!assetInHand(a)&&a.owner==="SEO / Web");
       const lbl=(t,gold)=><div style={{fontSize:9,color:gold?"#D4A040":"#6B5E80",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>{t}</div>;
-      return<div style={{maxWidth:860}}>
+      return<div style={{maxWidth:1150}}>
         <div onClick={()=>mopsGo(bcode?"b/"+bcode:"")} style={{fontSize:12,color:"#4AC8E8",cursor:"pointer",marginBottom:14}}>← {c.brand||"War Room"} desk</div>
         <input value={c.name} onChange={e=>updCamp(c.id,{name:e.target.value})} style={{...serif,fontSize:32,fontWeight:700,color:"#F0E8F8",background:"transparent",border:"none",outline:"none",width:"100%",padding:0}}/>
         {(()=>{const opens=openOf(c);let mv;
@@ -11970,7 +12028,7 @@ Rules:
           else if(opens.length)mv={t:"Requested and waiting. Chase when the dates get tight — I'll flag it if they do.",col:"#D4A040"};
           else if(c.trafficDue&&campDTo(c.trafficDue)!=null&&campDTo(c.trafficDue)>=0)mv={t:"Everything in hand. Traffic goes out "+campFd(c.trafficDue)+" — build it in the Traffic Center.",col:"#5BC4A0"};
           else mv={t:c.status==="Live"?"Live and fed. Nothing owed.":"Everything in hand.",col:"#5BC4A0"};
-          return<div style={{...serif,fontSize:16,fontStyle:"italic",color:mv.col,marginTop:6,borderLeft:"3px solid "+mv.col,paddingLeft:12}}>Next move: {mv.t}</div>})()}
+          return<div style={{fontSize:13,fontWeight:600,color:mv.col,marginTop:8,borderLeft:"3px solid "+mv.col,paddingLeft:12,lineHeight:1.5}}><span style={{textTransform:"uppercase",letterSpacing:1,fontSize:10,fontWeight:800}}>Next move</span> — {mv.t}</div>})()}
         <div style={{display:"flex",gap:18,flexWrap:"wrap",alignItems:"flex-end",margin:"14px 0 22px"}}>
           <div>{lbl("Status")}<select value={c.status} onChange={e=>updCamp(c.id,{status:e.target.value})} style={mIn}>{CAMP_CSTATUS.map(s=><option key={s} value={s}>{s}</option>)}</select></div>
           <div style={{minWidth:180}}>{lbl("Markets (DMA)")}<input value={c.markets||""} onChange={e=>updCamp(c.id,{markets:e.target.value})} style={{...mIn,width:"100%"}}/></div>
@@ -11979,46 +12037,51 @@ Rules:
           <div>{lbl("Traffic due",true)}<input type="date" value={campIsoD(c.trafficDue)} onChange={e=>updCamp(c.id,{trafficDue:e.target.value})} style={{...mIn,borderColor:"#D4A040"}}/></div>
         </div>
         {secHead("What it needs","#D4A040",(c.assets||[]).length?null:"add the first asset below — or send the brief and let the checklist drive")}
-        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
-          {(c.assets||[]).map(a=>{const inH=assetInHand(a);const n=campDTo(a.due);const col=inH?"#5BC4A0":n!=null&&n<0?"#E85A7A":n!=null&&n<=10?"#D4A040":"#9B8EAD";const lk=assetLink(a);
-            return<div key={a.id} style={{display:"flex",gap:11,alignItems:"center",fontSize:15,opacity:a.status==="na"?.45:1}}>
-              <span onClick={()=>{updAsset(c.id,a.id,{status:inH?"needed":"done"});notify(inH?"Back to owed: "+(a.label||a.type):"✓ In hand: "+(a.label||a.type))}} title={inH?"Click to mark it owed again":"Click when it's in hand"}>{box(inH,col==="#9B8EAD"?"#4a3565":col)}</span>
-              <div style={{flex:1,minWidth:0,display:"flex",alignItems:"baseline",gap:6,flexWrap:"wrap"}}>
-                <input value={a.label} placeholder={a.type} onChange={e=>updAsset(c.id,a.id,{label:e.target.value})} title="Name this asset — click to edit" style={{fontWeight:700,color:"#F0E8F8",background:"transparent",border:"none",borderBottom:"1px dashed #4a3565",outline:"none",fontSize:15,fontFamily:"'DM Sans',sans-serif",width:Math.max(80,((a.label||a.type).length+2)*8)+"px"}}/>
-                {a.label?<span style={{color:"#6B5E80",fontSize:12}}>{a.type}</span>:null}
-                {inH?<span style={{color:"#5BC4A0"}}>— in hand{a.isci&&isciByKey(a.isci)&&isciByKey(a.isci).fileUrl&&a.status!=="done"?" (file on "+a.isci.split("|")[0]+")":""}</span>
-                  :<span style={{color:"#9B8EAD"}}>— owed{a.due?<span> by <b style={{color:col}}>{campFd(a.due)}</b></span>:null} by</span>}
-                {!inH&&<select value={a.owner||""} onChange={e=>updAsset(c.id,a.id,{owner:e.target.value})} title="Who owes this" style={{background:"transparent",border:"none",borderBottom:"1px dashed #4a3565",color:"#C4A0C8",fontSize:13,fontWeight:700,outline:"none",cursor:"pointer"}}>
-                  {[...new Set(["Creative Ops","SEO / Web","Hazel","Station","Vendor / Station","Me",a.owner||""].filter(Boolean))].map(o=><option key={o} value={o}>{o}</option>)}
-                </select>}
-                {!inH&&a.status==="review"&&<span style={{color:"#C4A0C8",fontSize:13}}>· out for review</span>}
-                {!inH&&a.status==="requested"&&<span style={{color:"#9B8EAD",fontSize:13}}>· requested</span>}
-              </div>
-              <input type="date" value={campIsoD(a.due)} onChange={e=>updAsset(c.id,a.id,{due:e.target.value})} style={{...mIn,padding:"3px 6px",fontSize:11}}/>
-              {(a.type==="Broadcast Spot"||a.type==="Digital Banner"||a.type==="Station-Made Creative")&&(()=>{
-                // ISCIs are market-specific (code+DMA is the identity): offer
-                // only this campaign's brand AND markets, titled so they mean
-                // something. ◆ marks a creative file already on the ISCI.
-                const mkts=String(c.markets||"").toLowerCase();
-                const pool=iscis.filter(i=>{
-                  if(i.brand!==c.brand||!i.active||i.suffix==="O")return false;
-                  if(!mkts)return true;
-                  const mn=((typeof DM!=="undefined"&&DM[i.dma])||i.dma||"").toLowerCase();
-                  return mn&&mkts.includes(mn);
-                });
-                const cur=isciByKey(a.isci);
-                return<select value={a.isci||""} onChange={e=>updAsset(c.id,a.id,{isci:e.target.value})} title="Link to the ISCI Registry — a file on the ISCI counts as in hand" style={{...mIn,padding:"3px 6px",fontSize:11,maxWidth:230,color:a.isci?"#5BC4A0":"#6B5E80"}}>
-                  <option value="">link ISCI…</option>
-                  {cur&&!pool.some(x=>isciKeyOf(x)===a.isci)&&<option value={a.isci}>{cur.code} · {String(cur.title||"").slice(0,22)}</option>}
-                  {pool.map(x=><option key={isciKeyOf(x)} value={isciKeyOf(x)}>{x.fileUrl?"◆ ":""}{x.code} · {String(x.title||"untitled").slice(0,22)}{x.dur?" :"+x.dur:""}{x.category?" · "+x.category:""}</option>)}
-                </select>})()}
-              {!inH&&<label title="Upload the actual file — it lives in Doom's storage from then on" style={{fontSize:11,color:"#4AC8E8",fontWeight:700,cursor:"pointer",border:"1px solid #4a3565",borderRadius:4,padding:"3px 9px",whiteSpace:"nowrap"}}>📎 file<input type="file" style={{display:"none"}} onChange={e=>uploadAssetFile(c,a,e.target.files&&e.target.files[0])}/></label>}
-              {!inH&&<button onClick={()=>{const u=window.prompt("Paste the link to this asset (Drive, vendor page, wherever it lives):",a.url||"");if(u===null)return;const v=u.trim();updAsset(c.id,a.id,{url:v,status:v?"done":a.status});if(v)notify("✓ In hand via link: "+(a.label||a.type))}} title="Paste a link instead of uploading" style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#4AC8E8",fontSize:11,fontWeight:700,cursor:"pointer",padding:"3px 9px",whiteSpace:"nowrap"}}>🔗 link</button>}
-              {lk&&<a href={lk} target="_blank" rel="noreferrer" style={{fontSize:12,color:"#4AC8E8",textDecoration:"none",fontWeight:700}}>open ↗</a>}
-              {!inH&&a.status!=="review"&&<button onClick={()=>sendReview(c,a)} disabled={mopsBusy} style={{background:"rgba(196,160,200,.12)",border:"1px solid #C4A0C8",borderRadius:4,cursor:"pointer",fontSize:10,fontWeight:700,color:"#C4A0C8",padding:"3px 9px",whiteSpace:"nowrap"}}>send for review</button>}
-              <button onClick={()=>delAsset(c.id,a.id)} style={{background:"none",border:"none",color:"#6B5E80",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button>
-            </div>})}
-        </div>
+        {(()=>{
+          const COLS="26px minmax(170px,1.4fr) 130px 118px 128px minmax(150px,1fr) 210px";
+          const hcell={fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",color:"#6B5E80"};
+          return<div style={{border:"1px solid #2d1f42",borderRadius:8,overflow:"hidden",marginBottom:14}}>
+            {(c.assets||[]).length>0&&<div style={{display:"grid",gridTemplateColumns:COLS,gap:12,padding:"8px 14px",borderBottom:"2px solid #4a3565",alignItems:"center"}}>
+              <div/><div style={hcell}>Asset</div><div style={hcell}>Status</div><div style={hcell}>Due</div><div style={hcell}>Owner</div><div style={hcell}>ISCI</div><div style={hcell}>File</div>
+            </div>}
+            {(c.assets||[]).map((a,ri)=>{const inH=assetInHand(a);const n=campDTo(a.due);const col=inH?"#5BC4A0":n!=null&&n<0?"#E85A7A":n!=null&&n<=10?"#D4A040":"#9B8EAD";const lk=assetLink(a);const linked=isciByKey(a.isci);
+              return<div key={a.id} style={{display:"grid",gridTemplateColumns:COLS,gap:12,padding:"10px 14px",borderTop:ri?"1px solid #2d1f42":"none",alignItems:"center",background:inH?"rgba(91,196,160,.03)":n!=null&&n<0?"rgba(232,90,122,.05)":"transparent",opacity:a.status==="na"?.45:1}}>
+                <span onClick={()=>{updAsset(c.id,a.id,{status:inH?"needed":"done"});notify(inH?"Back to owed: "+(a.label||a.type):"✓ In hand: "+(a.label||a.type))}} title={inH?"Click to mark it owed again":"Click when it is in hand"} style={{cursor:"pointer"}}>{box(inH,col==="#9B8EAD"?"#4a3565":col)}</span>
+                <div style={{minWidth:0}}>
+                  <input value={a.label} placeholder={a.type} onChange={e=>updAsset(c.id,a.id,{label:e.target.value})} title="Click to rename" style={{fontWeight:700,color:"#F0E8F8",background:"transparent",border:"none",outline:"none",fontSize:14,fontFamily:"'DM Sans',sans-serif",width:"100%",padding:0}}/>
+                  <div style={{fontSize:10,color:"#6B5E80",marginTop:1}}>{a.type}</div>
+                </div>
+                <span style={{fontSize:12,fontWeight:700,color:col}}>{inH?"✓ in hand":a.status==="review"?"out for review":a.status==="requested"?"requested":"owed"}</span>
+                <input type="date" value={campIsoD(a.due)} onChange={e=>updAsset(c.id,a.id,{due:e.target.value})} style={{...mIn,padding:"4px 6px",fontSize:11,width:"100%",borderColor:!inH&&n!=null&&n<0?"#E85A7A":"#4a3565"}}/>
+                {inH?<span style={{fontSize:12,color:"#6B5E80"}}>—</span>
+                  :<select value={a.owner||""} onChange={e=>updAsset(c.id,a.id,{owner:e.target.value})} style={{...mIn,padding:"4px 6px",fontSize:11,width:"100%",color:"#C4A0C8"}}>
+                    {[...new Set(["Creative Ops","SEO / Web","Hazel","Station","Vendor / Station","Me",a.owner||""].filter(Boolean))].map(o=><option key={o} value={o}>{o}</option>)}
+                  </select>}
+                {(a.type==="Broadcast Spot"||a.type==="Digital Banner"||a.type==="Station-Made Creative")?(()=>{
+                  const mkts=String(c.markets||"").toLowerCase();
+                  const pool=iscis.filter(i=>{
+                    if(i.brand!==c.brand||!i.active||i.suffix==="O")return false;
+                    if(!mkts)return true;
+                    const mn=((typeof DM!=="undefined"&&DM[i.dma])||i.dma||"").toLowerCase();
+                    return mn&&mkts.includes(mn);
+                  });
+                  return<select value={a.isci||""} onChange={e=>updAsset(c.id,a.id,{isci:e.target.value})} title="A creative file on the linked ISCI counts as in hand" style={{...mIn,padding:"4px 6px",fontSize:11,width:"100%",color:a.isci?"#5BC4A0":"#6B5E80"}}>
+                    <option value="">link ISCI…</option>
+                    {linked&&!pool.some(x=>isciKeyOf(x)===a.isci)&&<option value={a.isci}>{linked.code} · {String(linked.title||"").slice(0,20)}</option>}
+                    {pool.map(x=><option key={isciKeyOf(x)} value={isciKeyOf(x)}>{x.fileUrl?"◆ ":""}{x.code} · {String(x.title||"untitled").slice(0,20)}{x.dur?" :"+x.dur:""}</option>)}
+                  </select>})()
+                :<span style={{fontSize:12,color:"#6B5E80"}}>—</span>}
+                <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                  {lk?<a href={lk} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4AC8E8",textDecoration:"none",fontWeight:700,whiteSpace:"nowrap"}}>◆ open</a>
+                    :<React.Fragment>
+                      <label title="Upload the file into Doom's storage" style={{fontSize:10,color:"#4AC8E8",fontWeight:700,cursor:"pointer",border:"1px solid #4a3565",borderRadius:4,padding:"3px 8px",whiteSpace:"nowrap"}}>📎 file<input type="file" style={{display:"none"}} onChange={e=>uploadAssetFile(c,a,e.target.files&&e.target.files[0])}/></label>
+                      <button onClick={()=>{const u=window.prompt("Paste the link to this asset:",a.url||"");if(u===null)return;const v=u.trim();updAsset(c.id,a.id,{url:v,status:v?"done":a.status});if(v)notify("✓ In hand via link: "+(a.label||a.type))}} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#4AC8E8",fontSize:10,fontWeight:700,cursor:"pointer",padding:"3px 8px",whiteSpace:"nowrap"}}>🔗 link</button>
+                    </React.Fragment>}
+                  {!inH&&lk&&a.status!=="review"&&<button onClick={()=>sendReview(c,a)} disabled={mopsBusy} style={{background:"rgba(196,160,200,.12)",border:"1px solid #C4A0C8",borderRadius:4,cursor:"pointer",fontSize:10,fontWeight:700,color:"#C4A0C8",padding:"3px 8px",whiteSpace:"nowrap"}}>review</button>}
+                  <button onClick={()=>delAsset(c.id,a.id)} title="Remove this line" style={{background:"none",border:"none",color:"#6B5E80",cursor:"pointer",fontSize:14,fontWeight:800,marginLeft:"auto"}}>×</button>
+                </div>
+              </div>})}
+          </div>})()}
         <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:22}}>
           <select value="" onChange={e=>{if(e.target.value)addAsset(c.id,e.target.value)}} style={mIn}>
             <option value="">+ Add asset…</option>
@@ -12304,6 +12367,7 @@ Rules:
         <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid #4a3565",borderRadius:10,maxWidth:640,width:"100%",maxHeight:"84vh",display:"flex",flexDirection:"column",boxShadow:"0 12px 48px rgba(0,0,0,.5)"}}>
           <div style={{padding:"16px 20px",borderBottom:"1px solid #4a3565"}}>
             <div style={{...serif,fontSize:20,fontWeight:700,color:"#F0E8F8"}}>This is the exact email. Nothing has been sent.</div>
+            {mopsPreview.kind==="brief"&&<div style={{fontSize:11,color:"#5BC4A0",fontWeight:600,marginTop:2}}>A branded PDF of this brief rides along as an attachment — a document the team can save and share.</div>}
             <div style={{fontSize:12,color:"#9B8EAD",marginTop:6,lineHeight:1.7}}><b style={{color:"#C4A0C8"}}>To:</b> {mopsPreview.to} &nbsp; <b style={{color:"#C4A0C8"}}>CC:</b> emm.caban@atticor.ai<br/><b style={{color:"#C4A0C8"}}>Subject:</b> {mopsPreview.subject}</div>
           </div>
           <div style={{padding:16,overflowY:"auto",flex:1}}>
