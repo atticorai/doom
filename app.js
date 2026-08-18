@@ -797,8 +797,19 @@ const dndStateOfOld=(a,kind)=>{
   if(a.status==="requested"||a.status==="wip")return"requested";
   return"needed";
 };
+const dndCleanVendor=(f)=>{
+  let v=(f.partner||"").trim();
+  if(!v){const m=String(f.name||"").match(/[–—-]\s*([A-Za-z0-9 &+\/.']{2,28})\s*$/);if(m)v=m[1].trim()}
+  if(!v)v=String(f.stations||"").split(/[;,]/)[0].replace(/\(.*?\)/g,"").trim();
+  if(v.length>28)v=v.slice(0,28).trim();
+  return v;
+};
 const dndMigrate=(c)=>{
-  if(c&&Array.isArray(c.reqs)&&Array.isArray(c.traffic))return c; // already new shape
+  if(c&&Array.isArray(c.reqs)&&Array.isArray(c.traffic)){
+    // sanitize any vendor that swallowed a station rundown in an earlier save
+    const t=(c.traffic||[]).map(x=>(String(x.vendor||"").length>30||/\(\d+x/.test(String(x.vendor||"")))?{...x,vendor:dndCleanVendor(c)||"(set the vendor)"}:x);
+    return{...c,traffic:t};
+  }
   const f={id:c.id||campUid(),name:c.name||"Untitled",brand:campBrandFix(c.brand),markets:c.markets||"",
     status:c.status==="Wrapped"?"wrapped":c.status==="Live"?"live":"approach",
     flightStart:campIsoD(c.flightStart),flightEnd:campIsoD(c.flightEnd),trafficDue:campIsoD(c.trafficDue),
@@ -814,7 +825,7 @@ const dndMigrate=(c)=>{
     if(r.url)r.versions=[{v:1,fileUrl:r.url,receivedAt:new Date(f.created).toISOString(),source:"upload"}];
     f.reqs.push(r);
   });
-  const vendor=(f.partner||"").trim()||String(f.stations||"").split(",")[0].trim()||"";
+  const vendor=dndCleanVendor(f);
   const launched=f.flightStart&&new Date(f.flightStart+"T00:00:00")<=new Date();
   f.traffic=[{id:campUid(),vendor:vendor||"(set the vendor)",due:dndVendorDue(f),
     state:(f.status==="live"||f.status==="wrapped"||launched)?"sent":"pending",
@@ -12024,24 +12035,33 @@ Rules:
       {(()=>{
         if(!dndLedger.length)return<div style={{...serif,fontStyle:"italic",fontSize:16,color:HD.soul,margin:"6px 0 16px"}}>Nobody owes anything. Suspicious… but I'll allow it.</div>;
         const minD=(arr)=>Math.min.apply(null,arr.map(x=>x.days==null?999:x.days));
-        const cnt=(n)=>n==null?"—":n<0?Math.abs(n)+"d late":n+"d";
-        const lgRow=(x)=><div key={x.key} onClick={()=>ovOpen({t:"dossier",fid:x.fid})} style={{display:"grid",gridTemplateColumns:"104px minmax(190px,1.3fr) minmax(130px,.85fr) 104px 56px minmax(190px,1.1fr)",gap:12,alignItems:"center",padding:"6px 14px",borderTop:"1px solid rgba(46,46,74,.4)",borderLeft:"3px solid "+(x.days!=null&&x.days<0?HD.rose:x.days!=null&&x.days<=3?HD.ember:"transparent"),fontSize:12.5,cursor:"pointer"}}>
-          <span style={{fontSize:10,fontWeight:800,letterSpacing:.5,textTransform:"uppercase",border:"1px solid",borderRadius:99,padding:"2px 9px",textAlign:"center",color:x.who==="You"?HD.lilac:x.who==="SEO/Web"?HD.flame:x.who==="Creative Ops"?HD.gold:HD.ember,borderColor:"currentColor"}}>{x.who}</span>
-          <span style={{color:HD.bone,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{x.what}</span>
-          <span style={{color:HD.smoke,fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{x.flight}</span>
-          <span style={{fontWeight:800,fontSize:12,color:x.days!=null&&x.days<0?HD.rose:x.days!=null&&x.days<=3?HD.ember:x.days!=null&&x.days<=7?HD.gold:HD.smoke}}>{x.due?dndFd(x.due):"—"}</span>
-          <span style={{fontWeight:800,fontSize:11.5,color:x.days!=null&&x.days<0?HD.rose:x.days!=null&&x.days<=7?HD.ember:HD.smoke}}>{cnt(x.days)}</span>
-          <span style={{color:HD.dim,fontSize:11,fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{x.orElse}</span>
-        </div>;
+        const cnt=(n)=>n==null||n>=999?"—":n<0?Math.abs(n)+"d late":n+"d";
+        const shortWhat=(x)=>String(x.what).split(" — ")[0].replace("Send asset package → ","package → ").trim();
+        const lgFlightRow=(arr)=>{
+          const f0=arr[0];
+          const worst=arr.reduce((m,x)=>((x.days==null?999:x.days)<(m.days==null?999:m.days)?x:m),arr[0]);
+          const whoG={};arr.forEach(x=>{(whoG[x.who]=whoG[x.who]||[]).push(x)});
+          return<div key={f0.fid} onClick={()=>ovOpen({t:"dossier",fid:f0.fid})} style={{display:"grid",gridTemplateColumns:"minmax(160px,.9fr) minmax(300px,1.8fr) 104px 56px minmax(160px,.95fr)",gap:12,alignItems:"center",padding:"8px 14px",borderTop:"1px solid rgba(46,46,74,.4)",borderLeft:"3px solid "+(worst.days!=null&&worst.days<0?HD.rose:worst.days!=null&&worst.days<=3?HD.ember:"transparent"),fontSize:12.5,cursor:"pointer"}}>
+            <span style={{color:HD.bone,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f0.flight}</span>
+            <span style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"baseline",minWidth:0}}>
+              {Object.entries(whoG).map(([who,xs])=><span key={who} style={{display:"inline-flex",gap:6,alignItems:"baseline",minWidth:0}}>
+                <span style={{fontSize:9.5,fontWeight:800,letterSpacing:.5,textTransform:"uppercase",border:"1px solid",borderRadius:99,padding:"1.5px 8px",color:who==="You"?HD.lilac:who==="SEO/Web"?HD.flame:who==="Creative Ops"?HD.gold:HD.ember,borderColor:"currentColor",whiteSpace:"nowrap"}}>{who}{xs.length>1?" ×"+xs.length:""}</span>
+                <span style={{color:HD.smoke,fontSize:11.5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:300}}>{xs.map(shortWhat).join(" · ")}</span>
+              </span>)}
+            </span>
+            <span style={{fontWeight:800,fontSize:12,color:worst.days!=null&&worst.days<0?HD.rose:worst.days!=null&&worst.days<=3?HD.ember:worst.days!=null&&worst.days<=7?HD.gold:HD.smoke}}>{worst.due?dndFd(worst.due):"—"}</span>
+            <span style={{fontWeight:800,fontSize:11.5,color:worst.days!=null&&worst.days<0?HD.rose:worst.days!=null&&worst.days<=7?HD.ember:HD.smoke}}>{cnt(worst.days)}</span>
+            <span style={{color:HD.dim,fontSize:11,fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{worst.orElse}</span>
+          </div>};
         const bs=BRANDS.filter(b=>dndLedger.some(x=>x.brand===b.name)).sort((a,b2)=>minD(dndLedger.filter(x=>x.brand===a.name))-minD(dndLedger.filter(x=>x.brand===b2.name)));
         return<div style={{marginBottom:16}}>
           <div style={{fontSize:10,fontWeight:800,letterSpacing:2.5,color:HD.gold,textTransform:"uppercase",marginBottom:7,display:"flex",alignItems:"center",gap:7}}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={HD.gold} strokeWidth="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-            The ledger — brand, then DMA, then who owes what · soonest first
+            The ledger — brand, then DMA, then the deal · one line per deal, soonest first
           </div>
           <div style={{border:"1px solid "+HD.bd,borderRadius:10,overflow:"hidden",background:"rgba(23,23,42,.45)"}}>
-            <div style={{display:"grid",gridTemplateColumns:"104px minmax(190px,1.3fr) minmax(130px,.85fr) 104px 56px minmax(190px,1.1fr)",gap:12,padding:"7px 14px",fontSize:9,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:HD.dim,background:"rgba(11,11,22,.5)"}}>
-              <span>Owes it</span><span>What</span><span>Deal</span><span>Hard date</span><span></span><span>Or else</span>
+            <div style={{display:"grid",gridTemplateColumns:"minmax(160px,.9fr) minmax(300px,1.8fr) 104px 56px minmax(160px,.95fr)",gap:12,padding:"7px 14px",fontSize:9,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:HD.dim,background:"rgba(11,11,22,.5)"}}>
+              <span>Deal</span><span>Who owes what</span><span>Hard date</span><span></span><span>Or else</span>
             </div>
             {bs.map(b=>{
               const items=dndLedger.filter(x=>x.brand===b.name);
@@ -12050,12 +12070,16 @@ Rules:
               return<div key={b.code}>
                 <div style={{display:"flex",gap:11,alignItems:"baseline",padding:"7px 14px 5px",background:"rgba(11,11,22,.65)",borderTop:"1px solid "+HD.bd,boxShadow:"inset 3px 0 0 "+b.color}}>
                   <span style={{...serif,fontSize:15.5,fontWeight:700,color:b.color}}>{b.name}</span>
-                  <span style={{fontSize:10.5,fontWeight:700,color:worst<0?HD.rose:worst<=3?HD.ember:HD.dim}}>{items.length} owed · worst {cnt(worst)}</span>
+                  <span style={{fontSize:10.5,fontWeight:700,color:worst<0?HD.rose:worst<=3?HD.ember:HD.dim}}>{[...new Set(items.map(x=>x.fid))].length} deal{[...new Set(items.map(x=>x.fid))].length!==1?"s":""} owed · worst {cnt(worst)}</span>
                 </div>
-                {dmas.map(d2=><React.Fragment key={d2}>
-                  <div style={{fontSize:9,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:HD.smoke,padding:"4px 14px 1px"}}>{d2}</div>
-                  {items.filter(x=>(x.mkts||"no market set")===d2).map(lgRow)}
-                </React.Fragment>)}
+                {dmas.map(d2=>{
+                  const dItems=items.filter(x=>(x.mkts||"no market set")===d2);
+                  const byF={};dItems.forEach(x=>{(byF[x.fid]=byF[x.fid]||[]).push(x)});
+                  const groups=Object.values(byF).sort((g1,g2)=>minD(g1)-minD(g2));
+                  return<React.Fragment key={d2}>
+                    <div style={{fontSize:9,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:HD.smoke,padding:"4px 14px 1px"}}>{d2}</div>
+                    {groups.map(lgFlightRow)}
+                  </React.Fragment>})}
               </div>})}
           </div>
         </div>})()}
