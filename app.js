@@ -1232,19 +1232,16 @@ const App=()=>{
             console.log("NSH OOH creative purge: cleared "+cleared+" board overlay entries");
           }
         }catch(e){console.warn("NSH OOH purge skipped",e)}
-        // Predators sponsorship DRAFT (removable). A prior save wrote the old NSH creative
-        // into the wkOohDesigns/wkOohIscis overlays, which win over the seed on load — so the
-        // seed's Predators draft never showed on the map. Force the seed creative onto the NSH
-        // boards ONCE; the normal save effects then persist it, so the map/report reflect the
-        // proposal. To remove the draft: revert the seed commit and bump this flag to V2.
+        // Predators sponsorship DRAFT (removable). While Nashville is in draft mode the
+        // SEED is the source of truth for NSH creative: force it over the Firestore
+        // overlays on EVERY load (idempotent), so the map always matches the repo data.
+        // No one-time flag — a missed application self-heals on the next refresh.
+        // To end draft mode: delete this block (Firestore overlays take over again).
         try{
-          if(!docs.nshPredatorsDraftV9?.data){
-            const seedNsh=Object.fromEntries((typeof POSTINGS!=="undefined"?POSTINGS:[]).filter(p=>p.dma==="NSH"&&Array.isArray(p.design)&&p.design.length).map(p=>[p.boardId,{design:p.design,isci:p.isci||""}]));
-            if(Object.keys(seedNsh).length){
-              setPops(prev=>prev.map(p=>p.dma==="NSH"&&seedNsh[p.boardId]?{...p,design:seedNsh[p.boardId].design.slice(),isci:seedNsh[p.boardId].isci}:p));
-              saveToDb("nshPredatorsDraftV9",{done:true,ts:Date.now()}).catch(()=>{});
-              console.log("NSH Predators draft V9 loaded onto "+Object.keys(seedNsh).length+" boards");
-            }
+          const seedNsh=Object.fromEntries((typeof POSTINGS!=="undefined"?POSTINGS:[]).filter(p=>p.dma==="NSH"&&Array.isArray(p.design)&&p.design.length).map(p=>[p.boardId,{design:p.design,isci:p.isci||""}]));
+          if(Object.keys(seedNsh).length){
+            setPops(prev=>prev.map(p=>p.dma==="NSH"&&seedNsh[p.boardId]?{...p,design:seedNsh[p.boardId].design.slice(),isci:seedNsh[p.boardId].isci}:p));
+            console.log("NSH Predators draft applied to "+Object.keys(seedNsh).length+" board rows (seed-forced)");
           }
         }catch(e){console.warn("NSH Predators draft skipped",e)}
       }catch(e){console.warn("Firestore load failed:",e);
