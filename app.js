@@ -5193,7 +5193,7 @@ const App=()=>{
                   <span style={{fontWeight:700,color:c.d<=1?"#E85A7A":"#D4A040",flexShrink:0}}>{c.d.toFixed(1)} mi</span>
                 </div>)}</div>
               </div>}
-              {approxConflicts.length>0&&<div style={{marginTop:6,border:"1px dashed #4a3565",borderRadius:6,overflow:"hidden"}}>
+              {approxConflicts.length>0&&<div style={{marginTop:6,border:"1px dashed rgba(196,160,200,.25)",borderRadius:12,overflow:"hidden"}}>
                 <div style={{padding:"5px 10px",background:"rgba(155,123,176,.1)",fontSize:11,fontWeight:700,color:"#9B8EAD"}}>~ {approxConflicts.length} possible pair{approxConflicts.length!==1?"s":""} involving approx-located boards — <b>verify the exact spot</b> before trusting</div>
                 <div style={{maxHeight:120,overflowY:"auto"}}>{approxConflicts.slice(0,40).map((c,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"3px 10px",borderTop:"1px solid #2d1f42",fontSize:11,opacity:.8}}>
                   <span style={{width:8,height:8,borderRadius:4,background:crColor(c.shared[0]),flexShrink:0}}/>
@@ -11889,7 +11889,7 @@ Rules:
       horizon.sort((a,b)=>String(a.trafficDue||a.flightStart||"9999").localeCompare(String(b.trafficDue||b.flightStart||"9999")));
       const missTotal=activeCamps.reduce((t,c)=>t+openOf(c).length,0);
       const missCamps=activeCamps.filter(c=>openOf(c).length).length;
-      const needCard=(c,strong)=><div key={c.id} onClick={()=>mopsGo("c/"+c.id)} style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid "+(strong?"rgba(232,90,122,.4)":"#4a3565"),borderRadius:6,padding:"18px 20px",display:"flex",flexDirection:"column",gap:8,marginBottom:12,cursor:"pointer"}}>
+      const needCard=(c,strong)=><div key={c.id} onClick={()=>mopsGo("c/"+c.id)} style={{background:"linear-gradient(145deg,#2d1f42 0%,#261840 50%,#2d1f42 100%)",border:"1px solid rgba(196,160,200,.15)",borderRadius:12,boxShadow:"0 4px 24px rgba(30,18,51,.5),0 1px 0 rgba(196,160,200,.08) inset",borderLeft:"3px solid "+(strong?"#E85A7A":"#D4A040"),padding:"18px 20px",display:"flex",flexDirection:"column",gap:8,marginBottom:12,cursor:"pointer"}}>
         <div style={{...serif,fontSize:strong?22:19,fontWeight:700,color:"#F0E8F8"}}>{c.name}</div>
         <div style={{fontSize:11,fontWeight:700,color:getBrandColor(c.brand),textTransform:"uppercase",letterSpacing:1.2}}>{c.brand}{c.markets?" · "+c.markets:""}</div>
         <div style={{fontSize:14,lineHeight:1.65,color:"#E8DFF0"}}>{campProse(c)}</div>
@@ -11911,7 +11911,7 @@ Rules:
       const todayIso=iso(new Date());
       return<div>
         <div style={{marginBottom:20}}>
-          <div style={{...serif,fontSize:34,fontWeight:700,color:"#F0E8F8"}}>The War Room</div>
+          <PageHead title="The War Room" pgKey="campaigns"/>
           <div style={{...serif,fontSize:17,fontStyle:"italic",color:"#C4A0C8",marginTop:4}}>
             {activeCamps.length} in flight — {live.length} live and fed{missTotal?", waiting on "+missTotal+" asset"+(missTotal>1?"s":"")+" across "+missCamps+" campaign"+(missCamps>1?"s":""):", nothing owed anywhere"}. {doomPick(DOOM.pg.campaigns||DOOM.sprinkle)}
           </div>
@@ -11934,7 +11934,7 @@ Rules:
                 <div style={{fontSize:10,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:b.color,margin:"2px 0 8px"}}>{b.name}</div>
                 {bRows.map(c=>{const opens=openOf(c);
               return opens.length?needCard(c,false)
-              :<div key={c.id} onClick={()=>mopsGo("c/"+c.id)} style={{background:"rgba(45,31,66,.45)",border:"1px dashed #4a3565",borderRadius:6,padding:"13px 16px",marginBottom:12,cursor:"pointer"}}>
+              :<div key={c.id} onClick={()=>mopsGo("c/"+c.id)} style={{background:"rgba(45,31,66,.45)",border:"1px dashed rgba(196,160,200,.25)",borderRadius:12,padding:"13px 16px",marginBottom:12,cursor:"pointer"}}>
                 <div style={{...serif,fontSize:17,fontWeight:700,color:"#C4A0C8"}}>{c.name}</div>
                 <div style={{fontSize:12,color:"#9B8EAD",marginTop:3}}>{c.brand}{c.markets?" · "+c.markets:""} — {c.flightStart?"launches "+campFd(c.flightStart):"no dates yet — open it and set the flight"}</div>
               </div>})}
@@ -11942,7 +11942,7 @@ Rules:
           </div>
           <div>
             {secHead("Live — nothing owed","#5BC4A0","airing now, every asset in hand")}
-            <div style={{background:"rgba(91,196,160,.05)",border:"1px solid rgba(91,196,160,.25)",borderRadius:6,padding:"14px 16px",display:"flex",flexDirection:"column",gap:12,fontSize:14}}>
+            <div style={{background:"rgba(91,196,160,.05)",border:"1px solid rgba(91,196,160,.25)",borderRadius:12,padding:"14px 16px",display:"flex",flexDirection:"column",gap:12,fontSize:14}}>
               {live.length===0&&<div style={{color:"#9B8EAD",fontStyle:"italic"}}>Nothing airing yet.</div>}
               {BRANDS.map(b=>{const rows=live.filter(c=>c.brand===b.name);if(!rows.length)return null;
                 return<div key={b.code}>
@@ -11993,10 +11993,7 @@ Rules:
         </div>};
       const bTags=taglines.filter(t=>!t.brand||t.brand===b.name);
       return<div>
-        <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:6}}>
-          <div style={{...serif,fontSize:34,fontWeight:700,color:b.color}}>{b.name}</div>
-          <div style={{fontSize:13,color:"#9B8EAD"}}>{needy.length?needy.length+" campaign"+(needy.length!==1?"s":"")+" waiting on assets":"nothing owed"}</div>
-        </div>
+        <PageHead title={b.name} pgKey="campaigns" sub={(needy.length?needy.length+" campaign"+(needy.length!==1?"s":"")+" waiting on assets":"nothing owed")+" — by DMA"}/>
         <div style={{fontSize:12,color:"#6B5E80",marginBottom:20}}>{fed>0?fed+" more live and fed — they're in the War Room, not here. ":""}{wrappedMine?wrappedMine+" wrapped this year in History.":""}</div>
         {needy.length===0&&<div style={{...serif,fontStyle:"italic",fontSize:17,color:"#5BC4A0",padding:"18px 0"}}>Every {b.name} campaign has what it needs. A rare sight — enjoy it.</div>}
         {dmaNames.map(dn=>{const rows=needy.filter(c=>inDma(c,dn));if(!rows.length)return null;
@@ -12147,8 +12144,7 @@ Rules:
       const notConfigured=feedErr&&/not_configured|NOTION_API_KEY/i.test(feedErr);
       const lbl=(t,gold)=><div style={{fontSize:9,color:gold?"#D4A040":"#6B5E80",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>{t}</div>;
       return<div style={{maxWidth:900}}>
-        <div style={{...serif,fontSize:34,fontWeight:700,color:"#F0E8F8",marginBottom:4}}>Intake</div>
-        <div style={{fontSize:13,color:"#9B8EAD",marginBottom:22}}>Three doors in, zero retyping: the Notion pipe feeds the desks on its own; a contract can be read straight into the form; the form files itself in Notion.</div>
+        <PageHead title="Intake" pgKey="campaigns" sub="Three doors in, zero retyping: the Notion pipe feeds the desks on its own; a contract reads straight into the form; the form files itself in Notion."/>
         {secHead("From a contract","#4AC8E8","paste the contract, media plan, or kickoff email — or upload the PDF")}
         <textarea value={contractText} onChange={e=>setContractText(e.target.value)} placeholder="Paste contract / media plan / email text here…" style={{...mIn,width:"100%",minHeight:100,fontFamily:"'DM Sans',sans-serif",resize:"vertical"}}/>
         <div style={{display:"flex",gap:8,margin:"8px 0 24px",alignItems:"center",flexWrap:"wrap"}}>
@@ -12208,8 +12204,7 @@ Rules:
       const revs=Object.entries(assetReviews).sort((a,b)=>String(b[1].sentAt||"").localeCompare(String(a[1].sentAt||"")));
       const sent=(auditLog||[]).filter(e=>["Campaign Brief","Campaign Request","Creative Review","Campaign Assets"].includes(e.a)).slice(0,12);
       return<div style={{maxWidth:880}}>
-        <div style={{...serif,fontSize:34,fontWeight:700,color:"#F0E8F8",marginBottom:4}}>Dispatch</div>
-        <div style={{fontSize:13,color:"#9B8EAD",marginBottom:22}}>The outbox. What's ready to go out, what's out awaiting an answer, what already went. Every send shows you the email before it moves; you're CC'd on all of it.</div>
+        <PageHead title="Dispatch" pgKey="notif" sub="The outbox: ready to go out, awaiting answers, already sent. Every send shows the email first; you are CC'd on everything."/>
         {secHead("Ready to go out","#D4A040",needBrief.length+needSeo.length?null:"nothing queued — when a campaign needs something, its send lands here")}
         <div style={{display:"flex",flexDirection:"column",marginBottom:24}}>
           {needBrief.map(c=><div key={"b"+c.id} style={{display:"flex",gap:12,alignItems:"center",padding:"9px 10px",borderBottom:"1px solid #2d1f42"}}>
@@ -12265,89 +12260,38 @@ Rules:
     // ── History ──
     const HistoryPg=()=>{
       const wrapped=campaigns.filter(c=>c.status==="Wrapped");
-      return<div style={{maxWidth:860}}>
-        <div style={{...serif,fontSize:34,fontWeight:700,color:"#F0E8F8",marginBottom:4}}>History</div>
-        <div style={{fontSize:13,color:"#9B8EAD",marginBottom:22}}>{wrapped.length} wrapped campaigns — the record this year, by brand.</div>
-        {BRANDS.map(b=>{const rows=wrapped.filter(c=>c.brand===b.name);if(!rows.length)return null;
-          return<div key={b.code} style={{marginBottom:18}}>
-            <div style={{fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:b.color,borderBottom:"2px solid "+b.color+"44",paddingBottom:5,marginBottom:2}}>{b.name}</div>
-            {rows.map(c=><div key={c.id} style={{display:"flex",gap:12,alignItems:"baseline",padding:"8px 10px",borderBottom:"1px solid #2d1f42"}}>
-              <span onClick={()=>mopsGo("c/"+c.id)} style={{...serif,fontSize:16,fontWeight:700,color:"#C4A0C8",cursor:"pointer",flex:1}}>{c.name}</span>
-              <span style={{fontSize:12,color:"#9B8EAD"}}>{c.markets}</span>
-              <span style={{fontSize:12,color:"#6B5E80"}}>{c.flightStart?campFd(c.flightStart)+(c.flightEnd?" – "+campFd(c.flightEnd):""):""}</span>
-              <button onClick={()=>updCamp(c.id,{status:"Planning"})} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#5BC4A0",fontSize:10,fontWeight:700,cursor:"pointer",padding:"2px 9px"}}>revive</button>
-            </div>)}
+      const monthOf=(c)=>{const i=campIsoD(c.flightEnd)||campIsoD(c.flightStart);if(!i)return"Undated";const d=new Date(i+"T00:00:00");return d.toLocaleDateString("en-US",{month:"long",year:"numeric"})};
+      const keyOf=(c)=>{const i=campIsoD(c.flightEnd)||campIsoD(c.flightStart);return i?i.slice(0,7):"0000"};
+      const groups={};wrapped.forEach(c=>{const k=keyOf(c);(groups[k]=groups[k]||[]).push(c)});
+      const keys=Object.keys(groups).sort().reverse();
+      return<div style={{maxWidth:1000}}>
+        <PageHead title="History" pgKey="library" sub={wrapped.length+" wrapped campaigns — the year's record, month by month."}/>
+        {keys.map(k=>{const rows=groups[k];const label=k==="0000"?"Undated":monthOf(rows[0]);
+          return<div key={k} style={{marginBottom:18}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+              <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:"#D4A040",letterSpacing:.5}}>{label}</span>
+              <span style={{fontSize:11,color:"#6B5E80"}}>· {rows.length} campaign{rows.length!==1?"s":""}</span>
+              <span style={{flex:1,height:1,background:"linear-gradient(90deg,rgba(212,160,64,.35),transparent)"}}/>
+            </div>
+            <Cd style={{padding:0,overflow:"hidden"}}>
+              {rows.map((c,i)=><div key={c.id} style={{display:"flex",gap:12,alignItems:"baseline",padding:"10px 14px",borderTop:i?"1px solid #2d1f42":"none",borderLeft:"3px solid "+getBrandColor(c.brand)}}>
+                <span onClick={()=>mopsGo("c/"+c.id)} style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,color:"#E8DFF0",cursor:"pointer",flex:1}}>{c.name}</span>
+                <span style={{fontSize:11,fontWeight:700,color:getBrandColor(c.brand)}}>{c.brand}</span>
+                <span style={{fontSize:12,color:"#9B8EAD"}}>{c.markets}</span>
+                <span style={{fontSize:12,color:"#6B5E80"}}>{c.flightStart?campFd(c.flightStart)+(c.flightEnd?" – "+campFd(c.flightEnd):""):""}</span>
+                <button onClick={()=>updCamp(c.id,{status:"Planning"})} style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#5BC4A0",fontSize:10,fontWeight:700,cursor:"pointer",padding:"2px 9px"}}>revive</button>
+              </div>)}
+            </Cd>
           </div>})}
-      </div>;
-    };
-    // ── Assets: the registry. Every asset in the system, one row each,
-    //    ISCI-Registry-shaped: identity first (name · type · category ·
-    //    brand · DMA), the file right there, its campaign one click away.
-    //    Categories come from Doom's own per-brand ISCI vocabulary. ──
-    const AssetsPg=()=>{
-      const q=(mopsAssetQ||"").toLowerCase();
-      const rows=[];
-      campaigns.forEach(c=>{
-        if(c.status==="Wrapped"&&!mopsAssetWrapped)return;
-        (c.assets||[]).forEach(a=>{
-          if(mopsAssetBrand&&c.brand!==mopsAssetBrand)return;
-          if(mopsAssetType&&a.type!==mopsAssetType)return;
-          if(mopsAssetMissing&&assetInHand(a))return;
-          if(q){const hay=((a.label||"")+" "+a.type+" "+(a.cat||"")+" "+c.name+" "+(c.markets||"")+" "+(a.isci||"")).toLowerCase();if(!hay.includes(q))return}
-          rows.push([c,a]);
-        });
-      });
-      rows.sort((x,y)=>String(x[1].due||"9999").localeCompare(String(y[1].due||"9999")));
-      const total=rows.length;
-      const inHand=rows.filter(([c,a])=>assetInHand(a)).length;
-      const brandCats=(b)=>((typeof customFields!=="undefined"&&customFields[b]&&customFields[b].categories)||[]);
-      return<div>
-        <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:6}}>
-          <div style={{...serif,fontSize:34,fontWeight:700,color:"#F0E8F8"}}>Assets</div>
-          <div style={{fontSize:13,color:"#9B8EAD"}}>every asset in the system, one row each — the file lives on the row</div>
-          <div style={{marginLeft:"auto",fontSize:13,fontWeight:700,color:inHand===total?"#5BC4A0":"#D4A040"}}>{inHand}/{total} in hand</div>
-        </div>
-        <div style={{display:"flex",gap:8,margin:"10px 0 14px",flexWrap:"wrap",alignItems:"center"}}>
-          <input value={mopsAssetQ} onChange={e=>setMopsAssetQ(e.target.value)} placeholder="Search assets, campaigns, ISCIs…" style={{...mIn,minWidth:220}}/>
-          <select value={mopsAssetBrand} onChange={e=>setMopsAssetBrand(e.target.value)} style={mIn}><option value="">All brands</option>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select>
-          <select value={mopsAssetType} onChange={e=>setMopsAssetType(e.target.value)} style={mIn}><option value="">All types</option>{CAMP_ASSET_TYPES.map(x=><option key={x.t} value={x.t}>{x.t}</option>)}</select>
-          <label style={{fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:5,cursor:"pointer"}}><input type="checkbox" checked={mopsAssetMissing} onChange={e=>setMopsAssetMissing(e.target.checked)}/>missing only</label>
-          <label style={{fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:5,cursor:"pointer"}}><input type="checkbox" checked={mopsAssetWrapped} onChange={e=>setMopsAssetWrapped(e.target.checked)}/>include wrapped</label>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"26px minmax(150px,1.4fr) 110px 120px minmax(110px,1fr) minmax(130px,1.2fr) 100px 96px 150px",gap:10,padding:"7px 12px",borderBottom:"2px solid #4a3565",fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",color:"#6B5E80"}}>
-          <div></div><div>Asset</div><div>Type</div><div>Category</div><div>Brand · DMA</div><div>Campaign</div><div>Owner</div><div>Due</div><div>File</div>
-        </div>
-        {rows.length===0&&<div style={{...serif,fontStyle:"italic",fontSize:15,color:"#9B8EAD",padding:"18px 12px"}}>{doomPick(DOOM.empty)}</div>}
-        {rows.map(([c,a])=>{const inH=assetInHand(a);const n=campDTo(a.due);const col=inH?"#5BC4A0":n!=null&&n<0?"#E85A7A":n!=null&&n<=10?"#D4A040":"#9B8EAD";const lk=assetLink(a);const linked=isciByKey(a.isci);
-          return<div key={a.id} style={{display:"grid",gridTemplateColumns:"26px minmax(150px,1.4fr) 110px 120px minmax(110px,1fr) minmax(130px,1.2fr) 100px 96px 150px",gap:10,padding:"9px 12px",borderBottom:"1px solid #2d1f42",alignItems:"center",background:inH?"rgba(91,196,160,.03)":n!=null&&n<0?"rgba(232,90,122,.05)":"transparent"}}>
-            <span onClick={()=>{updAsset(c.id,a.id,{status:inH?"needed":"done"});notify(inH?"Back to owed: "+(a.label||a.type):"✓ In hand: "+(a.label||a.type))}} style={{cursor:"pointer"}}>{box(inH,col==="#9B8EAD"?"#4a3565":col)}</span>
-            <input value={a.label} placeholder={a.type} onChange={e=>updAsset(c.id,a.id,{label:e.target.value})} style={{fontWeight:700,color:"#F0E8F8",background:"transparent",border:"none",borderBottom:"1px dashed transparent",outline:"none",fontSize:14,fontFamily:"'DM Sans',sans-serif",width:"100%"}} onFocus={e=>e.target.style.borderBottomColor="#4a3565"} onBlur={e=>e.target.style.borderBottomColor="transparent"}/>
-            <span style={{fontSize:11,fontWeight:700,color:campTypeMeta(a.type).c}}>{a.type}</span>
-            <select value={a.cat||""} onChange={e=>updAsset(c.id,a.id,{cat:e.target.value})} style={{background:"transparent",border:"none",color:a.cat?"#C4A0C8":"#6B5E80",fontSize:12,outline:"none",cursor:"pointer",width:"100%"}}>
-              <option value="">— category</option>
-              {[...new Set([...(brandCats(c.brand)),a.cat||""].filter(Boolean))].map(x=><option key={x} value={x}>{x}</option>)}
-            </select>
-            <span style={{fontSize:11,color:"#9B8EAD"}}><b style={{color:getBrandColor(c.brand)}}>{c.brand}</b>{c.markets?<span> · {c.markets}</span>:null}</span>
-            <span onClick={()=>mopsGo("c/"+c.id)} style={{fontSize:13,fontWeight:700,color:"#E8DFF0",cursor:"pointer",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</span>
-            <span style={{fontSize:11,color:"#C4A0C8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{inH?"—":(a.owner||"—")}</span>
-            <span style={{fontSize:11,fontWeight:700,color:col}}>{a.due?campFd(a.due):"—"}</span>
-            <span style={{display:"flex",gap:5,alignItems:"center"}}>
-              {lk?<a href={lk} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4AC8E8",textDecoration:"none",fontWeight:700}}>◆ open</a>
-                :<label style={{fontSize:10,color:"#4AC8E8",fontWeight:700,cursor:"pointer",border:"1px solid #4a3565",borderRadius:4,padding:"2px 7px",whiteSpace:"nowrap"}}>📎<input type="file" style={{display:"none"}} onChange={e=>uploadAssetFile(c,a,e.target.files&&e.target.files[0])}/></label>}
-              {linked&&<span title={"Linked ISCI: "+linked.code+" — "+(linked.title||"")} style={{fontSize:10,color:"#5BC4A0",fontWeight:700}}>{linked.code}</span>}
-              {!inH&&lk&&a.status!=="review"&&<button onClick={()=>sendReview(c,a)} style={{background:"none",border:"1px solid #C4A0C8",borderRadius:4,color:"#C4A0C8",fontSize:9,fontWeight:700,cursor:"pointer",padding:"2px 6px"}}>review</button>}
-            </span>
-          </div>})}
-        <div style={{fontSize:11,color:"#6B5E80",marginTop:10}}>◆ means the file itself is attached — uploaded here, or riding on a linked ISCI from the registry. Click a campaign name for the full picture.</div>
       </div>;
     };
     // ── Shell ──
     const mopsNav=[
-      {id:"",l:"The War Room"},
-      {id:"assets",l:"Assets"},
-      {id:"intake",l:"Intake"},
-      {id:"dispatch",l:"Dispatch"},
-      {id:"history",l:"History"}
+      {id:"",l:"The War Room",e:"🏛"},
+      {id:"assets",l:"Assets",e:"◈"},
+      {id:"intake",l:"Intake",e:"📥"},
+      {id:"dispatch",l:"Dispatch",e:"📤"},
+      {id:"history",l:"History",e:"📜"}
     ];
     const deskOf=(c)=>"b/"+c;
     let body;
@@ -12358,7 +12302,7 @@ Rules:
     else if(sub==="dispatch")body=Dispatch();
     else if(sub==="history")body=HistoryPg();
     else body=WarRoom();
-    return<div style={{display:"flex",height:"100vh",background:"radial-gradient(ellipse at 50% 0%, #2a1a3e 0%, #1e1233 60%)",overflow:"hidden"}}>
+    return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",overflow:"hidden"}}>
       <div style={{width:216,background:"linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
         <div style={{padding:"16px 14px 12px",borderBottom:"1px solid rgba(212,160,64,.15)"}}>
           <div style={{...serif,fontSize:19,fontWeight:700,color:"#D4A040",letterSpacing:.5}}>Marketing Ops</div>
@@ -12366,7 +12310,7 @@ Rules:
         </div>
         <div style={{flex:1,overflowY:"auto",padding:"8px 0"}}>
           {mopsNav.map(n=>{const a=(n.id===""&&(sub===""||sub.startsWith("c/")))||(n.id!==""&&sub===n.id);
-            return<button key={n.id||"war"} onClick={()=>mopsGo(n.id)} style={{display:"block",width:"100%",padding:"9px 16px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent"}}>{n.l}</button>})}
+            return<button key={n.id||"war"} onClick={()=>mopsGo(n.id)} style={{display:"block",width:"100%",padding:"9px 16px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent"}}><span style={{marginRight:8}}>{n.e}</span>{n.l}</button>})}
           <div style={{padding:"14px 16px 5px",fontSize:9,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:"#4a3565"}}>Desks</div>
           {BRANDS.map(b=>{const a=sub==="b/"+b.code;const n=activeCamps.filter(c=>c.brand===b.name).length;const miss=activeCamps.filter(c=>c.brand===b.name).reduce((t,c)=>t+openOf(c).length,0);
             return<button key={b.code} onClick={()=>mopsGo(deskOf(b.code))} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"8px 16px",border:"none",background:a?"linear-gradient(90deg,"+b.color+"1f,transparent)":"transparent",color:a?b.color:"#6B5E80",fontSize:12,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid "+b.color:"3px solid transparent"}}>
