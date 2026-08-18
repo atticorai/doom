@@ -753,6 +753,10 @@ const dndChannelEmit=(ch,detail,f)=>{
 // the flight actually has — no streaming URL without a streaming channel.
 const CAMP_BRAND_URLS={"Postman Law":"https://www.postmanlaw.com","Wettermark Keith":"https://www.wkfirm.com","Lerner & Rowe":"https://lernerandrowe.com","Parrish DeVaughn":"https://www.parrishdevaughn.com","Keches Law Group":"https://www.kecheslaw.com"};
 const DND_UTM_ELIGIBLE=(f)=>{const chs=f.channels||[];const out=[];
+  const rl=(f.reqs||[]).map(r=>(String(r.label||"")+" "+String(r.spec||"")).toLowerCase()).join(" | ");
+  const has=(re)=>re.test(rl);
+  if(!chs.includes("Digital")&&has(/banner|display|graphic|300|728/))out.push({medium:"display",label:"Display"});
+  if(!chs.includes("Streaming Audio")&&has(/streaming|companion/))out.push({medium:"streaming-audio",label:"Streaming"});
   if(chs.includes("Digital"))out.push({medium:"display",label:"Display"});
   if(chs.includes("Streaming Audio"))out.push({medium:"streaming-audio",label:"Streaming"});
   if(chs.includes("Paid Social"))out.push({medium:"paid-social",label:"Paid Social"});
@@ -808,7 +812,8 @@ const dndMigrate=(c)=>{
   if(c&&Array.isArray(c.reqs)&&Array.isArray(c.traffic)){
     // sanitize any vendor that swallowed a station rundown in an earlier save
     const t=(c.traffic||[]).map(x=>(String(x.vendor||"").length>30||/\(\d+x/.test(String(x.vendor||"")))?{...x,vendor:dndCleanVendor(c)||"(set the vendor)"}:x);
-    return{...c,traffic:t};
+    const rq=(c.reqs||[]).map(r=>({...r,due:dndRoll(r.due)||r.due}));
+    return{...c,traffic:t,reqs:rq};
   }
   const f={id:c.id||campUid(),name:c.name||"Untitled",brand:campBrandFix(c.brand),markets:c.markets||"",
     status:c.status==="Wrapped"?"wrapped":c.status==="Live"?"live":"approach",
@@ -821,6 +826,9 @@ const dndMigrate=(c)=>{
   (c.assets||[]).forEach(a=>{
     const kind=dndKindOfOld(a);if(!kind)return;
     const r=dndMkReq(kind,a.label||a.type,"",campIsoD(a.due),a.owner==="SEO / Web"?"seo":a.owner==="Hazel"?"merch":a.owner==="Station"?"station":undefined);
+    const _def1=campMinusDays(f.flightStart,7),_def2=campIsoD(c.trafficDue);
+    if(!r.due||r.due===_def1||r.due===_def2)r.due=(kind==="web"?dndVendorDue(f):dndCreativeDue(f))||r.due;
+    else r.due=dndRoll(r.due)||r.due;
     r.state=dndStateOfOld(a,kind);r.isci=a.isci||"";r.url=a.url||"";
     if(r.url)r.versions=[{v:1,fileUrl:r.url,receivedAt:new Date(f.created).toISOString(),source:"upload"}];
     f.reqs.push(r);
@@ -11672,7 +11680,7 @@ Rules:
       const brand=BRANDS.some(b=>b.name===p.brand)?p.brand:"Postman Law";
       const bMarkets=((BRANDS.find(b=>b.name===brand)||{}).markets||[]).map(m=>DM[m]||m);
       setDnc({...DNC_EMPTY,name:p.name||"",brand,
-        markets:Array.isArray(p.markets)?p.markets.filter(m=>bMarkets.some(x=>x.toLowerCase()===String(m).toLowerCase())):[],
+        markets:Array.isArray(p.markets)?p.markets.map(m=>String(m).trim()).filter(Boolean):[],
         flightStart:campIsoD(p.flightStart),flightEnd:campIsoD(p.flightEnd),trafficDue:campIsoD(p.trafficDue),
         channels:Array.isArray(p.channels)?p.channels.filter(x=>DND_CHANNELS.includes(x)):[],
         spots:Array.isArray(p.spots)?p.spots.filter(x=>[":15",":30",":60","Host Read"].includes(x)):[],
@@ -12251,7 +12259,7 @@ Rules:
           <div><label style={flab}>Package due (T−7 default)</label><input type="date" value={campIsoD(f.trafficDue)||dndVendorDue(f)} onChange={e=>updFlight(f.id,{trafficDue:e.target.value})} style={{...inp,borderColor:"rgba(212,160,64,.55)"}}/></div>
           <div style={{minWidth:170}}><label style={flab}>Markets (DMA)</label>
             <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-              {bMarkets.map(mn=>{const on=mk.some(x=>x.toLowerCase()===mn.toLowerCase());
+              {[...new Set([...mk,...bMarkets])].map(mn=>{const on=mk.some(x=>x.toLowerCase()===mn.toLowerCase());
                 return<button key={mn} onClick={()=>{const nx=on?mk.filter(x=>x.toLowerCase()!==mn.toLowerCase()):[...mk,mn];updFlight(f.id,{markets:nx.join(", ")})}} style={{...mini(on?HD.soul:undefined),color:on?HD.soul:HD.dim,fontSize:10,padding:"3px 9px"}}>{mn}{on?" ✓":""}</button>})}
             </div>
           </div>
@@ -12511,7 +12519,7 @@ Rules:
           <div><label style={flab}>Brand</label><select value={dnc.brand} onChange={e=>setDnc(p=>({...p,brand:e.target.value,markets:[]}))} style={{...inp,width:"100%"}}>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select></div>
           <div><label style={flab}>Requested by</label><input value={dnc.requestedBy} onChange={e=>setDnc(p=>({...p,requestedBy:e.target.value}))} placeholder="brand manager" style={{...inp,width:"100%"}}/></div>
           <div style={{gridColumn:"span 2"}}><label style={flab}>Markets — Doom knows {dnc.brand}'s DMAs</label>
-            <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{bMarkets.map(mn=>{const on=dnc.markets.includes(mn);
+            <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{[...new Set([...dnc.markets,...bMarkets])].map(mn=>{const on=dnc.markets.includes(mn);
               return<button key={mn} onClick={()=>setDnc(p=>({...p,markets:on?p.markets.filter(x=>x!==mn):[...p.markets,mn]}))} style={pill(on,HD.soul)}>{mn}{on?" ✓":""}</button>})}</div>
           </div>
           <div><label style={flab}>Flight start</label><input type="date" value={dnc.flightStart} onChange={e=>setDnc(p=>({...p,flightStart:e.target.value}))} style={{...inp,width:"100%"}}/></div>
