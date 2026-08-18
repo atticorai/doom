@@ -11781,6 +11781,11 @@ Rules:
   const[mopsUtmBase,setMopsUtmBase]=useState("");
   const[mopsUtmContent,setMopsUtmContent]=useState("");
   const[mopsMailTo,setMopsMailTo]=useState("");
+  const[mopsAssetQ,setMopsAssetQ]=useState("");
+  const[mopsAssetBrand,setMopsAssetBrand]=useState("");
+  const[mopsAssetType,setMopsAssetType]=useState("");
+  const[mopsAssetMissing,setMopsAssetMissing]=useState(false);
+  const[mopsAssetWrapped,setMopsAssetWrapped]=useState(false);
   const[mopsPreview,setMopsPreview]=useState(null); // {kind:"brief"|"seo",cId,to,subject,body} — every send shows the email first
   // ── Marketing Ops Hub pages (direction C: words, checkboxes, time) ──
   const MopsHub=()=>{
@@ -11798,7 +11803,21 @@ Rules:
       const ds=[campDTo(c.trafficDue),...openOf(c).map(a=>campDTo(a.due))].filter(n=>n!=null);
       return ds.length?Math.min.apply(null,ds):null;
     };
-    // ── War Room ──
+    // ── War Room: the whole story of time on one page. Cards speak in
+    //    consequences, not metadata; the month grid lives at the bottom. ──
+    const campProse=(c)=>{
+      const opens=openOf(c);
+      if(!opens.length)return"";
+      const names=opens.slice(0,3).map(a=>(a.label||a.type));
+      let s="Needs "+(names.length>1?names.slice(0,-1).join(", ")+" and "+names[names.length-1]:names[0]);
+      if(opens.length>3)s+=" (+"+(opens.length-3)+" more)";
+      const due=opens.map(a=>campIsoD(a.due)).filter(Boolean).sort()[0];
+      if(due)s+=" in hand by "+campFd(due);
+      const dest=(c.partner||"").trim()||String(c.stations||"").split(",")[0].trim();
+      if(c.trafficDue)s+=" — that's when traffic goes to "+(dest||"the stations");
+      if(c.flightStart)s+=(c.trafficDue?", so":" —")+" the "+campFd(c.flightStart)+" launch holds";
+      return s+".";
+    };
     const WarRoom=()=>{
       const urgent=[],horizon=[],live=[];
       activeCamps.forEach(c=>{
@@ -11809,53 +11828,78 @@ Rules:
       });
       urgent.sort((a,b)=>(hardDate(a)??99)-(hardDate(b)??99));
       horizon.sort((a,b)=>String(a.trafficDue||a.flightStart||"9999").localeCompare(String(b.trafficDue||b.flightStart||"9999")));
-      const needCard=(c,color,strong)=><div key={c.id} onClick={()=>mopsGo("c/"+c.id)} title="Open the campaign page" style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid "+(strong?"rgba(232,90,122,.4)":"#4a3565"),borderRadius:6,padding:"16px 18px",display:"flex",flexDirection:"column",gap:8,marginBottom:12,cursor:"pointer"}}>
-        <div style={{...serif,fontSize:strong?21:19,fontWeight:700,color:"#F0E8F8"}}>{c.name}</div>
-        <div style={{fontSize:12,fontWeight:700,color:getBrandColor(c.brand),textTransform:"uppercase",letterSpacing:1}}>{c.brand}{c.markets?" · "+c.markets:""}</div>
-        <div style={{display:"flex",flexDirection:"column",gap:7,fontSize:14}}>
-          {openOf(c).slice(0,4).map(a=>{const n=campDTo(a.due);const col=n!=null&&n<0?"#E85A7A":n!=null&&n<=10?(strong?"#E85A7A":"#D4A040"):"#D4A040";
-            return<div key={a.id} style={{display:"flex",gap:9,alignItems:"center"}}>{box(false,col)}<div>{a.label||a.type}{a.due?<span> — <b style={{color:col}}>{campFd(a.due)}</b></span>:null}{a.status==="review"?<span style={{color:"#C4A0C8"}}> · out for review</span>:null}</div></div>})}
-          {openOf(c).length>4&&<div style={{fontSize:12,color:"#9B8EAD"}}>+{openOf(c).length-4} more on the campaign page</div>}
-          {c.trafficDue&&<div style={{display:"flex",gap:9,alignItems:"center",color:"#9B8EAD"}}>{box(false,"#4a3565")}<div>Traffic out — {campFd(c.trafficDue)}</div></div>}
-        </div>
-        {strong&&<div onClick={(e)=>{e.stopPropagation();openPreview("brief",c)}} title="Shows you the email first — nothing sends until you approve it" style={{fontSize:12,fontWeight:700,color:"#1e1233",background:"linear-gradient(135deg,#D4A040,#c08f2f)",borderRadius:4,padding:"8px 0",textAlign:"center",marginTop:4,cursor:"pointer"}}>Preview the brief →</div>}
+      const missTotal=activeCamps.reduce((t,c)=>t+openOf(c).length,0);
+      const missCamps=activeCamps.filter(c=>openOf(c).length).length;
+      const needCard=(c,strong)=><div key={c.id} onClick={()=>mopsGo("c/"+c.id)} style={{background:"linear-gradient(145deg,#2d1f42,#261840)",border:"1px solid "+(strong?"rgba(232,90,122,.4)":"#4a3565"),borderRadius:6,padding:"18px 20px",display:"flex",flexDirection:"column",gap:8,marginBottom:12,cursor:"pointer"}}>
+        <div style={{...serif,fontSize:strong?22:19,fontWeight:700,color:"#F0E8F8"}}>{c.name}</div>
+        <div style={{fontSize:11,fontWeight:700,color:getBrandColor(c.brand),textTransform:"uppercase",letterSpacing:1.2}}>{c.brand}{c.markets?" · "+c.markets:""}</div>
+        <div style={{fontSize:14,lineHeight:1.65,color:"#E8DFF0"}}>{campProse(c)}</div>
+        {strong&&<div onClick={(e)=>{e.stopPropagation();openPreview("brief",c)}} style={{fontSize:12,fontWeight:700,color:"#1e1233",background:"linear-gradient(135deg,#D4A040,#c08f2f)",borderRadius:4,padding:"9px 0",textAlign:"center",marginTop:4,cursor:"pointer"}}>Preview the brief →</div>}
       </div>;
+      // The month, at a glance — folded in so time has ONE page.
+      const ev={};
+      const put=(iso,e)=>{if(!iso)return;(ev[iso]=ev[iso]||[]).push(e)};
+      activeCamps.forEach(c=>{
+        const bc=getBrandColor(c.brand);
+        put(campIsoD(c.flightStart),{color:"#5BC4A0",bc,t:"Launch — "+c.name,cid:c.id});
+        put(campIsoD(c.trafficDue),{color:"#D4A040",bc,t:"Traffic — "+c.name,cid:c.id});
+        (c.assets||[]).forEach(a=>{if(a.due&&!assetInHand(a))put(campIsoD(a.due),{color:campTypeMeta(a.type).c,bc,t:(a.label||a.type)+" — "+c.name,cid:c.id})});
+      });
+      const y=mopsCalM.getFullYear(),m=mopsCalM.getMonth();
+      const startDow=new Date(y,m,1).getDay();
+      const cells=[];for(let i=0;i<42;i++)cells.push(new Date(y,m,1-startDow+i));
+      const iso=(d)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+      const todayIso=iso(new Date());
       return<div>
-        <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:22}}>
+        <div style={{marginBottom:20}}>
           <div style={{...serif,fontSize:34,fontWeight:700,color:"#F0E8F8"}}>The War Room</div>
-          <div style={{fontSize:13,color:"#9B8EAD"}}>time marches left to right — a campaign lives in exactly one column</div>
+          <div style={{...serif,fontSize:17,fontStyle:"italic",color:"#C4A0C8",marginTop:4}}>
+            {activeCamps.length} in flight — {live.length} live and fed{missTotal?", waiting on "+missTotal+" asset"+(missTotal>1?"s":"")+" across "+missCamps+" campaign"+(missCamps>1?"s":""):", nothing owed anywhere"}. {doomPick(DOOM.pg.campaigns||DOOM.sprinkle)}
+          </div>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:18}}>
           <div>
             {secHead("Act now","#E85A7A","hard dates inside ten days")}
             {urgent.length===0&&<div style={{...serif,fontStyle:"italic",fontSize:15,color:"#5BC4A0",padding:"14px 4px"}}>Nothing on fire. Savor it.</div>}
-            {urgent.map(c=>needCard(c,"#E85A7A",true))}
+            {urgent.map(c=>needCard(c,true))}
           </div>
           <div>
             {secHead("On the horizon","#D4A040","owed later, or waiting on dates")}
             {horizon.length===0&&<div style={{...serif,fontStyle:"italic",fontSize:15,color:"#9B8EAD",padding:"14px 4px"}}>A clear horizon.</div>}
             {horizon.map(c=>{const opens=openOf(c);
-              return opens.length?needCard(c,"#D4A040",false)
-              :<div key={c.id} style={{background:"rgba(45,31,66,.45)",border:"1px dashed #4a3565",borderRadius:6,padding:"13px 16px",marginBottom:12}}>
-                <div onClick={()=>mopsGo("c/"+c.id)} style={{...serif,fontSize:17,fontWeight:700,color:"#C4A0C8",cursor:"pointer"}}>{c.name}</div>
-                <div style={{fontSize:12,color:"#9B8EAD",marginTop:3}}>{c.brand}{c.markets?" · "+c.markets:""} — {c.flightStart?"launches "+campFd(c.flightStart):"no dates yet"}</div>
+              return opens.length?needCard(c,false)
+              :<div key={c.id} onClick={()=>mopsGo("c/"+c.id)} style={{background:"rgba(45,31,66,.45)",border:"1px dashed #4a3565",borderRadius:6,padding:"13px 16px",marginBottom:12,cursor:"pointer"}}>
+                <div style={{...serif,fontSize:17,fontWeight:700,color:"#C4A0C8"}}>{c.name}</div>
+                <div style={{fontSize:12,color:"#9B8EAD",marginTop:3}}>{c.brand}{c.markets?" · "+c.markets:""} — {c.flightStart?"launches "+campFd(c.flightStart):"no dates yet — open it and set the flight"}</div>
               </div>})}
           </div>
           <div>
             {secHead("Live — nothing owed","#5BC4A0","airing now, every asset in hand")}
             <div style={{background:"rgba(91,196,160,.05)",border:"1px solid rgba(91,196,160,.25)",borderRadius:6,padding:"14px 16px",display:"flex",flexDirection:"column",gap:11,fontSize:14}}>
               {live.length===0&&<div style={{color:"#9B8EAD",fontStyle:"italic"}}>Nothing airing yet.</div>}
-              {live.map(c=><div key={c.id}>
-                <b onClick={()=>mopsGo("c/"+c.id)} style={{color:"#F0E8F8",cursor:"pointer"}}>{c.name}</b>
+              {live.map(c=><div key={c.id} onClick={()=>mopsGo("c/"+c.id)} style={{cursor:"pointer"}}>
+                <b style={{color:"#F0E8F8"}}>{c.name}</b>
                 <div style={{fontSize:12,color:"#9B8EAD"}}>{c.brand}{c.markets?" · "+c.markets:""}{c.flightEnd?" · through "+campFd(c.flightEnd):""}</div>
               </div>)}
             </div>
             <div onClick={()=>mopsGo("history")} style={{fontSize:12,color:"#6B5E80",textAlign:"center",padding:"10px 0",cursor:"pointer"}}>{campaigns.filter(c=>c.status==="Wrapped").length} wrapped campaigns live in History →</div>
           </div>
         </div>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",borderTop:"1px solid #4a3565",paddingTop:14,marginTop:22}}>
-          <div style={{...serif,fontSize:15,fontStyle:"italic",color:"#C4A0C8"}}>{doomPick(DOOM.pg.campaigns||DOOM.sprinkle)}</div>
-          <div style={{fontSize:12,color:"#6B5E80"}}>click a campaign to open it — checking things off happens there, on purpose</div>
+        <div style={{display:"flex",alignItems:"center",gap:10,margin:"26px 0 10px"}}>
+          <div style={{...serif,fontSize:20,fontWeight:700,color:"#D4A040"}}>The month, at a glance</div>
+          <Btn small onClick={()=>setMopsCalM(new Date(y,m-1,1))}>‹</Btn>
+          <span style={{fontSize:13,fontWeight:700,color:"#9B8EAD",minWidth:130,textAlign:"center"}}>{mopsCalM.toLocaleDateString("en-US",{month:"long",year:"numeric"})}</span>
+          <Btn small onClick={()=>setMopsCalM(new Date(y,m+1,1))}>›</Btn>
+          <span style={{marginLeft:"auto",fontSize:11,color:"#6B5E80"}}>green launch · gold traffic · colored = asset owed · edge = brand</span>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4}}>
+          {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=><div key={d} style={{fontSize:10,fontWeight:800,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1,textAlign:"center",padding:"3px 0"}}>{d}</div>)}
+          {cells.map((d,i)=>{const di=iso(d);const inM=d.getMonth()===m;const es=ev[di]||[];const isT=di===todayIso;
+            return<div key={i} style={{minHeight:70,borderRadius:6,border:"1px solid "+(isT?"#D4A040":"#2d1f42"),background:inM?"linear-gradient(145deg,#2d1f42,#261840)":"rgba(45,31,66,.25)",padding:"3px 4px",overflow:"hidden"}}>
+              <div style={{fontSize:9,fontWeight:800,color:isT?"#D4A040":inM?"#9B8EAD":"#4a3565",marginBottom:2}}>{d.getDate()}</div>
+              {es.slice(0,2).map((e,j)=><div key={j} onClick={()=>mopsGo("c/"+e.cid)} title={e.t} style={{fontSize:8,fontWeight:700,color:e.color,background:e.color+"14",borderLeft:"2px solid "+e.bc,borderRadius:2,padding:"1px 3px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}}>{e.t}</div>)}
+              {es.length>2&&<div style={{fontSize:8,color:"#6B5E80",fontWeight:700}}>+{es.length-2}</div>}
+            </div>})}
         </div>
       </div>;
     };
@@ -11968,6 +12012,7 @@ Rules:
                   {pool.map(x=><option key={isciKeyOf(x)} value={isciKeyOf(x)}>{x.fileUrl?"◆ ":""}{x.code} · {String(x.title||"untitled").slice(0,22)}{x.dur?" :"+x.dur:""}{x.category?" · "+x.category:""}</option>)}
                 </select>})()}
               {!inH&&<label title="Upload the actual file — it lives in Doom's storage from then on" style={{fontSize:11,color:"#4AC8E8",fontWeight:700,cursor:"pointer",border:"1px solid #4a3565",borderRadius:4,padding:"3px 9px",whiteSpace:"nowrap"}}>📎 file<input type="file" style={{display:"none"}} onChange={e=>uploadAssetFile(c,a,e.target.files&&e.target.files[0])}/></label>}
+              {!inH&&<button onClick={()=>{const u=window.prompt("Paste the link to this asset (Drive, vendor page, wherever it lives):",a.url||"");if(u===null)return;const v=u.trim();updAsset(c.id,a.id,{url:v,status:v?"done":a.status});if(v)notify("✓ In hand via link: "+(a.label||a.type))}} title="Paste a link instead of uploading" style={{background:"none",border:"1px solid #4a3565",borderRadius:4,color:"#4AC8E8",fontSize:11,fontWeight:700,cursor:"pointer",padding:"3px 9px",whiteSpace:"nowrap"}}>🔗 link</button>}
               {lk&&<a href={lk} target="_blank" rel="noreferrer" style={{fontSize:12,color:"#4AC8E8",textDecoration:"none",fontWeight:700}}>open ↗</a>}
               {!inH&&a.status!=="review"&&<button onClick={()=>sendReview(c,a)} disabled={mopsBusy} style={{background:"rgba(196,160,200,.12)",border:"1px solid #C4A0C8",borderRadius:4,cursor:"pointer",fontSize:10,fontWeight:700,color:"#C4A0C8",padding:"3px 9px",whiteSpace:"nowrap"}}>send for review</button>}
               <button onClick={()=>delAsset(c.id,a.id)} style={{background:"none",border:"none",color:"#6B5E80",cursor:"pointer",fontSize:14,fontWeight:800}}>×</button>
@@ -12014,41 +12059,6 @@ Rules:
           <div style={{flex:"1 1 150px"}}><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Partner / vendor</div><input value={c.partner||""} onChange={e=>updCamp(c.id,{partner:e.target.value})} style={{...mIn,width:"100%"}}/></div>
           <div style={{flex:"1 1 150px"}}><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Contact</div><input value={c.contact||""} onChange={e=>updCamp(c.id,{contact:e.target.value})} style={{...mIn,width:"100%"}}/></div>
           <div style={{width:100}}><div style={{fontSize:9,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Cost ($)</div><input value={c.cost||""} onChange={e=>updCamp(c.id,{cost:e.target.value.replace(/[^0-9.]/g,"")})} style={{...mIn,width:"100%"}}/></div>
-        </div>
-      </div>;
-    };
-    // ── Calendar ──
-    const MopsCalendar=()=>{
-      const ev={};
-      const put=(iso,e)=>{if(!iso)return;(ev[iso]=ev[iso]||[]).push(e)};
-      activeCamps.forEach(c=>{
-        const bc=getBrandColor(c.brand);
-        put(campIsoD(c.flightStart),{color:"#5BC4A0",bc,t:"Launch — "+c.name,cid:c.id});
-        put(campIsoD(c.trafficDue),{color:"#D4A040",bc,t:"Traffic — "+c.name,cid:c.id});
-        put(campIsoD(c.flightEnd),{color:"#6B5E80",bc,t:"Ends — "+c.name,cid:c.id});
-        (c.assets||[]).forEach(a=>{if(a.due&&!assetInHand(a))put(campIsoD(a.due),{color:campTypeMeta(a.type).c,bc,t:(a.label||a.type)+" — "+c.name,cid:c.id})});
-      });
-      const y=mopsCalM.getFullYear(),m=mopsCalM.getMonth();
-      const startDow=new Date(y,m,1).getDay();
-      const cells=[];for(let i=0;i<42;i++)cells.push(new Date(y,m,1-startDow+i));
-      const iso=(d)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-      const todayIso=iso(new Date());
-      return<div>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,flexWrap:"wrap"}}>
-          <Btn small onClick={()=>setMopsCalM(new Date(y,m-1,1))}>‹</Btn>
-          <span style={{...serif,fontSize:26,fontWeight:700,color:"#F0E8F8",minWidth:200,textAlign:"center",letterSpacing:1}}>{mopsCalM.toLocaleDateString("en-US",{month:"long",year:"numeric"})}</span>
-          <Btn small onClick={()=>setMopsCalM(new Date(y,m+1,1))}>›</Btn>
-          <Btn small onClick={()=>{const d=new Date();setMopsCalM(new Date(d.getFullYear(),d.getMonth(),1))}}>Today</Btn>
-          <span style={{marginLeft:"auto",fontSize:11,color:"#6B5E80"}}>green launch · gold traffic due · colored = asset owed · edge = brand</span>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4}}>
-          {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=><div key={d} style={{fontSize:10,fontWeight:800,color:"#6B5E80",textTransform:"uppercase",letterSpacing:1,textAlign:"center",padding:"4px 0"}}>{d}</div>)}
-          {cells.map((d,i)=>{const di=iso(d);const inM=d.getMonth()===m;const es=ev[di]||[];const isT=di===todayIso;
-            return<div key={i} style={{minHeight:88,borderRadius:8,border:"1px solid "+(isT?"#D4A040":"#2d1f42"),background:inM?"linear-gradient(145deg,#2d1f42,#261840)":"rgba(45,31,66,.25)",padding:"4px 5px",overflow:"hidden",boxShadow:isT?"0 0 12px rgba(212,160,64,.15)":"none"}}>
-              <div style={{fontSize:10,fontWeight:800,color:isT?"#D4A040":inM?"#9B8EAD":"#4a3565",marginBottom:2}}>{d.getDate()}</div>
-              {es.slice(0,3).map((e,j)=><div key={j} onClick={()=>mopsGo("c/"+e.cid)} title={e.t} style={{fontSize:9,fontWeight:700,color:e.color,background:e.color+"14",borderLeft:"2px solid "+e.bc,borderRadius:3,padding:"1px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}}>{e.t}</div>)}
-              {es.length>3&&<div style={{fontSize:9,color:"#6B5E80",fontWeight:700}}>+{es.length-3} more</div>}
-            </div>})}
         </div>
       </div>;
     };
@@ -12191,10 +12201,71 @@ Rules:
           </div>})}
       </div>;
     };
+    // ── Assets: the registry. Every asset in the system, one row each,
+    //    ISCI-Registry-shaped: identity first (name · type · category ·
+    //    brand · DMA), the file right there, its campaign one click away.
+    //    Categories come from Doom's own per-brand ISCI vocabulary. ──
+    const AssetsPg=()=>{
+      const q=(mopsAssetQ||"").toLowerCase();
+      const rows=[];
+      campaigns.forEach(c=>{
+        if(c.status==="Wrapped"&&!mopsAssetWrapped)return;
+        (c.assets||[]).forEach(a=>{
+          if(mopsAssetBrand&&c.brand!==mopsAssetBrand)return;
+          if(mopsAssetType&&a.type!==mopsAssetType)return;
+          if(mopsAssetMissing&&assetInHand(a))return;
+          if(q){const hay=((a.label||"")+" "+a.type+" "+(a.cat||"")+" "+c.name+" "+(c.markets||"")+" "+(a.isci||"")).toLowerCase();if(!hay.includes(q))return}
+          rows.push([c,a]);
+        });
+      });
+      rows.sort((x,y)=>String(x[1].due||"9999").localeCompare(String(y[1].due||"9999")));
+      const total=rows.length;
+      const inHand=rows.filter(([c,a])=>assetInHand(a)).length;
+      const brandCats=(b)=>((typeof customFields!=="undefined"&&customFields[b]&&customFields[b].categories)||[]);
+      return<div>
+        <div style={{display:"flex",alignItems:"baseline",gap:16,marginBottom:6}}>
+          <div style={{...serif,fontSize:34,fontWeight:700,color:"#F0E8F8"}}>Assets</div>
+          <div style={{fontSize:13,color:"#9B8EAD"}}>every asset in the system, one row each — the file lives on the row</div>
+          <div style={{marginLeft:"auto",fontSize:13,fontWeight:700,color:inHand===total?"#5BC4A0":"#D4A040"}}>{inHand}/{total} in hand</div>
+        </div>
+        <div style={{display:"flex",gap:8,margin:"10px 0 14px",flexWrap:"wrap",alignItems:"center"}}>
+          <input value={mopsAssetQ} onChange={e=>setMopsAssetQ(e.target.value)} placeholder="Search assets, campaigns, ISCIs…" style={{...mIn,minWidth:220}}/>
+          <select value={mopsAssetBrand} onChange={e=>setMopsAssetBrand(e.target.value)} style={mIn}><option value="">All brands</option>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select>
+          <select value={mopsAssetType} onChange={e=>setMopsAssetType(e.target.value)} style={mIn}><option value="">All types</option>{CAMP_ASSET_TYPES.map(x=><option key={x.t} value={x.t}>{x.t}</option>)}</select>
+          <label style={{fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:5,cursor:"pointer"}}><input type="checkbox" checked={mopsAssetMissing} onChange={e=>setMopsAssetMissing(e.target.checked)}/>missing only</label>
+          <label style={{fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:5,cursor:"pointer"}}><input type="checkbox" checked={mopsAssetWrapped} onChange={e=>setMopsAssetWrapped(e.target.checked)}/>include wrapped</label>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"26px minmax(150px,1.4fr) 110px 120px minmax(110px,1fr) minmax(130px,1.2fr) 100px 96px 150px",gap:10,padding:"7px 12px",borderBottom:"2px solid #4a3565",fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",color:"#6B5E80"}}>
+          <div></div><div>Asset</div><div>Type</div><div>Category</div><div>Brand · DMA</div><div>Campaign</div><div>Owner</div><div>Due</div><div>File</div>
+        </div>
+        {rows.length===0&&<div style={{...serif,fontStyle:"italic",fontSize:15,color:"#9B8EAD",padding:"18px 12px"}}>{doomPick(DOOM.empty)}</div>}
+        {rows.map(([c,a])=>{const inH=assetInHand(a);const n=campDTo(a.due);const col=inH?"#5BC4A0":n!=null&&n<0?"#E85A7A":n!=null&&n<=10?"#D4A040":"#9B8EAD";const lk=assetLink(a);const linked=isciByKey(a.isci);
+          return<div key={a.id} style={{display:"grid",gridTemplateColumns:"26px minmax(150px,1.4fr) 110px 120px minmax(110px,1fr) minmax(130px,1.2fr) 100px 96px 150px",gap:10,padding:"9px 12px",borderBottom:"1px solid #2d1f42",alignItems:"center",background:inH?"rgba(91,196,160,.03)":n!=null&&n<0?"rgba(232,90,122,.05)":"transparent"}}>
+            <span onClick={()=>{updAsset(c.id,a.id,{status:inH?"needed":"done"});notify(inH?"Back to owed: "+(a.label||a.type):"✓ In hand: "+(a.label||a.type))}} style={{cursor:"pointer"}}>{box(inH,col==="#9B8EAD"?"#4a3565":col)}</span>
+            <input value={a.label} placeholder={a.type} onChange={e=>updAsset(c.id,a.id,{label:e.target.value})} style={{fontWeight:700,color:"#F0E8F8",background:"transparent",border:"none",borderBottom:"1px dashed transparent",outline:"none",fontSize:14,fontFamily:"'DM Sans',sans-serif",width:"100%"}} onFocus={e=>e.target.style.borderBottomColor="#4a3565"} onBlur={e=>e.target.style.borderBottomColor="transparent"}/>
+            <span style={{fontSize:11,fontWeight:700,color:campTypeMeta(a.type).c}}>{a.type}</span>
+            <select value={a.cat||""} onChange={e=>updAsset(c.id,a.id,{cat:e.target.value})} style={{background:"transparent",border:"none",color:a.cat?"#C4A0C8":"#6B5E80",fontSize:12,outline:"none",cursor:"pointer",width:"100%"}}>
+              <option value="">— category</option>
+              {[...new Set([...(brandCats(c.brand)),a.cat||""].filter(Boolean))].map(x=><option key={x} value={x}>{x}</option>)}
+            </select>
+            <span style={{fontSize:11,color:"#9B8EAD"}}><b style={{color:getBrandColor(c.brand)}}>{c.brand}</b>{c.markets?<span> · {c.markets}</span>:null}</span>
+            <span onClick={()=>mopsGo("c/"+c.id)} style={{fontSize:13,fontWeight:700,color:"#E8DFF0",cursor:"pointer",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</span>
+            <span style={{fontSize:11,color:"#C4A0C8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{inH?"—":(a.owner||"—")}</span>
+            <span style={{fontSize:11,fontWeight:700,color:col}}>{a.due?campFd(a.due):"—"}</span>
+            <span style={{display:"flex",gap:5,alignItems:"center"}}>
+              {lk?<a href={lk} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4AC8E8",textDecoration:"none",fontWeight:700}}>◆ open</a>
+                :<label style={{fontSize:10,color:"#4AC8E8",fontWeight:700,cursor:"pointer",border:"1px solid #4a3565",borderRadius:4,padding:"2px 7px",whiteSpace:"nowrap"}}>📎<input type="file" style={{display:"none"}} onChange={e=>uploadAssetFile(c,a,e.target.files&&e.target.files[0])}/></label>}
+              {linked&&<span title={"Linked ISCI: "+linked.code+" — "+(linked.title||"")} style={{fontSize:10,color:"#5BC4A0",fontWeight:700}}>{linked.code}</span>}
+              {!inH&&lk&&a.status!=="review"&&<button onClick={()=>sendReview(c,a)} style={{background:"none",border:"1px solid #C4A0C8",borderRadius:4,color:"#C4A0C8",fontSize:9,fontWeight:700,cursor:"pointer",padding:"2px 6px"}}>review</button>}
+            </span>
+          </div>})}
+        <div style={{fontSize:11,color:"#6B5E80",marginTop:10}}>◆ means the file itself is attached — uploaded here, or riding on a linked ISCI from the registry. Click a campaign name for the full picture.</div>
+      </div>;
+    };
     // ── Shell ──
     const mopsNav=[
       {id:"",l:"The War Room"},
-      {id:"cal",l:"Calendar"},
+      {id:"assets",l:"Assets"},
       {id:"intake",l:"Intake"},
       {id:"dispatch",l:"Dispatch"},
       {id:"history",l:"History"}
@@ -12203,7 +12274,7 @@ Rules:
     let body;
     if(sub.startsWith("c/"))body=CampaignPage(sub.slice(2));
     else if(sub.startsWith("b/"))body=BrandDesk(sub.slice(2));
-    else if(sub==="cal")body=MopsCalendar();
+    else if(sub==="assets")body=AssetsPg();
     else if(sub==="intake")body=Intake();
     else if(sub==="dispatch")body=Dispatch();
     else if(sub==="history")body=HistoryPg();
