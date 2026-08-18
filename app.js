@@ -4412,7 +4412,16 @@ const App=()=>{
       // (Digital Bulletin)" — matching the proposal's sections one-for-one.
       const cidsAll=scope.map(p=>[...new Set(_crsOf(p).map(c=>_canon(c)+" ("+_fmt(p)+")"))]);
       const titles=[...new Set(cidsAll.flat())].sort();
-      const crColor=(t)=>{const i=titles.indexOf(t);return i>=0?CREATIVE_PALETTE[i%CREATIVE_PALETTE.length]:creativeColor(t)};
+      // Fixed color families: one hue per creative (dark = static, light = digital);
+      // the brand creative renders in grays so it reads as backdrop and the campaign
+      // creatives pop. Unlisted creatives (other markets) fall back to the palette.
+      const CR_COLORS={
+        "Always Show Up (Bulletin)":"#1D4ED8","Always Show Up (Digital Bulletin)":"#60A5FA",
+        "Lockup (Bulletin)":"#B45309","Lockup (Digital Bulletin)":"#F59E0B",
+        "Bring the Fight (Poster)":"#15803D","Bring the Fight (Digital Poster)":"#34D399",
+        "It's Personal CK (Bulletin)":"#0F172A","It's Personal CK (Digital Bulletin)":"#475569",
+        "It's Personal CK (Poster)":"#94A3B8","It's Personal CK (Digital Poster)":"#B7BDC9"};
+      const crColor=(t)=>{if(CR_COLORS[t])return CR_COLORS[t];const i=titles.indexOf(t);return i>=0?CREATIVE_PALETTE[i%CREATIVE_PALETTE.length]:creativeColor(t)};
       const pins=scope.map((p,pi)=>{const co=WK_COORDS[p.boardId];const crs=cidsAll[pi];return{panel:String(p.panel),sub:p.submarket||"",loc:p.location||"",size:p.size||"",dma:oohMarket(p.dma),creative:crs[0],creatives:crs,colors:crs.map(crColor),color:crColor(crs[0]),lat:co?co[0]:null,lng:co?co[1]:null,approx:isApproxCoord(p.boardId)}});
       // Spacing check applies to SINGLE-creative (static) boards — rotation boards show
       // everything everywhere by design, so spacing between them isn't a conflict.
@@ -4438,7 +4447,7 @@ const App=()=>{
         bs.forEach(p=>w.document.write('<tr><td><b>'+escHtml(p.panel)+'</b></td><td>'+escHtml(p.dma)+'</td><td>'+escHtml(p.sub)+'</td><td>'+escHtml(p.size)+'</td><td>'+escHtml(p.loc)+'</td></tr>'));
         w.document.write('</table></div>')});
       w.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"><\/script>');
-      const _landmarks={"Nashville":[[36.1593,-86.7785,"🏒 Bridgestone Arena"],[36.1665,-86.7713,"🏈 Nissan Stadium"]]};
+      const _landmarks={"Nashville":[[36.1593,-86.7785,"🏒 Bridgestone Arena"]]};
       const lms=scope.length?(_landmarks[oohMarket(scope[0].dma)]||[]):[];
       w.document.write('<script>var P='+JSON.stringify(mapPins)+';var LM='+JSON.stringify(lms)+';(function go(){if(typeof L==="undefined")return setTimeout(go,60);var map=L.map("map",{zoomControl:true,attributionControl:false});L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18}).addTo(map);var b=[];P.forEach(function(p){if(p.cs.length>1){var R=[10,6,3];p.cs.slice(0,3).forEach(function(c,i){L.circleMarker([p.lat,p.lng],{radius:R[i]||2,color:i===0?"#222":c,weight:i===0?1:0,fillColor:c,fillOpacity:1}).bindTooltip(p.t).addTo(map)})}else{L.circleMarker([p.lat,p.lng],{radius:6,color:"#222",weight:1,fillColor:p.cs[0],fillOpacity:.9,dashArray:p.a?"2 2":null}).bindTooltip(p.t).addTo(map)}b.push([p.lat,p.lng])});LM.forEach(function(l){L.marker([l[0],l[1]],{icon:L.divIcon({className:"",html:"<div style=\\"font-size:24px;line-height:1;text-shadow:0 0 3px #fff,0 0 3px #fff\\">⭐</div>",iconSize:[24,24],iconAnchor:[12,12]})}).bindTooltip("<b>"+l[2]+"</b>",{permanent:false}).addTo(map);b.push([l[0],l[1]])});if(b.length)map.fitBounds(b,{padding:[24,24]});setTimeout(function(){window.focus();window.print()},1600)})();<\/script>');
       w.document.write('</body></html>');w.document.close();
