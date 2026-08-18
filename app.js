@@ -4813,7 +4813,7 @@ const App=()=>{
       const wWin=window.open("","","width=1000,height=820");
       let _oohHtml="";
       const w={document:{write:s=>{_oohHtml+=s},close:()=>{if(wWin){wWin.document.write(_oohHtml);wWin.document.close()}}}};
-      w.document.write('<html><head><title>WK OOH Traffic — '+escHtml(mktLabel)+' — '+escHtml(vendorName)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}.sub{margin-top:8px;font-size:12px;font-weight:bold;color:#444;border-bottom:2px solid #999}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:8px;font-size:11px;font-weight:bold}@media print{body{margin:14px}.dl{display:none}table{page-break-inside:auto}tr{page-break-inside:avoid}}</style></head><body>');
+      w.document.write('<html><head><title>WK OOH Traffic — '+escHtml(mktLabel)+' — '+escHtml(vendorName)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#1d1822;color:#fff;padding:6px 10px;border-radius:5px}.sub{margin-top:8px;font-size:12px;font-weight:bold;color:#444;border-bottom:2px solid #999}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:8px;font-size:11px;font-weight:bold}@media print{body{margin:14px}.dl{display:none}table{page-break-inside:auto}tr{page-break-inside:avoid}}</style></head><body>');
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
       w.document.write('<div style="text-align:center;margin-bottom:12px"><h2>WETTERMARK KEITH</h2><div class="tag">PERSONAL INJURY LAWYERS — OOH TRAFFIC INSTRUCTIONS'+(resendOnly?' · <span style="color:#b00">REVISION — CORRECTED CREATIVE ONLY</span>':'')+'</div></div>');
       const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v||"")+'</span></div>');
@@ -4935,7 +4935,7 @@ const App=()=>{
         return [];
       };
       const w=window.open("","","width=1000,height=820");
-      w.document.write('<html><head><title>WK OOH Traffic — '+escHtml(mktLabel)+' — '+escHtml(dateLabel)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}@media print{body{margin:14px}.dl{display:none}tr{page-break-inside:avoid}}</style></head><body>');
+      w.document.write('<html><head><title>WK OOH Traffic — '+escHtml(mktLabel)+' — '+escHtml(dateLabel)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#1d1822;color:#fff;padding:6px 10px;border-radius:5px}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}@media print{body{margin:14px}.dl{display:none}tr{page-break-inside:avoid}}</style></head><body>');
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
       w.document.write('<div style="text-align:center;margin-bottom:12px"><h2>WETTERMARK KEITH</h2><div class="tag">PERSONAL INJURY LAWYERS — OOH TRAFFIC INSTRUCTIONS</div></div>');
       const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v||"")+'</span></div>');
@@ -5003,25 +5003,25 @@ const App=()=>{
     const saveDEdit=(boardId)=>{const bd=pops.find(p=>p.boardId===boardId);const rot=!!(bd&&boardClass(bd.type,bd.size).rotates);const raw=Array.isArray(dEditVal)?dEditVal:[];const pairs=raw.map((c,i)=>[(c||"").trim(),(dEditPct&&dEditPct[i])||0]).filter(x=>x[0]);const v=pairs.map(x=>x[0]);const pct=rot?pairs.map(x=>x[1]):[];setPops(prev=>prev.map(p=>p.boardId===boardId?{...p,design:v,designPct:pct}:p));setDEditId(null);log("OOH Creative",`${boardId} → ${(rot?pairs.map(x=>x[0]+" "+x[1]+"%"):v).join(" / ")||"(cleared)"}`);notify(`${boardId} creative ${v.length?"set":"cleared"}`)};
     const cancelDEdit=()=>{setDEditId(null);setDEditVal("");setDEditPct([])};
 
-    const dmaColors={BRM:"#D4A040",MTG:"#ec4899",GAD:"#059669",CHA:"#4AC8E8",HSV:"#f97316",KNX:"#6366f1",DHN:"#84cc16",NSH:"#06b6d4"};
+    const dmaColors={BRM:"#B08D3F",MTG:"#ec4899",GAD:"#059669",CHA:"#AFC2DE",HSV:"#f97316",KNX:"#6366f1",DHN:"#84cc16",NSH:"#06b6d4"};
 
     const PhotoModal=({p,onClose})=>{
       const close=POP_IMGS[p.closeImg];const dist=POP_IMGS[p.distImg];
       return<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.85)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={onClose}>
-        <div onClick={e=>e.stopPropagation()} style={{background:"#F0E8F8",borderRadius:12,padding:16,maxWidth:820,width:"100%",maxHeight:"90vh",overflow:"auto"}}>
+        <div onClick={e=>e.stopPropagation()} style={{background:"#F1EBDD",borderRadius:12,padding:16,maxWidth:820,width:"100%",maxHeight:"90vh",overflow:"auto"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:12}}>
             <div>
-              <div style={{fontSize:13,fontWeight:800,color:"#2d1f42"}}>Panel {p.panel} — {p.submarket}</div>
-              <div style={{fontSize:13,color:"#9B8EAD"}}>{p.location}</div>
-              <div style={{fontSize:13,color:"#9B8EAD"}}>TAB# {p.tab} · Contract {p.contract} · Installed {p.installDate}</div>
-              <div style={{fontSize:14,fontWeight:700,color:"#D4A040",marginTop:4}}>{p.impressions.toLocaleString()} weekly impressions</div>
-              {p.isci&&<div style={{fontSize:13,fontWeight:600,color:"#5BC4A0",marginTop:2}}>ISCI: {p.isci} — {isciTitle(p.isci)}</div>}
+              <div style={{fontSize:13,fontWeight:800,color:"#1d1822"}}>Panel {p.panel} — {p.submarket}</div>
+              <div style={{fontSize:13,color:"#948B7E"}}>{p.location}</div>
+              <div style={{fontSize:13,color:"#948B7E"}}>TAB# {p.tab} · Contract {p.contract} · Installed {p.installDate}</div>
+              <div style={{fontSize:14,fontWeight:700,color:"#B08D3F",marginTop:4}}>{p.impressions.toLocaleString()} weekly impressions</div>
+              {p.isci&&<div style={{fontSize:13,fontWeight:600,color:"#6FA287",marginTop:2}}>ISCI: {p.isci} — {isciTitle(p.isci)}</div>}
             </div>
-            <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#9B8EAD"}}>✕</button>
+            <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#948B7E"}}>✕</button>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",marginBottom:4}}>CLOSE-UP</div>{close&&<img src={close} style={{width:"100%",borderRadius:8,border:"1px solid #4a3565"}} alt="Close-up"/>}</div>
-            <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",marginBottom:4}}>DISTANCE</div>{dist&&<img src={dist} style={{width:"100%",borderRadius:8,border:"1px solid #4a3565"}} alt="Distance"/>}</div>
+            <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",marginBottom:4}}>CLOSE-UP</div>{close&&<img src={close} style={{width:"100%",borderRadius:8,border:"1px solid #3d3542"}} alt="Close-up"/>}</div>
+            <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",marginBottom:4}}>DISTANCE</div>{dist&&<img src={dist} style={{width:"100%",borderRadius:8,border:"1px solid #3d3542"}} alt="Distance"/>}</div>
           </div>
         </div>
       </div>;
@@ -5032,92 +5032,92 @@ const App=()=>{
         const allPhotosForCard=[...(closeImg?[{url:closeImg,label:"Close-up",hardcoded:true}]:[]),...(POP_IMGS[p.distImg]?[{url:POP_IMGS[p.distImg],label:"Distance",hardcoded:true}]:[]),...uploadedPhotos];
         const heroImg=uploadedPhotos.length>0?uploadedPhotos[uploadedPhotos.length-1].url:closeImg;
         const dark=isDarkBoard(p.boardId);
-        return<div key={p.boardId} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:dark?"#e5e7eb":"#F0E8F8",borderLeft:`4px solid ${dark?"#6b7280":c}`,filter:dark?"grayscale(1)":"none",opacity:dark?0.72:1,position:"relative"}}>
+        return<div key={p.boardId} style={{border:"1px solid #3d3542",borderRadius:9,overflow:"hidden",background:dark?"#e5e7eb":"#F1EBDD",borderLeft:`4px solid ${dark?"#6b7280":c}`,filter:dark?"grayscale(1)":"none",opacity:dark?0.72:1,position:"relative"}}>
           {dark&&<div style={{position:"absolute",top:6,left:6,zIndex:2,background:"#374151",color:"#e5e7eb",padding:"1px 7px",borderRadius:10,fontSize:10,fontWeight:800,letterSpacing:.5}}>🌑 DARK · UNLIT</div>}
           {hasAnyPhoto?<div style={{position:"relative",cursor:"pointer",height:120,overflow:"hidden"}} onClick={()=>setModal({type:"oohPhoto",id:p.boardId,photos:allPhotosForCard,startIdx:0})}>
             <img src={heroImg} style={{width:"100%",height:"100%",objectFit:"cover"}} alt={p.panel}/>
             <div style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.7)",color:"#fff",padding:"2px 8px",borderRadius:12,fontSize:13}}>📷 {allPhotosForCard.length} photo{allPhotosForCard.length>1?"s":""}</div>
             <div style={{position:"absolute",bottom:6,left:6,background:"rgba(0,0,0,0.7)",color:"#fff",padding:"2px 8px",borderRadius:12,fontSize:14,fontWeight:700}}>{p.impressions.toLocaleString()} wkly</div>
-          </div>:<div style={{padding:"8px 10px",background:"#1e1233",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          </div>:<div style={{padding:"8px 10px",background:"#0e0c10",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <span style={{fontSize:12,color:"#64748b"}}>No photos yet</span>
             <OohPhotoUpload id={p.boardId}/>
           </div>}
-          {hasAnyPhoto&&<div style={{display:"flex",justifyContent:"flex-end",padding:"3px 8px",background:"#1e1233"}} onClick={e=>e.stopPropagation()}><OohPhotoUpload id={p.boardId}/></div>}
+          {hasAnyPhoto&&<div style={{display:"flex",justifyContent:"flex-end",padding:"3px 8px",background:"#0e0c10"}} onClick={e=>e.stopPropagation()}><OohPhotoUpload id={p.boardId}/></div>}
           <div style={{padding:10}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
               <div>
                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
-                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#2d1f42"}}>Panel {p.panel}</span>
+                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#1d1822"}}>Panel {p.panel}</span>
                   <B l={oohMarket(p.dma)} c={c}/>
                   <B l={p.facing} c="#6366f1"/>
                 </div>
-                <div style={{fontSize:14,color:"#9B8EAD",marginTop:2,display:"flex",alignItems:"center",gap:6}}><MediaBadge type={p.type}/>{p.type} · {p.size} · {p.submarket}</div>
+                <div style={{fontSize:14,color:"#948B7E",marginTop:2,display:"flex",alignItems:"center",gap:6}}><MediaBadge type={p.type}/>{p.type} · {p.size} · {p.submarket}</div>
               </div>
-              <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.bg})(),color:(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.color})()}}>{(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.label})()}</span>{p.isci&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#dbeafe",color:"#4AC8E8",fontWeight:600,marginLeft:3}}>ISCI ✓</span>}
+              <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.bg})(),color:(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.color})()}}>{(()=>{const cs=contractStatus(oohContracts[p.contract]);return cs.label})()}</span>{p.isci&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#dbeafe",color:"#AFC2DE",fontWeight:600,marginLeft:3}}>ISCI ✓</span>}
             </div>
-            <div style={{fontSize:14,color:"#9B8EAD",marginTop:4}}>{p.location}</div>
-            <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #4a3565"}}>
-              <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Installed</div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD"}}>{p.installDate}</div></div>
-              <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>TAB#</div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD"}}>{p.tab}</div></div>
-              <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Contract</div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD"}}>{p.contract}</div></div>
+            <div style={{fontSize:14,color:"#948B7E",marginTop:4}}>{p.location}</div>
+            <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #3d3542"}}>
+              <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Installed</div><div style={{fontSize:14,fontWeight:600,color:"#948B7E"}}>{p.installDate}</div></div>
+              <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>TAB#</div><div style={{fontSize:14,fontWeight:600,color:"#948B7E"}}>{p.tab}</div></div>
+              <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Contract</div><div style={{fontSize:14,fontWeight:600,color:"#948B7E"}}>{p.contract}</div></div>
             </div>
             <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:p.isci?"#1f3530":"#fffbeb",border:`1px solid ${p.isci?"#bbf7d0":"#fde68a"}`}}>
               {editId===p.boardId?
                 <div style={{display:"flex",gap:3,alignItems:"center"}}>
-                  {(()=>{const opts=iscis.filter(i=>i.suffix==="O"&&i.dma===p.dma&&i.active).sort((a,b)=>a.code.localeCompare(b.code));return<select value={editVal} onChange={e=>{setEditVal(e.target.value);saveEdit(p.boardId,e.target.value)}} autoFocus style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:13,background:"#1e1233",color:"#E8DFF0"}} onKeyDown={e=>{if(e.key==="Escape")cancelEdit()}}><option value="">{opts.length?("— pick "+(p.dma||"")+" ISCI —"):("No "+(p.dma||"")+" ISCIs registered yet")}</option>{opts.map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}</option>)}</select>})()}
-                  <button onClick={()=>saveEdit(p.boardId)} style={{padding:"2px 6px",background:"#5BC4A0",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✓</button>
+                  {(()=>{const opts=iscis.filter(i=>i.suffix==="O"&&i.dma===p.dma&&i.active).sort((a,b)=>a.code.localeCompare(b.code));return<select value={editVal} onChange={e=>{setEditVal(e.target.value);saveEdit(p.boardId,e.target.value)}} autoFocus style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:13,background:"#0e0c10",color:"#E9E3D6"}} onKeyDown={e=>{if(e.key==="Escape")cancelEdit()}}><option value="">{opts.length?("— pick "+(p.dma||"")+" ISCI —"):("No "+(p.dma||"")+" ISCIs registered yet")}</option>{opts.map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}</option>)}</select>})()}
+                  <button onClick={()=>saveEdit(p.boardId)} style={{padding:"2px 6px",background:"#6FA287",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✓</button>
                   <button onClick={cancelEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
                 </div>:
                 <div onClick={()=>startEdit(p.boardId,p.isci)} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  {p.isci?<div><div style={{fontSize:14,fontWeight:700,fontFamily:"monospace",color:"#5BC4A0"}}>{p.isci}</div><div style={{fontSize:13,color:"#9B8EAD"}}>{isciTitle(p.isci)}</div></div>
-                  :<div style={{fontSize:14,color:"#D4A040",fontStyle:"italic"}}>No ISCI — click to assign</div>}
-                  <span style={{fontSize:13,color:"#9B8EAD"}}>✎</span>
+                  {p.isci?<div><div style={{fontSize:14,fontWeight:700,fontFamily:"monospace",color:"#6FA287"}}>{p.isci}</div><div style={{fontSize:13,color:"#948B7E"}}>{isciTitle(p.isci)}</div></div>
+                  :<div style={{fontSize:14,color:"#B08D3F",fontStyle:"italic"}}>No ISCI — click to assign</div>}
+                  <span style={{fontSize:13,color:"#948B7E"}}>✎</span>
                 </div>
               }
             </div>
             {/* Per-board creative rotation — class-specific (bulletin 2 · poster/junior 3 · rotary/digital rotation) */}
-            {(()=>{const bc=boardClass(p.type,p.size);const slots=bc.slots;const dl=Array.isArray(p.design)?p.design:[];const uc=bc.unit.charAt(0).toUpperCase()+bc.unit.slice(1);return<div style={{marginTop:5,padding:"5px 7px",borderRadius:5,background:dl.length?"#2a1f3e":"#1e1233",border:`1px solid ${dl.length?"#9b7bb0":"#4a3565"}`,borderLeft:`3px solid ${bc.color}`}}>
+            {(()=>{const bc=boardClass(p.type,p.size);const slots=bc.slots;const dl=Array.isArray(p.design)?p.design:[];const uc=bc.unit.charAt(0).toUpperCase()+bc.unit.slice(1);return<div style={{marginTop:5,padding:"5px 7px",borderRadius:5,background:dl.length?"#2a1f3e":"#0e0c10",border:`1px solid ${dl.length?"#9b7bb0":"#3d3542"}`,borderLeft:`3px solid ${bc.color}`}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
                 <span style={{fontSize:11,fontWeight:800,color:bc.color,display:"flex",alignItems:"center",gap:4}}>{bc.icon} {bc.label}{bc.rotates&&<span style={{fontSize:9,fontWeight:700,color:"#fff",background:bc.color,padding:"0 5px",borderRadius:7}}>ROTATES</span>}</span>
-                <span style={{fontSize:11,fontWeight:700,color:dl.length>=slots?"#5BC4A0":"#D4A040"}}>{dl.length}/{slots} {bc.unit}{slots>1?"s":""}</span>
+                <span style={{fontSize:11,fontWeight:700,color:dl.length>=slots?"#6FA287":"#B08D3F"}}>{dl.length}/{slots} {bc.unit}{slots>1?"s":""}</span>
               </div>
               <div style={{fontSize:10,color:"#6B5E80",marginBottom:3}}>{bc.spec} · {p.size}{p.vendorRef?<span style={{marginLeft:4}} title="Lamar's 2026 Design reference">· Lamar: {p.vendorRef}</span>:""}</div>
               {dEditId===p.boardId?(()=>{const picked=(dEditVal||[]).filter(Boolean);const dup=picked.length!==new Set(picked).size;const sum=(dEditPct||[]).reduce((a,b)=>a+(b||0),0);return
                 <div style={{display:"flex",flexDirection:"column",gap:3}}>
                   {bc.rotates?<React.Fragment>
                     {(dEditVal||[]).map((cv,k)=><div key={k} style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:10,fontWeight:700,color:bc.color,minWidth:34}}>{(bc.unit==="position"?"Pos ":"#")+(k+1)}</span>
-                      <select value={cv||""} onChange={e=>{if(e.target.value==="__new__"){const v=addCreativeConcept(p);if(v)setDSlot(k,v)}else setDSlot(k,e.target.value)}} style={{flex:1,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}>
+                      <select value={cv||""} onChange={e=>{if(e.target.value==="__new__"){const v=addCreativeConcept(p);if(v)setDSlot(k,v)}else setDSlot(k,e.target.value)}} style={{flex:1,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}>
                         <option value="">— pick creative —</option>
                         {poolFor(p).map(c=><option key={c} value={c}>{c}</option>)}
                         <option value="__new__">➕ Add new creative…</option>
                       </select>
-                      <input type="number" min="0" max="100" value={(dEditPct&&dEditPct[k]!=null)?dEditPct[k]:""} onChange={e=>setDPct(k,e.target.value)} style={{width:46,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0",textAlign:"right"}}/>
-                      <span style={{fontSize:11,color:"#9B8EAD"}}>%</span>
-                      <button onClick={()=>removeDRow(k)} title="Remove creative" style={{padding:"0 5px",background:"none",border:"none",color:"#E85A7A",fontSize:14,cursor:"pointer"}}>✕</button>
+                      <input type="number" min="0" max="100" value={(dEditPct&&dEditPct[k]!=null)?dEditPct[k]:""} onChange={e=>setDPct(k,e.target.value)} style={{width:46,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6",textAlign:"right"}}/>
+                      <span style={{fontSize:11,color:"#948B7E"}}>%</span>
+                      <button onClick={()=>removeDRow(k)} title="Remove creative" style={{padding:"0 5px",background:"none",border:"none",color:"#93323C",fontSize:14,cursor:"pointer"}}>✕</button>
                     </div>)}
                     <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-                      <button onClick={addDRow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#4AC8E8",border:"1px solid #4a3565",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>➕ Add creative</button>
-                      <button onClick={evenSplitNow} title="Split 100% evenly across the creatives" style={{padding:"2px 8px",background:"#2a1f3e",color:"#5BC4A0",border:"1px solid #4a3565",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>⚖ Even split</button>
-                      <span style={{fontSize:11,fontWeight:800,color:sum===100?"#5BC4A0":"#E85A7A",marginLeft:"auto"}}>Total {sum}%</span>
+                      <button onClick={addDRow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#AFC2DE",border:"1px solid #3d3542",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>➕ Add creative</button>
+                      <button onClick={evenSplitNow} title="Split 100% evenly across the creatives" style={{padding:"2px 8px",background:"#2a1f3e",color:"#6FA287",border:"1px solid #3d3542",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>⚖ Even split</button>
+                      <span style={{fontSize:11,fontWeight:800,color:sum===100?"#6FA287":"#93323C",marginLeft:"auto"}}>Total {sum}%</span>
                     </div>
-                    {sum!==100&&picked.length>0&&<div style={{fontSize:10,color:"#E85A7A",fontWeight:700}}>⚠ Rotation should total 100% (currently {sum}%) — use Even split to auto-balance.</div>}
+                    {sum!==100&&picked.length>0&&<div style={{fontSize:10,color:"#93323C",fontWeight:700}}>⚠ Rotation should total 100% (currently {sum}%) — use Even split to auto-balance.</div>}
                   </React.Fragment>:
                   Array.from({length:slots}).map((_,k)=><div key={k} style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:10,fontWeight:700,color:bc.color,minWidth:54}}>{"Creative "+(k+1)}</span>
-                    <select value={(dEditVal&&dEditVal[k])||""} onChange={e=>{if(e.target.value==="__new__"){const v=addCreativeConcept(p);if(v)setDSlot(k,v)}else setDSlot(k,e.target.value)}} style={{flex:1,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}} autoFocus={k===0}>
+                    <select value={(dEditVal&&dEditVal[k])||""} onChange={e=>{if(e.target.value==="__new__"){const v=addCreativeConcept(p);if(v)setDSlot(k,v)}else setDSlot(k,e.target.value)}} style={{flex:1,padding:"2px 4px",border:"1px solid #9b7bb0",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}} autoFocus={k===0}>
                       <option value="">— pick creative —</option>
                       {poolFor(p).map(c=><option key={c} value={c}>{c}</option>)}
                       <option value="__new__">➕ Add new creative…</option>
                     </select></div>)}
-                  {dup&&<div style={{fontSize:10,color:"#E85A7A",fontWeight:700}}>⚠ Same creative picked twice — that's a wasted rotation slot.</div>}
+                  {dup&&<div style={{fontSize:10,color:"#93323C",fontWeight:700}}>⚠ Same creative picked twice — that's a wasted rotation slot.</div>}
                   <div style={{display:"flex",gap:3,justifyContent:"flex-end"}}>
                     <button onClick={()=>saveDEdit(p.boardId)} style={{padding:"2px 8px",background:"#9b7bb0",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✓ Save</button>
                     <button onClick={cancelDEdit} style={{padding:"2px 8px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:13,cursor:"pointer"}}>✕</button>
                   </div>
                 </div>;})():
                 <div onClick={()=>startDEdit(p)} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",gap:4}}>
-                  {dl.length?(()=>{const pcts=bc.rotates?designPcts(dl,p.designPct):null;return <div style={{display:"flex",flexWrap:"wrap",gap:3,alignItems:"center"}}>{dl.map((c,k)=><React.Fragment key={k}>{bc.rotates&&k>0&&<span style={{fontSize:11,color:bc.color}}>→</span>}<span style={{fontSize:12,fontWeight:700,color:"#fff",background:creativeColor(c),padding:"1px 6px",borderRadius:8}}>{c}{pcts?" · "+pcts[k]+"%":""}</span></React.Fragment>)}{(new Set(dl).size!==dl.length)&&<span style={{fontSize:10,color:"#E85A7A",fontWeight:700}} title="Same creative more than once">⚠ dup</span>}</div>;})()
+                  {dl.length?(()=>{const pcts=bc.rotates?designPcts(dl,p.designPct):null;return <div style={{display:"flex",flexWrap:"wrap",gap:3,alignItems:"center"}}>{dl.map((c,k)=><React.Fragment key={k}>{bc.rotates&&k>0&&<span style={{fontSize:11,color:bc.color}}>→</span>}<span style={{fontSize:12,fontWeight:700,color:"#fff",background:creativeColor(c),padding:"1px 6px",borderRadius:8}}>{c}{pcts?" · "+pcts[k]+"%":""}</span></React.Fragment>)}{(new Set(dl).size!==dl.length)&&<span style={{fontSize:10,color:"#93323C",fontWeight:700}} title="Same creative more than once">⚠ dup</span>}</div>;})()
                   :<div style={{fontSize:13,color:"#9b7bb0",fontStyle:"italic"}}>Click to add {slots} {bc.unit}{slots>1?"s":""}</div>}
-                  <span style={{fontSize:13,color:"#9B8EAD",flexShrink:0}}>✎</span>
+                  <span style={{fontSize:13,color:"#948B7E",flexShrink:0}}>✎</span>
                 </div>
               }
             </div>})()}
@@ -5130,7 +5130,7 @@ const App=()=>{
       {photoPanel&&<PhotoModal p={photoPanel} onClose={()=>setPhotoPanel(null)}/>}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
         <div><PageHead title="Wettermark Keith — OOH Postings" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>{activePops.length} boards · {markets.length} markets · 2026 Lamar renewal · {totalImpr.toLocaleString()} weekly impressions · {pops.filter(p=>Array.isArray(p.design)&&p.design.length).length} with creative</p>
+          <p style={{fontSize:13,color:"#948B7E"}}>{activePops.length} boards · {markets.length} markets · 2026 Lamar renewal · {totalImpr.toLocaleString()} weekly impressions · {pops.filter(p=>Array.isArray(p.design)&&p.design.length).length} with creative</p>
         </div>
         <div style={{display:"flex",gap:4}}>
           <Btn small onClick={()=>{
@@ -5139,14 +5139,14 @@ const App=()=>{
             exportCsv("WK_OOH_"+(om||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
           <Btn small color="#9b7bb0" onClick={()=>{const scope=fl.filter(p=>!String(p.panel).includes("TBD"));const lbl=(om||ov||oVend)?`the ${scope.length} filtered boards`:`all ${scope.length} boards`;if(window.confirm(`Auto-name + ISCI ${lbl}?\n\n• Assigns ONE creative per board (bulletins from 2, posters/juniors from 3), spread by location so neighbours differ.\n• Generates an ISCI per market·size·creative, titled to your convention (WK <Type> - <Size> - <Market> - <Creative>).\n\nThis OVERWRITES current creative + ISCI assignments in view.`))autoNameSpread(fl)}}>🪄 Auto-name + ISCI</Btn>
-          <Btn small color="#D4A040" onClick={()=>printVendorTrafficSheet()}>📄 Vendor Sheet</Btn>
-          <Btn small color="#E85A7A" onClick={()=>printVendorTrafficSheet({resendOnly:true})}>📄 Revision Sheet</Btn>
-          <Btn small color="#5BC4A0" onClick={()=>printCreativeSpecs()}>📐 Creative Specs</Btn>
+          <Btn small color="#B08D3F" onClick={()=>printVendorTrafficSheet()}>📄 Vendor Sheet</Btn>
+          <Btn small color="#93323C" onClick={()=>printVendorTrafficSheet({resendOnly:true})}>📄 Revision Sheet</Btn>
+          <Btn small color="#6FA287" onClick={()=>printCreativeSpecs()}>📐 Creative Specs</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
           <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>📍 Map</Btn>
           <Btn small onClick={()=>setViewMode("ref")} primary={viewMode==="ref"}>📋 Reference</Btn>
-          <Btn small onClick={()=>setViewMode("traffic")} primary={viewMode==="traffic"} color="#D4A040">📡 Traffic</Btn>
+          <Btn small onClick={()=>setViewMode("traffic")} primary={viewMode==="traffic"} color="#B08D3F">📡 Traffic</Btn>
           <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"} color="#9b7bb0">📑 Contracts</Btn>
           {archivedPops.length>0&&<Btn small onClick={()=>setViewMode("archive")} primary={viewMode==="archive"} color="#6b7280">🗄 Archive ({archivedPops.length})</Btn>}
         </div>
@@ -5160,40 +5160,40 @@ const App=()=>{
       </div>
       {/* Board-type chips — quick toggle, affects Cards / Table / Map / Reference / Traffic */}
       <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
-        <span style={{fontSize:11,color:"#9B8EAD",fontWeight:700}}>Board type:</span>
-        {btypes.map(bt=>{const col=OOH_BTYPE_COLORS[bt]||OOH_BTYPE_COLORS.Other;const cnt=pops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true)&&oohBoardType(p.type,p.size)===bt).length;return<button key={bt} onClick={()=>setTypeF(typeF===bt?"":bt)} style={{padding:"3px 9px",borderRadius:5,border:typeF===bt?"2px solid "+col.border:"1px solid #4a3565",background:typeF===bt?col.bg:"transparent",color:typeF===bt?col.fg:"#9B8EAD",fontSize:11,fontWeight:700,cursor:"pointer"}}>{bt} ({cnt})</button>})}
+        <span style={{fontSize:11,color:"#948B7E",fontWeight:700}}>Board type:</span>
+        {btypes.map(bt=>{const col=OOH_BTYPE_COLORS[bt]||OOH_BTYPE_COLORS.Other;const cnt=pops.filter(p=>(om?oohMarket(p.dma)===om:true)&&(ov?p.submarket===ov:true)&&(oVend?p.vendor===oVend:true)&&oohBoardType(p.type,p.size)===bt).length;return<button key={bt} onClick={()=>setTypeF(typeF===bt?"":bt)} style={{padding:"3px 9px",borderRadius:5,border:typeF===bt?"2px solid "+col.border:"1px solid #3d3542",background:typeF===bt?col.bg:"transparent",color:typeF===bt?col.fg:"#948B7E",fontSize:11,fontWeight:700,cursor:"pointer"}}>{bt} ({cnt})</button>})}
       </div>
       {/* Pull a creative traffic report by start date — read-only PDF, clickable creative */}
       <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
-        <span style={{fontSize:11,color:"#9B8EAD",fontWeight:700}}>Traffic report — start date:</span>
-        <input type="date" value={oohReportDate} onChange={e=>setOohReportDate(e.target.value)} style={{padding:"3px 6px",borderRadius:5,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:12}}/>
-        {oohReportDate&&<button onClick={()=>setOohReportDate("")} style={{padding:"2px 7px",borderRadius:5,border:"1px solid #4a3565",background:"transparent",color:"#9B8EAD",fontSize:11,cursor:"pointer"}}>clear</button>}
+        <span style={{fontSize:11,color:"#948B7E",fontWeight:700}}>Traffic report — start date:</span>
+        <input type="date" value={oohReportDate} onChange={e=>setOohReportDate(e.target.value)} style={{padding:"3px 6px",borderRadius:5,border:"1px solid #3d3542",background:"#0e0c10",color:"#E9E3D6",fontSize:12}}/>
+        {oohReportDate&&<button onClick={()=>setOohReportDate("")} style={{padding:"2px 7px",borderRadius:5,border:"1px solid #3d3542",background:"transparent",color:"#948B7E",fontSize:11,cursor:"pointer"}}>clear</button>}
         {(()=>{const n=fl.filter(p=>!oohReportDate||p.installDate===oohReportDate).length;return <button onClick={printCardTrafficReport} style={{padding:"4px 12px",borderRadius:6,border:"none",background:"#9b7bb0",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>📄 Pull Traffic Report ({n})</button>})()}
       </div>
       {/* DMA stats */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
         {dmas.map(d=>{const all=activePops.filter(p=>oohMarket(p.dma)===d);const p=all.filter(x=>x.isci).length;const impr=all.reduce((a,x)=>a+x.impressions,0);const c=marketColor(d);
-          return<div key={d} onClick={()=>setOm(om===d?"":d)} style={{padding:"10px 12px",borderRadius:9,border:om===d?`2px solid ${c}`:"1px solid #E8DFF0",background:om===d?c+"0a":"#fff",cursor:"pointer"}}>
+          return<div key={d} onClick={()=>setOm(om===d?"":d)} style={{padding:"10px 12px",borderRadius:9,border:om===d?`2px solid ${c}`:"1px solid #E9E3D6",background:om===d?c+"0a":"#fff",cursor:"pointer"}}>
             <div style={{fontSize:13,fontWeight:700,color:c,textTransform:"uppercase",letterSpacing:1}}>{d}</div>
-            <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{all.length}</div>
+            <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{all.length}</div>
             <div style={{fontSize:14,color:c,fontWeight:600}}>{impr.toLocaleString()} wkly</div>
-            <div style={{fontSize:13,color:p===all.length?"#5BC4A0":"#9ca3af"}}>{p}/{all.length} ISCI assigned</div>
+            <div style={{fontSize:13,color:p===all.length?"#6FA287":"#9ca3af"}}>{p}/{all.length} ISCI assigned</div>
           </div>;
         })}
-        <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #4a3565",background:"linear-gradient(135deg,#fffbeb,#fef3c7)"}}>
-          <div style={{fontSize:13,fontWeight:700,color:"#D4A040",textTransform:"uppercase",letterSpacing:1}}>ALL DMAs</div>
-          <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{activePops.length}</div>
-          <div style={{fontSize:14,color:"#D4A040",fontWeight:600}}>{totalImpr.toLocaleString()} wkly</div>
-          <div style={{fontSize:13,color:"#9B8EAD"}}>{fl.length} active{tagged?" · "+tagged+" ISCI tagged":""}</div>
+        <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #3d3542",background:"linear-gradient(135deg,#fffbeb,#fef3c7)"}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#B08D3F",textTransform:"uppercase",letterSpacing:1}}>ALL DMAs</div>
+          <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{activePops.length}</div>
+          <div style={{fontSize:14,color:"#B08D3F",fontWeight:600}}>{totalImpr.toLocaleString()} wkly</div>
+          <div style={{fontSize:13,color:"#948B7E"}}>{fl.length} active{tagged?" · "+tagged+" ISCI tagged":""}</div>
         </div>
       </div>
       {/* Board mix by format class — informational, drives the per-board creative requirements */}
       {(()=>{const groups={};fl.forEach(p=>{const bc=boardClass(p.type,p.size);(groups[bc.key]=groups[bc.key]||{bc,boards:[]}).boards.push(p)});const order=["bulletin","static","junior","rotary","digital"];const entries=order.filter(k=>groups[k]).map(k=>groups[k]);if(!entries.length)return null;
-        return<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{entries.map(({bc,boards})=>{const need=boards.length;const done=boards.filter(p=>Array.isArray(p.design)&&p.design.length).length;const pct=need?Math.round(done/need*100):0;const poolN=(oohCreatives[creativePoolKey(boards[0].type,boards[0].size)]||[]).length;return<div key={bc.key} title={bc.spec} style={{flex:"1 1 150px",minWidth:150,padding:"7px 10px",borderRadius:8,background:"#1e1233",border:`1px solid #4a3565`,borderLeft:`3px solid ${bc.color}`}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:12,fontWeight:800,color:bc.color,display:"flex",alignItems:"center",gap:4}}>{bc.icon} {bc.label}{bc.rotates&&<span style={{fontSize:8,fontWeight:700,color:"#fff",background:bc.color,padding:"0 4px",borderRadius:6}}>ROT</span>}</span><span style={{fontSize:16,fontWeight:800,color:"#F0E8F8"}}>{boards.length}</span></div>
+        return<div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{entries.map(({bc,boards})=>{const need=boards.length;const done=boards.filter(p=>Array.isArray(p.design)&&p.design.length).length;const pct=need?Math.round(done/need*100):0;const poolN=(oohCreatives[creativePoolKey(boards[0].type,boards[0].size)]||[]).length;return<div key={bc.key} title={bc.spec} style={{flex:"1 1 150px",minWidth:150,padding:"7px 10px",borderRadius:8,background:"#0e0c10",border:`1px solid #3d3542`,borderLeft:`3px solid ${bc.color}`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:12,fontWeight:800,color:bc.color,display:"flex",alignItems:"center",gap:4}}>{bc.icon} {bc.label}{bc.rotates&&<span style={{fontSize:8,fontWeight:700,color:"#fff",background:bc.color,padding:"0 4px",borderRadius:6}}>ROT</span>}</span><span style={{fontSize:16,fontWeight:800,color:"#F1EBDD"}}>{boards.length}</span></div>
           <div style={{fontSize:10,color:"#6B5E80",margin:"2px 0 4px"}}>1 of {poolN} creatives each · spread by location</div>
-          <div style={{height:5,borderRadius:3,background:"#2d1f42",overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:pct===100?"#5BC4A0":bc.color}}/></div>
-          <div style={{fontSize:10,color:pct===100?"#5BC4A0":"#9B8EAD",marginTop:2,fontWeight:600}}>{done}/{need} boards named · {pct}%</div>
+          <div style={{height:5,borderRadius:3,background:"#1d1822",overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:pct===100?"#6FA287":bc.color}}/></div>
+          <div style={{fontSize:10,color:pct===100?"#6FA287":"#948B7E",marginTop:2,fontWeight:600}}>{done}/{need} boards named · {pct}%</div>
         </div>})}</div>;})()}
 
       {viewMode==="cards"?<CardGrid/>:
@@ -5202,10 +5202,10 @@ const App=()=>{
           <div style={{fontSize:14,fontWeight:700}}>📍 WK OOH Board Locations</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
             <Btn small color="#9b7bb0" onClick={printCreativeMap}>🗺 Download Creative Map</Btn>
-            {oohMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={oohClusterRadius} onChange={e=>setOohClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#4AC8E8",minWidth:30}}>{oohClusterRadius} mi</span></div>}
-            <div style={{display:"flex",gap:0,border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}>
-              <button onClick={()=>setOohMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:oohMapMode==="market"?"rgba(212,160,64,.2)":"transparent",color:oohMapMode==="market"?"#D4A040":"#94a3b8"}}>📍 By Market</button>
-              <button onClick={()=>setOohMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:oohMapMode==="creative"?"rgba(74,200,232,.2)":"transparent",color:oohMapMode==="creative"?"#4AC8E8":"#94a3b8"}}>🎨 By Creative</button>
+            {oohMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={oohClusterRadius} onChange={e=>setOohClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#AFC2DE",minWidth:30}}>{oohClusterRadius} mi</span></div>}
+            <div style={{display:"flex",gap:0,border:"1px solid #3d3542",borderRadius:6,overflow:"hidden"}}>
+              <button onClick={()=>setOohMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:oohMapMode==="market"?"rgba(176,141,63,.2)":"transparent",color:oohMapMode==="market"?"#B08D3F":"#94a3b8"}}>📍 By Market</button>
+              <button onClick={()=>setOohMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:oohMapMode==="creative"?"rgba(175,194,222,.2)":"transparent",color:oohMapMode==="creative"?"#AFC2DE":"#94a3b8"}}>🎨 By Creative</button>
             </div>
           </div>
         </div>
@@ -5221,41 +5221,41 @@ const App=()=>{
           // the map pins, legend, and conflict rows so colors always agree.
           const crTitles=[...new Set(pins.flatMap(p=>p.creatives))].sort();
           const crColor=(t)=>{const i=crTitles.indexOf(t);return i>=0?CREATIVE_PALETTE[i%CREATIVE_PALETTE.length]:"#475569"};
-          return<><OohMap pins={oohMapMode==="creative"?pinsWithStatus.filter(p=>p.creatives.length):pinsWithStatus} colorFn={p=>oohMapMode==="creative"?(p.creative?crColor(p.creative):"#475569"):(marketColor(p.market)||"#D4A040")} height={420}/>
+          return<><OohMap pins={oohMapMode==="creative"?pinsWithStatus.filter(p=>p.creatives.length):pinsWithStatus} colorFn={p=>oohMapMode==="creative"?(p.creative?crColor(p.creative):"#475569"):(marketColor(p.market)||"#B08D3F")} height={420}/>
           {oohMapMode==="market"?
             <div style={{display:"flex",gap:8,marginTop:6,justifyContent:"center",flexWrap:"wrap"}}>{markets.map(m=><div key={m} style={{display:"flex",gap:3,alignItems:"center",fontSize:14}}><div style={{width:8,height:8,borderRadius:4,background:marketColor(m)}}/>{m}</div>)}</div>
             :
             (()=>{const titles=[...new Set(pins.flatMap(p=>p.creatives))].sort();const untaggedCnt=pins.filter(p=>!p.creatives.length).length;return<div style={{marginTop:6}}>
-              {clustered.size>0?<div style={{textAlign:"center",fontSize:13,color:"#F4C242",fontWeight:600,marginBottom:6,padding:"4px 8px",background:"rgba(244,194,66,.1)",border:"1px solid rgba(244,194,66,.3)",borderRadius:4}}>⚠ {clustered.size} board{clustered.size!==1?"s":""} within {oohClusterRadius} mi of another running the SAME creative — spread them out</div>:titles.length>0&&<div style={{textAlign:"center",fontSize:13,color:"#5BC4A0",fontWeight:600,marginBottom:6}}>✓ No same-creative boards within {oohClusterRadius} mi — clean spread</div>}
+              {clustered.size>0?<div style={{textAlign:"center",fontSize:13,color:"#F4C242",fontWeight:600,marginBottom:6,padding:"4px 8px",background:"rgba(244,194,66,.1)",border:"1px solid rgba(244,194,66,.3)",borderRadius:4}}>⚠ {clustered.size} board{clustered.size!==1?"s":""} within {oohClusterRadius} mi of another running the SAME creative — spread them out</div>:titles.length>0&&<div style={{textAlign:"center",fontSize:13,color:"#6FA287",fontWeight:600,marginBottom:6}}>✓ No same-creative boards within {oohClusterRadius} mi — clean spread</div>}
               {titles.length===0?
                 <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No creative assigned yet — name your creatives per board (🎨 on each card/row; bulletins 2, posters/juniors 3) to see them colored and check for bunching.</div>
                 :
                 <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-                  {titles.map(t=>{const cnt=pins.filter(p=>p.creatives.includes(t)).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:crColor(t),border:"1px solid #4a3565"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
-                  {untaggedCnt>0&&<div style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:"#475569",border:"1px solid #4a3565"}}/><span style={{color:"#94a3b8"}}>no creative ({untaggedCnt})</span></div>}
+                  {titles.map(t=>{const cnt=pins.filter(p=>p.creatives.includes(t)).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:crColor(t),border:"1px solid #3d3542"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
+                  {untaggedCnt>0&&<div style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:"#475569",border:"1px solid #3d3542"}}/><span style={{color:"#94a3b8"}}>no creative ({untaggedCnt})</span></div>}
                 </div>
               }
               {conflicts.length>0&&<div style={{marginTop:8,border:"1px solid rgba(244,194,66,.3)",borderRadius:6,overflow:"hidden"}}>
                 <div style={{padding:"5px 10px",background:"rgba(244,194,66,.12)",fontSize:12,fontWeight:700,color:"#F4C242"}}>⚠ {conflicts.length} same-creative pair{conflicts.length!==1?"s":""} within {oohClusterRadius} mi — possible highway/mall bunching</div>
-                <div style={{maxHeight:170,overflowY:"auto"}}>{conflicts.map((c,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 10px",borderTop:"1px solid #2d1f42",fontSize:12}}>
+                <div style={{maxHeight:170,overflowY:"auto"}}>{conflicts.map((c,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 10px",borderTop:"1px solid #1d1822",fontSize:12}}>
                   <span style={{width:9,height:9,borderRadius:5,background:crColor(c.shared[0]),flexShrink:0}}/>
-                  <span style={{fontWeight:700,color:"#C4A0C8",minWidth:120}}>{c.shared.join(", ")}</span>
-                  <span style={{color:"#9B8EAD",flex:1}}><b>{c.a.panel}</b> ({c.a.market}) ↔ <b>{c.b.panel}</b> ({c.b.market})</span>
-                  <span style={{fontWeight:700,color:c.d<=1?"#E85A7A":"#D4A040",flexShrink:0}}>{c.d.toFixed(1)} mi</span>
+                  <span style={{fontWeight:700,color:"#C9BCA6",minWidth:120}}>{c.shared.join(", ")}</span>
+                  <span style={{color:"#948B7E",flex:1}}><b>{c.a.panel}</b> ({c.a.market}) ↔ <b>{c.b.panel}</b> ({c.b.market})</span>
+                  <span style={{fontWeight:700,color:c.d<=1?"#93323C":"#B08D3F",flexShrink:0}}>{c.d.toFixed(1)} mi</span>
                 </div>)}</div>
               </div>}
-              {approxConflicts.length>0&&<div style={{marginTop:6,border:"1px dashed rgba(196,160,200,.25)",borderRadius:12,overflow:"hidden"}}>
-                <div style={{padding:"5px 10px",background:"rgba(155,123,176,.1)",fontSize:11,fontWeight:700,color:"#9B8EAD"}}>~ {approxConflicts.length} possible pair{approxConflicts.length!==1?"s":""} involving approx-located boards — <b>verify the exact spot</b> before trusting</div>
-                <div style={{maxHeight:120,overflowY:"auto"}}>{approxConflicts.slice(0,40).map((c,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"3px 10px",borderTop:"1px solid #2d1f42",fontSize:11,opacity:.8}}>
+              {approxConflicts.length>0&&<div style={{marginTop:6,border:"1px dashed rgba(201,188,166,.25)",borderRadius:12,overflow:"hidden"}}>
+                <div style={{padding:"5px 10px",background:"rgba(155,123,176,.1)",fontSize:11,fontWeight:700,color:"#948B7E"}}>~ {approxConflicts.length} possible pair{approxConflicts.length!==1?"s":""} involving approx-located boards — <b>verify the exact spot</b> before trusting</div>
+                <div style={{maxHeight:120,overflowY:"auto"}}>{approxConflicts.slice(0,40).map((c,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"3px 10px",borderTop:"1px solid #1d1822",fontSize:11,opacity:.8}}>
                   <span style={{width:8,height:8,borderRadius:4,background:crColor(c.shared[0]),flexShrink:0}}/>
-                  <span style={{fontWeight:700,color:"#C4A0C8",minWidth:110}}>{c.shared.join(", ")}</span>
-                  <span style={{color:"#9B8EAD",flex:1}}><b>{c.a.panel}</b>{c.a.approx?"~":""} ↔ <b>{c.b.panel}</b>{c.b.approx?"~":""} ({c.a.market})</span>
-                  <span style={{fontWeight:700,color:"#9B8EAD",flexShrink:0}}>~{c.d.toFixed(1)} mi</span>
+                  <span style={{fontWeight:700,color:"#C9BCA6",minWidth:110}}>{c.shared.join(", ")}</span>
+                  <span style={{color:"#948B7E",flex:1}}><b>{c.a.panel}</b>{c.a.approx?"~":""} ↔ <b>{c.b.panel}</b>{c.b.approx?"~":""} ({c.a.market})</span>
+                  <span style={{fontWeight:700,color:"#948B7E",flexShrink:0}}>~{c.d.toFixed(1)} mi</span>
                 </div>)}</div>
               </div>}
             </div>})()
           }
-          <div style={{fontSize:14,color:"#9B8EAD",marginTop:4,textAlign:"center"}}>{pins.filter(p=>p.lat&&p.lng).length} of {fl.length} boards mapped{pins.filter(p=>p.approx).length>0?" · "+pins.filter(p=>p.approx).length+" placed approximately (★ refine when you can)":""}{pins.filter(p=>p.creatives.length&&!(p.lat&&p.lng)).length>0?" · "+pins.filter(p=>p.creatives.length&&!(p.lat&&p.lng)).length+" still need coordinates":""}</div>
+          <div style={{fontSize:14,color:"#948B7E",marginTop:4,textAlign:"center"}}>{pins.filter(p=>p.lat&&p.lng).length} of {fl.length} boards mapped{pins.filter(p=>p.approx).length>0?" · "+pins.filter(p=>p.approx).length+" placed approximately (★ refine when you can)":""}{pins.filter(p=>p.creatives.length&&!(p.lat&&p.lng)).length>0?" · "+pins.filter(p=>p.creatives.length&&!(p.lat&&p.lng)).length+" still need coordinates":""}</div>
           </>;
         })()}
        </div></Cd>:
@@ -5269,14 +5269,14 @@ const App=()=>{
         </div>
         <div style={{overflowX:"auto",maxHeight:500}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>#</TH><TH>Board ID</TH><TH>Panel</TH><TH>DMA</TH><TH>Vendor</TH><TH>Type</TH><TH>Size</TH><TH>Location</TH><TH>Impr/Wk</TH><TH>Installed</TH><TH>ISCI</TH><TH>Contract</TH><TH>TAB#</TH><TH>Coords</TH></tr></thead>
           <tbody>{fl.map((p,i)=>{const co=WK_COORDS[p.boardId];return<tr key={p.boardId}>
-            <TD b>{i+1}</TD><TD m b style={{fontSize:14}}>{p.boardId}</TD><TD m>{p.panel}</TD><TD><B l={oohMarket(p.dma)} c={dmaColors[p.dma]||"#D4A040"}/></TD>
+            <TD b>{i+1}</TD><TD m b style={{fontSize:14}}>{p.boardId}</TD><TD m>{p.panel}</TD><TD><B l={oohMarket(p.dma)} c={dmaColors[p.dma]||"#B08D3F"}/></TD>
             <TD><span style={{fontSize:14,fontWeight:600}}>{p.vendor}</span></TD><TD><span style={{fontSize:13,display:"flex",alignItems:"center",gap:6}}><MediaBadge type={p.type}/>{p.type}</span></TD><TD>{p.size}</TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:180,display:"inline-block"}}>{p.location}</span></TD>
             <TD b>{p.impressions.toLocaleString()}</TD><TD>{p.installDate}</TD>
-            <TD><span style={{fontFamily:"monospace",fontSize:14,color:p.isci?"#5BC4A0":"#9ca3af",fontWeight:p.isci?700:400}}>{p.isci||"—"}</span></TD>
+            <TD><span style={{fontFamily:"monospace",fontSize:14,color:p.isci?"#6FA287":"#9ca3af",fontWeight:p.isci?700:400}}>{p.isci||"—"}</span></TD>
             <TD><span style={{fontSize:13,fontFamily:"monospace"}}>{p.contract||"—"}</span></TD>
             <TD><span style={{fontSize:13}}>{p.tab||"—"}</span></TD>
-            <TD>{co?<span style={{fontSize:11,color:"#5BC4A0",fontFamily:"monospace"}}>{co[0].toFixed(3)}, {co[1].toFixed(3)}</span>:<span style={{fontSize:13,color:"#9B8EAD"}}>—</span>}</TD>
+            <TD>{co?<span style={{fontSize:11,color:"#6FA287",fontFamily:"monospace"}}>{co[0].toFixed(3)}, {co[1].toFixed(3)}</span>:<span style={{fontSize:13,color:"#948B7E"}}>—</span>}</TD>
           </tr>})}</tbody>
         </table></div></div></Cd>:
        viewMode==="traffic"?(()=>{
@@ -5299,7 +5299,7 @@ const App=()=>{
           const wWin=window.open("","","width=900,height=700");
           let _oohHtml="";
           const w={document:{write:s=>{_oohHtml+=s},close:()=>{if(wWin){wWin.document.write(_oohHtml);wWin.document.close()}}},print:()=>{if(wWin)wWin.print()}};
-          w.document.write("<html><head><title>OOH Traffic - "+escHtml(dmaLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
+          w.document.write("<html><head><title>OOH Traffic - "+escHtml(dmaLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#93323C}.grn{color:#6FA287}.amb{color:#B08D3F}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
           w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">WETTERMARK KEITH</h2><div style="font-weight:bold;color:#555">PERSONAL INJURY LAWYERS</div></div>');
           const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
           w.document.write(hd("Agency","Atticor Group LLC"));w.document.write(hd("Client","Wettermark Keith"));
@@ -5337,15 +5337,15 @@ const App=()=>{
             <div style={{fontSize:14,fontWeight:800}}>📡 OOH Traffic Instructions — {dmaLabel}</div>
             <div style={{display:"flex",gap:4,alignItems:"center"}}>
               <span style={{fontSize:11,color:"#94a3b8"}}>Vendor:</span>
-              {vendors.map(v=><button key={v} onClick={()=>setOVend(oVend===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:oVend===v?"2px solid #D4A040":"1px solid #4a3565",background:oVend===v?"rgba(217,119,6,.15)":"transparent",color:oVend===v?"#D4A040":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
+              {vendors.map(v=><button key={v} onClick={()=>setOVend(oVend===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:oVend===v?"2px solid #B08D3F":"1px solid #3d3542",background:oVend===v?"rgba(217,119,6,.15)":"transparent",color:oVend===v?"#B08D3F":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
             </div>
           </div>
           <div style={{display:"flex",gap:4,marginBottom:8}}>
-            <button onClick={()=>setTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:trafficMode==="units"?"2px solid #5BC4A0":"1px solid #4a3565",background:trafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:trafficMode==="units"?"#5BC4A0":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
-            <button onClick={()=>setTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:trafficMode==="panels"?"2px solid #4AC8E8":"1px solid #4a3565",background:trafficMode==="panels"?"rgba(37,99,235,.15)":"transparent",color:trafficMode==="panels"?"#60a5fa":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
+            <button onClick={()=>setTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:trafficMode==="units"?"2px solid #6FA287":"1px solid #3d3542",background:trafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:trafficMode==="units"?"#6FA287":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
+            <button onClick={()=>setTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:trafficMode==="panels"?"2px solid #AFC2DE":"1px solid #3d3542",background:trafficMode==="panels"?"rgba(37,99,235,.15)":"transparent",color:trafficMode==="panels"?"#60a5fa":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
             <div style={{marginLeft:"auto",display:"flex",gap:3,alignItems:"center"}}>
               <span style={{fontSize:11,color:"#94a3b8"}}>Type:</span>
-              {(()=>{const cats=[...new Set(vendorBoards.map(p=>oohBoardType(p.type,p.size)))].sort();return cats.map(c=>{const col=OOH_BTYPE_COLORS[c]||OOH_BTYPE_COLORS.Other;const matches=vendorBoards.filter(p=>oohBoardType(p.type,p.size)===c).length;return<button key={c} onClick={()=>setOohTypeF&&setOohTypeF(oohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:oohTypeF===c?"2px solid "+col.border:"1px solid #4a3565",background:oohTypeF===c?col.bg:"transparent",color:oohTypeF===c?col.fg:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
+              {(()=>{const cats=[...new Set(vendorBoards.map(p=>oohBoardType(p.type,p.size)))].sort();return cats.map(c=>{const col=OOH_BTYPE_COLORS[c]||OOH_BTYPE_COLORS.Other;const matches=vendorBoards.filter(p=>oohBoardType(p.type,p.size)===c).length;return<button key={c} onClick={()=>setOohTypeF&&setOohTypeF(oohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:oohTypeF===c?"2px solid "+col.border:"1px solid #3d3542",background:oohTypeF===c?col.bg:"transparent",color:oohTypeF===c?col.fg:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
@@ -5355,8 +5355,8 @@ const App=()=>{
           </div>
           <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {dmaLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} panels | Broadcast: {workMonth}</div>
           {usePanelMode&&oLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(37,99,235,.08)",borderRadius:5,border:"1px solid rgba(37,99,235,.2)"}}>
-            <span style={{fontSize:11,color:"#4AC8E8"}}>Quick assign creative to all {oLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
-            {oohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0",width:200}}/>}
+            <span style={{fontSize:11,color:"#AFC2DE"}}>Quick assign creative to all {oLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
+            {oohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6",width:200}}/>}
           </div>}
           <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
             <TH w="90">Flight</TH>
@@ -5368,31 +5368,31 @@ const App=()=>{
             <TH>Notes</TH><TH w="30"/>
           </tr></thead>
             <tbody>{oLines.map((l,i)=>{const bd=usePanelMode?vendorPanels.find(p=>p.panel===l.panel||p.id===l.panel):null;return<tr key={i}>
-              <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={oPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></TD>
-              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{const v=e.target.value;upL(i,"panel",v);const b=vendorPanels.find(p=>p.panel===v);if(b&&!l.isci){const cr=(Array.isArray(b.design)&&b.design.length)?b.design.map(c=>fullCreativeName(b,c)).join(" / "):(b.isci?(b.isci+(isciTitle(b.isci)?" - "+isciTitle(b.isci):"")):"");if(cr)upL(i,"isci",cr)}}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.dma} - {p.sub} - {p.type}{(Array.isArray(p.design)&&p.design.length)?" · 🎨"+p.design.join("/"):""}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
-              {usePanelMode&&<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
-              {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">All</option>{dmas.map(d=><option key={d} value={d}>{d}</option>)}</select></TD>}
-              {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1e1233",color:"#E8DFF0"}}/></TD>}
-              {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1e1233",color:"#E8DFF0"}}/></TD>}
-              <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></TD>
+              <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={oPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/></TD>
+              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{const v=e.target.value;upL(i,"panel",v);const b=vendorPanels.find(p=>p.panel===v);if(b&&!l.isci){const cr=(Array.isArray(b.design)&&b.design.length)?b.design.map(c=>fullCreativeName(b,c)).join(" / "):(b.isci?(b.isci+(isciTitle(b.isci)?" - "+isciTitle(b.isci):"")):"");if(cr)upL(i,"isci",cr)}}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.dma} - {p.sub} - {p.type}{(Array.isArray(p.design)&&p.design.length)?" · 🎨"+p.design.join("/"):""}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
+              {usePanelMode&&<TD>{oohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- creative --</option>{oohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #3d3542",borderRadius:3,fontSize:11,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
+              {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">All</option>{dmas.map(d=><option key={d} value={d}>{d}</option>)}</select></TD>}
+              {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
+              {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
+              <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/></TD>
               <TD>{oLines.length>1&&<button onClick={()=>delL(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#ef4444"}}>✕</button>}</TD>
             </tr>})}</tbody>
           </table>
           <div style={{display:"flex",gap:6,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
             <Btn small onClick={addLine}>+ Add Line</Btn>
-            {usePanelMode&&<Btn small onClick={()=>{const used=oLines.map(l=>l.panel).filter(Boolean);const unassigned=vendorPanels.filter(p=>!used.includes(p.panel));if(!unassigned.length){notify("All panels already added");return}const nl=unassigned.map(p=>({flight:oPostDates||"",panel:p.panel,isci:(Array.isArray(p.design)&&p.design.length)?p.design.map(c=>fullCreativeName(p,c)).join(" / "):"",units:"",notes:""}));setOLines(p=>[...p,...nl]);notify(unassigned.length+" panels added (creative pre-filled where set)")}} color="#4AC8E8">+ Add All {trafficVendor||""} Panels</Btn>}
-            <Btn small primary color="#D4A040" onClick={printOoh} disabled={!oLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
+            {usePanelMode&&<Btn small onClick={()=>{const used=oLines.map(l=>l.panel).filter(Boolean);const unassigned=vendorPanels.filter(p=>!used.includes(p.panel));if(!unassigned.length){notify("All panels already added");return}const nl=unassigned.map(p=>({flight:oPostDates||"",panel:p.panel,isci:(Array.isArray(p.design)&&p.design.length)?p.design.map(c=>fullCreativeName(p,c)).join(" / "):"",units:"",notes:""}));setOLines(p=>[...p,...nl]);notify(unassigned.length+" panels added (creative pre-filled where set)")}} color="#AFC2DE">+ Add All {trafficVendor||""} Panels</Btn>}
+            <Btn small primary color="#B08D3F" onClick={printOoh} disabled={!oLines.some(l=>l.isci||l.panel)}>🖨 Generate & Print</Btn>
             <span style={{marginLeft:"auto",fontSize:12,color:"#94a3b8"}}>{usePanelMode?totalPanels+" panels":""+oLines.filter(l=>l.isci).length+" creatives | "+totalUnits+" units"}{trafficVendor?" | "+trafficVendor:""}</span>
           </div>
         </Cd>;
        })():
       viewMode==="archive"?<Cd><div style={{padding:12}}>
         <div style={{fontSize:14,fontWeight:800,marginBottom:2}}>🗄 OOH Archive — Wettermark Keith</div>
-        <div style={{fontSize:11,color:"#9B8EAD",marginBottom:10}}>Prior-year buys, kept for reference. Hidden from all active views, counts, maps, and trafficking.</div>
+        <div style={{fontSize:11,color:"#948B7E",marginBottom:10}}>Prior-year buys, kept for reference. Hidden from all active views, counts, maps, and trafficking.</div>
         {(()=>{const byMkt={};archivedPops.forEach(p=>{const m=oohMarket(p.dma);(byMkt[m]=byMkt[m]||[]).push(p)});return Object.entries(byMkt).sort((a,b)=>a[0].localeCompare(b[0])).map(([mkt,boards])=>{const byC={};boards.forEach(p=>{(byC[p.contract]=byC[p.contract]||[]).push(p)});return<div key={mkt} style={{marginBottom:14}}>
-          <div style={{fontSize:13,fontWeight:800,color:"#D4A040",padding:"5px 9px",background:"#2d1f42",borderRadius:5}}>{mkt} — {boards.length} archived boards</div>
+          <div style={{fontSize:13,fontWeight:800,color:"#B08D3F",padding:"5px 9px",background:"#1d1822",borderRadius:5}}>{mkt} — {boards.length} archived boards</div>
           {Object.entries(byC).map(([c,bds])=><div key={c} style={{marginTop:6,filter:"grayscale(.5)",opacity:.85}}>
-            <div style={{fontSize:12,fontWeight:700,color:"#9B8EAD",margin:"4px 0 3px"}}>{bds[0].vendor} · contract {c} · {bds.length} boards</div>
+            <div style={{fontSize:12,fontWeight:700,color:"#948B7E",margin:"4px 0 3px"}}>{bds[0].vendor} · contract {c} · {bds.length} boards</div>
             <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH w="70">Panel</TH><TH>Location</TH><TH w="100">Type</TH><TH w="70">Size</TH></tr></thead>
             <tbody>{bds.slice().sort((a,b)=>String(a.panel).localeCompare(String(b.panel))).map((p,i)=><tr key={i}><TD m b>{p.panel}</TD><TD>{p.location}</TD><TD>{p.type}</TD><TD>{p.size}</TD></tr>)}</tbody></table>
           </div>)}
@@ -5404,29 +5404,29 @@ const App=()=>{
         const saveContractEdit=()=>{setOohContracts(prev=>({...prev,[editContract]:{...prev[editContract],num:editContract,...editDates}}));setEditContract(null);log("Contract Edit",`${editContract} dates updated`);notify("Contract "+editContract+" updated")};
         return<Cd style={{padding:12}}>
           <div style={{fontSize:14,fontWeight:800,marginBottom:8}}>📑 OOH Contract Status — WK Advertising</div>
-          <div style={{fontSize:14,color:"#9B8EAD",marginBottom:10}}>Track contract dates, status, and renewal deadlines per vendor contract</div>
+          <div style={{fontSize:14,color:"#948B7E",marginBottom:10}}>Track contract dates, status, and renewal deadlines per vendor contract</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
             {uniqueContracts.map(cNum=>{const c=oohContracts[cNum]||{num:cNum};const cs=contractStatus(c);const boards=pops.filter(p=>p.contract===cNum);const dmasInContract=[...new Set(boards.map(p=>p.dma))];const totalImprC=boards.reduce((a,p)=>a+p.impressions,0);const taggedC=boards.filter(p=>p.isci).length;
-              return<div key={cNum} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#F0E8F8"}}>
+              return<div key={cNum} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#F1EBDD"}}>
                 <div style={{padding:"10px 14px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#F0E8F8"}}>{cNum}</span>
+                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#F1EBDD"}}>{cNum}</span>
                       <span style={{fontSize:13,padding:"2px 8px",borderRadius:10,fontWeight:700,background:cs.color+"18",color:cs.color}}>{cs.label}</span>
                     </div>
-                    <button onClick={()=>editContract===cNum?setEditContract(null):startContractEdit(cNum)} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#9B8EAD"}}>✎ Edit</button>
+                    <button onClick={()=>editContract===cNum?setEditContract(null):startContractEdit(cNum)} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#948B7E"}}>✎ Edit</button>
                   </div>
-                  <div style={{fontSize:14,color:"#9B8EAD",marginTop:3}}>{c.vendor||"Lamar Advertising"} · {c.brand||"Wettermark Keith"}</div>
+                  <div style={{fontSize:14,color:"#948B7E",marginTop:3}}>{c.vendor||"Lamar Advertising"} · {c.brand||"Wettermark Keith"}</div>
                 </div>
-                {editContract===cNum?<div style={{padding:12,background:"#1e1233",display:"flex",flexDirection:"column",gap:6}}>
+                {editContract===cNum?<div style={{padding:12,background:"#0e0c10",display:"flex",flexDirection:"column",gap:6}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                    <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Start Date</label><input type="date" value={editDates.startDate} onChange={e=>setEditDates(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}}/></div>
-                    <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>End Date</label><input type="date" value={editDates.endDate} onChange={e=>setEditDates(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}}/></div>
+                    <div><label style={{fontSize:13,fontWeight:600,color:"#948B7E"}}>Start Date</label><input type="date" value={editDates.startDate} onChange={e=>setEditDates(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}}/></div>
+                    <div><label style={{fontSize:13,fontWeight:600,color:"#948B7E"}}>End Date</label><input type="date" value={editDates.endDate} onChange={e=>setEditDates(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}}/></div>
                   </div>
-                  <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Override Status</label><select value={editDates.manualStatus} onChange={e=>setEditDates(p=>({...p,manualStatus:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}}>
+                  <div><label style={{fontSize:13,fontWeight:600,color:"#948B7E"}}>Override Status</label><select value={editDates.manualStatus} onChange={e=>setEditDates(p=>({...p,manualStatus:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}}>
                     <option value="">Auto (from dates)</option><option value="active">Active</option><option value="renewal">Pending Renewal</option><option value="expired">Expired</option>
                   </select></div>
-                  <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Notes</label><input value={editDates.notes} onChange={e=>setEditDates(p=>({...p,notes:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}} placeholder="Renewal notes..."/></div>
+                  <div><label style={{fontSize:13,fontWeight:600,color:"#948B7E"}}>Notes</label><input value={editDates.notes} onChange={e=>setEditDates(p=>({...p,notes:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}} placeholder="Renewal notes..."/></div>
                   <div style={{display:"flex",gap:4}}>
                     <Btn small primary onClick={saveContractEdit}>Save</Btn>
                     <Btn small onClick={()=>setEditContract(null)}>Cancel</Btn>
@@ -5434,39 +5434,39 @@ const App=()=>{
                 </div>:
                 <div style={{padding:"10px 14px"}}>
                   <div style={{display:"flex",gap:16,marginBottom:8}}>
-                    <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Start</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>{c.startDate?new Date(c.startDate+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not set"}</div></div>
-                    <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>End</div><div style={{fontSize:13,fontWeight:600,color:cs.color}}>{c.endDate?new Date(c.endDate+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not set"}</div></div>
-                    <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:13,fontWeight:700,color:cs.color}}>{cs.daysLeft!==undefined?cs.daysLeft:"—"}</div></div>
+                    <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Start</div><div style={{fontSize:13,fontWeight:600,color:"#948B7E"}}>{c.startDate?new Date(c.startDate+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not set"}</div></div>
+                    <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>End</div><div style={{fontSize:13,fontWeight:600,color:cs.color}}>{c.endDate?new Date(c.endDate+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not set"}</div></div>
+                    <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:13,fontWeight:700,color:cs.color}}>{cs.daysLeft!==undefined?cs.daysLeft:"—"}</div></div>
                   </div>
                   <div style={{display:"flex",gap:4,marginBottom:6,flexWrap:"wrap"}}>
                     {dmasInContract.map(d=><B key={d} l={d} c={dmaColors[d]||"#64748b"}/>)}
                   </div>
-                  <div style={{display:"flex",gap:12,fontSize:14,color:"#9B8EAD"}}>
+                  <div style={{display:"flex",gap:12,fontSize:14,color:"#948B7E"}}>
                     <span><strong>{boards.length}</strong> boards</span>
                     <span><strong>{totalImprC.toLocaleString()}</strong> wkly impressions</span>
-                    <span style={{color:taggedC===boards.length?"#5BC4A0":"#D4A040"}}><strong>{taggedC}/{boards.length}</strong> ISCI tagged</span>
+                    <span style={{color:taggedC===boards.length?"#6FA287":"#B08D3F"}}><strong>{taggedC}/{boards.length}</strong> ISCI tagged</span>
                   </div>
-                  {c.notes&&<div style={{fontSize:14,color:"#9B8EAD",marginTop:6,fontStyle:"italic"}}>📝 {c.notes}</div>}
+                  {c.notes&&<div style={{fontSize:14,color:"#948B7E",marginTop:6,fontStyle:"italic"}}>📝 {c.notes}</div>}
                 </div>}
               </div>;
             })}
           </div>
           {/* Contract timeline bar */}
-          <div style={{marginTop:14,padding:12,background:"#1e1233",borderRadius:8,border:"1px solid #4a3565"}}>
+          <div style={{marginTop:14,padding:12,background:"#0e0c10",borderRadius:8,border:"1px solid #3d3542"}}>
             <div style={{fontSize:13,fontWeight:700,marginBottom:8}}>Contract Timeline</div>
             {uniqueContracts.map(cNum=>{const c=oohContracts[cNum]||{};const cs=contractStatus(c);if(!c.startDate||!c.endDate)return null;
               const start=new Date(c.startDate);const end=new Date(c.endDate);const rangeStart=new Date("2025-10-01");const rangeEnd=new Date("2026-12-31");const total=rangeEnd-rangeStart;
               const left=Math.max(0,Math.min(100,((start-rangeStart)/total)*100));const width=Math.max(2,Math.min(100-left,((end-start)/total)*100));
               const now=new Date();const nowPos=Math.max(0,Math.min(100,((now-rangeStart)/total)*100));
               return<div key={cNum} style={{marginBottom:6}}>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#9B8EAD"}}><span style={{fontWeight:700,fontFamily:"monospace"}}>{cNum}</span><span>{cs.label}</span></div>
-                <div style={{position:"relative",height:14,background:"#E8DFF0",borderRadius:4,overflow:"hidden"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#948B7E"}}><span style={{fontWeight:700,fontFamily:"monospace"}}>{cNum}</span><span>{cs.label}</span></div>
+                <div style={{position:"relative",height:14,background:"#E9E3D6",borderRadius:4,overflow:"hidden"}}>
                   <div style={{position:"absolute",left:left+"%",width:width+"%",height:"100%",background:cs.color+"60",borderRadius:4}}/>
-                  <div style={{position:"absolute",left:nowPos+"%",width:1,height:"100%",background:"#1e1233"}}/>
+                  <div style={{position:"absolute",left:nowPos+"%",width:1,height:"100%",background:"#0e0c10"}}/>
                 </div>
               </div>;
             })}
-            <div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#9B8EAD",marginTop:4}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#948B7E",marginTop:4}}>
               <span>Oct 2025</span><span>Jan 2026</span><span>Apr 2026</span><span>Jul 2026</span><span>Oct 2026</span><span>Dec 2026</span>
             </div>
           </div>
@@ -5478,7 +5478,7 @@ const App=()=>{
             <TD b>{i+1}</TD>
             <TD m b>{p.panel}</TD>
             <TD>{p.submarket}</TD>
-            <TD><B l={oohMarket(p.dma)} c={dmaColors[p.dma]||"#D4A040"}/></TD>
+            <TD><B l={oohMarket(p.dma)} c={dmaColors[p.dma]||"#B08D3F"}/></TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:200,display:"inline-block"}}>{p.location}</span></TD>
             <TD b>{p.impressions.toLocaleString()}</TD>
             <TD>{p.installDate}</TD>
@@ -5487,12 +5487,12 @@ const App=()=>{
             <TD>{(()=>{const cs=contractStatus(oohContracts[p.contract]);return<span style={{fontSize:13,padding:"1px 5px",borderRadius:6,fontWeight:600,background:cs.bg,color:cs.color}}>{cs.label}</span>})()}</TD>
             <TD>{editId===p.boardId?
               <div style={{display:"flex",gap:2,alignItems:"center"}}>
-                <input value={editVal} onChange={e=>setEditVal(e.target.value)} style={{width:120,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:14,fontFamily:"monospace"}} autoFocus onKeyDown={e=>{if(e.key==="Enter")saveEdit(p.boardId);if(e.key==="Escape")cancelEdit()}}/>
-                <button onClick={()=>saveEdit(p.boardId)} style={{padding:"1px 4px",background:"#5BC4A0",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✓</button>
+                <input value={editVal} onChange={e=>setEditVal(e.target.value)} style={{width:120,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:14,fontFamily:"monospace"}} autoFocus onKeyDown={e=>{if(e.key==="Enter")saveEdit(p.boardId);if(e.key==="Escape")cancelEdit()}}/>
+                <button onClick={()=>saveEdit(p.boardId)} style={{padding:"1px 4px",background:"#6FA287",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✓</button>
                 <button onClick={cancelEdit} style={{padding:"1px 4px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✕</button>
               </div>:
-              <span onClick={()=>startEdit(p.boardId,p.isci)} style={{cursor:"pointer",fontFamily:"monospace",fontSize:14,color:p.isci?"#5BC4A0":"#D4A040",fontWeight:p.isci?700:400}}>
-                {p.isci||"—"} <span style={{fontSize:14,color:"#9B8EAD"}}>✎</span>
+              <span onClick={()=>startEdit(p.boardId,p.isci)} style={{cursor:"pointer",fontFamily:"monospace",fontSize:14,color:p.isci?"#6FA287":"#B08D3F",fontWeight:p.isci?700:400}}>
+                {p.isci||"—"} <span style={{fontSize:14,color:"#948B7E"}}>✎</span>
               </span>
             }</TD>
             <TD>{dEditId===p.boardId?
@@ -5502,7 +5502,7 @@ const App=()=>{
                 <button onClick={cancelDEdit} style={{padding:"1px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:2,fontSize:13,cursor:"pointer"}}>✕</button></div>
               </div>:
               <span onClick={()=>startDEdit(p)} style={{cursor:"pointer",fontSize:13}} title={p.vendorRef?("Lamar: "+p.vendorRef):""}>
-                {(Array.isArray(p.design)&&p.design.length)?<span style={{display:"inline-flex",flexWrap:"wrap",gap:2,alignItems:"center"}}>{p.design.map((c,k)=><React.Fragment key={k}>{boardClass(p.type,p.size).rotates&&k>0&&<span style={{fontSize:10,color:boardClass(p.type,p.size).color}}>→</span>}<span style={{color:"#fff",background:creativeColor(c),padding:"0 5px",borderRadius:7,fontWeight:700,fontSize:11}}>{c}</span></React.Fragment>)}</span>:<span style={{color:"#9b7bb0",fontStyle:"italic"}}>+ add {creativeSlots(p.type,p.size)} <span style={{color:boardClass(p.type,p.size).color}}>{boardClass(p.type,p.size).icon}</span></span>} <span style={{fontSize:14,color:"#9B8EAD"}}>✎</span>
+                {(Array.isArray(p.design)&&p.design.length)?<span style={{display:"inline-flex",flexWrap:"wrap",gap:2,alignItems:"center"}}>{p.design.map((c,k)=><React.Fragment key={k}>{boardClass(p.type,p.size).rotates&&k>0&&<span style={{fontSize:10,color:boardClass(p.type,p.size).color}}>→</span>}<span style={{color:"#fff",background:creativeColor(c),padding:"0 5px",borderRadius:7,fontWeight:700,fontSize:11}}>{c}</span></React.Fragment>)}</span>:<span style={{color:"#9b7bb0",fontStyle:"italic"}}>+ add {creativeSlots(p.type,p.size)} <span style={{color:boardClass(p.type,p.size).color}}>{boardClass(p.type,p.size).icon}</span></span>} <span style={{fontSize:14,color:"#948B7E"}}>✎</span>
               </span>
             }</TD>
             <TD><button onClick={()=>setPhotoPanel(p)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,padding:0}} title="View Photos">📷</button></TD>
@@ -5567,7 +5567,7 @@ const App=()=>{
       // each resolved to its art by exact ISCI code so the download link can't break.
       const boardCreative=(p)=>{const list=(p.isciList&&p.isciList.length)?p.isciList:(p.isci?[p.isci]:[]);const rot=plRotates(p)&&list.length>1;const pcts=rot?plDesignPcts(list,p.isciPct):null;return list.map((code,k)=>{const m=iscis.find(i=>i.code===code);return{code,title:m?m.title:code,pct:pcts?pcts[k]:null,f:(m&&m.fileUrl)?{url:m.fileUrl,name:m.title||code}:null}})};
       const w=window.open("","","width=1000,height=820");
-      w.document.write('<html><head><title>PL OOH Traffic — '+escHtml(mktLabel)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}@media print{body{margin:14px}.dl{display:none}tr{page-break-inside:avoid}}</style></head><body>');
+      w.document.write('<html><head><title>PL OOH Traffic — '+escHtml(mktLabel)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#1d1822;color:#fff;padding:6px 10px;border-radius:5px}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}@media print{body{margin:14px}.dl{display:none}tr{page-break-inside:avoid}}</style></head><body>');
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
       w.document.write('<div style="text-align:center;margin-bottom:12px"><h2>POSTMAN LAW</h2><div class="tag">OUT-OF-HOME TRAFFIC INSTRUCTIONS</div></div>');
       const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v||"")+'</span></div>');
@@ -5602,7 +5602,7 @@ const App=()=>{
     const posted=fl.filter(p=>p.status==="posted").length;
     const upcoming=fl.filter(p=>p.status==="upcoming").length;
 
-    const mktColors={CHI:"#E85A7A",MSP:"#4AC8E8",CIN:"#9b7bb0",DEN:"#059669"};
+    const mktColors={CHI:"#93323C",MSP:"#AFC2DE",CIN:"#9b7bb0",DEN:"#059669"};
     const mktNames={CHI:"Chicago",MSP:"Minneapolis",CIN:"Cincinnati",DEN:"Denver"};
 
     // Map pins from PL_PANELS with coords
@@ -5624,15 +5624,15 @@ const App=()=>{
       const w=window.open("","","width=1040,height=900");
       w.document.write('<html><head><title>Postman Law — Chicago OOH Board Map</title>');
       w.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>');
-      w.document.write('<style>body{font-family:Arial,sans-serif;margin:24px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.sub{color:#555;font-weight:bold;margin:2px 0 10px}#map{height:520px;border:1px solid #ccc;border-radius:8px}.lg{margin:8px 0;font-size:12px}.sw{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:middle;border:1px solid #333}.box{border:1px solid #ccc;border-radius:8px;padding:10px 12px;margin-top:12px}table{width:100%;border-collapse:collapse;margin-top:6px}th,td{border:1px solid #ddd;padding:4px 8px;font-size:11px;text-align:left}th{background:#f4f4f4}.leaflet-tooltip.hl{background:#D4A040;color:#1a1a1a;border:none;font-weight:800;font-size:11px}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{body{margin:12px}.box,#map{page-break-inside:avoid}.dl{display:none}}</style></head><body>');
+      w.document.write('<style>body{font-family:Arial,sans-serif;margin:24px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.sub{color:#555;font-weight:bold;margin:2px 0 10px}#map{height:520px;border:1px solid #ccc;border-radius:8px}.lg{margin:8px 0;font-size:12px}.sw{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:middle;border:1px solid #333}.box{border:1px solid #ccc;border-radius:8px;padding:10px 12px;margin-top:12px}table{width:100%;border-collapse:collapse;margin-top:6px}th,td{border:1px solid #ddd;padding:4px 8px;font-size:11px;text-align:left}th{background:#f4f4f4}.leaflet-tooltip.hl{background:#B08D3F;color:#1a1a1a;border:none;font-weight:800;font-size:11px}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{body{margin:12px}.box,#map{page-break-inside:avoid}.dl{display:none}}</style></head><body>');
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
       w.document.write('<div style="text-align:center;margin-bottom:6px"><h2>POSTMAN LAW</h2><div style="font-weight:bold;color:#555">CHICAGO OOH BOARD MAP</div></div>');
       w.document.write('<div class="sub">'+escHtml(mktLabel)+' &nbsp;·&nbsp; '+pins.length+' boards &nbsp;·&nbsp; '+rec.length+' recommended &nbsp;·&nbsp; '+new Date().toLocaleDateString()+'</div>');
-      w.document.write('<div class="lg"><span class="sw" style="background:#4AC8E8"></span>Existing board ('+(pins.length-rec.length)+') &nbsp;&nbsp;<span class="sw" style="background:#D4A040"></span>★ Recommended ('+rec.length+')</div>');
+      w.document.write('<div class="lg"><span class="sw" style="background:#AFC2DE"></span>Existing board ('+(pins.length-rec.length)+') &nbsp;&nbsp;<span class="sw" style="background:#B08D3F"></span>★ Recommended ('+rec.length+')</div>');
       w.document.write('<div id="map"></div>');
       if(recTable)w.document.write('<div class="box"><div style="font-weight:bold;font-size:13px">★ Recommended boards</div>'+recTable+'</div>');
       w.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"><\/script>');
-      w.document.write('<script>var P='+JSON.stringify(pins)+';(function go(){if(typeof L==="undefined")return setTimeout(go,60);var map=L.map("map",{zoomControl:true,attributionControl:false});L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18}).addTo(map);var b=[];P.forEach(function(p){if(p.hi){L.circleMarker([p.lat,p.lng],{radius:9,color:"#7a4b00",weight:2,fillColor:"#D4A040",fillOpacity:1}).bindTooltip("★ "+p.unit,{permanent:true,direction:"right",offset:[8,0],className:"hl"}).addTo(map)}else{L.circleMarker([p.lat,p.lng],{radius:5,color:"#12384f",weight:1,fillColor:"#4AC8E8",fillOpacity:.85}).bindTooltip(p.unit+" — "+p.loc).addTo(map)}b.push([p.lat,p.lng])});if(b.length)map.fitBounds(b,{padding:[28,28]});setTimeout(function(){window.focus();window.print()},1700)})();<\/script>');
+      w.document.write('<script>var P='+JSON.stringify(pins)+';(function go(){if(typeof L==="undefined")return setTimeout(go,60);var map=L.map("map",{zoomControl:true,attributionControl:false});L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18}).addTo(map);var b=[];P.forEach(function(p){if(p.hi){L.circleMarker([p.lat,p.lng],{radius:9,color:"#7a4b00",weight:2,fillColor:"#B08D3F",fillOpacity:1}).bindTooltip("★ "+p.unit,{permanent:true,direction:"right",offset:[8,0],className:"hl"}).addTo(map)}else{L.circleMarker([p.lat,p.lng],{radius:5,color:"#12384f",weight:1,fillColor:"#AFC2DE",fillOpacity:.85}).bindTooltip(p.unit+" — "+p.loc).addTo(map)}b.push([p.lat,p.lng])});if(b.length)map.fitBounds(b,{padding:[28,28]});setTimeout(function(){window.focus();window.print()},1700)})();<\/script>');
       w.document.write('</body></html>');w.document.close();
       log("PL OOH Map Export",mktLabel+" · "+pins.length+" boards");
     };
@@ -5651,48 +5651,48 @@ const App=()=>{
           if(!allCardPhotos.length)return;
           setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0});
         };
-        return<div key={i} onClick={openCardPop} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:exp?"#e5e0ec":"#F0E8F8",borderLeft:`4px solid ${exp?"#9B8EAD":c}`,cursor:allCardPhotos.length?"pointer":"default",opacity:exp?0.6:1,filter:exp?"grayscale(0.8)":"none"}}>
+        return<div key={i} onClick={openCardPop} style={{border:"1px solid #3d3542",borderRadius:9,overflow:"hidden",background:exp?"#e5e0ec":"#F1EBDD",borderLeft:`4px solid ${exp?"#948B7E":c}`,cursor:allCardPhotos.length?"pointer":"default",opacity:exp?0.6:1,filter:exp?"grayscale(0.8)":"none"}}>
           <div style={{padding:10}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
               <div>
                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
-                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#2d1f42"}}>{p.unit}</span>
+                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#1d1822"}}>{p.unit}</span>
                   <B l={p.market} c={c}/>
-                  {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#1e1233",color:"#9B8EAD",fontWeight:600}}>INHERITED</span>}
+                  {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#0e0c10",color:"#948B7E",fontWeight:600}}>INHERITED</span>}
                   {p.plan==="expired"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#3a2f2f",color:"#c9b8b8",fontWeight:700}}>⧗ EXPIRED · ARCHIVED</span>}
                   {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#3a2f2f",color:"#c9b8b8",fontWeight:700}}>⧗ ARCHIVED</span>}
-                  {pop&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#dbeafe",color:"#4AC8E8",fontWeight:600}}>PoP ✓</span>}
+                  {pop&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#dbeafe",color:"#AFC2DE",fontWeight:600}}>PoP ✓</span>}
                 </div>
-                <div style={{fontSize:14,color:"#9B8EAD",marginTop:2}}>{p.media} · {p.size} · {p.vendor}</div>
+                <div style={{fontSize:14,color:"#948B7E",marginTop:2}}>{p.media} · {p.size} · {p.vendor}</div>
               </div>
-              <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:exp?"#e5e7eb":p.status==="posted"?"#dcfce7":"#fef3c7",color:exp?"#6b7280":p.status==="posted"?"#5BC4A0":"#D4A040"}}>{p.status}</span>
+              <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:exp?"#e5e7eb":p.status==="posted"?"#dcfce7":"#fef3c7",color:exp?"#6b7280":p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span>
             </div>
-            <div style={{fontSize:14,color:"#9B8EAD",marginTop:6}}>{p.location}</div>
-            <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #4a3565"}}>
-              <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Flight</div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD"}}>{flightClean||"TBD"}</div></div>
-              <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Cycles</div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD"}}>{p.cycles||"—"}</div></div>
-              <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Impr/Wk</div><div style={{fontSize:14,fontWeight:700,color:c}}>{(p.impressions*p.numUnits).toLocaleString()}</div></div>
-              {p.facing&&p.facing!=="N/A"&&p.facing!=="Various"&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#6366f1"/></div></div>}
-              {pop&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>PoP Date</div><div style={{fontSize:14,fontWeight:600,color:"#4AC8E8"}}>{pop.popDate}</div></div>}
+            <div style={{fontSize:14,color:"#948B7E",marginTop:6}}>{p.location}</div>
+            <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #3d3542"}}>
+              <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Flight</div><div style={{fontSize:14,fontWeight:600,color:"#948B7E"}}>{flightClean||"TBD"}</div></div>
+              <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Cycles</div><div style={{fontSize:14,fontWeight:600,color:"#948B7E"}}>{p.cycles||"—"}</div></div>
+              <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Impr/Wk</div><div style={{fontSize:14,fontWeight:700,color:c}}>{(p.impressions*p.numUnits).toLocaleString()}</div></div>
+              {p.facing&&p.facing!=="N/A"&&p.facing!=="Various"&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#6366f1"/></div></div>}
+              {pop&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>PoP Date</div><div style={{fontSize:14,fontWeight:600,color:"#AFC2DE"}}>{pop.popDate}</div></div>}
             </div>
-            {POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
+            {POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #3d3542",paddingTop:6}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                <div style={{fontSize:12,fontWeight:600,color:"#4AC8E8",textTransform:"uppercase"}}>📸 {1+(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length?"s":""}</div>
+                <div style={{fontSize:12,fontWeight:600,color:"#AFC2DE",textTransform:"uppercase"}}>📸 {1+(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length?"s":""}</div>
                 <OohPhotoUpload id={p.unit}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length?"1fr 1fr":"1fr",gap:4}}>
-                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0})}}/>
-                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=>{const altCount=_popAlts.length;return<img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:1+altCount+pi})}}/>})}
+                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #3d3542",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0})}}/>
+                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=>{const altCount=_popAlts.length;return<img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #3d3542",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:1+altCount+pi})}}/>})}
               </div>
             </div>}
-            {!POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
+            {!POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #3d3542",paddingTop:6}}>
               {(oohPhotos[p.unit]||[]).length?<div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                  <div style={{fontSize:12,fontWeight:600,color:"#4AC8E8",textTransform:"uppercase"}}>📸 {(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length>1?"s":""}</div>
+                  <div style={{fontSize:12,fontWeight:600,color:"#AFC2DE",textTransform:"uppercase"}}>📸 {(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length>1?"s":""}</div>
                   <OohPhotoUpload id={p.unit}/>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length>1?"1fr 1fr":"1fr",gap:4}}>
-                  {(oohPhotos[p.unit]||[]).slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:oohPhotos[p.unit],startIdx:pi})}}/>)}
+                  {(oohPhotos[p.unit]||[]).slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #3d3542",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:oohPhotos[p.unit],startIdx:pi})}}/>)}
                 </div>
               </div>:<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <span style={{fontSize:12,color:"#64748b"}}>No PoP photos</span>
@@ -5705,23 +5705,23 @@ const App=()=>{
                   <div onClick={e=>e.stopPropagation()}>
                     <div style={{fontSize:11,fontWeight:700,color:"#9b7bb0",marginBottom:3}}>↻ Rotation — digital board</div>
                     {(plEditList||[]).map((code,k)=><div key={k} style={{display:"flex",gap:3,alignItems:"center",marginBottom:2}}>
-                      <select value={code||""} onChange={e=>plSetRow(k,e.target.value)} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:12,background:"#fff"}}>
+                      <select value={code||""} onChange={e=>plSetRow(k,e.target.value)} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:12,background:"#fff"}}>
                         <option value="">— select ISCI —</option>
                         {plOohIscisFor(p.market).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?" 🎬":""}</option>)}
                       </select>
-                      <input type="number" value={(plEditPct&&plEditPct[k])||0} onChange={e=>plSetPct(k,e.target.value)} style={{width:42,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center"}}/><span style={{fontSize:11,color:"#9B8EAD"}}>%</span>
-                      <button onClick={()=>plRemoveRow(k)} style={{padding:"1px 5px",background:"#3a1f35",color:"#E85A7A",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✕</button>
+                      <input type="number" value={(plEditPct&&plEditPct[k])||0} onChange={e=>plSetPct(k,e.target.value)} style={{width:42,padding:"2px 3px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center"}}/><span style={{fontSize:11,color:"#948B7E"}}>%</span>
+                      <button onClick={()=>plRemoveRow(k)} style={{padding:"1px 5px",background:"#3a1f35",color:"#93323C",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✕</button>
                     </div>)}
                     <div style={{display:"flex",gap:3,marginTop:3}}>
-                      <button onClick={plAddRow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#4AC8E8",border:"1px solid #4a3565",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>+ Add</button>
-                      <button onClick={plEvenSplitNow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#5BC4A0",border:"1px solid #4a3565",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>⚖ Even</button>
-                      <button onClick={()=>savePlRotation(p.unit)} style={{marginLeft:"auto",padding:"2px 8px",background:"#5BC4A0",color:"#fff",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✓ Save</button>
+                      <button onClick={plAddRow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#AFC2DE",border:"1px solid #3d3542",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>+ Add</button>
+                      <button onClick={plEvenSplitNow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#6FA287",border:"1px solid #3d3542",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>⚖ Even</button>
+                      <button onClick={()=>savePlRotation(p.unit)} style={{marginLeft:"auto",padding:"2px 8px",background:"#6FA287",color:"#fff",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✓ Save</button>
                       <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✕</button>
                     </div>
                   </div>
                 :
                   <div style={{display:"flex",gap:3,alignItems:"center"}} onClick={e=>e.stopPropagation()}>
-                    <select value={p.isci||""} autoFocus onChange={e=>setPlIsci(p.unit,e.target.value)} onBlur={cancelPlEdit} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:13,background:"#fff"}}>
+                    <select value={p.isci||""} autoFocus onChange={e=>setPlIsci(p.unit,e.target.value)} onBlur={cancelPlEdit} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:13,background:"#fff"}}>
                       <option value="">— select ISCI —</option>
                       {plOohIscisFor(p.market).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?" 🎬":""}</option>)}
                     </select>
@@ -5731,13 +5731,13 @@ const App=()=>{
                 <div onClick={(e)=>{e.stopPropagation();startPlEdit(p.unit,p.isci)}} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   {has?<div style={{flex:1,minWidth:0}}>{rot&&dl.length>1&&<div style={{fontSize:11,fontWeight:700,color:"#9b7bb0"}}>↻ Rotation</div>}
                     {(()=>{const pcts=rot?plDesignPcts(dl,p.isciPct):null;return dl.map((code,k)=>{const m=iscis.find(i=>i.code===code);return<div key={k} style={{marginTop:k?2:0}}>
-                      <div style={{fontSize:13,fontWeight:700,fontFamily:"monospace",color:"#5BC4A0"}}>{code}{pcts&&dl.length>1?<span style={{color:"#9b7bb0"}}> · {pcts[k]}%</span>:null}</div>
-                      <div style={{fontSize:12,color:"#9B8EAD"}}>{m?m.title:""}</div>
-                      {m&&m.fileUrl?<a href={dlUrl(m.fileUrl)} target="_blank" rel="noopener" download onClick={e=>e.stopPropagation()} style={{fontSize:12,color:"#4AC8E8",fontWeight:600,textDecoration:"none"}}>📁 Download</a>:<span style={{fontSize:12,color:"#D4A040"}}>⚠ no art</span>}
+                      <div style={{fontSize:13,fontWeight:700,fontFamily:"monospace",color:"#6FA287"}}>{code}{pcts&&dl.length>1?<span style={{color:"#9b7bb0"}}> · {pcts[k]}%</span>:null}</div>
+                      <div style={{fontSize:12,color:"#948B7E"}}>{m?m.title:""}</div>
+                      {m&&m.fileUrl?<a href={dlUrl(m.fileUrl)} target="_blank" rel="noopener" download onClick={e=>e.stopPropagation()} style={{fontSize:12,color:"#AFC2DE",fontWeight:600,textDecoration:"none"}}>📁 Download</a>:<span style={{fontSize:12,color:"#B08D3F"}}>⚠ no art</span>}
                     </div>})})()}
                   </div>
-                  :<div style={{fontSize:14,color:"#D4A040",fontStyle:"italic"}}>No creative — click to assign{rot?" (rotates)":""}</div>}
-                  <span style={{fontSize:13,color:"#9B8EAD",marginLeft:4}}>✎</span>
+                  :<div style={{fontSize:14,color:"#B08D3F",fontStyle:"italic"}}>No creative — click to assign{rot?" (rotates)":""}</div>}
+                  <span style={{fontSize:13,color:"#948B7E",marginLeft:4}}>✎</span>
                 </div>
               }
             </div>;})()}
@@ -5749,7 +5749,7 @@ const App=()=>{
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
         <div><PageHead title="Postman Law — OOH Media Plan" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>2026 All Markets · {plPanels.filter(p=>p.plan!=="expired").length} placements across {mkts.length} DMAs · {plPanels.filter(p=>p.plan!=="expired"&&p.isci).length}/{plPanels.filter(p=>p.plan!=="expired").length} ISCI assigned{(()=>{const a=plPanels.filter(p=>p.plan==="expired").length;return a?" · "+a+" archived":""})()}</p>
+          <p style={{fontSize:13,color:"#948B7E"}}>2026 All Markets · {plPanels.filter(p=>p.plan!=="expired").length} placements across {mkts.length} DMAs · {plPanels.filter(p=>p.plan!=="expired"&&p.isci).length}/{plPanels.filter(p=>p.plan!=="expired").length} ISCI assigned{(()=>{const a=plPanels.filter(p=>p.plan==="expired").length;return a?" · "+a+" archived":""})()}</p>
         </div>
         <div style={{display:"flex",gap:4}}>
           <Btn small onClick={()=>{
@@ -5757,16 +5757,16 @@ const App=()=>{
             const rows=fl.map(p=>{const pop=PL_POPS[p.unit];const zip=typeof PL_ZIPS!=='undefined'?(PL_ZIPS[p.submarket]||PL_ZIPS[p.market]||""):"";return[p.market,p.unit,p.vendor,p.media,p.size,p.location,zip,p.flight.split('(')[0].trim(),p.cycles||"",p.status,p.isci||"",plIsciTitle(p.isci),pop?pop.popDate:"",pop?pop.contract:"",p.impressions*p.numUnits,p.facing||"",p.lat||"",p.lng||"",p.plan]});
             exportCsv("PL_OOH_"+(mktF||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
-          <Btn small onClick={()=>openOohCreativeSpecs("Postman Law",fl.map(p=>({market:(typeof DM!=="undefined"&&DM[p.market])||p.market,type:p.media,size:p.size,vendor:p.vendor,contract:(typeof PL_POPS!=="undefined"&&PL_POPS[p.unit]?PL_POPS[p.unit].contract:""),start:oohFlightStart(p.flight),unit:p.unit})),"#5D3A87")} color="#5BC4A0">📐 Creative Specs</Btn>
-          <Btn small onClick={()=>openOohSizesReport("Postman Law")} color="#5BC4A0">📏 Size Report</Btn>
-          <Btn small onClick={printPlCardReport} color="#4AC8E8">🖨 Traffic Report</Btn>
+          <Btn small onClick={()=>openOohCreativeSpecs("Postman Law",fl.map(p=>({market:(typeof DM!=="undefined"&&DM[p.market])||p.market,type:p.media,size:p.size,vendor:p.vendor,contract:(typeof PL_POPS!=="undefined"&&PL_POPS[p.unit]?PL_POPS[p.unit].contract:""),start:oohFlightStart(p.flight),unit:p.unit})),"#5D3A87")} color="#6FA287">📐 Creative Specs</Btn>
+          <Btn small onClick={()=>openOohSizesReport("Postman Law")} color="#6FA287">📏 Size Report</Btn>
+          <Btn small onClick={printPlCardReport} color="#AFC2DE">🖨 Traffic Report</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
           <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>📍 Map</Btn>
           <Btn small onClick={()=>setViewMode("ref")} primary={viewMode==="ref"}>📋 Reference</Btn>
           <Btn small onClick={()=>setViewMode("traffic")} primary={viewMode==="traffic"} color="#9b7bb0">📡 Traffic</Btn>
-          <Btn small onClick={()=>setViewMode("calendar")} primary={viewMode==="calendar"} color="#E85A7A">📅 Creative Calendar</Btn>
-          <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"} color="#D4A040">📑 Contracts</Btn>
+          <Btn small onClick={()=>setViewMode("calendar")} primary={viewMode==="calendar"} color="#93323C">📅 Creative Calendar</Btn>
+          <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"} color="#B08D3F">📑 Contracts</Btn>
         </div>
       </div>
       <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
@@ -5780,19 +5780,19 @@ const App=()=>{
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
         {mkts.map(m=>{const allM=plPanels.filter(p=>p.market===m);const all=allM.filter(p=>p.plan!=="expired");const arch=allM.length-all.length;const impr=all.reduce((a,p)=>a+(p.impressions*p.numUnits),0);const u=new Set(all.map(p=>p.unit)).size;const p2026=all.filter(x=>x.plan==="2026").length;const pops=all.filter(x=>PL_POPS[x.unit]).length;const isciCount=all.filter(x=>x.isci).length;
           const c=mktColors[m]||"#64748b";
-          return<div key={m} onClick={()=>setMktF(mktF===m?"":m)} style={{padding:"10px 12px",borderRadius:9,border:mktF===m?`2px solid ${c}`:"1px solid #E8DFF0",background:mktF===m?c+"0a":"#fff",cursor:"pointer"}}>
+          return<div key={m} onClick={()=>setMktF(mktF===m?"":m)} style={{padding:"10px 12px",borderRadius:9,border:mktF===m?`2px solid ${c}`:"1px solid #E9E3D6",background:mktF===m?c+"0a":"#fff",cursor:"pointer"}}>
             <div style={{fontSize:13,fontWeight:700,color:c,textTransform:"uppercase",letterSpacing:1}}>{mktNames[m]}</div>
-            <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{all.length}{arch>0&&<span style={{fontSize:12,fontWeight:600,color:"#9B8EAD"}}> +{arch} arch</span>}</div>
-            <div style={{fontSize:14,color:"#9B8EAD"}}>{u} unique units</div>
+            <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{all.length}{arch>0&&<span style={{fontSize:12,fontWeight:600,color:"#948B7E"}}> +{arch} arch</span>}</div>
+            <div style={{fontSize:14,color:"#948B7E"}}>{u} unique units</div>
             <div style={{fontSize:14,color:c,fontWeight:600}}>{impr.toLocaleString()} wkly</div>
-            <div style={{fontSize:13,color:"#9B8EAD",marginTop:2}}>{pops?`${pops} PoP · `:"" }{isciCount}/{all.length} ISCI</div>
+            <div style={{fontSize:13,color:"#948B7E",marginTop:2}}>{pops?`${pops} PoP · `:"" }{isciCount}/{all.length} ISCI</div>
           </div>;
         })}
-        <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #4a3565",background:"linear-gradient(135deg,#faf5ff,#F0E8F8)"}}>
+        <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #3d3542",background:"linear-gradient(135deg,#faf5ff,#F1EBDD)"}}>
           <div style={{fontSize:13,fontWeight:700,color:"#9b7bb0",textTransform:"uppercase",letterSpacing:1}}>ALL MARKETS</div>
-          <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{plPanels.filter(p=>p.plan!=="expired").length}{(()=>{const a=plPanels.filter(p=>p.plan==="expired").length;return a>0?<span style={{fontSize:12,fontWeight:600,color:"#9B8EAD"}}> +{a} arch</span>:null})()}</div>
+          <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{plPanels.filter(p=>p.plan!=="expired").length}{(()=>{const a=plPanels.filter(p=>p.plan==="expired").length;return a>0?<span style={{fontSize:12,fontWeight:600,color:"#948B7E"}}> +{a} arch</span>:null})()}</div>
           <div style={{fontSize:14,color:"#9b7bb0",fontWeight:600}}>{totalImpr.toLocaleString()} wkly</div>
-          <div style={{fontSize:13,color:"#9B8EAD"}}>{posted} posted · {upcoming} upcoming</div>
+          <div style={{fontSize:13,color:"#948B7E"}}>{posted} posted · {upcoming} upcoming</div>
         </div>
       </div>
 
@@ -5801,11 +5801,11 @@ const App=()=>{
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:6}}>
           <div style={{fontSize:14,fontWeight:700}}>📍 PL OOH Board Locations</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            <button onClick={downloadPlMap} title="Open a printable street map (Save as PDF) with the recommended boards starred" style={{padding:"4px 11px",fontSize:11,fontWeight:800,cursor:"pointer",border:"none",borderRadius:6,background:"#D4A040",color:"#1e1233"}}>⬇ Download Map</button>
-            {plMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={plClusterRadius} onChange={e=>setPlClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#4AC8E8",minWidth:30}}>{plClusterRadius} mi</span></div>}
-            <div style={{display:"flex",gap:0,border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}>
-              <button onClick={()=>setPlMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:plMapMode==="market"?"rgba(155,123,176,.2)":"transparent",color:plMapMode==="market"?"#C4A0C8":"#94a3b8"}}>📍 By Market</button>
-              <button onClick={()=>setPlMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:plMapMode==="creative"?"rgba(74,200,232,.2)":"transparent",color:plMapMode==="creative"?"#4AC8E8":"#94a3b8"}}>🎨 By Creative</button>
+            <button onClick={downloadPlMap} title="Open a printable street map (Save as PDF) with the recommended boards starred" style={{padding:"4px 11px",fontSize:11,fontWeight:800,cursor:"pointer",border:"none",borderRadius:6,background:"#B08D3F",color:"#0e0c10"}}>⬇ Download Map</button>
+            {plMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={plClusterRadius} onChange={e=>setPlClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#AFC2DE",minWidth:30}}>{plClusterRadius} mi</span></div>}
+            <div style={{display:"flex",gap:0,border:"1px solid #3d3542",borderRadius:6,overflow:"hidden"}}>
+              <button onClick={()=>setPlMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:plMapMode==="market"?"rgba(155,123,176,.2)":"transparent",color:plMapMode==="market"?"#C9BCA6":"#94a3b8"}}>📍 By Market</button>
+              <button onClick={()=>setPlMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:plMapMode==="creative"?"rgba(175,194,222,.2)":"transparent",color:plMapMode==="creative"?"#AFC2DE":"#94a3b8"}}>🎨 By Creative</button>
             </div>
           </div>
         </div>
@@ -5822,7 +5822,7 @@ const App=()=>{
                 <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No creatives tagged yet — all units untagged.</div>
                 :
                 <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-                  {titles.map(t=>{const cnt=mapPins.filter(p=>p.creative===t).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #4a3565"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
+                  {titles.map(t=>{const cnt=mapPins.filter(p=>p.creative===t).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #3d3542"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
                 </div>
               }
             </div>})()
@@ -5842,12 +5842,12 @@ const App=()=>{
             <TD b>{i+1}</TD><TD><B l={p.market} c={c}/></TD><TD m b>{p.unit}</TD><TD><span style={{fontSize:14,fontWeight:600}}>{p.vendor}</span></TD><TD><span style={{fontSize:13}}>{p.media}</span></TD><TD>{p.size}</TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:200,display:"inline-block"}}>{p.location}</span></TD>
             <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{p.flight.split('(')[0].trim()}</span></TD>
-            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#5BC4A0":"#D4A040"}}>{p.status}</span></TD>
-            <TD><span style={{fontFamily:"monospace",fontSize:14,color:p.isci?"#5BC4A0":"#9ca3af",fontWeight:p.isci?700:400,cursor:"pointer"}} onClick={()=>startPlEdit(p.unit,p.isci)}>{p.isci||"— assign"}</span></TD>
-            <TD>{pop?<span style={{fontSize:14,fontWeight:600,color:"#4AC8E8"}}>{pop.popDate} ✓</span>:<span style={{fontSize:13,color:"#9B8EAD"}}>—</span>}</TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
+            <TD><span style={{fontFamily:"monospace",fontSize:14,color:p.isci?"#6FA287":"#9ca3af",fontWeight:p.isci?700:400,cursor:"pointer"}} onClick={()=>startPlEdit(p.unit,p.isci)}>{p.isci||"— assign"}</span></TD>
+            <TD>{pop?<span style={{fontSize:14,fontWeight:600,color:"#AFC2DE"}}>{pop.popDate} ✓</span>:<span style={{fontSize:13,color:"#948B7E"}}>—</span>}</TD>
             <TD><span style={{fontSize:13,fontFamily:"monospace"}}>{pop?pop.contract:"—"}</span></TD>
             <TD b>{(p.impressions*p.numUnits).toLocaleString()}</TD>
-            <TD>{p.lat&&p.lng&&p.lat!==0?<span style={{fontSize:11,color:"#5BC4A0",fontFamily:"monospace"}}>{p.lat.toFixed(3)}, {p.lng.toFixed(3)}</span>:<span style={{fontSize:13,color:"#9B8EAD"}}>—</span>}</TD>
+            <TD>{p.lat&&p.lng&&p.lat!==0?<span style={{fontSize:11,color:"#6FA287",fontFamily:"monospace"}}>{p.lat.toFixed(3)}, {p.lng.toFixed(3)}</span>:<span style={{fontSize:13,color:"#948B7E"}}>—</span>}</TD>
           </tr>})}</tbody>
         </table></div></div></Cd>:
        viewMode==="traffic"?(()=>{
@@ -5870,7 +5870,7 @@ const App=()=>{
           const wWin=window.open("","","width=900,height=700");
           let _oohHtml="";
           const w={document:{write:s=>{_oohHtml+=s},close:()=>{if(wWin){wWin.document.write(_oohHtml);wWin.document.close()}}},print:()=>{if(wWin)wWin.print()}};
-          w.document.write("<html><head><title>OOH Traffic - PL "+escHtml(mktLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
+          w.document.write("<html><head><title>OOH Traffic - PL "+escHtml(mktLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#93323C}.grn{color:#6FA287}.amb{color:#B08D3F}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
           w.document.write('<div style="text-align:center;margin-bottom:20px"><h2 style="margin:0;letter-spacing:2px">POSTMAN LAW</h2></div>');
           const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
           w.document.write(hd("Agency","Atticor"));w.document.write(hd("Client","Postman Law"));
@@ -5905,15 +5905,15 @@ const App=()=>{
             <div style={{fontSize:14,fontWeight:800}}>📡 OOH Traffic Instructions — PL {mktLabel}</div>
             <div style={{display:"flex",gap:4,alignItems:"center"}}>
               <span style={{fontSize:11,color:"#94a3b8"}}>Vendor:</span>
-              {plVendors.map(v=><button key={v} onClick={()=>setVendF(vendF===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:vendF===v?"2px solid #9b7bb0":"1px solid #4a3565",background:vendF===v?"rgba(124,59,237,.15)":"transparent",color:vendF===v?"#C4A0C8":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
+              {plVendors.map(v=><button key={v} onClick={()=>setVendF(vendF===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:vendF===v?"2px solid #9b7bb0":"1px solid #3d3542",background:vendF===v?"rgba(124,59,237,.15)":"transparent",color:vendF===v?"#C9BCA6":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
             </div>
           </div>
           <div style={{display:"flex",gap:4,marginBottom:8}}>
-            <button onClick={()=>setPlOohTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:plOohTrafficMode==="units"?"2px solid #5BC4A0":"1px solid #4a3565",background:plOohTrafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:plOohTrafficMode==="units"?"#5BC4A0":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
-            <button onClick={()=>setPlOohTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:plOohTrafficMode==="panels"?"2px solid #9b7bb0":"1px solid #4a3565",background:plOohTrafficMode==="panels"?"rgba(124,59,237,.15)":"transparent",color:plOohTrafficMode==="panels"?"#C4A0C8":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
+            <button onClick={()=>setPlOohTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:plOohTrafficMode==="units"?"2px solid #6FA287":"1px solid #3d3542",background:plOohTrafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:plOohTrafficMode==="units"?"#6FA287":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
+            <button onClick={()=>setPlOohTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:plOohTrafficMode==="panels"?"2px solid #9b7bb0":"1px solid #3d3542",background:plOohTrafficMode==="panels"?"rgba(124,59,237,.15)":"transparent",color:plOohTrafficMode==="panels"?"#C9BCA6":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
             <div style={{marginLeft:"auto",display:"flex",gap:3,alignItems:"center"}}>
               <span style={{fontSize:11,color:"#94a3b8"}}>Type:</span>
-              {(()=>{const cats=[...new Set(vendorUnits.map(p=>mediaCategory(p.media||p.type)))].sort();return cats.map(c=>{const col=MEDIA_CAT_COLORS[c];const matches=vendorUnits.filter(p=>mediaCategory(p.media||p.type)===c).length;return<button key={c} onClick={()=>setPlOohTypeF(plOohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:plOohTypeF===c?"2px solid "+col.border:"1px solid #4a3565",background:plOohTypeF===c?col.bg:"transparent",color:plOohTypeF===c?col.fg:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
+              {(()=>{const cats=[...new Set(vendorUnits.map(p=>mediaCategory(p.media||p.type)))].sort();return cats.map(c=>{const col=MEDIA_CAT_COLORS[c];const matches=vendorUnits.filter(p=>mediaCategory(p.media||p.type)===c).length;return<button key={c} onClick={()=>setPlOohTypeF(plOohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:plOohTypeF===c?"2px solid "+col.border:"1px solid #3d3542",background:plOohTypeF===c?col.bg:"transparent",color:plOohTypeF===c?col.fg:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
@@ -5923,8 +5923,8 @@ const App=()=>{
           </div>
           <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {mktLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} units | Buyer: Ken Lazar | Broadcast: {workMonth}</div>
           {usePanelMode&&plOLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(124,59,237,.08)",borderRadius:5,border:"1px solid rgba(124,59,237,.2)"}}>
-            <span style={{fontSize:11,color:"#C4A0C8"}}>Quick assign creative to all {plOLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
-            {plOohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0",width:200}}/>}
+            <span style={{fontSize:11,color:"#C9BCA6"}}>Quick assign creative to all {plOLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
+            {plOohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6",width:200}}/>}
           </div>}
           <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
             <TH w="90">Flight</TH>
@@ -5937,14 +5937,14 @@ const App=()=>{
             <TH>Notes</TH><TH w="30"/>
           </tr></thead>
             <tbody>{plOLines.map((l,i)=>{const bd=usePanelMode?vendorPanels.find(p=>p.panel===l.panel):null;return<tr key={i}>
-              <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={plOPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></TD>
-              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.mkt} - {p.vendor} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
-              {usePanelMode&&<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
-              {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">All</option>{mkts.map(m=><option key={m} value={m}>{m}</option>)}</select></TD>}
-              {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1e1233",color:"#E8DFF0"}}/></TD>}
-              {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1e1233",color:"#E8DFF0"}}/></TD>}
-              <TD>{viewChiFaces.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:3,maxWidth:220}}>{viewChiFaces.map(f=>{const sel=(l.faces||[]).includes(f);return<span key={f} onClick={()=>{const cur=l.faces||[];upL(i,"faces",sel?cur.filter(x=>x!==f):[...cur,f])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",fontFamily:"monospace",fontWeight:sel?700:400,background:sel?"#9b7bb0":"#2d1f42",color:sel?"#fff":"#9B8EAD",border:"1px solid "+(sel?"#9b7bb0":"#4a3565"),userSelect:"none"}}>{f}</span>})}<span onClick={()=>{const allSel=viewChiFaces.every(f=>(l.faces||[]).includes(f));upL(i,"faces",allSel?[]:[...viewChiFaces])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",background:"#1e1233",color:"#9B8EAD",border:"1px solid #4a3565",userSelect:"none"}}>{viewChiFaces.every(f=>(l.faces||[]).includes(f))?"none":"all"}</span></div>:<span style={{fontSize:12,color:"#6B5E80"}}>--</span>}</TD>
-              <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></TD>
+              <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={plOPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/></TD>
+              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.mkt} - {p.vendor} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
+              {usePanelMode&&<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #3d3542",borderRadius:3,fontSize:11,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
+              {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">All</option>{mkts.map(m=><option key={m} value={m}>{m}</option>)}</select></TD>}
+              {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
+              {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
+              <TD>{viewChiFaces.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:3,maxWidth:220}}>{viewChiFaces.map(f=>{const sel=(l.faces||[]).includes(f);return<span key={f} onClick={()=>{const cur=l.faces||[];upL(i,"faces",sel?cur.filter(x=>x!==f):[...cur,f])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",fontFamily:"monospace",fontWeight:sel?700:400,background:sel?"#9b7bb0":"#1d1822",color:sel?"#fff":"#948B7E",border:"1px solid "+(sel?"#9b7bb0":"#3d3542"),userSelect:"none"}}>{f}</span>})}<span onClick={()=>{const allSel=viewChiFaces.every(f=>(l.faces||[]).includes(f));upL(i,"faces",allSel?[]:[...viewChiFaces])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",background:"#0e0c10",color:"#948B7E",border:"1px solid #3d3542",userSelect:"none"}}>{viewChiFaces.every(f=>(l.faces||[]).includes(f))?"none":"all"}</span></div>:<span style={{fontSize:12,color:"#6B5E80"}}>--</span>}</TD>
+              <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/></TD>
               <TD>{plOLines.length>1&&<button onClick={()=>delL(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#ef4444"}}>✕</button>}</TD>
             </tr>})}</tbody>
           </table>
@@ -5966,66 +5966,66 @@ const App=()=>{
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:10}}>
             <div>
               <div style={{fontSize:14,fontWeight:800}}>📅 OOH Creative Calendar — Postman Law</div>
-              <div style={{fontSize:14,color:"#9B8EAD"}}>Creative switch & rotation deadlines from Outlook marketing calendar · {OOH_CREATIVE_CAL.length} events</div>
+              <div style={{fontSize:14,color:"#948B7E"}}>Creative switch & rotation deadlines from Outlook marketing calendar · {OOH_CREATIVE_CAL.length} events</div>
             </div>
             {nextUp&&<div style={{padding:"6px 12px",borderRadius:8,background:"rgba(220,38,38,.15)",border:"1px solid #fecaca"}}>
-              <div style={{fontSize:14,fontWeight:700,color:"#E85A7A",textTransform:"uppercase"}}>Next Deadline</div>
-              <div style={{fontSize:14,fontWeight:800,color:"#E85A7A"}}>{new Date(nextUp.due+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"})} — {nextUp.dmas.join("/")} {nextUp.title}</div>
-              <div style={{fontSize:14,color:"#9B8EAD"}}>{oohCalStatus(nextUp.due).label} away</div>
+              <div style={{fontSize:14,fontWeight:700,color:"#93323C",textTransform:"uppercase"}}>Next Deadline</div>
+              <div style={{fontSize:14,fontWeight:800,color:"#93323C"}}>{new Date(nextUp.due+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"})} — {nextUp.dmas.join("/")} {nextUp.title}</div>
+              <div style={{fontSize:14,color:"#948B7E"}}>{oohCalStatus(nextUp.due).label} away</div>
             </div>}
           </div>
           <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
             <Sel label="Market" options={["CHI","CIN","DEN","MSP"]} value={calMktF} onChange={setCalMktF} placeholder="All Markets"/>
             <Sel label="Type" options={["creative","switch","dark","launch"]} value={calTypeF} onChange={setCalTypeF} placeholder="All Types"/>
-            <label style={{display:"flex",alignItems:"center",gap:4,fontSize:14,color:"#9B8EAD",cursor:"pointer"}}><input type="checkbox" checked={showPast} onChange={e=>setShowPast(e.target.checked)}/> Show past events</label>
+            <label style={{display:"flex",alignItems:"center",gap:4,fontSize:14,color:"#948B7E",cursor:"pointer"}}><input type="checkbox" checked={showPast} onChange={e=>setShowPast(e.target.checked)}/> Show past events</label>
           </div>
           {/* Urgency summary */}
           {upcoming.length>0&&<div style={{padding:8,borderRadius:8,background:"#fff7ed",border:"1px solid #fed7aa",marginBottom:10}}>
             <div style={{fontSize:14,fontWeight:700,color:"#ea580c",marginBottom:4}}>⚠ {upcoming.length} deadline{upcoming.length>1?"s":""} in the next 2 weeks</div>
             {upcoming.map((e,i)=>{const s=oohCalStatus(e.due);const t=oohCalType(e.type);return<div key={i} style={{display:"flex",gap:8,alignItems:"center",padding:"3px 0",fontSize:14,flexWrap:"wrap"}}>
-              <span style={{fontWeight:700,color:s.status==="today"?"#E85A7A":s.status==="urgent"?"#ea580c":"#D4A040"}}>{s.label}</span>
+              <span style={{fontWeight:700,color:s.status==="today"?"#93323C":s.status==="urgent"?"#ea580c":"#B08D3F"}}>{s.label}</span>
               <span>{t.icon}</span>
               <span style={{fontWeight:600}}>{e.dmas.join("/")}</span>
-              <span style={{color:"#9B8EAD"}}>{e.title}</span>
-              {e.units&&<span style={{fontSize:13,color:"#4AC8E8",fontFamily:"monospace"}}>[{e.units.length>40?e.units.slice(0,40)+"…":e.units}]</span>}
-              {e.size&&<span style={{fontSize:14,padding:"0 4px",background:"#f0f9ff",borderRadius:3,color:"#4AC8E8"}}>{e.size}</span>}
-              <span style={{fontSize:13,color:"#9B8EAD"}}>{new Date(e.due+"T00:00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}</span>
+              <span style={{color:"#948B7E"}}>{e.title}</span>
+              {e.units&&<span style={{fontSize:13,color:"#AFC2DE",fontFamily:"monospace"}}>[{e.units.length>40?e.units.slice(0,40)+"…":e.units}]</span>}
+              {e.size&&<span style={{fontSize:14,padding:"0 4px",background:"#f0f9ff",borderRadius:3,color:"#AFC2DE"}}>{e.size}</span>}
+              <span style={{fontSize:13,color:"#948B7E"}}>{new Date(e.due+"T00:00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}</span>
             </div>})}
           </div>}
           {/* Calendar list */}
           <div style={{display:"flex",flexDirection:"column",gap:4}}>
             {filtered.map((e,i)=>{const s=oohCalStatus(e.due);const t=oohCalType(e.type);const dateObj=new Date(e.due+"T00:00:00");
-              const urgBorder=s.status==="today"?"2px solid #E85A7A":s.status==="urgent"?"2px solid #ea580c":s.status==="soon"?"1px solid #fed7aa":"1px solid #E8DFF0";
-              const urgBg=s.status==="today"?"#3a1f35":s.status==="urgent"?"#fff7ed":s.status==="past"?"#2d1f42":"#fff";
+              const urgBorder=s.status==="today"?"2px solid #93323C":s.status==="urgent"?"2px solid #ea580c":s.status==="soon"?"1px solid #fed7aa":"1px solid #E9E3D6";
+              const urgBg=s.status==="today"?"#3a1f35":s.status==="urgent"?"#fff7ed":s.status==="past"?"#1d1822":"#fff";
               return<div key={i} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",borderRadius:8,border:urgBorder,background:urgBg,opacity:s.status==="past"?0.6:1}}>
                 <div style={{width:50,textAlign:"center",flexShrink:0}}>
                   <div style={{fontSize:24,fontWeight:800,color:s.status==="past"?"#9ca3af":t.color,lineHeight:1}}>{dateObj.getDate()}</div>
-                  <div style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>{dateObj.toLocaleDateString("en-US",{month:"short"})}</div>
-                  <div style={{fontSize:14,color:"#9B8EAD"}}>{dateObj.toLocaleDateString("en-US",{weekday:"short"})}</div>
+                  <div style={{fontSize:13,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>{dateObj.toLocaleDateString("en-US",{month:"short"})}</div>
+                  <div style={{fontSize:14,color:"#948B7E"}}>{dateObj.toLocaleDateString("en-US",{weekday:"short"})}</div>
                 </div>
                 <div style={{flex:1}}>
                   <div style={{display:"flex",gap:5,alignItems:"center"}}>
                     <span style={{fontSize:13}}>{t.icon}</span>
-                    <span style={{fontSize:14,fontWeight:700,color:"#F0E8F8"}}>{e.title}</span>
+                    <span style={{fontSize:14,fontWeight:700,color:"#F1EBDD"}}>{e.title}</span>
                     <span style={{fontSize:14,padding:"1px 6px",borderRadius:6,fontWeight:600,background:t.bg,color:t.color}}>{t.label}</span>
                   </div>
                   <div style={{display:"flex",gap:4,marginTop:3,alignItems:"center",flexWrap:"wrap"}}>
                     {e.dmas.map(d=><B key={d} l={d} c={mktColors[d]||"#64748b"}/>)}
-                    {e.size&&<span style={{fontSize:14,padding:"1px 5px",borderRadius:4,background:"#f0f9ff",color:"#4AC8E8",fontWeight:600,border:"1px solid #bfdbfe"}}>{e.size}</span>}
-                    {e.spec&&<span style={{fontSize:13,color:"#9B8EAD"}}>{e.spec}</span>}
+                    {e.size&&<span style={{fontSize:14,padding:"1px 5px",borderRadius:4,background:"#f0f9ff",color:"#AFC2DE",fontWeight:600,border:"1px solid #bfdbfe"}}>{e.size}</span>}
+                    {e.spec&&<span style={{fontSize:13,color:"#948B7E"}}>{e.spec}</span>}
                   </div>
-                  {e.units&&<div style={{fontSize:13,color:"#9B8EAD",marginTop:2,fontFamily:"monospace",background:"#1e1233",padding:"2px 6px",borderRadius:3,border:"1px solid #4a3565"}}>📋 {e.units}</div>}
-                  {e.start&&<div style={{fontSize:14,color:"#5BC4A0",marginTop:1}}>▶ Posts {new Date(e.start+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</div>}
+                  {e.units&&<div style={{fontSize:13,color:"#948B7E",marginTop:2,fontFamily:"monospace",background:"#0e0c10",padding:"2px 6px",borderRadius:3,border:"1px solid #3d3542"}}>📋 {e.units}</div>}
+                  {e.start&&<div style={{fontSize:14,color:"#6FA287",marginTop:1}}>▶ Posts {new Date(e.start+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</div>}
                 </div>
                 <div style={{textAlign:"right",flexShrink:0}}>
-                  {s.status==="past"?<span style={{fontSize:14,color:"#9B8EAD"}}>✓ Done</span>:
-                   s.status==="today"?<span style={{fontSize:14,fontWeight:800,color:"#E85A7A",animation:"pulse 1s infinite"}}>TODAY</span>:
-                   <span style={{fontSize:13,fontWeight:700,color:s.days<=7?"#E85A7A":s.days<=14?"#ea580c":"#64748b"}}>{s.label}</span>}
+                  {s.status==="past"?<span style={{fontSize:14,color:"#948B7E"}}>✓ Done</span>:
+                   s.status==="today"?<span style={{fontSize:14,fontWeight:800,color:"#93323C",animation:"pulse 1s infinite"}}>TODAY</span>:
+                   <span style={{fontSize:13,fontWeight:700,color:s.days<=7?"#93323C":s.days<=14?"#ea580c":"#64748b"}}>{s.label}</span>}
                 </div>
               </div>;
             })}
           </div>
-          {filtered.length===0&&<div style={{textAlign:"center",padding:24,color:"#9B8EAD",fontSize:14}}>No upcoming creative deadlines{calMktF?" for "+calMktF:""}</div>}
+          {filtered.length===0&&<div style={{textAlign:"center",padding:24,color:"#948B7E",fontSize:14}}>No upcoming creative deadlines{calMktF?" for "+calMktF:""}</div>}
         </Cd>;
        })():
       viewMode==="contracts"?(()=>{
@@ -6034,29 +6034,29 @@ const App=()=>{
         const saveContractEdit=()=>{setOohContracts(prev=>({...prev,[plEditContract]:{...prev[plEditContract],num:plEditContract,...plEditDates}}));setPlEditContract(null);log("Contract Edit",`${plEditContract} PL dates updated`);notify("Contract "+plEditContract+" updated")};
         return<Cd style={{padding:12}}>
           <div style={{fontSize:14,fontWeight:800,marginBottom:8}}>📑 OOH Contract Status — Postman Law</div>
-          <div style={{fontSize:14,color:"#9B8EAD",marginBottom:10}}>Track contract dates, status, and renewal deadlines per vendor contract</div>
+          <div style={{fontSize:14,color:"#948B7E",marginBottom:10}}>Track contract dates, status, and renewal deadlines per vendor contract</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
             {plContracts.map(cNum=>{const c=oohContracts[cNum]||{num:cNum};const cs=contractStatus(c);const popUnits=Object.entries(PL_POPS).filter(([_,v])=>v.contract===cNum).map(([k])=>k);const boards=fl.filter(p=>popUnits.includes(p.unit));const mktsInContract=[...new Set(boards.map(p=>p.market))];const totalImprC=boards.reduce((a,p)=>a+(p.impressions*p.numUnits),0);
-              return<div key={cNum} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#F0E8F8"}}>
+              return<div key={cNum} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#F1EBDD"}}>
                 <div style={{padding:"10px 14px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#F0E8F8"}}>{cNum}</span>
+                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#F1EBDD"}}>{cNum}</span>
                       <span style={{fontSize:13,padding:"2px 8px",borderRadius:10,fontWeight:700,background:cs.color+"18",color:cs.color}}>{cs.label}</span>
                     </div>
-                    <button onClick={()=>plEditContract===cNum?setPlEditContract(null):startContractEdit(cNum)} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#9B8EAD"}}>✎ Edit</button>
+                    <button onClick={()=>plEditContract===cNum?setPlEditContract(null):startContractEdit(cNum)} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#948B7E"}}>✎ Edit</button>
                   </div>
-                  <div style={{fontSize:14,color:"#9B8EAD",marginTop:3}}>{c.vendor||"Wilkins Media"} · {c.brand||"Postman Law"}</div>
+                  <div style={{fontSize:14,color:"#948B7E",marginTop:3}}>{c.vendor||"Wilkins Media"} · {c.brand||"Postman Law"}</div>
                 </div>
-                {plEditContract===cNum?<div style={{padding:12,background:"#1e1233",display:"flex",flexDirection:"column",gap:6}}>
+                {plEditContract===cNum?<div style={{padding:12,background:"#0e0c10",display:"flex",flexDirection:"column",gap:6}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                    <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Start Date</label><input type="date" value={plEditDates.startDate} onChange={e=>setPlEditDates(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}}/></div>
-                    <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>End Date</label><input type="date" value={plEditDates.endDate} onChange={e=>setPlEditDates(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}}/></div>
+                    <div><label style={{fontSize:13,fontWeight:600,color:"#948B7E"}}>Start Date</label><input type="date" value={plEditDates.startDate} onChange={e=>setPlEditDates(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}}/></div>
+                    <div><label style={{fontSize:13,fontWeight:600,color:"#948B7E"}}>End Date</label><input type="date" value={plEditDates.endDate} onChange={e=>setPlEditDates(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}}/></div>
                   </div>
-                  <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Override Status</label><select value={plEditDates.manualStatus} onChange={e=>setPlEditDates(p=>({...p,manualStatus:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}}>
+                  <div><label style={{fontSize:13,fontWeight:600,color:"#948B7E"}}>Override Status</label><select value={plEditDates.manualStatus} onChange={e=>setPlEditDates(p=>({...p,manualStatus:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}}>
                     <option value="">Auto (from dates)</option><option value="active">Active</option><option value="renewal">Pending Renewal</option><option value="expired">Expired</option>
                   </select></div>
-                  <div><label style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Notes</label><input value={plEditDates.notes} onChange={e=>setPlEditDates(p=>({...p,notes:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}} placeholder="Renewal notes..."/></div>
+                  <div><label style={{fontSize:13,fontWeight:600,color:"#948B7E"}}>Notes</label><input value={plEditDates.notes} onChange={e=>setPlEditDates(p=>({...p,notes:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #9b7bb0",borderRadius:4,fontSize:13}} placeholder="Renewal notes..."/></div>
                   <div style={{display:"flex",gap:4}}>
                     <Btn small primary onClick={saveContractEdit}>Save</Btn>
                     <Btn small onClick={()=>setPlEditContract(null)}>Cancel</Btn>
@@ -6064,39 +6064,39 @@ const App=()=>{
                 </div>:
                 <div style={{padding:"10px 14px"}}>
                   <div style={{display:"flex",gap:16,marginBottom:8}}>
-                    <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Start</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>{c.startDate?new Date(c.startDate+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not set"}</div></div>
-                    <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>End</div><div style={{fontSize:13,fontWeight:600,color:cs.color}}>{c.endDate?new Date(c.endDate+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not set"}</div></div>
-                    <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:13,fontWeight:700,color:cs.color}}>{cs.daysLeft!==undefined?cs.daysLeft:"—"}</div></div>
+                    <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Start</div><div style={{fontSize:13,fontWeight:600,color:"#948B7E"}}>{c.startDate?new Date(c.startDate+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not set"}</div></div>
+                    <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>End</div><div style={{fontSize:13,fontWeight:600,color:cs.color}}>{c.endDate?new Date(c.endDate+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not set"}</div></div>
+                    <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:13,fontWeight:700,color:cs.color}}>{cs.daysLeft!==undefined?cs.daysLeft:"—"}</div></div>
                   </div>
                   <div style={{display:"flex",gap:4,marginBottom:6,flexWrap:"wrap"}}>
                     {mktsInContract.map(d=><B key={d} l={d} c={mktColors[d]||"#64748b"}/>)}
                   </div>
-                  <div style={{display:"flex",gap:12,fontSize:14,color:"#9B8EAD"}}>
+                  <div style={{display:"flex",gap:12,fontSize:14,color:"#948B7E"}}>
                     <span><strong>{popUnits.length}</strong> PoP units</span>
                     <span><strong>{boards.length}</strong> matching panels</span>
                     <span><strong>{totalImprC.toLocaleString()}</strong> wkly impressions</span>
                   </div>
-                  {c.notes&&<div style={{fontSize:14,color:"#9B8EAD",marginTop:6,fontStyle:"italic"}}>📝 {c.notes}</div>}
+                  {c.notes&&<div style={{fontSize:14,color:"#948B7E",marginTop:6,fontStyle:"italic"}}>📝 {c.notes}</div>}
                 </div>}
               </div>;
             })}
           </div>
           {/* Contract timeline bar */}
-          <div style={{marginTop:14,padding:12,background:"#1e1233",borderRadius:8,border:"1px solid #4a3565"}}>
+          <div style={{marginTop:14,padding:12,background:"#0e0c10",borderRadius:8,border:"1px solid #3d3542"}}>
             <div style={{fontSize:13,fontWeight:700,marginBottom:8}}>Contract Timeline</div>
             {plContracts.map(cNum=>{const c=oohContracts[cNum]||{};const cs=contractStatus(c);if(!c.startDate||!c.endDate)return null;
               const start=new Date(c.startDate);const end=new Date(c.endDate);const rangeStart=new Date("2025-10-01");const rangeEnd=new Date("2026-12-31");const total=rangeEnd-rangeStart;
               const left=Math.max(0,Math.min(100,((start-rangeStart)/total)*100));const width=Math.max(2,Math.min(100-left,((end-start)/total)*100));
               const now=new Date();const nowPos=Math.max(0,Math.min(100,((now-rangeStart)/total)*100));
               return<div key={cNum} style={{marginBottom:6}}>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#9B8EAD"}}><span style={{fontWeight:700,fontFamily:"monospace"}}>{cNum}</span><span>{cs.label}</span></div>
-                <div style={{position:"relative",height:14,background:"#E8DFF0",borderRadius:4,overflow:"hidden"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#948B7E"}}><span style={{fontWeight:700,fontFamily:"monospace"}}>{cNum}</span><span>{cs.label}</span></div>
+                <div style={{position:"relative",height:14,background:"#E9E3D6",borderRadius:4,overflow:"hidden"}}>
                   <div style={{position:"absolute",left:left+"%",width:width+"%",height:"100%",background:cs.color+"60",borderRadius:4}}/>
-                  <div style={{position:"absolute",left:nowPos+"%",width:1,height:"100%",background:"#1e1233"}}/>
+                  <div style={{position:"absolute",left:nowPos+"%",width:1,height:"100%",background:"#0e0c10"}}/>
                 </div>
               </div>;
             })}
-            <div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#9B8EAD",marginTop:4}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:14,color:"#948B7E",marginTop:4}}>
               <span>Oct 2025</span><span>Jan 2026</span><span>Apr 2026</span><span>Jul 2026</span><span>Oct 2026</span><span>Dec 2026</span>
             </div>
           </div>
@@ -6108,16 +6108,16 @@ const App=()=>{
           return<tr key={i} style={{background:p.status==="posted"?"#1f353011":""}}>
             <TD b>{i+1}</TD>
             <TD><B l={p.market} c={c}/></TD>
-            <TD m b>{p.unit}{pop&&<span style={{fontSize:14,color:"#4AC8E8",marginLeft:3}}>PoP✓</span>}</TD>
+            <TD m b>{p.unit}{pop&&<span style={{fontSize:14,color:"#AFC2DE",marginLeft:3}}>PoP✓</span>}</TD>
             <TD><span style={{fontSize:13}}>{p.media}</span></TD>
             <TD>{p.size}</TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:220,display:"inline-block"}}>{p.location}</span></TD>
             <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{p.flight.split('(')[0].trim()}</span></TD>
             <TD b>{p.cycles}</TD>
             <TD b>{(p.impressions*p.numUnits).toLocaleString()}</TD>
-            <TD>{p.facing&&p.facing!=="N/A"?<B l={p.facing} c="#6366f1"/>:<span style={{fontSize:13,color:"#9B8EAD"}}>—</span>}</TD>
-            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#5BC4A0":"#D4A040"}}>{p.status}</span></TD>
-            <TD><span style={{fontSize:13,color:p.plan==="2026"?"#4AC8E8":"#9ca3af",fontWeight:p.plan==="2026"?600:400}}>{p.plan}</span></TD>
+            <TD>{p.facing&&p.facing!=="N/A"?<B l={p.facing} c="#6366f1"/>:<span style={{fontSize:13,color:"#948B7E"}}>—</span>}</TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
+            <TD><span style={{fontSize:13,color:p.plan==="2026"?"#AFC2DE":"#9ca3af",fontWeight:p.plan==="2026"?600:400}}>{p.plan}</span></TD>
           </tr>;
         })}</tbody>
       </table></div></Cd>}
@@ -9197,7 +9197,7 @@ Rules:
       // each resolved to its art by exact ISCI code so the download link can't break.
       const boardCreative=(p)=>{const list=(p.isciList&&p.isciList.length)?p.isciList:(p.isci?[p.isci]:[]);const rot=plRotates(p)&&list.length>1;const pcts=rot?plDesignPcts(list,p.isciPct):null;return list.map((code,k)=>{const m=iscis.find(i=>i.code===code);return{code,title:m?m.title:code,pct:pcts?pcts[k]:null,f:(m&&m.fileUrl)?{url:m.fileUrl,name:m.title||code}:null}})};
       const w=window.open("","","width=1000,height=820");
-      w.document.write('<html><head><title>PL OOH Traffic — '+escHtml(mktLabel)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#2FBF71;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}@media print{body{margin:14px}.dl{display:none}tr{page-break-inside:avoid}}</style></head><body>');
+      w.document.write('<html><head><title>PL OOH Traffic — '+escHtml(mktLabel)+'</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}.tag{font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.mkt{margin-top:16px;font-size:14px;font-weight:bold;background:#1d1822;color:#fff;padding:6px 10px;border-radius:5px}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#2FBF71;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}@media print{body{margin:14px}.dl{display:none}tr{page-break-inside:avoid}}</style></head><body>');
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
       w.document.write('<div style="text-align:center;margin-bottom:12px"><img src="'+(typeof LOGO_LR!=="undefined"?LOGO_LR:"")+'" style="height:56px;max-width:440px"/><div class="tag">OUT-OF-HOME TRAFFIC INSTRUCTIONS</div></div>');
       const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v||"")+'</span></div>');
@@ -9232,7 +9232,7 @@ Rules:
     const posted=fl.filter(p=>p.status==="posted").length;
     const upcoming=fl.filter(p=>p.status==="upcoming").length;
 
-    const mktColors={CHI:"#2FBF71",ABQ:"#E85A7A",LAS:"#D4A040",PHX:"#4AC8E8",TUC:"#5BC4A0",RNO:"#a855f7",SEA:"#6366f1",YUM:"#ec4899",KGB:"#f59e0b"};
+    const mktColors={CHI:"#2FBF71",ABQ:"#93323C",LAS:"#B08D3F",PHX:"#AFC2DE",TUC:"#6FA287",RNO:"#a855f7",SEA:"#6366f1",YUM:"#ec4899",KGB:"#f59e0b"};
     const mktNames={CHI:"Chicago",ABQ:"Albuquerque",LVS:"Las Vegas",PHX:"Phoenix",TUC:"Tucson",RNO:"Reno",SEA:"Seattle",YMA:"Yuma",KBH:"King/Bull"};
 
     // Map pins from LR_PANELS with coords
@@ -9252,48 +9252,48 @@ Rules:
           if(!allCardPhotos.length)return;
           setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0});
         };
-        return<div key={i} onClick={openCardPop} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:exp?"#e5e0ec":"#F0E8F8",borderLeft:`4px solid ${exp?"#9B8EAD":c}`,cursor:allCardPhotos.length?"pointer":"default",opacity:exp?0.6:1,filter:exp?"grayscale(0.8)":"none"}}>
+        return<div key={i} onClick={openCardPop} style={{border:"1px solid #3d3542",borderRadius:9,overflow:"hidden",background:exp?"#e5e0ec":"#F1EBDD",borderLeft:`4px solid ${exp?"#948B7E":c}`,cursor:allCardPhotos.length?"pointer":"default",opacity:exp?0.6:1,filter:exp?"grayscale(0.8)":"none"}}>
           <div style={{padding:10}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
               <div>
                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
-                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#2d1f42"}}>{p.unit}</span>
+                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#1d1822"}}>{p.unit}</span>
                   <B l={p.market} c={c}/>
-                  {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#1e1233",color:"#9B8EAD",fontWeight:600}}>INHERITED</span>}
+                  {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#0e0c10",color:"#948B7E",fontWeight:600}}>INHERITED</span>}
                   {p.plan==="expired"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#3a2f2f",color:"#c9b8b8",fontWeight:700}}>⧗ EXPIRED · ARCHIVED</span>}
                   {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#3a2f2f",color:"#c9b8b8",fontWeight:700}}>⧗ ARCHIVED</span>}
-                  {pop&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#dbeafe",color:"#4AC8E8",fontWeight:600}}>PoP ✓</span>}
+                  {pop&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#dbeafe",color:"#AFC2DE",fontWeight:600}}>PoP ✓</span>}
                 </div>
-                <div style={{fontSize:14,color:"#9B8EAD",marginTop:2}}>{p.media} · {p.size} · {p.vendor}</div>
+                <div style={{fontSize:14,color:"#948B7E",marginTop:2}}>{p.media} · {p.size} · {p.vendor}</div>
               </div>
-              <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:exp?"#e5e7eb":p.status==="posted"?"#dcfce7":"#fef3c7",color:exp?"#6b7280":p.status==="posted"?"#5BC4A0":"#D4A040"}}>{p.status}</span>
+              <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:exp?"#e5e7eb":p.status==="posted"?"#dcfce7":"#fef3c7",color:exp?"#6b7280":p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span>
             </div>
-            <div style={{fontSize:14,color:"#9B8EAD",marginTop:6}}>{p.location}</div>
-            <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #4a3565"}}>
-              <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Flight</div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD"}}>{flightClean||"TBD"}</div></div>
-              <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Cycles</div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD"}}>{p.cycles||"—"}</div></div>
-              <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Impr/Wk</div><div style={{fontSize:14,fontWeight:700,color:c}}>{(p.impressions*p.numUnits).toLocaleString()}</div></div>
-              {p.facing&&p.facing!=="N/A"&&p.facing!=="Various"&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#6366f1"/></div></div>}
-              {pop&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>PoP Date</div><div style={{fontSize:14,fontWeight:600,color:"#4AC8E8"}}>{pop.popDate}</div></div>}
+            <div style={{fontSize:14,color:"#948B7E",marginTop:6}}>{p.location}</div>
+            <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #3d3542"}}>
+              <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Flight</div><div style={{fontSize:14,fontWeight:600,color:"#948B7E"}}>{flightClean||"TBD"}</div></div>
+              <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Cycles</div><div style={{fontSize:14,fontWeight:600,color:"#948B7E"}}>{p.cycles||"—"}</div></div>
+              <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Impr/Wk</div><div style={{fontSize:14,fontWeight:700,color:c}}>{(p.impressions*p.numUnits).toLocaleString()}</div></div>
+              {p.facing&&p.facing!=="N/A"&&p.facing!=="Various"&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#6366f1"/></div></div>}
+              {pop&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>PoP Date</div><div style={{fontSize:14,fontWeight:600,color:"#AFC2DE"}}>{pop.popDate}</div></div>}
             </div>
-            {POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
+            {POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #3d3542",paddingTop:6}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                <div style={{fontSize:12,fontWeight:600,color:"#4AC8E8",textTransform:"uppercase"}}>📸 {1+(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length?"s":""}</div>
+                <div style={{fontSize:12,fontWeight:600,color:"#AFC2DE",textTransform:"uppercase"}}>📸 {1+(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length?"s":""}</div>
                 <OohPhotoUpload id={p.unit}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length?"1fr 1fr":"1fr",gap:4}}>
-                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0})}}/>
-                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=>{const altCount=_popAlts.length;return<img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:1+altCount+pi})}}/>})}
+                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #3d3542",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0})}}/>
+                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=>{const altCount=_popAlts.length;return<img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #3d3542",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:1+altCount+pi})}}/>})}
               </div>
             </div>}
-            {!POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
+            {!POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #3d3542",paddingTop:6}}>
               {(oohPhotos[p.unit]||[]).length?<div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                  <div style={{fontSize:12,fontWeight:600,color:"#4AC8E8",textTransform:"uppercase"}}>📸 {(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length>1?"s":""}</div>
+                  <div style={{fontSize:12,fontWeight:600,color:"#AFC2DE",textTransform:"uppercase"}}>📸 {(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length>1?"s":""}</div>
                   <OohPhotoUpload id={p.unit}/>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length>1?"1fr 1fr":"1fr",gap:4}}>
-                  {(oohPhotos[p.unit]||[]).slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:oohPhotos[p.unit],startIdx:pi})}}/>)}
+                  {(oohPhotos[p.unit]||[]).slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #3d3542",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:oohPhotos[p.unit],startIdx:pi})}}/>)}
                 </div>
               </div>:<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <span style={{fontSize:12,color:"#64748b"}}>No PoP photos</span>
@@ -9306,23 +9306,23 @@ Rules:
                   <div onClick={e=>e.stopPropagation()}>
                     <div style={{fontSize:11,fontWeight:700,color:"#2FBF71",marginBottom:3}}>↻ Rotation — digital board</div>
                     {(plEditList||[]).map((code,k)=><div key={k} style={{display:"flex",gap:3,alignItems:"center",marginBottom:2}}>
-                      <select value={code||""} onChange={e=>plSetRow(k,e.target.value)} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:12,background:"#fff"}}>
+                      <select value={code||""} onChange={e=>plSetRow(k,e.target.value)} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:12,background:"#fff"}}>
                         <option value="">— select ISCI —</option>
                         {plOohIscisFor(p.market).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?" 🎬":""}</option>)}
                       </select>
-                      <input type="number" value={(plEditPct&&plEditPct[k])||0} onChange={e=>plSetPct(k,e.target.value)} style={{width:42,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center"}}/><span style={{fontSize:11,color:"#9B8EAD"}}>%</span>
-                      <button onClick={()=>plRemoveRow(k)} style={{padding:"1px 5px",background:"#3a1f35",color:"#E85A7A",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✕</button>
+                      <input type="number" value={(plEditPct&&plEditPct[k])||0} onChange={e=>plSetPct(k,e.target.value)} style={{width:42,padding:"2px 3px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center"}}/><span style={{fontSize:11,color:"#948B7E"}}>%</span>
+                      <button onClick={()=>plRemoveRow(k)} style={{padding:"1px 5px",background:"#3a1f35",color:"#93323C",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✕</button>
                     </div>)}
                     <div style={{display:"flex",gap:3,marginTop:3}}>
-                      <button onClick={plAddRow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#4AC8E8",border:"1px solid #4a3565",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>+ Add</button>
-                      <button onClick={plEvenSplitNow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#5BC4A0",border:"1px solid #4a3565",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>⚖ Even</button>
-                      <button onClick={()=>savePlRotation(p.unit)} style={{marginLeft:"auto",padding:"2px 8px",background:"#5BC4A0",color:"#fff",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✓ Save</button>
+                      <button onClick={plAddRow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#AFC2DE",border:"1px solid #3d3542",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>+ Add</button>
+                      <button onClick={plEvenSplitNow} style={{padding:"2px 8px",background:"#2a1f3e",color:"#6FA287",border:"1px solid #3d3542",borderRadius:3,fontSize:11,fontWeight:700,cursor:"pointer"}}>⚖ Even</button>
+                      <button onClick={()=>savePlRotation(p.unit)} style={{marginLeft:"auto",padding:"2px 8px",background:"#6FA287",color:"#fff",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✓ Save</button>
                       <button onClick={cancelPlEdit} style={{padding:"2px 6px",background:"#9ca3af",color:"#fff",border:"none",borderRadius:3,fontSize:12,cursor:"pointer"}}>✕</button>
                     </div>
                   </div>
                 :
                   <div style={{display:"flex",gap:3,alignItems:"center"}} onClick={e=>e.stopPropagation()}>
-                    <select value={p.isci||""} autoFocus onChange={e=>setPlIsci(p.unit,e.target.value)} onBlur={cancelPlEdit} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #4AC8E8",borderRadius:3,fontSize:13,background:"#fff"}}>
+                    <select value={p.isci||""} autoFocus onChange={e=>setPlIsci(p.unit,e.target.value)} onBlur={cancelPlEdit} style={{flex:1,minWidth:0,padding:"2px 4px",border:"1px solid #AFC2DE",borderRadius:3,fontSize:13,background:"#fff"}}>
                       <option value="">— select ISCI —</option>
                       {plOohIscisFor(p.market).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?" 🎬":""}</option>)}
                     </select>
@@ -9332,13 +9332,13 @@ Rules:
                 <div onClick={(e)=>{e.stopPropagation();startPlEdit(p.unit,p.isci)}} style={{cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   {has?<div style={{flex:1,minWidth:0}}>{rot&&dl.length>1&&<div style={{fontSize:11,fontWeight:700,color:"#2FBF71"}}>↻ Rotation</div>}
                     {(()=>{const pcts=rot?plDesignPcts(dl,p.isciPct):null;return dl.map((code,k)=>{const m=iscis.find(i=>i.code===code);return<div key={k} style={{marginTop:k?2:0}}>
-                      <div style={{fontSize:13,fontWeight:700,fontFamily:"monospace",color:"#5BC4A0"}}>{code}{pcts&&dl.length>1?<span style={{color:"#2FBF71"}}> · {pcts[k]}%</span>:null}</div>
-                      <div style={{fontSize:12,color:"#9B8EAD"}}>{m?m.title:""}</div>
-                      {m&&m.fileUrl?<a href={dlUrl(m.fileUrl)} target="_blank" rel="noopener" download onClick={e=>e.stopPropagation()} style={{fontSize:12,color:"#4AC8E8",fontWeight:600,textDecoration:"none"}}>📁 Download</a>:<span style={{fontSize:12,color:"#D4A040"}}>⚠ no art</span>}
+                      <div style={{fontSize:13,fontWeight:700,fontFamily:"monospace",color:"#6FA287"}}>{code}{pcts&&dl.length>1?<span style={{color:"#2FBF71"}}> · {pcts[k]}%</span>:null}</div>
+                      <div style={{fontSize:12,color:"#948B7E"}}>{m?m.title:""}</div>
+                      {m&&m.fileUrl?<a href={dlUrl(m.fileUrl)} target="_blank" rel="noopener" download onClick={e=>e.stopPropagation()} style={{fontSize:12,color:"#AFC2DE",fontWeight:600,textDecoration:"none"}}>📁 Download</a>:<span style={{fontSize:12,color:"#B08D3F"}}>⚠ no art</span>}
                     </div>})})()}
                   </div>
-                  :<div style={{fontSize:14,color:"#D4A040",fontStyle:"italic"}}>No creative — click to assign{rot?" (rotates)":""}</div>}
-                  <span style={{fontSize:13,color:"#9B8EAD",marginLeft:4}}>✎</span>
+                  :<div style={{fontSize:14,color:"#B08D3F",fontStyle:"italic"}}>No creative — click to assign{rot?" (rotates)":""}</div>}
+                  <span style={{fontSize:13,color:"#948B7E",marginLeft:4}}>✎</span>
                 </div>
               }
             </div>;})()}
@@ -9350,7 +9350,7 @@ Rules:
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
         <div><img src={(typeof LOGO_LR!=="undefined"?LOGO_LR:"")} alt="Lerner & Rowe" style={{height:34,marginBottom:6,background:"#fff",padding:"4px 8px",borderRadius:6}}/><PageHead title="Lerner & Rowe — OOH Media Plan" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>2026 All Markets · {lrPanels.filter(p=>p.plan!=="expired").length} placements across {mkts.length} DMAs · {lrPanels.filter(p=>p.plan!=="expired"&&p.isci).length}/{lrPanels.filter(p=>p.plan!=="expired").length} ISCI assigned{(()=>{const a=lrPanels.filter(p=>p.plan==="expired").length;return a?" · "+a+" archived":""})()}</p>
+          <p style={{fontSize:13,color:"#948B7E"}}>2026 All Markets · {lrPanels.filter(p=>p.plan!=="expired").length} placements across {mkts.length} DMAs · {lrPanels.filter(p=>p.plan!=="expired"&&p.isci).length}/{lrPanels.filter(p=>p.plan!=="expired").length} ISCI assigned{(()=>{const a=lrPanels.filter(p=>p.plan==="expired").length;return a?" · "+a+" archived":""})()}</p>
         </div>
         <div style={{display:"flex",gap:4}}>
           <Btn small onClick={()=>{
@@ -9358,17 +9358,17 @@ Rules:
             const rows=fl.map(p=>{const pop=LR_POPS[p.unit];const zip=typeof PL_ZIPS!=='undefined'?(PL_ZIPS[p.submarket]||PL_ZIPS[p.market]||""):"";return[p.market,p.unit,p.vendor,p.media,p.size,p.location,zip,p.flight.split('(')[0].trim(),p.cycles||"",p.status,p.isci||"",plIsciTitle(p.isci),pop?pop.popDate:"",pop?pop.contract:"",p.impressions*p.numUnits,p.facing||"",p.lat||"",p.lng||"",p.plan]});
             exportCsv("LR_OOH_"+(mktF||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
-          <Btn small onClick={()=>openOohCreativeSpecs("Lerner & Rowe",fl.map(p=>({market:mktNames[p.market]||p.market,type:p.media,size:p.size,vendor:p.vendor,contract:(typeof LR_POPS!=="undefined"&&LR_POPS[p.unit]?LR_POPS[p.unit].contract:""),start:oohFlightStart(p.flight),unit:p.unit})),"#1B7A46")} color="#5BC4A0">📐 Creative Specs</Btn>
-          <Btn small onClick={openLrVendorSpecs} color="#5BC4A0">📎 Vendor Specs</Btn>
-          <Btn small onClick={()=>openOohSizesReport("Lerner & Rowe")} color="#5BC4A0">📏 Size Report</Btn>
-          <Btn small onClick={printPlCardReport} color="#4AC8E8">🖨 Traffic Report</Btn>
+          <Btn small onClick={()=>openOohCreativeSpecs("Lerner & Rowe",fl.map(p=>({market:mktNames[p.market]||p.market,type:p.media,size:p.size,vendor:p.vendor,contract:(typeof LR_POPS!=="undefined"&&LR_POPS[p.unit]?LR_POPS[p.unit].contract:""),start:oohFlightStart(p.flight),unit:p.unit})),"#1B7A46")} color="#6FA287">📐 Creative Specs</Btn>
+          <Btn small onClick={openLrVendorSpecs} color="#6FA287">📎 Vendor Specs</Btn>
+          <Btn small onClick={()=>openOohSizesReport("Lerner & Rowe")} color="#6FA287">📏 Size Report</Btn>
+          <Btn small onClick={printPlCardReport} color="#AFC2DE">🖨 Traffic Report</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
           <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>📍 Map</Btn>
           <Btn small onClick={()=>setViewMode("ref")} primary={viewMode==="ref"}>📋 Reference</Btn>
           <Btn small onClick={()=>setViewMode("traffic")} primary={viewMode==="traffic"} color="#2FBF71">📡 Traffic</Btn>
-          <Btn small onClick={()=>setViewMode("calendar")} primary={viewMode==="calendar"} color="#E85A7A">📅 Creative Calendar</Btn>
-          <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"} color="#D4A040">📑 Contracts</Btn>
+          <Btn small onClick={()=>setViewMode("calendar")} primary={viewMode==="calendar"} color="#93323C">📅 Creative Calendar</Btn>
+          <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"} color="#B08D3F">📑 Contracts</Btn>
         </div>
       </div>
       <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
@@ -9382,19 +9382,19 @@ Rules:
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
         {mkts.map(m=>{const allM=lrPanels.filter(p=>p.market===m);const all=allM.filter(p=>p.plan!=="expired");const arch=allM.length-all.length;const impr=all.reduce((a,p)=>a+(p.impressions*p.numUnits),0);const u=new Set(all.map(p=>p.unit)).size;const p2026=all.filter(x=>x.plan==="2026").length;const pops=all.filter(x=>LR_POPS[x.unit]).length;const isciCount=all.filter(x=>x.isci).length;
           const c=mktColors[m]||"#64748b";
-          return<div key={m} onClick={()=>setMktF(mktF===m?"":m)} style={{padding:"10px 12px",borderRadius:9,border:mktF===m?`2px solid ${c}`:"1px solid #E8DFF0",background:mktF===m?c+"0a":"#fff",cursor:"pointer"}}>
+          return<div key={m} onClick={()=>setMktF(mktF===m?"":m)} style={{padding:"10px 12px",borderRadius:9,border:mktF===m?`2px solid ${c}`:"1px solid #E9E3D6",background:mktF===m?c+"0a":"#fff",cursor:"pointer"}}>
             <div style={{fontSize:13,fontWeight:700,color:c,textTransform:"uppercase",letterSpacing:1}}>{mktNames[m]}</div>
-            <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{all.length}{arch>0&&<span style={{fontSize:12,fontWeight:600,color:"#9B8EAD"}}> +{arch} arch</span>}</div>
-            <div style={{fontSize:14,color:"#9B8EAD"}}>{u} unique units</div>
+            <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{all.length}{arch>0&&<span style={{fontSize:12,fontWeight:600,color:"#948B7E"}}> +{arch} arch</span>}</div>
+            <div style={{fontSize:14,color:"#948B7E"}}>{u} unique units</div>
             <div style={{fontSize:14,color:c,fontWeight:600}}>{impr.toLocaleString()} wkly</div>
-            <div style={{fontSize:13,color:"#9B8EAD",marginTop:2}}>{pops?`${pops} PoP · `:"" }{isciCount}/{all.length} ISCI</div>
+            <div style={{fontSize:13,color:"#948B7E",marginTop:2}}>{pops?`${pops} PoP · `:"" }{isciCount}/{all.length} ISCI</div>
           </div>;
         })}
-        <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #4a3565",background:"linear-gradient(135deg,#faf5ff,#F0E8F8)"}}>
+        <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #3d3542",background:"linear-gradient(135deg,#faf5ff,#F1EBDD)"}}>
           <div style={{fontSize:13,fontWeight:700,color:"#2FBF71",textTransform:"uppercase",letterSpacing:1}}>ALL MARKETS</div>
-          <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{lrPanels.filter(p=>p.plan!=="expired").length}{(()=>{const a=lrPanels.filter(p=>p.plan==="expired").length;return a>0?<span style={{fontSize:12,fontWeight:600,color:"#9B8EAD"}}> +{a} arch</span>:null})()}</div>
+          <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{lrPanels.filter(p=>p.plan!=="expired").length}{(()=>{const a=lrPanels.filter(p=>p.plan==="expired").length;return a>0?<span style={{fontSize:12,fontWeight:600,color:"#948B7E"}}> +{a} arch</span>:null})()}</div>
           <div style={{fontSize:14,color:"#2FBF71",fontWeight:600}}>{totalImpr.toLocaleString()} wkly</div>
-          <div style={{fontSize:13,color:"#9B8EAD"}}>{posted} posted · {upcoming} upcoming</div>
+          <div style={{fontSize:13,color:"#948B7E"}}>{posted} posted · {upcoming} upcoming</div>
         </div>
       </div>
 
@@ -9403,10 +9403,10 @@ Rules:
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:6}}>
           <div style={{fontSize:14,fontWeight:700}}>📍 PL OOH Board Locations</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            {lrMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={lrClusterRadius} onChange={e=>setLrClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#4AC8E8",minWidth:30}}>{lrClusterRadius} mi</span></div>}
-            <div style={{display:"flex",gap:0,border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}>
-              <button onClick={()=>setLrMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:lrMapMode==="market"?"rgba(155,123,176,.2)":"transparent",color:lrMapMode==="market"?"#C4A0C8":"#94a3b8"}}>📍 By Market</button>
-              <button onClick={()=>setLrMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:lrMapMode==="creative"?"rgba(74,200,232,.2)":"transparent",color:lrMapMode==="creative"?"#4AC8E8":"#94a3b8"}}>🎨 By Creative</button>
+            {lrMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={lrClusterRadius} onChange={e=>setLrClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#AFC2DE",minWidth:30}}>{lrClusterRadius} mi</span></div>}
+            <div style={{display:"flex",gap:0,border:"1px solid #3d3542",borderRadius:6,overflow:"hidden"}}>
+              <button onClick={()=>setLrMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:lrMapMode==="market"?"rgba(155,123,176,.2)":"transparent",color:lrMapMode==="market"?"#C9BCA6":"#94a3b8"}}>📍 By Market</button>
+              <button onClick={()=>setLrMapMode("creative")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:lrMapMode==="creative"?"rgba(175,194,222,.2)":"transparent",color:lrMapMode==="creative"?"#AFC2DE":"#94a3b8"}}>🎨 By Creative</button>
             </div>
           </div>
         </div>
@@ -9423,7 +9423,7 @@ Rules:
                 <div style={{textAlign:"center",fontSize:13,color:"#94a3b8",fontStyle:"italic"}}>No creatives tagged yet — all units untagged.</div>
                 :
                 <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-                  {titles.map(t=>{const cnt=mapPins.filter(p=>p.creative===t).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #4a3565"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
+                  {titles.map(t=>{const cnt=mapPins.filter(p=>p.creative===t).length;return<div key={t} style={{display:"flex",gap:4,alignItems:"center",fontSize:13}}><div style={{width:10,height:10,borderRadius:5,background:creativeColor(t),border:"1px solid #3d3542"}}/><span style={{fontWeight:600}}>{t}</span><span style={{color:"#94a3b8"}}>({cnt})</span></div>})}
                 </div>
               }
             </div>})()
@@ -9443,12 +9443,12 @@ Rules:
             <TD b>{i+1}</TD><TD><B l={p.market} c={c}/></TD><TD m b>{p.unit}</TD><TD><span style={{fontSize:14,fontWeight:600}}>{p.vendor}</span></TD><TD><span style={{fontSize:13}}>{p.media}</span></TD><TD>{p.size}</TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:200,display:"inline-block"}}>{p.location}</span></TD>
             <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{p.flight.split('(')[0].trim()}</span></TD>
-            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#5BC4A0":"#D4A040"}}>{p.status}</span></TD>
-            <TD><span style={{fontFamily:"monospace",fontSize:14,color:p.isci?"#5BC4A0":"#9ca3af",fontWeight:p.isci?700:400,cursor:"pointer"}} onClick={()=>startPlEdit(p.unit,p.isci)}>{p.isci||"— assign"}</span></TD>
-            <TD>{pop?<span style={{fontSize:14,fontWeight:600,color:"#4AC8E8"}}>{pop.popDate} ✓</span>:<span style={{fontSize:13,color:"#9B8EAD"}}>—</span>}</TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
+            <TD><span style={{fontFamily:"monospace",fontSize:14,color:p.isci?"#6FA287":"#9ca3af",fontWeight:p.isci?700:400,cursor:"pointer"}} onClick={()=>startPlEdit(p.unit,p.isci)}>{p.isci||"— assign"}</span></TD>
+            <TD>{pop?<span style={{fontSize:14,fontWeight:600,color:"#AFC2DE"}}>{pop.popDate} ✓</span>:<span style={{fontSize:13,color:"#948B7E"}}>—</span>}</TD>
             <TD><span style={{fontSize:13,fontFamily:"monospace"}}>{pop?pop.contract:"—"}</span></TD>
             <TD b>{(p.impressions*p.numUnits).toLocaleString()}</TD>
-            <TD>{p.lat&&p.lng&&p.lat!==0?<span style={{fontSize:11,color:"#5BC4A0",fontFamily:"monospace"}}>{p.lat.toFixed(3)}, {p.lng.toFixed(3)}</span>:<span style={{fontSize:13,color:"#9B8EAD"}}>—</span>}</TD>
+            <TD>{p.lat&&p.lng&&p.lat!==0?<span style={{fontSize:11,color:"#6FA287",fontFamily:"monospace"}}>{p.lat.toFixed(3)}, {p.lng.toFixed(3)}</span>:<span style={{fontSize:13,color:"#948B7E"}}>—</span>}</TD>
           </tr>})}</tbody>
         </table></div></div></Cd>:
        viewMode==="traffic"?(()=>{
@@ -9471,7 +9471,7 @@ Rules:
           const wWin=window.open("","","width=900,height=700");
           let _oohHtml="";
           const w={document:{write:s=>{_oohHtml+=s},close:()=>{if(wWin){wWin.document.write(_oohHtml);wWin.document.close()}}},print:()=>{if(wWin)wWin.print()}};
-          w.document.write("<html><head><title>OOH Traffic - PL "+escHtml(mktLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#E85A7A}.grn{color:#5BC4A0}.amb{color:#D4A040}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
+          w.document.write("<html><head><title>OOH Traffic - PL "+escHtml(mktLabel)+" - "+escHtml(vLabel)+"</title><style>body{font-family:Arial,sans-serif;margin:30px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #ccc;padding:6px 10px;font-size:11px}th{background:#f5f5f5;font-weight:bold;text-align:left}.h{margin-bottom:3px;font-size:12px}.h b{display:inline-block;width:160px}.red{color:#93323C}.grn{color:#6FA287}.amb{color:#B08D3F}.sig{margin-top:28px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.nt{background:#fef3c7;padding:8px;margin-top:4px;font-size:11px;font-weight:bold}@media print{body{margin:20px}}</style></head><body>");
           w.document.write('<div style="text-align:center;margin-bottom:20px"><img src="'+(typeof LOGO_LR!=="undefined"?LOGO_LR:"")+'" style="height:56px;max-width:440px"/></div>');
           const hd=(l,v,c)=>'<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>';
           w.document.write(hd("Agency","Atticor"));w.document.write(hd("Client","Lerner & Rowe"));
@@ -9507,15 +9507,15 @@ Rules:
             <div style={{fontSize:14,fontWeight:800}}>📡 OOH Traffic Instructions — PL {mktLabel}</div>
             <div style={{display:"flex",gap:4,alignItems:"center"}}>
               <span style={{fontSize:11,color:"#94a3b8"}}>Vendor:</span>
-              {plVendors.map(v=><button key={v} onClick={()=>setVendF(vendF===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:vendF===v?"2px solid #2FBF71":"1px solid #4a3565",background:vendF===v?"rgba(47,191,113,.15)":"transparent",color:vendF===v?"#C4A0C8":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
+              {plVendors.map(v=><button key={v} onClick={()=>setVendF(vendF===v?"":v)} style={{padding:"3px 8px",borderRadius:5,border:vendF===v?"2px solid #2FBF71":"1px solid #3d3542",background:vendF===v?"rgba(47,191,113,.15)":"transparent",color:vendF===v?"#C9BCA6":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{v}</button>)}
             </div>
           </div>
           <div style={{display:"flex",gap:4,marginBottom:8}}>
-            <button onClick={()=>setLrOohTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:lrOohTrafficMode==="units"?"2px solid #5BC4A0":"1px solid #4a3565",background:lrOohTrafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:lrOohTrafficMode==="units"?"#5BC4A0":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
-            <button onClick={()=>setLrOohTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:lrOohTrafficMode==="panels"?"2px solid #2FBF71":"1px solid #4a3565",background:lrOohTrafficMode==="panels"?"rgba(47,191,113,.15)":"transparent",color:lrOohTrafficMode==="panels"?"#C4A0C8":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
+            <button onClick={()=>setLrOohTrafficMode("units")} style={{padding:"5px 14px",borderRadius:6,border:lrOohTrafficMode==="units"?"2px solid #6FA287":"1px solid #3d3542",background:lrOohTrafficMode==="units"?"rgba(22,163,98,.15)":"transparent",color:lrOohTrafficMode==="units"?"#6FA287":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>📋 Unit Amounts</button>
+            <button onClick={()=>setLrOohTrafficMode("panels")} style={{padding:"5px 14px",borderRadius:6,border:lrOohTrafficMode==="panels"?"2px solid #2FBF71":"1px solid #3d3542",background:lrOohTrafficMode==="panels"?"rgba(47,191,113,.15)":"transparent",color:lrOohTrafficMode==="panels"?"#C9BCA6":"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{vendorPanels.length>0?"📍 Specific Panels ("+vendorPanels.length+")":"📍 Specific Panels"}</button>
             <div style={{marginLeft:"auto",display:"flex",gap:3,alignItems:"center"}}>
               <span style={{fontSize:11,color:"#94a3b8"}}>Type:</span>
-              {(()=>{const cats=[...new Set(vendorUnits.map(p=>mediaCategory(p.media||p.type)))].sort();return cats.map(c=>{const col=MEDIA_CAT_COLORS[c];const matches=vendorUnits.filter(p=>mediaCategory(p.media||p.type)===c).length;return<button key={c} onClick={()=>setLrOohTypeF(lrOohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:lrOohTypeF===c?"2px solid "+col.border:"1px solid #4a3565",background:lrOohTypeF===c?col.bg:"transparent",color:lrOohTypeF===c?col.fg:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
+              {(()=>{const cats=[...new Set(vendorUnits.map(p=>mediaCategory(p.media||p.type)))].sort();return cats.map(c=>{const col=MEDIA_CAT_COLORS[c];const matches=vendorUnits.filter(p=>mediaCategory(p.media||p.type)===c).length;return<button key={c} onClick={()=>setLrOohTypeF(lrOohTypeF===c?"":c)} style={{padding:"2px 8px",borderRadius:4,border:lrOohTypeF===c?"2px solid "+col.border:"1px solid #3d3542",background:lrOohTypeF===c?col.bg:"transparent",color:lrOohTypeF===c?col.fg:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c} ({matches})</button>})})()}
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
@@ -9525,8 +9525,8 @@ Rules:
           </div>
           <div style={{fontSize:12,color:"#94a3b8",marginBottom:6}}>Market: {mktLabel} | Vendor: {trafficVendor||"All"} | {vendorPanels.length} units | Buyer: Atticor Media | Broadcast: {workMonth}</div>
           {usePanelMode&&plOLines.some(l=>l.panel&&!l.isci)&&<div style={{display:"flex",gap:4,alignItems:"center",marginBottom:6,padding:"4px 8px",background:"rgba(47,191,113,.08)",borderRadius:5,border:"1px solid rgba(47,191,113,.2)"}}>
-            <span style={{fontSize:11,color:"#C4A0C8"}}>Quick assign creative to all {plOLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
-            {plOohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0",width:200}}/>}
+            <span style={{fontSize:11,color:"#C9BCA6"}}>Quick assign creative to all {plOLines.filter(l=>l.panel&&!l.isci).length} unassigned:</span>
+            {plOohIscis.length?<select onChange={e=>{if(e.target.value)assignAll(e.target.value)}} style={{fontSize:11,padding:"2px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input onKeyDown={e=>{if(e.key==="Enter"&&e.target.value){assignAll(e.target.value);e.target.value=""}}} placeholder="Type creative + Enter" style={{fontSize:11,padding:"2px 6px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6",width:200}}/>}
           </div>}
           <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>
             <TH w="90">Flight</TH>
@@ -9539,14 +9539,14 @@ Rules:
             <TH>Notes</TH><TH w="30"/>
           </tr></thead>
             <tbody>{plOLines.map((l,i)=>{const bd=usePanelMode?vendorPanels.find(p=>p.panel===l.panel):null;return<tr key={i}>
-              <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={plOPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></TD>
-              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.mkt} - {p.vendor} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- select creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
-              {usePanelMode&&<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">-- creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #4a3565",borderRadius:3,fontSize:11,background:"#1e1233",color:"#E8DFF0"}}/>}</TD>}
-              {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #4a3565",borderRadius:3,background:"#1e1233",color:"#E8DFF0"}}><option value="">All</option>{mkts.map(m=><option key={m} value={m}>{m}</option>)}</select></TD>}
-              {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1e1233",color:"#E8DFF0"}}/></TD>}
-              {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#1e1233",color:"#E8DFF0"}}/></TD>}
-              <TD>{viewChiFaces.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:3,maxWidth:220}}>{viewChiFaces.map(f=>{const sel=(l.faces||[]).includes(f);return<span key={f} onClick={()=>{const cur=l.faces||[];upL(i,"faces",sel?cur.filter(x=>x!==f):[...cur,f])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",fontFamily:"monospace",fontWeight:sel?700:400,background:sel?"#2FBF71":"#2d1f42",color:sel?"#fff":"#9B8EAD",border:"1px solid "+(sel?"#2FBF71":"#4a3565"),userSelect:"none"}}>{f}</span>})}<span onClick={()=>{const allSel=viewChiFaces.every(f=>(l.faces||[]).includes(f));upL(i,"faces",allSel?[]:[...viewChiFaces])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",background:"#1e1233",color:"#9B8EAD",border:"1px solid #4a3565",userSelect:"none"}}>{viewChiFaces.every(f=>(l.faces||[]).includes(f))?"none":"all"}</span></div>:<span style={{fontSize:12,color:"#6B5E80"}}>--</span>}</TD>
-              <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #4a3565",borderRadius:3,fontSize:12,background:"#1e1233",color:"#E8DFF0"}}/></TD>
+              <TD><input value={l.flight} onChange={e=>upL(i,"flight",e.target.value)} placeholder={plOPostDates||"2/2 - 3/29"} style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/></TD>
+              {usePanelMode?<TD><select value={l.panel||""} onChange={e=>{upL(i,"panel",e.target.value)}} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select unit --</option>{vendorPanels.map(p=><option key={p.id} value={p.panel}>{p.panel} - {p.mkt} - {p.vendor} - {p.type}</option>)}</select>{bd&&<div style={{fontSize:10,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bd.loc}</div>}</TD>:<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:12,padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- select creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.code} - {c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative name or ISCI" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
+              {usePanelMode&&<TD>{plOohIscis.length?<select value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">-- creative --</option>{plOohIscis.map(c=><option key={c.code} value={c.code+" - "+c.title}>{c.title}</option>)}</select>:<input value={l.isci} onChange={e=>upL(i,"isci",e.target.value)} placeholder="Creative" style={{width:"100%",padding:"2px 4px",border:"1px solid #3d3542",borderRadius:3,fontSize:11,background:"#0e0c10",color:"#E9E3D6"}}/>}</TD>}
+              {!usePanelMode&&<TD><select value={l.market||""} onChange={e=>upL(i,"market",e.target.value)} style={{width:"100%",fontSize:11,padding:"2px 3px",border:"1px solid #3d3542",borderRadius:3,background:"#0e0c10",color:"#E9E3D6"}}><option value="">All</option>{mkts.map(m=><option key={m} value={m}>{m}</option>)}</select></TD>}
+              {!usePanelMode&&<TD><input value={l.pct||""} onChange={e=>upL(i,"pct",e.target.value)} placeholder="%" style={{width:"100%",padding:"3px 4px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
+              {!usePanelMode&&<TD><input value={l.units} onChange={e=>upL(i,"units",e.target.value)} placeholder="#" style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,textAlign:"center",fontWeight:700,background:"#0e0c10",color:"#E9E3D6"}}/></TD>}
+              <TD>{viewChiFaces.length>0?<div style={{display:"flex",flexWrap:"wrap",gap:3,maxWidth:220}}>{viewChiFaces.map(f=>{const sel=(l.faces||[]).includes(f);return<span key={f} onClick={()=>{const cur=l.faces||[];upL(i,"faces",sel?cur.filter(x=>x!==f):[...cur,f])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",fontFamily:"monospace",fontWeight:sel?700:400,background:sel?"#2FBF71":"#1d1822",color:sel?"#fff":"#948B7E",border:"1px solid "+(sel?"#2FBF71":"#3d3542"),userSelect:"none"}}>{f}</span>})}<span onClick={()=>{const allSel=viewChiFaces.every(f=>(l.faces||[]).includes(f));upL(i,"faces",allSel?[]:[...viewChiFaces])}} style={{fontSize:11,padding:"1px 5px",borderRadius:3,cursor:"pointer",background:"#0e0c10",color:"#948B7E",border:"1px solid #3d3542",userSelect:"none"}}>{viewChiFaces.every(f=>(l.faces||[]).includes(f))?"none":"all"}</span></div>:<span style={{fontSize:12,color:"#6B5E80"}}>--</span>}</TD>
+              <TD><input value={l.notes} onChange={e=>upL(i,"notes",e.target.value)} style={{width:"100%",padding:"3px 5px",border:"1px solid #3d3542",borderRadius:3,fontSize:12,background:"#0e0c10",color:"#E9E3D6"}}/></TD>
               <TD>{plOLines.length>1&&<button onClick={()=>delL(i)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#ef4444"}}>✕</button>}</TD>
             </tr>})}</tbody>
           </table>
@@ -9568,66 +9568,66 @@ Rules:
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:10}}>
             <div>
               <div style={{fontSize:14,fontWeight:800}}>📅 OOH Creative Calendar — Lerner & Rowe</div>
-              <div style={{fontSize:14,color:"#9B8EAD"}}>Creative switch & rotation deadlines from Outlook marketing calendar · {LR_CREATIVE_CAL.length} events</div>
+              <div style={{fontSize:14,color:"#948B7E"}}>Creative switch & rotation deadlines from Outlook marketing calendar · {LR_CREATIVE_CAL.length} events</div>
             </div>
             {nextUp&&<div style={{padding:"6px 12px",borderRadius:8,background:"rgba(220,38,38,.15)",border:"1px solid #fecaca"}}>
-              <div style={{fontSize:14,fontWeight:700,color:"#E85A7A",textTransform:"uppercase"}}>Next Deadline</div>
-              <div style={{fontSize:14,fontWeight:800,color:"#E85A7A"}}>{new Date(nextUp.due+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"})} — {nextUp.dmas.join("/")} {nextUp.title}</div>
-              <div style={{fontSize:14,color:"#9B8EAD"}}>{oohCalStatus(nextUp.due).label} away</div>
+              <div style={{fontSize:14,fontWeight:700,color:"#93323C",textTransform:"uppercase"}}>Next Deadline</div>
+              <div style={{fontSize:14,fontWeight:800,color:"#93323C"}}>{new Date(nextUp.due+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"})} — {nextUp.dmas.join("/")} {nextUp.title}</div>
+              <div style={{fontSize:14,color:"#948B7E"}}>{oohCalStatus(nextUp.due).label} away</div>
             </div>}
           </div>
           <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
             <Sel label="Market" options={["CHI","ABQ","LVS","PHX","TUC","RNO","SEA","YMA","KBH"]} value={calMktF} onChange={setCalMktF} placeholder="All Markets"/>
             <Sel label="Type" options={["creative","switch","dark","launch"]} value={calTypeF} onChange={setCalTypeF} placeholder="All Types"/>
-            <label style={{display:"flex",alignItems:"center",gap:4,fontSize:14,color:"#9B8EAD",cursor:"pointer"}}><input type="checkbox" checked={showPast} onChange={e=>setShowPast(e.target.checked)}/> Show past events</label>
+            <label style={{display:"flex",alignItems:"center",gap:4,fontSize:14,color:"#948B7E",cursor:"pointer"}}><input type="checkbox" checked={showPast} onChange={e=>setShowPast(e.target.checked)}/> Show past events</label>
           </div>
           {/* Urgency summary */}
           {upcoming.length>0&&<div style={{padding:8,borderRadius:8,background:"#fff7ed",border:"1px solid #fed7aa",marginBottom:10}}>
             <div style={{fontSize:14,fontWeight:700,color:"#ea580c",marginBottom:4}}>⚠ {upcoming.length} deadline{upcoming.length>1?"s":""} in the next 2 weeks</div>
             {upcoming.map((e,i)=>{const s=oohCalStatus(e.due);const t=oohCalType(e.type);return<div key={i} style={{display:"flex",gap:8,alignItems:"center",padding:"3px 0",fontSize:14,flexWrap:"wrap"}}>
-              <span style={{fontWeight:700,color:s.status==="today"?"#E85A7A":s.status==="urgent"?"#ea580c":"#D4A040"}}>{s.label}</span>
+              <span style={{fontWeight:700,color:s.status==="today"?"#93323C":s.status==="urgent"?"#ea580c":"#B08D3F"}}>{s.label}</span>
               <span>{t.icon}</span>
               <span style={{fontWeight:600}}>{e.dmas.join("/")}</span>
-              <span style={{color:"#9B8EAD"}}>{e.title}</span>
-              {e.units&&<span style={{fontSize:13,color:"#4AC8E8",fontFamily:"monospace"}}>[{e.units.length>40?e.units.slice(0,40)+"…":e.units}]</span>}
-              {e.size&&<span style={{fontSize:14,padding:"0 4px",background:"#f0f9ff",borderRadius:3,color:"#4AC8E8"}}>{e.size}</span>}
-              <span style={{fontSize:13,color:"#9B8EAD"}}>{new Date(e.due+"T00:00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}</span>
+              <span style={{color:"#948B7E"}}>{e.title}</span>
+              {e.units&&<span style={{fontSize:13,color:"#AFC2DE",fontFamily:"monospace"}}>[{e.units.length>40?e.units.slice(0,40)+"…":e.units}]</span>}
+              {e.size&&<span style={{fontSize:14,padding:"0 4px",background:"#f0f9ff",borderRadius:3,color:"#AFC2DE"}}>{e.size}</span>}
+              <span style={{fontSize:13,color:"#948B7E"}}>{new Date(e.due+"T00:00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}</span>
             </div>})}
           </div>}
           {/* Calendar list */}
           <div style={{display:"flex",flexDirection:"column",gap:4}}>
             {filtered.map((e,i)=>{const s=oohCalStatus(e.due);const t=oohCalType(e.type);const dateObj=new Date(e.due+"T00:00:00");
-              const urgBorder=s.status==="today"?"2px solid #E85A7A":s.status==="urgent"?"2px solid #ea580c":s.status==="soon"?"1px solid #fed7aa":"1px solid #E8DFF0";
-              const urgBg=s.status==="today"?"#3a1f35":s.status==="urgent"?"#fff7ed":s.status==="past"?"#2d1f42":"#fff";
+              const urgBorder=s.status==="today"?"2px solid #93323C":s.status==="urgent"?"2px solid #ea580c":s.status==="soon"?"1px solid #fed7aa":"1px solid #E9E3D6";
+              const urgBg=s.status==="today"?"#3a1f35":s.status==="urgent"?"#fff7ed":s.status==="past"?"#1d1822":"#fff";
               return<div key={i} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 12px",borderRadius:8,border:urgBorder,background:urgBg,opacity:s.status==="past"?0.6:1}}>
                 <div style={{width:50,textAlign:"center",flexShrink:0}}>
                   <div style={{fontSize:24,fontWeight:800,color:s.status==="past"?"#9ca3af":t.color,lineHeight:1}}>{dateObj.getDate()}</div>
-                  <div style={{fontSize:13,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>{dateObj.toLocaleDateString("en-US",{month:"short"})}</div>
-                  <div style={{fontSize:14,color:"#9B8EAD"}}>{dateObj.toLocaleDateString("en-US",{weekday:"short"})}</div>
+                  <div style={{fontSize:13,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>{dateObj.toLocaleDateString("en-US",{month:"short"})}</div>
+                  <div style={{fontSize:14,color:"#948B7E"}}>{dateObj.toLocaleDateString("en-US",{weekday:"short"})}</div>
                 </div>
                 <div style={{flex:1}}>
                   <div style={{display:"flex",gap:5,alignItems:"center"}}>
                     <span style={{fontSize:13}}>{t.icon}</span>
-                    <span style={{fontSize:14,fontWeight:700,color:"#F0E8F8"}}>{e.title}</span>
+                    <span style={{fontSize:14,fontWeight:700,color:"#F1EBDD"}}>{e.title}</span>
                     <span style={{fontSize:14,padding:"1px 6px",borderRadius:6,fontWeight:600,background:t.bg,color:t.color}}>{t.label}</span>
                   </div>
                   <div style={{display:"flex",gap:4,marginTop:3,alignItems:"center",flexWrap:"wrap"}}>
                     {e.dmas.map(d=><B key={d} l={d} c={mktColors[d]||"#64748b"}/>)}
-                    {e.size&&<span style={{fontSize:14,padding:"1px 5px",borderRadius:4,background:"#f0f9ff",color:"#4AC8E8",fontWeight:600,border:"1px solid #bfdbfe"}}>{e.size}</span>}
-                    {e.spec&&<span style={{fontSize:13,color:"#9B8EAD"}}>{e.spec}</span>}
+                    {e.size&&<span style={{fontSize:14,padding:"1px 5px",borderRadius:4,background:"#f0f9ff",color:"#AFC2DE",fontWeight:600,border:"1px solid #bfdbfe"}}>{e.size}</span>}
+                    {e.spec&&<span style={{fontSize:13,color:"#948B7E"}}>{e.spec}</span>}
                   </div>
-                  {e.units&&<div style={{fontSize:13,color:"#9B8EAD",marginTop:2,fontFamily:"monospace",background:"#1e1233",padding:"2px 6px",borderRadius:3,border:"1px solid #4a3565"}}>📋 {e.units}</div>}
-                  {e.start&&<div style={{fontSize:14,color:"#5BC4A0",marginTop:1}}>▶ Posts {new Date(e.start+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</div>}
+                  {e.units&&<div style={{fontSize:13,color:"#948B7E",marginTop:2,fontFamily:"monospace",background:"#0e0c10",padding:"2px 6px",borderRadius:3,border:"1px solid #3d3542"}}>📋 {e.units}</div>}
+                  {e.start&&<div style={{fontSize:14,color:"#6FA287",marginTop:1}}>▶ Posts {new Date(e.start+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</div>}
                 </div>
                 <div style={{textAlign:"right",flexShrink:0}}>
-                  {s.status==="past"?<span style={{fontSize:14,color:"#9B8EAD"}}>✓ Done</span>:
-                   s.status==="today"?<span style={{fontSize:14,fontWeight:800,color:"#E85A7A",animation:"pulse 1s infinite"}}>TODAY</span>:
-                   <span style={{fontSize:13,fontWeight:700,color:s.days<=7?"#E85A7A":s.days<=14?"#ea580c":"#64748b"}}>{s.label}</span>}
+                  {s.status==="past"?<span style={{fontSize:14,color:"#948B7E"}}>✓ Done</span>:
+                   s.status==="today"?<span style={{fontSize:14,fontWeight:800,color:"#93323C",animation:"pulse 1s infinite"}}>TODAY</span>:
+                   <span style={{fontSize:13,fontWeight:700,color:s.days<=7?"#93323C":s.days<=14?"#ea580c":"#64748b"}}>{s.label}</span>}
                 </div>
               </div>;
             })}
           </div>
-          {filtered.length===0&&<div style={{textAlign:"center",padding:24,color:"#9B8EAD",fontSize:14}}>No upcoming creative deadlines{calMktF?" for "+calMktF:""}</div>}
+          {filtered.length===0&&<div style={{textAlign:"center",padding:24,color:"#948B7E",fontSize:14}}>No upcoming creative deadlines{calMktF?" for "+calMktF:""}</div>}
         </Cd>;
        })():
       viewMode==="contracts"?(()=>{
@@ -9637,14 +9637,14 @@ Rules:
         const fmtD=d=>d?new Date(d+"T00:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"—";
         return<Cd style={{padding:12}}>
           <div style={{fontSize:14,fontWeight:800,marginBottom:2}}>📑 Contracts — Lerner & Rowe</div>
-          <div style={{fontSize:13,color:"#9B8EAD",marginBottom:10}}>{lrKeys.length} contract{lrKeys.length!==1?"s":""}{mktF?" · "+(mktNames[mktF]||mktF):""}{vendF?" · "+vendF:""} — vendor, dates, status, units, and the signed PDF</div>
+          <div style={{fontSize:13,color:"#948B7E",marginBottom:10}}>{lrKeys.length} contract{lrKeys.length!==1?"s":""}{mktF?" · "+(mktNames[mktF]||mktF):""}{vendF?" · "+vendF:""} — vendor, dates, status, units, and the signed PDF</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
             {lrKeys.map(k=>{const c=oohContracts[k]||{num:k};const cs=contractStatus(c);const dma=(c.dmas&&c.dmas[0])||"";
-              return<div key={k} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#1e1233"}}>
+              return<div key={k} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#0e0c10"}}>
                 <div style={{padding:"9px 12px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#1e1233"}}>{c.num||k}</span>
+                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#0e0c10"}}>{c.num||k}</span>
                       <span style={{fontSize:12,padding:"1px 7px",borderRadius:10,fontWeight:700,background:cs.color+"22",color:cs.color}}>{cs.label}</span>
                     </div>
                     <button onClick={()=>plEditContract===k?setPlEditContract(null):startContractEdit(k)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#3a2a4a"}}>✎</button>
@@ -9653,29 +9653,29 @@ Rules:
                 </div>
                 {plEditContract===k?<div style={{padding:12,display:"flex",flexDirection:"column",gap:6}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                    <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Start</label><input type="date" value={plEditDates.startDate} onChange={e=>setPlEditDates(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}/></div>
-                    <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>End</label><input type="date" value={plEditDates.endDate} onChange={e=>setPlEditDates(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}/></div>
+                    <div><label style={{fontSize:11,fontWeight:600,color:"#948B7E"}}>Start</label><input type="date" value={plEditDates.startDate} onChange={e=>setPlEditDates(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:12,background:"#1d1822",color:"#E9E3D6"}}/></div>
+                    <div><label style={{fontSize:11,fontWeight:600,color:"#948B7E"}}>End</label><input type="date" value={plEditDates.endDate} onChange={e=>setPlEditDates(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:12,background:"#1d1822",color:"#E9E3D6"}}/></div>
                   </div>
-                  <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Override Status</label><select value={plEditDates.manualStatus} onChange={e=>setPlEditDates(p=>({...p,manualStatus:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}><option value="">Auto (from dates)</option><option value="active">Active</option><option value="renewal">Pending Renewal</option><option value="expired">Expired</option></select></div>
-                  <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Notes</label><input value={plEditDates.notes} onChange={e=>setPlEditDates(p=>({...p,notes:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}} placeholder="Renewal / notes..."/></div>
+                  <div><label style={{fontSize:11,fontWeight:600,color:"#948B7E"}}>Override Status</label><select value={plEditDates.manualStatus} onChange={e=>setPlEditDates(p=>({...p,manualStatus:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:12,background:"#1d1822",color:"#E9E3D6"}}><option value="">Auto (from dates)</option><option value="active">Active</option><option value="renewal">Pending Renewal</option><option value="expired">Expired</option></select></div>
+                  <div><label style={{fontSize:11,fontWeight:600,color:"#948B7E"}}>Notes</label><input value={plEditDates.notes} onChange={e=>setPlEditDates(p=>({...p,notes:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid #2FBF71",borderRadius:4,fontSize:12,background:"#1d1822",color:"#E9E3D6"}} placeholder="Renewal / notes..."/></div>
                   <div style={{display:"flex",gap:4}}><Btn small primary color="#2FBF71" onClick={saveContractEdit}>Save</Btn><Btn small onClick={()=>setPlEditContract(null)}>Cancel</Btn></div>
                 </div>:
                 <div style={{padding:"9px 12px"}}>
                   <div style={{display:"flex",gap:14,marginBottom:6}}>
-                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Start</div><div style={{fontSize:12,fontWeight:600,color:"#C4A0C8"}}>{fmtD(c.startDate)}</div></div>
+                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Start</div><div style={{fontSize:12,fontWeight:600,color:"#C9BCA6"}}>{fmtD(c.startDate)}</div></div>
                     <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>End</div><div style={{fontSize:12,fontWeight:600,color:cs.color}}>{c.endDate?fmtD(c.endDate):(c.manualStatus==="active"?"Ongoing":"—")}</div></div>
                     <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:12,fontWeight:700,color:cs.color}}>{cs.daysLeft!==undefined?cs.daysLeft:"—"}</div></div>
                   </div>
                   <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",fontSize:12,marginBottom:5}}>
-                    {c.mediaType&&<span style={{color:"#C4A0C8"}}>{c.mediaType}</span>}
-                    {c.qty!=null&&<span style={{color:"#9B8EAD"}}>· <strong style={{color:"#E8DFF0"}}>{Number(c.qty).toLocaleString()}</strong> units</span>}
+                    {c.mediaType&&<span style={{color:"#C9BCA6"}}>{c.mediaType}</span>}
+                    {c.qty!=null&&<span style={{color:"#948B7E"}}>· <strong style={{color:"#E9E3D6"}}>{Number(c.qty).toLocaleString()}</strong> units</span>}
                   </div>
-                  {c.link&&<a href={c.link} target="_blank" rel="noopener noreferrer" style={{fontSize:12,fontWeight:700,color:"#4AC8E8"}}>📄 Contract PDF ↗</a>}
-                  {c.notes&&<div style={{fontSize:12,color:"#9B8EAD",marginTop:5,fontStyle:"italic"}}>📝 {c.notes}</div>}
-                  {(()=>{const pops=(typeof window!=="undefined"&&window.LR_CONTRACT_POPS&&window.LR_CONTRACT_POPS[k])||null;return pops&&pops.length?<div style={{marginTop:8,borderTop:"1px solid #4a3565",paddingTop:6}}>
-                    <div style={{fontSize:11,fontWeight:700,color:"#4AC8E8",textTransform:"uppercase",marginBottom:4}}>📸 {pops.length} Proof-of-Posting Photo{pops.length>1?"s":""}</div>
+                  {c.link&&<a href={c.link} target="_blank" rel="noopener noreferrer" style={{fontSize:12,fontWeight:700,color:"#AFC2DE"}}>📄 Contract PDF ↗</a>}
+                  {c.notes&&<div style={{fontSize:12,color:"#948B7E",marginTop:5,fontStyle:"italic"}}>📝 {c.notes}</div>}
+                  {(()=>{const pops=(typeof window!=="undefined"&&window.LR_CONTRACT_POPS&&window.LR_CONTRACT_POPS[k])||null;return pops&&pops.length?<div style={{marginTop:8,borderTop:"1px solid #3d3542",paddingTop:6}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#AFC2DE",textTransform:"uppercase",marginBottom:4}}>📸 {pops.length} Proof-of-Posting Photo{pops.length>1?"s":""}</div>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(54px,1fr))",gap:4}}>
-                      {pops.map((ph,pi)=><img key={pi} src={ph.url} title={ph.label} onClick={()=>setModal({type:"oohPhoto",id:k,photos:pops,startIdx:pi})} style={{width:"100%",height:46,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}}/>)}
+                      {pops.map((ph,pi)=><img key={pi} src={ph.url} title={ph.label} onClick={()=>setModal({type:"oohPhoto",id:k,photos:pops,startIdx:pi})} style={{width:"100%",height:46,objectFit:"cover",borderRadius:4,border:"1px solid #3d3542",cursor:"pointer"}}/>)}
                     </div>
                     <div style={{fontSize:10,color:"#6B5E80",marginTop:3,fontStyle:"italic"}}>Vendor proofs for this buy (not tied to a specific panel)</div>
                   </div>:null})()}
@@ -9691,16 +9691,16 @@ Rules:
           return<tr key={i} style={{background:p.status==="posted"?"#1f353011":""}}>
             <TD b>{i+1}</TD>
             <TD><B l={p.market} c={c}/></TD>
-            <TD m b>{p.unit}{pop&&<span style={{fontSize:14,color:"#4AC8E8",marginLeft:3}}>PoP✓</span>}</TD>
+            <TD m b>{p.unit}{pop&&<span style={{fontSize:14,color:"#AFC2DE",marginLeft:3}}>PoP✓</span>}</TD>
             <TD><span style={{fontSize:13}}>{p.media}</span></TD>
             <TD>{p.size}</TD>
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:220,display:"inline-block"}}>{p.location}</span></TD>
             <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{p.flight.split('(')[0].trim()}</span></TD>
             <TD b>{p.cycles}</TD>
             <TD b>{(p.impressions*p.numUnits).toLocaleString()}</TD>
-            <TD>{p.facing&&p.facing!=="N/A"?<B l={p.facing} c="#6366f1"/>:<span style={{fontSize:13,color:"#9B8EAD"}}>—</span>}</TD>
-            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#5BC4A0":"#D4A040"}}>{p.status}</span></TD>
-            <TD><span style={{fontSize:13,color:p.plan==="2026"?"#4AC8E8":"#9ca3af",fontWeight:p.plan==="2026"?600:400}}>{p.plan}</span></TD>
+            <TD>{p.facing&&p.facing!=="N/A"?<B l={p.facing} c="#6366f1"/>:<span style={{fontSize:13,color:"#948B7E"}}>—</span>}</TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
+            <TD><span style={{fontSize:13,color:p.plan==="2026"?"#AFC2DE":"#9ca3af",fontWeight:p.plan==="2026"?600:400}}>{p.plan}</span></TD>
           </tr>;
         })}</tbody>
       </table></div></Cd>}
@@ -9739,7 +9739,7 @@ Rules:
     return <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",flexWrap:"wrap",gap:8}}>
         <div><img src={(typeof LOGO_PDV!=="undefined"?LOGO_PDV:"")} alt="Parrish DeVaughn" style={{height:34,marginBottom:6,background:"#fff",padding:"4px 8px",borderRadius:6}}/><PageHead title="Parrish DeVaughn — OOH Media Plan" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>Oklahoma City · {pdvPanels.length} placements ({fixed} fixed boards · {programs} rotating programs) · {totalUnits} total units · vendor CJ</p>
+          <p style={{fontSize:13,color:"#948B7E"}}>Oklahoma City · {pdvPanels.length} placements ({fixed} fixed boards · {programs} rotating programs) · {totalUnits} total units · vendor CJ</p>
         </div>
         <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
           <Btn small onClick={()=>{
@@ -9747,9 +9747,9 @@ Rules:
             const rows=fl.map(p=>[mktNames[p.market]||p.market,p.unit,p.vendor,p.media,p.size,p.location,p.facing||"",fmtFl(p.flight),p.cycles||"",p.numUnits||1,p.status,p.contract||"",p.isci||""]);
             exportCsv("PDV_OOH_"+(mktF||"All")+"_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
-          <Btn small onClick={()=>openOohCreativeSpecs("Parrish DeVaughn",fl.map(p=>({market:mktNames[p.market]||p.market,type:p.media,size:p.size,vendor:p.vendor,contract:p.contract||"",start:oohFlightStart(p.flight),unit:p.unit})),ACC)} color="#5BC4A0">📐 Creative Brief</Btn>
-          <Btn small onClick={()=>openOohSizesReport("Parrish DeVaughn")} color="#5BC4A0">📏 Size Report</Btn>
-          <Btn small onClick={printBoardList} color="#4AC8E8">🖨 Board List</Btn>
+          <Btn small onClick={()=>openOohCreativeSpecs("Parrish DeVaughn",fl.map(p=>({market:mktNames[p.market]||p.market,type:p.media,size:p.size,vendor:p.vendor,contract:p.contract||"",start:oohFlightStart(p.flight),unit:p.unit})),ACC)} color="#6FA287">📐 Creative Brief</Btn>
+          <Btn small onClick={()=>openOohSizesReport("Parrish DeVaughn")} color="#6FA287">📏 Size Report</Btn>
+          <Btn small onClick={printBoardList} color="#AFC2DE">🖨 Board List</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
         </div>
@@ -9762,37 +9762,37 @@ Rules:
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:8}}>
         {mediaTypes.map(mt=>{const bs=pdvPanels.filter(p=>p.media===mt);const u=bs.reduce((a,p)=>a+(p.numUnits||1),0);
-          return <div key={mt} onClick={()=>setMediaF(mediaF===mt?"":mt)} style={{padding:"10px 12px",borderRadius:9,border:mediaF===mt?"2px solid "+ACC:"1px solid #4a3565",background:mediaF===mt?ACC+"12":"#2d1f42",cursor:"pointer"}}>
+          return <div key={mt} onClick={()=>setMediaF(mediaF===mt?"":mt)} style={{padding:"10px 12px",borderRadius:9,border:mediaF===mt?"2px solid "+ACC:"1px solid #3d3542",background:mediaF===mt?ACC+"12":"#1d1822",cursor:"pointer"}}>
             <div style={{fontSize:13,fontWeight:700,color:ACC,textTransform:"uppercase",letterSpacing:1}}>{mt}</div>
-            <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{bs.length}</div>
-            <div style={{fontSize:14,color:"#9B8EAD"}}>{u} units</div>
+            <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{bs.length}</div>
+            <div style={{fontSize:14,color:"#948B7E"}}>{u} units</div>
           </div>;
         })}
-        <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #4a3565",background:"linear-gradient(135deg,#2a1a3e,#2d1f42)"}}>
+        <div style={{padding:"10px 12px",borderRadius:9,border:"1px solid #3d3542",background:"linear-gradient(135deg,#17131a,#1d1822)"}}>
           <div style={{fontSize:13,fontWeight:700,color:ACC,textTransform:"uppercase",letterSpacing:1}}>ALL OOH</div>
-          <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{pdvPanels.length}</div>
-          <div style={{fontSize:14,color:"#9B8EAD"}}>{pdvPanels.reduce((a,p)=>a+(p.numUnits||1),0)} total units</div>
+          <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{pdvPanels.length}</div>
+          <div style={{fontSize:14,color:"#948B7E"}}>{pdvPanels.reduce((a,p)=>a+(p.numUnits||1),0)} total units</div>
         </div>
       </div>
       {viewMode==="cards"?
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
-          {fl.map((p,i)=>{const posted=p.status==="posted";return <div key={i} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:"#2d1f42",borderLeft:"4px solid "+ACC}}>
+          {fl.map((p,i)=>{const posted=p.status==="posted";return <div key={i} style={{border:"1px solid #3d3542",borderRadius:9,overflow:"hidden",background:"#1d1822",borderLeft:"4px solid "+ACC}}>
             <div style={{padding:10}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
                 <div>
-                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#F0E8F8"}}>{p.unit}</span>
-                  <div style={{fontSize:14,color:"#9B8EAD",marginTop:2}}>{p.media} · {p.size} · {p.vendor}</div>
+                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#F1EBDD"}}>{p.unit}</span>
+                  <div style={{fontSize:14,color:"#948B7E",marginTop:2}}>{p.media} · {p.size} · {p.vendor}</div>
                 </div>
-                <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:posted?"#1f3530":"#3a2f1a",color:posted?"#5BC4A0":"#D4A040"}}>{p.status}</span>
+                <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:posted?"#1f3530":"#3a2f1a",color:posted?"#6FA287":"#B08D3F"}}>{p.status}</span>
               </div>
-              <div style={{fontSize:14,color:"#9B8EAD",marginTop:6}}>{p.location}</div>
-              <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #4a3565"}}>
-                <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Run Dates</div><div style={{fontSize:14,fontWeight:600,color:"#E8DFF0"}}>{fmtFl(p.flight)||"TBD"}</div></div>
-                {p.cycles&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Cycles</div><div style={{fontSize:14,fontWeight:600,color:"#E8DFF0"}}>{p.cycles}</div></div>}
-                {(p.numUnits||1)>1&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Units</div><div style={{fontSize:14,fontWeight:700,color:ACC}}>{p.numUnits}</div></div>}
-                {p.facing&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#6366f1"/></div></div>}
+              <div style={{fontSize:14,color:"#948B7E",marginTop:6}}>{p.location}</div>
+              <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #3d3542"}}>
+                <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Run Dates</div><div style={{fontSize:14,fontWeight:600,color:"#E9E3D6"}}>{fmtFl(p.flight)||"TBD"}</div></div>
+                {p.cycles&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Cycles</div><div style={{fontSize:14,fontWeight:600,color:"#E9E3D6"}}>{p.cycles}</div></div>}
+                {(p.numUnits||1)>1&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Units</div><div style={{fontSize:14,fontWeight:700,color:ACC}}>{p.numUnits}</div></div>}
+                {p.facing&&<div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#6366f1"/></div></div>}
               </div>
-              <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:"#3a2f1a",border:"1px solid #5a4a2a",fontSize:13,color:"#D4A040",fontStyle:"italic"}}>No creative assigned yet</div>
+              <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:"#3a2f1a",border:"1px solid #5a4a2a",fontSize:13,color:"#B08D3F",fontStyle:"italic"}}>No creative assigned yet</div>
             </div>
           </div>;})}
         </div>
@@ -9803,7 +9803,7 @@ Rules:
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:240,display:"inline-block"}}>{p.location}</span></TD>
             <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{fmtFl(p.flight)}</span></TD>
             <TD>{p.cycles||"—"}</TD><TD b>{p.numUnits||1}</TD>
-            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#5BC4A0":"#D4A040"}}>{p.status}</span></TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
           </tr>)}</tbody>
         </table></div></Cd>}
     </div>;
@@ -9846,7 +9846,7 @@ Rules:
     return <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",flexWrap:"wrap",gap:8}}>
         <div>{hasLogo?<img src={LOGO_KE} alt="Keches Law Group" style={{height:34,marginBottom:6,background:"#fff",padding:"4px 8px",borderRadius:6}}/>:<div style={{fontSize:20,fontWeight:900,color:ACC,fontFamily:"'Cormorant Garamond',serif",marginBottom:2}}>Keches Law Group</div>}<PageHead title="Keches Law Group — OOH Media Plan" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>Boston · {kePanels.length} board{kePanels.length!==1?"s":""} · {totalUnits} units · {vendorLabel} · {keKeys.length} contract{keKeys.length!==1?"s":""}</p>
+          <p style={{fontSize:13,color:"#948B7E"}}>Boston · {kePanels.length} board{kePanels.length!==1?"s":""} · {totalUnits} units · {vendorLabel} · {keKeys.length} contract{keKeys.length!==1?"s":""}</p>
         </div>
         <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
           <Btn small onClick={()=>{
@@ -9854,9 +9854,9 @@ Rules:
             const rows=fl.map(p=>["Boston",p.unit,p.vendor,p.media,p.slots||"",p.size,p.location,p.facing||"",fmtFl(p.flight),p.numUnits||1,p.status,p.contract||"",p.isci||""]);
             exportCsv("Keches_OOH_"+new Date().toISOString().slice(0,10)+".csv",headers,rows);
           }} color="#059669">📥 Export</Btn>
-          <Btn small onClick={()=>openOohCreativeSpecs("Keches Law Group",fl.map(p=>({market:"Boston",type:p.media,size:p.size,vendor:p.vendor,contract:p.contract||"",start:oohFlightStart(p.flight),unit:p.unit})),ACC)} color="#5BC4A0">📐 Creative Brief</Btn>
-          <Btn small onClick={()=>openOohSizesReport("Keches Law Group")} color="#5BC4A0">📏 Size Report</Btn>
-          <Btn small onClick={printBoardList} color="#4AC8E8">🖨 Board List</Btn>
+          <Btn small onClick={()=>openOohCreativeSpecs("Keches Law Group",fl.map(p=>({market:"Boston",type:p.media,size:p.size,vendor:p.vendor,contract:p.contract||"",start:oohFlightStart(p.flight),unit:p.unit})),ACC)} color="#6FA287">📐 Creative Brief</Btn>
+          <Btn small onClick={()=>openOohSizesReport("Keches Law Group")} color="#6FA287">📏 Size Report</Btn>
+          <Btn small onClick={printBoardList} color="#AFC2DE">🖨 Board List</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
           <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"}>📑 Contracts</Btn>
@@ -9866,34 +9866,34 @@ Rules:
         <Sel label="Media" options={mediaTypes} value={mediaF} onChange={setMediaF} placeholder="All Media Types"/>
         <Sel label="Status" options={statuses} value={statF} onChange={setStatF} placeholder="All Statuses"/>
         {(mediaF||statF)&&<Btn small onClick={()=>{setMediaF("");setStatF("")}}>Clear</Btn>}
-        <span style={{fontSize:12,color:"#9B8EAD"}}>{fl.length} of {kePanels.length} boards</span>
+        <span style={{fontSize:12,color:"#948B7E"}}>{fl.length} of {kePanels.length} boards</span>
       </div>}
       {viewMode!=="contracts"&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:8}}>
         {mediaTypes.map(mt=>{const bs=kePanels.filter(p=>p.media===mt);const u=bs.reduce((a,p)=>a+(p.numUnits||1),0);
-          return <div key={mt} onClick={()=>setMediaF(mediaF===mt?"":mt)} style={{padding:"10px 12px",borderRadius:9,border:mediaF===mt?"2px solid "+ACC:"1px solid #4a3565",background:mediaF===mt?ACC+"12":"#2d1f42",cursor:"pointer"}}>
+          return <div key={mt} onClick={()=>setMediaF(mediaF===mt?"":mt)} style={{padding:"10px 12px",borderRadius:9,border:mediaF===mt?"2px solid "+ACC:"1px solid #3d3542",background:mediaF===mt?ACC+"12":"#1d1822",cursor:"pointer"}}>
             <div style={{fontSize:13,fontWeight:700,color:ACC,textTransform:"uppercase",letterSpacing:1}}>{mt}</div>
-            <div style={{fontSize:24,fontWeight:800,color:"#F0E8F8",marginTop:2}}>{bs.length}</div>
-            <div style={{fontSize:14,color:"#9B8EAD"}}>{u} units</div>
+            <div style={{fontSize:24,fontWeight:800,color:"#F1EBDD",marginTop:2}}>{bs.length}</div>
+            <div style={{fontSize:14,color:"#948B7E"}}>{u} units</div>
           </div>;
         })}
       </div>}
       {viewMode==="cards"?
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
-          {fl.map((p,i)=>{const posted=p.status==="posted";return <div key={i} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:"#2d1f42",borderLeft:"4px solid "+ACC}}>
+          {fl.map((p,i)=>{const posted=p.status==="posted";return <div key={i} style={{border:"1px solid #3d3542",borderRadius:9,overflow:"hidden",background:"#1d1822",borderLeft:"4px solid "+ACC}}>
             <div style={{padding:10}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
                 <div>
-                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#F0E8F8"}}>{p.unit}</span>
-                  <div style={{fontSize:14,color:"#9B8EAD",marginTop:2}}>{p.media}{p.slots?" · "+p.slots+" slots":""} · {p.size} · {p.vendor}</div>
+                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#F1EBDD"}}>{p.unit}</span>
+                  <div style={{fontSize:14,color:"#948B7E",marginTop:2}}>{p.media}{p.slots?" · "+p.slots+" slots":""} · {p.size} · {p.vendor}</div>
                 </div>
-                <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:posted?"#1f3530":"#3a2f1a",color:posted?"#5BC4A0":"#D4A040"}}>{p.status}</span>
+                <span style={{fontSize:13,padding:"2px 6px",borderRadius:8,fontWeight:600,background:posted?"#1f3530":"#3a2f1a",color:posted?"#6FA287":"#B08D3F"}}>{p.status}</span>
               </div>
-              <div style={{fontSize:14,color:"#9B8EAD",marginTop:6}}>{p.location}{p.facing?" ("+p.facing+")":""}</div>
-              <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #4a3565"}}>
-                <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Run Dates</div><div style={{fontSize:14,fontWeight:600,color:"#E8DFF0"}}>{fmtFl(p.flight)||"TBD"}</div></div>
-                <div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Contract</div><div style={{fontSize:14,fontWeight:600,color:ACC,fontFamily:"monospace"}}>{p.contract||"—"}</div></div>
+              <div style={{fontSize:14,color:"#948B7E",marginTop:6}}>{p.location}{p.facing?" ("+p.facing+")":""}</div>
+              <div style={{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid #3d3542"}}>
+                <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Run Dates</div><div style={{fontSize:14,fontWeight:600,color:"#E9E3D6"}}>{fmtFl(p.flight)||"TBD"}</div></div>
+                <div><div style={{fontSize:14,fontWeight:600,color:"#948B7E",textTransform:"uppercase"}}>Contract</div><div style={{fontSize:14,fontWeight:600,color:ACC,fontFamily:"monospace"}}>{p.contract||"—"}</div></div>
               </div>
-              <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:"#3a2f1a",border:"1px solid #5a4a2a",fontSize:13,color:"#D4A040",fontStyle:"italic"}}>No creative assigned yet</div>
+              <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:"#3a2f1a",border:"1px solid #5a4a2a",fontSize:13,color:"#B08D3F",fontStyle:"italic"}}>No creative assigned yet</div>
             </div>
           </div>;})}
         </div>
@@ -9904,20 +9904,20 @@ Rules:
             <TD><span style={{fontSize:14,whiteSpace:"normal",maxWidth:240,display:"inline-block"}}>{p.location}</span></TD>
             <TD><span style={{fontSize:13,whiteSpace:"nowrap"}}>{fmtFl(p.flight)}</span></TD>
             <TD m>{p.contract||"—"}</TD>
-            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#5BC4A0":"#D4A040"}}>{p.status}</span></TD>
+            <TD><span style={{fontSize:13,padding:"1px 5px",borderRadius:8,fontWeight:600,background:p.status==="posted"?"#dcfce7":"#fef3c7",color:p.status==="posted"?"#6FA287":"#B08D3F"}}>{p.status}</span></TD>
           </tr>)}</tbody>
         </table></div></Cd>
       :
         <Cd style={{padding:12}}>
           <div style={{fontSize:14,fontWeight:800,marginBottom:2}}>📑 Contracts — Keches Law Group</div>
-          <div style={{fontSize:13,color:"#9B8EAD",marginBottom:10}}>{keKeys.length} contract{keKeys.length!==1?"s":""} · Clear Channel Outdoor · Boston — vendor, dates, status, and units. Digital dominations carry a 90-day RFR renewal window; every contract has a 60-day no-penalty out.</div>
+          <div style={{fontSize:13,color:"#948B7E",marginBottom:10}}>{keKeys.length} contract{keKeys.length!==1?"s":""} · Clear Channel Outdoor · Boston — vendor, dates, status, and units. Digital dominations carry a 90-day RFR renewal window; every contract has a 60-day no-penalty out.</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
             {keKeys.map(k=>{const c=oohContracts[k]||{num:k};const cs=contractStatus(c);
-              return<div key={k} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#1e1233"}}>
+              return<div key={k} style={{border:`1px solid ${cs.color}30`,borderRadius:10,overflow:"hidden",background:"#0e0c10"}}>
                 <div style={{padding:"9px 12px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#1e1233"}}>{c.num||k}</span>
+                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#0e0c10"}}>{c.num||k}</span>
                       <span style={{fontSize:12,padding:"1px 7px",borderRadius:10,fontWeight:700,background:cs.color+"22",color:cs.color}}>{cs.label}</span>
                     </div>
                     <button onClick={()=>keEditK===k?setKeEditK(null):startCEdit(k)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#3a2a4a"}}>✎</button>
@@ -9926,26 +9926,26 @@ Rules:
                 </div>
                 {keEditK===k?<div style={{padding:12,display:"flex",flexDirection:"column",gap:6}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                    <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Start</label><input type="date" value={keEditD.startDate} onChange={e=>setKeEditD(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+ACC,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}/></div>
-                    <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>End</label><input type="date" value={keEditD.endDate} onChange={e=>setKeEditD(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+ACC,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}/></div>
+                    <div><label style={{fontSize:11,fontWeight:600,color:"#948B7E"}}>Start</label><input type="date" value={keEditD.startDate} onChange={e=>setKeEditD(p=>({...p,startDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+ACC,borderRadius:4,fontSize:12,background:"#1d1822",color:"#E9E3D6"}}/></div>
+                    <div><label style={{fontSize:11,fontWeight:600,color:"#948B7E"}}>End</label><input type="date" value={keEditD.endDate} onChange={e=>setKeEditD(p=>({...p,endDate:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+ACC,borderRadius:4,fontSize:12,background:"#1d1822",color:"#E9E3D6"}}/></div>
                   </div>
-                  <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Override Status</label><select value={keEditD.manualStatus} onChange={e=>setKeEditD(p=>({...p,manualStatus:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+ACC,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}}><option value="">Auto (from dates)</option><option value="active">Active</option><option value="renewal">Pending Renewal</option><option value="expired">Expired</option></select></div>
-                  <div><label style={{fontSize:11,fontWeight:600,color:"#9B8EAD"}}>Notes</label><input value={keEditD.notes} onChange={e=>setKeEditD(p=>({...p,notes:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+ACC,borderRadius:4,fontSize:12,background:"#2d1f42",color:"#E8DFF0"}} placeholder="Renewal / notes..."/></div>
+                  <div><label style={{fontSize:11,fontWeight:600,color:"#948B7E"}}>Override Status</label><select value={keEditD.manualStatus} onChange={e=>setKeEditD(p=>({...p,manualStatus:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+ACC,borderRadius:4,fontSize:12,background:"#1d1822",color:"#E9E3D6"}}><option value="">Auto (from dates)</option><option value="active">Active</option><option value="renewal">Pending Renewal</option><option value="expired">Expired</option></select></div>
+                  <div><label style={{fontSize:11,fontWeight:600,color:"#948B7E"}}>Notes</label><input value={keEditD.notes} onChange={e=>setKeEditD(p=>({...p,notes:e.target.value}))} style={{width:"100%",padding:"4px 6px",border:"1px solid "+ACC,borderRadius:4,fontSize:12,background:"#1d1822",color:"#E9E3D6"}} placeholder="Renewal / notes..."/></div>
                   <div style={{display:"flex",gap:4}}><Btn small primary color={ACC} onClick={saveCEdit}>Save</Btn><Btn small onClick={()=>setKeEditK(null)}>Cancel</Btn></div>
                 </div>:
                 <div style={{padding:"9px 12px"}}>
                   <div style={{display:"flex",gap:14,marginBottom:6}}>
-                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Start</div><div style={{fontSize:12,fontWeight:600,color:"#C4A0C8"}}>{fmtD(c.startDate)}</div></div>
+                    <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Start</div><div style={{fontSize:12,fontWeight:600,color:"#C9BCA6"}}>{fmtD(c.startDate)}</div></div>
                     <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>End</div><div style={{fontSize:12,fontWeight:600,color:cs.color}}>{c.endDate?fmtD(c.endDate):(c.manualStatus==="active"?"Ongoing":"—")}</div></div>
                     <div><div style={{fontSize:10,fontWeight:700,color:"#6B5E80",textTransform:"uppercase"}}>Days Left</div><div style={{fontSize:12,fontWeight:700,color:cs.color}}>{cs.daysLeft!==undefined?cs.daysLeft:"—"}</div></div>
                   </div>
                   <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",fontSize:12,marginBottom:5}}>
-                    {c.mediaType&&<span style={{color:"#C4A0C8"}}>{c.mediaType}</span>}
-                    {c.qty!=null&&<span style={{color:"#9B8EAD"}}>· <strong style={{color:"#E8DFF0"}}>{Number(c.qty).toLocaleString()}</strong> board{Number(c.qty)!==1?"s":""}</span>}
-                    {c.total!=null&&<span style={{color:"#9B8EAD"}}>· <strong style={{color:"#5BC4A0"}}>${Number(c.total).toLocaleString()}</strong></span>}
+                    {c.mediaType&&<span style={{color:"#C9BCA6"}}>{c.mediaType}</span>}
+                    {c.qty!=null&&<span style={{color:"#948B7E"}}>· <strong style={{color:"#E9E3D6"}}>{Number(c.qty).toLocaleString()}</strong> board{Number(c.qty)!==1?"s":""}</span>}
+                    {c.total!=null&&<span style={{color:"#948B7E"}}>· <strong style={{color:"#6FA287"}}>${Number(c.total).toLocaleString()}</strong></span>}
                   </div>
-                  {c.link&&<a href={c.link} target="_blank" rel="noopener noreferrer" style={{fontSize:12,fontWeight:700,color:"#4AC8E8"}}>📄 Contract PDF ↗</a>}
-                  {c.notes&&<div style={{fontSize:12,color:"#9B8EAD",marginTop:5,fontStyle:"italic"}}>📝 {c.notes}</div>}
+                  {c.link&&<a href={c.link} target="_blank" rel="noopener noreferrer" style={{fontSize:12,fontWeight:700,color:"#AFC2DE"}}>📄 Contract PDF ↗</a>}
+                  {c.notes&&<div style={{fontSize:12,color:"#948B7E",marginTop:5,fontStyle:"italic"}}>📝 {c.notes}</div>}
                 </div>}
               </div>;
             })}
@@ -9986,13 +9986,13 @@ Rules:
           <div><PageHead title="OOH ISCI Registry" pgKey="ooh" sub={allOoh.filter(i=>i.active).length+" active · "+inactiveOoh.length+" inactive · "+allOoh.filter(i=>i.fileUrl).length+" with creative"}/></div>
           <div style={{display:"flex",gap:4}}>
             <Btn primary onClick={()=>setModal({t:"newIsci",defaultMedia:"OOH"})}>+ Register OOH ISCI</Btn>
-            <Btn onClick={()=>setShowOohBulk(v=>!v)} color={showOohBulk?"#E85A7A":"#9b7bb0"}>📁 Bulk Creative</Btn>
+            <Btn onClick={()=>setShowOohBulk(v=>!v)} color={showOohBulk?"#93323C":"#9b7bb0"}>📁 Bulk Creative</Btn>
             <Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=allOoh.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active OOH ISCIs have files");return}notify("Scanning "+missing.length+" OOH ISCIs...");let found=0;const updates={};const exts=["jpg","png","pdf","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j],crLock:true}:x);return updated});notify(found+" files recovered!");log("OOH Creative Recovery",found+" files")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn>
           </div>
         </div>
         {showOohBulk&&<Cd style={{padding:12}}>
           <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>📁 Bulk OOH Creative Upload</div>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>Drag & drop or click. Matches by <b style={{color:"#E8DFF0"}}>ISCI code</b> (whole token in the filename) <i>or</i> by WK creative convention with market + size in the name (e.g. <b style={{color:"#E8DFF0"}}>WK_Birmingham_Cause_14x48</b>). <b style={{color:"#E85A7A"}}>Titles alone never auto-match</b> — titles recycle across markets; those files drop to the manual-assign list. Run <b style={{color:"#D4A040"}}>🪄 Auto-name</b> first so the ISCIs exist.</div>
+          <div style={{fontSize:12,color:"#94a3b8",marginBottom:8}}>Drag & drop or click. Matches by <b style={{color:"#E9E3D6"}}>ISCI code</b> (whole token in the filename) <i>or</i> by WK creative convention with market + size in the name (e.g. <b style={{color:"#E9E3D6"}}>WK_Birmingham_Cause_14x48</b>). <b style={{color:"#93323C"}}>Titles alone never auto-match</b> — titles recycle across markets; those files drop to the manual-assign list. Run <b style={{color:"#B08D3F"}}>🪄 Auto-name</b> first so the ISCIs exist.</div>
           <DropZone multiple accept="*/*" style={{marginBottom:8}} onFiles={async(fileList)=>{
             const files=Array.from(fileList);if(!files.length){notify("No files selected");return}
             const toB64=(f)=>new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(r.error||new Error("read failed"));r.onload=()=>res(String(r.result).split(",")[1]||"");r.readAsDataURL(f)});
@@ -10049,30 +10049,30 @@ Rules:
             log("Bulk OOH Creative",matched+" files stored standalone, "+unmatched.length+" need manual ISCI, "+failed+" failed");
             notify(matched+" file(s) uploaded — all standalone"+(unmatched.length?" | "+unmatched.length+" need a manual ISCI pick below":"")+(failed?" | "+failed+" failed: "+lastErr:""));
           }}>
-            <div style={{fontSize:24}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#9B8EAD"}}>Drag & drop or click to select OOH creative files</div><div style={{fontSize:12,color:"#64748b"}}>.jpg, .png, .pdf, .psd, .ai, .eps — multiple allowed</div>
+            <div style={{fontSize:24}}>📁</div><div style={{fontSize:13,fontWeight:600,color:"#948B7E"}}>Drag & drop or click to select OOH creative files</div><div style={{fontSize:12,color:"#64748b"}}>.jpg, .png, .pdf, .psd, .ai, .eps — multiple allowed</div>
           </DropZone>
-          {oohUnassigned.length>0&&<div style={{marginTop:10,border:"1px solid #E85A7A",borderRadius:6,padding:10,background:"#2d1f42"}}>
-            <div style={{fontSize:13,fontWeight:700,color:"#E85A7A",marginBottom:2}}>⚠ {oohUnassigned.length} file(s) didn't auto-match — pick the ISCI for each. It uploads the moment you choose.</div>
-            <div style={{fontSize:11,color:"#9B8EAD",marginBottom:8}}>Their names don't carry market+size+creative, so just assign them by hand. Open each file to see the artwork if you're unsure.</div>
+          {oohUnassigned.length>0&&<div style={{marginTop:10,border:"1px solid #93323C",borderRadius:6,padding:10,background:"#1d1822"}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#93323C",marginBottom:2}}>⚠ {oohUnassigned.length} file(s) didn't auto-match — pick the ISCI for each. It uploads the moment you choose.</div>
+            <div style={{fontSize:11,color:"#948B7E",marginBottom:8}}>Their names don't carry market+size+creative, so just assign them by hand. Open each file to see the artwork if you're unsure.</div>
             <div style={{maxHeight:340,overflowY:"auto",display:"flex",flexDirection:"column",gap:5}}>
               {oohUnassigned.map((u,k)=><div key={k} style={{display:"flex",gap:6,alignItems:"center",fontSize:12}}>
-                <span style={{flex:"0 0 38%",color:"#E8DFF0",fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={u.file.name}>{u.file.name}</span>
+                <span style={{flex:"0 0 38%",color:"#E9E3D6",fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={u.file.name}>{u.file.name}</span>
                 <span style={{color:"#6B5E80"}}>→</span>
-                <select defaultValue="" onChange={e=>{if(e.target.value)assignOohFile(u,e.target.value)}} style={{flex:1,padding:"4px 6px",borderRadius:4,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:12}}>
+                <select defaultValue="" onChange={e=>{if(e.target.value)assignOohFile(u,e.target.value)}} style={{flex:1,padding:"4px 6px",borderRadius:4,border:"1px solid #3d3542",background:"#0e0c10",color:"#E9E3D6",fontSize:12}}>
                   <option value="">— pick ISCI / board —</option>
                   {allOoh.slice().sort((a,b)=>a.code.localeCompare(b.code)).map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}{i.fileUrl?"  ✓has file":""}</option>)}
                 </select>
               </div>)}
             </div>
-            <div style={{display:"flex",gap:6,marginTop:8}}><Btn small color="#E85A7A" onClick={()=>setOohUnassigned([])}>Clear list</Btn></div>
+            <div style={{display:"flex",gap:6,marginTop:8}}><Btn small color="#93323C" onClick={()=>setOohUnassigned([])}>Clear list</Btn></div>
           </div>}
-          <div style={{fontSize:12,color:"#94a3b8"}}>OOH ISCIs with creative: <b style={{color:"#5BC4A0"}}>{allOoh.filter(i=>i.fileUrl).length}</b> / {allOoh.length}</div>
+          <div style={{fontSize:12,color:"#94a3b8"}}>OOH ISCIs with creative: <b style={{color:"#6FA287"}}>{allOoh.filter(i=>i.fileUrl).length}</b> / {allOoh.length}</div>
         </Cd>}
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-          <input placeholder="Search OOH ISCIs..." value={oohIsciFilter} onChange={e=>setOohIsciFilter(e.target.value)} style={{width:200,padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
+          <input placeholder="Search OOH ISCIs..." value={oohIsciFilter} onChange={e=>setOohIsciFilter(e.target.value)} style={{width:200,padding:"5px 8px",borderRadius:5,border:"1px solid #3d3542",fontSize:13,outline:"none",background:"#0e0c10",color:"#E9E3D6"}}/>
           <Sel label="" options={[{v:"",l:"All Brands"},{v:"Wettermark Keith",l:"Wettermark Keith"},{v:"Postman Law",l:"Postman Law"},{v:"Lerner & Rowe",l:"Lerner & Rowe"}]} value={oohBrandFilter} onChange={setOohBrandFilter}/>
           <Sel label="" options={[{v:"",l:"All DMAs"},...oohDmas.map(d=>({v:d,l:(DM[d]||d)+" ("+d+")"}))] } value={oohDmaFilter} onChange={setOohDmaFilter}/>
-          <label style={{fontSize:12,display:"flex",alignItems:"center",gap:3,cursor:"pointer",color:"#9B8EAD"}}><input type="checkbox" checked={showOohInactive} onChange={e=>setShowOohInactive(e.target.checked)}/> Show inactive</label>
+          <label style={{fontSize:12,display:"flex",alignItems:"center",gap:3,cursor:"pointer",color:"#948B7E"}}><input type="checkbox" checked={showOohInactive} onChange={e=>setShowOohInactive(e.target.checked)}/> Show inactive</label>
           {(oohIsciFilter||oohBrandFilter||oohDmaFilter)&&<Btn small onClick={()=>{setOohIsciFilter("");setOohBrandFilter("");setOohDmaFilter("")}}>Clear</Btn>}
           <span style={{fontSize:12,color:"#6B5E80",marginLeft:"auto"}}>{filtered.length} shown</span>
         </div>
@@ -10080,35 +10080,35 @@ Rules:
           <div style={{maxHeight:"calc(100vh - 260px)",overflowY:"auto"}}>
             <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr><TH>Code</TH><TH>Title</TH><TH>Brand</TH><TH>DMA</TH><TH>Type</TH><TH>File</TH><TH>Status</TH><TH w="60">Actions</TH></tr></thead>
               <tbody>{filtered.map((ic,i)=>{const gi=iscis.findIndex(x=>x.code===ic.code&&x.dma===ic.dma);return<tr key={ic.code+ic.dma} style={{opacity:ic.active?1:.45}}>
-                <TD m b><span style={{cursor:"pointer",color:"#4AC8E8",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})}>{ic.code}</span></TD>
+                <TD m b><span style={{cursor:"pointer",color:"#AFC2DE",textDecoration:"underline",textDecorationStyle:"dotted"}} onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})}>{ic.code}</span></TD>
                 <TD>{ic.title}</TD>
                 <TD><B l={ic.brand} c={getBrandColor(ic.brand)}/></TD>
                 <TD>{DM[ic.dma]||ic.dma}</TD>
                 <TD>{ic.dur}</TD>
-                <TD>{ic.fileUrl?<a href={ic.fileUrl} target="_blank" rel="noopener noreferrer" style={{color:"#4AC8E8",fontSize:12,fontWeight:600}}>📁 View</a>:<span style={{color:"#E85A7A",fontSize:12}}>No file</span>}</TD>
-                <TD>{ic.active?<B l="Active" c="#5BC4A0"/>:<B l="Inactive" c="#E85A7A"/>}</TD>
+                <TD>{ic.fileUrl?<a href={ic.fileUrl} target="_blank" rel="noopener noreferrer" style={{color:"#AFC2DE",fontSize:12,fontWeight:600}}>📁 View</a>:<span style={{color:"#93323C",fontSize:12}}>No file</span>}</TD>
+                <TD>{ic.active?<B l="Active" c="#6FA287"/>:<B l="Inactive" c="#93323C"/>}</TD>
                 <TD><div style={{display:"flex",gap:3}}>
-                  <button onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#4AC8E8"}}>✎</button>
-                  <button onClick={()=>toggleOohActive(gi)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:ic.active?"#D4A040":"#5BC4A0"}}>{ic.active?"⏸":"▶"}</button>
+                  <button onClick={()=>setModal({t:"editIsci",isci:ic,idx:gi})} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#AFC2DE"}}>✎</button>
+                  <button onClick={()=>toggleOohActive(gi)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:ic.active?"#B08D3F":"#6FA287"}}>{ic.active?"⏸":"▶"}</button>
                 </div></TD>
               </tr>})}</tbody>
             </table>
-            {filtered.length===0&&<div style={{padding:30,textAlign:"center",color:"#9B8EAD",fontSize:14,fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div>}
+            {filtered.length===0&&<div style={{padding:30,textAlign:"center",color:"#948B7E",fontSize:14,fontStyle:"italic"}}>{doomPick(DOOM.empty)}</div>}
           </div>
         </Cd>
       </div>;
     };
     const calAlerts=(()=>{const now=new Date();const wk=new Date(now.getTime()+7*864e5);return OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length})();
-    return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#1e1233 0%,#2a1a3e 50%,#1e1233 100%)",color:"#E8DFF0"}}>
-      <div style={{width:200,background:"linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
-        <div style={{padding:"14px 11px",borderBottom:"1px solid #2d1f42"}}>
-          <div style={{fontSize:16,fontWeight:800,letterSpacing:1,color:"#D4A040"}}>OVERKILL &amp; OOH</div>
-          <div style={{fontSize:11,color:"#9B8EAD",letterSpacing:2,fontWeight:600}}>OUTDOOR MEDIA</div>
+    return<div style={{display:"flex",height:"100vh",background:"linear-gradient(160deg,#0e0c10 0%,#17131a 50%,#0e0c10 100%)",color:"#E9E3D6"}}>
+      <div style={{width:200,background:"linear-gradient(180deg,#0e0c10 0%,#241640 50%,#0e0c10 100%)",borderRight:"1px solid rgba(155,123,176,.15)",display:"flex",flexDirection:"column",flexShrink:0}}>
+        <div style={{padding:"14px 11px",borderBottom:"1px solid #1d1822"}}>
+          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:700,letterSpacing:4,color:"#B08D3F",textTransform:"uppercase"}}>Overkill &amp; OOH</div>
+          <div style={{fontSize:11,color:"#948B7E",letterSpacing:2,fontWeight:600}}>OUTDOOR MEDIA</div>
         </div>
-        <nav style={{flex:1,padding:"3px 0"}}>{oohNav.map(n=>{const a=subRoute===n.id;const badge=n.id==="pl"&&calAlerts?calAlerts:null;return<button key={n.id} onClick={()=>navigateHash("ooh/"+n.id)} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"6px 11px",border:"none",background:a?"#2d1f42":"transparent",color:a?"#fff":"#9ca3af",fontSize:13,fontWeight:a?600:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative"}}><span style={{fontSize:13}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:14,fontWeight:800,padding:"1px 5px",borderRadius:8,background:"#D4A040",color:"#fff"}}>{badge}</span>}</button>})}</nav>
-        <div style={{padding:"8px 11px",borderTop:"1px solid #2d1f42",display:"flex",flexDirection:"column",gap:6}}>
-          <button onClick={openOohSizesReport} style={{display:"flex",alignItems:"center",gap:6,width:"100%",padding:"6px 8px",border:"none",borderRadius:6,background:"#5BC4A0",color:"#0a2e22",fontSize:13,fontWeight:700,cursor:"pointer"}}>📐 OOH Size Report (all brands)</button>
-          <button onClick={()=>{navigateHash("");setPg("dash")}} style={{display:"flex",alignItems:"center",gap:6,width:"100%",padding:"6px 8px",border:"1px solid #4a3565",borderRadius:6,background:"transparent",color:"#9B8EAD",fontSize:13,fontWeight:600,cursor:"pointer"}}>← Back to D&D</button>
+        <nav style={{flex:1,padding:"3px 0"}}>{oohNav.map(n=>{const a=subRoute===n.id;const badge=n.id==="pl"&&calAlerts?calAlerts:null;return<button key={n.id} onClick={()=>navigateHash("ooh/"+n.id)} style={{display:"flex",alignItems:"center",gap:7,width:"100%",padding:"6px 11px",border:"none",background:a?"#1d1822":"transparent",color:a?"#fff":"#9ca3af",fontSize:13,fontWeight:a?600:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #B08D3F":"3px solid transparent",position:"relative"}}><span style={{fontSize:13}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:14,fontWeight:800,padding:"1px 5px",borderRadius:8,background:"#B08D3F",color:"#fff"}}>{badge}</span>}</button>})}</nav>
+        <div style={{padding:"8px 11px",borderTop:"1px solid #1d1822",display:"flex",flexDirection:"column",gap:6}}>
+          <button onClick={openOohSizesReport} style={{display:"flex",alignItems:"center",gap:6,width:"100%",padding:"6px 8px",border:"none",borderRadius:6,background:"#6FA287",color:"#0a2e22",fontSize:13,fontWeight:700,cursor:"pointer"}}>📐 OOH Size Report (all brands)</button>
+          <button onClick={()=>{navigateHash("");setPg("dash")}} style={{display:"flex",alignItems:"center",gap:6,width:"100%",padding:"6px 8px",border:"1px solid #3d3542",borderRadius:6,background:"transparent",color:"#948B7E",fontSize:13,fontWeight:600,cursor:"pointer"}}>← Back to D&D</button>
         </div>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:16}}>
