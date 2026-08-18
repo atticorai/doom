@@ -11630,6 +11630,10 @@ Rules:
   const dndCopy=(txt,msg)=>{try{navigator.clipboard.writeText(txt);notify(msg||"Copied")}catch(e){window.prompt("Copy:",txt)}};
   const dndLedger=React.useMemo(()=>dndLedgerCompute(flights,iscis,hubCfg),[flights,iscis,hubCfg]);
   const dndTws=React.useMemo(()=>dndTripwires(flights,iscis,hubCfg),[flights,iscis,hubCfg]);
+  React.useEffect(()=>{
+    const h=(e)=>{if(e.key==="Escape"){setDndPreview(null);setDndMint(null);setDndOv(null)}};
+    window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h);
+  },[]);
   // contract door — proven pre-strip: PDF → text → AI → prefilled form.
   const contractPdf=async(file)=>{
     if(!file)return;
