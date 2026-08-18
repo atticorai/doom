@@ -5027,10 +5027,10 @@ const App=()=>{
     const PhotoModal=({p,onClose})=>{
       const close=POP_IMGS[p.closeImg];const dist=POP_IMGS[p.distImg];
       return<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.85)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={onClose}>
-        <div onClick={e=>e.stopPropagation()} style={{background:"#F1EBDD",borderRadius:4,padding:16,maxWidth:820,width:"100%",maxHeight:"90vh",overflow:"auto"}}>
+        <div onClick={e=>e.stopPropagation()} style={{background:"#17131a",borderRadius:4,padding:16,maxWidth:820,width:"100%",maxHeight:"90vh",overflow:"auto"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:12}}>
             <div>
-              <div style={{fontSize:13,fontWeight:800,color:"#1d1822"}}>Panel {p.panel} — {p.submarket}</div>
+              <div style={{fontSize:13,fontWeight:800,color:"#E9E3D6"}}>Panel {p.panel} — {p.submarket}</div>
               <div style={{fontSize:13,color:"#948B7E"}}>{p.location}</div>
               <div style={{fontSize:13,color:"#948B7E"}}>TAB# {p.tab} · Contract {p.contract} · Installed {p.installDate}</div>
               <div style={{fontSize:14,fontWeight:700,color:"#B08D3F",marginTop:4}}>{p.impressions.toLocaleString()} weekly impressions</div>
@@ -5051,8 +5051,8 @@ const App=()=>{
         const allPhotosForCard=[...(closeImg?[{url:closeImg,label:"Close-up",hardcoded:true}]:[]),...(POP_IMGS[p.distImg]?[{url:POP_IMGS[p.distImg],label:"Distance",hardcoded:true}]:[]),...uploadedPhotos];
         const heroImg=uploadedPhotos.length>0?uploadedPhotos[uploadedPhotos.length-1].url:closeImg;
         const dark=isDarkBoard(p.boardId);
-        return<div key={p.boardId} style={{border:"1px solid #3d3542",borderRadius:4,overflow:"hidden",background:dark?"#2e2833":"#F1EBDD",borderLeft:`4px solid ${dark?"#948B7E":c}`,filter:dark?"grayscale(1)":"none",opacity:dark?0.72:1,position:"relative"}}>
-          {dark&&<div style={{position:"absolute",top:6,left:6,zIndex:2,background:"#C9BCA6",color:"#2e2833",padding:"1px 7px",borderRadius:4,fontSize:10,fontWeight:800,letterSpacing:.5}}>🌑 DARK · UNLIT</div>}
+        return<div key={p.boardId} style={{border:"1px solid #3d3542",borderRadius:4,overflow:"hidden",background:dark?"#131016":"#1d1822",borderLeft:`4px solid ${dark?"#948B7E":c}`,filter:dark?"grayscale(1)":"none",opacity:dark?0.72:1,position:"relative"}}>
+          {dark&&<div style={{position:"absolute",top:6,left:6,zIndex:2,background:"#2e2833",color:"#C9BCA6",padding:"1px 7px",borderRadius:4,fontSize:10,fontWeight:800,letterSpacing:.5}}>🌑 DARK · UNLIT</div>}
           {hasAnyPhoto?<div style={{position:"relative",cursor:"pointer",height:120,overflow:"hidden"}} onClick={()=>setModal({type:"oohPhoto",id:p.boardId,photos:allPhotosForCard,startIdx:0})}>
             <img src={heroImg} style={{width:"100%",height:"100%",objectFit:"cover"}} alt={p.panel}/>
             <div style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.7)",color:"#1b161f",padding:"2px 8px",borderRadius:4,fontSize:13}}>📷 {allPhotosForCard.length} photo{allPhotosForCard.length>1?"s":""}</div>
@@ -5066,7 +5066,7 @@ const App=()=>{
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
               <div>
                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
-                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#1d1822"}}>Panel {p.panel}</span>
+                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#E9E3D6"}}>Panel {p.panel}</span>
                   <B l={oohMarket(p.dma)} c={c}/>
                   <B l={p.facing} c="#8A8AC0"/>
                 </div>
@@ -5426,7 +5426,7 @@ const App=()=>{
           <div style={{fontSize:14,color:"#948B7E",marginBottom:10}}>Track contract dates, status, and renewal deadlines per vendor contract</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
             {uniqueContracts.map(cNum=>{const c=oohContracts[cNum]||{num:cNum};const cs=contractStatus(c);const boards=pops.filter(p=>p.contract===cNum);const dmasInContract=[...new Set(boards.map(p=>p.dma))];const totalImprC=boards.reduce((a,p)=>a+p.impressions,0);const taggedC=boards.filter(p=>p.isci).length;
-              return<div key={cNum} style={{border:`1px solid ${cs.color}30`,borderRadius:4,overflow:"hidden",background:"#F1EBDD"}}>
+              return<div key={cNum} style={{border:`1px solid ${cs.color}30`,borderRadius:4,overflow:"hidden",background:"#17131a"}}>
                 <div style={{padding:"10px 14px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div style={{display:"flex",gap:6,alignItems:"center"}}>
@@ -5479,7 +5479,7 @@ const App=()=>{
               const now=new Date();const nowPos=Math.max(0,Math.min(100,((now-rangeStart)/total)*100));
               return<div key={cNum} style={{marginBottom:6}}>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#948B7E"}}><span style={{fontWeight:700,fontFamily:"monospace"}}>{cNum}</span><span>{cs.label}</span></div>
-                <div style={{position:"relative",height:14,background:"#E9E3D6",borderRadius:4,overflow:"hidden"}}>
+                <div style={{position:"relative",height:14,background:"#2e2833",borderRadius:4,overflow:"hidden"}}>
                   <div style={{position:"absolute",left:left+"%",width:width+"%",height:"100%",background:cs.color+"60",borderRadius:4}}/>
                   <div style={{position:"absolute",left:nowPos+"%",width:1,height:"100%",background:"#0e0c10"}}/>
                 </div>
@@ -5675,7 +5675,7 @@ const App=()=>{
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
               <div>
                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
-                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#1d1822"}}>{p.unit}</span>
+                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#E9E3D6"}}>{p.unit}</span>
                   <B l={p.market} c={c}/>
                   {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#0e0c10",color:"#948B7E",fontWeight:600}}>INHERITED</span>}
                   {p.plan==="expired"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#3a2f2f",color:"#c9b8b8",fontWeight:700}}>⧗ EXPIRED · ARCHIVED</span>}
@@ -6056,7 +6056,7 @@ const App=()=>{
           <div style={{fontSize:14,color:"#948B7E",marginBottom:10}}>Track contract dates, status, and renewal deadlines per vendor contract</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
             {plContracts.map(cNum=>{const c=oohContracts[cNum]||{num:cNum};const cs=contractStatus(c);const popUnits=Object.entries(PL_POPS).filter(([_,v])=>v.contract===cNum).map(([k])=>k);const boards=fl.filter(p=>popUnits.includes(p.unit));const mktsInContract=[...new Set(boards.map(p=>p.market))];const totalImprC=boards.reduce((a,p)=>a+(p.impressions*p.numUnits),0);
-              return<div key={cNum} style={{border:`1px solid ${cs.color}30`,borderRadius:4,overflow:"hidden",background:"#F1EBDD"}}>
+              return<div key={cNum} style={{border:`1px solid ${cs.color}30`,borderRadius:4,overflow:"hidden",background:"#17131a"}}>
                 <div style={{padding:"10px 14px",background:cs.bg,borderBottom:`1px solid ${cs.color}30`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div style={{display:"flex",gap:6,alignItems:"center"}}>
@@ -6109,7 +6109,7 @@ const App=()=>{
               const now=new Date();const nowPos=Math.max(0,Math.min(100,((now-rangeStart)/total)*100));
               return<div key={cNum} style={{marginBottom:6}}>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:13,color:"#948B7E"}}><span style={{fontWeight:700,fontFamily:"monospace"}}>{cNum}</span><span>{cs.label}</span></div>
-                <div style={{position:"relative",height:14,background:"#E9E3D6",borderRadius:4,overflow:"hidden"}}>
+                <div style={{position:"relative",height:14,background:"#2e2833",borderRadius:4,overflow:"hidden"}}>
                   <div style={{position:"absolute",left:left+"%",width:width+"%",height:"100%",background:cs.color+"60",borderRadius:4}}/>
                   <div style={{position:"absolute",left:nowPos+"%",width:1,height:"100%",background:"#0e0c10"}}/>
                 </div>
@@ -9276,7 +9276,7 @@ Rules:
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
               <div>
                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
-                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#1d1822"}}>{p.unit}</span>
+                  <span style={{fontSize:15,fontWeight:900,fontFamily:"monospace",color:"#E9E3D6"}}>{p.unit}</span>
                   <B l={p.market} c={c}/>
                   {p.plan==="inherited"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#0e0c10",color:"#948B7E",fontWeight:600}}>INHERITED</span>}
                   {p.plan==="expired"&&<span style={{fontSize:14,padding:"1px 4px",borderRadius:4,background:"#3a2f2f",color:"#c9b8b8",fontWeight:700}}>⧗ EXPIRED · ARCHIVED</span>}
