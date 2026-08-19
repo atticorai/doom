@@ -941,6 +941,11 @@ const dndTripwires=(flights,iscis,hubCfg)=>{
 // static, date-fns → the handful of helpers the kit actually uses.
 // ═══════════════════════════════════════════════════════════════════════
 const MP_LIVE={deals:[],brands:[],wrapped:[],registry:[],TODAY:"",board:{start:"",end:""},hooks:{},ui:{}};
+// Olympus (light) is a full second skin: mpSc picks scenic inline colors,
+// the CSS vars + .mpolympus class handle every compiled utility.
+const mpLight=()=>Boolean(MP_LIVE.ui&&MP_LIVE.ui.light);
+const mpSc=(dark,light)=>mpLight()?light:dark;
+const mpThemeClass=()=>"mphades"+(mpLight()?" mpolympus":"");
 // ── date-fns subset ──
 const mpD=(iso)=>new Date(String(iso).slice(0,10)+"T00:00:00");
 const mpIso=(d)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -992,7 +997,7 @@ const MpOverlay=({open,onClose,label,widthClass="max-w-[880px]",children})=>{
   mpUseDialog(open,onClose);
   return<MpPortal>
     <AnimatePresence>
-      {open&&<motion.div key={label} style={{position:"fixed",top:0,right:0,bottom:0,left:0,height:"100dvh",width:"100vw",zIndex:60,display:"flex",justifyContent:"flex-end",overscrollBehavior:"contain"}} className="mphades font-sans">
+      {open&&<motion.div key={label} style={{position:"fixed",top:0,right:0,bottom:0,left:0,height:"100dvh",width:"100vw",zIndex:60,display:"flex",justifyContent:"flex-end",overscrollBehavior:"contain"}} className={mpThemeClass()+" font-sans"}>
         <button type="button" aria-label={"Close "+label} onClick={onClose} className="absolute inset-0 h-full w-full cursor-default bg-abyss-950/80 backdrop-blur-sm"/>
         <motion.aside role="dialog" aria-modal="true" aria-label={label} className={"stone cracked relative flex h-full w-full flex-col border-l-2 border-gold-500/50 bg-abyss-900/98 "+widthClass} style={{boxShadow:"-30px 0 90px -30px #05030f, -1px 0 40px rgba(232,181,58,0.24)",color:"#e6ecf5"}}>
           {children}
@@ -1038,7 +1043,7 @@ const MP_TONGUES=[
 const MpFlame=({height=64,className=""})=>{
   const width=height*0.62;
   return<span aria-hidden="true" className={"pointer-events-none relative block "+className} style={{height,width}}>
-    <span className="animate-pulse-glow absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl" style={{height:height*2.1,width:height*2.1,background:"radial-gradient(closest-side, rgba(47,111,232,0.55), transparent 72%)"}}/>
+    <span className="animate-pulse-glow absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl" style={{height:height*2.1,width:height*2.1,background:mpSc("radial-gradient(closest-side, rgba(47,111,232,0.55), transparent 72%)","radial-gradient(closest-side, rgba(47,111,232,0.28), transparent 72%)")}}/>
     {MP_TONGUES.map((t,i)=><span key={i} className="flame-tongue animate-dance absolute bottom-0 left-1/2" style={{height:height*t.scale,width:width*t.scale,marginLeft:-(width*t.scale)/2,background:t.tint,filter:"blur("+t.blur+"px)",animationDuration:t.duration,animationDelay:t.delay}}/>)}
   </span>;
 };
@@ -1047,64 +1052,64 @@ const MpBrazier=({height=72,className=""})=>{
   return<div aria-hidden="true" className={"flex flex-col items-center "+className}>
     <MpFlame height={height}/>
     <svg viewBox="0 0 120 58" style={{width:bowlWidth}} className="-mt-2" preserveAspectRatio="xMidYMid meet">
-      <path d="M4 6h112l-14 22H18z" fill="#0a111e" stroke="rgba(232,181,58,0.55)" strokeWidth="1.4"/>
-      <path d="M18 28h84l-10 12H28z" fill="#070c16" stroke="rgba(232,181,58,0.32)" strokeWidth="1.2"/>
-      <rect x="52" y="40" width="16" height="12" fill="#0a111e" stroke="rgba(232,181,58,0.3)" strokeWidth="1.2"/>
+      <path d="M4 6h112l-14 22H18z" fill={mpSc("#0a111e","#e6dcc6")} stroke="rgba(232,181,58,0.55)" strokeWidth="1.4"/>
+      <path d="M18 28h84l-10 12H28z" fill={mpSc("#070c16","#ded2b6")} stroke="rgba(232,181,58,0.32)" strokeWidth="1.2"/>
+      <rect x="52" y="40" width="16" height="12" fill={mpSc("#0a111e","#e6dcc6")} stroke={mpGold()+"0.3)"} strokeWidth="1.2"/>
       <path d="M38 56h44" stroke="rgba(232,181,58,0.5)" strokeWidth="2"/>
     </svg>
   </div>;
 };
 // ── the temple ──
-const MP_GOLD="rgba(232,181,58,";
+const MP_GOLD_D="rgba(232,181,58,",MP_GOLD_L="rgba(122,96,30,";const mpGold=()=>mpLight()?MP_GOLD_L:MP_GOLD_D;
 const MpColumn=({x})=>{
   const half=38,ST=306,SB=556,SW=76;
   return<g>
-    <rect x={x-half-16} y={SB-6} width={SW+32} height={16} fill="#0a111e" stroke={MP_GOLD+"0.34)"} strokeWidth="1.2"/>
-    <rect x={x-half-8} y={SB-20} width={SW+16} height={14} fill="#0e1728" stroke={MP_GOLD+"0.26)"} strokeWidth="1.1"/>
-    <path d={"M"+(x-half)+" "+(SB-20)+" L"+(x-half+7)+" "+(ST+30)+" L"+(x+half-7)+" "+(ST+30)+" L"+(x+half)+" "+(SB-20)+" Z"} fill="#070c16" stroke={MP_GOLD+"0.3)"} strokeWidth="1.2"/>
-    {[-25,-12.5,0,12.5,25].map((o)=><line key={o} x1={x+o*0.86} y1={ST+34} x2={x+o} y2={SB-24} stroke="rgba(230,236,245,0.075)" strokeWidth="2.2"/>)}
-    <path d={"M"+(x-half-4)+" "+(ST+30)+" C"+(x-half-2)+" "+(ST+14)+" "+(x-half+6)+" "+(ST+12)+" "+x+" "+(ST+12)+" C"+(x+half-6)+" "+(ST+12)+" "+(x+half+2)+" "+(ST+14)+" "+(x+half+4)+" "+(ST+30)+" Z"} fill="#0e1728" stroke={MP_GOLD+"0.34)"} strokeWidth="1.2"/>
-    <rect x={x-half-17} y={ST-2} width={SW+34} height={15} fill="#0a111e" stroke={MP_GOLD+"0.42)"} strokeWidth="1.2"/>
+    <rect x={x-half-16} y={SB-6} width={SW+32} height={16} fill={mpSc("#0a111e","#e9e0cb")} stroke={mpGold()+"0.34)"} strokeWidth="1.2"/>
+    <rect x={x-half-8} y={SB-20} width={SW+16} height={14} fill={mpSc("#0e1728","#e2d7bd")} stroke={mpGold()+"0.26)"} strokeWidth="1.1"/>
+    <path d={"M"+(x-half)+" "+(SB-20)+" L"+(x-half+7)+" "+(ST+30)+" L"+(x+half-7)+" "+(ST+30)+" L"+(x+half)+" "+(SB-20)+" Z"} fill={mpSc("#070c16","#dbceb0")} stroke={mpGold()+"0.3)"} strokeWidth="1.2"/>
+    {[-25,-12.5,0,12.5,25].map((o)=><line key={o} x1={x+o*0.86} y1={ST+34} x2={x+o} y2={SB-24} stroke={mpSc("rgba(230,236,245,0.075)","rgba(58,48,30,0.12)")} strokeWidth="2.2"/>)}
+    <path d={"M"+(x-half-4)+" "+(ST+30)+" C"+(x-half-2)+" "+(ST+14)+" "+(x-half+6)+" "+(ST+12)+" "+x+" "+(ST+12)+" C"+(x+half-6)+" "+(ST+12)+" "+(x+half+2)+" "+(ST+14)+" "+(x+half+4)+" "+(ST+30)+" Z"} fill={mpSc("#0e1728","#e2d7bd")} stroke={mpGold()+"0.34)"} strokeWidth="1.2"/>
+    <rect x={x-half-17} y={ST-2} width={SW+34} height={15} fill={mpSc("#0a111e","#e9e0cb")} stroke={mpGold()+"0.42)"} strokeWidth="1.2"/>
   </g>;
 };
 const MpTriglyph=({x})=><g>
-  <rect x={x-15} y={238} width={30} height={46} fill="#0e1728" stroke={MP_GOLD+"0.4)"} strokeWidth="1.1"/>
-  {[-7.5,0,7.5].map((o)=><line key={o} x1={x+o} y1={241} x2={x+o} y2={281} stroke={MP_GOLD+"0.5)"} strokeWidth="2"/>)}
+  <rect x={x-15} y={238} width={30} height={46} fill={mpSc("#0e1728","#e2d7bd")} stroke={mpGold()+"0.4)"} strokeWidth="1.1"/>
+  {[-7.5,0,7.5].map((o)=><line key={o} x1={x+o} y1={241} x2={x+o} y2={281} stroke={mpGold()+"0.5)"} strokeWidth="2"/>)}
 </g>;
 const MpPalmette=({x,y,scale=1})=><g transform={"translate("+x+" "+y+") scale("+scale+")"}>
-  <path d="M0 0c0-14 8-24 8-24-6 2-8 6-8 6s-2-4-8-6c0 0 8 10 8 24z" fill={MP_GOLD+"0.55)"}/>
-  <path d="M0 0c0-11-11-17-11-17 2 7 5 11 5 11s-7 0-12-4c0 0 10 12 18 10z" fill={MP_GOLD+"0.4)"}/>
-  <path d="M0 0c0-11 11-17 11-17-2 7-5 11-5 11s7 0 12-4c0 0-10 12-18 10z" fill={MP_GOLD+"0.4)"}/>
+  <path d="M0 0c0-14 8-24 8-24-6 2-8 6-8 6s-2-4-8-6c0 0 8 10 8 24z" fill={mpGold()+"0.55)"}/>
+  <path d="M0 0c0-11-11-17-11-17 2 7 5 11 5 11s-7 0-12-4c0 0 10 12 18 10z" fill={mpGold()+"0.4)"}/>
+  <path d="M0 0c0-11 11-17 11-17-2 7-5 11-5 11s7 0 12-4c0 0-10 12-18 10z" fill={mpGold()+"0.4)"}/>
 </g>;
 const MpTempleFacade=()=><svg viewBox="0 0 1600 620" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-  <path d="M800 54 1462 206 138 206Z" fill="rgba(10,17,30,0.92)" stroke={MP_GOLD+"0.3)"} strokeWidth="1.4"/>
-  <path d="M800 40 1490 200 1478 214 800 58 122 214 110 200Z" fill="#0a111e" stroke={MP_GOLD+"0.5)"} strokeWidth="1.4"/>
+  <path d="M800 54 1462 206 138 206Z" fill={mpSc("rgba(10,17,30,0.92)","rgba(233,224,203,0.94)")} stroke={mpGold()+"0.3)"} strokeWidth="1.4"/>
+  <path d="M800 40 1490 200 1478 214 800 58 122 214 110 200Z" fill={mpSc("#0a111e","#e9e0cb")} stroke={mpGold()+"0.5)"} strokeWidth="1.4"/>
   <g opacity="0.85">
-    <circle cx="800" cy="150" r="26" fill="none" stroke={MP_GOLD+"0.45)"} strokeWidth="2"/>
-    <circle cx="800" cy="150" r="9" fill={MP_GOLD+"0.35)"}/>
-    <path d="M742 168c22 4 38-6 44-18" fill="none" stroke={MP_GOLD+"0.35)"} strokeWidth="2"/>
-    <path d="M858 168c-22 4-38-6-44-18" fill="none" stroke={MP_GOLD+"0.35)"} strokeWidth="2"/>
+    <circle cx="800" cy="150" r="26" fill="none" stroke={mpGold()+"0.45)"} strokeWidth="2"/>
+    <circle cx="800" cy="150" r="9" fill={mpGold()+"0.35)"}/>
+    <path d="M742 168c22 4 38-6 44-18" fill="none" stroke={mpGold()+"0.35)"} strokeWidth="2"/>
+    <path d="M858 168c-22 4-38-6-44-18" fill="none" stroke={mpGold()+"0.35)"} strokeWidth="2"/>
   </g>
   <MpPalmette x={800} y={38} scale={1.5}/>
   <MpPalmette x={1486} y={198} scale={1.1}/>
   <MpPalmette x={114} y={198} scale={1.1}/>
-  <rect x="104" y="206" width="1392" height="22" fill="#0e1728" stroke={MP_GOLD+"0.45)"} strokeWidth="1.3"/>
-  {Array.from({length:58},(_,i)=><rect key={"d"+i} x={112+i*24} y={228} width={13} height={9} fill="#0a111e" stroke={MP_GOLD+"0.3)"} strokeWidth="0.8"/>)}
-  <rect x="112" y="238" width="1376" height="46" fill="rgba(7,12,22,0.9)" stroke={MP_GOLD+"0.28)"} strokeWidth="1"/>
+  <rect x="104" y="206" width="1392" height="22" fill={mpSc("#0e1728","#e2d7bd")} stroke={mpGold()+"0.45)"} strokeWidth="1.3"/>
+  {Array.from({length:58},(_,i)=><rect key={"d"+i} x={112+i*24} y={228} width={13} height={9} fill={mpSc("#0a111e","#e9e0cb")} stroke={mpGold()+"0.3)"} strokeWidth="0.8"/>)}
+  <rect x="112" y="238" width="1376" height="46" fill={mpSc("rgba(7,12,22,0.9)","rgba(226,215,189,0.92)")} stroke={mpGold()+"0.28)"} strokeWidth="1"/>
   {Array.from({length:23},(_,i)=><MpTriglyph key={"t"+i} x={135+i*62}/>)}
-  {Array.from({length:22},(_,i)=><path key={"m"+i} d={"M"+(166+i*62)+" 261 l9 -9 9 9 -9 9z"} fill="none" stroke={MP_GOLD+"0.22)"} strokeWidth="1.1"/>)}
-  <rect x="112" y="284" width="1376" height="22" fill="#0a111e" stroke={MP_GOLD+"0.4)"} strokeWidth="1.2"/>
+  {Array.from({length:22},(_,i)=><path key={"m"+i} d={"M"+(166+i*62)+" 261 l9 -9 9 9 -9 9z"} fill="none" stroke={mpGold()+"0.22)"} strokeWidth="1.1"/>)}
+  <rect x="112" y="284" width="1376" height="22" fill={mpSc("#0a111e","#e9e0cb")} stroke={mpGold()+"0.4)"} strokeWidth="1.2"/>
   {[150,300,450,1150,1300,1450].map((x)=><MpColumn key={x} x={x}/>)}
-  <rect x="86" y="566" width="1428" height="18" fill="#0e1728" stroke={MP_GOLD+"0.32)"} strokeWidth="1.2"/>
-  <rect x="58" y="584" width="1484" height="18" fill="#0a111e" stroke={MP_GOLD+"0.26)"} strokeWidth="1.2"/>
-  <rect x="26" y="602" width="1548" height="18" fill="#070c16" stroke={MP_GOLD+"0.2)"} strokeWidth="1.2"/>
+  <rect x="86" y="566" width="1428" height="18" fill={mpSc("#0e1728","#e2d7bd")} stroke={mpGold()+"0.32)"} strokeWidth="1.2"/>
+  <rect x="58" y="584" width="1484" height="18" fill={mpSc("#0a111e","#e9e0cb")} stroke={mpGold()+"0.26)"} strokeWidth="1.2"/>
+  <rect x="26" y="602" width="1548" height="18" fill={mpSc("#070c16","#dbceb0")} stroke={mpGold()+"0.2)"} strokeWidth="1.2"/>
 </svg>;
 const MpCapital=({flip=false})=><svg viewBox="0 0 120 46" className={"w-full "+(flip?"rotate-180":"")} preserveAspectRatio="none" aria-hidden="true">
-  <rect x="0" y="0" width="120" height="10" fill="#0a111e" stroke="rgba(232,181,58,0.45)" strokeWidth="1"/>
-  <path d="M6 10h108l-12 14H18z" fill="#070c16" stroke="rgba(232,181,58,0.3)" strokeWidth="1"/>
-  <circle cx="26" cy="33" r="8" fill="none" stroke="rgba(232,181,58,0.42)" strokeWidth="1.4"/>
-  <circle cx="94" cy="33" r="8" fill="none" stroke="rgba(232,181,58,0.42)" strokeWidth="1.4"/>
-  <path d="M34 33h52" stroke="rgba(232,181,58,0.3)" strokeWidth="1.2"/>
+  <rect x="0" y="0" width="120" height="10" fill={mpSc("#0a111e","#e9e0cb")} stroke={mpGold()+"0.45)"} strokeWidth="1"/>
+  <path d="M6 10h108l-12 14H18z" fill={mpSc("#070c16","#dbceb0")} stroke={mpGold()+"0.3)"} strokeWidth="1"/>
+  <circle cx="26" cy="33" r="8" fill="none" stroke={mpGold()+"0.42)"} strokeWidth="1.4"/>
+  <circle cx="94" cy="33" r="8" fill="none" stroke={mpGold()+"0.42)"} strokeWidth="1.4"/>
+  <path d="M34 33h52" stroke={mpGold()+"0.3)"} strokeWidth="1.2"/>
 </svg>;
 const MpColumns=()=><div aria-hidden="true" className="pointer-events-none fixed inset-y-0 left-0 right-0 z-0 hidden xl:block">
   {["left-0","right-0"].map((side)=><div key={side} className={"absolute "+side+" top-0 h-full w-[104px] opacity-[0.55]"}>
@@ -1114,23 +1119,23 @@ const MpColumns=()=><div aria-hidden="true" className="pointer-events-none fixed
   </div>)}
 </div>;
 const MP_SMOKE=[
-  {className:"-left-52 top-[10%] h-[560px] w-[1000px] animate-drift",tint:"rgba(47,111,232,0.2)",delay:"0s"},
-  {className:"-right-64 top-[38%] h-[680px] w-[1150px] animate-drift-slow",tint:"rgba(22,54,138,0.42)",delay:"-8s"},
-  {className:"left-[18%] bottom-[-14%] h-[520px] w-[1000px] animate-drift",tint:"rgba(4,7,14,0.94)",delay:"-16s"},
-  {className:"left-[42%] top-[62%] h-[440px] w-[820px] animate-drift-slow",tint:"rgba(232,181,58,0.08)",delay:"-24s"}];
+  {className:"-left-52 top-[10%] h-[560px] w-[1000px] animate-drift",tint_d:"rgba(47,111,232,0.2)",tint_l:"rgba(169,200,255,0.3)",delay:"0s"},
+  {className:"-right-64 top-[38%] h-[680px] w-[1150px] animate-drift-slow",tint_d:"rgba(22,54,138,0.42)",tint_l:"rgba(240,231,210,0.7)",delay:"-8s"},
+  {className:"left-[18%] bottom-[-14%] h-[520px] w-[1000px] animate-drift",tint_d:"rgba(4,7,14,0.94)",tint_l:"rgba(255,252,244,0.9)",delay:"-16s"},
+  {className:"left-[42%] top-[62%] h-[440px] w-[820px] animate-drift-slow",tint_d:"rgba(232,181,58,0.08)",tint_l:"rgba(232,181,58,0.12)",delay:"-24s"}];
 const MP_EMBERS=[{left:"4%",delay:"0s",duration:"7s"},{left:"11%",delay:"-4.2s",duration:"9s"},{left:"23%",delay:"-1.6s",duration:"8s"},{left:"37%",delay:"-6.1s",duration:"10s"},{left:"52%",delay:"-2.9s",duration:"7.5s"},{left:"66%",delay:"-5.4s",duration:"9.5s"},{left:"79%",delay:"-3.1s",duration:"8.5s"},{left:"93%",delay:"-7.2s",duration:"11s"}];
 const MpAtmosphere=()=><React.Fragment>
   <MpColumns/>
   <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-    <div className="absolute inset-0" style={{background:"radial-gradient(1300px 700px at 70% -12%, rgba(47,111,232,0.32), transparent 66%),radial-gradient(760px 520px at 4% 6%, rgba(232,181,58,0.13), transparent 62%),radial-gradient(760px 520px at 97% 22%, rgba(142,30,55,0.12), transparent 62%),radial-gradient(1200px 820px at 46% 118%, rgba(19,53,96,0.6), transparent 62%)"}}/>
-    {MP_SMOKE.map((p)=><div key={p.className} className={"absolute blur-3xl "+p.className} style={{animationDelay:p.delay,background:"radial-gradient(closest-side, "+p.tint+", transparent 72%)"}}/>)}
+    <div className="absolute inset-0" style={{background:mpSc("radial-gradient(1300px 700px at 70% -12%, rgba(47,111,232,0.32), transparent 66%),radial-gradient(760px 520px at 4% 6%, rgba(232,181,58,0.13), transparent 62%),radial-gradient(760px 520px at 97% 22%, rgba(142,30,55,0.12), transparent 62%),radial-gradient(1200px 820px at 46% 118%, rgba(19,53,96,0.6), transparent 62%)","radial-gradient(1300px 700px at 70% -12%, rgba(169,200,255,0.5), transparent 66%),radial-gradient(760px 520px at 4% 6%, rgba(232,181,58,0.16), transparent 62%),radial-gradient(1200px 820px at 46% 118%, rgba(226,216,196,0.85), transparent 62%)")}}/>
+    {MP_SMOKE.map((p)=><div key={p.className} className={"absolute blur-3xl "+p.className} style={{animationDelay:p.delay,background:"radial-gradient(closest-side, "+mpSc(p.tint_d,p.tint_l)+", transparent 72%)"}}/>)}
     {MP_EMBERS.map((s)=><span key={s.left} className="absolute bottom-4 h-[3px] w-[3px] animate-rise rounded-full bg-gold-300" style={{left:s.left,animationDelay:s.delay,animationDuration:s.duration,boxShadow:"0 0 10px 2px rgba(240,207,114,0.9)"}}/>)}
-    <div className="absolute inset-0" style={{background:"radial-gradient(120% 90% at 50% 40%, transparent 42%, rgba(2,4,9,0.72) 88%, rgba(2,4,9,0.96) 100%)"}}/>
+    <div className="absolute inset-0" style={{background:mpSc("radial-gradient(120% 90% at 50% 40%, transparent 42%, rgba(2,4,9,0.72) 88%, rgba(2,4,9,0.96) 100%)","radial-gradient(120% 90% at 50% 40%, transparent 50%, rgba(214,201,176,0.4) 90%, rgba(199,183,152,0.55) 100%)")}}/>
   </div>
 </React.Fragment>;
 const MP_SOULS=[{left:"7%",size:5,delay:"0s",duration:"17s"},{left:"15%",size:3,delay:"-6s",duration:"21s"},{left:"28%",size:4,delay:"-11s",duration:"19s"},{left:"41%",size:3,delay:"-3s",duration:"23s"},{left:"56%",size:5,delay:"-14s",duration:"18s"},{left:"68%",size:3,delay:"-8s",duration:"22s"},{left:"81%",size:4,delay:"-17s",duration:"20s"},{left:"92%",size:3,delay:"-5s",duration:"24s"}];
 const MpWisps=()=><div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-  {MP_SOULS.map((s)=><span key={s.left} className="animate-wisp absolute bottom-0 rounded-full bg-flame-300" style={{left:s.left,height:s.size,width:s.size,animationDelay:s.delay,animationDuration:s.duration,boxShadow:"0 0 "+(s.size*4)+"px "+s.size+"px rgba(91,147,255,0.8)"}}/>)}
+  {MP_SOULS.map((s)=><span key={s.left} className="animate-wisp absolute bottom-0 rounded-full bg-flame-300" style={{left:s.left,height:s.size,width:s.size,animationDelay:s.delay,animationDuration:s.duration,boxShadow:"0 0 "+(s.size*4)+"px "+s.size+"px "+mpSc("rgba(91,147,255,0.8)","rgba(165,130,31,0.55)")}}/>)}
 </div>;
 const MpSectionHeading=({id,icon,title,aside,greek,tone="gold"})=>{
   const titleTone=tone==="ember"?"ember-text":"gilded-text";
@@ -1154,18 +1159,18 @@ const MpSectionHeading=({id,icon,title,aside,greek,tone="gold"})=>{
 const MP_HADES_DECK="Name's Hades. Lord of the dead, keeper of your deadlines. Hi, how ya doin'.";
 const MP_HADES_MONTH="Whoa, whoa — is that a launch approaching with nothing in hand? Not on my watch.";
 const MpSkullSigil=()=><svg viewBox="0 0 64 72" className="h-8 w-8 lg:h-10 lg:w-10" aria-hidden="true">
-  <g style={{filter:"drop-shadow(0 0 14px rgba(91,147,255,0.9))"}} fill="#e6ecf5" stroke="rgba(4,7,14,0.7)" strokeWidth="1">
+  <g style={{filter:mpSc("drop-shadow(0 0 14px rgba(91,147,255,0.9))","drop-shadow(0 0 10px rgba(47,111,232,0.55))")}} fill={mpSc("#e6ecf5","#fdfaf2")} stroke={mpSc("rgba(4,7,14,0.7)","rgba(58,48,30,0.75)")} strokeWidth="1">
     <path d="M32 2c15 0 24 11 24 26 0 9-4 14-4 21 0 6-8 8-20 8s-20-2-20-8c0-7-4-12-4-21C8 13 17 2 32 2z"/>
-    <ellipse cx="22" cy="30" rx="7" ry="9" fill="#04070e"/>
-    <ellipse cx="42" cy="30" rx="7" ry="9" fill="#04070e"/>
-    <path d="M32 40l-5 9h10z" fill="#04070e"/>
-    <path d="M24 58h4v8h-4zM30 58h4v8h-4zM36 58h4v8h-4z" fill="#e6ecf5"/>
+    <ellipse cx="22" cy="30" rx="7" ry="9" fill={mpSc("#04070e","#3a301e")}/>
+    <ellipse cx="42" cy="30" rx="7" ry="9" fill={mpSc("#04070e","#3a301e")}/>
+    <path d="M32 40l-5 9h10z" fill={mpSc("#04070e","#3a301e")}/>
+    <path d="M24 58h4v8h-4zM30 58h4v8h-4zM36 58h4v8h-4z" fill={mpSc("#e6ecf5","#fdfaf2")}/>
   </g>
 </svg>;
 const MpThroneHero=()=><section aria-labelledby="chamber-title" className="relative isolate aspect-[1600/620] max-h-[76vh] min-h-[380px] w-full overflow-hidden bg-abyss-950">
-  <div aria-hidden="true" className="absolute inset-0" style={{background:"radial-gradient(820px 460px at 50% 104%, rgba(47,111,232,0.55), transparent 70%),radial-gradient(1200px 640px at 50% -16%, rgba(19,53,96,0.75), transparent 72%)"}}/>
+  <div aria-hidden="true" className="absolute inset-0" style={{background:mpSc("radial-gradient(820px 460px at 50% 104%, rgba(47,111,232,0.55), transparent 70%),radial-gradient(1200px 640px at 50% -16%, rgba(19,53,96,0.75), transparent 72%)","radial-gradient(820px 460px at 50% 104%, rgba(232,181,58,0.25), transparent 70%),radial-gradient(1200px 640px at 50% -16%, rgba(169,200,255,0.55), transparent 72%)")}}/>
   <MpTempleFacade/>
-  <div aria-hidden="true" className="animate-drift absolute -bottom-16 left-1/2 h-48 w-[130%] -translate-x-1/2 blur-3xl" style={{background:"radial-gradient(closest-side, rgba(47,111,232,0.34), transparent 72%)"}}/>
+  <div aria-hidden="true" className="animate-drift absolute -bottom-16 left-1/2 h-48 w-[130%] -translate-x-1/2 blur-3xl" style={{background:mpSc("radial-gradient(closest-side, rgba(47,111,232,0.34), transparent 72%)","radial-gradient(closest-side, rgba(232,181,58,0.2), transparent 72%)")}}/>
   <MpBrazier height={54} className="absolute bottom-[8%] left-[13%] hidden -translate-x-1/2 lg:flex"/>
   <MpBrazier height={54} className="absolute bottom-[8%] right-[13%] hidden translate-x-1/2 lg:flex"/>
   <div className="absolute inset-x-[6%] top-[49.4%] bottom-[10.3%] flex flex-col items-center justify-center text-center md:inset-x-[28.1%]">
@@ -1205,6 +1210,9 @@ const MpHubHeader=({view,onViewChange,onOpenRecord,onOpenRegistry,onOpenDispatch
       <div className="flex items-center gap-4">
         <button type="button" onClick={onOpenNewDeal} className="glow-flame inline-flex items-center gap-1.5 whitespace-nowrap border border-flame-300/70 bg-flame-500 px-3.5 py-2 font-display text-[12.5px] font-bold tracking-[0.08em] text-abyss-950 transition-colors duration-150 ease-out hover:bg-flame-400">
           <PlusIcon className="h-3.5 w-3.5" strokeWidth={3}/>NEW DEAL
+        </button>
+        <button type="button" onClick={()=>MP_LIVE.hooks.setTheme(mpLight()?"hades":"olympus")} title={mpLight()?"Back to the Underworld":"Olympus mode — for the weirdos who like daylight"} aria-label="Toggle light mode" className="inline-flex items-center whitespace-nowrap border border-gold-600/50 bg-abyss-900/80 px-2.5 py-1.5 text-[13px] text-gold-400 transition-colors duration-150 ease-out hover:border-gold-400/80 hover:text-gold-300">
+          {mpLight()?"\u263E":"\u2600"}
         </button>
         <button type="button" onClick={()=>MP_LIVE.hooks.backToDoom()} className="inline-flex items-center gap-1.5 whitespace-nowrap font-display text-[12.5px] tracking-[0.1em] text-shade-300 transition-colors duration-150 ease-out hover:text-gold-300">
           <ArrowLeftIcon className="h-3.5 w-3.5"/>DOOM
@@ -1889,7 +1897,7 @@ const MpApp=({api})=>{
   const[wing,setWing]=React.useState(null);
   MP_LIVE.hooks.closeWing=()=>setWing(null);
   const close=()=>setWing(null);
-  return<div className="mphades relative min-h-screen w-full bg-abyss-950 font-sans text-shade-100">
+  return<div className={mpThemeClass()+" relative min-h-screen w-full bg-abyss-950 font-sans text-shade-100"}>
     <MpAtmosphere/>
     <MpWisps/>
     <div className="relative z-10">
@@ -12676,6 +12684,7 @@ Rules:
   const DNC_EMPTY={name:"",brand:"Postman Law",markets:[],flightStart:"",flightEnd:"",trafficDue:"",channels:[],channelDetail:{},spots:[],extras:[],stations:"",partner:"",contact:"",cost:"",requestedBy:"",promoObligations:"",desc:"",toNotion:true};
   const[dnc,setDnc]=useState(DNC_EMPTY);
   const[contractText,setContractText]=useState("");
+  const[mpTheme,setMpTheme]=useState(()=>{try{return localStorage.getItem("mpTheme")||"hades"}catch(e){return"hades"}});
   const[parsing,setParsing]=useState(false);
   const dndGo=(ov)=>setDndOv(ov);
   const dndTouch=()=>{flightsDirtyRef.current=true};
@@ -12697,8 +12706,8 @@ Rules:
   // The chamber owns the whole viewport: Meg's gradient must not bleed under
   // the abyss while #mops is up. Restored on the way out.
   React.useEffect(()=>{
-    if(isMopsHub){const prev=document.body.style.background;document.body.style.background="#04070e";return()=>{document.body.style.background=prev}}
-  },[isMopsHub]);
+    if(isMopsHub){const prev=document.body.style.background;document.body.style.background=mpTheme==="olympus"?"#f7f3ea":"#04070e";return()=>{document.body.style.background=prev}}
+  },[isMopsHub,mpTheme]);
   // contract door — proven pre-strip: PDF → text → AI → prefilled form.
   const contractPdf=async(file)=>{
     if(!file)return;
@@ -13059,9 +13068,11 @@ Rules:
   //    send/mint modals — the operational layer the kit doesn't carry —
   //    above the chamber in the same abyss-and-gold tongue.
   const DndHub=()=>{
-    const HD={bg:"#04070e",bg2:"#070c16",card:"#0a111e",bd:"rgba(232,181,58,.28)",flame:"#5b93ff",ember:"#e2687f",rose:"#c02f4d",soul:"#8ac6cb",smoke:"#93a6bd",bone:"#e6ecf5",gold:"#e8b53a",lilac:"#c0cddd",dim:"#4c5c73"};
+    const HD=mpTheme==="olympus"
+      ?{bg:"#f7f3ea",bg2:"#f0eade",card:"#fcf9f1",bd:"rgba(138,109,26,.4)",flame:"#2456c9",ember:"#c02f4d",rose:"#8e1e37",soul:"#2c5c62",smoke:"#5c5138",bone:"#241e12",gold:"#8a6d1a",lilac:"#3d3524",dim:"#7d7050",panel:"linear-gradient(165deg,#fcf9f1,#f2ecdd 70%,#fcf9f1)",modal:"linear-gradient(150deg,#fdfaf3,#f4eee0)",shadow:"rgba(60,48,20,.35)"}
+      :{bg:"#04070e",bg2:"#070c16",card:"#0a111e",bd:"rgba(232,181,58,.28)",flame:"#5b93ff",ember:"#e2687f",rose:"#c02f4d",soul:"#8ac6cb",smoke:"#93a6bd",bone:"#e6ecf5",gold:"#e8b53a",lilac:"#c0cddd",dim:"#4c5c73",panel:"linear-gradient(165deg,#0a111e,#04070e 70%,#0a111e)",modal:"linear-gradient(150deg,#101014,#0a0a0e)",shadow:"rgba(0,0,0,.85)"};
     const serif={fontFamily:"'Cinzel',serif"};
-    const inp={padding:"6px 10px",borderRadius:4,border:"1px solid rgba(91,68,21,.6)",background:"rgba(4,7,14,.85)",color:HD.bone,fontSize:13,outline:"none",fontFamily:"'Inter','DM Sans',sans-serif"};
+    const inp={padding:"6px 10px",borderRadius:4,border:"1px solid "+(mpTheme==="olympus"?"rgba(165,141,79,.6)":"rgba(91,68,21,.6)"),background:mpTheme==="olympus"?"rgba(255,252,244,.9)":"rgba(4,7,14,.85)",color:HD.bone,fontSize:13,outline:"none",fontFamily:"'Inter','DM Sans',sans-serif"};
     const mini=(color)=>({background:"none",border:"1px solid "+(color||"rgba(232,181,58,.5)"),borderRadius:4,color:color||HD.gold,fontSize:11,fontWeight:700,cursor:"pointer",padding:"4px 10px",whiteSpace:"nowrap"});
     const flab={display:"block",fontSize:9,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:HD.smoke,marginBottom:3};
     const secH=(t,c)=><div style={{...serif,fontSize:16,fontWeight:700,letterSpacing:.4,color:HD.bone,borderBottom:"3px double "+(c||HD.gold)+"77",paddingBottom:4,margin:"18px 0 10px"}}>{t}</div>;
@@ -13232,7 +13243,7 @@ Rules:
 
     // ── adapters: the live engine, shaped for the chamber ──
     const today=new Date();today.setHours(0,0,0,0);
-    const MP_ACCENT={PL:"#9fb6d6",WK:"#e8b53a",LR:"#f0cf72",PDV:"#e2687f",KE:"#8ac6cb"};
+    const MP_ACCENT=mpTheme==="olympus"?{PL:"#5D3A87",WK:"#a5821f",LR:"#8f8400",PDV:"#c22733",KE:"#1E5F9E"}:{PL:"#9fb6d6",WK:"#e8b53a",LR:"#f0cf72",PDV:"#e2687f",KE:"#8ac6cb"};
     const mpBrands=BRANDS.map(b=>({id:b.code,name:b.name,accent:MP_ACCENT[b.code]||"#e8b53a"}));
     const bCode=(name)=>{const b=BRANDS.find(x=>x.name===name);return b?b.code:String(name||"")};
     const byFlight={};dndLedger.forEach(x=>{(byFlight[x.fid]=byFlight[x.fid]||[]).push(x)});
@@ -13282,6 +13293,7 @@ Rules:
       pending:Object.entries(assetReviews).filter(([t,r])=>r.status==="pending").sort((a,b)=>String(b[1].sentAt).localeCompare(String(a[1].sentAt))).map(([tok,r])=>{const age=Math.floor((Date.now()-new Date(r.sentAt).getTime())/864e5);return{id:tok,when:dndFd(r.sentAt),what:"Review · "+(r.assetLabel||r.assetType)+" — "+r.campName,late:age>=3?age:0}}),
       answered:Object.entries(assetReviews).filter(([t,r])=>r.status==="approved"||r.status==="changes").sort((a,b)=>String(b[1].respondedAt).localeCompare(String(a[1].respondedAt))).slice(0,8).map(([tok,r])=>({id:tok,when:dndFd(r.respondedAt),ok:r.status==="approved",what:(r.assetLabel||r.assetType)+" · "+r.campName,note:r.feedback||""})),
       trail:dndLog.slice(0,14).map(l=>({id:l.id,when:dndFd(l.at),kind:l.kind,subject:l.subject,to:l.to})),
+      light:mpTheme==="olympus",
       nd:{dnc,brandMarkets:brandMktCodes(dnc.brand).map(c=>DM[c]||c),brandNames:BRANDS.map(b=>b.name),channels:DND_CHANNELS,channelHints:DND_CH_HINT,contractText,parsing,notionCount:flights.filter(f=>f.notionId).length}
     };
     const mpHooks={
@@ -13299,6 +13311,7 @@ Rules:
       setMerch:(brand,field,val)=>saveMerchRole(brand,{[field]:val}),
       openAsset:(a)=>{if(a.url)window.open(a.url,"_blank");else dndCopy(a.kind==="Tagline"?a.title:a.code,"Copied")},
       backToDoom:()=>navigateHash(""),
+      setTheme:(t)=>{setMpTheme(t);try{localStorage.setItem("mpTheme",t)}catch(e){}},
       ndSet:(patch)=>setDnc(p=>({...p,...patch})),
       ndToggle:(key,val)=>setDnc(p=>{const arr=p[key]||[];return{...p,[key]:arr.includes(val)?arr.filter(x=>x!==val):[...arr,val]}}),
       ndBrand:(name)=>setDnc(p=>({...p,brand:name,markets:[]})),
@@ -13313,15 +13326,15 @@ Rules:
     return<React.Fragment>
       <MpApp api={mpApi}/>
       {dndOv&&dndOv.t==="dossier"&&<React.Fragment>
-        <div onClick={close} style={{position:"fixed",inset:0,background:"rgba(2,4,9,.8)",backdropFilter:"blur(3px)",zIndex:70}}/>
-        <div className="mphades" style={{position:"fixed",top:0,bottom:0,right:0,width:700,maxWidth:"95vw",background:"linear-gradient(165deg,#0a111e,#04070e 70%,#0a111e)",borderLeft:"1px solid rgba(232,181,58,.35)",boxShadow:"-18px 0 60px rgba(0,0,0,.85)",zIndex:71,overflowY:"auto",padding:"24px 28px 40px",fontFamily:"'Inter','DM Sans',sans-serif",fontSize:14,color:HD.bone}}>
+        <div onClick={close} style={{position:"fixed",inset:0,background:mpTheme==="olympus"?"rgba(58,48,30,.35)":"rgba(2,4,9,.8)",backdropFilter:"blur(3px)",zIndex:70}}/>
+        <div className={"mphades"+(mpTheme==="olympus"?" mpolympus":"")} style={{position:"fixed",top:0,bottom:0,right:0,width:700,maxWidth:"95vw",background:HD.panel,borderLeft:"1px solid "+HD.bd,boxShadow:"-18px 0 60px "+HD.shadow,zIndex:71,overflowY:"auto",padding:"24px 28px 40px",fontFamily:"'Inter','DM Sans',sans-serif",fontSize:14,color:HD.bone}}>
           <button onClick={close} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:HD.smoke,fontSize:20,fontWeight:800,cursor:"pointer"}}>×</button>
           {Dossier(dndOv.fid)}
         </div>
       </React.Fragment>}
       {dndPreview&&<React.Fragment>
         <div style={{position:"fixed",inset:0,background:"rgba(5,5,12,.82)",zIndex:80}} onClick={()=>setDndPreview(null)}/>
-        <div className="mphades" style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:720,maxWidth:"94vw",maxHeight:"88vh",overflowY:"auto",background:"linear-gradient(150deg,#101014,#0a0a0e)",border:"1px solid "+HD.bd,borderRadius:14,boxShadow:"0 24px 80px rgba(0,0,0,.85)",zIndex:81,padding:"22px 26px"}}>
+        <div className={"mphades"+(mpTheme==="olympus"?" mpolympus":"")} style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:720,maxWidth:"94vw",maxHeight:"88vh",overflowY:"auto",background:HD.modal,border:"1px solid "+HD.bd,borderRadius:14,boxShadow:"0 24px 80px "+HD.shadow,zIndex:81,padding:"22px 26px"}}>
           <div style={{...serif,fontSize:20,fontWeight:700,color:HD.bone,marginBottom:8}}>This is the exact email. Nothing has been sent.</div>
           <div style={{fontSize:12,color:HD.smoke,marginBottom:2}}><b style={{color:HD.bone}}>To:</b> {dndPreview.needsTo?<input value={dndPreview.to||""} onChange={e=>setDndPreview(p=>({...p,to:e.target.value,needsTo:false}))} placeholder="who gets it?" style={{...inp,fontSize:12,padding:"3px 8px"}}/>:dndPreview.to} · <b style={{color:HD.bone}}>CC:</b> emm.caban@atticor.ai</div>
           {dndPreview.needsTo&&<input autoFocus value={dndPreview.to||""} onChange={e=>setDndPreview(p=>({...p,to:e.target.value}))} placeholder="email address for this send" style={{...inp,width:"100%",margin:"6px 0"}}/>}
@@ -13337,7 +13350,7 @@ Rules:
       </React.Fragment>}
       {dndMint&&<React.Fragment>
         <div style={{position:"fixed",inset:0,background:"rgba(5,5,12,.82)",zIndex:80}} onClick={()=>setDndMint(null)}/>
-        <div className="mphades" style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:520,maxWidth:"94vw",background:"linear-gradient(150deg,#101014,#0a0a0e)",border:"1px solid "+HD.bd,borderRadius:14,zIndex:81,padding:"22px 26px"}}>
+        <div className={"mphades"+(mpTheme==="olympus"?" mpolympus":"")} style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:520,maxWidth:"94vw",background:HD.modal,border:"1px solid "+HD.bd,borderRadius:14,zIndex:81,padding:"22px 26px"}}>
           <div style={{...serif,fontSize:20,fontWeight:700,color:HD.bone}}>Register as ISCI</div>
           <div style={{fontSize:11.5,color:HD.smoke,margin:"6px 0 12px"}}>Doom mints by its own conventions — pre-filled from the deal. Confirm, don't type. Provenance rides along.</div>
           <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
@@ -13352,7 +13365,7 @@ Rules:
           </div>
         </div>
       </React.Fragment>}
-      {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#101014",color:HD.bone,padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.5)",zIndex:9999,border:"1px solid "+HD.bd}}>{toast}</div>}
+      {toast&&<div style={{position:"fixed",bottom:20,right:20,background:HD.card,color:HD.bone,padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.5)",zIndex:9999,border:"1px solid "+HD.bd}}>{toast}</div>}
     </React.Fragment>;
   };
 
