@@ -2298,7 +2298,11 @@ const App=()=>{
             return{...fb,title:useTitle,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:fb.fileUrl||seed.fileUrl,category:useSeedCat?seedCat:(fbCat||seedCat),caseType:useSeedCat?seedCat:(fbCat||seedCat),valueProp:fb.valueProp||seed.valueProp||"",vo:fb.vo||seed.vo||""};
           });
           // Always add back missing seed ISCIs — better to recover than lose
-          const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||""))&&!loadedDeleted.has(init.code+"|"+(init.dma||"")));
+          // L&R (non-OOH) seed rows always restore — the seed is canonical for the
+          // brand, so a stale deletedIscis key must never block a seed code (the
+          // same failure the "Restore ESPN Digital ISCIs" button works around).
+          const _seedAlwaysRestores=init=>init.brand==="Lerner & Rowe"&&init.suffix!=="O";
+          const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||""))&&(_seedAlwaysRestores(init)||!loadedDeleted.has(init.code+"|"+(init.dma||""))));
           const all=[...enhanced,...missing];
           // Normalize any unicode punctuation in titles to plain ASCII (curly quotes,
           // en/em dashes, non-breaking spaces) — Firestore-stored titles win over seed,
@@ -3931,6 +3935,106 @@ const App=()=>{
       pdf.text("Atticor · OOH Size Report",MX,PH-8);pdf.text("Page "+i+" of "+n,RIGHT,PH-8,{align:"right"});}
     pdf.save((brandFilter?brandFilter.replace(/[^A-Za-z0-9]+/g,"_"):"OOH")+"_Size_Report_"+new Date().toISOString().slice(0,10)+".pdf");
     log("OOH Size Report",(brandFilter||"All brands")+" · "+totalBoards+" boards · "+sized+" sized");
+  };
+
+  // ── L&R TV :15 ISCI LIST ───────────────────────────────
+  // Professional reference PDF: 4 Lerner & Rowe TV :15 creatives per market,
+  // grouped by DMA in alphabetical order. Picks the creatives that MATCH
+  // across the most markets (same title, same rotation everywhere) so every
+  // DMA runs the same set; Spanish spots (SP-infix codes) and the MythBuster
+  // series are excluded per Emm. Built live from the ISCI registry
+  // (Firestore-merged), so it always reflects current data. Lives under
+  // Audit Log → Reference Downloads.
+  const downloadLrTv15IsciPdf=()=>{
+    const pool=iscis.filter(i=>i.brand==="Lerner & Rowe"&&i.media==="TV"&&String(i.dur)==="15"&&i.suffix!=="O"&&i.active
+      &&!(i.code||"").includes("LRSP")&&!/spanish|espanol/i.test(i.title||"")&&!/mythbuster/i.test(i.title||""));
+    if(!pool.length){notify("No active Lerner & Rowe TV :15 ISCIs found");return}
+    const JPP=window.jspdf&&window.jspdf.jsPDF;
+    if(!JPP){notify("PDF library not loaded — try again in a moment");return}
+    const mktOf=(c)=>(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c])||(typeof DM!=="undefined"&&DM[c])||c;
+    // creative download link: the registry's stored fileUrl (Supabase-backed)
+    // is the ONLY source — strictly per-ISCI, since cuts differ by market.
+    const linkOf=(r)=>r.fileUrl?dlUrl(r.fileUrl):"";
+    // rank titles: most markets WITH a download link first, then total market
+    // coverage, then lowest sequence number — keep the top 4 as the matched
+    // rotation set
+    const byTitle={};
+    pool.forEach(r=>{const t=r.title||r.code;const e=byTitle[t]=byTitle[t]||{dmas:new Set(),linked:new Set(),minSeq:1e9};
+      e.dmas.add(r.dma||"—");if(linkOf(r))e.linked.add(r.dma||"—");
+      const m=(r.code||"").match(/(\d{3})T?$/);const seq=m?+m[1]:999;if(seq<e.minSeq)e.minSeq=seq});
+    const picked=Object.entries(byTitle).sort((a,b)=>b[1].linked.size-a[1].linked.size||b[1].dmas.size-a[1].dmas.size||a[1].minSeq-b[1].minSeq).slice(0,4).map(e=>e[0]);
+    // group by DMA, alphabetical; matched titles first, then fill each market
+    // to 4 from its own inventory (linked spots before unlinked)
+    const G={};
+    pool.forEach(r=>{const k=r.dma||"—";(G[k]=G[k]||[]).push(r)});
+    const dmas=Object.keys(G).sort((a,b)=>a.localeCompare(b));
+    dmas.forEach(d=>{
+      const inSet=G[d].filter(r=>picked.includes(r.title||r.code)).sort((a,b)=>a.code.localeCompare(b.code));
+      const rest=G[d].filter(r=>!picked.includes(r.title||r.code)).sort((a,b)=>(linkOf(b)?1:0)-(linkOf(a)?1:0)||a.code.localeCompare(b.code));
+      G[d]=inSet.concat(rest).slice(0,4)});
+    const rows=dmas.reduce((a,d)=>a.concat(G[d]),[]);
+    const linkedCount=rows.filter(r=>linkOf(r)).length;
+    const fullMatch=picked.every(t=>byTitle[t].dmas.size===dmas.length);
+    const cleanTitle=(t)=>String(t||"").replace(/_15$/,"");
+    const pdf=new JPP("p","mm","a4");
+    const PW=210,PH=297,MX=16,RIGHT=PW-MX;
+    const INK=[38,34,49],SUB=[120,120,132],RULE=[228,224,234],HEAD=[245,242,248];
+    const ACC=[27,120,70]; // L&R print accent (matches OOH Size Report)
+    const tc=c=>pdf.setTextColor(c[0],c[1],c[2]);
+    const dc=c=>pdf.setDrawColor(c[0],c[1],c[2]);
+    const fc=c=>pdf.setFillColor(c[0],c[1],c[2]);
+    let y=0;
+    const check=(need)=>{if(y+need>PH-16){pdf.addPage();y=20;}};
+    // header
+    fc(ACC);pdf.rect(0,0,PW,4,"F");
+    y=22;pdf.setFont("helvetica","bold");pdf.setFontSize(19);tc(INK);
+    pdf.text("Lerner & Rowe  ·  TV :15 ISCI List",MX,y);
+    y+=6.5;pdf.setFont("helvetica","normal");pdf.setFontSize(10);tc(SUB);
+    pdf.text((fullMatch?"Matched rotation — the same "+picked.length+" creatives in every market":"Top "+picked.length+" creatives per market (widest coverage)")+" · English only · by DMA, alphabetical",MX,y);
+    y+=5.5;pdf.setFontSize(9);
+    pdf.text(rows.length+" ISCIs across "+dmas.length+" markets · "+linkedCount+" with creative download links      "+new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}),MX,y);
+    y+=5;dc(RULE);pdf.setLineWidth(0.4);pdf.line(MX,y,RIGHT,y);y+=7;
+    // rotation set legend
+    pdf.setFont("helvetica","bold");pdf.setFontSize(8);tc(SUB);pdf.text("ROTATION SET",MX,y);
+    pdf.setFont("helvetica","normal");pdf.setFontSize(10);tc(INK);
+    pdf.text(picked.map(cleanTitle).join("  ·  "),MX+30,y);
+    y+=4;dc(RULE);pdf.setLineWidth(0.4);pdf.line(MX,y,RIGHT,y);y+=9;
+    const TITLEX=68,CATX=126,FILEX=168,LINKBLUE=[21,101,192];
+    dmas.forEach(d=>{
+      const list=G[d];
+      check(20);
+      pdf.setFont("helvetica","bold");pdf.setFontSize(12.5);tc(ACC);
+      pdf.text(mktOf(d)+"  ("+d+")",MX,y);
+      pdf.setFont("helvetica","normal");pdf.setFontSize(9);tc(SUB);
+      pdf.text(list.length+(list.length===1?" spot":" spots"),RIGHT,y,{align:"right"});
+      y+=2.5;dc(ACC);pdf.setLineWidth(0.6);pdf.line(MX,y,RIGHT,y);y+=5.5;
+      // column header
+      fc(HEAD);pdf.rect(MX,y-4,RIGHT-MX,6.2,"F");
+      pdf.setFont("helvetica","bold");pdf.setFontSize(8);tc(SUB);
+      pdf.text("ISCI CODE",MX+2,y);pdf.text("CREATIVE TITLE",TITLEX,y);pdf.text("CATEGORY",CATX,y);pdf.text("CREATIVE FILE",FILEX,y);
+      y+=6.5;
+      list.forEach(r=>{
+        check(7);
+        pdf.setFont("courier","bold");pdf.setFontSize(9.5);tc(INK);
+        pdf.text(r.code,MX+2,y);
+        pdf.setFont("helvetica","normal");pdf.setFontSize(10);tc(INK);
+        pdf.text(cleanTitle(r.title),TITLEX,y);
+        pdf.setFontSize(9);tc(SUB);
+        pdf.text(r.category||r.caseType||"—",CATX,y);
+        const url=linkOf(r);
+        if(url){pdf.setFont("helvetica","bold");pdf.setFontSize(9);tc(LINKBLUE);pdf.textWithLink("Download",FILEX,y,{url:url});}
+        else{pdf.setFont("helvetica","italic");pdf.setFontSize(8.5);tc(SUB);pdf.text("no file on record",FILEX,y);}
+        y+=4;dc(RULE);pdf.setLineWidth(0.2);pdf.line(MX,y,RIGHT,y);y+=4;
+      });
+      y+=6;
+    });
+    // page footers
+    const n=pdf.getNumberOfPages();
+    for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFont("helvetica","normal");pdf.setFontSize(7.5);tc(SUB);
+      pdf.text("Atticor · Lerner & Rowe TV :15 ISCI List",MX,PH-8);pdf.text("Page "+i+" of "+n,RIGHT,PH-8,{align:"right"});}
+    pdf.save("Lerner_Rowe_TV15_ISCI_List_"+new Date().toISOString().slice(0,10)+".pdf");
+    log("L&R TV :15 ISCI List","downloaded · "+picked.length+" matched creatives · "+rows.length+" ISCIs · "+dmas.length+" markets · "+linkedCount+" download links · no Spanish, no MythBusters");
+    notify("L&R TV :15 list downloaded — "+picked.map(cleanTitle).join(", ")+" in "+dmas.length+" markets");
   };
 
   // ── OOH CREATIVE SPECS ─────────────────────────────────
@@ -5952,7 +6056,11 @@ const App=()=>{
       w.document.write('<div class="note">'+swaps+' bulletins change to Predators creative (new vinyl, production required). All other bulletins KEEP the current It\'s Personal CK — do not retraffic.</div>');
       w.document.write('<table><tr><th style="width:56px">Panel #</th><th>Location</th><th style="width:56px">Size</th><th style="width:200px">Creative (click for file)</th><th style="width:110px">ISCI</th><th style="width:60px">Post date</th></tr>');
       statics.forEach(b=>{const pred=b.design.some(c=>/Always|Lockup/.test(c));
-        w.document.write('<tr'+(pred?' style="background:#fff8e0"':'')+'><td class="mono">'+escHtml(b.id)+'</td><td>'+escHtml(b.loc||"")+'</td><td>'+escHtml(b.size)+'</td><td>'+lk(b.isci,crName(b.design))+(pred?' <span class="new">NEW VINYL</span>':' <span class="keep">KEEP CURRENT</span>')+'</td><td class="mono">'+escHtml(b.isci)+'</td><td>'+(pred?"8/31/26":"—")+'</td></tr>')});
+        // Position relocations per the Lamar master WK sheet: the SAME vinyl moves to
+        // the new panel when it starts — not a second production.
+        const MOVES={"22841":{from:"23115",date:"9/28/26"},"22322":{from:"23406",date:"11/30/26"}};
+        const mv=MOVES[b.id];
+        w.document.write('<tr'+(pred?' style="background:#fff8e0"':'')+'><td class="mono">'+escHtml(b.id)+'</td><td>'+escHtml(b.loc||"")+'</td><td>'+escHtml(b.size)+'</td><td>'+lk(b.isci,crName(b.design))+(mv?' <span class="new">VINYL MOVED FROM #'+mv.from+' — NO NEW PRODUCTION</span>':(pred?' <span class="new">NEW VINYL</span>':' <span class="keep">KEEP CURRENT</span>'))+'</td><td class="mono">'+escHtml(b.isci)+'</td><td>'+(mv?mv.date:(pred?"8/31/26":"—"))+'</td></tr>')});
       w.document.write('</table>');
       w.document.write('<div class="sec">2 — DIGITAL BULLETINS (16) · effective 8/31/26</div>');
       w.document.write('<div class="note">Three rotations. Groups 1 &amp; 2 are the standard state — each unit runs a two-ad rotation at 50/50. <b>Group 3 is the all-Predators takeover rotation: ALL 16 units run We Always Show Up + Partner Lockup (50/50)</b> — it replaces Groups 1 &amp; 2 only during the takeover dates in Section 5, then units return to their standard group.</div>');
@@ -13415,6 +13523,12 @@ Rules:
         <input value={auditSearch} onChange={e=>setAuditSearch(e.target.value)} placeholder="Search actions, details..." style={{width:300,padding:"5px 10px",borderRadius:6,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:13,outline:"none"}}/>
         {auditSearch&&<span style={{fontSize:12,color:"#6B5E80",marginLeft:8}}>{filteredLog.length} results</span>}
       </div>
+      {/* Reference downloads — professional lists built live from the registry */}
+      <div style={{marginBottom:10,padding:"10px 14px",borderRadius:6,border:"1px dashed #2FBF7155",background:"rgba(47,191,113,.07)",fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+        <span style={{fontWeight:700,color:"#2FBF71"}}>⬇ Reference Downloads</span>
+        <span style={{flex:1,minWidth:200}}>Lerner &amp; Rowe TV :15 ISCI list — the 4 creatives that match across the most markets, grouped by DMA in alphabetical order, with clickable creative download links. No Spanish spots, no MythBusters. Built live from the registry, so it's always current.</span>
+        <button onClick={downloadLrTv15IsciPdf} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #2FBF71",background:"#2FBF7115",color:"#2FBF71",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📄 L&amp;R TV :15 List (PDF)</button>
+      </div>
       {/* Migration tools — safety net before Supabase cutover */}
       <div style={{marginBottom:10,padding:"10px 14px",borderRadius:6,border:"1px dashed #D4A04055",background:"rgba(212,160,64,.07)",fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
         <span style={{fontWeight:700,color:"#D4A040"}}>⚙ Migration</span>
@@ -14429,6 +14543,7 @@ Rules:
         <p>The Audit Log tracks every action: rotation builds, email sends, confirmations, ISCI edits, file uploads, station changes, imports. Use brand tabs to filter by PL, WK, or All Activity.</p>
         <p>Category filters (Traffic, Emails, Confirmations, Edits, Imports, Admin) narrow results. Combine with the search bar to find specific stations, estimates, or ISCI codes.</p>
         <p>The log shows 200 entries at a time. If a vendor disputes a send, check here — every email is logged with recipients and timestamps.</p>
+        <p>The <b>Reference Downloads</b> box at the top of the page generates professional PDFs straight from the live registry — like the Lerner &amp; Rowe TV :15 list (matched creatives per market, by DMA, no Spanish spots, no MythBusters). Every download is logged.</p>
         <BookMarginNote author="meg">I see everything, Wonderboy. Everything.</BookMarginNote>
       </div>,damageEffects:<>{<BookBiteMark style={{top:"25%",right:0,opacity:.4,transform:"rotate(-90deg) scale(.6)"}}/>}{<BookInkSplatter style={{bottom:24,left:16,opacity:.4}}/>}</>},
 
