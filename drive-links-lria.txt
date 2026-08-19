@@ -1,0 +1,20 @@
+FETCH FAILED — could not retrieve Drive folder listing from this environment.
+
+URL attempted: https://drive.google.com/embeddedfolderview?id=1VSI0i_xc07ul1a3Lt-5Ts4ZZkMF1XnKs#list
+Date attempted: 2026-08-19 (UTC)
+
+Attempt 1 — curl -sL (via session HTTPS proxy):
+  HTTP status: 000 (no response received)
+  curl exit code: 56 (CURLE_RECV_ERROR — failure receiving network data)
+
+Attempt 2 — WebFetch tool:
+  Error output (exact):
+  {"error_type":"EGRESS_BLOCKED","domain":"drive.google.com","message":"Access to drive.google.com is blocked by the network egress proxy."}
+
+Cause: this remote session's network egress policy blocks drive.google.com,
+so the publicly shared folder's embedded listing could not be fetched.
+No file names or Drive IDs could be extracted.
+
+To get the listing, either allow drive.google.com in the Claude Code
+environment's network policy and re-run this task, or fetch the URL above
+from an unrestricted machine.
