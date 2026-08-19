@@ -12634,7 +12634,7 @@ Rules:
   };
 
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"campaigns",l:"Mayhem & Marketing Ops",e:"🔥"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"Overkill & OOH",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"vault",l:"WK Legacy Vault",e:"🗄"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"campaigns",l:"Mayhem & Marketing Ops",e:"🔥"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"Overkill & OOH",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
