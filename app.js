@@ -5214,6 +5214,7 @@ const App=()=>{
           <Btn small color="#D4A040" onClick={()=>printVendorTrafficSheet()}>📄 Vendor Sheet</Btn>
           <Btn small color="#E85A7A" onClick={()=>printVendorTrafficSheet({resendOnly:true})}>📄 Revision Sheet</Btn>
           <Btn small color="#5BC4A0" onClick={()=>printCreativeSpecs()}>📐 Creative Specs</Btn>
+          <Btn small color="#FFB81C" onClick={printPredsTraffic}>🏒 Preds Traffic</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
           <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>📍 Map</Btn>
