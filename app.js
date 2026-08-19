@@ -3940,10 +3940,9 @@ const App=()=>{
     const JPP=window.jspdf&&window.jspdf.jsPDF;
     if(!JPP){notify("PDF library not loaded — try again in a moment");return}
     const mktOf=(c)=>(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c])||(typeof DM!=="undefined"&&DM[c])||c;
-    // creative download link: registry fileUrl wins, else the L&R creative
-    // map. Strictly per-ISCI — cuts differ by market, so never borrow another
-    // market's file for the same title.
-    const linkOf=(r)=>r.fileUrl||((typeof LR_CREATIVE_LINKS!=="undefined"&&LR_CREATIVE_LINKS[r.code])||"");
+    // creative download link: the registry's stored fileUrl (Supabase-backed)
+    // is the ONLY source — strictly per-ISCI, since cuts differ by market.
+    const linkOf=(r)=>r.fileUrl?dlUrl(r.fileUrl):"";
     // rank titles: most markets WITH a download link first, then total market
     // coverage, then lowest sequence number — keep the top 4 as the matched
     // rotation set
