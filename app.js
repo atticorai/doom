@@ -4112,7 +4112,7 @@ const App=()=>{
     const _dupCodes=(()=>{const c={};iscis.forEach(i=>{if(i.code)c[i.code]=(c[i.code]||0)+1});return Object.keys(c).filter(k=>c[k]>1)})();
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
       {_dupCodes.length>0&&<div style={{background:"#3a1f2a",border:"1px solid #E85A7A",borderRadius:8,padding:"9px 14px",color:"#E85A7A",fontSize:13,fontWeight:700}}>⚠ {_dupCodes.length} duplicate ISCI code{_dupCodes.length>1?"s":""} detected — two records share the same code, which breaks trafficking and sends. Fix before sending: {_dupCodes.slice(0,25).join(", ")}{_dupCodes.length>25?" …":""}</div>}
-      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setModal({t:"socialTraffic"})} color="#9b7bb0">📱 Social Traffic</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn color="#4AC8E8" onClick={()=>{const esc=x=>{const s=String(x==null?"":x);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};const list=iscis.filter(i=>i.fileUrl&&i.brand===isciBrand);if(!list.length){notify("No linked creative for "+isciBrand+" — upload creative first");return}const csv="code,title,brand,dma,media,length,category,valueProp,vo,url\n"+list.map(i=>[i.code,i.title,i.brand,i.dma||"",i.media||"",i.dur||"",i.category||i.caseType||"",i.valueProp||"",i.vo||"",i.fileUrl].map(esc).join(",")).join("\n");const blob=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=isciBrand.replace(/[^A-Za-z]/g,"")+"-creative-links.csv";document.body.appendChild(a);a.click();a.remove();log("Export Links",list.length+" "+isciBrand+" creative links");notify(list.length+" creative links exported")}}>⬇ Export Links</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j],crLock:true}:x);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>{const n=iscis.filter(i=>i.fileUrl&&!i.crLock).length;if(!n){notify("All linked creative is already locked");return}if(!confirm("Lock "+n+" ISCI"+(n>1?"s":"")+" to their current creative file? This freezes each file→ISCI binding so download links can't break. You can unlock any one from its edit screen."))return;setIscis(prev=>prev.map(i=>i.fileUrl?{...i,crLock:true}:i));log("Creative Lock","Locked "+n+" ISCIs to their creative");notify("🔒 Locked "+n+" creative link"+(n>1?"s":""))}} color="#5BC4A0">🔒 Lock Creative</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
+      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setModal({t:"socialTraffic"})} color="#9b7bb0">📱 Social Traffic</Btn>{isciBrand==="Lerner & Rowe"&&typeof LR_MYTHBUSTERS!=="undefined"&&<Btn onClick={()=>setModal({t:"mythMap"})} color="#D4A040">🎬 Myth Buster Map</Btn>}<Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn color="#4AC8E8" onClick={()=>{const esc=x=>{const s=String(x==null?"":x);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};const list=iscis.filter(i=>i.fileUrl&&i.brand===isciBrand);if(!list.length){notify("No linked creative for "+isciBrand+" — upload creative first");return}const csv="code,title,brand,dma,media,length,category,valueProp,vo,url\n"+list.map(i=>[i.code,i.title,i.brand,i.dma||"",i.media||"",i.dur||"",i.category||i.caseType||"",i.valueProp||"",i.vo||"",i.fileUrl].map(esc).join(",")).join("\n");const blob=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=isciBrand.replace(/[^A-Za-z]/g,"")+"-creative-links.csv";document.body.appendChild(a);a.click();a.remove();log("Export Links",list.length+" "+isciBrand+" creative links");notify(list.length+" creative links exported")}}>⬇ Export Links</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j],crLock:true}:x);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>{const n=iscis.filter(i=>i.fileUrl&&!i.crLock).length;if(!n){notify("All linked creative is already locked");return}if(!confirm("Lock "+n+" ISCI"+(n>1?"s":"")+" to their current creative file? This freezes each file→ISCI binding so download links can't break. You can unlock any one from its edit screen."))return;setIscis(prev=>prev.map(i=>i.fileUrl?{...i,crLock:true}:i));log("Creative Lock","Locked "+n+" ISCIs to their creative");notify("🔒 Locked "+n+" creative link"+(n>1?"s":""))}} color="#5BC4A0">🔒 Lock Creative</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
       {showTagMgr&&<Cd style={{padding:14,marginTop:8}}>
         <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:8}}>🏷 Manage Categories, Value Props & VOs</div>
         {BRANDS.map(x=>x.name).map(brand=>{const bc=getBrandColor(brand);const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
@@ -7569,6 +7569,79 @@ const App=()=>{
     </Mod>;
   };
   const EditTrafficModal=_etmRef.current;
+
+  // Lerner & Rowe — Myth Buster Creative Map. On Target Media delivers the
+  // campaign under LNR_* file names; Doom knows each spot by its ISCI. This is
+  // the bridge: spot → script → delivered file → per-market ISCI codes, with a
+  // printable map (scripts included) and a rename CSV for creative uploads.
+  const MythBusterMapMod=()=>{
+    const spots=(typeof LR_MYTHBUSTERS!=="undefined"?LR_MYTHBUSTERS:[]);
+    const MB_DMAS=["ABQ","BHD","CHI","FLG","LVS","PHX","RNO","TUC","YMA"];
+    const pad3=n=>String(n).padStart(3,"0");
+    const codeOf=(dma,seq,suf)=>dma+"LR2615"+pad3(seq)+suf;
+    const regOf=code=>iscis.find(i=>i.code===code);
+    // Shared creative: the same physical file serves all nine market codes, so
+    // any market's linked file is THE file for that cut.
+    const fileOf=(seq,suf)=>{for(const d of MB_DMAS){const r=regOf(codeOf(d,seq,suf));if(r&&r.fileUrl)return r.fileUrl}return""};
+    const cutRows=s=>[{label:"16x9 · TV",seq:s.tvSeq,suf:"T",file:s.f169,title:"MythBuster "+s.n+" 16x9_15"},{label:"9x16 · Digital",seq:s.dgSeq,suf:"D",file:s.f916,title:"MythBuster "+s.n+" 9x16_15"}];
+    const exportCsv=()=>{
+      const esc=x=>{const t=String(x==null?"":x);return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t};
+      const rows=["spot,format,delivered_file,doom_title,market,isci,upload_as"];
+      spots.forEach(s=>cutRows(s).forEach(c=>MB_DMAS.forEach(d=>{const code=codeOf(d,c.seq,c.suf);rows.push([s.n,c.label,c.file,c.title,(DM[d]||d),code,code+".mp4"].map(esc).join(","))})));
+      const blob=new Blob([rows.join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="LR-mythbuster-rename-map.csv";document.body.appendChild(a);a.click();a.remove();
+      log("MythBuster Map","Rename CSV exported — "+spots.length+" spots");notify("Rename map exported — one row per market code, upload each file as its ISCI");
+    };
+    const printMap=()=>{
+      let x='<html><head><meta charset="utf-8"><title>Lerner &amp; Rowe — Myth Buster Creative Map</title><style>body{font-family:Arial,sans-serif;margin:30px;color:#1a1a1a}h2{margin:0}.spot{border:1px solid #ccc;border-radius:8px;padding:12px 14px;margin-top:12px;page-break-inside:avoid}.tag{display:inline-block;padding:1px 8px;border-radius:4px;font-size:11px;font-weight:700}.myth{font-style:italic;margin:6px 0 2px}.resp{margin:2px 0 8px}.mono{font-family:monospace;font-size:11px}.lbl{font-size:10px;letter-spacing:1px;color:#7a5c00;font-weight:700;text-transform:uppercase}table{width:100%;border-collapse:collapse;margin-top:6px}th,td{border:1px solid #ddd;padding:4px 8px;font-size:11px;text-align:left}</style></head><body>';
+      x+='<div style="text-align:center;margin-bottom:14px"><h2>LERNER &amp; ROWE</h2><div style="letter-spacing:2px;font-size:12px;color:#7a5c00">MYTH BUSTER CREATIVE MAP</div></div>';
+      x+='<div style="font-size:12px;line-height:1.6"><b>Source:</b> On Target Media — 16 spots recorded by Kevin, each in 16x9 (horizontal, TV) and 9x16 (vertical, Digital).<br/><b>Tag:</b> ALL spots tagged National 844-977-1900. <b>Disclaimers:</b> ALL carry Dramatization + AI Actor(s).<br/><b>Copy:</b> verbatim from script; two typo fixes applied (Myth 9 &quot;mergers&quot;→&quot;merges&quot;, Myth 13 &quot;facts documents&quot;→&quot;facts documented&quot;). AI quality varies spot to spot and can be redone if revisions are needed.<br/><b>ISCI pattern:</b> [MKT]LR2615[SEQ]T = 16x9 TV cut, [MKT]LR2615[SEQ]D = 9x16 Digital cut, across '+MB_DMAS.map(d=>escHtml(DM[d]||d)).join(", ")+'.</div>';
+      spots.forEach(s=>{
+        x+='<div class="spot"><div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:14px">Myth '+s.n+' — '+escHtml(s.speaker)+'</b><span class="tag" style="background:'+(s.status==="New"?"#fdf3d7;color:#7a5c00":"#ddf2e8;color:#0a6b47")+'">'+escHtml(s.status)+'</span></div>';
+        x+='<div class="myth">&ldquo;'+escHtml(s.myth)+'&rdquo; <span style="font-size:10px;color:#888">(claim on camera)</span></div>';
+        x+='<div class="resp">'+escHtml(s.response)+' <span style="font-size:10px;color:#888">(voiceover)</span></div>';
+        if(s.note)x+='<div style="font-size:11px;color:#a33"><b>Revision note:</b> '+escHtml(s.note)+'</div>';
+        x+='<table><thead><tr><th>Cut</th><th>Delivered file</th><th>Doom title</th><th>ISCI codes ('+MB_DMAS.length+' markets)</th></tr></thead><tbody>';
+        cutRows(s).forEach(c=>{const url=fileOf(c.seq,c.suf);x+='<tr><td>'+escHtml(c.label)+'</td><td class="mono">'+escHtml(c.file)+(url?' — <a href="'+escHtml(dlUrl(url))+'">Download</a>':"")+'</td><td>'+escHtml(c.title)+'</td><td class="mono">'+MB_DMAS.map(d=>codeOf(d,c.seq,c.suf)).join(" · ")+'</td></tr>'});
+        x+='</tbody></table></div>';
+      });
+      x+='<div style="font-size:10px;color:#888;margin-top:14px">Generated from Doom &amp; Deliverables — '+new Date().toLocaleDateString()+'</div></body></html>';
+      const w=window.open("","","width=980,height=900");
+      if(w){w.document.write(x);w.document.close();setTimeout(()=>{w.focus();w.print()},400)}else{notify("Pop-up blocked — allow pop-ups to download the map")}
+      log("MythBuster Map","Creative map printed — "+spots.length+" spots");
+    };
+    const registered=(seq,suf)=>MB_DMAS.filter(d=>regOf(codeOf(d,seq,suf))).length;
+    return<Mod title="🎬 Myth Buster Creative Map — Lerner & Rowe" onClose={()=>setModal(null)} xl>
+      <div style={{fontSize:12.5,color:"#9B8EAD",lineHeight:1.6,marginBottom:10}}>
+        16 spots from On Target Media, each in <b style={{color:"#C4A0C8"}}>16x9 (TV)</b> and <b style={{color:"#C4A0C8"}}>9x16 (Digital)</b>. All tagged <b style={{color:"#D4A040"}}>National 844-977-1900</b>, all carry Dramatization + AI Actor(s) disclaimers. Spots 1–6 were sent previously; 7–16 are the new drafts, registered as <span style={{fontFamily:"monospace",color:"#4AC8E8"}}>[MKT]LR2615036T–045T</span> and <span style={{fontFamily:"monospace",color:"#4AC8E8"}}>[MKT]LR2615007D–016D</span>. To link creative: rename each delivered file to its ISCI (the CSV maps every code) and upload via Bulk Creative — Recover Links will do the rest.
+      </div>
+      <div style={{display:"flex",gap:6,marginBottom:12}}>
+        <Btn color="#D4A040" onClick={printMap}>🗺 Download Creative Map (PDF)</Btn>
+        <Btn color="#4AC8E8" onClick={exportCsv}>⬇ Rename Map CSV</Btn>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {spots.map(s=><div key={s.n} style={{border:"1px solid #4a3565",borderRadius:10,padding:"10px 14px",background:"#261840"}}>
+          <div style={{display:"flex",alignItems:"baseline",gap:10,flexWrap:"wrap"}}>
+            <span style={{fontSize:15,fontWeight:800,color:"#F0E8F8"}}>Myth {s.n}</span>
+            <span style={{fontSize:12,color:"#9B8EAD"}}>{s.speaker}</span>
+            <span style={{fontSize:10,fontWeight:700,padding:"1px 8px",borderRadius:4,background:s.status==="New"?"rgba(212,160,64,.15)":"rgba(91,196,160,.15)",color:s.status==="New"?"#D4A040":"#5BC4A0"}}>{s.status}</span>
+            {s.note&&<span style={{fontSize:11,color:"#E85A7A"}}>⚠ {s.note}</span>}
+          </div>
+          <div style={{fontSize:13,fontStyle:"italic",color:"#C4A0C8",margin:"6px 0 2px"}}>“{s.myth}” <span style={{fontSize:10,color:"#9B8EAD",fontStyle:"normal"}}>claim on camera</span></div>
+          <div style={{fontSize:13,color:"#E8DFF0",marginBottom:8}}>{s.response} <span style={{fontSize:10,color:"#9B8EAD"}}>voiceover</span></div>
+          {cutRows(s).map(c=>{const url=fileOf(c.seq,c.suf);const nReg=registered(c.seq,c.suf);
+            return<div key={c.suf} style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",fontSize:12,padding:"4px 0",borderTop:"1px dashed rgba(155,123,176,.15)"}}>
+              <span style={{fontSize:10,fontWeight:700,color:"#D4A040",textTransform:"uppercase",width:82}}>{c.label}</span>
+              <span style={{fontFamily:"monospace",fontSize:11,color:"#9B8EAD"}}>{c.file}</span>
+              <span style={{color:"#4a3565"}}>→</span>
+              <span style={{color:"#E8DFF0",fontWeight:600}}>{c.title}</span>
+              <span style={{fontFamily:"monospace",fontSize:11,color:"#4AC8E8"}} title={MB_DMAS.map(d=>codeOf(d,c.seq,c.suf)).join(", ")}>[MKT]LR2615{pad3(c.seq)}{c.suf}</span>
+              <span style={{marginLeft:"auto",fontSize:11,color:nReg===MB_DMAS.length?"#5BC4A0":"#E85A7A"}}>{nReg}/{MB_DMAS.length} markets registered</span>
+              {url?<a href={dlUrl(url)} style={{color:"#4AC8E8",fontWeight:700,fontSize:11}}>⬇ file</a>:<span style={{fontSize:11,color:"#9B8EAD"}}>no file yet</span>}
+            </div>;})}
+        </div>)}
+      </div>
+    </Mod>;
+  };
 
   const EditIsciMod=({isci,idx})=>{
     const locked=isIsciSent(isci.code);
@@ -14286,6 +14359,7 @@ Rules:
         <p>Lerner &amp; Rowe runs across the Southwest and Pacific Northwest — Phoenix, Tucson, Albuquerque, Las Vegas, Reno, Seattle, Flagstaff, Bullhead, Yuma, and Chicago. Estimates are 4-digit (2661–2674).</p>
         <p>Unlike the others, most L&amp;R creative is <b>shared</b> — the same spot carries one number and one title across every market, coded by market. Spanish spots are flagged right in the code with an <b>SP</b> after the brand: <span style={{fontFamily:"monospace"}}>LVSLRSP2630001R</span>.</p>
         <p>Brand look is black &amp; gold. <span style={{color:"#C4A0C8",fontWeight:700}}>{lrActive} active ISCIs</span> across the markets.</p>
+        <p>The <b>Myth Buster</b> campaign (On Target Media) is 16 spots, each in 16x9 for TV and 9x16 for Digital — all tagged National 844-977-1900 with Dramatization + AI Actor(s) disclaimers. The full map — scripts, delivered file names, per-market ISCI codes, download links — lives behind the <b>🎬 Myth Buster Map</b> button on the ISCI Registry when Lerner &amp; Rowe is selected.</p>
         <BookBrandFacts brand="Lerner & Rowe"/>
         <BookMarginNote author="meg">New blood. Try to keep the codes straight.</BookMarginNote>
       </div>,damageEffects:<>{<BookInkSplatter style={{bottom:20,right:20,opacity:.4}}/>}{<BookHoofMark style={{top:20,left:20,opacity:.2,transform:"rotate(12deg) scale(.65)"}}/>}</>},
@@ -14651,6 +14725,7 @@ Rules:
     {OohHub()}
     {(modal==="newIsci"||modal?.t==="newIsci")&&<NewIsciMod defaultMedia={modal?.defaultMedia||null}/>}
     {modal?.t==="socialTraffic"&&<SocialTrafficMod/>}
+    {modal?.t==="mythMap"&&<MythBusterMapMod/>}
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
     {modal?.type==="oohPhoto"&&<OohPhotoModal modal={modal}/>}
     {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#2d1f42",color:"#E8DFF0",padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.3)",zIndex:9999,border:"1px solid #4a3565"}}>{toast}</div>}
@@ -15463,6 +15538,7 @@ Rules:
     </div>
     {(modal==="newIsci"||modal?.t==="newIsci")&&<NewIsciMod defaultMedia={modal?.defaultMedia||null}/>}
     {modal?.t==="socialTraffic"&&<SocialTrafficMod/>}
+    {modal?.t==="mythMap"&&<MythBusterMapMod/>}
     {modal?.t==="buildRot"&&<RotBuilder est={modal.est} pool={modal.pool} workMonth={workMonth} _revise={modal._revise}/>}
     {modal?.t==="buildStream"&&<StreamBuilder est={modal.est} pool={modal.pool} workMonth={workMonth}/>}
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
