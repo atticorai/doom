@@ -2290,7 +2290,11 @@ const App=()=>{
             return{...fb,title:useTitle,dur:fb.dur||seed.dur,media:fb.media||seed.media,fileUrl:fb.fileUrl||seed.fileUrl,category:useSeedCat?seedCat:(fbCat||seedCat),caseType:useSeedCat?seedCat:(fbCat||seedCat),valueProp:fb.valueProp||seed.valueProp||"",vo:fb.vo||seed.vo||""};
           });
           // Always add back missing seed ISCIs — better to recover than lose
-          const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||""))&&!loadedDeleted.has(init.code+"|"+(init.dma||"")));
+          // L&R (non-OOH) seed rows always restore — the seed is canonical for the
+          // brand, so a stale deletedIscis key must never block a seed code (the
+          // same failure the "Restore ESPN Digital ISCIs" button works around).
+          const _seedAlwaysRestores=init=>init.brand==="Lerner & Rowe"&&init.suffix!=="O";
+          const missing=ISCIS_INIT.filter(init=>!fbMap.has(init.code+"|"+(init.dma||""))&&(_seedAlwaysRestores(init)||!loadedDeleted.has(init.code+"|"+(init.dma||""))));
           const all=[...enhanced,...missing];
           // Normalize any unicode punctuation in titles to plain ASCII (curly quotes,
           // en/em dashes, non-breaking spaces) — Firestore-stored titles win over seed,
