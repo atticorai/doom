@@ -4,6 +4,7 @@
 <title>Atticor Doom &amp; Deliverables</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Cinzel:wght@400;500;600;700;800;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=MedievalSharp&family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Pirata+One&family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@1,400;1,500;1,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <link rel="stylesheet" href="/tailwind.css"/>
 <link rel="stylesheet" href="/library-ui.css"/>
@@ -11,38 +12,55 @@
      so it doesn't blow away the rest of the app's styles. Project
      palette (megara + parchment) and fonts (cinzel/cormorant/eb) are
      extended so the source-bundle class strings work verbatim. -->
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    corePlugins: { preflight: false },
-    theme: {
-      extend: {
-        colors: {
-          megara: {
-            dark: '#1a0a1f',
-            plum: '#2a0f2e',
-            wine: '#7a1f3d',
-            magenta: '#a02850',
-            lavender: '#c9a8d4',
-            gold: '#d4a857',
-            'gold-dark': '#b8924a'
-          },
-          parchment: {
-            light: '#f4ebd8',
-            DEFAULT: '#e8dcc0',
-            dark: '#d4c4a0',
-            shadow: '#b5a37a'
-          }
-        },
-        fontFamily: {
-          cinzel: ['Cinzel', 'serif'],
-          cormorant: ['Cormorant Garamond', 'serif'],
-          eb: ['EB Garamond', 'serif']
-        }
-      }
-    }
-  };
-</script>
+<link rel="stylesheet" href="tw.css"/>
+<!-- Tailwind is COMPILED (tw.css via tailwind.config.cjs) — no runtime CDN.
+     Rebuild after adding classes: npx tailwindcss@3.4.17 -c tailwind.config.cjs -i tw.in.css -o tw.css --minify -->
+<style id="mp-hades">
+/* ── Mayhem & Marketing Ops: the Underworld chamber (Magic Patterns port) ──
+   Scoped under .mphades. The reset block stands in for Tailwind preflight
+   (which is off app-wide) so border/button utilities behave as authored. */
+.mphades, .mphades *, .mphades *::before, .mphades *::after{border-width:0;border-style:solid;border-color:#26262e;box-sizing:border-box}
+.mphades button{background:none;color:inherit;font:inherit;cursor:pointer;text-align:inherit}
+.mphades input,.mphades select,.mphades textarea{font:inherit;color:inherit}
+.mphades ul{list-style:none;margin:0;padding:0}
+.mphades h1,.mphades h2,.mphades h3,.mphades h4,.mphades p,.mphades dl,.mphades dd{margin:0}
+.mphades table{border-collapse:collapse}
+.mphades a{text-decoration:none;color:inherit}
+/* Meg's global !important rules are excluded from the chamber at their
+   source via :not(.mphades)/:not(.mphades *) — Tailwind rules own it here. */
+.mphades .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
+.mphades ::selection{background:rgba(47,111,232,0.4)}
+.mphades :focus-visible{outline:2px solid #5b93ff;outline-offset:2px}
+.mphades{-webkit-font-smoothing:antialiased}
+.stone{background-image:repeating-linear-gradient(174deg,rgba(230,236,245,0.02) 0 1px,transparent 1px 5px)}
+.cracked{position:relative}
+.cracked::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:0.5;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='320' viewBox='0 0 420 320'%3E%3Cg fill='none' stroke='%23e6ecf5' stroke-opacity='0.05' stroke-width='1'%3E%3Cpath d='M30 0l18 54-12 38 26 62-9 44 22 52'/%3E%3Cpath d='M210 320l-14-62 16-40-22-58 10-46-18-52'/%3E%3Cpath d='M380 12l-22 70 14 36-18 66 12 48'/%3E%3Cpath d='M120 90l40 14 22-10'/%3E%3Cpath d='M300 210l-38 12-26-8'/%3E%3C/g%3E%3C/svg%3E")}
+.carved{position:relative;background-color:rgba(7,12,22,0.85);border:1px solid rgba(232,181,58,0.32);box-shadow:inset 0 1px 0 rgba(249,234,208,0.14),inset 0 0 90px rgba(2,4,9,0.9),0 30px 80px -40px #010306}
+.carved::before,.carved::after{content:'';position:absolute;top:7px;width:5px;height:5px;background:#e8b53a;transform:rotate(45deg);opacity:0.8;box-shadow:0 0 10px rgba(232,181,58,0.9)}
+.carved::before{left:7px}
+.carved::after{right:7px}
+.slab{background-color:rgba(7,12,22,0.75);border:1px solid rgba(232,181,58,0.2);box-shadow:inset 0 1px 0 rgba(249,234,208,0.06),inset 0 0 46px rgba(2,4,9,0.8)}
+.double-rule{border-top:1px solid rgba(232,181,58,0.55);box-shadow:0 3px 0 -1px rgba(232,181,58,0.28),0 0 18px rgba(232,181,58,0.25)}
+.fluted{background-image:repeating-linear-gradient(90deg,rgba(147,166,189,0.07) 0 1px,rgba(2,4,9,0.65) 1px 7px,rgba(147,166,189,0.04) 7px 9px,rgba(2,4,9,0.7) 9px 16px)}
+.grille{background-image:linear-gradient(45deg,rgba(232,181,58,0.045) 25%,transparent 25% 75%,rgba(232,181,58,0.045) 75%),linear-gradient(-45deg,rgba(232,181,58,0.045) 25%,transparent 25% 75%,rgba(232,181,58,0.045) 75%);background-size:26px 26px}
+.soulfire-text{color:#dbe8ff;text-shadow:0 0 8px rgba(169,200,255,0.95),0 0 26px rgba(91,147,255,0.85),0 0 60px rgba(47,111,232,0.6),0 0 120px rgba(47,111,232,0.35)}
+.gilded-text{color:#f0cf72;text-shadow:0 0 12px rgba(232,181,58,0.55),0 0 40px rgba(232,181,58,0.28)}
+.ember-text{color:#e2687f;text-shadow:0 0 12px rgba(192,47,77,0.7),0 0 34px rgba(192,47,77,0.38)}
+.jade-text{color:#a5d8dc;text-shadow:0 0 12px rgba(84,154,161,0.65),0 0 30px rgba(84,154,161,0.3)}
+.glow-flame{box-shadow:0 0 0 1px rgba(91,147,255,0.45),0 0 28px rgba(47,111,232,0.5),inset 0 0 22px rgba(47,111,232,0.16)}
+.glow-gold{box-shadow:0 0 0 1px rgba(232,181,58,0.35),0 0 24px rgba(232,181,58,0.32),inset 0 0 22px rgba(232,181,58,0.1)}
+.glow-ember{box-shadow:-1px 0 18px rgba(192,47,77,0.6),inset 0 0 26px rgba(192,47,77,0.1)}
+.glow-jade{box-shadow:0 0 18px rgba(84,154,161,0.32),inset 0 0 20px rgba(84,154,161,0.1)}
+.flame-tongue{border-radius:50% 50% 22% 22% / 66% 66% 34% 34%;transform-origin:50% 100%;filter:blur(0.4px)}
+.frieze{height:18px;background-repeat:repeat-x;background-position:center;background-size:auto 18px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='18' viewBox='0 0 28 18'%3E%3Cpath d='M1 16V2h12v11H6V6h4' fill='none' stroke='%23e8b53a' stroke-width='1.6'/%3E%3Cpath d='M15 2v14h12V5h-7v7h4' fill='none' stroke='%23e8b53a' stroke-width='1.6'/%3E%3C/svg%3E");filter:drop-shadow(0 0 6px rgba(232,181,58,0.5))}
+.frieze-thin{height:12px;background-size:auto 12px;opacity:0.7}
+.laurel-rule{height:9px;background-repeat:repeat-x;background-size:auto 9px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='9' viewBox='0 0 16 9'%3E%3Cpath d='M0 4.5h16' stroke='%23e8b53a' stroke-width='0.8' opacity='0.55'/%3E%3Cpath d='M4 4.5c0-2 1.4-3.2 3-3.2-.2 1.9-1.3 3.2-3 3.2zM12 4.5c0 2-1.4 3.2-3 3.2.2-1.9 1.3-3.2 3-3.2z' fill='%23e8b53a' opacity='0.85'/%3E%3C/svg%3E");filter:drop-shadow(0 0 5px rgba(232,181,58,0.45))}
+.dentil-band{height:11px;border-bottom:1px solid rgba(232,181,58,0.4);background-image:repeating-linear-gradient(90deg,rgba(232,181,58,0.42) 0 9px,transparent 9px 21px);background-size:100% 6px;background-position:0 100%;background-repeat:repeat-x;filter:drop-shadow(0 0 6px rgba(232,181,58,0.35))}
+.greek-caps{font-family:'Cinzel',Georgia,serif;letter-spacing:0.42em;color:rgba(232,181,58,0.66);text-shadow:0 0 14px rgba(232,181,58,0.4)}
+.drop-cap::first-letter{float:left;font-family:'Pirata One','Cinzel',serif;font-size:3.1em;line-height:0.82;padding:0.06em 0.12em 0 0;color:#f0cf72;text-shadow:0 0 18px rgba(232,181,58,0.6)}
+.tabular{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion: reduce){.mphades *,.mphades *::before,.mphades *::after{animation:none !important;transition-duration:0.01ms !important}}
+</style>
 <script type="importmap">
 {
   "imports": {
@@ -64,7 +82,7 @@ table,button,select,input,textarea{font-family:'DM Sans',sans-serif}
 
 /* === DARK THEME === */
 #dd-loader, #dd-loader>div{background:transparent !important;border:none !important;box-shadow:none !important}
-#R>div:not(#dd-loader)>div:last-child{background:#1e1233 !important;color:#E8DFF0 !important}
+#R>div:not(#dd-loader):not(.mphades)>div:last-child{background:#1e1233 !important;color:#E8DFF0 !important}
 #R>div>div:last-child div[style*="background: rgb(255, 255, 255)"],
 #R>div>div:last-child div[style*="background:#fff"],
 #R>div>div:last-child div[style*="background: white"]{background:#2d1f42 !important;border-color:#4a3565 !important;color:#E8DFF0 !important}
@@ -113,14 +131,14 @@ h1,h2,h3,h4{color:#F0E8F8;font-family:'Cormorant Garamond','DM Sans',serif}
 /* Hover glow brightens scrolls and bottles */
 #R .wkv-page button:hover .wkv-scroll-glow{opacity:1 !important}
 #R .wkv-page button:hover .wkv-bottle-glow{opacity:.95 !important}
-td{color:#D0C4DD !important;border-color:#2d1f42 !important}
-th{background:#2d1f42 !important;color:#9B8EAD !important;border-color:#4a3565 !important}
+td:not(.mphades *){color:#D0C4DD !important;border-color:#2d1f42 !important}
+th:not(.mphades *){background:#2d1f42 !important;color:#9B8EAD !important;border-color:#4a3565 !important}
 /* Skip loader inputs from dark theme override */
-#R>div:not(#dd-loader) input,#R>div:not(#dd-loader) select,#R>div:not(#dd-loader) textarea{background:#1e1233 !important;color:#E8DFF0 !important;border-color:#4a3565 !important}
-label{color:#9B8EAD !important}
-button{border-color:#4a3565 !important}
-tr:nth-child(even) td{background:rgba(42,34,64,.25)}
-tr:nth-child(odd) td{background:rgba(28,21,40,.15)}
+#R>div:not(#dd-loader):not(.mphades) input:not(.mphades *),#R>div:not(#dd-loader):not(.mphades) select:not(.mphades *),#R>div:not(#dd-loader):not(.mphades) textarea:not(.mphades *){background:#1e1233 !important;color:#E8DFF0 !important;border-color:#4a3565 !important}
+label:not(.mphades *){color:#9B8EAD !important}
+button:not(.mphades *){border-color:#4a3565 !important}
+tr:nth-child(even) td:not(.mphades *){background:rgba(42,34,64,.25)}
+tr:nth-child(odd) td:not(.mphades *){background:rgba(28,21,40,.15)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .page-fade{animation:fadeIn .25s ease-out}
 @keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
@@ -167,7 +185,7 @@ tr:nth-child(odd) td{background:rgba(28,21,40,.15)}
   box-shadow:0 2px 20px rgba(155,123,176,.1),0 0 1px rgba(196,160,200,.12) !important;
 }
 /* Sidebar ambient glow — skip the loader */
-#R>div:not(#dd-loader)>div:first-child{
+#R>div:not(#dd-loader):not(.mphades)>div:first-child{
   background:linear-gradient(180deg,#1e1233 0%,#241640 50%,#1e1233 100%) !important;
   border-right:1px solid rgba(155,123,176,.15) !important;
 }

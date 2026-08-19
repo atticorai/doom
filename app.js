@@ -928,6 +928,990 @@ const dndTripwires=(flights,iscis,hubCfg)=>{
   return tws.sort((a,b)=>(a.sev==="red"?0:a.sev==="gold"?1:2)-(b.sev==="red"?0:b.sev==="gold"?1:2));
 };
 
+
+// ═══════════════════════════════════════════════════════════════════════
+// MAYHEM & MARKETING OPS — the Underworld chamber (Magic Patterns port)
+// Ported to the letter from the design kit Emm supplied: Doric temple hero,
+// soul-fire, wisps, the carved ledger, drawers as wings of the office.
+// Presentation only — the engine (typed reqs, evidence rules, sends) is the
+// existing Mayhem model; MP_LIVE is the bridge that feeds these components
+// real flights instead of the kit's mocks, refreshed on every App render.
+// Components live at MODULE scope so their identity is stable (inputs keep
+// focus). External deps are shimmed: lucide → inline SVGs, framer-motion →
+// static, date-fns → the handful of helpers the kit actually uses.
+// ═══════════════════════════════════════════════════════════════════════
+const MP_LIVE={deals:[],brands:[],wrapped:[],registry:[],TODAY:"",board:{start:"",end:""},hooks:{},ui:{}};
+// ── date-fns subset ──
+const mpD=(iso)=>new Date(String(iso).slice(0,10)+"T00:00:00");
+const mpIso=(d)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const mpDiffDays=(a,b)=>Math.round((mpD(mpIso(a)).getTime()-mpD(mpIso(b)).getTime())/864e5);
+const mpSubDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()-n);return x};
+const mpAddDays=(d,n)=>mpSubDays(d,-n);
+const mpAddMonths=(d,n)=>new Date(d.getFullYear(),d.getMonth()+n,1);
+const MP_MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const MP_MONF=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const MP_DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const mpFmtHard=(iso)=>{const d=mpD(iso);return MP_DOW[d.getDay()]+", "+MP_MON[d.getMonth()]+" "+d.getDate()};
+const mpSameDay=(a,b)=>mpIso(a)===mpIso(b);
+const mpSameMonth=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth();
+// ── lucide-react subset (inline, currentColor stroke) ──
+const mpIcon=(paths)=>({className="",strokeWidth=2})=><svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths}</svg>;
+const ArrowLeftIcon=mpIcon(<React.Fragment><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></React.Fragment>);
+const ArrowRightIcon=mpIcon(<React.Fragment><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></React.Fragment>);
+const ChevronLeftIcon=mpIcon(<path d="m15 18-6-6 6-6"/>);
+const ChevronRightIcon=mpIcon(<path d="m9 18 6-6-6-6"/>);
+const PlusIcon=mpIcon(<React.Fragment><path d="M5 12h14"/><path d="M12 5v14"/></React.Fragment>);
+const XIcon=mpIcon(<React.Fragment><path d="M18 6 6 18"/><path d="m6 6 12 12"/></React.Fragment>);
+const SearchIcon=mpIcon(<React.Fragment><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></React.Fragment>);
+const TriangleAlertIcon=mpIcon(<React.Fragment><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></React.Fragment>);
+const ScrollTextIcon=mpIcon(<React.Fragment><path d="M15 12h-5"/><path d="M15 8h-5"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></React.Fragment>);
+const FileTextIcon=mpIcon(<React.Fragment><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></React.Fragment>);
+const CheckIcon=mpIcon(<path d="M20 6 9 17l-5-5"/>);
+// ── framer-motion shim (static — the chamber's CSS animations carry the motion) ──
+const mpStripMotion=({initial,animate,exit,transition,...rest})=>rest;
+const motion={div:(props)=><div {...mpStripMotion(props)}/>,aside:(props)=><aside {...mpStripMotion(props)}/>};
+const AnimatePresence=({children})=><React.Fragment>{children}</React.Fragment>;
+// ── Portal + Overlay + Drawer ──
+const MpPortal=({children})=>{
+  const[mounted,setMounted]=React.useState(false);
+  React.useEffect(()=>{setMounted(true)},[]);
+  if(!mounted)return null;
+  return ReactDOM.createPortal(children,document.body);
+};
+const mpUseDialog=(open,onClose)=>{
+  React.useEffect(()=>{
+    if(!open)return;
+    const onKeyDown=(e)=>{if(e.key==="Escape")onClose()};
+    const prev=document.body.style.overflow;
+    document.body.style.overflow="hidden";
+    window.addEventListener("keydown",onKeyDown);
+    return()=>{document.body.style.overflow=prev;window.removeEventListener("keydown",onKeyDown)};
+  },[open,onClose]);
+};
+const MpOverlay=({open,onClose,label,widthClass="max-w-[880px]",children})=>{
+  mpUseDialog(open,onClose);
+  return<MpPortal>
+    <AnimatePresence>
+      {open&&<motion.div key={label} style={{position:"fixed",top:0,right:0,bottom:0,left:0,height:"100dvh",width:"100vw",zIndex:60,display:"flex",justifyContent:"flex-end",overscrollBehavior:"contain"}} className="mphades font-sans">
+        <button type="button" aria-label={"Close "+label} onClick={onClose} className="absolute inset-0 h-full w-full cursor-default bg-abyss-950/80 backdrop-blur-sm"/>
+        <motion.aside role="dialog" aria-modal="true" aria-label={label} className={"stone cracked relative flex h-full w-full flex-col border-l-2 border-gold-500/50 bg-abyss-900/98 "+widthClass} style={{boxShadow:"-30px 0 90px -30px #05030f, -1px 0 40px rgba(232,181,58,0.24)",color:"#e6ecf5"}}>
+          {children}
+        </motion.aside>
+      </motion.div>}
+    </AnimatePresence>
+  </MpPortal>;
+};
+const MpDrawer=({open,onClose,title,subtitle,greek,toolbar,widthClass="max-w-[880px]",children})=>
+  <MpOverlay open={open} onClose={onClose} label={title} widthClass={widthClass}>
+    <span aria-hidden="true" className="fluted absolute inset-y-0 left-0 w-6 opacity-70"/>
+    <MpGreekFrieze/>
+    <div className="dentil-band" aria-hidden="true"/>
+    <div className="relative shrink-0 px-8 pb-4 pt-6" style={{background:"radial-gradient(420px 180px at 8% 0%, rgba(47,111,232,0.16), transparent 70%)"}}>
+      <div className="flex items-start justify-between gap-6">
+        <div className="flex items-start gap-5">
+          <MpFlame height={40} className="mt-1 shrink-0"/>
+          <div>
+            <p className="greek-caps text-[9px]">{greek}</p>
+            <h2 className="gilded-text mt-1.5 font-deco text-[31px] font-bold tracking-[0.06em]">{title}</h2>
+            <p className="mt-2 max-w-2xl font-goth text-[17px] text-shade-300">{subtitle}</p>
+          </div>
+        </div>
+        <button type="button" onClick={onClose} aria-label={"Close "+title} className="border border-gold-700/60 p-1.5 text-shade-300 transition-colors duration-150 ease-out hover:border-gold-500 hover:text-gold-300">
+          <XIcon className="h-4 w-4"/>
+        </button>
+      </div>
+      {toolbar}
+      <div className="double-rule mt-5" aria-hidden="true"/>
+    </div>
+    <div className="relative min-h-0 flex-1 overflow-y-auto px-8 pb-10">{children}</div>
+  </MpOverlay>;
+// ── ornament & fire ──
+const MpGreekFrieze=({variant="meander",thin=false,className=""})=>{
+  const base=variant==="laurel"?"laurel-rule":("frieze"+(thin?" frieze-thin":""));
+  return<div aria-hidden="true" className={base+" "+className}/>;
+};
+const MP_TONGUES=[
+  {scale:1,tint:"rgba(31,79,192,0.95)",blur:6,duration:"1.9s",delay:"0s"},
+  {scale:0.78,tint:"rgba(47,111,232,0.98)",blur:3,duration:"1.5s",delay:"-0.4s"},
+  {scale:0.5,tint:"#a9c8ff",blur:1.5,duration:"1.2s",delay:"-0.8s"},
+  {scale:0.26,tint:"#f2f7ff",blur:0.5,duration:"0.9s",delay:"-0.2s"}];
+const MpFlame=({height=64,className=""})=>{
+  const width=height*0.62;
+  return<span aria-hidden="true" className={"pointer-events-none relative block "+className} style={{height,width}}>
+    <span className="animate-pulse-glow absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl" style={{height:height*2.1,width:height*2.1,background:"radial-gradient(closest-side, rgba(47,111,232,0.55), transparent 72%)"}}/>
+    {MP_TONGUES.map((t,i)=><span key={i} className="flame-tongue animate-dance absolute bottom-0 left-1/2" style={{height:height*t.scale,width:width*t.scale,marginLeft:-(width*t.scale)/2,background:t.tint,filter:"blur("+t.blur+"px)",animationDuration:t.duration,animationDelay:t.delay}}/>)}
+  </span>;
+};
+const MpBrazier=({height=72,className=""})=>{
+  const bowlWidth=height*1.15;
+  return<div aria-hidden="true" className={"flex flex-col items-center "+className}>
+    <MpFlame height={height}/>
+    <svg viewBox="0 0 120 58" style={{width:bowlWidth}} className="-mt-2" preserveAspectRatio="xMidYMid meet">
+      <path d="M4 6h112l-14 22H18z" fill="#0a111e" stroke="rgba(232,181,58,0.55)" strokeWidth="1.4"/>
+      <path d="M18 28h84l-10 12H28z" fill="#070c16" stroke="rgba(232,181,58,0.32)" strokeWidth="1.2"/>
+      <rect x="52" y="40" width="16" height="12" fill="#0a111e" stroke="rgba(232,181,58,0.3)" strokeWidth="1.2"/>
+      <path d="M38 56h44" stroke="rgba(232,181,58,0.5)" strokeWidth="2"/>
+    </svg>
+  </div>;
+};
+// ── the temple ──
+const MP_GOLD="rgba(232,181,58,";
+const MpColumn=({x})=>{
+  const half=38,ST=306,SB=556,SW=76;
+  return<g>
+    <rect x={x-half-16} y={SB-6} width={SW+32} height={16} fill="#0a111e" stroke={MP_GOLD+"0.34)"} strokeWidth="1.2"/>
+    <rect x={x-half-8} y={SB-20} width={SW+16} height={14} fill="#0e1728" stroke={MP_GOLD+"0.26)"} strokeWidth="1.1"/>
+    <path d={"M"+(x-half)+" "+(SB-20)+" L"+(x-half+7)+" "+(ST+30)+" L"+(x+half-7)+" "+(ST+30)+" L"+(x+half)+" "+(SB-20)+" Z"} fill="#070c16" stroke={MP_GOLD+"0.3)"} strokeWidth="1.2"/>
+    {[-25,-12.5,0,12.5,25].map((o)=><line key={o} x1={x+o*0.86} y1={ST+34} x2={x+o} y2={SB-24} stroke="rgba(230,236,245,0.075)" strokeWidth="2.2"/>)}
+    <path d={"M"+(x-half-4)+" "+(ST+30)+" C"+(x-half-2)+" "+(ST+14)+" "+(x-half+6)+" "+(ST+12)+" "+x+" "+(ST+12)+" C"+(x+half-6)+" "+(ST+12)+" "+(x+half+2)+" "+(ST+14)+" "+(x+half+4)+" "+(ST+30)+" Z"} fill="#0e1728" stroke={MP_GOLD+"0.34)"} strokeWidth="1.2"/>
+    <rect x={x-half-17} y={ST-2} width={SW+34} height={15} fill="#0a111e" stroke={MP_GOLD+"0.42)"} strokeWidth="1.2"/>
+  </g>;
+};
+const MpTriglyph=({x})=><g>
+  <rect x={x-15} y={238} width={30} height={46} fill="#0e1728" stroke={MP_GOLD+"0.4)"} strokeWidth="1.1"/>
+  {[-7.5,0,7.5].map((o)=><line key={o} x1={x+o} y1={241} x2={x+o} y2={281} stroke={MP_GOLD+"0.5)"} strokeWidth="2"/>)}
+</g>;
+const MpPalmette=({x,y,scale=1})=><g transform={"translate("+x+" "+y+") scale("+scale+")"}>
+  <path d="M0 0c0-14 8-24 8-24-6 2-8 6-8 6s-2-4-8-6c0 0 8 10 8 24z" fill={MP_GOLD+"0.55)"}/>
+  <path d="M0 0c0-11-11-17-11-17 2 7 5 11 5 11s-7 0-12-4c0 0 10 12 18 10z" fill={MP_GOLD+"0.4)"}/>
+  <path d="M0 0c0-11 11-17 11-17-2 7-5 11-5 11s7 0 12-4c0 0-10 12-18 10z" fill={MP_GOLD+"0.4)"}/>
+</g>;
+const MpTempleFacade=()=><svg viewBox="0 0 1600 620" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+  <path d="M800 54 1462 206 138 206Z" fill="rgba(10,17,30,0.92)" stroke={MP_GOLD+"0.3)"} strokeWidth="1.4"/>
+  <path d="M800 40 1490 200 1478 214 800 58 122 214 110 200Z" fill="#0a111e" stroke={MP_GOLD+"0.5)"} strokeWidth="1.4"/>
+  <g opacity="0.85">
+    <circle cx="800" cy="150" r="26" fill="none" stroke={MP_GOLD+"0.45)"} strokeWidth="2"/>
+    <circle cx="800" cy="150" r="9" fill={MP_GOLD+"0.35)"}/>
+    <path d="M742 168c22 4 38-6 44-18" fill="none" stroke={MP_GOLD+"0.35)"} strokeWidth="2"/>
+    <path d="M858 168c-22 4-38-6-44-18" fill="none" stroke={MP_GOLD+"0.35)"} strokeWidth="2"/>
+  </g>
+  <MpPalmette x={800} y={38} scale={1.5}/>
+  <MpPalmette x={1486} y={198} scale={1.1}/>
+  <MpPalmette x={114} y={198} scale={1.1}/>
+  <rect x="104" y="206" width="1392" height="22" fill="#0e1728" stroke={MP_GOLD+"0.45)"} strokeWidth="1.3"/>
+  {Array.from({length:58},(_,i)=><rect key={"d"+i} x={112+i*24} y={228} width={13} height={9} fill="#0a111e" stroke={MP_GOLD+"0.3)"} strokeWidth="0.8"/>)}
+  <rect x="112" y="238" width="1376" height="46" fill="rgba(7,12,22,0.9)" stroke={MP_GOLD+"0.28)"} strokeWidth="1"/>
+  {Array.from({length:23},(_,i)=><MpTriglyph key={"t"+i} x={135+i*62}/>)}
+  {Array.from({length:22},(_,i)=><path key={"m"+i} d={"M"+(166+i*62)+" 261 l9 -9 9 9 -9 9z"} fill="none" stroke={MP_GOLD+"0.22)"} strokeWidth="1.1"/>)}
+  <rect x="112" y="284" width="1376" height="22" fill="#0a111e" stroke={MP_GOLD+"0.4)"} strokeWidth="1.2"/>
+  {[150,300,450,1150,1300,1450].map((x)=><MpColumn key={x} x={x}/>)}
+  <rect x="86" y="566" width="1428" height="18" fill="#0e1728" stroke={MP_GOLD+"0.32)"} strokeWidth="1.2"/>
+  <rect x="58" y="584" width="1484" height="18" fill="#0a111e" stroke={MP_GOLD+"0.26)"} strokeWidth="1.2"/>
+  <rect x="26" y="602" width="1548" height="18" fill="#070c16" stroke={MP_GOLD+"0.2)"} strokeWidth="1.2"/>
+</svg>;
+const MpCapital=({flip=false})=><svg viewBox="0 0 120 46" className={"w-full "+(flip?"rotate-180":"")} preserveAspectRatio="none" aria-hidden="true">
+  <rect x="0" y="0" width="120" height="10" fill="#0a111e" stroke="rgba(232,181,58,0.45)" strokeWidth="1"/>
+  <path d="M6 10h108l-12 14H18z" fill="#070c16" stroke="rgba(232,181,58,0.3)" strokeWidth="1"/>
+  <circle cx="26" cy="33" r="8" fill="none" stroke="rgba(232,181,58,0.42)" strokeWidth="1.4"/>
+  <circle cx="94" cy="33" r="8" fill="none" stroke="rgba(232,181,58,0.42)" strokeWidth="1.4"/>
+  <path d="M34 33h52" stroke="rgba(232,181,58,0.3)" strokeWidth="1.2"/>
+</svg>;
+const MpColumns=()=><div aria-hidden="true" className="pointer-events-none fixed inset-y-0 left-0 right-0 z-0 hidden xl:block">
+  {["left-0","right-0"].map((side)=><div key={side} className={"absolute "+side+" top-0 h-full w-[104px] opacity-[0.55]"}>
+    <MpCapital/>
+    <div className="fluted h-[calc(100%-92px)] w-full"/>
+    <MpCapital flip/>
+  </div>)}
+</div>;
+const MP_SMOKE=[
+  {className:"-left-52 top-[10%] h-[560px] w-[1000px] animate-drift",tint:"rgba(47,111,232,0.2)",delay:"0s"},
+  {className:"-right-64 top-[38%] h-[680px] w-[1150px] animate-drift-slow",tint:"rgba(22,54,138,0.42)",delay:"-8s"},
+  {className:"left-[18%] bottom-[-14%] h-[520px] w-[1000px] animate-drift",tint:"rgba(4,7,14,0.94)",delay:"-16s"},
+  {className:"left-[42%] top-[62%] h-[440px] w-[820px] animate-drift-slow",tint:"rgba(232,181,58,0.08)",delay:"-24s"}];
+const MP_EMBERS=[{left:"4%",delay:"0s",duration:"7s"},{left:"11%",delay:"-4.2s",duration:"9s"},{left:"23%",delay:"-1.6s",duration:"8s"},{left:"37%",delay:"-6.1s",duration:"10s"},{left:"52%",delay:"-2.9s",duration:"7.5s"},{left:"66%",delay:"-5.4s",duration:"9.5s"},{left:"79%",delay:"-3.1s",duration:"8.5s"},{left:"93%",delay:"-7.2s",duration:"11s"}];
+const MpAtmosphere=()=><React.Fragment>
+  <MpColumns/>
+  <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+    <div className="absolute inset-0" style={{background:"radial-gradient(1300px 700px at 70% -12%, rgba(47,111,232,0.32), transparent 66%),radial-gradient(760px 520px at 4% 6%, rgba(232,181,58,0.13), transparent 62%),radial-gradient(760px 520px at 97% 22%, rgba(142,30,55,0.12), transparent 62%),radial-gradient(1200px 820px at 46% 118%, rgba(19,53,96,0.6), transparent 62%)"}}/>
+    {MP_SMOKE.map((p)=><div key={p.className} className={"absolute blur-3xl "+p.className} style={{animationDelay:p.delay,background:"radial-gradient(closest-side, "+p.tint+", transparent 72%)"}}/>)}
+    {MP_EMBERS.map((s)=><span key={s.left} className="absolute bottom-4 h-[3px] w-[3px] animate-rise rounded-full bg-gold-300" style={{left:s.left,animationDelay:s.delay,animationDuration:s.duration,boxShadow:"0 0 10px 2px rgba(240,207,114,0.9)"}}/>)}
+    <div className="absolute inset-0" style={{background:"radial-gradient(120% 90% at 50% 40%, transparent 42%, rgba(2,4,9,0.72) 88%, rgba(2,4,9,0.96) 100%)"}}/>
+  </div>
+</React.Fragment>;
+const MP_SOULS=[{left:"7%",size:5,delay:"0s",duration:"17s"},{left:"15%",size:3,delay:"-6s",duration:"21s"},{left:"28%",size:4,delay:"-11s",duration:"19s"},{left:"41%",size:3,delay:"-3s",duration:"23s"},{left:"56%",size:5,delay:"-14s",duration:"18s"},{left:"68%",size:3,delay:"-8s",duration:"22s"},{left:"81%",size:4,delay:"-17s",duration:"20s"},{left:"92%",size:3,delay:"-5s",duration:"24s"}];
+const MpWisps=()=><div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+  {MP_SOULS.map((s)=><span key={s.left} className="animate-wisp absolute bottom-0 rounded-full bg-flame-300" style={{left:s.left,height:s.size,width:s.size,animationDelay:s.delay,animationDuration:s.duration,boxShadow:"0 0 "+(s.size*4)+"px "+s.size+"px rgba(91,147,255,0.8)"}}/>)}
+</div>;
+const MpSectionHeading=({id,icon,title,aside,greek,tone="gold"})=>{
+  const titleTone=tone==="ember"?"ember-text":"gilded-text";
+  const iconTone=tone==="ember"?"text-ember-400":"text-gold-400";
+  return<div className="relative">
+    <div className="flex items-end gap-5">
+      <MpFlame height={44} className="mb-1 shrink-0"/>
+      <div className="min-w-0 flex-1">
+        <p className="greek-caps text-[10px]">{greek}</p>
+        <h2 id={id} className="mt-1.5 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          <span className={"font-deco text-[27px] font-bold leading-none tracking-[0.06em] "+titleTone}>{title}</span>
+          <span className={"self-center "+iconTone} style={{filter:"drop-shadow(0 0 8px currentColor)"}}>{icon}</span>
+          <span className="font-goth text-[17px] text-shade-300">{aside}</span>
+        </h2>
+      </div>
+    </div>
+    <div className="double-rule mt-3"/>
+    <MpGreekFrieze className="mt-1 opacity-80"/>
+  </div>;
+};
+const MP_HADES_DECK="Name's Hades. Lord of the dead, keeper of your deadlines. Hi, how ya doin'.";
+const MP_HADES_MONTH="Whoa, whoa — is that a launch approaching with nothing in hand? Not on my watch.";
+const MpSkullSigil=()=><svg viewBox="0 0 64 72" className="h-8 w-8 lg:h-10 lg:w-10" aria-hidden="true">
+  <g style={{filter:"drop-shadow(0 0 14px rgba(91,147,255,0.9))"}} fill="#e6ecf5" stroke="rgba(4,7,14,0.7)" strokeWidth="1">
+    <path d="M32 2c15 0 24 11 24 26 0 9-4 14-4 21 0 6-8 8-20 8s-20-2-20-8c0-7-4-12-4-21C8 13 17 2 32 2z"/>
+    <ellipse cx="22" cy="30" rx="7" ry="9" fill="#04070e"/>
+    <ellipse cx="42" cy="30" rx="7" ry="9" fill="#04070e"/>
+    <path d="M32 40l-5 9h10z" fill="#04070e"/>
+    <path d="M24 58h4v8h-4zM30 58h4v8h-4zM36 58h4v8h-4z" fill="#e6ecf5"/>
+  </g>
+</svg>;
+const MpThroneHero=()=><section aria-labelledby="chamber-title" className="relative isolate aspect-[1600/620] max-h-[76vh] min-h-[380px] w-full overflow-hidden bg-abyss-950">
+  <div aria-hidden="true" className="absolute inset-0" style={{background:"radial-gradient(820px 460px at 50% 104%, rgba(47,111,232,0.55), transparent 70%),radial-gradient(1200px 640px at 50% -16%, rgba(19,53,96,0.75), transparent 72%)"}}/>
+  <MpTempleFacade/>
+  <div aria-hidden="true" className="animate-drift absolute -bottom-16 left-1/2 h-48 w-[130%] -translate-x-1/2 blur-3xl" style={{background:"radial-gradient(closest-side, rgba(47,111,232,0.34), transparent 72%)"}}/>
+  <MpBrazier height={54} className="absolute bottom-[8%] left-[13%] hidden -translate-x-1/2 lg:flex"/>
+  <MpBrazier height={54} className="absolute bottom-[8%] right-[13%] hidden translate-x-1/2 lg:flex"/>
+  <div className="absolute inset-x-[6%] top-[49.4%] bottom-[10.3%] flex flex-col items-center justify-center text-center md:inset-x-[28.1%]">
+    <MpSkullSigil/>
+    <p className="greek-caps mt-2 text-[clamp(7px,0.62vw,11px)]">ΤΟ ΓΡΑΦΕΙΟΝ ΤΟΥ ΑΔΟΥ</p>
+    <h1 id="chamber-title" className="soulfire-text mt-[2%] font-deco text-[clamp(19px,2.5vw,44px)] font-black leading-[1.08] tracking-[0.05em]">Mayhem &amp; Marketing Ops</h1>
+    <p className="mt-[2%] text-[clamp(7px,0.6vw,11px)] font-semibold uppercase tracking-[0.3em] text-gold-400/90">The Underworld Office · Atticor Marketing Ops</p>
+    <p className="gilded-text mt-[3%] font-goth text-[clamp(12px,1.1vw,19px)] leading-snug">{MP_HADES_DECK}</p>
+  </div>
+  <MpGreekFrieze className="absolute inset-x-0 bottom-0"/>
+</section>;
+const MP_NAVC="inline-flex items-center gap-1 whitespace-nowrap border border-gold-600/50 bg-abyss-900/80 px-3 py-1.5 font-display text-[12.5px] font-semibold tracking-[0.08em] text-flame-300 transition-colors duration-150 ease-out hover:border-gold-400/80 hover:bg-abyss-700 hover:text-flame-400";
+const MpHubHeader=({view,onViewChange,onOpenRecord,onOpenRegistry,onOpenDispatch,onOpenNewDeal})=>
+  <div className="sticky top-0 z-30 bg-abyss-950/95 backdrop-blur-md">
+    <div className="stone cracked flex w-full flex-wrap items-center gap-x-7 gap-y-3 px-6 py-2.5 md:px-10 xl:px-[132px]">
+      <span className="flex items-center gap-3">
+        <MpFlame height={26}/>
+        <span className="gilded-text font-deco text-[15px] font-bold tracking-[0.1em]">M&amp;MO</span>
+      </span>
+      <p className="hidden min-w-0 flex-1 truncate font-goth text-[16px] text-shade-300 xl:block">
+        {view==="month"?MP_HADES_MONTH:"The ledger keeps itself. You just answer for it."}
+      </p>
+      <div role="tablist" aria-label="Board view" className="flex items-center gap-1 border border-gold-600/60 bg-abyss-900 p-1">
+        {["deck","month"].map((value)=>{
+          const active=view===value;
+          return<button key={value} role="tab" type="button" aria-selected={active} onClick={()=>onViewChange(value)}
+            className={["whitespace-nowrap px-4 py-1.5 font-display text-[12.5px] font-bold tracking-[0.1em] transition-colors duration-150 ease-out",active?"glow-flame bg-flame-600/30 text-flame-300":"text-shade-300 hover:text-flame-300"].join(" ")}>
+            {value==="deck"?"THE DECK":"THE MONTH"}
+          </button>;
+        })}
+      </div>
+      <nav aria-label="Underworld records" className="flex items-center gap-2">
+        <button type="button" onClick={onOpenRecord} className={MP_NAVC}><ChevronLeftIcon className="h-3 w-3 text-gold-400"/>The Record</button>
+        <button type="button" onClick={onOpenRegistry} className={MP_NAVC}>The Registry</button>
+        <button type="button" onClick={onOpenDispatch} className={MP_NAVC}>Dispatch</button>
+      </nav>
+      <div className="flex items-center gap-4">
+        <button type="button" onClick={onOpenNewDeal} className="glow-flame inline-flex items-center gap-1.5 whitespace-nowrap border border-flame-300/70 bg-flame-500 px-3.5 py-2 font-display text-[12.5px] font-bold tracking-[0.08em] text-abyss-950 transition-colors duration-150 ease-out hover:bg-flame-400">
+          <PlusIcon className="h-3.5 w-3.5" strokeWidth={3}/>NEW DEAL
+        </button>
+        <button type="button" onClick={()=>MP_LIVE.hooks.backToDoom()} className="inline-flex items-center gap-1.5 whitespace-nowrap font-display text-[12.5px] tracking-[0.1em] text-shade-300 transition-colors duration-150 ease-out hover:text-gold-300">
+          <ArrowLeftIcon className="h-3.5 w-3.5"/>DOOM
+        </button>
+      </div>
+    </div>
+    <MpGreekFrieze thin className="opacity-70"/>
+  </div>;
+// ── timeline math over the live board ──
+const mpSpan=()=>Math.max(1,mpDiffDays(mpD(MP_LIVE.board.end),mpD(MP_LIVE.board.start)));
+const mpPositionOf=(iso)=>Math.min(100,Math.max(0,mpDiffDays(mpD(iso),mpD(MP_LIVE.board.start))/mpSpan()*100));
+const mpTodayPos=()=>mpPositionOf(MP_LIVE.TODAY);
+const mpDaysOut=(iso)=>mpDiffDays(mpD(iso),mpD(MP_LIVE.TODAY));
+const mpGatesFor=(iso)=>({creative:mpPositionOf(mpIso(mpSubDays(mpD(iso),11))),vendor:mpPositionOf(mpIso(mpSubDays(mpD(iso),7)))});
+const mpMonthMarkers=()=>{
+  const out=[];let d=new Date(mpD(MP_LIVE.board.start).getFullYear(),mpD(MP_LIVE.board.start).getMonth(),1);
+  for(let i=0;i<7;i++){const t=d.getTime();if(t>mpD(MP_LIVE.board.end).getTime())break;out.push({label:MP_MON[d.getMonth()].toUpperCase(),position:Math.max(0,mpPositionOf(mpIso(d)))});d=new Date(d.getFullYear(),d.getMonth()+1,1)}
+  return out;
+};
+const mpOwedDeals=(brandId)=>MP_LIVE.deals.filter((d)=>d.state!=="live"&&(!brandId||d.brandId===brandId)).sort((a,b)=>{if(!a.hardDate)return -1;if(!b.hardDate)return 1;return a.hardDate<b.hardDate?-1:1});
+const mpTripwireDeals=()=>MP_LIVE.deals.filter((d)=>Boolean(d.tripwire));
+const mpBrandSummary=(brandId)=>{
+  const mine=MP_LIVE.deals.filter((d)=>d.brandId===brandId);
+  const owed=mine.filter((d)=>d.state!=="live");
+  const worst=owed.reduce((acc,d)=>{const v=d.hardDate?mpDaysOut(d.hardDate):0;return acc===null||v<acc?v:acc},null);
+  return{owed:owed.length,fed:mine.filter((d)=>d.state==="live").length,worst};
+};
+const mpDmaLabel=(dmas)=>({primary:dmas[0],extra:dmas.length-1});
+const mpAnchorDateOf=(deal)=>{if(deal.launchDate)return deal.launchDate;if(deal.state==="live"&&deal.flight)return deal.flight.start;return null};
+const mpVendorOf=(deal)=>{const send=deal.owed.find((i)=>i.owner==="you");const m=send&&send.label.match(/→\s*(.+)$/);return m?m[1]:"vendor"};
+const mpBuildCalendar=()=>{
+  const map=new Map();
+  const push=(iso,ev)=>{const ex=map.get(iso);if(ex)ex.push(ev);else map.set(iso,[ev])};
+  MP_LIVE.deals.forEach((deal)=>{
+    const anchor=mpAnchorDateOf(deal);
+    if(!anchor)return;
+    push(anchor,{id:deal.id+"-launch",kind:"launch",label:"Launch — "+deal.name,deal});
+    if(deal.state==="live"||!deal.hardDate)return;
+    push(deal.hardDate,{id:deal.id+"-creative",kind:"creative",label:"Creative returns — "+deal.name,deal});
+    deal.owed.filter((i)=>i.owner==="creative").forEach((item,index)=>{
+      push(deal.hardDate,{id:deal.id+"-asset-"+index,kind:"asset",label:item.label+" due — "+deal.name,deal});
+    });
+    push(mpIso(mpSubDays(mpD(anchor),7)),{id:deal.id+"-package",kind:"package",label:"Package → "+mpVendorOf(deal)+" — "+deal.name,deal});
+  });
+  return map;
+};
+const mpMonthGrid=(month)=>{
+  const first=new Date(month.getFullYear(),month.getMonth(),1);
+  const start=mpSubDays(first,first.getDay());
+  const days=[];for(let i=0;i<42;i++)days.push(mpAddDays(start,i));
+  return days;
+};
+// ── the working parts ──
+const MpOwedChip=({item})=>{
+  const isYou=item.owner==="you";
+  const tag=item.tag||(isYou?"YOU":(item.count?"CREATIVE OPS ×"+item.count:"CREATIVE OPS"));
+  return<span className="inline-flex min-w-0 items-center gap-2">
+    <span className={["shrink-0 rounded-sm border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em]",isYou?"border-flame-500/70 bg-flame-500/10 text-flame-300":"border-gold-500/70 bg-gold-500/10 text-gold-300"].join(" ")}>{tag}</span>
+    <span className="truncate text-[13px] text-shade-200">{item.label}</span>
+  </span>;
+};
+const MpTripwires=()=>{
+  const tripped=mpTripwireDeals();
+  return<section aria-labelledby="tripwires-heading">
+    <MpSectionHeading id="tripwires-heading" icon={<TriangleAlertIcon className="h-4 w-4" strokeWidth={2.25}/>} title="Tripwires" aside="what needs you today" greek="ΠΑΓΙΔΕΣ" tone="ember"/>
+    {tripped.length===0
+      ?<p className="mt-3 border-l-2 border-asphodel-500 bg-abyss-850/80 px-5 py-4 text-shade-200">Nothing is bleeding. Every deal on the board has a date and an owner.</p>
+      :<ul className="mt-3 space-y-2">
+        {tripped.map((deal)=><li key={deal.id} className="stone glow-ember flex flex-wrap items-center gap-x-6 gap-y-3 border-l-[3px] border-ember-500 bg-abyss-850/85 px-5 py-3.5">
+          <p className="min-w-0 flex-1 text-[14px] leading-relaxed text-shade-100">{deal.tripwire.text}</p>
+          <button type="button" onClick={()=>MP_LIVE.hooks.tripwire(deal)} className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-ember-500/70 bg-ember-500/10 px-3 py-1.5 text-[13px] font-bold text-ember-400 transition-colors duration-150 ease-out hover:bg-ember-500/25">
+            {deal.tripwire.action}<ArrowRightIcon className="h-3.5 w-3.5"/>
+          </button>
+        </li>)}
+      </ul>}
+    <p className="mt-3 font-goth text-[16px] text-shade-400">The <strong className="font-semibold not-italic text-gold-300">PDV clause</strong> is armed on every deal: a launch with no traffic on record trips red here — before the air date, not after it.</p>
+  </section>;
+};
+const mpGroupByDma=(list)=>{
+  const groups=[];
+  list.forEach((deal)=>{
+    const key=deal.dmas.join(", ");
+    const ex=groups.find((g)=>g.key===key);
+    if(ex)ex.deals.push(deal);else groups.push({key,deals:[deal]});
+  });
+  return groups;
+};
+const mpUrgency=(days)=>{
+  if(days===null||days<=0)return"text-ember-500";
+  if(days<=14)return"text-ember-400";
+  if(days<=45)return"text-gold-400";
+  return"text-shade-200";
+};
+const MP_HEADCELL="px-5 py-2.5 font-goth text-[16px] text-gold-400/90";
+const MpLedger=()=><section id="ledger-section" aria-labelledby="ledger-heading" className="scroll-mt-28">
+  <MpSectionHeading id="ledger-heading" icon={<ScrollTextIcon className="h-4 w-4" strokeWidth={2}/>} title="The Ledger" aside="brand, then DMA, then the deal · one line per deal, soonest first" greek="ΤΟ ΚΑΤΑΣΤΙΧΟ"/>
+  <div className="carved cracked grille stone mt-4 overflow-hidden pt-3">
+    <table className="w-full border-collapse text-left">
+      <colgroup><col className="w-[24%]"/><col className="w-[34%]"/><col className="w-[11%]"/><col className="w-[6%]"/><col className="w-[25%]"/></colgroup>
+      <thead>
+        <tr className="border-b border-gold-700/50 bg-abyss-900/80">
+          <th scope="col" className={MP_HEADCELL}>Deal</th>
+          <th scope="col" className={MP_HEADCELL}>Who owes what</th>
+          <th scope="col" className={MP_HEADCELL}>Hard date</th>
+          <th scope="col" className={MP_HEADCELL+" text-right"}><span className="sr-only">Days out</span></th>
+          <th scope="col" className={MP_HEADCELL}>Or else</th>
+        </tr>
+      </thead>
+      {MP_LIVE.brands.map((brand)=>{
+        const list=mpOwedDeals(brand.id);
+        if(list.length===0)return null;
+        const summary=mpBrandSummary(brand.id);
+        return<tbody key={brand.id} className="border-b border-gold-700/35 last:border-b-0">
+          <tr className="bg-abyss-900/90">
+            <th scope="colgroup" colSpan={5} className="py-2 pl-5 pr-5 text-left font-normal">
+              <span className="flex items-baseline gap-3 border-l-[3px] pl-3" style={{borderColor:brand.accent,boxShadow:"-1px 0 16px "+brand.accent+"55"}}>
+                <span className="font-deco text-[19px] font-bold tracking-[0.07em]" style={{color:brand.accent,textShadow:"0 0 16px "+brand.accent+"aa"}}>{brand.name}</span>
+                <span className="text-[12px] font-bold text-ember-400">{summary.owed} deal{summary.owed!==1?"s":""} owed · worst {summary.worst===null?0:summary.worst}d</span>
+              </span>
+            </th>
+          </tr>
+          {mpGroupByDma(list).map((group)=><React.Fragment key={group.key}>
+            <tr><th scope="colgroup" colSpan={5} className="border-y border-gold-700/25 bg-abyss-800/70 px-5 py-1.5 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-shade-300">{group.key}</th></tr>
+            {group.deals.map((deal)=>{
+              const days=deal.hardDate?mpDaysOut(deal.hardDate):null;
+              return<tr key={deal.id} className="border-t border-gold-700/15 align-middle transition-colors duration-150 ease-out hover:bg-flame-700/25">
+                <th scope="row" className="py-3 pl-5 pr-5 text-left font-normal">
+                  <button type="button" onClick={()=>MP_LIVE.hooks.openFlight(deal.fid)}
+                    className={["block w-full border-l-[3px] pl-3 text-left font-display text-[15px] font-semibold tracking-[0.02em] text-shade-100 hover:text-flame-300",days===null||days<=3?"glow-ember border-ember-500":"border-transparent"].join(" ")}>
+                    {deal.name}
+                  </button>
+                </th>
+                <td className="px-5 py-3">
+                  <span className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                    {deal.owed.map((item,index)=><MpOwedChip key={deal.id+"-"+index} item={item}/>)}
+                  </span>
+                </td>
+                <td className={"tabular px-5 py-3 text-[13px] font-bold "+mpUrgency(days)}>{deal.hardDate?mpFmtHard(deal.hardDate):"—"}</td>
+                <td className={"tabular px-5 py-3 text-right text-[13px] font-bold "+mpUrgency(days)}>{days===null?"0d":days+"d"}</td>
+                <td className="px-5 py-3 font-script text-[14px] italic text-shade-400">{deal.orElse}</td>
+              </tr>;
+            })}
+          </React.Fragment>)}
+        </tbody>;
+      })}
+    </table>
+  </div>
+</section>;
+const MP_LABEL_COL="230px";
+const mpOwedSummary=(deal)=>deal.owed.map((i)=>i.owner==="you"?"Send asset "+i.label:i.label).join(" + ");
+const MpDealTrack=({deal})=>{
+  if(deal.state==="live"&&deal.flight){
+    const left=mpPositionOf(deal.flight.start);
+    const right=mpPositionOf(deal.flight.end);
+    return<button type="button" onClick={()=>MP_LIVE.hooks.openFlight(deal.fid)} className="glow-jade absolute inset-y-1.5 flex items-center rounded-sm border border-asphodel-500/55 bg-asphodel-700/15 px-3" style={{left:left+"%",width:Math.max(right-left,4)+"%"}}>
+      <span className="jade-text truncate text-[12.5px] font-bold">{deal.shortName} · live · fed</span>
+    </button>;
+  }
+  if(deal.state==="undated"){
+    return<button type="button" onClick={()=>MP_LIVE.hooks.openFlight(deal.fid)} className="glow-ember absolute inset-y-1.5 flex items-center justify-end rounded-sm border border-dashed border-ember-500/80 bg-ember-500/5 px-3 text-right transition-colors duration-150 ease-out hover:bg-ember-500/15" style={{left:Math.min(94,mpTodayPos()+46)+"%",right:0}}>
+      <span className="ember-text truncate text-[12.5px] font-bold">{deal.shortName} · set the flight →</span>
+    </button>;
+  }
+  const airDate=deal.launchDate||deal.hardDate;
+  const gates=mpGatesFor(airDate);
+  const anchor=mpPositionOf(airDate);
+  return<React.Fragment>
+    <span aria-hidden="true" className="absolute top-1/2 -translate-y-1/2 border-t border-dashed border-gold-600/70" style={{left:gates.creative+"%",width:Math.max(anchor-gates.creative,0)+"%"}}/>
+    <span aria-hidden="true" title="Creative returns (T−11)" className="absolute top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 bg-ember-500" style={{left:gates.creative+"%"}}/>
+    <span aria-hidden="true" title="Package to vendor (T−7)" className="absolute top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 bg-gold-400" style={{left:gates.vendor+"%"}}/>
+    <button type="button" onClick={()=>MP_LIVE.hooks.openFlight(deal.fid)} className="glow-gold absolute inset-y-1.5 flex items-center gap-2.5 rounded-sm border border-gold-500/70 bg-abyss-900 px-3.5 text-left" style={{left:anchor+"%",right:0}}>
+      <span className="shrink-0 font-display text-[13px] font-bold tracking-[0.03em] text-shade-100">{deal.shortName}</span>
+      {deal.owed.length>0&&<span className="truncate rounded-sm bg-ember-500/20 px-2 py-0.5 text-[10.5px] font-bold text-ember-300">owed: {mpOwedSummary(deal)}</span>}
+    </button>
+  </React.Fragment>;
+};
+const MpTimelineBoard=({onOpenRecord})=><section id="board-section" aria-labelledby="board-heading" className="scroll-mt-28">
+  <h2 id="board-heading" className="sr-only">The board — every deal, by brand and DMA</h2>
+  <div className="relative">
+    <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 z-10" style={{left:MP_LABEL_COL}}>
+      <span className="absolute inset-y-0 w-px bg-flame-400/70" style={{left:mpTodayPos()+"%",boxShadow:"0 0 14px rgba(99,220,255,0.65)"}}/>
+    </div>
+    <div className="grid items-end" style={{gridTemplateColumns:MP_LABEL_COL+" 1fr"}}>
+      <div/>
+      <div className="relative h-12 border-b border-gold-700/50">
+        {mpMonthMarkers().map((m)=><span key={m.label+m.position} className="gilded-text absolute top-0 border-l border-gold-600/60 pl-2 font-display text-[12px] font-bold uppercase tracking-[0.28em]" style={{left:m.position+"%"}}>{m.label}</span>)}
+        <span className="glow-flame absolute bottom-0 z-20 -translate-x-1/2 rounded-sm bg-flame-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-abyss-950" style={{left:mpTodayPos()+"%"}}>Today</span>
+      </div>
+    </div>
+    {MP_LIVE.brands.map((brand)=>{
+      const summary=mpBrandSummary(brand.id);
+      const brandDeals=MP_LIVE.deals.filter((d)=>d.brandId===brand.id).sort((a,b)=>Number(a.state==="live")-Number(b.state==="live"));
+      if(!brandDeals.length)return null;
+      return<div key={brand.id} className="pt-8">
+        <h3 className="flex items-baseline gap-3">
+          <span className="font-deco text-[23px] font-bold tracking-[0.07em]" style={{color:brand.accent,textShadow:"0 0 16px "+brand.accent+"aa"}}>{brand.name}</span>
+          <span className="font-goth text-[16px] text-shade-400">{summary.owed===0?"nothing owed":summary.owed+" deal"+(summary.owed!==1?"s":"")+" owed"} · {summary.fed} fed</span>
+        </h3>
+        <span aria-hidden="true" className="mt-2 block h-px w-full" style={{backgroundColor:brand.accent,boxShadow:"0 0 12px "+brand.accent}}/>
+        <ul className="mt-1">
+          {brandDeals.map((deal)=>{
+            const label=mpDmaLabel(deal.dmas);
+            return<li key={deal.id} className="grid items-center border-b border-gold-700/10 last:border-b-0" style={{gridTemplateColumns:MP_LABEL_COL+" 1fr"}}>
+              <span className="pr-4 text-[10.5px] font-bold uppercase tracking-[0.2em] text-shade-300">{label.primary}{label.extra>0&&<span className="ml-1 text-shade-500">+{label.extra}</span>}</span>
+              <span className="relative block h-11"><MpDealTrack deal={deal}/></span>
+            </li>;
+          })}
+        </ul>
+      </div>;
+    })}
+    <div className="grid pt-9" style={{gridTemplateColumns:MP_LABEL_COL+" 1fr"}}>
+      <div/>
+      <div>
+        <ul className="flex flex-wrap items-center gap-x-8 gap-y-2 text-[12px] text-shade-400">
+          <li className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rotate-45 bg-ember-500"/>creative returns (T−11)</li>
+          <li className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rotate-45 bg-gold-400"/>package to vendor (T−7)</li>
+          <li className="flex items-center gap-2"><span aria-hidden="true" className="h-px w-5 bg-asphodel-400"/><span className="font-bold text-asphodel-400">live &amp; fed</span></li>
+          <li className="flex items-center gap-2"><span aria-hidden="true" className="h-0 w-5 border-t border-dashed border-ember-500"/><span className="font-bold text-ember-400">needs dates</span></li>
+        </ul>
+        <p className="mt-6 flex items-center justify-end gap-1 font-script text-[14px] italic text-shade-500">
+          wrapped deals live in
+          <button type="button" onClick={onOpenRecord} className="inline-flex items-center gap-0.5 not-italic text-shade-300 transition-colors duration-150 ease-out hover:text-gold-300">
+            <ChevronLeftIcon className="h-3 w-3"/>The Record
+          </button>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>;
+const MP_KINDSTYLES={
+  launch:{border:"border-asphodel-400",text:"jade-text",glyph:"▲",glow:"glow-jade"},
+  creative:{border:"border-ember-500",text:"ember-text",glyph:"◆",glow:"glow-ember"},
+  asset:{border:"border-ember-600",text:"text-ember-300",glyph:null,glow:""},
+  package:{border:"border-gold-400",text:"gilded-text",glyph:"◆",glow:"glow-gold"}
+};
+const MpDealDossier=({deal,onClose})=>{
+  const brand=deal?MP_LIVE.brands.find((b)=>b.id===deal.brandId):undefined;
+  const anchor=deal?mpAnchorDateOf(deal):null;
+  return<MpOverlay open={Boolean(deal)} onClose={onClose} label={deal?"Dossier — "+deal.name:"Dossier"} widthClass="max-w-md">
+    {deal&&<React.Fragment>
+      <MpGreekFrieze/>
+      <div className="dentil-band" aria-hidden="true"/>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="flex items-start justify-between gap-4 px-6 pb-4 pt-5">
+          <div>
+            <p className="font-display text-[13px] font-semibold uppercase tracking-[0.2em]" style={{color:brand&&brand.accent,textShadow:"0 0 14px "+(brand?brand.accent:"#fff")+"88"}}>{brand&&brand.name}</p>
+            <h2 className="mt-2 font-deco text-[23px] font-bold leading-tight text-shade-100">{deal.name}</h2>
+            <p className="mt-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-shade-400">{deal.dmas.join(" · ")}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close dossier" className="border border-gold-700/60 p-1.5 text-shade-300 transition-colors duration-150 ease-out hover:border-gold-500 hover:text-gold-300"><XIcon className="h-4 w-4"/></button>
+        </div>
+        <dl className="grid grid-cols-2 gap-px border-y border-gold-700/40 bg-gold-700/20">
+          <div className="bg-abyss-850 px-6 py-4">
+            <dt className="font-goth text-[15px] text-gold-400">Assets owed by</dt>
+            <dd className="mt-1 tabular text-[15px] font-bold text-shade-100">
+              {deal.hardDate?mpFmtHard(deal.hardDate):"— not set"}
+              {deal.hardDate&&<span className="ml-2 text-[13px] font-bold text-ember-400">{mpDaysOut(deal.hardDate)}d</span>}
+            </dd>
+          </div>
+          <div className="bg-abyss-850 px-6 py-4">
+            <dt className="font-goth text-[15px] text-gold-400">{deal.state==="live"?"In flight since":"Launch"}</dt>
+            <dd className="mt-1 tabular text-[15px] font-bold text-shade-100">{anchor?mpFmtHard(anchor):"— not set"}</dd>
+          </div>
+        </dl>
+        <div className="px-6 py-5">
+          <h3 className="gilded-text font-deco text-[16px] font-bold tracking-[0.06em]">Who owes what</h3>
+          {deal.owed.length===0
+            ?<p className="jade-text mt-3 text-[14px]">Nothing owed — this one is live and fed.</p>
+            :<ul className="mt-3 space-y-2.5">{deal.owed.map((item,index)=><li key={deal.id+"-owed-"+index}><MpOwedChip item={item}/></li>)}</ul>}
+          {deal.orElse&&<p className="glow-ember mt-6 border-l-[3px] border-ember-500 bg-ember-500/5 px-4 py-3 font-goth text-[16px] text-ember-300">Or else — {deal.orElse}.</p>}
+          <button type="button" onClick={()=>{onClose();MP_LIVE.hooks.openFlight(deal.fid)}} className="glow-gold mt-6 inline-flex items-center gap-1.5 border border-gold-500/70 bg-gold-500/10 px-3.5 py-2 font-display text-[12.5px] font-bold text-gold-300 transition-colors duration-150 ease-out hover:bg-gold-500/25">
+            Open the working dossier<ArrowRightIcon className="h-3.5 w-3.5"/>
+          </button>
+        </div>
+      </div>
+    </React.Fragment>}
+  </MpOverlay>;
+};
+const MpMonthCalendar=()=>{
+  const[cursor,setCursor]=React.useState(()=>mpD(MP_LIVE.TODAY));
+  const[openDeal,setOpenDeal]=React.useState(null);
+  const calendar=mpBuildCalendar();
+  const days=mpMonthGrid(cursor);
+  const today=mpD(MP_LIVE.TODAY);
+  return<section id="month-section" aria-labelledby="month-heading" className="scroll-mt-28">
+    <p className="greek-caps text-[10px]">Ο ΜΗΝΑΣ</p>
+    <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <h2 id="month-heading" className="gilded-text font-deco text-[26px] font-bold tracking-[0.07em]">{MP_MONF[cursor.getMonth()]} {cursor.getFullYear()}</h2>
+      <div className="flex items-center gap-1.5">
+        <button type="button" aria-label="Previous month" onClick={()=>setCursor(mpAddMonths(cursor,-1))} className="rounded-md border border-gold-700/60 bg-abyss-850 p-1.5 text-gold-400 transition-colors duration-150 ease-out hover:border-gold-500 hover:text-gold-300"><ChevronLeftIcon className="h-3.5 w-3.5"/></button>
+        <button type="button" aria-label="Next month" onClick={()=>setCursor(mpAddMonths(cursor,1))} className="rounded-md border border-gold-700/60 bg-abyss-850 p-1.5 text-gold-400 transition-colors duration-150 ease-out hover:border-gold-500 hover:text-gold-300"><ChevronRightIcon className="h-3.5 w-3.5"/></button>
+      </div>
+      <p className="font-goth text-[16px] text-shade-400">same deals, month-shaped — click anything to open its dossier</p>
+    </div>
+    <MpGreekFrieze className="mt-2"/>
+    <div className="mt-4 grid grid-cols-7 gap-2">
+      {MP_DOW.map((label)=><div key={label} className="pb-1 text-center text-[10.5px] font-bold uppercase tracking-[0.24em] text-shade-400">{label}</div>)}
+      {days.map((day)=>{
+        const key=mpIso(day);
+        const events=calendar.get(key)||[];
+        const inMonth=mpSameMonth(day,cursor);
+        const isToday=mpSameDay(day,today);
+        return<div key={key} className={["stone min-h-[116px] rounded-sm p-2",isToday?"glow-flame border border-flame-400/80 bg-abyss-800":"slab",inMonth?"":"opacity-45"].join(" ")}>
+          <p className={["tabular px-0.5 font-display text-[12.5px] font-bold",isToday?"soulfire-text":inMonth?"text-gold-400/90":"text-shade-500"].join(" ")}>{day.getDate()}</p>
+          {events.length>0&&<ul className="mt-1.5 space-y-1">
+            {events.map((event)=>{
+              const style=MP_KINDSTYLES[event.kind];
+              return<li key={event.id}>
+                <button type="button" onClick={()=>setOpenDeal(event.deal)} title={event.label} className={"flex w-full items-center gap-1 border-l-2 bg-abyss-950/80 px-1.5 py-1 text-left transition-colors duration-150 ease-out hover:bg-flame-700/30 "+style.border+" "+style.glow}>
+                  {style.glyph&&<span aria-hidden="true" className={"shrink-0 text-[9px] "+style.text}>{style.glyph}</span>}
+                  <span className={"truncate text-[10.5px] font-bold "+style.text}>{event.label}</span>
+                </button>
+              </li>;
+            })}
+          </ul>}
+        </div>;
+      })}
+    </div>
+    <ul className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-2 text-[12px] text-shade-400">
+      <li className="flex items-center gap-2"><span aria-hidden="true" className="text-[10px] text-asphodel-400">▲</span>launch day</li>
+      <li className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rotate-45 bg-ember-500"/>creative returns (T−11)</li>
+      <li className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rotate-45 bg-gold-400"/>package to vendor (T−7)</li>
+    </ul>
+    <MpDealDossier deal={openDeal} onClose={()=>setOpenDeal(null)}/>
+  </section>;
+};
+const MpRecordDrawer=({open,onClose})=>{
+  const groups=(()=>{
+    const undated=MP_LIVE.wrapped.filter((d)=>!d.wrappedOn);
+    const dated=MP_LIVE.wrapped.filter((d)=>Boolean(d.wrappedOn)).sort((a,b)=>a.wrappedOn>b.wrappedOn?-1:1);
+    const out=[];
+    if(undated.length>0)out.push({key:"undated",label:"Undated",deals:undated});
+    dated.forEach((deal)=>{
+      const key=deal.wrappedOn.slice(0,7);
+      const ex=out.find((g)=>g.key===key);
+      if(ex)ex.deals.push(deal);
+      else{const d=mpD(deal.wrappedOn);out.push({key,label:MP_MONF[d.getMonth()]+" "+d.getFullYear(),deals:[deal]})}
+    });
+    return out;
+  })();
+  return<MpDrawer open={open} onClose={onClose} title="The Record" greek="ΤΟ ΑΡΧΕΙΟΝ ΤΩΝ ΨΥΧΩΝ" subtitle="The wrapped deals. Every one delivered — or I'd remember.">
+    {groups.length===0&&<p className="font-script text-[16px] italic text-shade-300">Nothing wrapped yet. Give it time — everything wraps eventually. I'd know.</p>}
+    {groups.map((group)=><section key={group.key} className="pt-5 first:pt-1">
+      <h3 className="gilded-text font-display text-[17px] font-bold tracking-[0.07em]">{group.label}</h3>
+      <MpGreekFrieze variant="laurel" className="mt-1.5"/>
+      <ul>
+        {group.deals.map((deal)=><li key={deal.id} className="grid grid-cols-[92px_minmax(0,1fr)_auto] items-center gap-x-5 gap-y-2 border-b border-gold-700/15 py-3 last:border-b-0">
+          <span className="tabular text-[12px] font-semibold text-shade-500">{deal.wrappedOn?mpFmtHard(deal.wrappedOn):""}</span>
+          <p className="min-w-0 text-[14px] leading-snug">
+            <span className="font-deco font-bold tracking-[0.02em] text-shade-100">{deal.name}</span>
+            <span className="text-shade-400"> · {deal.brand} · {deal.dmas.join(", ")}</span>
+          </p>
+          <span className="flex shrink-0 items-center gap-2">
+            <button type="button" onClick={()=>MP_LIVE.hooks.recap(deal.id)} className="glow-gold inline-flex items-center gap-1 border border-gold-500/70 bg-gold-500/10 px-2.5 py-1.5 font-display text-[12px] font-bold tracking-[0.06em] text-gold-300 transition-colors duration-150 ease-out hover:bg-gold-500/25">Recap<ArrowRightIcon className="h-3 w-3"/></button>
+            <button type="button" onClick={()=>MP_LIVE.hooks.runAgain(deal.id)} className="glow-jade inline-flex items-center gap-1 border border-asphodel-500/70 bg-asphodel-700/20 px-2.5 py-1.5 font-display text-[12px] font-bold tracking-[0.06em] text-asphodel-400 transition-colors duration-150 ease-out hover:bg-asphodel-700/40">Run it again<ArrowRightIcon className="h-3 w-3"/></button>
+          </span>
+        </li>)}
+      </ul>
+    </section>)}
+  </MpDrawer>;
+};
+const MP_KINDTONE={Radio:"gilded-text",TV:"soulfire-text",Streaming:"jade-text",Digital:"text-flame-300",Banner:"soulfire-text",File:"text-shade-200",URL:"jade-text",Tagline:"text-shade-200"};
+const MP_SELECT="rounded-md border border-gold-700/50 bg-abyss-850 px-3 py-2 text-[13px] text-shade-100";
+const mpCountsFor=(list)=>{
+  const spots=list.filter((a)=>["Radio","TV","Streaming","Digital"].includes(a.kind)).length;
+  const files=list.filter((a)=>["Banner","File"].includes(a.kind)).length;
+  const urls=list.filter((a)=>a.kind==="URL").length;
+  const taglines=list.filter((a)=>a.kind==="Tagline").length;
+  return spots+" spots · "+files+" files · "+urls+" URLs · "+taglines+" taglines";
+};
+const MpRegistryDrawer=({open,onClose})=>{
+  const[query,setQuery]=React.useState("");
+  const[brandId,setBrandId]=React.useState("all");
+  const[kind,setKind]=React.useState("Everything");
+  const PREVIEW_ROWS=8;
+  const needle=query.trim().toLowerCase();
+  const filtered=MP_LIVE.registry.filter((asset)=>{
+    if(brandId!=="all"&&asset.brandId!==brandId)return false;
+    if(kind!=="Everything"&&asset.kind!==kind)return false;
+    if(!needle)return true;
+    return asset.code.toLowerCase().includes(needle)||asset.title.toLowerCase().includes(needle)||asset.dma.toLowerCase().includes(needle)||asset.brand.toLowerCase().includes(needle);
+  });
+  const expanded=needle.length>0||brandId!=="all";
+  const grouped=MP_LIVE.brands.map((brand)=>{
+    const mine=filtered.filter((a)=>a.brandId===brand.id);
+    const dmas=[];
+    mine.forEach((asset)=>{
+      const ex=dmas.find((g)=>g.name===asset.dma);
+      if(ex)ex.assets.push(asset);else dmas.push({name:asset.dma,assets:[asset]});
+    });
+    return{brand,total:mine.length,counts:mpCountsFor(mine),dmas};
+  }).filter((g)=>g.total>0);
+  return<MpDrawer open={open} onClose={onClose} title="The Registry" greek="ΤΟ ΜΗΤΡΩΟΝ"
+    subtitle="Souls, spots, banners — I keep inventory of everything. What a deal still needs lives on that deal — a row here is a real thing."
+    widthClass="max-w-[920px]"
+    toolbar={<div className="mt-5 flex flex-wrap items-center gap-3">
+      <div className="relative min-w-[280px] flex-1">
+        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-shade-400"/>
+        <input type="search" value={query} onChange={(e)=>setQuery(e.target.value)} aria-label="Search the Registry" placeholder="Search codes, titles, deals, URLs…" className="w-full rounded-md border border-gold-700/50 bg-abyss-850 py-2 pl-9 pr-3 text-[13px] text-shade-100 placeholder:text-shade-500"/>
+      </div>
+      <select value={brandId} onChange={(e)=>setBrandId(e.target.value)} aria-label="Filter by brand" className={MP_SELECT}>
+        <option value="all">All brands</option>
+        {MP_LIVE.brands.map((b)=><option key={b.id} value={b.id}>{b.name}</option>)}
+      </select>
+      <select value={kind} onChange={(e)=>setKind(e.target.value)} aria-label="Filter by asset type" className={MP_SELECT}>
+        {["Everything","Radio","TV","Streaming","Digital","Banner","File","URL","Tagline"].map((o)=><option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>}>
+    {grouped.length===0
+      ?<p className="border-l-2 border-gold-600 bg-abyss-850/70 px-5 py-4 font-script text-[16px] italic text-shade-300">Nothing in the vault answers to that. Even I can't produce what was never made.</p>
+      :grouped.map((group)=><section key={group.brand.id} className="pt-6 first:pt-1">
+        <h3 className="flex flex-wrap items-baseline gap-x-3">
+          <span className="font-display text-[19px] font-semibold tracking-[0.05em]" style={{color:group.brand.accent}}>{group.brand.name}</span>
+          <span className="tabular text-[12px] font-semibold text-shade-400">{group.counts}</span>
+        </h3>
+        <span aria-hidden="true" className="mt-1.5 block h-px w-full" style={{backgroundColor:group.brand.accent,opacity:0.55}}/>
+        {group.dmas.map((dma)=>{
+          const visible=expanded?dma.assets:dma.assets.slice(0,PREVIEW_ROWS);
+          const hidden=dma.assets.length-visible.length;
+          return<div key={group.brand.id+"-"+dma.name} className="mt-4">
+            <h4 className="text-[10.5px] font-bold uppercase tracking-[0.24em] text-shade-300">{dma.name}</h4>
+            <ul className="mt-1.5">
+              {visible.map((asset)=><li key={asset.id} className="grid grid-cols-[64px_146px_minmax(0,1fr)_46px_auto] items-center gap-x-4 border-b border-gold-700/12 py-1.5 transition-colors duration-150 ease-out last:border-b-0 hover:bg-flame-700/20">
+                <span className={"text-[11px] font-bold "+(MP_KINDTONE[asset.kind]||"text-shade-200")}>{asset.kind}</span>
+                <span className="tabular text-[12px] font-semibold tracking-[0.04em] text-gold-300">{asset.code}</span>
+                <span className="truncate text-[13px] text-shade-100">{asset.title}</span>
+                <span className="tabular text-[12px] font-semibold text-shade-300">{asset.length}</span>
+                <button type="button" onClick={()=>MP_LIVE.hooks.openAsset(asset)} className="inline-flex items-center gap-1 text-[12px] font-bold text-flame-300 transition-colors duration-150 ease-out hover:text-flame-400">
+                  <span aria-hidden="true" className="text-[9px]">◆</span>{asset.url?"open":"copy"}
+                </button>
+              </li>)}
+            </ul>
+            {hidden>0&&<p className="mt-1.5 text-[12px] text-shade-500">+{hidden} more — search or filter by brand to see all</p>}
+          </div>;
+        })}
+      </section>)}
+  </MpDrawer>;
+};
+const MP_FIELD="w-full rounded-md border border-gold-700/50 bg-abyss-850 px-3 py-2 text-[13px] text-shade-100 placeholder:text-shade-500";
+const MP_LABEL="block text-[10.5px] font-bold uppercase tracking-[0.22em] text-shade-300";
+const MpDispatchTitle=({children})=><React.Fragment>
+  <h3 className="gilded-text font-display text-[18px] font-bold tracking-[0.05em]">{children}</h3>
+  <MpGreekFrieze variant="laurel" className="mt-1.5"/>
+</React.Fragment>;
+const MpDispatchDrawer=({open,onClose})=>{
+  const ui=MP_LIVE.ui;
+  const addr=ui.addresses||{};
+  return<MpDrawer open={open} onClose={onClose} title="Dispatch" greek="ΑΓΓΕΛΙΑΦΟΡΟΣ" subtitle="Every conversation, every promise, every timestamp. Leverage, baby.">
+    <section className="pt-1">
+      <MpDispatchTitle>The Monday rollup — your status, drafted for you</MpDispatchTitle>
+      <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <p className="min-w-[280px] flex-1 text-[13.5px] leading-relaxed text-shade-200">What launched · what's late · who owes what — one email to Jessica, drafted from the ledger. You preview, you send.</p>
+        <button type="button" onClick={()=>MP_LIVE.hooks.previewRollup()} className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gold-500/70 bg-gold-500/10 px-3.5 py-2 text-[13px] font-bold text-gold-300 transition-colors duration-150 ease-out hover:bg-gold-500/25">Preview this week's<ArrowRightIcon className="h-3.5 w-3.5"/></button>
+      </div>
+    </section>
+    <section className="pt-6">
+      <MpDispatchTitle>Out — awaiting an answer</MpDispatchTitle>
+      {(ui.pending||[]).length===0&&<p className="mt-3 font-script text-[15px] italic text-shade-400">Nothing out. Everyone answered. Refreshing, honestly.</p>}
+      {(ui.pending||[]).map((r)=><p key={r.id} className="mt-3 border-b border-gold-700/15 pb-2 text-[13.5px] text-shade-100">
+        <span className={"tabular mr-3 text-[11.5px] font-bold "+(r.late?"text-ember-400":"text-shade-500")}>{r.when}</span>
+        {r.what}{r.late&&<strong className="text-ember-400"> · {r.late}d, no answer</strong>}
+      </p>)}
+    </section>
+    <section className="pt-6">
+      <MpDispatchTitle>In — answered, already applied</MpDispatchTitle>
+      {(ui.answered||[]).length===0&&<p className="mt-3 font-script text-[15px] italic text-shade-400">No verdicts yet.</p>}
+      {(ui.answered||[]).map((r)=><p key={r.id} className="mt-3 border-b border-gold-700/15 pb-2 text-[13.5px] text-shade-100">
+        <span className="tabular mr-3 text-[11.5px] font-bold text-shade-500">{r.when}</span>
+        <strong className={r.ok?"jade-text":"ember-text"}>{r.ok?"✓ Approved":"✏ Changes"}</strong> — {r.what}{r.note&&<em className="text-shade-400"> · “{r.note}”</em>}
+      </p>)}
+    </section>
+    <section className="pt-6">
+      <MpDispatchTitle>The paper trail — every send, stamped</MpDispatchTitle>
+      {(ui.trail||[]).length===0&&<p className="mt-3 font-script text-[15px] italic text-shade-400">Nothing sent from this wing yet.</p>}
+      {(ui.trail||[]).map((r)=><p key={r.id} className="mt-2.5 border-b border-gold-700/10 pb-2 text-[12.5px] text-shade-300">
+        <span className="tabular mr-3 text-[11px] font-bold text-shade-500">{r.when}</span>
+        <span className="mr-2 text-[10px] font-bold uppercase tracking-[0.16em] text-flame-300">{r.kind}</span>
+        {r.subject} → {r.to}
+      </p>)}
+    </section>
+    <section className="pt-6">
+      <MpDispatchTitle>Addresses — people are settings, never schema</MpDispatchTitle>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className={MP_LABEL} htmlFor="dispatch-creative">Creative Ops</label>
+          <input id="dispatch-creative" type="email" className={"mt-1.5 "+MP_FIELD} placeholder="creativeops@…" value={addr.creativeOps||""} onChange={(e)=>MP_LIVE.hooks.setAddress("creativeOpsEmail",e.target.value)}/>
+        </div>
+        <div>
+          <label className={MP_LABEL} htmlFor="dispatch-seo">SEO / Web</label>
+          <input id="dispatch-seo" type="email" className={"mt-1.5 "+MP_FIELD} placeholder="seo@…" value={addr.seo||""} onChange={(e)=>MP_LIVE.hooks.setAddress("seoEmail",e.target.value)}/>
+        </div>
+      </div>
+      <div className="mt-4">
+        <label className={MP_LABEL} htmlFor="dispatch-jessica">Jessica (rollups &amp; recaps)</label>
+        <input id="dispatch-jessica" type="email" className={"mt-1.5 "+MP_FIELD} placeholder="jessica@…" value={addr.jessica||""} onChange={(e)=>MP_LIVE.hooks.setAddress("jessicaEmail",e.target.value)}/>
+      </div>
+      <div className="mt-4">
+        <span className={MP_LABEL}>Merch — default owner</span>
+        <div className="mt-1.5 grid gap-3 sm:grid-cols-[220px_minmax(0,1fr)]">
+          <input aria-label="Merch default owner name" className={MP_FIELD} placeholder="owner" value={addr.merchOwner||""} onChange={(e)=>MP_LIVE.hooks.setMerch("default","person",e.target.value)}/>
+          <input aria-label="Merch default owner email" type="email" className={MP_FIELD} placeholder="email" value={addr.merchEmail||""} onChange={(e)=>MP_LIVE.hooks.setMerch("default","email",e.target.value)}/>
+        </div>
+      </div>
+      <p className="mt-6 text-[12.5px] text-shade-400">Per-brand overrides — brand managers pop up (Victoria Tuttle for Keches, and whoever's next):</p>
+      <ul className="mt-2.5 space-y-2">
+        {MP_LIVE.brands.map((brand)=>{
+          const ov=(addr.byBrand||{})[brand.name]||{};
+          return<li key={brand.id} className="grid items-center gap-3 sm:grid-cols-[170px_180px_minmax(0,1fr)]">
+            <span className="font-display text-[14px] font-semibold tracking-[0.03em]" style={{color:brand.accent}}>{brand.name}</span>
+            <input aria-label={brand.name+" owner"} className={MP_FIELD} placeholder="(default)" value={ov.person||""} onChange={(e)=>MP_LIVE.hooks.setMerch(brand.name,"person",e.target.value)}/>
+            <input aria-label={brand.name+" email"} type="email" className={MP_FIELD} placeholder="email" value={ov.email||""} onChange={(e)=>MP_LIVE.hooks.setMerch(brand.name,"email",e.target.value)}/>
+          </li>;
+        })}
+      </ul>
+    </section>
+  </MpDrawer>;
+};
+const MP_ND_FIELD="w-full rounded-sm border border-gold-700/50 bg-abyss-950/80 px-3 py-2 text-[13px] text-shade-100 placeholder:text-shade-500";
+const MP_ND_LABEL="block text-[10px] font-bold uppercase tracking-[0.2em] text-shade-300";
+const MpChip=({label,active,onToggle})=>
+  <button type="button" aria-pressed={active} onClick={onToggle}
+    className={["rounded-full border px-3 py-1 text-[12px] font-semibold transition-colors duration-150 ease-out",active?"glow-flame border-flame-400/70 bg-flame-600/25 text-flame-300":"border-gold-700/60 bg-abyss-900 text-shade-300 hover:border-gold-500/70 hover:text-gold-300"].join(" ")}>
+    {label}
+  </button>;
+const MpNewDealPanel=({open,onClose})=>{
+  const[sealed,setSealed]=React.useState(false);
+  const nd=MP_LIVE.ui.nd||{};
+  const dnc2=nd.dnc||{markets:[],channels:[],spots:[],extras:[],channelDetail:{}};
+  const set=(k,v)=>MP_LIVE.hooks.ndSet({[k]:v});
+  const toggle=(k,v)=>MP_LIVE.hooks.ndToggle(k,v);
+  const handleClose=()=>{onClose();setSealed(false)};
+  const bMarkets=nd.brandMarkets||[];
+  return<MpOverlay open={open} onClose={handleClose} label="A deal is born" widthClass="max-w-[980px]">
+    <span aria-hidden="true" className="fluted absolute inset-y-0 left-0 w-6 opacity-70"/>
+    <MpGreekFrieze/>
+    <div className="dentil-band" aria-hidden="true"/>
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="relative px-8 pb-9 pt-6" style={{background:"radial-gradient(460px 200px at 8% 0%, rgba(47,111,232,0.16), transparent 70%)"}}>
+        <div className="flex items-start justify-between gap-6">
+          <div className="flex items-start gap-5">
+            <MpFlame height={40} className="mt-1 shrink-0"/>
+            <div>
+              <p className="greek-caps text-[9px]">ΓΕΝΝΗΣΙΣ ΣΥΜΦΩΝΙΑΣ</p>
+              <h2 className="gilded-text mt-1.5 font-deco text-[31px] font-bold tracking-[0.06em]">A deal is born</h2>
+              <p className="mt-2 max-w-3xl font-goth text-[17px] text-shade-300">A new deal. I love new deals. The fine print writes itself. Three doors in — whichever it walks through, the dates compute and the tripwires arm.</p>
+            </div>
+          </div>
+          <button type="button" onClick={handleClose} aria-label="Close the new deal panel" className="rounded-sm border border-gold-700/60 p-1.5 text-shade-300 transition-colors duration-150 ease-out hover:border-gold-500 hover:text-gold-300"><XIcon className="h-4 w-4"/></button>
+        </div>
+        {sealed
+          ?<div className="glow-flame mt-8 border border-flame-400/60 bg-abyss-950/70 px-7 py-8">
+            <p className="greek-caps text-[9px]">ΣΦΡΑΓΙΣΜΕΝΟΝ</p>
+            <h3 className="soulfire-text mt-2 font-deco text-[26px] font-bold tracking-[0.05em]">The deal is sealed</h3>
+            <p className="mt-2 font-goth text-[17px] text-shade-200">Dates computed backward, needs seeded as proposals, tripwires armed. It's on the ledger now — and I don't forget.</p>
+            <button type="button" onClick={handleClose} className="mt-5 inline-flex items-center gap-1.5 rounded-sm border border-gold-500/70 bg-gold-500/10 px-4 py-2 text-[13px] font-bold text-gold-300 transition-colors duration-150 ease-out hover:bg-gold-500/25">Back to the board<ArrowRightIcon className="h-3.5 w-3.5"/></button>
+          </div>
+          :<form className="mt-6" onSubmit={(e)=>{e.preventDefault();MP_LIVE.hooks.ndSubmit();setSealed(true)}}>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="glow-gold border border-gold-500/50 bg-abyss-950/60 p-4">
+                <h3 className="gilded-text font-display text-[14px] font-bold tracking-[0.05em]">From a contract — the fine print, read for you</h3>
+                <textarea aria-label="Paste the contract, media plan or kickoff email" rows={3} value={nd.contractText||""} onChange={(e)=>MP_LIVE.hooks.ndContract(e.target.value)} placeholder="Paste the contract / media plan / kickoff email…" className={"mt-3 resize-none "+MP_ND_FIELD}/>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-gold-700/70 bg-abyss-900 px-3 py-1.5 text-[12.5px] font-bold text-shade-200 transition-colors duration-150 ease-out hover:border-gold-500 hover:text-gold-300">
+                    <FileTextIcon className="h-3.5 w-3.5"/>Drop PDF
+                    <input type="file" accept="application/pdf" className="sr-only" onChange={(e)=>MP_LIVE.hooks.ndPdf(e.target.files&&e.target.files[0])}/>
+                  </label>
+                  <button type="button" onClick={()=>MP_LIVE.hooks.ndParse()} className="glow-ember inline-flex items-center gap-1.5 rounded-sm border border-ember-500/70 bg-ember-500/10 px-3 py-1.5 text-[12.5px] font-bold text-ember-400 transition-colors duration-150 ease-out hover:bg-ember-500/25">
+                    {nd.parsing?"Reading…":"Read the fine print"}<ArrowRightIcon className="h-3.5 w-3.5"/>
+                  </button>
+                  <p className="min-w-[150px] flex-1 text-[11.5px] leading-snug text-shade-400">fills the form — you check, you don't type</p>
+                </div>
+              </div>
+              <div className="glow-flame border border-flame-500/50 bg-abyss-950/60 p-4">
+                <h3 className="soulfire-text font-display text-[14px] font-bold tracking-[0.05em]">From Notion — the pipe</h3>
+                <p className="mt-3 text-[13px] leading-relaxed text-shade-200">The 2026 slate flows in on its own every 15 minutes and updates in place. A blank in Notion never erases a date set here. Nothing to do — that's the point.</p>
+                <p className="mt-3 text-[11.5px] text-shade-400">{nd.notionCount||0} deals carry Notion ids · form entries below also file themselves INTO Notion</p>
+              </div>
+            </div>
+            <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+              <div>
+                <label className={MP_ND_LABEL} htmlFor="deal-name">Deal / campaign</label>
+                <input id="deal-name" className={"mt-1.5 "+MP_ND_FIELD} placeholder="name it" value={dnc2.name||""} onChange={(e)=>set("name",e.target.value)}/>
+              </div>
+              <div>
+                <label className={MP_ND_LABEL} htmlFor="deal-brand">Brand</label>
+                <select id="deal-brand" value={dnc2.brand||""} onChange={(e)=>MP_LIVE.hooks.ndBrand(e.target.value)} className={"mt-1.5 "+MP_ND_FIELD}>
+                  {(nd.brandNames||[]).map((n)=><option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={MP_ND_LABEL} htmlFor="deal-requester">Requested by</label>
+                <input id="deal-requester" className={"mt-1.5 "+MP_ND_FIELD} placeholder="brand manager" value={dnc2.requestedBy||""} onChange={(e)=>set("requestedBy",e.target.value)}/>
+              </div>
+            </div>
+            <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+              <div>
+                <span className={MP_ND_LABEL}>Markets — Doom knows {dnc2.brand}'s DMAs</span>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {bMarkets.map((market)=><MpChip key={market} label={market} active={(dnc2.markets||[]).includes(market)} onToggle={()=>toggle("markets",market)}/>)}
+                </div>
+              </div>
+              <div>
+                <label className={MP_ND_LABEL} htmlFor="flight-start">Flight start</label>
+                <input id="flight-start" type="date" value={dnc2.flightStart||""} onChange={(e)=>set("flightStart",e.target.value)} className={"mt-1.5 "+MP_ND_FIELD}/>
+              </div>
+              <div>
+                <label className={MP_ND_LABEL} htmlFor="flight-end">Flight end</label>
+                <input id="flight-end" type="date" value={dnc2.flightEnd||""} onChange={(e)=>set("flightEnd",e.target.value)} className={"mt-1.5 "+MP_ND_FIELD}/>
+              </div>
+            </div>
+            <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)]">
+              <div>
+                <label className={MP_ND_LABEL} htmlFor="package-due">Package due <span className="text-gold-400">(blank = T−7)</span></label>
+                <input id="package-due" type="date" value={dnc2.trafficDue||""} onChange={(e)=>set("trafficDue",e.target.value)} className={"mt-1.5 "+MP_ND_FIELD}/>
+              </div>
+              <div>
+                <label className={MP_ND_LABEL} htmlFor="deal-cost">Cost $</label>
+                <input id="deal-cost" inputMode="numeric" className={"mt-1.5 "+MP_ND_FIELD} placeholder="0" value={dnc2.cost||""} onChange={(e)=>set("cost",e.target.value)}/>
+              </div>
+              <div>
+                <label className={MP_ND_LABEL} htmlFor="deal-stations">Stations / outlets · units</label>
+                <input id="deal-stations" className={"mt-1.5 "+MP_ND_FIELD} placeholder="iHeart · 120 spots" value={dnc2.stations||""} onChange={(e)=>set("stations",e.target.value)}/>
+              </div>
+            </div>
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <div>
+                <label className={MP_ND_LABEL} htmlFor="deal-vendor">Partner / vendor</label>
+                <input id="deal-vendor" className={"mt-1.5 "+MP_ND_FIELD} placeholder="iHeart, Audacy, B96…" value={dnc2.partner||""} onChange={(e)=>set("partner",e.target.value)}/>
+              </div>
+              <div>
+                <label className={MP_ND_LABEL} htmlFor="deal-contact">Contact (gets the package)</label>
+                <input id="deal-contact" className={"mt-1.5 "+MP_ND_FIELD} placeholder="name · email" value={dnc2.contact||""} onChange={(e)=>set("contact",e.target.value)}/>
+              </div>
+            </div>
+            <div className="mt-5">
+              <label className={MP_ND_LABEL} htmlFor="deal-promo">Promo obligations — mentions · booth · tickets · added value</label>
+              <input id="deal-promo" className={"mt-1.5 "+MP_ND_FIELD} placeholder="what we owe them back" value={dnc2.promoObligations||""} onChange={(e)=>set("promoObligations",e.target.value)}/>
+            </div>
+            <div className="mt-5">
+              <span className={MP_ND_LABEL}>Channels — each one asks its own questions</span>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(nd.channels||[]).map((channel)=><MpChip key={channel} label={channel} active={(dnc2.channels||[]).includes(channel)} onToggle={()=>toggle("channels",channel)}/>)}
+              </div>
+              {(dnc2.channels||[]).map((ch)=><div key={ch} className="mt-2 flex items-center gap-3">
+                <span className="w-[120px] shrink-0 text-[11px] font-bold text-flame-300">{ch} →</span>
+                <input aria-label={ch+" detail"} className={MP_ND_FIELD} placeholder={(nd.channelHints||{})[ch]||"detail"} value={(dnc2.channelDetail||{})[ch]||""} onChange={(e)=>MP_LIVE.hooks.ndChannelDetail(ch,e.target.value)}/>
+              </div>)}
+            </div>
+            <div className="mt-5">
+              <span className={MP_ND_LABEL}>Spot lengths &amp; other needs</span>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[":15",":30",":60","Host Read"].map((need)=><MpChip key={need} label={need} active={(dnc2.spots||[]).includes(need)} onToggle={()=>toggle("spots",need)}/>)}
+                {["Merch","Pixel","Tag","Social video"].map((need)=><MpChip key={need} label={need} active={(dnc2.extras||[]).includes(need)} onToggle={()=>toggle("extras",need)}/>)}
+              </div>
+            </div>
+            <div className="mt-5">
+              <label className={MP_ND_LABEL} htmlFor="deal-notes">Notes / creative direction</label>
+              <input id="deal-notes" className={"mt-1.5 "+MP_ND_FIELD} placeholder="tone · mandatories · what worked before" value={dnc2.desc||""} onChange={(e)=>set("desc",e.target.value)}/>
+            </div>
+            <div className="mt-7 flex flex-wrap items-center gap-x-8 gap-y-4">
+              <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-semibold text-shade-200">
+                <span className={["flex h-4 w-4 items-center justify-center rounded-sm border transition-colors duration-150 ease-out",dnc2.toNotion?"glow-flame border-flame-400 bg-flame-500 text-abyss-950":"border-gold-700/70 bg-abyss-950"].join(" ")}>
+                  {dnc2.toNotion&&<CheckIcon className="h-3 w-3" strokeWidth={3.5}/>}
+                </span>
+                <input type="checkbox" className="sr-only" checked={Boolean(dnc2.toNotion)} onChange={(e)=>set("toNotion",e.target.checked)}/>
+                also file it into Notion
+              </label>
+              <p className="min-w-[240px] flex-1 font-goth text-[16px] leading-snug text-shade-400">Dates compute backward, known needs seed in as proposals, tripwires arm. What it actually needs stays your call.</p>
+              <button type="submit" className="glow-flame inline-flex items-center gap-2 rounded-sm border border-flame-300/70 bg-flame-500 px-5 py-2.5 text-[13.5px] font-bold tracking-[0.03em] text-abyss-950 transition-colors duration-150 ease-out hover:bg-flame-400">Make the deal — and arm the tripwires</button>
+            </div>
+          </form>}
+      </div>
+    </div>
+  </MpOverlay>;
+};
+// ── the chamber, assembled ──
+const MpApp=({api})=>{
+  MP_LIVE.deals=api.deals;MP_LIVE.brands=api.brands;MP_LIVE.wrapped=api.wrapped;
+  MP_LIVE.registry=api.registry;MP_LIVE.TODAY=api.today;MP_LIVE.board=api.board;
+  MP_LIVE.hooks=api.hooks;MP_LIVE.ui=api.ui;
+  const[view,setView]=React.useState("deck");
+  const[wing,setWing]=React.useState(null);
+  MP_LIVE.hooks.closeWing=()=>setWing(null);
+  const close=()=>setWing(null);
+  return<div className="mphades relative min-h-screen w-full bg-abyss-950 font-sans text-shade-100">
+    <MpAtmosphere/>
+    <MpWisps/>
+    <div className="relative z-10">
+      <MpThroneHero/>
+      <MpHubHeader view={view} onViewChange={setView} onOpenRecord={()=>setWing("record")} onOpenRegistry={()=>setWing("registry")} onOpenDispatch={()=>setWing("dispatch")} onOpenNewDeal={()=>setWing("new-deal")}/>
+      <main className="w-full space-y-12 px-6 py-10 md:px-10 xl:px-[132px]">
+        {view==="deck"
+          ?<React.Fragment>
+            <MpTripwires/>
+            <MpLedger/>
+            <MpTimelineBoard onOpenRecord={()=>setWing("record")}/>
+          </React.Fragment>
+          :<MpMonthCalendar/>}
+      </main>
+    </div>
+    <MpRecordDrawer open={wing==="record"} onClose={close}/>
+    <MpRegistryDrawer open={wing==="registry"} onClose={close}/>
+    <MpDispatchDrawer open={wing==="dispatch"} onClose={close}/>
+    <MpNewDealPanel open={wing==="new-deal"} onClose={close}/>
+  </div>;
+};
+
 // ── MUSE CHARACTERS (AI Planner narrators) ───────────
 const MUSES=[
   {name:"Calliope",role:"Coverage",color:"#FF8C42",icon:"🎭",voice:["Let me tell you a tale of market coverage…","Honey, your coverage has gaps wider than the Aegean.","Now THIS is a story worth telling.","The muse of eloquence sees… room for improvement."]},
@@ -11655,6 +12639,11 @@ Rules:
     const h=(e)=>{if(e.key==="Escape"){setDndPreview(null);setDndMint(null);setDndOv(null)}};
     window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h);
   },[]);
+  // The chamber owns the whole viewport: Meg's gradient must not bleed under
+  // the abyss while #mops is up. Restored on the way out.
+  React.useEffect(()=>{
+    if(isMopsHub){const prev=document.body.style.background;document.body.style.background="#04070e";return()=>{document.body.style.background=prev}}
+  },[isMopsHub]);
   // contract door — proven pre-strip: PDF → text → AI → prefilled form.
   const contractPdf=async(file)=>{
     if(!file)return;
@@ -12008,179 +12997,23 @@ Rules:
     });
   },[dbLoaded]);
 
-  // ── The Underworld office itself. Called as a FUNCTION (no hooks inside —
-  // it renders conditionally; all state lives above at App level). ──
+  // ── The Underworld chamber — the Magic Patterns kit, ported to the letter.
+  //    Every Mp* component lives at MODULE scope (stable identity — inputs
+  //    keep focus). DndHub is CALLED as a function: it only shapes the live
+  //    engine into <MpApp api={…}>, then floats the working dossier and the
+  //    send/mint modals — the operational layer the kit doesn't carry —
+  //    above the chamber in the same abyss-and-gold tongue.
   const DndHub=()=>{
-    const HD={bg:"#050508",bg2:"#0d0d12",card:"#101014",bd:"#26262e",flame:"#4AC8E8",ember:"#FF8C42",rose:"#E85A7A",soul:"#5BC4A0",smoke:"#8C93A0",bone:"#ECECEF",gold:"#D4A040",lilac:"#B9C7D6",dim:"#565664"};
-    const serif={fontFamily:"'Cormorant Garamond',serif"};
-    const inp={padding:"6px 10px",borderRadius:5,border:"1px solid "+HD.bd,background:"rgba(6,6,9,.7)",color:HD.bone,fontSize:13,outline:"none",fontFamily:"'DM Sans',sans-serif"};
-    const mini=(color)=>({background:"none",border:"1px solid "+(color||HD.bd),borderRadius:5,color:color||HD.flame,fontSize:11,fontWeight:700,cursor:"pointer",padding:"4px 10px",whiteSpace:"nowrap"});
-    const flab={display:"block",fontSize:9,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:HD.dim,marginBottom:3};
-    const secH=(t,c)=><div style={{...serif,fontSize:16.5,fontWeight:700,letterSpacing:.4,color:HD.bone,borderBottom:"3px double "+(c||HD.gold)+"77",paddingBottom:4,margin:"18px 0 10px"}}>{t}</div>;
-    const today=new Date();today.setHours(0,0,0,0);
-    const win0=today.getTime()-10*864e5,win1=today.getTime()+135*864e5;
-    const pos=(iso)=>{const d=campIsoD(iso);if(!d)return null;const t=new Date(d+"T00:00:00").getTime();return Math.max(0,Math.min(100,(t-win0)/(win1-win0)*100))};
-    const active=flights.filter(f=>f.status!=="wrapped");
-    const wrapped=flights.filter(f=>f.status==="wrapped");
-    const owedOf=(f)=>dndLedger.filter(x=>x.fid===f.id);
+    const HD={bg:"#04070e",bg2:"#070c16",card:"#0a111e",bd:"rgba(232,181,58,.28)",flame:"#5b93ff",ember:"#e2687f",rose:"#c02f4d",soul:"#8ac6cb",smoke:"#93a6bd",bone:"#e6ecf5",gold:"#e8b53a",lilac:"#c0cddd",dim:"#4c5c73"};
+    const serif={fontFamily:"'Cinzel',serif"};
+    const inp={padding:"6px 10px",borderRadius:4,border:"1px solid rgba(91,68,21,.6)",background:"rgba(4,7,14,.85)",color:HD.bone,fontSize:13,outline:"none",fontFamily:"'Inter','DM Sans',sans-serif"};
+    const mini=(color)=>({background:"none",border:"1px solid "+(color||"rgba(232,181,58,.5)"),borderRadius:4,color:color||HD.gold,fontSize:11,fontWeight:700,cursor:"pointer",padding:"4px 10px",whiteSpace:"nowrap"});
+    const flab={display:"block",fontSize:9,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:HD.smoke,marginBottom:3};
+    const secH=(t,c)=><div style={{...serif,fontSize:16,fontWeight:700,letterSpacing:.4,color:HD.bone,borderBottom:"3px double "+(c||HD.gold)+"77",paddingBottom:4,margin:"18px 0 10px"}}>{t}</div>;
     const flightById=(id)=>flights.find(f=>f.id===id);
-    // month markers inside the window
-    const months=[];{let d=new Date(today.getFullYear(),today.getMonth(),1);for(let i=0;i<6;i++){const t=d.getTime();if(t>win1)break;months.push({label:d.toLocaleDateString("en-US",{month:"short"}).toUpperCase(),pct:Math.max(0,(t-win0)/(win1-win0)*100)});d=new Date(d.getFullYear(),d.getMonth()+1,1)}}
-    const ovOpen=(o)=>dndGo(o);
     const close=()=>{setDndOv(null);setDndPreview(null);setDndMint(null)};
+    const ovOpen=(o)=>dndGo(o);
 
-    // ═══ DECK ═══
-    const Deck=()=><div>
-      {dndTws.length>0&&<div style={{marginBottom:14}}>
-        <div style={{...serif,fontSize:19,fontWeight:700,letterSpacing:2,color:HD.bone,borderBottom:"4px double rgba(255,140,66,.6)",paddingBottom:4,marginBottom:8,display:"flex",alignItems:"baseline",gap:8,textShadow:"0 0 22px rgba(255,140,66,.28)"}}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={HD.ember} strokeWidth="2.4"><path d="M12 3 2 21h20L12 3Z"/><path d="M12 10v5"/></svg>
-          TRIPWIRES <span style={{fontFamily:"'DM Sans',sans-serif",fontSize:9.5,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",color:HD.ember,marginLeft:4}}>what needs you today</span>
-        </div>
-        {dndTws.slice(0,4).map(tw=><div key={tw.fid+tw.sev} onClick={()=>tw.fid&&ovOpen({t:"dossier",fid:tw.fid})} style={{display:"flex",alignItems:"center",gap:12,borderLeft:"4px solid "+(tw.sev==="red"?HD.rose:HD.ember),borderRadius:"0 8px 8px 0",background:"linear-gradient(90deg,"+(tw.sev==="red"?"rgba(232,90,122,.14)":"rgba(255,140,66,.12)")+",rgba(10,10,18,.94) 320px)",padding:"9px 13px",marginBottom:6,fontSize:13,lineHeight:1.5,cursor:"pointer",color:HD.bone,animation:tw.sev==="red"?"ddpulse 2.2s infinite":"none",boxShadow:tw.sev==="gold"?"0 0 14px rgba(255,140,66,.16)":"none"}}>
-          <span style={{flex:1}}>{tw.msg}</span>
-          <button style={mini(tw.sev==="red"?HD.rose:HD.ember)}>{tw.fix} →</button>
-        </div>)}
-        <div style={{fontSize:11,color:HD.dim,fontStyle:"italic"}}>The <b style={{color:HD.smoke}}>PDV clause</b> is armed on every deal: a launch with no traffic on record trips red here — before the air date, not after it.</div>
-      </div>}
-      {(()=>{
-        if(!dndLedger.length)return<div style={{...serif,fontStyle:"italic",fontSize:16,color:HD.soul,margin:"6px 0 16px"}}>Nobody owes anything. Suspicious… but I'll allow it.</div>;
-        const minD=(arr)=>Math.min.apply(null,arr.map(x=>x.days==null?999:x.days));
-        const cnt=(n)=>n==null||n>=999?"—":n<0?Math.abs(n)+"d late":n+"d";
-        const shortWhat=(x)=>String(x.what).split(" — ")[0].replace("Send asset package → ","package → ").trim();
-        const lgFlightRow=(arr)=>{
-          const f0=arr[0];
-          const worst=arr.reduce((m,x)=>((x.days==null?999:x.days)<(m.days==null?999:m.days)?x:m),arr[0]);
-          const whoG={};arr.forEach(x=>{(whoG[x.who]=whoG[x.who]||[]).push(x)});
-          return<div key={f0.fid} onClick={()=>ovOpen({t:"dossier",fid:f0.fid})} style={{display:"grid",gridTemplateColumns:"minmax(160px,.9fr) minmax(300px,1.8fr) 104px 56px minmax(160px,.95fr)",gap:12,alignItems:"center",padding:"8px 14px",borderTop:"1px solid rgba(38,38,46,.4)",borderLeft:"3px solid "+(worst.days!=null&&worst.days<0?HD.rose:worst.days!=null&&worst.days<=3?HD.ember:"transparent"),fontSize:12.5,cursor:"pointer"}}>
-            <span style={{...serif,fontSize:15.5,fontWeight:700,color:HD.bone,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textShadow:"0 1px 0 rgba(0,0,0,.8)"}}>{f0.flight}</span>
-            <span style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"baseline",minWidth:0}}>
-              {Object.entries(whoG).map(([who,xs])=><span key={who} style={{display:"inline-flex",gap:6,alignItems:"baseline",minWidth:0}}>
-                <span style={{fontSize:9.5,fontWeight:800,letterSpacing:1.2,textTransform:"uppercase",border:"1px solid",borderRadius:3,padding:"2.5px 9px",background:"rgba(5,5,12,.55)",boxShadow:"inset 0 1px 4px rgba(0,0,0,.6)",color:who==="You"?HD.lilac:who==="SEO/Web"?HD.flame:who==="Creative Ops"?HD.gold:HD.ember,borderColor:"currentColor",whiteSpace:"nowrap"}}>{who}{xs.length>1?" ×"+xs.length:""}</span>
-                <span style={{color:HD.smoke,fontSize:11.5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:300}}>{xs.map(shortWhat).join(" · ")}</span>
-              </span>)}
-            </span>
-            <span style={{fontWeight:800,fontSize:12,color:worst.days!=null&&worst.days<0?HD.rose:worst.days!=null&&worst.days<=3?HD.ember:worst.days!=null&&worst.days<=7?HD.gold:HD.smoke}}>{worst.due?dndFd(worst.due):"—"}</span>
-            <span style={{fontWeight:800,fontSize:11.5,color:worst.days!=null&&worst.days<0?HD.rose:worst.days!=null&&worst.days<=7?HD.ember:HD.smoke}}>{cnt(worst.days)}</span>
-            <span style={{color:HD.dim,fontSize:11,fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{worst.orElse}</span>
-          </div>};
-        const bs=BRANDS.filter(b=>dndLedger.some(x=>x.brand===b.name)).sort((a,b2)=>minD(dndLedger.filter(x=>x.brand===a.name))-minD(dndLedger.filter(x=>x.brand===b2.name)));
-        return<div style={{marginBottom:16}}>
-          <div style={{...serif,fontSize:19,fontWeight:700,letterSpacing:2,color:HD.bone,borderBottom:"4px double rgba(176,141,63,.65)",paddingBottom:4,marginBottom:8,display:"flex",alignItems:"baseline",gap:8,textShadow:"0 0 22px rgba(176,141,63,.25)"}}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={HD.gold} strokeWidth="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-            THE LEDGER <span style={{fontFamily:"'DM Sans',sans-serif",fontSize:9.5,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",color:HD.gold,marginLeft:4}}>brand → DMA → the deal · one line each · soonest first</span>
-          </div>
-          <div style={{border:"1px solid "+HD.bd,borderTop:"1px solid rgba(236,236,244,.14)",borderRadius:10,overflow:"hidden",background:"linear-gradient(180deg,rgba(14,14,22,.85),rgba(8,8,14,.8))",boxShadow:"0 18px 40px -22px rgba(0,0,0,.9), inset 0 1px 0 rgba(236,236,244,.05)"}}>
-            <div style={{display:"grid",gridTemplateColumns:"minmax(160px,.9fr) minmax(300px,1.8fr) 104px 56px minmax(160px,.95fr)",gap:12,padding:"7px 14px",fontSize:9,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:HD.dim,background:"rgba(4,4,8,.6)"}}>
-              <span style={{fontSize:9.5,fontWeight:800,letterSpacing:2.2,textTransform:"uppercase",color:HD.dim}}>Deal</span><span style={{fontSize:9.5,fontWeight:800,letterSpacing:2.2,textTransform:"uppercase",color:HD.dim}}>Who owes what</span><span style={{fontSize:9.5,fontWeight:800,letterSpacing:2.2,textTransform:"uppercase",color:HD.dim}}>Hard date</span><span></span><span style={{fontSize:9.5,fontWeight:800,letterSpacing:2.2,textTransform:"uppercase",color:HD.dim}}>Or else</span>
-            </div>
-            {bs.map(b=>{
-              const items=dndLedger.filter(x=>x.brand===b.name);
-              const worst=minD(items);
-              const dmas=[...new Set(items.map(x=>x.mkts||"no market set"))].sort((p2,q2)=>minD(items.filter(x=>(x.mkts||"no market set")===p2))-minD(items.filter(x=>(x.mkts||"no market set")===q2)));
-              return<div key={b.code}>
-                <div style={{display:"flex",gap:11,alignItems:"baseline",padding:"7px 14px 5px",background:"rgba(4,4,8,.75)",borderTop:"1px solid "+HD.bd,boxShadow:"inset 3px 0 0 "+b.color}}>
-                  <span style={{...serif,fontSize:15.5,fontWeight:700,color:b.color}}>{b.name}</span>
-                  <span style={{fontSize:10.5,fontWeight:700,color:worst<0?HD.rose:worst<=3?HD.ember:HD.dim}}>{[...new Set(items.map(x=>x.fid))].length} deal{[...new Set(items.map(x=>x.fid))].length!==1?"s":""} owed · worst {cnt(worst)}</span>
-                </div>
-                {dmas.map(d2=>{
-                  const dItems=items.filter(x=>(x.mkts||"no market set")===d2);
-                  const byF={};dItems.forEach(x=>{(byF[x.fid]=byF[x.fid]||[]).push(x)});
-                  const groups=Object.values(byF).sort((g1,g2)=>minD(g1)-minD(g2));
-                  return<React.Fragment key={d2}>
-                    <div style={{fontSize:9,fontWeight:800,letterSpacing:2,textTransform:"uppercase",color:HD.smoke,padding:"4px 14px 1px"}}>{d2}</div>
-                    {groups.map(lgFlightRow)}
-                  </React.Fragment>})}
-              </div>})}
-          </div>
-        </div>})()}
-      <div style={{position:"relative",marginLeft:212,height:26,borderBottom:"1px solid "+HD.bd}}>
-        {months.map(m=><span key={m.label+m.pct} style={{...serif,position:"absolute",left:m.pct+"%",top:2,fontSize:12.5,fontWeight:700,letterSpacing:3.5,color:HD.smoke,borderLeft:"1px solid rgba(38,38,46,.8)",paddingLeft:7}}>{m.label}</span>)}
-      </div>
-      <div style={{position:"relative"}}>
-        <div style={{position:"absolute",left:"calc(212px + (100% - 212px)*"+(((today.getTime()-win0)/(win1-win0))).toFixed(4)+")",top:-26,bottom:0,width:2,background:"linear-gradient(180deg,"+HD.flame+",rgba(74,200,232,.12))",boxShadow:"0 0 12px rgba(74,200,232,.55)",zIndex:5,pointerEvents:"none"}}>
-          <span style={{position:"absolute",top:-1,left:-34,background:HD.flame,color:"#0b0b16",fontSize:9,fontWeight:800,letterSpacing:1,borderRadius:3,padding:"2px 7px",whiteSpace:"nowrap"}}>TODAY</span>
-        </div>
-        {BRANDS.map(b=>{
-          const mine=active.filter(f=>f.brand===b.name);if(!mine.length)return null;
-          const owedCt=mine.filter(f=>owedOf(f).length).length;
-          const cost=mine.reduce((t,f)=>t+(parseFloat(String(f.cost).replace(/[^0-9.]/g,""))||0),0);
-          const rows=[...mine].sort((x,y)=>(owedOf(y).length?1:0)-(owedOf(x).length?1:0)||String(x.flightStart||"9999").localeCompare(String(y.flightStart||"9999")));
-          return<div key={b.code} style={{marginTop:14}}>
-            <div style={{display:"flex",alignItems:"baseline",gap:12,padding:"3px 0 5px",borderBottom:"3px double "+b.color,boxShadow:"0 5px 12px -11px "+b.color}}>
-              <span style={{...serif,fontSize:19,fontWeight:700,color:b.color}}>{b.name}</span>
-              <span style={{fontSize:11,color:HD.dim,fontWeight:600}}>{owedCt?owedCt+" deal"+(owedCt>1?"s":"")+" owed":"nothing owed"} · {mine.length-owedCt} fed{cost?" · ":""}{cost?<b style={{color:HD.gold}}>${cost>=1000?(cost/1000).toFixed(cost>=10000?0:1)+"k":cost} committed</b>:null}</span>
-            </div>
-            {rows.map(f=>{
-              const opens=owedOf(f);
-              const p0=pos(f.flightStart),p1=f.flightEnd?pos(f.flightEnd):100;
-              const cd=pos(dndCreativeDue(f)),vd=pos(dndVendorDue(f));
-              const isLive=f.status==="live"&&!opens.length;
-              const mk=String(f.markets||"").split(",").map(s=>s.trim()).filter(Boolean);
-              return<div key={f.id} style={{display:"flex",minHeight:42,borderBottom:"1px solid rgba(38,38,46,.35)"}}>
-                <div style={{width:212,flex:"none",display:"flex",alignItems:"center",fontSize:10,fontWeight:800,letterSpacing:1.6,color:HD.smoke,textTransform:"uppercase",paddingRight:12,overflow:"hidden"}}>
-                  {mk[0]||"—"}{mk.length>1&&<span style={{fontWeight:600,letterSpacing:0,textTransform:"none",color:HD.dim,marginLeft:5}}>+{mk.length-1}</span>}
-                </div>
-                <div style={{position:"relative",flex:1}}>
-                  {p0==null?<div onClick={()=>ovOpen({t:"dossier",fid:f.id})} style={{position:"absolute",top:"50%",transform:"translateY(-50%)",right:6,border:"1.5px dashed rgba(232,90,122,.6)",borderRadius:6,color:HD.rose,fontSize:11.5,fontWeight:700,padding:"4px 11px",cursor:"pointer",background:"rgba(232,90,122,.05)"}}>{f.name} · set the flight →</div>
-                  :isLive?<div onClick={()=>ovOpen({t:"dossier",fid:f.id})} style={{position:"absolute",top:"50%",transform:"translateY(-50%)",left:Math.max(0,p0)+"%",width:Math.max(6,(p1==null?100:p1)-Math.max(0,p0))+"%",height:17,borderRadius:5,display:"flex",alignItems:"center",padding:"0 9px",fontSize:11,fontWeight:700,color:HD.soul,background:"linear-gradient(90deg,rgba(91,196,160,.15),rgba(91,196,160,.06))",border:"1px solid rgba(91,196,160,.45)",cursor:"pointer",whiteSpace:"nowrap",overflow:"hidden"}}>{f.name} · live · fed</div>
-                  :<React.Fragment>
-                    {cd!=null&&cd<p0&&<div style={{position:"absolute",top:"50%",left:cd+"%",width:(p0-cd)+"%",borderTop:"2px dashed rgba(142,142,168,.4)"}}/>}
-                    {cd!=null&&<div title={"Creative returns · "+dndFd(dndCreativeDue(f))} style={{position:"absolute",top:"50%",left:cd+"%",transform:"translate(-50%,-50%) rotate(45deg)",width:8,height:8,borderRadius:2,background:HD.ember,zIndex:4}}/>}
-                    {vd!=null&&<div title={"Package to vendor · "+dndFd(dndVendorDue(f))} style={{position:"absolute",top:"50%",left:vd+"%",transform:"translate(-50%,-50%) rotate(45deg)",width:8,height:8,borderRadius:2,background:HD.gold,zIndex:4,outline:"2px solid rgba(212,160,64,.3)",outlineOffset:2}}/>}
-                    <div onClick={()=>ovOpen({t:"dossier",fid:f.id})} style={{position:"absolute",top:"50%",transform:"translateY(-50%)",left:p0+"%",width:Math.max(9,(p1==null?p0+18:p1)-p0)+"%",height:24,borderRadius:6,display:"flex",alignItems:"center",gap:7,padding:"0 9px",fontSize:12,fontWeight:700,color:HD.bone,background:"linear-gradient(90deg,rgba(13,13,17,.95),rgba(17,17,32,.95))",border:"1px solid "+(opens.length?HD.ember:b.color),cursor:"pointer",whiteSpace:"nowrap",overflow:"hidden",zIndex:2}}>
-                      {f.name}
-                      {opens.length>0&&<span style={{fontSize:9,fontWeight:800,letterSpacing:.8,borderRadius:3,padding:"1px 6px",background:"rgba(255,140,66,.15)",color:HD.ember}}>owed: {opens.slice(0,2).map(o=>o.what.split("—")[0].trim()).join(" + ")}{opens.length>2?" +"+(opens.length-2):""}</span>}
-                    </div>
-                  </React.Fragment>}
-                </div>
-              </div>})}
-          </div>})}
-        <div style={{display:"flex",gap:20,alignItems:"center",margin:"12px 0 4px 212px",fontSize:10.5,color:HD.dim,flexWrap:"wrap"}}>
-          <span><span style={{display:"inline-block",width:8,height:8,borderRadius:2,transform:"rotate(45deg)",background:HD.ember,marginRight:5}}/>creative returns (T−11)</span>
-          <span><span style={{display:"inline-block",width:8,height:8,borderRadius:2,transform:"rotate(45deg)",background:HD.gold,marginRight:5}}/>package to vendor (T−7)</span>
-          <span style={{color:HD.soul}}>▬ live &amp; fed</span>
-          <span style={{color:HD.rose}}>┄ needs dates</span>
-          <span style={{marginLeft:"auto"}}>wrapped deals live in ◂ The Record</span>
-        </div>
-      </div>
-    </div>;
-
-    // ═══ MONTH ═══
-    const MonthView=()=>{
-      const y=dndCalM.getFullYear(),m=dndCalM.getMonth();
-      const ev={};const put=(iso,e)=>{const d=campIsoD(iso);if(!d)return;(ev[d]=ev[d]||[]).push(e)};
-      active.forEach(f=>{
-        const bc=getBrandColor(f.brand);
-        put(f.flightStart,{c:HD.soul,bc,t:"▲ Launch — "+f.name,fid:f.id});
-        put(f.flightEnd,{c:HD.smoke,bc,t:f.name+" wraps",fid:f.id});
-        put(dndVendorDue(f),{c:HD.gold,bc,t:"◆ Package → "+((f.traffic[0]||{}).vendor||"vendor")+" — "+f.name,fid:f.id});
-        put(dndCreativeDue(f),{c:HD.ember,bc,t:"◆ Creative returns — "+f.name,fid:f.id});
-        (f.reqs||[]).forEach(r=>{if(r.due&&!dndReqInHand(r,iscis))put(r.due,{c:HD.ember,bc,t:(r.label||r.kind)+" due — "+f.name,fid:f.id})});
-      });
-      const startDow=new Date(y,m,1).getDay();
-      const cells=[];for(let i=0;i<42;i++)cells.push(new Date(y,m,1-startDow+i));
-      const iso=(d)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-      const ti=iso(new Date());
-      return<div>
-        <div style={{display:"flex",alignItems:"center",gap:10,margin:"2px 0 10px"}}>
-          <span style={{...serif,fontSize:20,fontWeight:700,color:HD.gold}}>{dndCalM.toLocaleDateString("en-US",{month:"long",year:"numeric"})}</span>
-          <button style={mini()} onClick={()=>setDndCalM(new Date(y,m-1,1))}>‹</button>
-          <button style={mini()} onClick={()=>setDndCalM(new Date(y,m+1,1))}>›</button>
-          <span style={{fontSize:11,color:HD.dim,marginLeft:8}}>same deals, month-shaped — click anything to open its dossier</span>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:5}}>
-          {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=><div key={d} style={{fontSize:9,fontWeight:800,letterSpacing:1.5,color:HD.dim,textTransform:"uppercase",textAlign:"center",padding:"3px 0"}}>{d}</div>)}
-          {cells.map((d,i)=>{const di=iso(d);const inM=d.getMonth()===m;const es=ev[di]||[];
-            return<div key={i} style={{minHeight:76,borderRadius:7,border:"1px solid "+(di===ti?HD.flame:"rgba(38,38,46,.5)"),background:inM?"linear-gradient(145deg,#101014,#0c0c10)":"rgba(13,13,17,.25)",padding:"4px 5px",overflow:"hidden"}}>
-              <div style={{fontSize:9.5,fontWeight:800,color:di===ti?HD.flame:inM?HD.smoke:HD.bd,marginBottom:3}}>{d.getDate()}</div>
-              {es.slice(0,3).map((e,j)=><div key={j} onClick={()=>ovOpen({t:"dossier",fid:e.fid})} title={e.t} style={{fontSize:8.5,fontWeight:700,color:e.c,background:"rgba(6,6,9,.5)",borderLeft:"2px solid "+e.bc,borderRadius:2,padding:"1.5px 4px",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}}>{e.t}</div>)}
-              {es.length>3&&<div style={{fontSize:8,color:HD.dim,fontWeight:700}}>+{es.length-3}</div>}
-            </div>})}
-        </div>
-      </div>;
-    };
-
-    // ═══ DOSSIER ═══
     const Dossier=(fid)=>{
       const f=flightById(fid);
       if(!f)return<div style={{...serif,fontSize:17,fontStyle:"italic",color:HD.smoke}}>That deal isn't on the books anymore.</div>;
@@ -12342,265 +13175,98 @@ Rules:
       </div>;
     };
 
-    // ═══ REGISTRY ═══
-    const Registry=()=>{
-      const q=dndRegQ.toLowerCase();
-      const hit=(s2)=>!q||String(s2).toLowerCase().includes(q);
-      const usedBy={};flights.forEach(f=>(f.reqs||[]).forEach(r=>{if(r.isci)(usedBy[r.isci]=usedBy[r.isci]||[]).push(f)}));
-      const MEDIA_W={T:"TV",R:"Radio",S:"Streaming",D:"Digital",B:"Display"};
-      const MEDIA_C={T:HD.flame,R:HD.gold,S:HD.lilac,D:HD.soul,B:"#9b7bb0"};
-      return<div>
-        <div style={{...serif,fontSize:26,fontWeight:700,color:HD.bone}}>The Registry</div>
-        <div style={{...serif,fontStyle:"italic",color:HD.lilac,fontSize:13.5,margin:"4px 0 12px"}}>{dndPick(DND_QUIP.registry)} What a deal still <i>needs</i> lives on that deal — a row here is a real thing.</div>
-        <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
-          <input value={dndRegQ} onChange={e=>setDndRegQ(e.target.value)} placeholder="Search codes, titles, deals, URLs…" style={{...inp,minWidth:210,flex:1}}/>
-          <select value={dndRegBrand} onChange={e=>setDndRegBrand(e.target.value)} style={inp}><option value="">All brands</option>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select>
-          <select value={dndRegKind} onChange={e=>setDndRegKind(e.target.value)} style={inp}><option value="">Everything</option><option value="isci">Broadcast &amp; display (ISCI)</option><option value="file">Files</option><option value="utm">UTMs</option><option value="tag">Taglines</option></select>
-        </div>
-        {BRANDS.map(b=>{
-          if(dndRegBrand&&b.name!==dndRegBrand)return null;
-          const bSpots=(!dndRegKind||dndRegKind==="isci")?iscis.filter(i=>i.active&&i.suffix!=="O"&&i.brand===b.name&&hit(i.code+" "+(i.title||"")+" "+(DM[i.dma]||i.dma||""))):[];
-          const bFiles=[];const bUtms=[];
-          flights.forEach(f=>{if(f.brand!==b.name)return;
-            if(!dndRegKind||dndRegKind==="file")(f.reqs||[]).forEach(r=>{if(r.url&&hit((r.label||"")+" "+f.name))bFiles.push([f,r])});
-            if(!dndRegKind||dndRegKind==="utm")(f.utms||[]).forEach(u=>{if(hit(u.platform+" "+u.url+" "+f.name))bUtms.push([f,u])});
-          });
-          const bTags=(!dndRegKind||dndRegKind==="tag")?taglines.filter(t=>t.active!==false&&t.brand===b.name&&hit(t.text)):[];
-          if(!bSpots.length&&!bFiles.length&&!bUtms.length&&!bTags.length)return null;
-          const dmas=[...new Set(bSpots.map(i=>i.dma))];
-          const cap=dndRegBrand||q?9999:8;
-          return<div key={b.code} style={{marginBottom:24}}>
-            <div style={{...serif,fontSize:19,fontWeight:700,color:b.color,borderBottom:"2px solid "+b.color,paddingBottom:4,marginBottom:8}}>{b.name}<span style={{fontFamily:"'DM Sans',sans-serif",fontSize:10.5,fontWeight:700,color:HD.dim,marginLeft:10}}>{bSpots.length} spots · {bFiles.length} files · {bUtms.length} URLs · {bTags.length} taglines</span></div>
-            {dmas.map(dc=>{const rows=bSpots.filter(i=>i.dma===dc);
-              return<div key={dc} style={{marginBottom:8}}>
-                <div style={{fontSize:9.5,fontWeight:800,letterSpacing:1.8,textTransform:"uppercase",color:HD.smoke,margin:"6px 0 3px"}}>{DM[dc]||dc}</div>
-                {rows.slice(0,cap).map(i=>{const key=isciKeyOf(i);const cs=usedBy[key]||[];
-                  return<div key={key} style={{display:"grid",gridTemplateColumns:"52px 138px minmax(120px,1.2fr) 36px minmax(90px,.9fr) 62px",gap:9,alignItems:"center",padding:"5px 4px",borderBottom:"1px solid rgba(38,38,46,.4)",fontSize:12}}>
-                    <span style={{fontSize:9,fontWeight:800,color:MEDIA_C[i.suffix]||HD.smoke}}>{MEDIA_W[i.suffix]||i.suffix||"—"}</span>
-                    <span onClick={()=>dndCopy(i.code,"ISCI copied")} style={{fontFamily:"ui-monospace,monospace",fontWeight:700,color:HD.bone,cursor:"pointer",fontSize:11.5}}>{i.code}</span>
-                    <span style={{color:i.title?HD.bone:HD.dim,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11.5}}>{i.title||"untitled"}</span>
-                    <span style={{color:HD.smoke,fontSize:11}}>{i.dur?":"+i.dur:""}</span>
-                    <span style={{fontSize:10.5,color:cs.length?HD.lilac:HD.bd,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{cs.length?cs.map(c=>c.name).slice(0,1).join("")+(cs.length>1?" +"+(cs.length-1):""):"—"}</span>
-                    {i.fileUrl?<a href={i.fileUrl} target="_blank" rel="noreferrer" style={{fontSize:10.5,color:HD.flame,textDecoration:"none",fontWeight:800}}>◆ open</a>:<span style={{fontSize:10.5,color:HD.dim}}>no file</span>}
-                  </div>})}
-                {rows.length>cap&&<div style={{fontSize:10.5,color:HD.dim,padding:"3px 4px"}}>+{rows.length-cap} more — search or filter by brand to see all</div>}
-              </div>})}
-            {bFiles.length>0&&<div style={{fontSize:9.5,fontWeight:800,letterSpacing:1.8,textTransform:"uppercase",color:HD.lilac,margin:"8px 0 3px"}}>Files</div>}
-            {bFiles.map(([f,r])=><div key={r.id} style={{display:"flex",gap:9,alignItems:"center",padding:"5px 4px",borderBottom:"1px solid rgba(38,38,46,.4)",fontSize:12}}>
-              <span style={{fontWeight:700,color:HD.bone,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.label}</span>
-              <span onClick={()=>ovOpen({t:"dossier",fid:f.id})} style={{fontSize:11,color:HD.lilac,cursor:"pointer"}}>{f.name}</span>
-              <a href={r.url} target="_blank" rel="noreferrer" style={{fontSize:10.5,color:HD.flame,textDecoration:"none",fontWeight:800}}>◆ open</a>
-            </div>)}
-            {bUtms.length>0&&<div style={{fontSize:9.5,fontWeight:800,letterSpacing:1.8,textTransform:"uppercase",color:HD.flame,margin:"8px 0 3px"}}>Tracking URLs</div>}
-            {bUtms.map(([f,u])=><div key={u.id} style={{display:"flex",gap:9,alignItems:"center",padding:"5px 4px",borderBottom:"1px solid rgba(38,38,46,.4)",fontSize:11}}>
-              <span style={{fontWeight:800,color:HD.flame,width:80,flex:"none"}}>{u.platform}</span>
-              <code style={{flex:1,fontSize:10,color:HD.smoke,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.url}</code>
-              <button style={mini()} onClick={()=>dndCopy(u.url,"URL copied")}>copy</button>
-            </div>)}
-            {bTags.length>0&&<div style={{fontSize:9.5,fontWeight:800,letterSpacing:1.8,textTransform:"uppercase",color:HD.lilac,margin:"8px 0 3px"}}>Taglines</div>}
-            {bTags.map(t=><div key={t.id} style={{display:"flex",gap:9,alignItems:"center",padding:"4px",fontSize:13}}>
-              <span style={{...serif,fontStyle:"italic",color:HD.bone,flex:1}}>“{t.text}”</span>
-              <button style={mini()} onClick={()=>dndCopy(t.text,"Tagline copied")}>copy</button>
-              <button onClick={()=>{taglinesDirtyRef.current=true;setTaglines(p=>p.map(x=>x.id===t.id?{...x,active:false}:x))}} style={mini(HD.gold)}>retire</button>
-            </div>)}
-            <div style={{display:"flex",gap:6,marginTop:6}}>
-              <input id={"dndtag_"+b.code} placeholder={"New "+b.name+" tagline…"} style={{...inp,flex:1,fontSize:12}} onKeyDown={e=>{if(e.key==="Enter"){const v=e.target.value.trim();if(!v)return;taglinesDirtyRef.current=true;setTaglines(p=>[...p,{id:campUid(),text:v,brand:b.name,active:true,added:new Date().toISOString()}]);e.target.value="";log("Tagline","Added: "+v)}}}/>
-            </div>
-          </div>})}
-        <div style={{fontSize:10.5,color:HD.dim,marginTop:6}}>Broadcast &amp; display rows ARE the ISCI Registry, read live — never retyped. A new upload or a registered spot lands here by itself.</div>
-      </div>;
+    // ── adapters: the live engine, shaped for the chamber ──
+    const today=new Date();today.setHours(0,0,0,0);
+    const MP_ACCENT={PL:"#9fb6d6",WK:"#e8b53a",LR:"#f0cf72",PDV:"#e2687f",KE:"#8ac6cb"};
+    const mpBrands=BRANDS.map(b=>({id:b.code,name:b.name,accent:MP_ACCENT[b.code]||"#e8b53a"}));
+    const bCode=(name)=>{const b=BRANDS.find(x=>x.name===name);return b?b.code:String(name||"")};
+    const byFlight={};dndLedger.forEach(x=>{(byFlight[x.fid]=byFlight[x.fid]||[]).push(x)});
+    const twByFid={};dndTws.forEach(t=>{if(t.fid&&!twByFid[t.fid])twByFid[t.fid]=t});
+    const shortWhat=(x)=>String(x.what).split(" — ")[0].trim();
+    const mpDeals=flights.filter(f=>f.status!=="wrapped"&&f.status!=="cancelled").map(f=>{
+      const items=byFlight[f.id]||[];
+      const owed=[];
+      const cre=items.filter(x=>x.who==="Creative Ops");
+      if(cre.length)owed.push({owner:"creative",count:cre.length>1?cre.length:undefined,label:cre.map(shortWhat).join(" · ")});
+      items.filter(x=>x.who!=="Creative Ops"&&x.who!=="You").forEach(x=>owed.push({owner:"creative",tag:String(x.who).toUpperCase(),label:shortWhat(x)}));
+      items.filter(x=>x.who==="You").forEach(x=>owed.push({owner:"you",label:String(x.what).replace("Send asset package → ","package → ")}));
+      const dated=items.filter(x=>x.due);
+      const hard=dated.length?dated.reduce((m,x)=>x.due<m?x.due:m,dated[0].due):null;
+      const worst=items.length?items.reduce((m,x)=>((x.days==null?999:x.days)<(m.days==null?999:m.days)?x:m),items[0]):null;
+      let state=f.status==="live"?"live":(!f.flightStart&&!f.trafficDue)?"undated":"owed";
+      if(state==="live"&&!f.flightStart)state=hard?"owed":"undated";
+      if(state==="owed"&&!f.flightStart&&!hard)state="undated";
+      const dmas=String(f.markets||"").split(",").map(s=>s.trim()).filter(Boolean);
+      const tw=twByFid[f.id];
+      return{id:f.id,fid:f.id,brandId:bCode(f.brand),brand:f.brand,name:f.name,
+        shortName:f.name.length>26?f.name.slice(0,24).trim()+"…":f.name,
+        dmas:dmas.length?dmas:["—"],owed,
+        hardDate:state==="live"?null:hard,
+        launchDate:f.flightStart||null,state,
+        orElse:worst?worst.orElse:"",
+        tripwire:tw?{text:tw.msg,action:tw.fix}:null,
+        flight:f.flightStart?{start:f.flightStart,end:f.flightEnd||f.flightStart}:null};
+    });
+    const mpWrapped=flights.filter(f=>f.status==="wrapped").map(f=>({id:f.id,name:f.name,brand:f.brand,
+      dmas:String(f.markets||"").split(",").map(s=>s.trim()).filter(Boolean),
+      wrappedOn:f.flightEnd||f.flightStart||null}));
+    const SUF_KIND={T:"TV",R:"Radio",S:"Streaming",D:"Digital",B:"Banner"};
+    const mpRegistry=[];
+    iscis.forEach(i=>{if(!i.active||i.suffix==="O")return;
+      mpRegistry.push({id:"i-"+i.code+"-"+(i.dma||""),brandId:bCode(i.brand),brand:i.brand||"",dma:DM[i.dma]||i.dma||"—",kind:SUF_KIND[i.suffix]||"File",code:i.code,title:i.title||"untitled",length:i.dur?":"+i.dur:"",url:i.fileUrl||""});
+    });
+    flights.forEach(f=>{
+      (f.reqs||[]).forEach(r=>{if(r.url)mpRegistry.push({id:"f-"+r.id,brandId:bCode(f.brand),brand:f.brand,dma:f.name,kind:"File",code:"—",title:(r.label||r.kind),length:"",url:r.url})});
+      (f.utms||[]).forEach(u=>mpRegistry.push({id:"u-"+u.id,brandId:bCode(f.brand),brand:f.brand,dma:f.name,kind:"URL",code:u.platform,title:u.url,length:"",url:u.url}));
+    });
+    taglines.forEach(t=>{if(t.active===false)return;
+      mpRegistry.push({id:"t-"+t.id,brandId:bCode(t.brand),brand:t.brand,dma:"Taglines",kind:"Tagline",code:"—",title:t.text,length:"",url:""})});
+    const merchDef=(hubCfg.merch||{}).default||{};
+    const mpUi={
+      addresses:{creativeOps:hubCfg.creativeOpsEmail||"",seo:hubCfg.seoEmail||"",jessica:hubCfg.jessicaEmail||"",merchOwner:merchDef.person||"",merchEmail:merchDef.email||"",byBrand:(hubCfg.merch||{}).byBrand||{}},
+      pending:Object.entries(assetReviews).filter(([t,r])=>r.status==="pending").sort((a,b)=>String(b[1].sentAt).localeCompare(String(a[1].sentAt))).map(([tok,r])=>{const age=Math.floor((Date.now()-new Date(r.sentAt).getTime())/864e5);return{id:tok,when:dndFd(r.sentAt),what:"Review · "+(r.assetLabel||r.assetType)+" — "+r.campName,late:age>=3?age:0}}),
+      answered:Object.entries(assetReviews).filter(([t,r])=>r.status==="approved"||r.status==="changes").sort((a,b)=>String(b[1].respondedAt).localeCompare(String(a[1].respondedAt))).slice(0,8).map(([tok,r])=>({id:tok,when:dndFd(r.respondedAt),ok:r.status==="approved",what:(r.assetLabel||r.assetType)+" · "+r.campName,note:r.feedback||""})),
+      trail:dndLog.slice(0,14).map(l=>({id:l.id,when:dndFd(l.at),kind:l.kind,subject:l.subject,to:l.to})),
+      nd:{dnc,brandMarkets:brandMktCodes(dnc.brand).map(c=>DM[c]||c),brandNames:BRANDS.map(b=>b.name),channels:DND_CHANNELS,channelHints:DND_CH_HINT,contractText,parsing,notionCount:flights.filter(f=>f.notionId).length}
     };
-
-    // ═══ RECORD ═══
-    const RecordPg=()=>{
-      const byMonth={};wrapped.forEach(f=>{const k=dndMonthKey(f)||"undated";(byMonth[k]=byMonth[k]||[]).push(f)});
-      const keys=Object.keys(byMonth).sort().reverse();
-      return<div>
-        <div style={{...serif,fontSize:26,fontWeight:700,color:HD.bone}}>The Record</div>
-        <div style={{...serif,fontStyle:"italic",color:HD.lilac,fontSize:13.5,margin:"4px 0 14px"}}>{dndPick(DND_QUIP.record)}</div>
-        {keys.length===0&&<div style={{fontSize:13,color:HD.dim,fontStyle:"italic"}}>Nothing wrapped yet. Give it time — everything wraps eventually. I'd know.</div>}
-        {keys.map(k=><div key={k} style={{marginBottom:18}}>
-          <div style={{...serif,fontSize:17,fontWeight:700,color:HD.gold,borderBottom:"1px solid rgba(212,160,64,.4)",paddingBottom:3,marginBottom:6}}>{k==="undated"?"Undated":new Date(k+"-02T00:00:00").toLocaleDateString("en-US",{month:"long",year:"numeric"})}</div>
-          {byMonth[k].map(f=><div key={f.id} style={{display:"flex",gap:10,alignItems:"baseline",padding:"7px 4px",borderBottom:"1px solid rgba(38,38,46,.4)",fontSize:13}}>
-            <span style={{flex:"none",width:92,fontSize:10.5,fontWeight:800,color:HD.dim}}>{f.flightStart?dndFd(f.flightStart):""}</span>
-            <span style={{flex:1,minWidth:0}}>
-              <b style={{color:HD.bone,cursor:"pointer"}} onClick={()=>ovOpen({t:"dossier",fid:f.id})}>{f.name}</b>
-              <span style={{color:HD.smoke,fontSize:12}}> · {f.brand}{f.markets?" · "+f.markets:""}{f.cost?" · $"+f.cost:""}</span>
-            </span>
-            <button style={mini(HD.lilac)} onClick={()=>openDndPreview("recap",f)}>Recap →</button>
-            <button style={mini(HD.soul)} onClick={()=>runAgain(f)}>Run it again →</button>
-          </div>)}
-        </div>)}
-        <div style={{marginTop:10,border:"1px solid rgba(74,200,232,.3)",borderRadius:8,background:"rgba(74,200,232,.04)",padding:"9px 12px",fontSize:11,lineHeight:1.6,color:HD.smoke}}>
-          <b style={{color:HD.flame}}>History is inherited, not typed.</b> A deal files itself here the day its flight ends. Recaps draft themselves from what actually ran — preview, then send.
-        </div>
-      </div>;
+    const mpHooks={
+      openFlight:(fid)=>dndGo({t:"dossier",fid}),
+      tripwire:(deal)=>{const tw=twByFid[deal.fid];const f=flightById(deal.fid);
+        if(!tw||!f){dndGo({t:"dossier",fid:deal.fid});return}
+        if(tw.fix==="Send the package"){const tr=(f.traffic||[]).find(t=>t.state!=="sent");openDndPreview("package",f,{tr,to:f.contact})}
+        else if(tw.fix==="Chase")openDndPreview("brief",f);
+        else dndGo({t:"dossier",fid:deal.fid});
+      },
+      recap:(id)=>{const f=flightById(id);if(f)openDndPreview("recap",f)},
+      runAgain:(id)=>{const f=flightById(id);if(f)runAgain(f)},
+      previewRollup:()=>openDndPreview("rollup",null),
+      setAddress:(key,val)=>saveCfg({[key]:val}),
+      setMerch:(brand,field,val)=>saveMerchRole(brand,{[field]:val}),
+      openAsset:(a)=>{if(a.url)window.open(a.url,"_blank");else dndCopy(a.kind==="Tagline"?a.title:a.code,"Copied")},
+      backToDoom:()=>navigateHash(""),
+      ndSet:(patch)=>setDnc(p=>({...p,...patch})),
+      ndToggle:(key,val)=>setDnc(p=>{const arr=p[key]||[];return{...p,[key]:arr.includes(val)?arr.filter(x=>x!==val):[...arr,val]}}),
+      ndBrand:(name)=>setDnc(p=>({...p,brand:name,markets:[]})),
+      ndChannelDetail:(ch,val)=>setDnc(p=>({...p,channelDetail:{...p.channelDetail,[ch]:val}})),
+      ndContract:(text)=>setContractText(text),
+      ndPdf:(file)=>{if(file)contractPdf(file)},
+      ndParse:()=>parseContract(),
+      ndSubmit:()=>createFlight()
     };
+    const mpApi={deals:mpDeals,brands:mpBrands,wrapped:mpWrapped,registry:mpRegistry,today:mpIso(today),board:{start:mpIso(mpSubDays(today,17)),end:mpIso(mpAddDays(today,135))},hooks:mpHooks,ui:mpUi};
 
-    // ═══ DISPATCH ═══
-    const Dispatch=()=>{
-      const pendingRev=Object.entries(assetReviews).filter(([t,r])=>r.status==="pending").sort((a,b)=>String(b[1].sentAt).localeCompare(String(a[1].sentAt)));
-      const answered=Object.entries(assetReviews).filter(([t,r])=>r.status==="approved"||r.status==="changes").sort((a,b)=>String(b[1].respondedAt).localeCompare(String(a[1].respondedAt))).slice(0,8);
-      const merchDef=(hubCfg.merch||{}).default||{};
-      return<div>
-        <div style={{...serif,fontSize:26,fontWeight:700,color:HD.bone}}>Dispatch</div>
-        <div style={{...serif,fontStyle:"italic",color:HD.lilac,fontSize:13.5,margin:"4px 0 12px"}}>{dndPick(DND_QUIP.dispatch)}</div>
-        {secH("The Monday rollup — your status, drafted for you",HD.gold)}
-        <div style={{display:"flex",gap:10,alignItems:"center",fontSize:12.5,color:HD.smoke}}>
-          <span style={{flex:1}}>What launched · what's late · who owes what — one email to Jessica, drafted from the ledger. You preview, you send.</span>
-          <button style={mini(HD.gold)} disabled={dndBusy} onClick={()=>openDndPreview("rollup",null)}>Preview this week's →</button>
+    return<React.Fragment>
+      <MpApp api={mpApi}/>
+      {dndOv&&dndOv.t==="dossier"&&<React.Fragment>
+        <div onClick={close} style={{position:"fixed",inset:0,background:"rgba(2,4,9,.8)",backdropFilter:"blur(3px)",zIndex:70}}/>
+        <div className="mphades" style={{position:"fixed",top:0,bottom:0,right:0,width:700,maxWidth:"95vw",background:"linear-gradient(165deg,#0a111e,#04070e 70%,#0a111e)",borderLeft:"1px solid rgba(232,181,58,.35)",boxShadow:"-18px 0 60px rgba(0,0,0,.85)",zIndex:71,overflowY:"auto",padding:"24px 28px 40px",fontFamily:"'Inter','DM Sans',sans-serif",fontSize:14,color:HD.bone}}>
+          <button onClick={close} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:HD.smoke,fontSize:20,fontWeight:800,cursor:"pointer"}}>×</button>
+          {Dossier(dndOv.fid)}
         </div>
-        {secH("Out — awaiting an answer",HD.ember)}
-        {pendingRev.length===0&&<div style={{fontSize:12,color:HD.dim,fontStyle:"italic"}}>Nothing out. Everyone answered. Refreshing, honestly.</div>}
-        {pendingRev.map(([tok,r])=>{const age=Math.floor((Date.now()-new Date(r.sentAt).getTime())/864e5);
-          return<div key={tok} style={{display:"flex",gap:10,alignItems:"baseline",padding:"6px 0",borderBottom:"1px solid rgba(38,38,46,.4)",fontSize:12.5}}>
-            <span style={{flex:"none",width:86,fontSize:10.5,fontWeight:800,color:age>=3?HD.rose:HD.dim}}>{dndFd(r.sentAt)}</span>
-            <span style={{flex:1,color:HD.bone}}>Review · <b>{r.assetLabel||r.assetType}</b> — {r.campName}{age>=3?<b style={{color:HD.rose}}> · {age}d, no answer</b>:null}</span>
-          </div>})}
-        {secH("In — answered, already applied",HD.soul)}
-        {answered.length===0&&<div style={{fontSize:12,color:HD.dim,fontStyle:"italic"}}>No verdicts yet.</div>}
-        {answered.map(([tok,r])=><div key={tok} style={{display:"flex",gap:10,alignItems:"baseline",padding:"6px 0",borderBottom:"1px solid rgba(38,38,46,.4)",fontSize:12.5}}>
-          <span style={{flex:"none",width:86,fontSize:10.5,fontWeight:800,color:HD.dim}}>{dndFd(r.respondedAt)}</span>
-          <span style={{flex:1,color:HD.bone}}><b style={{color:r.status==="approved"?HD.soul:HD.rose}}>{r.status==="approved"?"✓ Approved":"✏ Changes"}</b> — {r.assetLabel||r.assetType} · {r.campName}{r.feedback?<i style={{color:HD.smoke}}> · “{r.feedback}”</i>:null}</span>
-        </div>)}
-        {secH("The paper trail — every send, stamped",HD.lilac)}
-        {dndLog.slice(0,14).map(l=><div key={l.id} style={{display:"flex",gap:10,alignItems:"baseline",padding:"5px 0",borderBottom:"1px solid rgba(38,38,46,.35)",fontSize:12}}>
-          <span style={{flex:"none",width:86,fontSize:10,fontWeight:800,color:HD.dim}}>{dndFd(l.at)}</span>
-          <span style={{flex:"none",fontSize:9.5,fontWeight:800,textTransform:"uppercase",letterSpacing:1,color:HD.flame,width:72}}>{l.kind}</span>
-          <span style={{flex:1,color:HD.smoke,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.subject} → {l.to}</span>
-        </div>)}
-        {dndLog.length===0&&<div style={{fontSize:12,color:HD.dim,fontStyle:"italic"}}>Nothing sent yet from this wing.</div>}
-        {secH("Addresses — people are settings, never schema",HD.flame)}
-        <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-          <div style={{flex:"1 1 200px"}}><label style={flab}>Creative Ops</label><input value={hubCfg.creativeOpsEmail||""} onChange={e=>saveCfg({creativeOpsEmail:e.target.value})} placeholder="creativeops@…" style={{...inp,width:"100%"}}/></div>
-          <div style={{flex:"1 1 200px"}}><label style={flab}>SEO / Web</label><input value={hubCfg.seoEmail||""} onChange={e=>saveCfg({seoEmail:e.target.value})} placeholder="seo@…" style={{...inp,width:"100%"}}/></div>
-          <div style={{flex:"1 1 200px"}}><label style={flab}>Jessica (rollups &amp; recaps)</label><input value={hubCfg.jessicaEmail||""} onChange={e=>saveCfg({jessicaEmail:e.target.value})} placeholder="jessica@…" style={{...inp,width:"100%"}}/></div>
-        </div>
-        <div style={{marginTop:10}}>
-          <label style={flab}>Merch — default owner</label>
-          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-            <input value={merchDef.person||""} onChange={e=>saveMerchRole("default",{person:e.target.value})} placeholder="Hazel" style={{...inp,width:140}}/>
-            <input value={merchDef.email||""} onChange={e=>saveMerchRole("default",{email:e.target.value})} placeholder="email" style={{...inp,flex:1,minWidth:180}}/>
-          </div>
-          <div style={{fontSize:10.5,color:HD.dim,margin:"8px 0 4px"}}>Per-brand overrides — brand managers pop up (Victoria Tuttle for Keches, and whoever's next):</div>
-          {BRANDS.map(b=>{const cur=((hubCfg.merch||{}).byBrand||{})[b.name]||{};
-            return<div key={b.code} style={{display:"flex",gap:8,alignItems:"center",marginBottom:4}}>
-              <span style={{fontSize:10.5,fontWeight:800,color:b.color,width:130,flex:"none"}}>{b.name}</span>
-              <input value={cur.person||""} onChange={e=>saveMerchRole(b.name,{person:e.target.value})} placeholder="(default)" style={{...inp,width:130,fontSize:11}}/>
-              <input value={cur.email||""} onChange={e=>saveMerchRole(b.name,{email:e.target.value})} placeholder="email" style={{...inp,flex:1,fontSize:11}}/>
-            </div>})}
-        </div>
-      </div>;
-    };
-
-    // ═══ INTAKE ═══
-    const Intake=()=>{
-      const bMarkets=(((BRANDS.find(b=>b.name===dnc.brand)||{}).markets)||[]).map(mm=>DM[mm]||mm);
-      const pill=(on,c)=>({border:"1px solid "+(on?(c||HD.flame):HD.bd),borderRadius:99,background:on?"rgba(74,200,232,.08)":"none",color:on?(c||HD.flame):HD.dim,fontSize:11,fontWeight:700,cursor:"pointer",padding:"5px 12px"});
-      return<div>
-        <div style={{...serif,fontSize:26,fontWeight:700,color:HD.bone}}>A deal is born</div>
-        <div style={{...serif,fontStyle:"italic",color:HD.lilac,fontSize:13.5,margin:"4px 0 14px"}}>{dndPick(DND_QUIP.intake)} Three doors in — whichever it walks through, the dates compute and the tripwires arm.</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-          <div style={{border:"1px solid rgba(212,160,64,.45)",borderRadius:10,padding:13,background:"rgba(6,6,9,.4)"}}>
-            <div style={{fontSize:12.5,fontWeight:800,color:HD.gold,marginBottom:5}}>From a contract — the fine print, read for you</div>
-            <textarea value={contractText} onChange={e=>setContractText(e.target.value)} placeholder="Paste the contract / media plan / kickoff email…" style={{...inp,width:"100%",minHeight:54,resize:"vertical",fontSize:11.5}}/>
-            <div style={{display:"flex",gap:8,marginTop:6,alignItems:"center"}}>
-              <label style={mini(HD.gold)}>Drop PDF<input type="file" accept="application/pdf" style={{display:"none"}} onChange={e=>contractPdf(e.target.files&&e.target.files[0])}/></label>
-              <button style={mini(HD.gold)} disabled={parsing} onClick={parseContract}>{parsing?"Reading…":"Read the fine print →"}</button>
-              <span style={{fontSize:10,color:HD.dim}}>fills the form — you check, you don't type</span>
-            </div>
-          </div>
-          <div style={{border:"1px solid rgba(74,200,232,.45)",borderRadius:10,padding:13,background:"rgba(6,6,9,.4)"}}>
-            <div style={{fontSize:12.5,fontWeight:800,color:HD.flame,marginBottom:5}}>From Notion — the pipe</div>
-            <div style={{fontSize:11.5,color:HD.smoke,lineHeight:1.55}}>The 2026 slate flows in on its own every 15 minutes and updates in place. A blank in Notion never erases a date set here. Nothing to do — that's the point.</div>
-            <div style={{fontSize:10.5,color:HD.dim,marginTop:8}}>{flights.filter(f=>f.notionId).length} deals carry Notion ids · form entries below also file themselves INTO Notion</div>
-          </div>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
-          <div style={{gridColumn:"span 2"}}><label style={flab}>Deal / campaign</label><input value={dnc.name} onChange={e=>setDnc(p=>({...p,name:e.target.value}))} style={{...inp,width:"100%"}}/></div>
-          <div><label style={flab}>Brand</label><select value={dnc.brand} onChange={e=>setDnc(p=>({...p,brand:e.target.value,markets:[]}))} style={{...inp,width:"100%"}}>{BRANDS.map(b=><option key={b.code} value={b.name}>{b.name}</option>)}</select></div>
-          <div><label style={flab}>Requested by</label><input value={dnc.requestedBy} onChange={e=>setDnc(p=>({...p,requestedBy:e.target.value}))} placeholder="brand manager" style={{...inp,width:"100%"}}/></div>
-          <div style={{gridColumn:"span 2"}}><label style={flab}>Markets — Doom knows {dnc.brand}'s DMAs</label>
-            <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{[...new Set([...dnc.markets,...bMarkets])].map(mn=>{const on=dnc.markets.includes(mn);
-              return<button key={mn} onClick={()=>setDnc(p=>({...p,markets:on?p.markets.filter(x=>x!==mn):[...p.markets,mn]}))} style={pill(on,HD.soul)}>{mn}{on?" ✓":""}</button>})}</div>
-          </div>
-          <div><label style={flab}>Flight start</label><input type="date" value={dnc.flightStart} onChange={e=>setDnc(p=>({...p,flightStart:e.target.value}))} style={{...inp,width:"100%"}}/></div>
-          <div><label style={flab}>Flight end</label><input type="date" value={dnc.flightEnd} onChange={e=>setDnc(p=>({...p,flightEnd:e.target.value}))} style={{...inp,width:"100%"}}/></div>
-          <div><label style={flab}>Package due <span style={{color:HD.gold}}>(blank = T−7)</span></label><input type="date" value={dnc.trafficDue} onChange={e=>setDnc(p=>({...p,trafficDue:e.target.value}))} style={{...inp,width:"100%",borderColor:"rgba(212,160,64,.5)"}}/></div>
-          <div><label style={flab}>Cost $</label><input value={dnc.cost} onChange={e=>setDnc(p=>({...p,cost:e.target.value}))} style={{...inp,width:"100%"}}/></div>
-          <div style={{gridColumn:"span 2"}}><label style={flab}>Stations / outlets · units</label><input value={dnc.stations} onChange={e=>setDnc(p=>({...p,stations:e.target.value}))} style={{...inp,width:"100%"}}/></div>
-          <div><label style={flab}>Partner / vendor</label><input value={dnc.partner} onChange={e=>setDnc(p=>({...p,partner:e.target.value}))} style={{...inp,width:"100%"}}/></div>
-          <div><label style={flab}>Contact (gets the package)</label><input value={dnc.contact} onChange={e=>setDnc(p=>({...p,contact:e.target.value}))} placeholder="name · email" style={{...inp,width:"100%"}}/></div>
-          <div style={{gridColumn:"span 4"}}><label style={flab}>Promo obligations — mentions · booth · tickets · added value</label><input value={dnc.promoObligations} onChange={e=>setDnc(p=>({...p,promoObligations:e.target.value}))} style={{...inp,width:"100%"}}/></div>
-        </div>
-        <div style={{marginTop:12}}><label style={flab}>Channels — each one asks its own questions</label>
-          <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{DND_CHANNELS.map(ch=>{const on=dnc.channels.includes(ch);
-            return<button key={ch} onClick={()=>setDnc(p=>({...p,channels:on?p.channels.filter(x=>x!==ch):[...p.channels,ch]}))} style={pill(on)}>{ch}</button>})}</div>
-          {dnc.channels.map(ch=><div key={ch} style={{display:"flex",gap:8,alignItems:"center",marginTop:6}}>
-            <span style={{fontSize:10.5,fontWeight:800,color:HD.flame,width:110,flex:"none"}}>{ch} →</span>
-            <input value={dnc.channelDetail[ch]||""} onChange={e=>setDnc(p=>({...p,channelDetail:{...p.channelDetail,[ch]:e.target.value}}))} placeholder={DND_CH_HINT[ch]} style={{...inp,flex:1,fontSize:11.5}}/>
-          </div>)}
-        </div>
-        <div style={{marginTop:10}}><label style={flab}>Spot lengths &amp; other needs</label>
-          <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-            {[":15",":30",":60","Host Read"].map(sp=>{const on=dnc.spots.includes(sp);
-              return<button key={sp} onClick={()=>setDnc(p=>({...p,spots:on?p.spots.filter(x=>x!==sp):[...p.spots,sp]}))} style={pill(on,HD.gold)}>{sp}</button>})}
-            {["Merch","Pixel","Tag","Social video"].map(x=>{const on=dnc.extras.includes(x);
-              return<button key={x} onClick={()=>setDnc(p=>({...p,extras:on?p.extras.filter(y=>y!==x):[...p.extras,x]}))} style={pill(on,HD.lilac)}>{x}</button>})}
-          </div>
-        </div>
-        <div style={{marginTop:10}}><label style={flab}>Notes / creative direction</label><input value={dnc.desc} onChange={e=>setDnc(p=>({...p,desc:e.target.value}))} placeholder="tone · mandatories · what worked before" style={{...inp,width:"100%"}}/></div>
-        <div style={{display:"flex",gap:12,alignItems:"center",marginTop:16}}>
-          <label style={{fontSize:11.5,color:HD.smoke,display:"flex",alignItems:"center",gap:6,cursor:"pointer"}}><input type="checkbox" checked={dnc.toNotion} onChange={e=>setDnc(p=>({...p,toNotion:e.target.checked}))}/>also file it into Notion</label>
-          <span style={{flex:1,fontSize:10.5,color:HD.dim,fontStyle:"italic"}}>Dates compute backward, known needs seed in as proposals, tripwires arm. What it actually needs stays your call.</span>
-          <button onClick={createFlight} style={{background:"linear-gradient(135deg,"+HD.flame+",#2a9fc0)",border:"none",borderRadius:7,color:"#0b0b16",fontSize:13,fontWeight:800,padding:"10px 20px",cursor:"pointer"}}>Make the deal — and arm the tripwires</button>
-        </div>
-      </div>;
-    };
-
-    // ═══ SHELL ═══
-    const panel=(w,body)=><React.Fragment>
-      <div onClick={close} style={{position:"fixed",inset:0,background:"rgba(5,5,12,.78)",backdropFilter:"blur(3px)",zIndex:40}}/>
-      <div style={{position:"fixed",top:0,bottom:0,right:0,width:w,maxWidth:"95vw",background:"linear-gradient(165deg,#101014,#0a0a0e 70%,#101014)",borderLeft:"1px solid "+HD.bd,boxShadow:"-18px 0 60px rgba(0,0,0,.75)",zIndex:50,overflowY:"auto",padding:"24px 28px 40px"}}>
-        <button onClick={close} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:HD.smoke,fontSize:20,fontWeight:800,cursor:"pointer"}}>×</button>
-        {body}
-      </div>
-    </React.Fragment>;
-    return<div style={{minHeight:"100vh",background:"radial-gradient(1100px 480px at 76% -12%,rgba(74,200,232,.09),transparent 60%),radial-gradient(900px 420px at 10% 108%,rgba(255,140,66,.06),transparent 60%),linear-gradient(168deg,#040406 0%,#0a0a10 45%,#040406 100%)",color:HD.bone,fontFamily:"'DM Sans',sans-serif",fontSize:14}}>
-      <style>{"@keyframes ddflick{0%,100%{opacity:1;transform:scaleY(1)}42%{opacity:.72;transform:scaleY(.93)}55%{opacity:.95;transform:scaleY(1.02)}68%{opacity:.8;transform:scaleY(.96)}}@keyframes ddpulse{0%,100%{box-shadow:0 0 16px rgba(232,90,122,.22)}50%{box-shadow:0 0 26px rgba(232,90,122,.42)}}"}</style>
-      <div style={{display:"flex",alignItems:"center",gap:16,padding:"14px 26px 11px",borderBottom:"none"}}>
-        <svg width="22" height="30" viewBox="0 0 22 30" style={{animation:"ddflick 2.8s infinite",transformOrigin:"50% 100%",filter:"drop-shadow(0 0 10px rgba(74,200,232,.7))",flex:"none"}}>
-          <path d="M11 1 C13 7 19 9 19 17 A8 8 0 0 1 3 17 C3 12 7 10 7 5 C9 8 11 8 11 1 Z" fill="#123344" stroke="#4AC8E8" strokeWidth="1.4"/>
-          <path d="M11 11 C12 14 15 15 15 19 A4 4 0 0 1 7 19 C7 16.5 9.5 15.5 9.5 12.5 C10.2 14 11 13.5 11 11 Z" fill="#4AC8E8" opacity=".85"/>
-        </svg>
-        <div>
-          <div style={{...serif,fontSize:24,fontWeight:700,background:"linear-gradient(90deg,"+HD.bone+" 10%,"+HD.flame+" 70%,#7FDCF5)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",whiteSpace:"nowrap",filter:"drop-shadow(0 0 14px rgba(74,200,232,.35))"}}>Mayhem &amp; Marketing Ops</div>
-          <div style={{fontSize:8.5,letterSpacing:3,color:HD.lilac,textTransform:"uppercase",marginTop:-2}}>The Underworld Office · Atticor Marketing Ops</div>
-        </div>
-        <div style={{...serif,fontStyle:"italic",color:HD.lilac,fontSize:15.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textShadow:"0 0 18px rgba(196,160,200,.25)"}}>{dndPick(DND_QUIP.deck)}</div>
-        <div style={{flex:1}}/>
-        <div style={{display:"flex",gap:3,background:"rgba(6,6,9,.7)",border:"1px solid "+HD.bd,borderRadius:99,padding:3}}>
-          <button onClick={()=>setDndView("deck")} style={{border:"none",borderRadius:99,fontSize:11,fontWeight:800,padding:"5px 13px",cursor:"pointer",background:dndView==="deck"?"linear-gradient(135deg,"+HD.flame+",#2a9fc0)":"none",color:dndView==="deck"?"#0b0b16":HD.smoke}}>The deck</button>
-          <button onClick={()=>setDndView("month")} style={{border:"none",borderRadius:99,fontSize:11,fontWeight:800,padding:"5px 13px",cursor:"pointer",background:dndView==="month"?"linear-gradient(135deg,"+HD.flame+",#2a9fc0)":"none",color:dndView==="month"?"#0b0b16":HD.smoke}}>The month</button>
-        </div>
-        <button style={mini()} onClick={()=>ovOpen({t:"record"})}>◂ The Record</button>
-        <button style={mini()} onClick={()=>ovOpen({t:"registry"})}>The Registry</button>
-        <button style={mini()} onClick={()=>ovOpen({t:"dispatch"})}>Dispatch</button>
-        <button onClick={()=>ovOpen({t:"intake"})} style={{background:"linear-gradient(135deg,"+HD.flame+",#2a9fc0)",border:"none",borderRadius:7,color:"#0b0b16",fontSize:12.5,fontWeight:800,padding:"9px 16px",cursor:"pointer",boxShadow:"0 3px 14px rgba(74,200,232,.25)"}}>+ New deal</button>
-        <button onClick={()=>navigateHash("")} style={{background:"none",border:"none",color:HD.smoke,fontSize:11.5,fontWeight:700,cursor:"pointer"}}>← Doom</button>
-      </div>
-      <div style={{height:1,background:"linear-gradient(90deg,rgba(74,200,232,.55),rgba(38,38,46,.45) 35%,rgba(38,38,46,.45) 70%,rgba(255,140,66,.4))"}}/>
-      <div style={{padding:"16px 26px 40px"}}>
-        {dndView==="deck"?Deck():MonthView()}
-      </div>
-      {dndOv&&dndOv.t==="dossier"&&panel(700,Dossier(dndOv.fid))}
-      {dndOv&&dndOv.t==="registry"&&panel(860,Registry())}
-      {dndOv&&dndOv.t==="record"&&panel(660,RecordPg())}
-      {dndOv&&dndOv.t==="dispatch"&&panel(660,Dispatch())}
-      {dndOv&&dndOv.t==="intake"&&panel(880,Intake())}
+      </React.Fragment>}
       {dndPreview&&<React.Fragment>
-        <div style={{position:"fixed",inset:0,background:"rgba(5,5,12,.82)",zIndex:60}} onClick={()=>setDndPreview(null)}/>
-        <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:720,maxWidth:"94vw",maxHeight:"88vh",overflowY:"auto",background:"linear-gradient(150deg,#101014,#0a0a0e)",border:"1px solid "+HD.bd,borderRadius:14,boxShadow:"0 24px 80px rgba(0,0,0,.85)",zIndex:61,padding:"22px 26px"}}>
+        <div style={{position:"fixed",inset:0,background:"rgba(5,5,12,.82)",zIndex:80}} onClick={()=>setDndPreview(null)}/>
+        <div className="mphades" style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:720,maxWidth:"94vw",maxHeight:"88vh",overflowY:"auto",background:"linear-gradient(150deg,#101014,#0a0a0e)",border:"1px solid "+HD.bd,borderRadius:14,boxShadow:"0 24px 80px rgba(0,0,0,.85)",zIndex:81,padding:"22px 26px"}}>
           <div style={{...serif,fontSize:20,fontWeight:700,color:HD.bone,marginBottom:8}}>This is the exact email. Nothing has been sent.</div>
           <div style={{fontSize:12,color:HD.smoke,marginBottom:2}}><b style={{color:HD.bone}}>To:</b> {dndPreview.needsTo?<input value={dndPreview.to||""} onChange={e=>setDndPreview(p=>({...p,to:e.target.value,needsTo:false}))} placeholder="who gets it?" style={{...inp,fontSize:12,padding:"3px 8px"}}/>:dndPreview.to} · <b style={{color:HD.bone}}>CC:</b> emm.caban@atticor.ai</div>
           {dndPreview.needsTo&&<input autoFocus value={dndPreview.to||""} onChange={e=>setDndPreview(p=>({...p,to:e.target.value}))} placeholder="email address for this send" style={{...inp,width:"100%",margin:"6px 0"}}/>}
@@ -12615,8 +13281,8 @@ Rules:
         </div>
       </React.Fragment>}
       {dndMint&&<React.Fragment>
-        <div style={{position:"fixed",inset:0,background:"rgba(5,5,12,.82)",zIndex:60}} onClick={()=>setDndMint(null)}/>
-        <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:520,maxWidth:"94vw",background:"linear-gradient(150deg,#101014,#0a0a0e)",border:"1px solid "+HD.bd,borderRadius:14,zIndex:61,padding:"22px 26px"}}>
+        <div style={{position:"fixed",inset:0,background:"rgba(5,5,12,.82)",zIndex:80}} onClick={()=>setDndMint(null)}/>
+        <div className="mphades" style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:520,maxWidth:"94vw",background:"linear-gradient(150deg,#101014,#0a0a0e)",border:"1px solid "+HD.bd,borderRadius:14,zIndex:81,padding:"22px 26px"}}>
           <div style={{...serif,fontSize:20,fontWeight:700,color:HD.bone}}>Register as ISCI</div>
           <div style={{fontSize:11.5,color:HD.smoke,margin:"6px 0 12px"}}>Doom mints by its own conventions — pre-filled from the deal. Confirm, don't type. Provenance rides along.</div>
           <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
@@ -12632,7 +13298,7 @@ Rules:
         </div>
       </React.Fragment>}
       {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#101014",color:HD.bone,padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.5)",zIndex:9999,border:"1px solid "+HD.bd}}>{toast}</div>}
-    </div>;
+    </React.Fragment>;
   };
 
   // ── NAV ───────────────────────────────────────────────
