@@ -3940,20 +3940,28 @@ const App=()=>{
     const JPP=window.jspdf&&window.jspdf.jsPDF;
     if(!JPP){notify("PDF library not loaded — try again in a moment");return}
     const mktOf=(c)=>(typeof DMA_MARKET!=="undefined"&&DMA_MARKET[c])||(typeof DM!=="undefined"&&DM[c])||c;
-    const allDmas=[...new Set(pool.map(r=>r.dma||"—"))];
-    // rank titles by how many DMAs they cover (ties → lowest sequence number
-    // first), then keep the top 4 — the matched rotation set
+    // creative download link: registry fileUrl wins, else the L&R creative map
+    const linkOf=(r)=>r.fileUrl||((typeof LR_CREATIVE_LINKS!=="undefined"&&LR_CREATIVE_LINKS[r.code])||"");
+    // rank titles: most markets WITH a download link first, then total market
+    // coverage, then lowest sequence number — keep the top 4 as the matched
+    // rotation set
     const byTitle={};
-    pool.forEach(r=>{const t=r.title||r.code;byTitle[t]=byTitle[t]||{dmas:new Set(),minSeq:1e9};byTitle[t].dmas.add(r.dma||"—");
-      const m=(r.code||"").match(/(\d{3})T?$/);const seq=m?+m[1]:999;if(seq<byTitle[t].minSeq)byTitle[t].minSeq=seq});
-    const picked=Object.entries(byTitle).sort((a,b)=>b[1].dmas.size-a[1].dmas.size||a[1].minSeq-b[1].minSeq).slice(0,4).map(e=>e[0]);
-    const rows=pool.filter(r=>picked.includes(r.title||r.code));
-    const fullMatch=picked.every(t=>byTitle[t].dmas.size===allDmas.length);
-    // group by DMA, alphabetical; codes sorted within each market
+    pool.forEach(r=>{const t=r.title||r.code;const e=byTitle[t]=byTitle[t]||{dmas:new Set(),linked:new Set(),minSeq:1e9};
+      e.dmas.add(r.dma||"—");if(linkOf(r))e.linked.add(r.dma||"—");
+      const m=(r.code||"").match(/(\d{3})T?$/);const seq=m?+m[1]:999;if(seq<e.minSeq)e.minSeq=seq});
+    const picked=Object.entries(byTitle).sort((a,b)=>b[1].linked.size-a[1].linked.size||b[1].dmas.size-a[1].dmas.size||a[1].minSeq-b[1].minSeq).slice(0,4).map(e=>e[0]);
+    // group by DMA, alphabetical; matched titles first, then fill each market
+    // to 4 from its own inventory (linked spots before unlinked)
     const G={};
-    rows.forEach(r=>{const k=r.dma||"—";(G[k]=G[k]||[]).push(r)});
+    pool.forEach(r=>{const k=r.dma||"—";(G[k]=G[k]||[]).push(r)});
     const dmas=Object.keys(G).sort((a,b)=>a.localeCompare(b));
-    dmas.forEach(d=>G[d].sort((a,b)=>a.code.localeCompare(b.code)));
+    dmas.forEach(d=>{
+      const inSet=G[d].filter(r=>picked.includes(r.title||r.code)).sort((a,b)=>a.code.localeCompare(b.code));
+      const rest=G[d].filter(r=>!picked.includes(r.title||r.code)).sort((a,b)=>(linkOf(b)?1:0)-(linkOf(a)?1:0)||a.code.localeCompare(b.code));
+      G[d]=inSet.concat(rest).slice(0,4)});
+    const rows=dmas.reduce((a,d)=>a.concat(G[d]),[]);
+    const linkedCount=rows.filter(r=>linkOf(r)).length;
+    const fullMatch=picked.every(t=>byTitle[t].dmas.size===dmas.length);
     const cleanTitle=(t)=>String(t||"").replace(/_15$/,"");
     const pdf=new JPP("p","mm","a4");
     const PW=210,PH=297,MX=16,RIGHT=PW-MX;
@@ -3971,14 +3979,14 @@ const App=()=>{
     y+=6.5;pdf.setFont("helvetica","normal");pdf.setFontSize(10);tc(SUB);
     pdf.text((fullMatch?"Matched rotation — the same "+picked.length+" creatives in every market":"Top "+picked.length+" creatives per market (widest coverage)")+" · English only · by DMA, alphabetical",MX,y);
     y+=5.5;pdf.setFontSize(9);
-    pdf.text(rows.length+" ISCIs across "+dmas.length+" markets      "+new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}),MX,y);
+    pdf.text(rows.length+" ISCIs across "+dmas.length+" markets · "+linkedCount+" with creative download links      "+new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}),MX,y);
     y+=5;dc(RULE);pdf.setLineWidth(0.4);pdf.line(MX,y,RIGHT,y);y+=7;
     // rotation set legend
     pdf.setFont("helvetica","bold");pdf.setFontSize(8);tc(SUB);pdf.text("ROTATION SET",MX,y);
     pdf.setFont("helvetica","normal");pdf.setFontSize(10);tc(INK);
     pdf.text(picked.map(cleanTitle).join("  ·  "),MX+30,y);
     y+=4;dc(RULE);pdf.setLineWidth(0.4);pdf.line(MX,y,RIGHT,y);y+=9;
-    const TITLEX=68,CATX=RIGHT-2;
+    const TITLEX=68,CATX=126,FILEX=168,LINKBLUE=[21,101,192];
     dmas.forEach(d=>{
       const list=G[d];
       check(20);
@@ -3990,7 +3998,7 @@ const App=()=>{
       // column header
       fc(HEAD);pdf.rect(MX,y-4,RIGHT-MX,6.2,"F");
       pdf.setFont("helvetica","bold");pdf.setFontSize(8);tc(SUB);
-      pdf.text("ISCI CODE",MX+2,y);pdf.text("CREATIVE TITLE",TITLEX,y);pdf.text("CATEGORY",CATX,y,{align:"right"});
+      pdf.text("ISCI CODE",MX+2,y);pdf.text("CREATIVE TITLE",TITLEX,y);pdf.text("CATEGORY",CATX,y);pdf.text("CREATIVE FILE",FILEX,y);
       y+=6.5;
       list.forEach(r=>{
         check(7);
@@ -3999,7 +4007,10 @@ const App=()=>{
         pdf.setFont("helvetica","normal");pdf.setFontSize(10);tc(INK);
         pdf.text(cleanTitle(r.title),TITLEX,y);
         pdf.setFontSize(9);tc(SUB);
-        pdf.text(r.category||r.caseType||"—",CATX,y,{align:"right"});
+        pdf.text(r.category||r.caseType||"—",CATX,y);
+        const url=linkOf(r);
+        if(url){pdf.setFont("helvetica","bold");pdf.setFontSize(9);tc(LINKBLUE);pdf.textWithLink("Download",FILEX,y,{url:url});}
+        else{pdf.setFont("helvetica","italic");pdf.setFontSize(8.5);tc(SUB);pdf.text("no file on record",FILEX,y);}
         y+=4;dc(RULE);pdf.setLineWidth(0.2);pdf.line(MX,y,RIGHT,y);y+=4;
       });
       y+=6;
@@ -4009,7 +4020,7 @@ const App=()=>{
     for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFont("helvetica","normal");pdf.setFontSize(7.5);tc(SUB);
       pdf.text("Atticor · Lerner & Rowe TV :15 ISCI List",MX,PH-8);pdf.text("Page "+i+" of "+n,RIGHT,PH-8,{align:"right"});}
     pdf.save("Lerner_Rowe_TV15_ISCI_List_"+new Date().toISOString().slice(0,10)+".pdf");
-    log("L&R TV :15 ISCI List","downloaded · "+picked.length+" matched creatives · "+rows.length+" ISCIs · "+dmas.length+" markets · no Spanish, no MythBusters");
+    log("L&R TV :15 ISCI List","downloaded · "+picked.length+" matched creatives · "+rows.length+" ISCIs · "+dmas.length+" markets · "+linkedCount+" download links · no Spanish, no MythBusters");
     notify("L&R TV :15 list downloaded — "+picked.map(cleanTitle).join(", ")+" in "+dmas.length+" markets");
   };
 
@@ -13497,7 +13508,7 @@ Rules:
       {/* Reference downloads — professional lists built live from the registry */}
       <div style={{marginBottom:10,padding:"10px 14px",borderRadius:6,border:"1px dashed #2FBF7155",background:"rgba(47,191,113,.07)",fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
         <span style={{fontWeight:700,color:"#2FBF71"}}>⬇ Reference Downloads</span>
-        <span style={{flex:1,minWidth:200}}>Lerner &amp; Rowe TV :15 ISCI list — the 4 creatives that match across the most markets, grouped by DMA in alphabetical order. No Spanish spots, no MythBusters. Built live from the registry, so it's always current.</span>
+        <span style={{flex:1,minWidth:200}}>Lerner &amp; Rowe TV :15 ISCI list — the 4 creatives that match across the most markets, grouped by DMA in alphabetical order, with clickable creative download links. No Spanish spots, no MythBusters. Built live from the registry, so it's always current.</span>
         <button onClick={downloadLrTv15IsciPdf} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #2FBF71",background:"#2FBF7115",color:"#2FBF71",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📄 L&amp;R TV :15 List (PDF)</button>
       </div>
       {/* Migration tools — safety net before Supabase cutover */}
