@@ -5944,10 +5944,11 @@ const App=()=>{
       w.document.write('<div class="note">'+swaps+' bulletins change to Predators creative (new vinyl, production required). All other bulletins KEEP the current It\'s Personal CK — do not retraffic.</div>');
       w.document.write('<table><tr><th style="width:56px">Panel #</th><th>Location</th><th style="width:56px">Size</th><th style="width:200px">Creative (click for file)</th><th style="width:110px">ISCI</th><th style="width:60px">Post date</th></tr>');
       statics.forEach(b=>{const pred=b.design.some(c=>/Always|Lockup/.test(c));
-        // 22841 starts 9/28 and takes over 23115's position — the SAME vinyl is
-        // relocated by Lamar, not a second production.
-        const mv=b.id==="22841";
-        w.document.write('<tr'+(pred?' style="background:#fff8e0"':'')+'><td class="mono">'+escHtml(b.id)+'</td><td>'+escHtml(b.loc||"")+'</td><td>'+escHtml(b.size)+'</td><td>'+lk(b.isci,crName(b.design))+(mv?' <span class="new">VINYL MOVED FROM #23115 — NO NEW PRODUCTION</span>':(pred?' <span class="new">NEW VINYL</span>':' <span class="keep">KEEP CURRENT</span>'))+'</td><td class="mono">'+escHtml(b.isci)+'</td><td>'+(mv?"9/28/26":(pred?"8/31/26":"—"))+'</td></tr>')});
+        // Position relocations per the Lamar master WK sheet: the SAME vinyl moves to
+        // the new panel when it starts — not a second production.
+        const MOVES={"22841":{from:"23115",date:"9/28/26"},"22322":{from:"23406",date:"11/30/26"}};
+        const mv=MOVES[b.id];
+        w.document.write('<tr'+(pred?' style="background:#fff8e0"':'')+'><td class="mono">'+escHtml(b.id)+'</td><td>'+escHtml(b.loc||"")+'</td><td>'+escHtml(b.size)+'</td><td>'+lk(b.isci,crName(b.design))+(mv?' <span class="new">VINYL MOVED FROM #'+mv.from+' — NO NEW PRODUCTION</span>':(pred?' <span class="new">NEW VINYL</span>':' <span class="keep">KEEP CURRENT</span>'))+'</td><td class="mono">'+escHtml(b.isci)+'</td><td>'+(mv?mv.date:(pred?"8/31/26":"—"))+'</td></tr>')});
       w.document.write('</table>');
       w.document.write('<div class="sec">2 — DIGITAL BULLETINS (16) · effective 8/31/26</div>');
       w.document.write('<div class="note">Three rotations. Groups 1 &amp; 2 are the standard state — each unit runs a two-ad rotation at 50/50. <b>Group 3 is the all-Predators takeover rotation: ALL 16 units run We Always Show Up + Partner Lockup (50/50)</b> — it replaces Groups 1 &amp; 2 only during the takeover dates in Section 5, then units return to their standard group.</div>');
