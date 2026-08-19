@@ -3933,8 +3933,12 @@ const App=()=>{
   // series are excluded per Emm. Built live from the ISCI registry
   // (Firestore-merged), so it always reflects current data. Lives under
   // Audit Log → Reference Downloads.
-  const downloadLrTv15IsciPdf=()=>{
+  // opts.dmas restricts to specific markets (e.g. the UA list: PHX/CHI/ABQ/LVS);
+  // opts.tag labels the header, filename, and audit entry
+  const downloadLrTv15IsciPdf=(opts)=>{
+    const O=opts||{};
     const pool=iscis.filter(i=>i.brand==="Lerner & Rowe"&&i.media==="TV"&&String(i.dur)==="15"&&i.suffix!=="O"&&i.active
+      &&(!O.dmas||O.dmas.includes(i.dma))
       &&!(i.code||"").includes("LRSP")&&!/spanish|espanol/i.test(i.title||"")&&!/mythbuster/i.test(i.title||""));
     if(!pool.length){notify("No active Lerner & Rowe TV :15 ISCIs found");return}
     const JPP=window.jspdf&&window.jspdf.jsPDF;
@@ -3976,7 +3980,7 @@ const App=()=>{
     // header
     fc(ACC);pdf.rect(0,0,PW,4,"F");
     y=22;pdf.setFont("helvetica","bold");pdf.setFontSize(19);tc(INK);
-    pdf.text("Lerner & Rowe  ·  TV :15 ISCI List",MX,y);
+    pdf.text("Lerner & Rowe  ·  TV :15 ISCI List"+(O.tag?"  —  "+O.tag:""),MX,y);
     y+=6.5;pdf.setFont("helvetica","normal");pdf.setFontSize(10);tc(SUB);
     pdf.text((fullMatch?"Matched rotation — the same "+picked.length+" creatives in every market":"Top "+picked.length+" creatives per market (widest coverage)")+" · English only · by DMA, alphabetical",MX,y);
     y+=5.5;pdf.setFontSize(9);
@@ -4020,8 +4024,8 @@ const App=()=>{
     const n=pdf.getNumberOfPages();
     for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFont("helvetica","normal");pdf.setFontSize(7.5);tc(SUB);
       pdf.text("Atticor · Lerner & Rowe TV :15 ISCI List",MX,PH-8);pdf.text("Page "+i+" of "+n,RIGHT,PH-8,{align:"right"});}
-    pdf.save("Lerner_Rowe_TV15_ISCI_List_"+new Date().toISOString().slice(0,10)+".pdf");
-    log("L&R TV :15 ISCI List","downloaded · "+picked.length+" matched creatives · "+rows.length+" ISCIs · "+dmas.length+" markets · "+linkedCount+" download links · no Spanish, no MythBusters");
+    pdf.save("Lerner_Rowe_TV15_ISCI_List_"+(O.tag?O.tag.replace(/[^A-Za-z0-9]+/g,"_")+"_":"")+new Date().toISOString().slice(0,10)+".pdf");
+    log("L&R TV :15 ISCI List"+(O.tag?" — "+O.tag:""),"downloaded · "+picked.length+" matched creatives · "+rows.length+" ISCIs · "+dmas.length+" markets · "+linkedCount+" download links · no Spanish, no MythBusters");
     notify("L&R TV :15 list downloaded — "+picked.map(cleanTitle).join(", ")+" in "+dmas.length+" markets");
   };
 
@@ -13510,7 +13514,8 @@ Rules:
       <div style={{marginBottom:10,padding:"10px 14px",borderRadius:6,border:"1px dashed #2FBF7155",background:"rgba(47,191,113,.07)",fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
         <span style={{fontWeight:700,color:"#2FBF71"}}>⬇ Reference Downloads</span>
         <span style={{flex:1,minWidth:200}}>Lerner &amp; Rowe TV :15 ISCI list — the 4 creatives that match across the most markets, grouped by DMA in alphabetical order, with clickable creative download links. No Spanish spots, no MythBusters. Built live from the registry, so it's always current.</span>
-        <button onClick={downloadLrTv15IsciPdf} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #2FBF71",background:"#2FBF7115",color:"#2FBF71",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📄 L&amp;R TV :15 List (PDF)</button>
+        <button onClick={()=>downloadLrTv15IsciPdf()} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #2FBF71",background:"#2FBF7115",color:"#2FBF71",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📄 L&amp;R TV :15 List (PDF)</button>
+        <button onClick={()=>downloadLrTv15IsciPdf({dmas:["ABQ","CHI","LVS","PHX"],tag:"UA"})} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #2FBF71",background:"#2FBF7115",color:"#2FBF71",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📄 UA — PHX · CHI · ABQ · LVS (PDF)</button>
       </div>
       {/* Migration tools — safety net before Supabase cutover */}
       <div style={{marginBottom:10,padding:"10px 14px",borderRadius:6,border:"1px dashed #D4A04055",background:"rgba(212,160,64,.07)",fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
