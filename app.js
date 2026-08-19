@@ -5916,6 +5916,59 @@ const App=()=>{
       setTrafficHistory(prev=>[{ts:recTs,est:"OOH-"+mktLabel+"-"+vendorName,brand:"Wettermark Keith",market:mktLabel,media:"OOH",buyer:"Amy Coffey",month:workMonth,flight:oPostDates,version:oVersion,comments:(oComments||"")+" | Vendor: "+vendorName,iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:grand,vendor:vendorName},...prev]);
       log("OOH Vendor Sheet",mktLabel+" · "+vendorName+" · "+grand+" boards");notify("Vendor traffic sheet — "+grand+" boards");
     };
+    // PREDS TRAFFIC INSTRUCTIONS — the Nashville × Predators campaign instruction for
+    // Lamar, generated from the live board data with clickable creative links resolved
+    // by ISCI code. Sections: statics (swap/keep), digital groups 1/2/3, digital
+    // posters, poster program, flighting, creative files. Read-only.
+    const printPredsTraffic=()=>{
+      const nsh=pops.filter(p=>p.dma==="NSH");
+      if(!nsh.length){notify("No Nashville boards loaded");return}
+      const _b=id=>String(id).replace(/-F\d+$/,"");const _sn=new Set();
+      const B=nsh.filter(p=>{const b=_b(p.boardId);if(_sn.has(b))return false;_sn.add(b);return true})
+        .map(p=>({id:_b(p.boardId).replace("NSH-LMR-",""),type:p.type,size:p.size,loc:p.location,design:Array.isArray(p.design)?p.design:(p.design?[p.design]:[]),isci:p.isci||""}));
+      const statics=B.filter(b=>b.type==="Perm Bulletin");
+      const digA=B.filter(b=>b.type==="Digital Bulletin"&&b.design.includes("We Always Show Up")).map(b=>b.id);
+      const digB=B.filter(b=>b.type==="Digital Bulletin"&&b.design.includes("Partner Lockup")).map(b=>b.id);
+      const digPost=B.filter(b=>b.type==="Digital Poster").map(b=>b.id);
+      const posters=B.filter(b=>b.type==="Poster").length;
+      const lk=(code,label)=>{const m=iscis.find(i=>i.code===code);return(m&&m.fileUrl)?('<a href="'+escHtml(oohVendorDl(m.fileUrl,m.title||code))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(label||code)+'</a>'):('<b>'+escHtml(label||code)+'</b> <span style="color:#b00">⚠ no file linked</span>')};
+      const crName=d=>d.map(c=>String(c).replace(/\s*-\s*[\d'".]+\s*x\s*[\d'".]+\s*$/,"")).join(" + ");
+      const w=window.open("","","width=1000,height=860");
+      w.document.write('<html><head><title>WK Preds Traffic — Nashville</title><style>*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:Arial,sans-serif;color:#1a1a1a;margin:26px;font-size:12px}h2{margin:0;letter-spacing:2px;text-align:center}.tag{text-align:center;font-weight:bold;color:#555;margin-bottom:10px}.h{font-size:12px;margin-bottom:2px}.h b{display:inline-block;width:150px}.amb{color:#b8860b;font-weight:bold}.red{color:#b00;font-weight:bold}.grn{color:#15803d;font-weight:bold}.sec{margin-top:14px;font-size:13px;font-weight:bold;background:#2d1f42;color:#fff;padding:6px 10px;border-radius:5px}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #ccc;padding:4px 7px;font-size:10.5px;text-align:left;vertical-align:top}th{background:#f3f3f3}.mono{font-family:monospace;font-weight:700}.new{font-size:9px;background:#b45309;color:#fff;padding:1px 4px;border-radius:3px;font-weight:800}.keep{font-size:9px;background:#15803d;color:#fff;padding:1px 4px;border-radius:3px;font-weight:800}.note{font-size:10.5px;color:#444;margin:4px 0;background:#fef3c7;padding:6px 9px;border-radius:4px}.sig{margin-top:24px;display:flex;gap:60px}.sig div{flex:1;border-top:2px solid #000;padding-top:4px;font-weight:bold;font-size:12px}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}@media print{body{margin:14px}.dl{display:none}tr{page-break-inside:avoid}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<h2>WETTERMARK KEITH</h2><div class="tag">PERSONAL INJURY LAWYERS — OOH TRAFFIC INSTRUCTIONS</div>');
+      const hd=(l,v,c)=>w.document.write('<div class="h"><b>'+l+':</b> <span'+(c?' class="'+c+'"':'')+'>'+escHtml(v)+'</span></div>');
+      hd("Agency","WK Advertising Solutions");hd("Client","Wettermark Keith");hd("Vendor","Lamar — Nashville","amb");hd("Market","Nashville, TN");hd("Buyer","Amy Coffey","red");hd("Media","OOH — Out of Home","red");hd("Campaign","WK × Nashville Predators partnership — launch 8/31/26","grn");
+      const swaps=statics.filter(b=>b.design.some(c=>/Always|Lockup/.test(c))).length;
+      w.document.write('<div class="sec">1 — STATIC BULLETINS ('+statics.length+') · post 8/31/26</div>');
+      w.document.write('<div class="note">'+swaps+' bulletins change to Predators creative (new vinyl, production required). All other bulletins KEEP the current It\'s Personal CK — do not retraffic.</div>');
+      w.document.write('<table><tr><th style="width:56px">Panel #</th><th>Location</th><th style="width:56px">Size</th><th style="width:200px">Creative (click for file)</th><th style="width:110px">ISCI</th><th style="width:60px">Post date</th></tr>');
+      statics.forEach(b=>{const pred=b.design.some(c=>/Always|Lockup/.test(c));
+        w.document.write('<tr'+(pred?' style="background:#fff8e0"':'')+'><td class="mono">'+escHtml(b.id)+'</td><td>'+escHtml(b.loc||"")+'</td><td>'+escHtml(b.size)+'</td><td>'+lk(b.isci,crName(b.design))+(pred?' <span class="new">NEW VINYL</span>':' <span class="keep">KEEP CURRENT</span>')+'</td><td class="mono">'+escHtml(b.isci)+'</td><td>'+(pred?"8/31/26":"—")+'</td></tr>')});
+      w.document.write('</table>');
+      w.document.write('<div class="sec">2 — DIGITAL BULLETINS (16) · effective 8/31/26</div>');
+      w.document.write('<div class="note">Three rotations. Groups 1 &amp; 2 are the standard state — each unit runs a two-ad rotation at 50/50. <b>Group 3 is the all-Predators takeover rotation: ALL 16 units run We Always Show Up + Partner Lockup (50/50)</b> — it replaces Groups 1 &amp; 2 only during the takeover dates in Section 5, then units return to their standard group.</div>');
+      w.document.write('<table><tr><th style="width:230px">Rotation (click creative for file)</th><th>Units</th></tr>');
+      w.document.write('<tr><td><b>Group 1 (standard):</b> '+lk("NSHWK26DB007O","It\'s Personal CK")+' + '+lk("NSHWK26DB010O","We Always Show Up")+' (50/50)</td><td class="mono">'+digA.join(", ")+'</td></tr>');
+      w.document.write('<tr><td><b>Group 2 (standard):</b> '+lk("NSHWK26DB007O","It\'s Personal CK")+' + '+lk("NSHWK26DB009O","Partner Lockup")+' (50/50)</td><td class="mono">'+digB.join(", ")+'</td></tr>');
+      w.document.write('<tr style="background:#fff8e0"><td><b>Group 3 (takeover):</b> '+lk("NSHWK26DB010O","We Always Show Up")+' + '+lk("NSHWK26DB009O","Partner Lockup")+' (50/50)</td><td class="mono"><b>ALL 16 UNITS</b></td></tr></table>');
+      w.document.write('<div class="sec">3 — DIGITAL POSTERS (2) · effective 8/31/26</div>');
+      w.document.write('<table><tr><th style="width:230px">Rotation</th><th>Units</th></tr><tr><td>'+lk("NSHWK26DB008O","It\'s Personal CK")+' + '+lk("NSHWK26DB011O","Bring the Fight")+' (50/50)</td><td class="mono">'+digPost.join(", ")+'</td></tr></table>');
+      w.document.write('<div class="sec">4 — FLIGHTING (digitals &amp; posters)</div>');
+      w.document.write('<table><tr><th style="width:110px">Dates</th><th>Digital bulletins (all 16)</th><th>Digital + rotating posters</th></tr>');
+      [["8/31 (launch day)","<b>We Always Show Up + Partner Lockup only</b> (DB010O + DB009O)","<b>Bring the Fight only</b> (DB011O / SP013O)"],["9/1 – 9/19","Group rotations per Section 2","50/50 split per Sections 3 &amp; 5"],["9/20 – 9/26","<b>We Always Show Up + Partner Lockup only</b>","<b>Bring the Fight only</b> (digital posters)"],["9/27 – 9/30","Group rotations","50/50 split"],["10/1 – 10/8","<b>We Always Show Up + Partner Lockup only</b>","<b>Bring the Fight only</b> (digital posters)"],["10/8 – 10/31","Group rotations","50/50 split"]].forEach(r=>w.document.write('<tr><td class="mono">'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>'));
+      w.document.write('</table>');
+      w.document.write('<div class="sec">5 — ROTATING POSTER PROGRAM ('+posters+' faces) · next posting cycle from 8/31/26</div>');
+      w.document.write('<div class="note">Split the program as evenly as possible: half the faces '+lk("NSHWK26SP012O","It\'s Personal CK")+' (keep current), half '+lk("NSHWK26SP013O","Bring the Fight")+' (new posting). Please spread the two designs evenly across the market as faces rotate.</div>');
+      w.document.write('<div class="sec">6 — CREATIVE FILES (click to download)</div>');
+      w.document.write('<table><tr><th style="width:130px">ISCI</th><th>Creative</th><th>Format / Spec</th></tr>');
+      [["NSHWK26SB025O","Always Show Up","Static Bulletin 14\'x48\' — vinyl"],["NSHWK26SB026O","Lockup","Static Bulletin 14\'x48\' — vinyl"],["NSHWK26SP013O","Bring the Fight","Static Poster 10\'6x22\'9"],["NSHWK26DB009O","Partner Lockup","Digital Bulletin 400x1400"],["NSHWK26DB010O","We Always Show Up","Digital Bulletin 400x1400"],["NSHWK26DB011O","Bring the Fight","Digital Poster 400x840"]].forEach(r=>w.document.write('<tr><td class="mono">'+lk(r[0],r[0])+'</td><td>'+escHtml(r[1])+'</td><td>'+escHtml(r[2])+'</td></tr>'));
+      w.document.write('</table><div class="note">Existing It\'s Personal CK creative (NSHWK26DB007O / DB008O / SP012O / SB023O) is already on file with Lamar — no re-delivery needed.</div>');
+      w.document.write('<div class="sig"><div>Accepted by:</div><div>Date:</div></div>');
+      w.document.write('<div class="note" style="font-weight:bold">Please return signed Traffic Instructions or confirm receipt by email within 24 hours. Vinyl production lead time applies to the static bulletin changes — please confirm production deadlines for an 8/31 post.</div>');
+      w.document.write('</body></html>');w.document.close();
+      log("Preds Traffic Instructions","Nashville · "+B.length+" boards");notify("Preds traffic instructions generated");
+    };
     // CARD TRAFFIC REPORT — read-only. Pulls each board's ALREADY-ASSIGNED creative
     // (design concepts or ISCI), filtered by start date + current filters, into the
     // same traffic PDF with clickable creative links. Never writes to any board.
@@ -6145,6 +6198,7 @@ const App=()=>{
           <Btn small color="#D4A040" onClick={()=>printVendorTrafficSheet()}>📄 Vendor Sheet</Btn>
           <Btn small color="#E85A7A" onClick={()=>printVendorTrafficSheet({resendOnly:true})}>📄 Revision Sheet</Btn>
           <Btn small color="#5BC4A0" onClick={()=>printCreativeSpecs()}>📐 Creative Specs</Btn>
+          <Btn small color="#FFB81C" onClick={printPredsTraffic}>🏒 Preds Traffic</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
           <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>📍 Map</Btn>
@@ -6205,6 +6259,7 @@ const App=()=>{
           <div style={{fontSize:14,fontWeight:700}}>📍 WK OOH Board Locations</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
             <Btn small color="#9b7bb0" onClick={printCreativeMap}>🗺 Download Creative Map</Btn>
+            <Btn small color="#FFB81C" onClick={printPredsTraffic}>🏒 Preds Traffic</Btn>
             {oohMapMode==="creative"&&<div style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#94a3b8"}}>Cluster radius:<input type="range" min="1" max="15" step="1" value={oohClusterRadius} onChange={e=>setOohClusterRadius(parseInt(e.target.value))} style={{width:80}}/><span style={{fontWeight:700,color:"#4AC8E8",minWidth:30}}>{oohClusterRadius} mi</span></div>}
             <div style={{display:"flex",gap:0,border:"1px solid #4a3565",borderRadius:6,overflow:"hidden"}}>
               <button onClick={()=>setOohMapMode("market")} style={{padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer",border:"none",background:oohMapMode==="market"?"rgba(212,160,64,.2)":"transparent",color:oohMapMode==="market"?"#D4A040":"#94a3b8"}}>📍 By Market</button>
