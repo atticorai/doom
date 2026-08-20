@@ -941,6 +941,11 @@ const dndTripwires=(flights,iscis,hubCfg)=>{
 // static, date-fns → the handful of helpers the kit actually uses.
 // ═══════════════════════════════════════════════════════════════════════
 const MP_LIVE={deals:[],brands:[],wrapped:[],registry:[],TODAY:"",board:{start:"",end:""},hooks:{},ui:{}};
+// Olympus (light) is a full second skin: mpSc picks scenic inline colors,
+// the CSS vars + .mpolympus class handle every compiled utility.
+const mpLight=()=>Boolean(MP_LIVE.ui&&MP_LIVE.ui.light);
+const mpSc=(dark,light)=>mpLight()?light:dark;
+const mpThemeClass=()=>"mphades"+(mpLight()?" mpolympus":"");
 // ── date-fns subset ──
 const mpD=(iso)=>new Date(String(iso).slice(0,10)+"T00:00:00");
 const mpIso=(d)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -992,7 +997,7 @@ const MpOverlay=({open,onClose,label,widthClass="max-w-[880px]",children})=>{
   mpUseDialog(open,onClose);
   return<MpPortal>
     <AnimatePresence>
-      {open&&<motion.div key={label} style={{position:"fixed",top:0,right:0,bottom:0,left:0,height:"100dvh",width:"100vw",zIndex:60,display:"flex",justifyContent:"flex-end",overscrollBehavior:"contain"}} className="mphades font-sans">
+      {open&&<motion.div key={label} style={{position:"fixed",top:0,right:0,bottom:0,left:0,height:"100dvh",width:"100vw",zIndex:60,display:"flex",justifyContent:"flex-end",overscrollBehavior:"contain"}} className={mpThemeClass()+" font-sans"}>
         <button type="button" aria-label={"Close "+label} onClick={onClose} className="absolute inset-0 h-full w-full cursor-default bg-abyss-950/80 backdrop-blur-sm"/>
         <motion.aside role="dialog" aria-modal="true" aria-label={label} className={"stone cracked relative flex h-full w-full flex-col border-l-2 border-gold-500/50 bg-abyss-900/98 "+widthClass} style={{boxShadow:"-30px 0 90px -30px #05030f, -1px 0 40px rgba(232,181,58,0.24)",color:"#e6ecf5"}}>
           {children}
@@ -1038,7 +1043,7 @@ const MP_TONGUES=[
 const MpFlame=({height=64,className=""})=>{
   const width=height*0.62;
   return<span aria-hidden="true" className={"pointer-events-none relative block "+className} style={{height,width}}>
-    <span className="animate-pulse-glow absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl" style={{height:height*2.1,width:height*2.1,background:"radial-gradient(closest-side, rgba(47,111,232,0.55), transparent 72%)"}}/>
+    <span className="animate-pulse-glow absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl" style={{height:height*2.1,width:height*2.1,background:mpSc("radial-gradient(closest-side, rgba(47,111,232,0.55), transparent 72%)","radial-gradient(closest-side, rgba(47,111,232,0.28), transparent 72%)")}}/>
     {MP_TONGUES.map((t,i)=><span key={i} className="flame-tongue animate-dance absolute bottom-0 left-1/2" style={{height:height*t.scale,width:width*t.scale,marginLeft:-(width*t.scale)/2,background:t.tint,filter:"blur("+t.blur+"px)",animationDuration:t.duration,animationDelay:t.delay}}/>)}
   </span>;
 };
@@ -1047,64 +1052,64 @@ const MpBrazier=({height=72,className=""})=>{
   return<div aria-hidden="true" className={"flex flex-col items-center "+className}>
     <MpFlame height={height}/>
     <svg viewBox="0 0 120 58" style={{width:bowlWidth}} className="-mt-2" preserveAspectRatio="xMidYMid meet">
-      <path d="M4 6h112l-14 22H18z" fill="#0a111e" stroke="rgba(232,181,58,0.55)" strokeWidth="1.4"/>
-      <path d="M18 28h84l-10 12H28z" fill="#070c16" stroke="rgba(232,181,58,0.32)" strokeWidth="1.2"/>
-      <rect x="52" y="40" width="16" height="12" fill="#0a111e" stroke="rgba(232,181,58,0.3)" strokeWidth="1.2"/>
+      <path d="M4 6h112l-14 22H18z" fill={mpSc("#0a111e","#e6dcc6")} stroke="rgba(232,181,58,0.55)" strokeWidth="1.4"/>
+      <path d="M18 28h84l-10 12H28z" fill={mpSc("#070c16","#ded2b6")} stroke="rgba(232,181,58,0.32)" strokeWidth="1.2"/>
+      <rect x="52" y="40" width="16" height="12" fill={mpSc("#0a111e","#e6dcc6")} stroke={mpGold()+"0.3)"} strokeWidth="1.2"/>
       <path d="M38 56h44" stroke="rgba(232,181,58,0.5)" strokeWidth="2"/>
     </svg>
   </div>;
 };
 // ── the temple ──
-const MP_GOLD="rgba(232,181,58,";
+const MP_GOLD_D="rgba(232,181,58,",MP_GOLD_L="rgba(122,96,30,";const mpGold=()=>mpLight()?MP_GOLD_L:MP_GOLD_D;
 const MpColumn=({x})=>{
   const half=38,ST=306,SB=556,SW=76;
   return<g>
-    <rect x={x-half-16} y={SB-6} width={SW+32} height={16} fill="#0a111e" stroke={MP_GOLD+"0.34)"} strokeWidth="1.2"/>
-    <rect x={x-half-8} y={SB-20} width={SW+16} height={14} fill="#0e1728" stroke={MP_GOLD+"0.26)"} strokeWidth="1.1"/>
-    <path d={"M"+(x-half)+" "+(SB-20)+" L"+(x-half+7)+" "+(ST+30)+" L"+(x+half-7)+" "+(ST+30)+" L"+(x+half)+" "+(SB-20)+" Z"} fill="#070c16" stroke={MP_GOLD+"0.3)"} strokeWidth="1.2"/>
-    {[-25,-12.5,0,12.5,25].map((o)=><line key={o} x1={x+o*0.86} y1={ST+34} x2={x+o} y2={SB-24} stroke="rgba(230,236,245,0.075)" strokeWidth="2.2"/>)}
-    <path d={"M"+(x-half-4)+" "+(ST+30)+" C"+(x-half-2)+" "+(ST+14)+" "+(x-half+6)+" "+(ST+12)+" "+x+" "+(ST+12)+" C"+(x+half-6)+" "+(ST+12)+" "+(x+half+2)+" "+(ST+14)+" "+(x+half+4)+" "+(ST+30)+" Z"} fill="#0e1728" stroke={MP_GOLD+"0.34)"} strokeWidth="1.2"/>
-    <rect x={x-half-17} y={ST-2} width={SW+34} height={15} fill="#0a111e" stroke={MP_GOLD+"0.42)"} strokeWidth="1.2"/>
+    <rect x={x-half-16} y={SB-6} width={SW+32} height={16} fill={mpSc("#0a111e","#e9e0cb")} stroke={mpGold()+"0.34)"} strokeWidth="1.2"/>
+    <rect x={x-half-8} y={SB-20} width={SW+16} height={14} fill={mpSc("#0e1728","#e2d7bd")} stroke={mpGold()+"0.26)"} strokeWidth="1.1"/>
+    <path d={"M"+(x-half)+" "+(SB-20)+" L"+(x-half+7)+" "+(ST+30)+" L"+(x+half-7)+" "+(ST+30)+" L"+(x+half)+" "+(SB-20)+" Z"} fill={mpSc("#070c16","#dbceb0")} stroke={mpGold()+"0.3)"} strokeWidth="1.2"/>
+    {[-25,-12.5,0,12.5,25].map((o)=><line key={o} x1={x+o*0.86} y1={ST+34} x2={x+o} y2={SB-24} stroke={mpSc("rgba(230,236,245,0.075)","rgba(58,48,30,0.12)")} strokeWidth="2.2"/>)}
+    <path d={"M"+(x-half-4)+" "+(ST+30)+" C"+(x-half-2)+" "+(ST+14)+" "+(x-half+6)+" "+(ST+12)+" "+x+" "+(ST+12)+" C"+(x+half-6)+" "+(ST+12)+" "+(x+half+2)+" "+(ST+14)+" "+(x+half+4)+" "+(ST+30)+" Z"} fill={mpSc("#0e1728","#e2d7bd")} stroke={mpGold()+"0.34)"} strokeWidth="1.2"/>
+    <rect x={x-half-17} y={ST-2} width={SW+34} height={15} fill={mpSc("#0a111e","#e9e0cb")} stroke={mpGold()+"0.42)"} strokeWidth="1.2"/>
   </g>;
 };
 const MpTriglyph=({x})=><g>
-  <rect x={x-15} y={238} width={30} height={46} fill="#0e1728" stroke={MP_GOLD+"0.4)"} strokeWidth="1.1"/>
-  {[-7.5,0,7.5].map((o)=><line key={o} x1={x+o} y1={241} x2={x+o} y2={281} stroke={MP_GOLD+"0.5)"} strokeWidth="2"/>)}
+  <rect x={x-15} y={238} width={30} height={46} fill={mpSc("#0e1728","#e2d7bd")} stroke={mpGold()+"0.4)"} strokeWidth="1.1"/>
+  {[-7.5,0,7.5].map((o)=><line key={o} x1={x+o} y1={241} x2={x+o} y2={281} stroke={mpGold()+"0.5)"} strokeWidth="2"/>)}
 </g>;
 const MpPalmette=({x,y,scale=1})=><g transform={"translate("+x+" "+y+") scale("+scale+")"}>
-  <path d="M0 0c0-14 8-24 8-24-6 2-8 6-8 6s-2-4-8-6c0 0 8 10 8 24z" fill={MP_GOLD+"0.55)"}/>
-  <path d="M0 0c0-11-11-17-11-17 2 7 5 11 5 11s-7 0-12-4c0 0 10 12 18 10z" fill={MP_GOLD+"0.4)"}/>
-  <path d="M0 0c0-11 11-17 11-17-2 7-5 11-5 11s7 0 12-4c0 0-10 12-18 10z" fill={MP_GOLD+"0.4)"}/>
+  <path d="M0 0c0-14 8-24 8-24-6 2-8 6-8 6s-2-4-8-6c0 0 8 10 8 24z" fill={mpGold()+"0.55)"}/>
+  <path d="M0 0c0-11-11-17-11-17 2 7 5 11 5 11s-7 0-12-4c0 0 10 12 18 10z" fill={mpGold()+"0.4)"}/>
+  <path d="M0 0c0-11 11-17 11-17-2 7-5 11-5 11s7 0 12-4c0 0-10 12-18 10z" fill={mpGold()+"0.4)"}/>
 </g>;
 const MpTempleFacade=()=><svg viewBox="0 0 1600 620" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-  <path d="M800 54 1462 206 138 206Z" fill="rgba(10,17,30,0.92)" stroke={MP_GOLD+"0.3)"} strokeWidth="1.4"/>
-  <path d="M800 40 1490 200 1478 214 800 58 122 214 110 200Z" fill="#0a111e" stroke={MP_GOLD+"0.5)"} strokeWidth="1.4"/>
+  <path d="M800 54 1462 206 138 206Z" fill={mpSc("rgba(10,17,30,0.92)","rgba(233,224,203,0.94)")} stroke={mpGold()+"0.3)"} strokeWidth="1.4"/>
+  <path d="M800 40 1490 200 1478 214 800 58 122 214 110 200Z" fill={mpSc("#0a111e","#e9e0cb")} stroke={mpGold()+"0.5)"} strokeWidth="1.4"/>
   <g opacity="0.85">
-    <circle cx="800" cy="150" r="26" fill="none" stroke={MP_GOLD+"0.45)"} strokeWidth="2"/>
-    <circle cx="800" cy="150" r="9" fill={MP_GOLD+"0.35)"}/>
-    <path d="M742 168c22 4 38-6 44-18" fill="none" stroke={MP_GOLD+"0.35)"} strokeWidth="2"/>
-    <path d="M858 168c-22 4-38-6-44-18" fill="none" stroke={MP_GOLD+"0.35)"} strokeWidth="2"/>
+    <circle cx="800" cy="150" r="26" fill="none" stroke={mpGold()+"0.45)"} strokeWidth="2"/>
+    <circle cx="800" cy="150" r="9" fill={mpGold()+"0.35)"}/>
+    <path d="M742 168c22 4 38-6 44-18" fill="none" stroke={mpGold()+"0.35)"} strokeWidth="2"/>
+    <path d="M858 168c-22 4-38-6-44-18" fill="none" stroke={mpGold()+"0.35)"} strokeWidth="2"/>
   </g>
   <MpPalmette x={800} y={38} scale={1.5}/>
   <MpPalmette x={1486} y={198} scale={1.1}/>
   <MpPalmette x={114} y={198} scale={1.1}/>
-  <rect x="104" y="206" width="1392" height="22" fill="#0e1728" stroke={MP_GOLD+"0.45)"} strokeWidth="1.3"/>
-  {Array.from({length:58},(_,i)=><rect key={"d"+i} x={112+i*24} y={228} width={13} height={9} fill="#0a111e" stroke={MP_GOLD+"0.3)"} strokeWidth="0.8"/>)}
-  <rect x="112" y="238" width="1376" height="46" fill="rgba(7,12,22,0.9)" stroke={MP_GOLD+"0.28)"} strokeWidth="1"/>
+  <rect x="104" y="206" width="1392" height="22" fill={mpSc("#0e1728","#e2d7bd")} stroke={mpGold()+"0.45)"} strokeWidth="1.3"/>
+  {Array.from({length:58},(_,i)=><rect key={"d"+i} x={112+i*24} y={228} width={13} height={9} fill={mpSc("#0a111e","#e9e0cb")} stroke={mpGold()+"0.3)"} strokeWidth="0.8"/>)}
+  <rect x="112" y="238" width="1376" height="46" fill={mpSc("rgba(7,12,22,0.9)","rgba(226,215,189,0.92)")} stroke={mpGold()+"0.28)"} strokeWidth="1"/>
   {Array.from({length:23},(_,i)=><MpTriglyph key={"t"+i} x={135+i*62}/>)}
-  {Array.from({length:22},(_,i)=><path key={"m"+i} d={"M"+(166+i*62)+" 261 l9 -9 9 9 -9 9z"} fill="none" stroke={MP_GOLD+"0.22)"} strokeWidth="1.1"/>)}
-  <rect x="112" y="284" width="1376" height="22" fill="#0a111e" stroke={MP_GOLD+"0.4)"} strokeWidth="1.2"/>
+  {Array.from({length:22},(_,i)=><path key={"m"+i} d={"M"+(166+i*62)+" 261 l9 -9 9 9 -9 9z"} fill="none" stroke={mpGold()+"0.22)"} strokeWidth="1.1"/>)}
+  <rect x="112" y="284" width="1376" height="22" fill={mpSc("#0a111e","#e9e0cb")} stroke={mpGold()+"0.4)"} strokeWidth="1.2"/>
   {[150,300,450,1150,1300,1450].map((x)=><MpColumn key={x} x={x}/>)}
-  <rect x="86" y="566" width="1428" height="18" fill="#0e1728" stroke={MP_GOLD+"0.32)"} strokeWidth="1.2"/>
-  <rect x="58" y="584" width="1484" height="18" fill="#0a111e" stroke={MP_GOLD+"0.26)"} strokeWidth="1.2"/>
-  <rect x="26" y="602" width="1548" height="18" fill="#070c16" stroke={MP_GOLD+"0.2)"} strokeWidth="1.2"/>
+  <rect x="86" y="566" width="1428" height="18" fill={mpSc("#0e1728","#e2d7bd")} stroke={mpGold()+"0.32)"} strokeWidth="1.2"/>
+  <rect x="58" y="584" width="1484" height="18" fill={mpSc("#0a111e","#e9e0cb")} stroke={mpGold()+"0.26)"} strokeWidth="1.2"/>
+  <rect x="26" y="602" width="1548" height="18" fill={mpSc("#070c16","#dbceb0")} stroke={mpGold()+"0.2)"} strokeWidth="1.2"/>
 </svg>;
 const MpCapital=({flip=false})=><svg viewBox="0 0 120 46" className={"w-full "+(flip?"rotate-180":"")} preserveAspectRatio="none" aria-hidden="true">
-  <rect x="0" y="0" width="120" height="10" fill="#0a111e" stroke="rgba(232,181,58,0.45)" strokeWidth="1"/>
-  <path d="M6 10h108l-12 14H18z" fill="#070c16" stroke="rgba(232,181,58,0.3)" strokeWidth="1"/>
-  <circle cx="26" cy="33" r="8" fill="none" stroke="rgba(232,181,58,0.42)" strokeWidth="1.4"/>
-  <circle cx="94" cy="33" r="8" fill="none" stroke="rgba(232,181,58,0.42)" strokeWidth="1.4"/>
-  <path d="M34 33h52" stroke="rgba(232,181,58,0.3)" strokeWidth="1.2"/>
+  <rect x="0" y="0" width="120" height="10" fill={mpSc("#0a111e","#e9e0cb")} stroke={mpGold()+"0.45)"} strokeWidth="1"/>
+  <path d="M6 10h108l-12 14H18z" fill={mpSc("#070c16","#dbceb0")} stroke={mpGold()+"0.3)"} strokeWidth="1"/>
+  <circle cx="26" cy="33" r="8" fill="none" stroke={mpGold()+"0.42)"} strokeWidth="1.4"/>
+  <circle cx="94" cy="33" r="8" fill="none" stroke={mpGold()+"0.42)"} strokeWidth="1.4"/>
+  <path d="M34 33h52" stroke={mpGold()+"0.3)"} strokeWidth="1.2"/>
 </svg>;
 const MpColumns=()=><div aria-hidden="true" className="pointer-events-none fixed inset-y-0 left-0 right-0 z-0 hidden xl:block">
   {["left-0","right-0"].map((side)=><div key={side} className={"absolute "+side+" top-0 h-full w-[104px] opacity-[0.55]"}>
@@ -1114,23 +1119,23 @@ const MpColumns=()=><div aria-hidden="true" className="pointer-events-none fixed
   </div>)}
 </div>;
 const MP_SMOKE=[
-  {className:"-left-52 top-[10%] h-[560px] w-[1000px] animate-drift",tint:"rgba(47,111,232,0.2)",delay:"0s"},
-  {className:"-right-64 top-[38%] h-[680px] w-[1150px] animate-drift-slow",tint:"rgba(22,54,138,0.42)",delay:"-8s"},
-  {className:"left-[18%] bottom-[-14%] h-[520px] w-[1000px] animate-drift",tint:"rgba(4,7,14,0.94)",delay:"-16s"},
-  {className:"left-[42%] top-[62%] h-[440px] w-[820px] animate-drift-slow",tint:"rgba(232,181,58,0.08)",delay:"-24s"}];
+  {className:"-left-52 top-[10%] h-[560px] w-[1000px] animate-drift",tint_d:"rgba(47,111,232,0.2)",tint_l:"rgba(169,200,255,0.3)",delay:"0s"},
+  {className:"-right-64 top-[38%] h-[680px] w-[1150px] animate-drift-slow",tint_d:"rgba(22,54,138,0.42)",tint_l:"rgba(240,231,210,0.7)",delay:"-8s"},
+  {className:"left-[18%] bottom-[-14%] h-[520px] w-[1000px] animate-drift",tint_d:"rgba(4,7,14,0.94)",tint_l:"rgba(255,252,244,0.9)",delay:"-16s"},
+  {className:"left-[42%] top-[62%] h-[440px] w-[820px] animate-drift-slow",tint_d:"rgba(232,181,58,0.08)",tint_l:"rgba(232,181,58,0.12)",delay:"-24s"}];
 const MP_EMBERS=[{left:"4%",delay:"0s",duration:"7s"},{left:"11%",delay:"-4.2s",duration:"9s"},{left:"23%",delay:"-1.6s",duration:"8s"},{left:"37%",delay:"-6.1s",duration:"10s"},{left:"52%",delay:"-2.9s",duration:"7.5s"},{left:"66%",delay:"-5.4s",duration:"9.5s"},{left:"79%",delay:"-3.1s",duration:"8.5s"},{left:"93%",delay:"-7.2s",duration:"11s"}];
 const MpAtmosphere=()=><React.Fragment>
   <MpColumns/>
   <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-    <div className="absolute inset-0" style={{background:"radial-gradient(1300px 700px at 70% -12%, rgba(47,111,232,0.32), transparent 66%),radial-gradient(760px 520px at 4% 6%, rgba(232,181,58,0.13), transparent 62%),radial-gradient(760px 520px at 97% 22%, rgba(142,30,55,0.12), transparent 62%),radial-gradient(1200px 820px at 46% 118%, rgba(19,53,96,0.6), transparent 62%)"}}/>
-    {MP_SMOKE.map((p)=><div key={p.className} className={"absolute blur-3xl "+p.className} style={{animationDelay:p.delay,background:"radial-gradient(closest-side, "+p.tint+", transparent 72%)"}}/>)}
+    <div className="absolute inset-0" style={{background:mpSc("radial-gradient(1300px 700px at 70% -12%, rgba(47,111,232,0.32), transparent 66%),radial-gradient(760px 520px at 4% 6%, rgba(232,181,58,0.13), transparent 62%),radial-gradient(760px 520px at 97% 22%, rgba(142,30,55,0.12), transparent 62%),radial-gradient(1200px 820px at 46% 118%, rgba(19,53,96,0.6), transparent 62%)","radial-gradient(1300px 700px at 70% -12%, rgba(169,200,255,0.5), transparent 66%),radial-gradient(760px 520px at 4% 6%, rgba(232,181,58,0.16), transparent 62%),radial-gradient(1200px 820px at 46% 118%, rgba(226,216,196,0.85), transparent 62%)")}}/>
+    {MP_SMOKE.map((p)=><div key={p.className} className={"absolute blur-3xl "+p.className} style={{animationDelay:p.delay,background:"radial-gradient(closest-side, "+mpSc(p.tint_d,p.tint_l)+", transparent 72%)"}}/>)}
     {MP_EMBERS.map((s)=><span key={s.left} className="absolute bottom-4 h-[3px] w-[3px] animate-rise rounded-full bg-gold-300" style={{left:s.left,animationDelay:s.delay,animationDuration:s.duration,boxShadow:"0 0 10px 2px rgba(240,207,114,0.9)"}}/>)}
-    <div className="absolute inset-0" style={{background:"radial-gradient(120% 90% at 50% 40%, transparent 42%, rgba(2,4,9,0.72) 88%, rgba(2,4,9,0.96) 100%)"}}/>
+    <div className="absolute inset-0" style={{background:mpSc("radial-gradient(120% 90% at 50% 40%, transparent 42%, rgba(2,4,9,0.72) 88%, rgba(2,4,9,0.96) 100%)","radial-gradient(120% 90% at 50% 40%, transparent 50%, rgba(214,201,176,0.4) 90%, rgba(199,183,152,0.55) 100%)")}}/>
   </div>
 </React.Fragment>;
 const MP_SOULS=[{left:"7%",size:5,delay:"0s",duration:"17s"},{left:"15%",size:3,delay:"-6s",duration:"21s"},{left:"28%",size:4,delay:"-11s",duration:"19s"},{left:"41%",size:3,delay:"-3s",duration:"23s"},{left:"56%",size:5,delay:"-14s",duration:"18s"},{left:"68%",size:3,delay:"-8s",duration:"22s"},{left:"81%",size:4,delay:"-17s",duration:"20s"},{left:"92%",size:3,delay:"-5s",duration:"24s"}];
 const MpWisps=()=><div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-  {MP_SOULS.map((s)=><span key={s.left} className="animate-wisp absolute bottom-0 rounded-full bg-flame-300" style={{left:s.left,height:s.size,width:s.size,animationDelay:s.delay,animationDuration:s.duration,boxShadow:"0 0 "+(s.size*4)+"px "+s.size+"px rgba(91,147,255,0.8)"}}/>)}
+  {MP_SOULS.map((s)=><span key={s.left} className="animate-wisp absolute bottom-0 rounded-full bg-flame-300" style={{left:s.left,height:s.size,width:s.size,animationDelay:s.delay,animationDuration:s.duration,boxShadow:"0 0 "+(s.size*4)+"px "+s.size+"px "+mpSc("rgba(91,147,255,0.8)","rgba(165,130,31,0.55)")}}/>)}
 </div>;
 const MpSectionHeading=({id,icon,title,aside,greek,tone="gold"})=>{
   const titleTone=tone==="ember"?"ember-text":"gilded-text";
@@ -1154,18 +1159,18 @@ const MpSectionHeading=({id,icon,title,aside,greek,tone="gold"})=>{
 const MP_HADES_DECK="Name's Hades. Lord of the dead, keeper of your deadlines. Hi, how ya doin'.";
 const MP_HADES_MONTH="Whoa, whoa — is that a launch approaching with nothing in hand? Not on my watch.";
 const MpSkullSigil=()=><svg viewBox="0 0 64 72" className="h-8 w-8 lg:h-10 lg:w-10" aria-hidden="true">
-  <g style={{filter:"drop-shadow(0 0 14px rgba(91,147,255,0.9))"}} fill="#e6ecf5" stroke="rgba(4,7,14,0.7)" strokeWidth="1">
+  <g style={{filter:mpSc("drop-shadow(0 0 14px rgba(91,147,255,0.9))","drop-shadow(0 0 10px rgba(47,111,232,0.55))")}} fill={mpSc("#e6ecf5","#fdfaf2")} stroke={mpSc("rgba(4,7,14,0.7)","rgba(58,48,30,0.75)")} strokeWidth="1">
     <path d="M32 2c15 0 24 11 24 26 0 9-4 14-4 21 0 6-8 8-20 8s-20-2-20-8c0-7-4-12-4-21C8 13 17 2 32 2z"/>
-    <ellipse cx="22" cy="30" rx="7" ry="9" fill="#04070e"/>
-    <ellipse cx="42" cy="30" rx="7" ry="9" fill="#04070e"/>
-    <path d="M32 40l-5 9h10z" fill="#04070e"/>
-    <path d="M24 58h4v8h-4zM30 58h4v8h-4zM36 58h4v8h-4z" fill="#e6ecf5"/>
+    <ellipse cx="22" cy="30" rx="7" ry="9" fill={mpSc("#04070e","#3a301e")}/>
+    <ellipse cx="42" cy="30" rx="7" ry="9" fill={mpSc("#04070e","#3a301e")}/>
+    <path d="M32 40l-5 9h10z" fill={mpSc("#04070e","#3a301e")}/>
+    <path d="M24 58h4v8h-4zM30 58h4v8h-4zM36 58h4v8h-4z" fill={mpSc("#e6ecf5","#fdfaf2")}/>
   </g>
 </svg>;
 const MpThroneHero=()=><section aria-labelledby="chamber-title" className="relative isolate aspect-[1600/620] max-h-[76vh] min-h-[380px] w-full overflow-hidden bg-abyss-950">
-  <div aria-hidden="true" className="absolute inset-0" style={{background:"radial-gradient(820px 460px at 50% 104%, rgba(47,111,232,0.55), transparent 70%),radial-gradient(1200px 640px at 50% -16%, rgba(19,53,96,0.75), transparent 72%)"}}/>
+  <div aria-hidden="true" className="absolute inset-0" style={{background:mpSc("radial-gradient(820px 460px at 50% 104%, rgba(47,111,232,0.55), transparent 70%),radial-gradient(1200px 640px at 50% -16%, rgba(19,53,96,0.75), transparent 72%)","radial-gradient(820px 460px at 50% 104%, rgba(232,181,58,0.25), transparent 70%),radial-gradient(1200px 640px at 50% -16%, rgba(169,200,255,0.55), transparent 72%)")}}/>
   <MpTempleFacade/>
-  <div aria-hidden="true" className="animate-drift absolute -bottom-16 left-1/2 h-48 w-[130%] -translate-x-1/2 blur-3xl" style={{background:"radial-gradient(closest-side, rgba(47,111,232,0.34), transparent 72%)"}}/>
+  <div aria-hidden="true" className="animate-drift absolute -bottom-16 left-1/2 h-48 w-[130%] -translate-x-1/2 blur-3xl" style={{background:mpSc("radial-gradient(closest-side, rgba(47,111,232,0.34), transparent 72%)","radial-gradient(closest-side, rgba(232,181,58,0.2), transparent 72%)")}}/>
   <MpBrazier height={54} className="absolute bottom-[8%] left-[13%] hidden -translate-x-1/2 lg:flex"/>
   <MpBrazier height={54} className="absolute bottom-[8%] right-[13%] hidden translate-x-1/2 lg:flex"/>
   <div className="absolute inset-x-[6%] top-[49.4%] bottom-[10.3%] flex flex-col items-center justify-center text-center md:inset-x-[28.1%]">
@@ -1205,6 +1210,9 @@ const MpHubHeader=({view,onViewChange,onOpenRecord,onOpenRegistry,onOpenDispatch
       <div className="flex items-center gap-4">
         <button type="button" onClick={onOpenNewDeal} className="glow-flame inline-flex items-center gap-1.5 whitespace-nowrap border border-flame-300/70 bg-flame-500 px-3.5 py-2 font-display text-[12.5px] font-bold tracking-[0.08em] text-abyss-950 transition-colors duration-150 ease-out hover:bg-flame-400">
           <PlusIcon className="h-3.5 w-3.5" strokeWidth={3}/>NEW DEAL
+        </button>
+        <button type="button" onClick={()=>MP_LIVE.hooks.setTheme(mpLight()?"hades":"olympus")} title={mpLight()?"Back to the Underworld":"Olympus mode — for the weirdos who like daylight"} aria-label="Toggle light mode" className="inline-flex items-center whitespace-nowrap border border-gold-600/50 bg-abyss-900/80 px-2.5 py-1.5 text-[13px] text-gold-400 transition-colors duration-150 ease-out hover:border-gold-400/80 hover:text-gold-300">
+          {mpLight()?"\u263E":"\u2600"}
         </button>
         <button type="button" onClick={()=>MP_LIVE.hooks.backToDoom()} className="inline-flex items-center gap-1.5 whitespace-nowrap font-display text-[12.5px] tracking-[0.1em] text-shade-300 transition-colors duration-150 ease-out hover:text-gold-300">
           <ArrowLeftIcon className="h-3.5 w-3.5"/>DOOM
@@ -1889,7 +1897,7 @@ const MpApp=({api})=>{
   const[wing,setWing]=React.useState(null);
   MP_LIVE.hooks.closeWing=()=>setWing(null);
   const close=()=>setWing(null);
-  return<div className="mphades relative min-h-screen w-full bg-abyss-950 font-sans text-shade-100">
+  return<div className={mpThemeClass()+" relative min-h-screen w-full bg-abyss-950 font-sans text-shade-100"}>
     <MpAtmosphere/>
     <MpWisps/>
     <div className="relative z-10">
@@ -3937,8 +3945,12 @@ const App=()=>{
   // series are excluded per Emm. Built live from the ISCI registry
   // (Firestore-merged), so it always reflects current data. Lives under
   // Audit Log → Reference Downloads.
-  const downloadLrTv15IsciPdf=()=>{
+  // opts.dmas restricts to specific markets (e.g. the UA list: PHX/CHI/ABQ/LVS);
+  // opts.tag labels the header, filename, and audit entry
+  const downloadLrTv15IsciPdf=(opts)=>{
+    const O=opts||{};
     const pool=iscis.filter(i=>i.brand==="Lerner & Rowe"&&i.media==="TV"&&String(i.dur)==="15"&&i.suffix!=="O"&&i.active
+      &&(!O.dmas||O.dmas.includes(i.dma))
       &&!(i.code||"").includes("LRSP")&&!/spanish|espanol/i.test(i.title||"")&&!/mythbuster/i.test(i.title||""));
     if(!pool.length){notify("No active Lerner & Rowe TV :15 ISCIs found");return}
     const JPP=window.jspdf&&window.jspdf.jsPDF;
@@ -3980,7 +3992,7 @@ const App=()=>{
     // header
     fc(ACC);pdf.rect(0,0,PW,4,"F");
     y=22;pdf.setFont("helvetica","bold");pdf.setFontSize(19);tc(INK);
-    pdf.text("Lerner & Rowe  ·  TV :15 ISCI List",MX,y);
+    pdf.text("Lerner & Rowe  ·  TV :15 ISCI List"+(O.tag?"  —  "+O.tag:""),MX,y);
     y+=6.5;pdf.setFont("helvetica","normal");pdf.setFontSize(10);tc(SUB);
     pdf.text((fullMatch?"Matched rotation — the same "+picked.length+" creatives in every market":"Top "+picked.length+" creatives per market (widest coverage)")+" · English only · by DMA, alphabetical",MX,y);
     y+=5.5;pdf.setFontSize(9);
@@ -4024,8 +4036,8 @@ const App=()=>{
     const n=pdf.getNumberOfPages();
     for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFont("helvetica","normal");pdf.setFontSize(7.5);tc(SUB);
       pdf.text("Atticor · Lerner & Rowe TV :15 ISCI List",MX,PH-8);pdf.text("Page "+i+" of "+n,RIGHT,PH-8,{align:"right"});}
-    pdf.save("Lerner_Rowe_TV15_ISCI_List_"+new Date().toISOString().slice(0,10)+".pdf");
-    log("L&R TV :15 ISCI List","downloaded · "+picked.length+" matched creatives · "+rows.length+" ISCIs · "+dmas.length+" markets · "+linkedCount+" download links · no Spanish, no MythBusters");
+    pdf.save("Lerner_Rowe_TV15_ISCI_List_"+(O.tag?O.tag.replace(/[^A-Za-z0-9]+/g,"_")+"_":"")+new Date().toISOString().slice(0,10)+".pdf");
+    log("L&R TV :15 ISCI List"+(O.tag?" — "+O.tag:""),"downloaded · "+picked.length+" matched creatives · "+rows.length+" ISCIs · "+dmas.length+" markets · "+linkedCount+" download links · no Spanish, no MythBusters");
     notify("L&R TV :15 list downloaded — "+picked.map(cleanTitle).join(", ")+" in "+dmas.length+" markets");
   };
 
@@ -4216,7 +4228,7 @@ const App=()=>{
     const _dupCodes=(()=>{const c={};iscis.forEach(i=>{if(i.code)c[i.code]=(c[i.code]||0)+1});return Object.keys(c).filter(k=>c[k]>1)})();
     return<div style={{display:"flex",flexDirection:"column",gap:10}}>
       {_dupCodes.length>0&&<div style={{background:"#3a1f2a",border:"1px solid #E85A7A",borderRadius:8,padding:"9px 14px",color:"#E85A7A",fontSize:13,fontWeight:700}}>⚠ {_dupCodes.length} duplicate ISCI code{_dupCodes.length>1?"s":""} detected — two records share the same code, which breaks trafficking and sends. Fix before sending: {_dupCodes.slice(0,25).join(", ")}{_dupCodes.length>25?" …":""}</div>}
-      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setModal({t:"socialTraffic"})} color="#9b7bb0">📱 Social Traffic</Btn><Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn color="#4AC8E8" onClick={()=>{const esc=x=>{const s=String(x==null?"":x);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};const list=iscis.filter(i=>i.fileUrl&&i.brand===isciBrand);if(!list.length){notify("No linked creative for "+isciBrand+" — upload creative first");return}const csv="code,title,brand,dma,media,length,category,valueProp,vo,url\n"+list.map(i=>[i.code,i.title,i.brand,i.dma||"",i.media||"",i.dur||"",i.category||i.caseType||"",i.valueProp||"",i.vo||"",i.fileUrl].map(esc).join(",")).join("\n");const blob=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=isciBrand.replace(/[^A-Za-z]/g,"")+"-creative-links.csv";document.body.appendChild(a);a.click();a.remove();log("Export Links",list.length+" "+isciBrand+" creative links");notify(list.length+" creative links exported")}}>⬇ Export Links</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j],crLock:true}:x);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>{const n=iscis.filter(i=>i.fileUrl&&!i.crLock).length;if(!n){notify("All linked creative is already locked");return}if(!confirm("Lock "+n+" ISCI"+(n>1?"s":"")+" to their current creative file? This freezes each file→ISCI binding so download links can't break. You can unlock any one from its edit screen."))return;setIscis(prev=>prev.map(i=>i.fileUrl?{...i,crLock:true}:i));log("Creative Lock","Locked "+n+" ISCIs to their creative");notify("🔒 Locked "+n+" creative link"+(n>1?"s":""))}} color="#5BC4A0">🔒 Lock Creative</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
+      <div style={{display:"flex",justifyContent:"space-between"}}><div><PageHead title="ISCI Registry" pgKey="isci" sub={iscis.filter(i=>i.active&&i.suffix!=="O").length+" active · "+iscis.filter(i=>i.fileUrl&&i.suffix!=="O").length+" with creative · OOH ISCIs in OOH Hub"}/></div><div style={{display:"flex",gap:4}}><Btn primary onClick={()=>setModal("newIsci")}>+ Register ISCI</Btn><Btn onClick={()=>setModal({t:"socialTraffic"})} color="#9b7bb0">📱 Social Traffic</Btn>{isciBrand==="Lerner & Rowe"&&typeof LR_MYTHBUSTERS!=="undefined"&&<Btn onClick={()=>setModal({t:"mythMap"})} color="#D4A040">🎬 Myth Buster Map</Btn>}<Btn onClick={()=>setShowBulk(!showBulk)}>📤 Bulk Import</Btn><Btn onClick={()=>setShowBulkCreative&&setShowBulkCreative(!showBulkCreative)}>📁 Bulk Creative</Btn><Btn color="#4AC8E8" onClick={()=>{const esc=x=>{const s=String(x==null?"":x);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};const list=iscis.filter(i=>i.fileUrl&&i.brand===isciBrand);if(!list.length){notify("No linked creative for "+isciBrand+" — upload creative first");return}const csv="code,title,brand,dma,media,length,category,valueProp,vo,url\n"+list.map(i=>[i.code,i.title,i.brand,i.dma||"",i.media||"",i.dur||"",i.category||i.caseType||"",i.valueProp||"",i.vo||"",i.fileUrl].map(esc).join(",")).join("\n");const blob=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=isciBrand.replace(/[^A-Za-z]/g,"")+"-creative-links.csv";document.body.appendChild(a);a.click();a.remove();log("Export Links",list.length+" "+isciBrand+" creative links");notify(list.length+" creative links exported")}}>⬇ Export Links</Btn><Btn onClick={async()=>{if(!storage){notify("Storage not available");return}const missing=iscis.filter(i=>!i.fileUrl&&i.active);if(!missing.length){notify("All active ISCIs have files linked");return}notify("Scanning "+missing.length+" ISCIs...");localStorage.removeItem("creativeScanFailed");setUploadTracker({label:"Scanning for creative files...",pct:0});let found=0;const updates={};const exts=["mp4","mov","wav","mp3","pdf","jpg","png","psd","ai","eps"];for(let mi=0;mi<missing.length;mi++){const isci=missing[mi];setUploadTracker({label:"Checking "+isci.code,current:mi+1,total:missing.length,pct:Math.round((mi/missing.length)*100)});for(const ext of exts){try{const ref=storage.ref("creative/"+isci.code+"."+ext);const url=await ref.getDownloadURL();const gi=iscis.findIndex(i=>i.code===isci.code);if(gi>-1){updates[gi]=url;found++}break}catch(e){}}};setUploadTracker(null);if(found>0){setIscis(prev=>{const updated=prev.map((x,j)=>updates[j]?{...x,fileUrl:updates[j],crLock:true}:x);return updated});notify(found+" files re-linked!");log("Creative Recovery",found+" files recovered")}else{notify("No orphaned files found")}}}>🔗 Recover Links</Btn><Btn onClick={()=>{const n=iscis.filter(i=>i.fileUrl&&!i.crLock).length;if(!n){notify("All linked creative is already locked");return}if(!confirm("Lock "+n+" ISCI"+(n>1?"s":"")+" to their current creative file? This freezes each file→ISCI binding so download links can't break. You can unlock any one from its edit screen."))return;setIscis(prev=>prev.map(i=>i.fileUrl?{...i,crLock:true}:i));log("Creative Lock","Locked "+n+" ISCIs to their creative");notify("🔒 Locked "+n+" creative link"+(n>1?"s":""))}} color="#5BC4A0">🔒 Lock Creative</Btn><Btn onClick={()=>setShowTagMgr(!showTagMgr)} color={showTagMgr?"#E85A7A":"#9b7bb0"}>{showTagMgr?"Close Tags":"🏷 Manage Tags"}</Btn></div></div>
       {showTagMgr&&<Cd style={{padding:14,marginTop:8}}>
         <div style={{fontSize:14,fontWeight:700,color:"#9B8EAD",marginBottom:8}}>🏷 Manage Categories, Value Props & VOs</div>
         {BRANDS.map(x=>x.name).map(brand=>{const bc=getBrandColor(brand);const bf=customFields[brand]||{categories:[],valueProps:[],vos:[]};
@@ -7677,6 +7689,79 @@ const App=()=>{
     </Mod>;
   };
   const EditTrafficModal=_etmRef.current;
+
+  // Lerner & Rowe — Myth Buster Creative Map. On Target Media delivers the
+  // campaign under LNR_* file names; Doom knows each spot by its ISCI. This is
+  // the bridge: spot → script → delivered file → per-market ISCI codes, with a
+  // printable map (scripts included) and a rename CSV for creative uploads.
+  const MythBusterMapMod=()=>{
+    const spots=(typeof LR_MYTHBUSTERS!=="undefined"?LR_MYTHBUSTERS:[]);
+    const MB_DMAS=["ABQ","BHD","CHI","FLG","LVS","PHX","RNO","TUC","YMA"];
+    const pad3=n=>String(n).padStart(3,"0");
+    const codeOf=(dma,seq,suf)=>dma+"LR2615"+pad3(seq)+suf;
+    const regOf=code=>iscis.find(i=>i.code===code);
+    // Shared creative: the same physical file serves all nine market codes, so
+    // any market's linked file is THE file for that cut.
+    const fileOf=(seq,suf)=>{for(const d of MB_DMAS){const r=regOf(codeOf(d,seq,suf));if(r&&r.fileUrl)return r.fileUrl}return""};
+    const cutRows=s=>[{label:"16x9 · TV",seq:s.tvSeq,suf:"T",file:s.f169,title:"MythBuster "+s.n+" 16x9_15"},{label:"9x16 · Digital",seq:s.dgSeq,suf:"D",file:s.f916,title:"MythBuster "+s.n+" 9x16_15"}];
+    const exportCsv=()=>{
+      const esc=x=>{const t=String(x==null?"":x);return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t};
+      const rows=["spot,format,delivered_file,doom_title,market,isci,upload_as"];
+      spots.forEach(s=>cutRows(s).forEach(c=>MB_DMAS.forEach(d=>{const code=codeOf(d,c.seq,c.suf);rows.push([s.n,c.label,c.file,c.title,(DM[d]||d),code,code+".mp4"].map(esc).join(","))})));
+      const blob=new Blob([rows.join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="LR-mythbuster-rename-map.csv";document.body.appendChild(a);a.click();a.remove();
+      log("MythBuster Map","Rename CSV exported — "+spots.length+" spots");notify("Rename map exported — one row per market code, upload each file as its ISCI");
+    };
+    const printMap=()=>{
+      let x='<html><head><meta charset="utf-8"><title>Lerner &amp; Rowe — Myth Buster Creative Map</title><style>body{font-family:Arial,sans-serif;margin:30px;color:#1a1a1a}h2{margin:0}.spot{border:1px solid #ccc;border-radius:8px;padding:12px 14px;margin-top:12px;page-break-inside:avoid}.tag{display:inline-block;padding:1px 8px;border-radius:4px;font-size:11px;font-weight:700}.myth{font-style:italic;margin:6px 0 2px}.resp{margin:2px 0 8px}.mono{font-family:monospace;font-size:11px}.lbl{font-size:10px;letter-spacing:1px;color:#7a5c00;font-weight:700;text-transform:uppercase}table{width:100%;border-collapse:collapse;margin-top:6px}th,td{border:1px solid #ddd;padding:4px 8px;font-size:11px;text-align:left}</style></head><body>';
+      x+='<div style="text-align:center;margin-bottom:14px"><h2>LERNER &amp; ROWE</h2><div style="letter-spacing:2px;font-size:12px;color:#7a5c00">MYTH BUSTER CREATIVE MAP</div></div>';
+      x+='<div style="font-size:12px;line-height:1.6"><b>Source:</b> On Target Media — 16 spots recorded by Kevin, each in 16x9 (horizontal, TV) and 9x16 (vertical, Digital).<br/><b>Tag:</b> ALL spots tagged National 844-977-1900. <b>Disclaimers:</b> ALL carry Dramatization + AI Actor(s).<br/><b>Copy:</b> verbatim from script; two typo fixes applied (Myth 9 &quot;mergers&quot;→&quot;merges&quot;, Myth 13 &quot;facts documents&quot;→&quot;facts documented&quot;). AI quality varies spot to spot and can be redone if revisions are needed.<br/><b>ISCI pattern:</b> [MKT]LR2615[SEQ]T = 16x9 TV cut, [MKT]LR2615[SEQ]D = 9x16 Digital cut, across '+MB_DMAS.map(d=>escHtml(DM[d]||d)).join(", ")+'.</div>';
+      spots.forEach(s=>{
+        x+='<div class="spot"><div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:14px">Myth '+s.n+' — '+escHtml(s.speaker)+'</b><span class="tag" style="background:'+(s.status==="New"?"#fdf3d7;color:#7a5c00":"#ddf2e8;color:#0a6b47")+'">'+escHtml(s.status)+'</span></div>';
+        x+='<div class="myth">&ldquo;'+escHtml(s.myth)+'&rdquo; <span style="font-size:10px;color:#888">(claim on camera)</span></div>';
+        x+='<div class="resp">'+escHtml(s.response)+' <span style="font-size:10px;color:#888">(voiceover)</span></div>';
+        if(s.note)x+='<div style="font-size:11px;color:#a33"><b>Revision note:</b> '+escHtml(s.note)+'</div>';
+        x+='<table><thead><tr><th>Cut</th><th>Delivered file</th><th>Doom title</th><th>ISCI codes ('+MB_DMAS.length+' markets)</th></tr></thead><tbody>';
+        cutRows(s).forEach(c=>{const url=fileOf(c.seq,c.suf);x+='<tr><td>'+escHtml(c.label)+'</td><td class="mono">'+escHtml(c.file)+(url?' — <a href="'+escHtml(dlUrl(url))+'">Download</a>':"")+'</td><td>'+escHtml(c.title)+'</td><td class="mono">'+MB_DMAS.map(d=>codeOf(d,c.seq,c.suf)).join(" · ")+'</td></tr>'});
+        x+='</tbody></table></div>';
+      });
+      x+='<div style="font-size:10px;color:#888;margin-top:14px">Generated from Doom &amp; Deliverables — '+new Date().toLocaleDateString()+'</div></body></html>';
+      const w=window.open("","","width=980,height=900");
+      if(w){w.document.write(x);w.document.close();setTimeout(()=>{w.focus();w.print()},400)}else{notify("Pop-up blocked — allow pop-ups to download the map")}
+      log("MythBuster Map","Creative map printed — "+spots.length+" spots");
+    };
+    const registered=(seq,suf)=>MB_DMAS.filter(d=>regOf(codeOf(d,seq,suf))).length;
+    return<Mod title="🎬 Myth Buster Creative Map — Lerner & Rowe" onClose={()=>setModal(null)} xl>
+      <div style={{fontSize:12.5,color:"#9B8EAD",lineHeight:1.6,marginBottom:10}}>
+        16 spots from On Target Media, each in <b style={{color:"#C4A0C8"}}>16x9 (TV)</b> and <b style={{color:"#C4A0C8"}}>9x16 (Digital)</b>. All tagged <b style={{color:"#D4A040"}}>National 844-977-1900</b>, all carry Dramatization + AI Actor(s) disclaimers. Spots 1–6 were sent previously; 7–16 are the new drafts, registered as <span style={{fontFamily:"monospace",color:"#4AC8E8"}}>[MKT]LR2615036T–045T</span> and <span style={{fontFamily:"monospace",color:"#4AC8E8"}}>[MKT]LR2615007D–016D</span>. To link creative: rename each delivered file to its ISCI (the CSV maps every code) and upload via Bulk Creative — Recover Links will do the rest.
+      </div>
+      <div style={{display:"flex",gap:6,marginBottom:12}}>
+        <Btn color="#D4A040" onClick={printMap}>🗺 Download Creative Map (PDF)</Btn>
+        <Btn color="#4AC8E8" onClick={exportCsv}>⬇ Rename Map CSV</Btn>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {spots.map(s=><div key={s.n} style={{border:"1px solid #4a3565",borderRadius:10,padding:"10px 14px",background:"#261840"}}>
+          <div style={{display:"flex",alignItems:"baseline",gap:10,flexWrap:"wrap"}}>
+            <span style={{fontSize:15,fontWeight:800,color:"#F0E8F8"}}>Myth {s.n}</span>
+            <span style={{fontSize:12,color:"#9B8EAD"}}>{s.speaker}</span>
+            <span style={{fontSize:10,fontWeight:700,padding:"1px 8px",borderRadius:4,background:s.status==="New"?"rgba(212,160,64,.15)":"rgba(91,196,160,.15)",color:s.status==="New"?"#D4A040":"#5BC4A0"}}>{s.status}</span>
+            {s.note&&<span style={{fontSize:11,color:"#E85A7A"}}>⚠ {s.note}</span>}
+          </div>
+          <div style={{fontSize:13,fontStyle:"italic",color:"#C4A0C8",margin:"6px 0 2px"}}>“{s.myth}” <span style={{fontSize:10,color:"#9B8EAD",fontStyle:"normal"}}>claim on camera</span></div>
+          <div style={{fontSize:13,color:"#E8DFF0",marginBottom:8}}>{s.response} <span style={{fontSize:10,color:"#9B8EAD"}}>voiceover</span></div>
+          {cutRows(s).map(c=>{const url=fileOf(c.seq,c.suf);const nReg=registered(c.seq,c.suf);
+            return<div key={c.suf} style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",fontSize:12,padding:"4px 0",borderTop:"1px dashed rgba(155,123,176,.15)"}}>
+              <span style={{fontSize:10,fontWeight:700,color:"#D4A040",textTransform:"uppercase",width:82}}>{c.label}</span>
+              <span style={{fontFamily:"monospace",fontSize:11,color:"#9B8EAD"}}>{c.file}</span>
+              <span style={{color:"#4a3565"}}>→</span>
+              <span style={{color:"#E8DFF0",fontWeight:600}}>{c.title}</span>
+              <span style={{fontFamily:"monospace",fontSize:11,color:"#4AC8E8"}} title={MB_DMAS.map(d=>codeOf(d,c.seq,c.suf)).join(", ")}>[MKT]LR2615{pad3(c.seq)}{c.suf}</span>
+              <span style={{marginLeft:"auto",fontSize:11,color:nReg===MB_DMAS.length?"#5BC4A0":"#E85A7A"}}>{nReg}/{MB_DMAS.length} markets registered</span>
+              {url?<a href={dlUrl(url)} style={{color:"#4AC8E8",fontWeight:700,fontSize:11}}>⬇ file</a>:<span style={{fontSize:11,color:"#9B8EAD"}}>no file yet</span>}
+            </div>;})}
+        </div>)}
+      </div>
+    </Mod>;
+  };
 
   const EditIsciMod=({isci,idx})=>{
     const locked=isIsciSent(isci.code);
@@ -12784,6 +12869,7 @@ Rules:
   const DNC_EMPTY={name:"",brand:"Postman Law",markets:[],flightStart:"",flightEnd:"",trafficDue:"",channels:[],channelDetail:{},spots:[],extras:[],stations:"",partner:"",contact:"",cost:"",requestedBy:"",promoObligations:"",desc:"",toNotion:true};
   const[dnc,setDnc]=useState(DNC_EMPTY);
   const[contractText,setContractText]=useState("");
+  const[mpTheme,setMpTheme]=useState(()=>{try{return localStorage.getItem("mpTheme")||"hades"}catch(e){return"hades"}});
   const[parsing,setParsing]=useState(false);
   const dndGo=(ov)=>setDndOv(ov);
   const dndTouch=()=>{flightsDirtyRef.current=true};
@@ -12805,8 +12891,8 @@ Rules:
   // The chamber owns the whole viewport: Meg's gradient must not bleed under
   // the abyss while #mops is up. Restored on the way out.
   React.useEffect(()=>{
-    if(isMopsHub){const prev=document.body.style.background;document.body.style.background="#04070e";return()=>{document.body.style.background=prev}}
-  },[isMopsHub]);
+    if(isMopsHub){const prev=document.body.style.background;document.body.style.background=mpTheme==="olympus"?"#f7f3ea":"#04070e";return()=>{document.body.style.background=prev}}
+  },[isMopsHub,mpTheme]);
   // contract door — proven pre-strip: PDF → text → AI → prefilled form.
   const contractPdf=async(file)=>{
     if(!file)return;
@@ -13167,9 +13253,11 @@ Rules:
   //    send/mint modals — the operational layer the kit doesn't carry —
   //    above the chamber in the same abyss-and-gold tongue.
   const DndHub=()=>{
-    const HD={bg:"#04070e",bg2:"#070c16",card:"#0a111e",bd:"rgba(232,181,58,.28)",flame:"#5b93ff",ember:"#e2687f",rose:"#c02f4d",soul:"#8ac6cb",smoke:"#93a6bd",bone:"#e6ecf5",gold:"#e8b53a",lilac:"#c0cddd",dim:"#4c5c73"};
+    const HD=mpTheme==="olympus"
+      ?{bg:"#f7f3ea",bg2:"#f0eade",card:"#fcf9f1",bd:"rgba(138,109,26,.4)",flame:"#2456c9",ember:"#c02f4d",rose:"#8e1e37",soul:"#2c5c62",smoke:"#5c5138",bone:"#241e12",gold:"#8a6d1a",lilac:"#3d3524",dim:"#7d7050",panel:"linear-gradient(165deg,#fcf9f1,#f2ecdd 70%,#fcf9f1)",modal:"linear-gradient(150deg,#fdfaf3,#f4eee0)",shadow:"rgba(60,48,20,.35)"}
+      :{bg:"#04070e",bg2:"#070c16",card:"#0a111e",bd:"rgba(232,181,58,.28)",flame:"#5b93ff",ember:"#e2687f",rose:"#c02f4d",soul:"#8ac6cb",smoke:"#93a6bd",bone:"#e6ecf5",gold:"#e8b53a",lilac:"#c0cddd",dim:"#4c5c73",panel:"linear-gradient(165deg,#0a111e,#04070e 70%,#0a111e)",modal:"linear-gradient(150deg,#101014,#0a0a0e)",shadow:"rgba(0,0,0,.85)"};
     const serif={fontFamily:"'Cinzel',serif"};
-    const inp={padding:"6px 10px",borderRadius:4,border:"1px solid rgba(91,68,21,.6)",background:"rgba(4,7,14,.85)",color:HD.bone,fontSize:13,outline:"none",fontFamily:"'Inter','DM Sans',sans-serif"};
+    const inp={padding:"6px 10px",borderRadius:4,border:"1px solid "+(mpTheme==="olympus"?"rgba(165,141,79,.6)":"rgba(91,68,21,.6)"),background:mpTheme==="olympus"?"rgba(255,252,244,.9)":"rgba(4,7,14,.85)",color:HD.bone,fontSize:13,outline:"none",fontFamily:"'Inter','DM Sans',sans-serif"};
     const mini=(color)=>({background:"none",border:"1px solid "+(color||"rgba(232,181,58,.5)"),borderRadius:4,color:color||HD.gold,fontSize:11,fontWeight:700,cursor:"pointer",padding:"4px 10px",whiteSpace:"nowrap"});
     const flab={display:"block",fontSize:9,fontWeight:800,letterSpacing:1.5,textTransform:"uppercase",color:HD.smoke,marginBottom:3};
     const secH=(t,c)=><div style={{...serif,fontSize:16,fontWeight:700,letterSpacing:.4,color:HD.bone,borderBottom:"3px double "+(c||HD.gold)+"77",paddingBottom:4,margin:"18px 0 10px"}}>{t}</div>;
@@ -13340,7 +13428,7 @@ Rules:
 
     // ── adapters: the live engine, shaped for the chamber ──
     const today=new Date();today.setHours(0,0,0,0);
-    const MP_ACCENT={PL:"#9fb6d6",WK:"#e8b53a",LR:"#f0cf72",PDV:"#e2687f",KE:"#8ac6cb"};
+    const MP_ACCENT=mpTheme==="olympus"?{PL:"#5D3A87",WK:"#a5821f",LR:"#8f8400",PDV:"#c22733",KE:"#1E5F9E"}:{PL:"#9fb6d6",WK:"#e8b53a",LR:"#f0cf72",PDV:"#e2687f",KE:"#8ac6cb"};
     const mpBrands=BRANDS.map(b=>({id:b.code,name:b.name,accent:MP_ACCENT[b.code]||"#e8b53a"}));
     const bCode=(name)=>{const b=BRANDS.find(x=>x.name===name);return b?b.code:String(name||"")};
     const byFlight={};dndLedger.forEach(x=>{(byFlight[x.fid]=byFlight[x.fid]||[]).push(x)});
@@ -13390,6 +13478,7 @@ Rules:
       pending:Object.entries(assetReviews).filter(([t,r])=>r.status==="pending").sort((a,b)=>String(b[1].sentAt).localeCompare(String(a[1].sentAt))).map(([tok,r])=>{const age=Math.floor((Date.now()-new Date(r.sentAt).getTime())/864e5);return{id:tok,when:dndFd(r.sentAt),what:"Review · "+(r.assetLabel||r.assetType)+" — "+r.campName,late:age>=3?age:0}}),
       answered:Object.entries(assetReviews).filter(([t,r])=>r.status==="approved"||r.status==="changes").sort((a,b)=>String(b[1].respondedAt).localeCompare(String(a[1].respondedAt))).slice(0,8).map(([tok,r])=>({id:tok,when:dndFd(r.respondedAt),ok:r.status==="approved",what:(r.assetLabel||r.assetType)+" · "+r.campName,note:r.feedback||""})),
       trail:dndLog.slice(0,14).map(l=>({id:l.id,when:dndFd(l.at),kind:l.kind,subject:l.subject,to:l.to})),
+      light:mpTheme==="olympus",
       nd:{dnc,brandMarkets:brandMktCodes(dnc.brand).map(c=>DM[c]||c),brandNames:BRANDS.map(b=>b.name),channels:DND_CHANNELS,channelHints:DND_CH_HINT,contractText,parsing,notionCount:flights.filter(f=>f.notionId).length}
     };
     const mpHooks={
@@ -13407,6 +13496,7 @@ Rules:
       setMerch:(brand,field,val)=>saveMerchRole(brand,{[field]:val}),
       openAsset:(a)=>{if(a.url)window.open(a.url,"_blank");else dndCopy(a.kind==="Tagline"?a.title:a.code,"Copied")},
       backToDoom:()=>navigateHash(""),
+      setTheme:(t)=>{setMpTheme(t);try{localStorage.setItem("mpTheme",t)}catch(e){}},
       ndSet:(patch)=>setDnc(p=>({...p,...patch})),
       ndToggle:(key,val)=>setDnc(p=>{const arr=p[key]||[];return{...p,[key]:arr.includes(val)?arr.filter(x=>x!==val):[...arr,val]}}),
       ndBrand:(name)=>setDnc(p=>({...p,brand:name,markets:[]})),
@@ -13421,15 +13511,15 @@ Rules:
     return<React.Fragment>
       <MpApp api={mpApi}/>
       {dndOv&&dndOv.t==="dossier"&&<React.Fragment>
-        <div onClick={close} style={{position:"fixed",inset:0,background:"rgba(2,4,9,.8)",backdropFilter:"blur(3px)",zIndex:70}}/>
-        <div className="mphades" style={{position:"fixed",top:0,bottom:0,right:0,width:700,maxWidth:"95vw",background:"linear-gradient(165deg,#0a111e,#04070e 70%,#0a111e)",borderLeft:"1px solid rgba(232,181,58,.35)",boxShadow:"-18px 0 60px rgba(0,0,0,.85)",zIndex:71,overflowY:"auto",padding:"24px 28px 40px",fontFamily:"'Inter','DM Sans',sans-serif",fontSize:14,color:HD.bone}}>
+        <div onClick={close} style={{position:"fixed",inset:0,background:mpTheme==="olympus"?"rgba(58,48,30,.35)":"rgba(2,4,9,.8)",backdropFilter:"blur(3px)",zIndex:70}}/>
+        <div className={"mphades"+(mpTheme==="olympus"?" mpolympus":"")} style={{position:"fixed",top:0,bottom:0,right:0,width:700,maxWidth:"95vw",background:HD.panel,borderLeft:"1px solid "+HD.bd,boxShadow:"-18px 0 60px "+HD.shadow,zIndex:71,overflowY:"auto",padding:"24px 28px 40px",fontFamily:"'Inter','DM Sans',sans-serif",fontSize:14,color:HD.bone}}>
           <button onClick={close} style={{position:"absolute",top:14,right:16,background:"none",border:"none",color:HD.smoke,fontSize:20,fontWeight:800,cursor:"pointer"}}>×</button>
           {Dossier(dndOv.fid)}
         </div>
       </React.Fragment>}
       {dndPreview&&<React.Fragment>
         <div style={{position:"fixed",inset:0,background:"rgba(5,5,12,.82)",zIndex:80}} onClick={()=>setDndPreview(null)}/>
-        <div className="mphades" style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:720,maxWidth:"94vw",maxHeight:"88vh",overflowY:"auto",background:"linear-gradient(150deg,#101014,#0a0a0e)",border:"1px solid "+HD.bd,borderRadius:14,boxShadow:"0 24px 80px rgba(0,0,0,.85)",zIndex:81,padding:"22px 26px"}}>
+        <div className={"mphades"+(mpTheme==="olympus"?" mpolympus":"")} style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:720,maxWidth:"94vw",maxHeight:"88vh",overflowY:"auto",background:HD.modal,border:"1px solid "+HD.bd,borderRadius:14,boxShadow:"0 24px 80px "+HD.shadow,zIndex:81,padding:"22px 26px"}}>
           <div style={{...serif,fontSize:20,fontWeight:700,color:HD.bone,marginBottom:8}}>This is the exact email. Nothing has been sent.</div>
           <div style={{fontSize:12,color:HD.smoke,marginBottom:2}}><b style={{color:HD.bone}}>To:</b> {dndPreview.needsTo?<input value={dndPreview.to||""} onChange={e=>setDndPreview(p=>({...p,to:e.target.value,needsTo:false}))} placeholder="who gets it?" style={{...inp,fontSize:12,padding:"3px 8px"}}/>:dndPreview.to} · <b style={{color:HD.bone}}>CC:</b> emm.caban@atticor.ai</div>
           {dndPreview.needsTo&&<input autoFocus value={dndPreview.to||""} onChange={e=>setDndPreview(p=>({...p,to:e.target.value}))} placeholder="email address for this send" style={{...inp,width:"100%",margin:"6px 0"}}/>}
@@ -13445,7 +13535,7 @@ Rules:
       </React.Fragment>}
       {dndMint&&<React.Fragment>
         <div style={{position:"fixed",inset:0,background:"rgba(5,5,12,.82)",zIndex:80}} onClick={()=>setDndMint(null)}/>
-        <div className="mphades" style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:520,maxWidth:"94vw",background:"linear-gradient(150deg,#101014,#0a0a0e)",border:"1px solid "+HD.bd,borderRadius:14,zIndex:81,padding:"22px 26px"}}>
+        <div className={"mphades"+(mpTheme==="olympus"?" mpolympus":"")} style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:520,maxWidth:"94vw",background:HD.modal,border:"1px solid "+HD.bd,borderRadius:14,zIndex:81,padding:"22px 26px"}}>
           <div style={{...serif,fontSize:20,fontWeight:700,color:HD.bone}}>Register as ISCI</div>
           <div style={{fontSize:11.5,color:HD.smoke,margin:"6px 0 12px"}}>Doom mints by its own conventions — pre-filled from the deal. Confirm, don't type. Provenance rides along.</div>
           <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
@@ -13460,7 +13550,7 @@ Rules:
           </div>
         </div>
       </React.Fragment>}
-      {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#101014",color:HD.bone,padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.5)",zIndex:9999,border:"1px solid "+HD.bd}}>{toast}</div>}
+      {toast&&<div style={{position:"fixed",bottom:20,right:20,background:HD.card,color:HD.bone,padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.5)",zIndex:9999,border:"1px solid "+HD.bd}}>{toast}</div>}
     </React.Fragment>;
   };
 
@@ -13514,7 +13604,8 @@ Rules:
       <div style={{marginBottom:10,padding:"10px 14px",borderRadius:6,border:"1px dashed #2FBF7155",background:"rgba(47,191,113,.07)",fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
         <span style={{fontWeight:700,color:"#2FBF71"}}>⬇ Reference Downloads</span>
         <span style={{flex:1,minWidth:200}}>Lerner &amp; Rowe TV :15 ISCI list — the 4 creatives that match across the most markets, grouped by DMA in alphabetical order, with clickable creative download links. No Spanish spots, no MythBusters. Built live from the registry, so it's always current.</span>
-        <button onClick={downloadLrTv15IsciPdf} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #2FBF71",background:"#2FBF7115",color:"#2FBF71",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📄 L&amp;R TV :15 List (PDF)</button>
+        <button onClick={()=>downloadLrTv15IsciPdf()} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #2FBF71",background:"#2FBF7115",color:"#2FBF71",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📄 L&amp;R TV :15 List (PDF)</button>
+        <button onClick={()=>downloadLrTv15IsciPdf({dmas:["ABQ","CHI","LVS","PHX"],tag:"UA"})} style={{padding:"5px 14px",borderRadius:6,border:"1px solid #2FBF71",background:"#2FBF7115",color:"#2FBF71",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>📄 UA — PHX · CHI · ABQ · LVS (PDF)</button>
       </div>
       {/* Migration tools — safety net before Supabase cutover */}
       <div style={{marginBottom:10,padding:"10px 14px",borderRadius:6,border:"1px dashed #D4A04055",background:"rgba(212,160,64,.07)",fontSize:12,color:"#9B8EAD",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
@@ -14400,6 +14491,7 @@ Rules:
         <p>Lerner &amp; Rowe runs across the Southwest and Pacific Northwest — Phoenix, Tucson, Albuquerque, Las Vegas, Reno, Seattle, Flagstaff, Bullhead, Yuma, and Chicago. Estimates are 4-digit (2661–2674).</p>
         <p>Unlike the others, most L&amp;R creative is <b>shared</b> — the same spot carries one number and one title across every market, coded by market. Spanish spots are flagged right in the code with an <b>SP</b> after the brand: <span style={{fontFamily:"monospace"}}>LVSLRSP2630001R</span>.</p>
         <p>Brand look is black &amp; gold. <span style={{color:"#C4A0C8",fontWeight:700}}>{lrActive} active ISCIs</span> across the markets.</p>
+        <p>The <b>Myth Buster</b> campaign (On Target Media) is 16 spots, each in 16x9 for TV and 9x16 for Digital — all tagged National 844-977-1900 with Dramatization + AI Actor(s) disclaimers. The full map — scripts, delivered file names, per-market ISCI codes, download links — lives behind the <b>🎬 Myth Buster Map</b> button on the ISCI Registry when Lerner &amp; Rowe is selected.</p>
         <BookBrandFacts brand="Lerner & Rowe"/>
         <BookMarginNote author="meg">New blood. Try to keep the codes straight.</BookMarginNote>
       </div>,damageEffects:<>{<BookInkSplatter style={{bottom:20,right:20,opacity:.4}}/>}{<BookHoofMark style={{top:20,left:20,opacity:.2,transform:"rotate(12deg) scale(.65)"}}/>}</>},
@@ -14766,6 +14858,7 @@ Rules:
     {OohHub()}
     {(modal==="newIsci"||modal?.t==="newIsci")&&<NewIsciMod defaultMedia={modal?.defaultMedia||null}/>}
     {modal?.t==="socialTraffic"&&<SocialTrafficMod/>}
+    {modal?.t==="mythMap"&&<MythBusterMapMod/>}
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}
     {modal?.type==="oohPhoto"&&<OohPhotoModal modal={modal}/>}
     {toast&&<div style={{position:"fixed",bottom:20,right:20,background:"#2d1f42",color:"#E8DFF0",padding:"10px 18px",borderRadius:8,fontSize:14,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,.3)",zIndex:9999,border:"1px solid #4a3565"}}>{toast}</div>}
@@ -15578,6 +15671,7 @@ Rules:
     </div>
     {(modal==="newIsci"||modal?.t==="newIsci")&&<NewIsciMod defaultMedia={modal?.defaultMedia||null}/>}
     {modal?.t==="socialTraffic"&&<SocialTrafficMod/>}
+    {modal?.t==="mythMap"&&<MythBusterMapMod/>}
     {modal?.t==="buildRot"&&<RotBuilder est={modal.est} pool={modal.pool} workMonth={workMonth} _revise={modal._revise}/>}
     {modal?.t==="buildStream"&&<StreamBuilder est={modal.est} pool={modal.pool} workMonth={workMonth}/>}
     {modal?.t==="editIsci"&&<EditIsciMod isci={modal.isci} idx={modal.idx}/>}

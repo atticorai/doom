@@ -22,12 +22,12 @@ module.exports = Object.assign({content:['./app.js','./config.js','./index.html'
             dark: '#d4c4a0',
             shadow: '#b5a37a'
           },
-          abyss: {950:'#04070e',900:'#070c16',850:'#0a111e',800:'#0e1728',700:'#132033',600:'#1a2b42',500:'#233a56'},
-          flame: {300:'#a9c8ff',400:'#5b93ff',500:'#2f6fe8',600:'#1f4fc0',700:'#16368a'},
-          gold: {200:'#f9ead0',300:'#f0cf72',400:'#e8b53a',500:'#c9962a',600:'#8f6a1c',700:'#5b4415'},
-          asphodel: {400:'#8ac6cb',500:'#549aa1',700:'#2c5c62'},
-          ember: {300:'#f0a2b3',400:'#e2687f',500:'#c02f4d',600:'#8e1e37'},
-          shade: {100:'#e6ecf5',200:'#c0cddd',300:'#93a6bd',400:'#6b7f96',500:'#4c5c73'}
+          abyss: {950:'rgb(var(--mp-abyss-950) / <alpha-value>)',900:'rgb(var(--mp-abyss-900) / <alpha-value>)',850:'rgb(var(--mp-abyss-850) / <alpha-value>)',800:'rgb(var(--mp-abyss-800) / <alpha-value>)',700:'rgb(var(--mp-abyss-700) / <alpha-value>)',600:'rgb(var(--mp-abyss-600) / <alpha-value>)',500:'rgb(var(--mp-abyss-500) / <alpha-value>)'},
+          flame: {300:'rgb(var(--mp-flame-300) / <alpha-value>)',400:'rgb(var(--mp-flame-400) / <alpha-value>)',500:'rgb(var(--mp-flame-500) / <alpha-value>)',600:'rgb(var(--mp-flame-600) / <alpha-value>)',700:'rgb(var(--mp-flame-700) / <alpha-value>)'},
+          gold: {200:'rgb(var(--mp-gold-200) / <alpha-value>)',300:'rgb(var(--mp-gold-300) / <alpha-value>)',400:'rgb(var(--mp-gold-400) / <alpha-value>)',500:'rgb(var(--mp-gold-500) / <alpha-value>)',600:'rgb(var(--mp-gold-600) / <alpha-value>)',700:'rgb(var(--mp-gold-700) / <alpha-value>)'},
+          asphodel: {400:'rgb(var(--mp-asphodel-400) / <alpha-value>)',500:'rgb(var(--mp-asphodel-500) / <alpha-value>)',700:'rgb(var(--mp-asphodel-700) / <alpha-value>)'},
+          ember: {300:'rgb(var(--mp-ember-300) / <alpha-value>)',400:'rgb(var(--mp-ember-400) / <alpha-value>)',500:'rgb(var(--mp-ember-500) / <alpha-value>)',600:'rgb(var(--mp-ember-600) / <alpha-value>)'},
+          shade: {100:'rgb(var(--mp-shade-100) / <alpha-value>)',200:'rgb(var(--mp-shade-200) / <alpha-value>)',300:'rgb(var(--mp-shade-300) / <alpha-value>)',400:'rgb(var(--mp-shade-400) / <alpha-value>)',500:'rgb(var(--mp-shade-500) / <alpha-value>)'}
         },
         fontFamily: {
           cinzel: ['Cinzel', 'serif'],

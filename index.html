@@ -16,6 +16,25 @@
 <!-- Tailwind is COMPILED (tw.css via tailwind.config.cjs) — no runtime CDN.
      Rebuild after adding classes: npx tailwindcss@3.4.17 -c tailwind.config.cjs -i tw.in.css -o tw.css --minify -->
 <style id="mp-hades">
+/* ── Theme tokens: Hades (default) and Olympus (.mpolympus, the light skin
+   for the weirdos who like daylight). Tailwind's compiled utilities read
+   these vars, so one class flip re-skins every color utility at once. ── */
+.mphades{
+  --mp-abyss-950:4 7 14; --mp-abyss-900:7 12 22; --mp-abyss-850:10 17 30; --mp-abyss-800:14 23 40; --mp-abyss-700:19 32 51; --mp-abyss-600:26 43 66; --mp-abyss-500:35 58 86;
+  --mp-flame-300:169 200 255; --mp-flame-400:91 147 255; --mp-flame-500:47 111 232; --mp-flame-600:31 79 192; --mp-flame-700:22 54 138;
+  --mp-gold-200:249 234 208; --mp-gold-300:240 207 114; --mp-gold-400:232 181 58; --mp-gold-500:201 150 42; --mp-gold-600:143 106 28; --mp-gold-700:91 68 21;
+  --mp-asphodel-400:138 198 203; --mp-asphodel-500:84 154 161; --mp-asphodel-700:44 92 98;
+  --mp-ember-300:240 162 179; --mp-ember-400:226 104 127; --mp-ember-500:192 47 77; --mp-ember-600:142 30 55;
+  --mp-shade-100:230 236 245; --mp-shade-200:192 205 221; --mp-shade-300:147 166 189; --mp-shade-400:107 127 150; --mp-shade-500:76 92 115;
+}
+.mphades.mpolympus{
+  --mp-abyss-950:247 243 234; --mp-abyss-900:240 234 222; --mp-abyss-850:234 226 210; --mp-abyss-800:226 216 196; --mp-abyss-700:214 201 176; --mp-abyss-600:199 183 152; --mp-abyss-500:180 161 124;
+  --mp-flame-300:29 79 192; --mp-flame-400:36 86 201; --mp-flame-500:47 111 232; --mp-flame-600:91 147 255; --mp-flame-700:169 200 255;
+  --mp-gold-200:63 50 8; --mp-gold-300:107 84 21; --mp-gold-400:138 109 26; --mp-gold-500:165 130 31; --mp-gold-600:178 146 58; --mp-gold-700:165 141 79;
+  --mp-asphodel-400:44 92 98; --mp-asphodel-500:63 125 132; --mp-asphodel-700:159 211 207;
+  --mp-ember-300:142 30 55; --mp-ember-400:192 47 77; --mp-ember-500:192 47 77; --mp-ember-600:226 104 127;
+  --mp-shade-100:36 30 18; --mp-shade-200:61 53 36; --mp-shade-300:92 81 56; --mp-shade-400:125 112 80; --mp-shade-500:153 138 103;
+}
 /* ── Mayhem & Marketing Ops: the Underworld chamber (Magic Patterns port) ──
    Scoped under .mphades. The reset block stands in for Tailwind preflight
    (which is off app-wide) so border/button utilities behave as authored. */
@@ -26,6 +45,30 @@
 .mphades h1,.mphades h2,.mphades h3,.mphades h4,.mphades p,.mphades dl,.mphades dd{margin:0}
 .mphades table{border-collapse:collapse}
 .mphades a{text-decoration:none;color:inherit}
+/* ── Olympus variants of the hand-cut classes ── */
+.mphades.mpolympus, .mphades.mpolympus *, .mphades.mpolympus *::before, .mphades.mpolympus *::after{border-color:#cdbd97}
+.mpolympus ::selection{background:rgba(47,111,232,0.22)}
+.mpolympus :focus-visible{outline-color:#2456c9}
+.mpolympus .stone{background-image:repeating-linear-gradient(174deg,rgba(58,48,30,0.035) 0 1px,transparent 1px 5px)}
+.mpolympus .cracked::after{opacity:0.3;filter:invert(1)}
+.mpolympus .carved{background-color:rgba(252,249,241,0.9);border-color:rgba(165,141,79,0.55);box-shadow:inset 0 1px 0 rgba(255,255,255,0.85),inset 0 0 60px rgba(180,161,124,0.14),0 24px 60px -38px rgba(60,48,20,0.45)}
+.mpolympus .carved::before,.mpolympus .carved::after{background:#a5821f;box-shadow:0 0 8px rgba(165,130,31,0.7)}
+.mpolympus .slab{background-color:rgba(250,246,237,0.8);border-color:rgba(165,141,79,0.35);box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),inset 0 0 34px rgba(180,161,124,0.12)}
+.mpolympus .double-rule{border-top-color:rgba(138,109,26,0.6);box-shadow:0 3px 0 -1px rgba(138,109,26,0.3),0 0 14px rgba(165,130,31,0.2)}
+.mpolympus .fluted{background-image:repeating-linear-gradient(90deg,rgba(120,102,66,0.16) 0 1px,rgba(238,230,214,0.85) 1px 7px,rgba(120,102,66,0.1) 7px 9px,rgba(238,230,214,0.9) 9px 16px)}
+.mpolympus .grille{background-image:linear-gradient(45deg,rgba(138,109,26,0.06) 25%,transparent 25% 75%,rgba(138,109,26,0.06) 75%),linear-gradient(-45deg,rgba(138,109,26,0.06) 25%,transparent 25% 75%,rgba(138,109,26,0.06) 75%)}
+.mpolympus .soulfire-text{color:#1d4fc0;text-shadow:0 0 10px rgba(91,147,255,0.4),0 0 30px rgba(47,111,232,0.2)}
+.mpolympus .gilded-text{color:#8a6d1a;text-shadow:0 0 8px rgba(232,181,58,0.35)}
+.mpolympus .ember-text{color:#c02f4d;text-shadow:0 0 8px rgba(192,47,77,0.25)}
+.mpolympus .jade-text{color:#2c5c62;text-shadow:0 0 8px rgba(84,154,161,0.3)}
+.mpolympus .glow-flame{box-shadow:0 0 0 1px rgba(47,111,232,0.4),0 4px 18px -4px rgba(47,111,232,0.35)}
+.mpolympus .glow-gold{box-shadow:0 0 0 1px rgba(165,130,31,0.4),0 4px 16px -4px rgba(165,130,31,0.3)}
+.mpolympus .glow-ember{box-shadow:-1px 0 14px rgba(192,47,77,0.3),inset 0 0 18px rgba(192,47,77,0.05)}
+.mpolympus .glow-jade{box-shadow:0 0 14px rgba(63,125,132,0.25),inset 0 0 14px rgba(63,125,132,0.06)}
+.mpolympus .greek-caps{color:rgba(138,109,26,0.85);text-shadow:0 0 10px rgba(232,181,58,0.3)}
+.mpolympus .drop-cap::first-letter{color:#6b5415;text-shadow:0 0 12px rgba(232,181,58,0.4)}
+.mpolympus .frieze,.mpolympus .laurel-rule{filter:saturate(0.9) brightness(0.72)}
+.mpolympus .dentil-band{border-bottom-color:rgba(138,109,26,0.5);background-image:repeating-linear-gradient(90deg,rgba(138,109,26,0.5) 0 9px,transparent 9px 21px)}
 /* Meg's global !important rules are excluded from the chamber at their
    source via :not(.mphades)/:not(.mphades *) — Tailwind rules own it here. */
 .mphades .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
@@ -398,7 +441,7 @@ html.dd-light ::-webkit-scrollbar-track{background:#f0e4ce !important}
     var dataFiles=[
       "data-isci.js","data-est-sta-cal.js","data-postings.js","data-postings-new.js","data-ooh-coords-new.js","data-ooh-renewal-dates.js",
       "data-pop-images.js","data-pl-panels.js","data-logos.js","data-ooh-cal.js",
-      "data-traffic-history.js","data-ooh-contracts.js","data-lr-contracts.js","data-lr-panels.js","data-pop-photos.js","data-pop-titles.js","data-lr-pops.js","data-lr-specs.js",
+      "data-traffic-history.js","data-ooh-contracts.js","data-lr-contracts.js","data-lr-panels.js","data-pop-photos.js","data-pop-titles.js","data-lr-pops.js","data-lr-specs.js","data-lr-mythbusters.js",
       "data-legacy-vault.js","data-wk-aug-drafts.js","data-pdv-panels.js","data-ke-contracts.js","data-ke-panels.js","data-ke-vault.js"
     ];
 
