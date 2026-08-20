@@ -5436,7 +5436,7 @@ const App=()=>{
     const REASONS=["New market launch","New media type","New flight period","Agency buy plan"];
     const BB={"Postman Law":["Ken Lazar","Lynn Cortelezzi","Hazel Wolf"],"Wettermark Keith":["Amy Coffey"],"Parrish DeVaughn":["Jessica Flynn"],"Lerner & Rowe":[],"Keches Law Group":[]};
     const BUYER_EMAILS={"Ken Lazar":"ken.lazar@atticor.ai","Lynn Cortelezzi":"lynn.cortelezzi@atticor.ai","Amy Coffey":"acoffey@wkfirm.com","Jessica Flynn":"jessica.flynn@atticor.ai"};
-    const BM={"Postman Law":["Chicago","Cincinnati","Denver","Minneapolis"],"Wettermark Keith":["Birmingham","Chattanooga","Dothan","Huntsville","Knoxville","Montgomery","Nashville"],"Parrish DeVaughn":["Oklahoma City","Tulsa"],"Lerner & Rowe":["Albuquerque","Bullhead","Chicago","Flagstaff","Las Vegas","Phoenix","Reno","Tucson","Yuma"],"Keches Law Group":["Boston"]};
+    const BM={"Postman Law":["Chicago","Cincinnati","Denver","Minneapolis"],"Wettermark Keith":["Birmingham","Chattanooga","Dothan","Huntsville","Knoxville","Montgomery","Nashville"],"Parrish DeVaughn":["Oklahoma City","Tulsa"],"Lerner & Rowe":["Albuquerque","Bullhead","Chicago","Flagstaff","Las Vegas","Phoenix","Reno","Seattle","Tucson","Yuma"],"Keches Law Group":["Boston"]};
     const findSta=()=>{if(!nr.market||!nr.brand||!nr.media)return[];return stations.filter(s=>s.market===nr.market&&s.brand===nr.brand&&(nr.media==="Sports"||nr.media==="Heavy Up"?s.media==="TV":nr.media==="Streaming Audio"?s.media==="Radio":s.media===nr.media))};
     const openC=()=>{setShowAdd(true);setStep(1);setNr({num:nextNum(),market:"",media:"",group:"",campaign:"",buyer:"",brand:"",reason:""});setSugStations([]);setSelStations([])};
     const closeC=()=>{setShowAdd(false);setStep(1)};
