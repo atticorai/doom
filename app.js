@@ -10995,11 +10995,15 @@ Rules:
       const withRot=fl.filter(p=>p.isciList&&p.isciList.length);
       if(!withRot.length){notify("No creative rotation on these boards yet");return}
       const groups={};
-      withRot.forEach(p=>{const k=p.isciList.join(",")+"|"+p.size;if(!groups[k])groups[k]={list:p.isciList,pct:p.isciPct||[],size:p.size,medias:new Set(),units:0,cycles:p.cycles||""};groups[k].medias.add(p.media);groups[k].units+=(p.numUnits||1)});
+      withRot.forEach(p=>{const k=p.isciList.join(",")+"|"+p.size;if(!groups[k])groups[k]={list:p.isciList,pct:p.isciPct||[],size:p.size,medias:new Set(),units:0,cycles:p.cycles||"",flight:p.flight||""};groups[k].medias.add(p.media);groups[k].units+=(p.numUnits||1)});
       const conceptOf=(t,code)=>{const seg=String(t||"").split(" - ");return seg.length>=3?seg[2]:(t||code)};
       // Largest-remainder allocation so panel counts always sum to the showing size.
       const alloc=(pcts,total)=>{const raw=pcts.map(x=>x/100*total);const fl_=raw.map(Math.floor);let left=total-fl_.reduce((a,b)=>a+b,0);const order=raw.map((r,i)=>[r-fl_[i],i]).sort((a,b)=>b[0]-a[0]);for(let i=0;i<left;i++)fl_[order[i%order.length][1]]++;return fl_};
-      const w=window.open("","","width=1000,height=800");
+      // Buffer every write so the EXACT sheet can be stored and re-shown
+      // verbatim by the Traffic Library (oohSheets collection).
+      const wWin=window.open("","","width=1000,height=800");
+      let _rotHtml="";
+      const w={document:{write:s=>{_rotHtml+=s},close:()=>{if(wWin){wWin.document.write(_rotHtml);wWin.document.close()}}}};
       w.document.write('<html><head><title>PDV OOH — Creative Rotation</title><style>body{font-family:Arial,sans-serif;margin:26px;color:#1a1a1a}h3{color:#EE2B37;font-size:13px;letter-spacing:1px;margin:22px 0 0;text-transform:uppercase}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #ccc;padding:6px 8px;font-size:11px;text-align:left;vertical-align:top}th{background:#f3f3f3}.note{font-size:10.5px;color:#555;font-style:italic;margin:6px 0 0}.dl{position:fixed;top:12px;right:12px;background:#EE2B37;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}@media print{.dl{display:none}table,tr{page-break-inside:avoid}}</style></head><body>');
       w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
       w.document.write('<div style="text-align:center;margin-bottom:12px"><img src="'+(typeof LOGO_PDV!=="undefined"?LOGO_PDV:"")+'" style="height:52px;max-width:420px"/><div style="font-weight:bold;color:#555;letter-spacing:2px">OUT-OF-HOME CREATIVE ROTATION</div></div>');
@@ -11020,7 +11024,18 @@ Rules:
       w.document.write('<h3>Art Files</h3><div class="note" style="font-style:normal">Each link downloads the print-resolution production TIF directly. Filenames carry the ISCI code; please reference the ISCI in posting reports and completion photos.</div>');
       w.document.write('<div style="margin-top:26px;padding-top:8px;border-top:1px solid #ccc;font-size:10px;color:#777">Parrish DeVaughn · OOH Creative Rotation &nbsp;|&nbsp; Emm Caban · Atticor Media</div>');
       w.document.write('</body></html>');w.document.close();
-      log("PDV Rotation Sheet",(mktF||"All")+" · "+nIscis+" creatives");notify("Rotation sheet — "+nIscis+" creatives");
+      // Save to the Traffic Library: history record + verbatim sheet HTML.
+      const recTs=new Date().toISOString();
+      const mktLabel=mktF?(mktNames[mktF]||mktF):[...new Set(withRot.map(x=>mktNames[x.market]||x.market))].join(", ");
+      const isciLines=[];
+      Object.values(groups).forEach(g=>{
+        const showing=g.units>g.list.length;
+        const panels=showing?alloc(g.list.map((_,i)=>(g.pct[i]!=null?g.pct[i]:100/g.list.length)),g.units):null;
+        g.list.forEach((code,i)=>{const m=iscis.find(x=>x.code===code);isciLines.push({code:code,title:conceptOf(m&&m.title,code),dur:g.size,pct:String(g.pct[i]!=null?g.pct[i]:Math.round(100/g.list.length)),sched:"",bookend:"",units:showing?panels[i]+"/"+g.units:""})});
+      });
+      saveOohSheet(recTs,_rotHtml);
+      setTrafficHistory(p=>[{ts:recTs,est:"OOH-PDV-"+mktLabel.replace(/[^A-Za-z]/g,""),brand:"Parrish DeVaughn",market:mktLabel,media:"OOH",buyer:"Jessica Flynn",month:workMonth,flight:[...new Set(withRot.map(x=>fmtFl(x.flight)).filter(Boolean))].join(" · "),version:"1",comments:"Creative rotation sheet",iscis:isciLines,stations:[],isOoh:true,status:"print_only",totalUnits:withRot.reduce((a,x)=>a+(x.numUnits||1),0),vendor:[...new Set(withRot.map(x=>x.vendor).filter(Boolean))].join(", ")},...p]);
+      log("PDV Rotation Sheet",mktLabel+" · "+nIscis+" creatives — saved to Traffic Library");notify("Rotation sheet saved to Traffic Library — "+nIscis+" creatives");
     };
     return <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",flexWrap:"wrap",gap:8}}>
