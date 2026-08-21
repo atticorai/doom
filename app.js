@@ -11043,7 +11043,15 @@ Rules:
                 {(p.numUnits||1)>1&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Units</div><div style={{fontSize:14,fontWeight:700,color:ACC}}>{p.numUnits}</div></div>}
                 {p.facing&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#6366f1"/></div></div>}
               </div>
-              <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:"#3a2f1a",border:"1px solid #5a4a2a",fontSize:13,color:"#D4A040",fontStyle:"italic"}}>No creative assigned yet</div>
+              {(p.isciList&&p.isciList.length)?
+                <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:"#1f2a35",border:"1px solid #2a4a5a",fontSize:13}}>
+                  {p.isciList.map((code,k)=>{const m=iscis.find(i=>i.code===code);const pct=(p.isciPct&&p.isciPct[k]!=null)?p.isciPct[k]+"%":null;
+                    return <div key={k} style={{display:"flex",justifyContent:"space-between",gap:6,marginTop:k?2:0}}>
+                      <span style={{color:"#E8DFF0"}}>{(m&&m.fileUrl)?<a href={m.fileUrl} target="_blank" rel="noreferrer" style={{color:"#4AC8E8"}}>{m.title||code}</a>:(m?m.title:code)}</span>
+                      {pct&&<b style={{color:"#D4A040",whiteSpace:"nowrap"}}>{pct}</b>}
+                    </div>;})}
+                </div>
+              :<div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:"#3a2f1a",border:"1px solid #5a4a2a",fontSize:13,color:"#D4A040",fontStyle:"italic"}}>No creative assigned yet</div>}
             </div>
           </div>;})}
         </div>
