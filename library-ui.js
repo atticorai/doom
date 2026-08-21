@@ -453,7 +453,7 @@ function Se({
             " instructions"
           ] }),
           " · ",
-          /* @__PURE__ */ e.jsx("span", { children: "2 brands" }),
+          /* @__PURE__ */ e.jsx("span", { children: "5 brands" }),
           " ·",
           " ",
           /* @__PURE__ */ e.jsxs("span", { children: [
@@ -467,7 +467,7 @@ function Se({
       "div",
       {
         className: `flex rounded-t-lg border-b overflow-hidden backdrop-blur-sm ${p ? "bg-white/60 border-purple-200" : "bg-underworld-800/60 border-megara-dark/40"}`,
-        children: ["Postman Law", "Wettermark Keith"].map((g) => {
+        children: ["Postman Law", "Wettermark Keith", "Lerner & Rowe", "Parrish DeVaughn", "Keches Law Group"].map((g) => {
           const h = a === g, f = p ? "text-purple-800 border-purple-600 bg-purple-50" : "text-megara-light border-magic-gold bg-magic-gold/5", j = p ? "text-purple-400 border-transparent hover:text-purple-600 hover:bg-purple-50/50" : "text-megara-light/40 border-transparent hover:text-megara-light/70 hover:bg-white/5";
           return /* @__PURE__ */ e.jsxs(
             "button",
@@ -478,7 +478,7 @@ function Se({
                 g,
                 /* @__PURE__ */ e.jsxs("span", { className: "text-xs opacity-50 ml-1", children: [
                   "(",
-                  n[g],
+                  n[g] || 0,
                   ")"
                 ] })
               ]

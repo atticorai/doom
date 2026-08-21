@@ -15114,7 +15114,7 @@ Rules:
             };
             const renderSheet=(h)=>{
               if(h.isOoh)return renderOohSheet(h);
-              const code=h.brand==="Postman Law"?"PL":"WK";
+              const code=(BRANDS.find(b=>b.name===h.brand)||{}).code||"PL";
               const bc=getBrandColor(code);const bcBg=getBrandBg(code);
               const logo=code==="PL"?LOGO_PL:LOGO_WK;
               const hdr=(l,v,c)=>'<div style="display:flex;gap:6px;font-size:12px;margin:2px 0;color:#1e1233"><b style="min-width:140px;color:#555;font-weight:700">'+l+':</b><span style="color:'+(c||'#1e1233')+';font-weight:'+(c?'600':'500')+'">'+(v==null?"":v)+'</span></div>';
