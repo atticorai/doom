@@ -4424,8 +4424,8 @@ const App=()=>{
           // Audacy: CHI/PHX/LVS/ABQ/TUC/YMA/RNO) and read the radio (R) ISCIs.
           const lrStream=e.brand==="Lerner & Rowe"&&e.media==="Streaming Audio";
           const lrStreamDmas=lrStream?(/Audacy/i.test(e.group||"")?["CHI","PHX","LVS","ABQ","TUC","YMA","RNO"]:["PHX","LVS","SEA"]):null;
-          // Pandora runs :30s only; Audacy takes the full radio pool.
-          const mi=iscis.filter(i=>(lrStream?lrStreamDmas.includes(i.dma)&&(!/Pandora/i.test(e.group||"")||String(i.dur)==="30"):i.dma===dc)&&i.brand===e.brand&&i.active&&(e.media==="TV"||e.media==="Cable"?i.suffix==="T":e.media==="Radio"?i.suffix==="R":e.media==="Streaming Audio"?(e.brand==="Wettermark Keith"||e.brand==="Lerner & Rowe"?i.suffix==="R":i.suffix==="S"):e.media==="Digital Streaming"?i.suffix==="T":e.media==="OOH"?i.suffix==="O":e.media==="Digital"?i.suffix==="D":e.media==="Display"?i.suffix==="B":true));
+          // L&R streaming (Pandora and Audacy alike) runs :30s only.
+          const mi=iscis.filter(i=>(lrStream?lrStreamDmas.includes(i.dma)&&String(i.dur)==="30":i.dma===dc)&&i.brand===e.brand&&i.active&&(e.media==="TV"||e.media==="Cable"?i.suffix==="T":e.media==="Radio"?i.suffix==="R":e.media==="Streaming Audio"?(e.brand==="Wettermark Keith"||e.brand==="Lerner & Rowe"?i.suffix==="R":i.suffix==="S"):e.media==="Digital Streaming"?i.suffix==="T":e.media==="OOH"?i.suffix==="O":e.media==="Digital"?i.suffix==="D":e.media==="Display"?i.suffix==="B":true));
           const isSel=combineSet.includes(estKey(e));
           const linkedSta=getEstStations(e);
           const airing=nowAiring[ak(e)];
