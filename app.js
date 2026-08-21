@@ -4420,7 +4420,8 @@ const App=()=>{
           // Audacy: CHI/PHX/LVS/ABQ/TUC/YMA/RNO) and read the radio (R) ISCIs.
           const lrStream=e.brand==="Lerner & Rowe"&&e.media==="Streaming Audio";
           const lrStreamDmas=lrStream?(/Audacy/i.test(e.group||"")?["CHI","PHX","LVS","ABQ","TUC","YMA","RNO"]:["PHX","LVS","SEA"]):null;
-          const mi=iscis.filter(i=>(lrStream?lrStreamDmas.includes(i.dma):i.dma===dc)&&i.brand===e.brand&&i.active&&(e.media==="TV"||e.media==="Cable"?i.suffix==="T":e.media==="Radio"?i.suffix==="R":e.media==="Streaming Audio"?(e.brand==="Wettermark Keith"||e.brand==="Lerner & Rowe"?i.suffix==="R":i.suffix==="S"):e.media==="Digital Streaming"?i.suffix==="T":e.media==="OOH"?i.suffix==="O":e.media==="Digital"?i.suffix==="D":e.media==="Display"?i.suffix==="B":true));
+          // Pandora runs :30s only; Audacy takes the full radio pool.
+          const mi=iscis.filter(i=>(lrStream?lrStreamDmas.includes(i.dma)&&(!/Pandora/i.test(e.group||"")||String(i.dur)==="30"):i.dma===dc)&&i.brand===e.brand&&i.active&&(e.media==="TV"||e.media==="Cable"?i.suffix==="T":e.media==="Radio"?i.suffix==="R":e.media==="Streaming Audio"?(e.brand==="Wettermark Keith"||e.brand==="Lerner & Rowe"?i.suffix==="R":i.suffix==="S"):e.media==="Digital Streaming"?i.suffix==="T":e.media==="OOH"?i.suffix==="O":e.media==="Digital"?i.suffix==="D":e.media==="Display"?i.suffix==="B":true));
           const isSel=combineSet.includes(estKey(e));
           const linkedSta=getEstStations(e);
           const airing=nowAiring[ak(e)];
@@ -4914,7 +4915,9 @@ const App=()=>{
     const[displayMedium,setDisplayMedium]=useState("Display");
     // Pandora companion/display banner names
     const[pandoraCompanions,setPandoraCompanions]=useState([{name:"",size:"350x250"}]);
-    const[pandoraDisplays,setPandoraDisplays]=useState([{name:"",size:"3250x250"},{name:"",size:"3250x250"}]);
+    // Hands-off: L&R preloads its registered display banner(s) automatically —
+    // the brand runs one banner across all streaming markets.
+    const[pandoraDisplays,setPandoraDisplays]=useState(()=>{if(isLRstream){const b=iscis.filter(i=>i.suffix==="B"&&i.brand===est.brand&&i.active!==false).map(i=>({name:i.code,size:((String(i.title).match(/(\d+\s*x\s*\d+)/)||[])[1]||"").replace(/\s/g,"")}));if(b.length)return b}return[{name:"",size:"3250x250"},{name:"",size:"3250x250"}]});
     const[abTest,setAbTest]=useState(true);
     const[version,setVersion]=useState("1");
     const[flightDates,setFlightDates]=useState(flight);
@@ -5270,7 +5273,7 @@ const App=()=>{
         <button onClick={()=>setPandoraCompanions(p=>[...p,{name:"",size:"350x250"}])} style={{fontSize:11,padding:"2px 8px",borderRadius:4,border:"1px solid #4a3565",background:"transparent",color:"#4AC8E8",cursor:"pointer",fontWeight:600}}>+ Add Companion</button></React.Fragment>}
 
         {vendorMode!=="Audacy"&&<React.Fragment><div style={{display:"flex",alignItems:"center",gap:10,marginTop:10,marginBottom:6}}><div style={{fontSize:12,fontWeight:700,color:"#ec4899"}}>DISPLAY BANNERS{abTest?" (A/B test)":""}</div><label style={{fontSize:11,color:"#9B8EAD",display:"flex",alignItems:"center",gap:4,cursor:"pointer"}}><input type="checkbox" checked={abTest} onChange={e=>setAbTest(e.target.checked)}/> A/B Test</label></div>
-        {(()=>{const _dc=Object.entries(DM).find(([_,n])=>n===est.market)?.[0]||"";const dbi=iscis.filter(i=>i.suffix==="B"&&i.brand===est.brand&&i.dma===_dc&&i.active!==false);return dbi.length?<select value="" onChange={e=>{const c=e.target.value;if(!c)return;const it=dbi.find(x=>x.code===c);if(!it)return;const sz=((String(it.title).match(/(\d+\s*x\s*\d+)/)||[])[1]||"").replace(/\s/g,"");setPandoraDisplays(p=>[...p.filter(x=>x.name.trim()),{name:it.code,size:sz}]);e.target.value=""}} style={{width:"100%",marginBottom:6,padding:"5px 8px",borderRadius:4,border:"1px solid #ec4899",background:"#1e1233",color:"#E8DFF0",fontSize:11}}><option value="">+ Add from registered display banners…</option>{dbi.map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}</option>)}</select>:<div style={{fontSize:10,color:"#9B8EAD",marginBottom:6}}>No registered display-banner ISCIs for {est.market} — type them below or register them (media "Display").</div>})()}
+        {(()=>{const _dc=Object.entries(DM).find(([_,n])=>n===est.market)?.[0]||"";const dbi=iscis.filter(i=>i.suffix==="B"&&i.brand===est.brand&&(isLRstream||i.dma===_dc)&&i.active!==false);return dbi.length?<select value="" onChange={e=>{const c=e.target.value;if(!c)return;const it=dbi.find(x=>x.code===c);if(!it)return;const sz=((String(it.title).match(/(\d+\s*x\s*\d+)/)||[])[1]||"").replace(/\s/g,"");setPandoraDisplays(p=>[...p.filter(x=>x.name.trim()),{name:it.code,size:sz}]);e.target.value=""}} style={{width:"100%",marginBottom:6,padding:"5px 8px",borderRadius:4,border:"1px solid #ec4899",background:"#1e1233",color:"#E8DFF0",fontSize:11}}><option value="">+ Add from registered display banners…</option>{dbi.map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}</option>)}</select>:<div style={{fontSize:10,color:"#9B8EAD",marginBottom:6}}>No registered display-banner ISCIs for {est.market} — type them below or register them (media "Display").</div>})()}
         {pandoraDisplays.map((d,di)=><div key={di} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
           {abTest&&<span style={{fontSize:11,fontWeight:800,color:"#ec4899",width:16,textAlign:"center"}}>{String.fromCharCode(65+di)}</span>}
           <input value={d.name} onChange={e=>{const v=e.target.value;setPandoraDisplays(p=>p.map((x,i)=>i===di?{...x,name:v}:x))}} placeholder="e.g. Pandora_Banner_Ad_3250x250_CHI_AccidentIALogo_Contact_Us" style={{flex:1,padding:"4px 8px",borderRadius:4,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:11}}/>
