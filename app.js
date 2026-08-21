@@ -422,6 +422,10 @@ const CALENDAR=D_C.map(r=>({month:r[0],rotDue:r[1],bcStart:r[2],bcEnd:r[3]}));
 const nextTrafficMonth=()=>{const t=new Date();t.setHours(0,0,0,0);const c=CALENDAR.find(c=>new Date(c.bcStart+"T00:00:00")>t);return c?c.month:(CALENDAR[CALENDAR.length-1]||{}).month||"December"};
 const POSTINGS=(()=>{const nv=v=>v==="Lamar Advertising"?"Lamar":v;const mk=r=>({boardId:r[0],submarket:r[1],dma:r[2],vendor:nv(r[3]),type:r[4],size:r[5],location:r[6],impressions:r[7],installDate:r[8],facing:r[9],brand:r[10],contact:r[11],panel:r[12],tab:r[13],contract:r[14],isci:r[15]||"",closeImg:r[16],distImg:r[17],design:(r[18]?(Array.isArray(r[18])?r[18].filter(Boolean):[r[18]]):[]),vendorRef:r[19]||""});const base=D_P.map(mk);const extra=(typeof D_P_NEW!=="undefined"?D_P_NEW:[]).map(mk);return[...base,...extra]})();
 const DM={CHI:"Chicago",CIN:"Cincinnati",DEN:"Denver",MSP:"Minneapolis",BRM:"Birmingham",CHA:"Chattanooga",DHN:"Dothan",GAD:"Gadsden",HSV:"Huntsville",KNX:"Knoxville",MTG:"Montgomery",NSH:"Nashville",PAN:"Panama City",ABQ:"Albuquerque",KBH:"King/Bull",BHD:"Bullhead",FLG:"Flagstaff",LVS:"Las Vegas",PHX:"Phoenix",RNO:"Reno",SEA:"Seattle",TUC:"Tucson",YMA:"Yuma",OKC:"Oklahoma City",TUL:"Tulsa",BOS:"Boston"};
+// In-progress rotation drafts, keyed per estimate+month. Module-scoped so a
+// builder survives closing/reopening, generating, and downloading; a draft is
+// cleared only by its Discard Draft button.
+const ROT_DRAFTS={};
 // Market rolls up by FULL NAME everywhere in the app (traffic library, history,
 // metrics, AI planner) — the prefix lives ONLY in the ISCI code. Gadsden (GAD)
 // is not its own market; it falls under Birmingham.
@@ -4456,8 +4460,18 @@ const App=()=>{
 
     // State: array of {isci, pct, sched, bookend, selected}
     // If _revise, pre-fill from previous rotation
+    // The builder never resets mid-work: state restores from the draft on
+    // reopen, and generating/printing/downloading never clears it.
+    const _draftKey=(est.num||"")+"|"+(est.market||"")+"|"+workMonth+"|rot";
+    const _draft=ROT_DRAFTS[_draftKey];
     const[rows,setRows]=useState(()=>{
       const base=pool.map(i=>({isci:i,pct:"",sched:"All Week",bookend:"",selected:false}));
+      if(_draft&&_draft.rows){
+        return base.map(r=>{
+          const p=_draft.rows.find(x=>x.code===r.isci.code);
+          return p?{...r,pct:p.pct||"",sched:p.sched||"All Week",bookend:p.bookend||"",selected:!!p.selected}:r;
+        });
+      }
       if(_revise&&_revise.iscis){
         return base.map(r=>{
           const prev=_revise.iscis.find(p=>p.code===r.isci.code);
@@ -4467,12 +4481,14 @@ const App=()=>{
       }
       return base;
     });
-    const[customSched,setCustomSched]=useState("");
-    const[version,setVersion]=useState(_revise?String(parseInt(_revise.version||"1")+1):"1");
-    const[comments,setComments]=useState(_revise?`Revision of v${_revise.version}`:"")
-    const[manualEmails,setManualEmails]=useState("");
+    const[customSched,setCustomSched]=useState(_draft?_draft.customSched||"":"");
+    const[version,setVersion]=useState(_draft&&_draft.version?_draft.version:(_revise?String(parseInt(_revise.version||"1")+1):"1"));
+    const[comments,setComments]=useState(_draft?_draft.comments||"":(_revise?`Revision of v${_revise.version}`:""))
+    const[manualEmails,setManualEmails]=useState(_draft?_draft.manualEmails||"":"");
     const linkedSta=(()=>{const raw=est._combined?est._combined.flatMap(ce=>getEstStations(ce)):getEstStations(est);const seen=new Set();return raw.filter(s=>{const k=s.call+"|"+s.market;if(seen.has(k))return false;seen.add(k);return true})})();
-    const[sendStations,setSendStations]=useState(()=>linkedSta.map(s=>s.call));
+    const[sendStations,setSendStations]=useState(()=>(_draft&&_draft.sendStations)||linkedSta.map(s=>s.call));
+    // Continuously stash the in-progress rotation
+    React.useEffect(()=>{ROT_DRAFTS[_draftKey]={rows:rows.filter(r=>r.selected||r.pct||r.bookend||(r.sched&&r.sched!=="All Week")).map(r=>({code:r.isci.code,pct:r.pct,sched:r.sched,bookend:r.bookend,selected:r.selected})),version,comments,customSched,manualEmails,sendStations}},[rows,version,comments,customSched,manualEmails,sendStations]);
 
     const sel=rows.filter(r=>r.selected);
     const updRow=(idx,k,v)=>setRows(p=>p.map((r,i)=>i===idx?{...r,[k]:v}:r));
@@ -4838,7 +4854,8 @@ const App=()=>{
           }
           notify(doomPick(DOOM.send)+" "+sent+" sent"+(failed?" ("+failed+" failed)":""));
         }}>✉ Email {sendStations.length>0?`Stations (${sendStations.length})`:"Recipients"}</Btn>
-        <Btn onClick={()=>setModal(null)}>Cancel</Btn>
+        <Btn onClick={()=>setModal(null)}>Close (keeps draft)</Btn>
+        <Btn color="#E85A7A" onClick={()=>{delete ROT_DRAFTS[_draftKey];setModal(null)}}>Discard Draft</Btn>
         {!allValid&&sel.length>0&&<span style={{fontSize:13,color:"#E85A7A",fontWeight:600}}>⚠ Fix rotation %s — each duration must total 100%</span>}
         <span style={{marginLeft:"auto",fontSize:13,color:"#9B8EAD"}}>{sel.length} selected · {linkedSta.length} stations</span>
       </div>
@@ -4878,7 +4895,17 @@ const App=()=>{
     // Paramount = video streaming: same sheet as Pandora but video spots.
     const audPlc=vendorMode==="Paramount"?"Video":"AudioSelect";
     const audLabel=vendorMode==="Paramount"?"VIDEO CREATIVES":"AUDIO CREATIVES";
-    const[rows,setRows]=useState(()=>pool.map(i=>({isci:i,selected:false,pct:"",sched:"All Week",flight:flight,companionUrl:"",companionName:"",companionBannerName:""})));
+    // Draft persistence, same contract as RotBuilder: nothing resets until the
+    // draft is explicitly discarded — closing, generating, downloading all keep it.
+    const _draftKey=(est.num||"")+"|"+workMonth+"|stream";
+    const _draft=ROT_DRAFTS[_draftKey];
+    const[rows,setRows]=useState(()=>{
+      const base=pool.map(i=>({isci:i,selected:false,pct:"",sched:"All Week",flight:flight,companionUrl:"",companionName:"",companionBannerName:""}));
+      if(_draft&&_draft.rows){
+        return base.map(r=>{const p=_draft.rows.find(x=>x.code===r.isci.code);return p?{...r,selected:!!p.selected,pct:p.pct||"",sched:p.sched||"All Week"}:r});
+      }
+      return base;
+    });
     // Paramount pulls the market's TV ISCIs as its creative pool; switching back
     // to Pandora restores the estimate's own (radio) pool.
     useEffect(()=>{if(!isWKstream)return;const _dc=Object.entries(DM).find(function(e){return e[1]===est.market});const dc=_dc?_dc[0]:"";const src=vendorMode==="Paramount"?iscis.filter(i=>i.dma===dc&&i.brand===est.brand&&i.active&&i.suffix==="T"):pool;setRows(src.map(i=>({isci:i,selected:false,pct:"",sched:"All Week",flight:flight,companionUrl:"",companionName:"",companionBannerName:""})))},[vendorMode]);
@@ -4916,14 +4943,16 @@ const App=()=>{
     // Pandora companion/display banner names
     // Hands-off: L&R preloads its registered COMPANION banner automatically
     // (LR26MR001B — one companion runs brand-wide across all streaming markets).
-    const[pandoraCompanions,setPandoraCompanions]=useState(()=>{if(isLRstream){const b=iscis.filter(i=>i.suffix==="B"&&i.brand===est.brand&&i.active!==false).map(i=>({name:i.code,size:((String(i.title).match(/(\d+\s*x\s*\d+)/)||[])[1]||"").replace(/\s/g,"")}));if(b.length)return b}return[{name:"",size:"350x250"}]});
-    const[pandoraDisplays,setPandoraDisplays]=useState([{name:"",size:"3250x250"},{name:"",size:"3250x250"}]);
+    const[pandoraCompanions,setPandoraCompanions]=useState(()=>{if(_draft&&_draft.companions)return _draft.companions;if(isLRstream){const b=iscis.filter(i=>i.suffix==="B"&&i.brand===est.brand&&i.active!==false).map(i=>({name:i.code,size:((String(i.title).match(/(\d+\s*x\s*\d+)/)||[])[1]||"").replace(/\s/g,"")}));if(b.length)return b}return[{name:"",size:"350x250"}]});
+    const[pandoraDisplays,setPandoraDisplays]=useState(()=>(_draft&&_draft.displays)||[{name:"",size:"3250x250"},{name:"",size:"3250x250"}]);
     const[abTest,setAbTest]=useState(true);
-    const[version,setVersion]=useState("1");
-    const[flightDates,setFlightDates]=useState(flight);
-    const[comments,setComments]=useState("");
+    const[version,setVersion]=useState(_draft&&_draft.version?_draft.version:"1");
+    const[flightDates,setFlightDates]=useState(_draft&&_draft.flightDates?_draft.flightDates:flight);
+    const[comments,setComments]=useState(_draft?_draft.comments||"":"");
     const[emailNote,setEmailNote]=useState("");
-    const[customRecipients,setCustomRecipients]=useState("");
+    const[customRecipients,setCustomRecipients]=useState(_draft?_draft.customRecipients||"":"");
+    // Continuously stash the in-progress streaming rotation
+    React.useEffect(()=>{ROT_DRAFTS[_draftKey]={rows:rows.filter(r=>r.selected||r.pct).map(r=>({code:r.isci.code,selected:r.selected,pct:r.pct,sched:r.sched})),companions:pandoraCompanions,displays:pandoraDisplays,version,flightDates,comments,customRecipients}},[rows,pandoraCompanions,pandoraDisplays,version,flightDates,comments,customRecipients]);
     const[displayBanners,setDisplayBanners]=useState([
       {label:"Display Banner 1",size:"300x250",url:"",fileName:""},
       {label:"Display Banner 2",size:"300x250",url:"",fileName:""}
@@ -5446,7 +5475,8 @@ const App=()=>{
             }else throw new Error("n8n "+resp.status)
           }catch(err){notify("Send failed: "+(err.message||err))}
         }}>{"\u2709"} Send Traffic</Btn>}
-        <Btn onClick={()=>setModal(null)}>Cancel</Btn>
+        <Btn onClick={()=>setModal(null)}>Close (keeps draft)</Btn>
+        <Btn color="#E85A7A" onClick={()=>{delete ROT_DRAFTS[_draftKey];setModal(null)}}>Discard Draft</Btn>
         <span style={{marginLeft:"auto",fontSize:12,color:"#94a3b8"}}>{sel.length} audio | {sel.filter(r=>r.companionUrl).length} companions | {displayBanners.filter(b=>b.url).length} display{rotValid?" | \u2713":" | \u26A0 %"}</span>
       </div>
     </Mod>;
