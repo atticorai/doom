@@ -11329,7 +11329,7 @@ Rules:
         </Cd>}
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
           <input placeholder="Search OOH ISCIs..." value={oohIsciFilter} onChange={e=>setOohIsciFilter(e.target.value)} style={{width:200,padding:"5px 8px",borderRadius:5,border:"1px solid #4a3565",fontSize:13,outline:"none",background:"#1e1233",color:"#E8DFF0"}}/>
-          <Sel label="" options={[{v:"",l:"All Brands"},{v:"Wettermark Keith",l:"Wettermark Keith"},{v:"Postman Law",l:"Postman Law"},{v:"Lerner & Rowe",l:"Lerner & Rowe"}]} value={oohBrandFilter} onChange={setOohBrandFilter}/>
+          <Sel label="" options={[{v:"",l:"All Brands"},...[...new Set(allOoh.map(i=>i.brand))].sort().map(b=>({v:b,l:b}))]} value={oohBrandFilter} onChange={setOohBrandFilter}/>
           <Sel label="" options={[{v:"",l:"All DMAs"},...oohDmas.map(d=>({v:d,l:(DM[d]||d)+" ("+d+")"}))] } value={oohDmaFilter} onChange={setOohDmaFilter}/>
           <label style={{fontSize:12,display:"flex",alignItems:"center",gap:3,cursor:"pointer",color:"#9B8EAD"}}><input type="checkbox" checked={showOohInactive} onChange={e=>setShowOohInactive(e.target.checked)}/> Show inactive</label>
           {(oohIsciFilter||oohBrandFilter||oohDmaFilter)&&<Btn small onClick={()=>{setOohIsciFilter("");setOohBrandFilter("");setOohDmaFilter("")}}>Clear</Btn>}
