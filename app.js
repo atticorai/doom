@@ -4416,7 +4416,11 @@ const App=()=>{
       <Cd><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr>{combineMode&&<TH w="30">✓</TH>}<STH tbl="traf" col="num">Est#</STH><STH tbl="traf" col="market">Market</STH><STH tbl="traf" col="media">Media</STH><STH tbl="traf" col="group">Buy Type</STH><STH tbl="traf" col="buyer">Buyer</STH><TH>Stations</TH><TH>ISCIs</TH><TH>Airing</TH><TH>Confirmed</TH><TH>Action</TH></tr></thead>
         <tbody>{sortRows("traf",brandEsts,{num:r=>r.num,brand:r=>r.brand,market:r=>r.market,media:r=>r.media,group:r=>r.group||"",buyer:r=>r.buyer||""}).map(e=>{
           const dc=normMkt(e.market)||"";
-          const mi=iscis.filter(i=>i.dma===dc&&i.brand===e.brand&&i.active&&(e.media==="TV"||e.media==="Cable"?i.suffix==="T":e.media==="Radio"?i.suffix==="R":e.media==="Streaming Audio"?(e.brand==="Wettermark Keith"?i.suffix==="R":i.suffix==="S"):e.media==="Digital Streaming"?i.suffix==="T":e.media==="OOH"?i.suffix==="O":e.media==="Digital"?i.suffix==="D":e.media==="Display"?i.suffix==="B":true));
+          // L&R streaming estimates span the vendor's markets (Pandora: PHX/LVS/SEA,
+          // Audacy: CHI/PHX/LVS/ABQ/TUC/YMA/RNO) and read the radio (R) ISCIs.
+          const lrStream=e.brand==="Lerner & Rowe"&&e.media==="Streaming Audio";
+          const lrStreamDmas=lrStream?(/Audacy/i.test(e.group||"")?["CHI","PHX","LVS","ABQ","TUC","YMA","RNO"]:["PHX","LVS","SEA"]):null;
+          const mi=iscis.filter(i=>(lrStream?lrStreamDmas.includes(i.dma):i.dma===dc)&&i.brand===e.brand&&i.active&&(e.media==="TV"||e.media==="Cable"?i.suffix==="T":e.media==="Radio"?i.suffix==="R":e.media==="Streaming Audio"?(e.brand==="Wettermark Keith"||e.brand==="Lerner & Rowe"?i.suffix==="R":i.suffix==="S"):e.media==="Digital Streaming"?i.suffix==="T":e.media==="OOH"?i.suffix==="O":e.media==="Digital"?i.suffix==="D":e.media==="Display"?i.suffix==="B":true));
           const isSel=combineSet.includes(estKey(e));
           const linkedSta=getEstStations(e);
           const airing=nowAiring[ak(e)];
@@ -4848,13 +4852,15 @@ const App=()=>{
     const isDigital=est.media==="Digital";
     const isDigStream=est.media==="Digital Streaming";
     const mediaLabel=isDigital?"Digital Video":isDigStream?"Digital Streaming":"Streaming Audio";
-    const vendorList=isDigital?["ESPN","Generic"]:isDigStream?["Paramount","Generic"]:["Pandora","Spotify","Generic"];
-    const defaultVendor=isDigital?"ESPN":isDigStream?"Paramount":"Pandora";
+    const isLRstream=est.brand==="Lerner & Rowe"&&!isDigital&&!isDigStream;
+    const vendorList=isDigital?["ESPN","Generic"]:isDigStream?["Paramount","Generic"]:isLRstream?["Pandora","Audacy","Generic"]:["Pandora","Spotify","Generic"];
+    const defaultVendor=isDigital?"ESPN":isDigStream?"Paramount":isLRstream?(/Audacy/i.test(est.group||"")?"Audacy":"Pandora"):"Pandora";
     const PL_MKTS_ALL=["Chicago","Cincinnati","Denver","Minneapolis"];
+    // L&R streaming: one estimate spans the vendor's whole market set, but each
+    // market's radio ISCIs are their own rotation totalling 100% on that market alone.
+    const LR_PANDORA_MKTS=["Phoenix","Las Vegas","Seattle"];
+    const LR_AUDACY_MKTS=["Chicago","Phoenix","Las Vegas","Albuquerque","Tucson","Yuma","Reno"];
     const isWKstream=est.brand==="Wettermark Keith";
-    // Pandora markets: WK runs one market at a time (the estimate's market, e.g. Nashville);
-    // the other brand runs its four markets together.
-    const PAND_MKTS=isWKstream?[est.market]:PL_MKTS_ALL;
     const dc=Object.entries(DM).find(function(x){return x[1].toLowerCase()===est.market.toLowerCase()});
     const dmaPrefix=dc?dc[0]:"";
     // Quarter calculation from work month
@@ -4864,6 +4870,9 @@ const App=()=>{
     // ESPN campaign options
     const ESPN_CAMPAIGNS=["MarchMadness","MLB","NFL","NBA","CFB","MMA","Golf"];
     const[vendorMode,setVendorMode]=useState(defaultVendor);
+    // Pandora markets: WK runs one market at a time (the estimate's market, e.g.
+    // Nashville); PL runs its four markets together; L&R runs the vendor's set.
+    const PAND_MKTS=isWKstream?[est.market]:isLRstream?(vendorMode==="Audacy"?LR_AUDACY_MKTS:LR_PANDORA_MKTS):PL_MKTS_ALL;
     const isPlatform=vendorMode!=="Generic";
     // Paramount = video streaming: same sheet as Pandora but video spots.
     const audPlc=vendorMode==="Paramount"?"Video":"AudioSelect";
@@ -4872,7 +4881,7 @@ const App=()=>{
     // Paramount pulls the market's TV ISCIs as its creative pool; switching back
     // to Pandora restores the estimate's own (radio) pool.
     useEffect(()=>{if(!isWKstream)return;const _dc=Object.entries(DM).find(function(e){return e[1]===est.market});const dc=_dc?_dc[0]:"";const src=vendorMode==="Paramount"?iscis.filter(i=>i.dma===dc&&i.brand===est.brand&&i.active&&i.suffix==="T"):pool;setRows(src.map(i=>({isci:i,selected:false,pct:"",sched:"All Week",flight:flight,companionUrl:"",companionName:"",companionBannerName:""})))},[vendorMode]);
-    const baseUrl=isWKstream?"https://www.wkfirm.com":"https://www.postmanlaw.com";
+    const baseUrl=isWKstream?"https://www.wkfirm.com":isLRstream?"https://www.lernerandrowe.com":"https://www.postmanlaw.com";
     // Pandora UTM builder — WK uses the Pandora-supplied spec against WKFIRM.com;
     // the other brand uses its SiriusXM/Placement scheme.
     const pandoraUrl=(market,content,placement)=>{
@@ -4883,6 +4892,11 @@ const App=()=>{
         // (standard GA param), ordered source/medium/campaign/term/content.
         const landing="https://www.wkfirm.com/";
         return landing+"?utm_source="+encodeURIComponent(vendorMode)+"&utm_medium="+medium+"&utm_campaign="+encodeURIComponent(camp)+"&utm_term="+encodeURIComponent(placement)+"&utm_content="+encodeURIComponent(content);
+      }
+      if(isLRstream){
+        // Same ordered spec as WK, against lernerandrowe.com; campaign is per market.
+        const camp="LernerRowe_"+market.replace(/\s+/g,"")+"_"+vendorMode+"_"+currentYear+currentQuarter;
+        return"https://www.lernerandrowe.com/?utm_source="+encodeURIComponent(vendorMode)+"&utm_medium=Streaming_Audio&utm_campaign="+encodeURIComponent(camp)+"&utm_term="+encodeURIComponent(placement)+"&utm_content="+encodeURIComponent(content);
       }
       const mktPath=market.toLowerCase().replace(/\s+/g,"");
       return"https://www.postmandelivers.com/"+mktPath+"/?UTM_Source=SiriusXM&UTM_Medium=Streaming_Audio&UTM_Content="+encodeURIComponent(content)+"&Placement="+encodeURIComponent(placement)+"&utm_campaign="+encodeURIComponent("Blackacre_KellerPostman_PostmanLawPI-"+market+"_"+currentYear+currentQuarter);
@@ -4976,7 +4990,7 @@ const App=()=>{
     const SCHED_ORDER=["M-F Schedule","Weekend Schedule","All Week","M-F Bookend","Weekend Bookend"];
     // Pandora display-banner rows for a saved record — each carries its own
     // DisplayBanners UTM so they persist into the Traffic Library like the audio.
-    const pandoraDispRows=function(){return (vendorMode==="Pandora"||vendorMode==="Paramount")?pandoraDisplays.filter(function(d){return d.name.trim()}).map(function(d){var it=iscis.find(function(i){return i.code===d.name.trim()});return{code:d.name.trim(),title:(it&&it.title)||("Display Banner "+(d.size||"")),dur:d.size||"",pct:"",sched:"Display Banner",placement:"DisplayBanners",url:pandoraUrl(est.market,d.name.trim(),"DisplayBanners")}}):[]};
+    const pandoraDispRows=function(){return (vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")?pandoraDisplays.filter(function(d){return d.name.trim()}).map(function(d){var it=iscis.find(function(i){return i.code===d.name.trim()});return{code:d.name.trim(),title:(it&&it.title)||("Display Banner "+(d.size||"")),dur:d.size||"",pct:"",sched:"Display Banner",placement:"DisplayBanners",url:pandoraUrl(est.market,d.name.trim(),"DisplayBanners")}}):[]};
     // Delivery-ready Pandora sheet as a REAL text PDF (jsPDF) — full UTM URLs
     // rendered as clickable, selectable links. Mirrors the Generate sheet.
     // Self-contained: does NOT touch printStream, so Generate is unaffected.
@@ -5080,7 +5094,7 @@ const App=()=>{
           });
           w.document.write("</tbody></table>");
         }
-      }else if((vendorMode==="Pandora"||vendorMode==="Paramount")){
+      }else if((vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")){
         // ═══ PANDORA: All PL markets, per-ISCI URLs ═══
         PAND_MKTS.forEach(function(mkt){
           var mktDma=Object.entries(DM).find(function(e){return e[1]===mkt});var dma=mktDma?mktDma[0]:"";
@@ -5149,7 +5163,7 @@ const App=()=>{
         var allIscis=sel.map(function(r){
           var isB=r.isci.suffix==="B";var med=isB?"Display":"Video";
           var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);
-          var espnUrl=(vendorMode==="Pandora"||vendorMode==="Paramount")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+(isB?"ESPNweb":"ESPNweb")+"&utm_Content="+r.isci.code;
+          var espnUrl=(vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+(isB?"ESPNweb":"ESPNweb")+"&utm_Content="+r.isci.code;
           var gkbpsUrl=isB?"":baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code;
           return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:"ESPNweb",url:isPlatform?espnUrl:"",gkbpsUrl:isPlatform?gkbpsUrl:""}
         });
@@ -5171,12 +5185,12 @@ const App=()=>{
           </div>
         </div>
         {isPlatform&&<div style={{background:"#1e1233",border:"1px solid #4a3565",borderRadius:6,padding:8}}>
-          <div style={{fontSize:12,fontWeight:700,color:"#D4A040",marginBottom:6}}>UTM PARAMETERS {(vendorMode==="Pandora"||vendorMode==="Paramount")?"(auto-generated per ISCI)":vendorMode==="ESPN"?"(per campaign)":""}</div>
+          <div style={{fontSize:12,fontWeight:700,color:"#D4A040",marginBottom:6}}>UTM PARAMETERS {(vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")?"(auto-generated per ISCI)":vendorMode==="ESPN"?"(per campaign)":""}</div>
           {vendorMode==="ESPN"&&<div style={{marginBottom:6}}>
             <div style={{fontSize:11,color:"#94a3b8",marginBottom:4}}>Campaign:</div>
             <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{ESPN_CAMPAIGNS.map(c=><button key={c} onClick={()=>setEspnCampaign(c)} style={{padding:"4px 10px",borderRadius:4,border:espnCampaign===c?"2px solid #D4A040":"1px solid #4a3565",background:espnCampaign===c?"rgba(251,191,36,.15)":"transparent",color:espnCampaign===c?"#D4A040":"#94a3b8",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c}</button>)}</div>
           </div>}
-          {(vendorMode==="Pandora"||vendorMode==="Paramount")&&<div style={{fontSize:10,color:"#94a3b8"}}>
+          {(vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")&&<div style={{fontSize:10,color:"#94a3b8"}}>
             <div>Source: <b style={{color:"#E8DFF0"}}>{isWKstream?vendorMode:"SiriusXM"}</b> · Medium: <b style={{color:"#E8DFF0"}}>{isWKstream&&vendorMode==="Paramount"?"Video_Streaming":"Streaming_Audio"}</b></div>
             <div>Campaign: <b style={{color:"#D4A040"}}>{isWKstream?("WettermarkKeith_Nashville_"+vendorMode+"_"+currentYear+currentQuarter):("Blackacre_KellerPostman_PostmanLawPI-{Market}_"+currentYear+currentQuarter)}</b></div>
             <div style={{marginTop:4}}>Placements: <b style={{color:"#5BC4A0"}}>AudioSelect</b> · <b style={{color:"#4AC8E8"}}>CompanionBanners</b> · <b style={{color:"#ec4899"}}>DisplayBanners</b></div>
@@ -5195,7 +5209,7 @@ const App=()=>{
           </div>}
         </div>}
       </div>
-      {(vendorMode==="Pandora"||vendorMode==="Paramount")&&<div style={{marginBottom:8,padding:6,background:"rgba(37,99,235,.06)",borderRadius:5,border:"1px solid rgba(37,99,235,.15)",fontSize:10,fontFamily:"monospace"}}>
+      {(vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")&&<div style={{marginBottom:8,padding:6,background:"rgba(37,99,235,.06)",borderRadius:5,border:"1px solid rgba(37,99,235,.15)",fontSize:10,fontFamily:"monospace"}}>
         <div><span style={{color:"#5BC4A0"}}>{vendorMode==="Paramount"?"Video:":"Audio:"}</span> {pandoraUrl(est.market,"{ISCI}",audPlc)}</div>
         <div><span style={{color:"#4AC8E8"}}>Companion:</span> {pandoraUrl(est.market,"{BannerName}","CompanionBanners")}</div>
         <div><span style={{color:"#ec4899"}}>Display:</span> {pandoraUrl(est.market,"{BannerName}","DisplayBanners")}</div>
@@ -5246,7 +5260,7 @@ const App=()=>{
         </table>
       </div>
       <div style={{display:"flex",gap:4,marginTop:4}}><Btn small onClick={()=>setRows(p=>p.map(r=>({...r,selected:true})))}>Select All</Btn><Btn small onClick={()=>setRows(p=>p.map(r=>({...r,selected:false})))}>Clear</Btn>{isDigital&&<Btn small onClick={()=>setRows(p=>p.map(r=>r.isci.suffix==="D"?{...r,selected:true}:r))}>Select Video</Btn>}{isDigital&&<Btn small onClick={()=>setRows(p=>p.map(r=>r.isci.suffix==="B"?{...r,selected:true}:r))}>Select Display</Btn>}{isDigital&&<Btn small color="#D4A040" onClick={()=>setRows(p=>p.map(r=>r.selected?{...r,placement:"ESPNweb"}:r))}>Set ESPN</Btn>}{isDigital&&<Btn small color="#9b7bb0" onClick={()=>setRows(p=>p.map(r=>r.selected&&r.isci.suffix!=="B"?{...r,placement:"GKBPS"}:r))}>Set GKBPS</Btn>}</div>
-      {(vendorMode==="Pandora"||vendorMode==="Paramount")&&<div style={{marginTop:10}}>
+      {(vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")&&<div style={{marginTop:10}}>
         {!isWKstream&&<React.Fragment><div style={{fontSize:12,fontWeight:700,color:"#4AC8E8",marginBottom:6}}>COMPANION BANNERS (paired with audio creatives)</div>
         {pandoraCompanions.map((c,ci)=><div key={ci} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
           <input value={c.name} onChange={e=>{const v=e.target.value;setPandoraCompanions(p=>p.map((x,i)=>i===ci?{...x,name:v}:x))}} placeholder="e.g. Pandora_Banner_Ad_350x250_CHI_CityscapeIA_Let_us_Deliver_for_You" style={{flex:1,padding:"4px 8px",borderRadius:4,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:11}}/>
@@ -5299,7 +5313,7 @@ const App=()=>{
           var allIscis2=sel.map(function(r){
             var isB=r.isci.suffix==="B";var med=isB?"Display":"Video";
             var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);
-            var espnUrl=(vendorMode==="Pandora"||vendorMode==="Paramount")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement=ESPNweb&utm_Content="+r.isci.code:"");
+            var espnUrl=(vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement=ESPNweb&utm_Content="+r.isci.code:"");
             var gkbpsUrl3=isB||!isPlatform?"":baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code;
             return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:"ESPNweb",url:espnUrl,gkbpsUrl:gkbpsUrl3}
           });
@@ -5316,7 +5330,7 @@ const App=()=>{
               var a=document.createElement("a");a.href=pdfUri3;a.download="Traffic_PostmanLaw_Digital_ESPN_GKBPS_"+workMonth.replace(/\s/g,"")+"_v"+version+".pdf";a.click();
               notify(doomPick(DOOM.success));
             }catch(pe){console.warn("PDF gen failed:",pe);notify("PDF generation failed")}
-          }else if((vendorMode==="Pandora"||vendorMode==="Paramount")){
+          }else if((vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")){
             // Clickable delivery-ready sheet, same as the Generate view.
             var uriP=buildPandoraPdf();var a2=document.createElement("a");a2.href=uriP;a2.download="Traffic_"+(est.brand||"").replace(/\s/g,"")+"_"+vendorMode+"_"+(est.market||"").replace(/[\s\/]/g,"")+"_"+workMonth.replace(/\s/g,"")+"_v"+version+".pdf";a2.click();notify(doomPick(DOOM.success));
           }else{
@@ -5345,9 +5359,9 @@ const App=()=>{
             ph3+="</tbody></table>";
             var dc5=Object.entries(DM).find(function(e){return e[1].toLowerCase()===est.market.toLowerCase()});var dcCode5=dc5?dc5[0]:"";
             var dispIscis5=iscis.filter(function(i){return i.suffix==="B"&&i.brand===est.brand&&i.dma===dcCode5&&i.active});
-            if(dispIscis5.length>0){ph3+='<div class="section">DISPLAY BANNERS</div><table><thead><tr><th>ISCI</th><th>Title</th><th>File</th><th>Click-Through URL</th></tr></thead><tbody>';dispIscis5.forEach(function(d){var fc=d.fileUrl?'<a href="'+dlUrl(d.fileUrl)+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+d.code+"</td><td>"+d.title+"</td><td>"+fc+"</td><td style='font-size:9px'>"+((vendorMode==="Pandora"||vendorMode==="Paramount")?pandoraUrl(est.market,d.code,"DisplayBanners"):buildUtm("Display",d.code,dcCode5))+"</td></tr>"});ph3+="</tbody></table>"}
+            if(dispIscis5.length>0){ph3+='<div class="section">DISPLAY BANNERS</div><table><thead><tr><th>ISCI</th><th>Title</th><th>File</th><th>Click-Through URL</th></tr></thead><tbody>';dispIscis5.forEach(function(d){var fc=d.fileUrl?'<a href="'+dlUrl(d.fileUrl)+'">DL</a>':"TBD";ph3+="<tr><td style='font-family:monospace;font-weight:700'>"+d.code+"</td><td>"+d.title+"</td><td>"+fc+"</td><td style='font-size:9px'>"+((vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")?pandoraUrl(est.market,d.code,"DisplayBanners"):buildUtm("Display",d.code,dcCode5))+"</td></tr>"});ph3+="</tbody></table>"}
             ph3+='<div class="sig"><div>Accepted by:</div><div>Date:</div></div><div class="nt">Note: You have 24 hours to return signed Traffic Instructions or Confirm receipt via email.</div></body></html>';
-            try{var pdfUri5=(vendorMode==="Pandora"||vendorMode==="Paramount")?buildPandoraPdf():await generatePdfBase64(ph3);pdfB64=pdfUri5.split(",")[1]||""}catch(pe2){notify("PDF generation failed");return}
+            try{var pdfUri5=(vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")?buildPandoraPdf():await generatePdfBase64(ph3);pdfB64=pdfUri5.split(",")[1]||""}catch(pe2){notify("PDF generation failed");return}
           }
           // Build email
           var vendorLabel2=isDigital?"ESPN / GKBPS":vendorMode;
@@ -5378,7 +5392,7 @@ const App=()=>{
               notify(doomPick(DOOM.send));log(vendorLabel2+" Email","Sent - "+est.market+" "+workMonth);
               setTrafficHistory(function(p){
                 var allIscis3=sel.map(function(r){var isB=r.isci.suffix==="B";var med=isB?"Display":(isDigital?"Video":"Audio");var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);var pl=r.placement||utmPlacement;
-                  return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:pl,url:(vendorMode==="Pandora"||vendorMode==="Paramount")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+pl+"&utm_Content="+r.isci.code:""),gkbpsUrl:isDigital&&!isB?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code:""}});
+                  return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:pl,url:(vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+pl+"&utm_Content="+r.isci.code:""),gkbpsUrl:isDigital&&!isB?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code:""}});
                 return [{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+" | Vendor: "+vendorLabel2,iscis:allIscis3.concat(pandoraDispRows()),stations:[staTag2],isOoh:false,status:"sent",isDigitalEspn:isDigital}].concat(p)});
             }else throw new Error("n8n "+resp2.status)
           }catch(err2){notify("Send failed: "+(err2.message||err2))}
