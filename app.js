@@ -4990,7 +4990,7 @@ const App=()=>{
     const SCHED_ORDER=["M-F Schedule","Weekend Schedule","All Week","M-F Bookend","Weekend Bookend"];
     // Pandora display-banner rows for a saved record — each carries its own
     // DisplayBanners UTM so they persist into the Traffic Library like the audio.
-    const pandoraDispRows=function(){return (vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")?pandoraDisplays.filter(function(d){return d.name.trim()}).map(function(d){var it=iscis.find(function(i){return i.code===d.name.trim()});return{code:d.name.trim(),title:(it&&it.title)||("Display Banner "+(d.size||"")),dur:d.size||"",pct:"",sched:"Display Banner",placement:"DisplayBanners",url:pandoraUrl(est.market,d.name.trim(),"DisplayBanners")}}):[]};
+    const pandoraDispRows=function(){return (vendorMode==="Pandora"||vendorMode==="Paramount")?pandoraDisplays.filter(function(d){return d.name.trim()}).map(function(d){var it=iscis.find(function(i){return i.code===d.name.trim()});return{code:d.name.trim(),title:(it&&it.title)||("Display Banner "+(d.size||"")),dur:d.size||"",pct:"",sched:"Display Banner",placement:"DisplayBanners",url:pandoraUrl(est.market,d.name.trim(),"DisplayBanners")}}):[]};
     // Delivery-ready Pandora sheet as a REAL text PDF (jsPDF) — full UTM URLs
     // rendered as clickable, selectable links. Mirrors the Generate sheet.
     // Self-contained: does NOT touch printStream, so Generate is unaffected.
@@ -5014,7 +5014,7 @@ const App=()=>{
         d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(5,150,105);d.text(audLabel+" — Placement: "+audPlc,mx,y);y+=5;
         audio.forEach(function(r){check(11);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(String(r.isci.code),mx,y);d.setFont("helvetica","normal");d.text(String(r.isci.title||"").substring(0,36),mx+34,y);d.text(":"+String(r.isci.dur),mx+96,y);d.text(String(r.pct||"")+"%",mx+108,y);y+=3.8;urlBlock(pandoraUrl(est.market,r.isci.code,audPlc));check(4);if(r.isci.fileUrl){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download creative",mx+4,y,{url:dlUrl(r.isci.fileUrl)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("Creative: TBD",mx+4,y)}y+=5});
       }
-      var disps=pandoraDisplays.filter(function(x){return x.name.trim()});
+      var disps=vendorMode==="Audacy"?[]:pandoraDisplays.filter(function(x){return x.name.trim()});
       if(disps.length){
         y+=2;check(10);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(236,72,153);d.text("DISPLAY BANNERS — Placement: DisplayBanners",mx,y);y+=5;
         disps.forEach(function(x){check(9);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(x.name.trim(),mx,y);d.setFont("helvetica","normal");d.text(String(x.size||""),mx+96,y);var _xf=(iscis.find(function(i){return i.code===x.name.trim()})||{}).fileUrl;if(_xf){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download",mx+130,y,{url:dlUrl(_xf)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("TBD",mx+130,y)}y+=5});
@@ -5111,7 +5111,7 @@ const App=()=>{
           });
           w.document.write("</tbody></table>");
           // Companion banners
-          var comps=pandoraCompanions.filter(function(c){return c.name.trim()});
+          var comps=vendorMode==="Audacy"?[]:pandoraCompanions.filter(function(c){return c.name.trim()});
           if(comps.length){
             w.document.write('<div style="font-weight:700;font-size:11px;color:#4AC8E8;margin:8px 0 4px">COMPANION BANNERS — Placement: CompanionBanners</div>');
             w.document.write("<table><thead><tr><th>Banner</th><th>Size</th><th>Creative</th></tr></thead><tbody>");
@@ -5125,7 +5125,7 @@ const App=()=>{
             w.document.write("</tbody></table>");
           }
           // Display banners
-          var disps=pandoraDisplays.filter(function(d){return d.name.trim()});
+          var disps=vendorMode==="Audacy"?[]:pandoraDisplays.filter(function(d){return d.name.trim()});
           if(disps.length){
             w.document.write('<div style="font-weight:700;font-size:11px;color:#ec4899;margin:8px 0 4px">DISPLAY BANNERS — Placement: DisplayBanners</div>');
             w.document.write("<table><thead><tr><th>Banner</th><th>Size</th><th>Creative</th></tr></thead><tbody>");
@@ -5226,7 +5226,7 @@ const App=()=>{
       {sel.length>0&&<div style={{display:"flex",gap:8,marginBottom:6,flexWrap:"wrap"}}>
         {Object.entries(durGroups).map(([key,g])=>{var dmaName=DM[g.dma]||g.dma;return<div key={key} style={{padding:"3px 8px",borderRadius:5,border:"1px solid "+(Math.abs(g.total-100)<0.5?"#5BC4A0":"#E85A7A"),fontSize:12,fontWeight:700,color:Math.abs(g.total-100)<0.5?"#5BC4A0":"#E85A7A"}}>{dmaName} :{g.dur} = {g.total}%{Math.abs(g.total-100)<0.5?" \u2713":" (need 100%)"}</div>})}
       </div>}
-      <div style={{fontSize:12,fontWeight:700,color:"#9B8EAD",marginBottom:4}}>{mediaLabel.toUpperCase()} {isDigital?"CREATIVES":"ROTATION + COMPANION BANNERS"} ({pool.length} available{isDigital?" across "+[...new Set(pool.map(function(i){return i.dma}))].length+" markets":""})</div>
+      <div style={{fontSize:12,fontWeight:700,color:"#9B8EAD",marginBottom:4}}>{mediaLabel.toUpperCase()} {isDigital?"CREATIVES":vendorMode==="Audacy"?"ROTATION":"ROTATION + COMPANION BANNERS"} ({pool.length} available{isDigital?" across "+[...new Set(pool.map(function(i){return i.dma}))].length+" markets":""})</div>
       <div style={{maxHeight:350,overflowY:"auto",border:"1px solid #4a3565",borderRadius:6}}>
         <table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{position:"sticky",top:0,background:"#2d1f42",zIndex:1}}>
           <TH w="30">{"✓"}</TH>
@@ -5261,7 +5261,7 @@ const App=()=>{
       </div>
       <div style={{display:"flex",gap:4,marginTop:4}}><Btn small onClick={()=>setRows(p=>p.map(r=>({...r,selected:true})))}>Select All</Btn><Btn small onClick={()=>setRows(p=>p.map(r=>({...r,selected:false})))}>Clear</Btn>{isDigital&&<Btn small onClick={()=>setRows(p=>p.map(r=>r.isci.suffix==="D"?{...r,selected:true}:r))}>Select Video</Btn>}{isDigital&&<Btn small onClick={()=>setRows(p=>p.map(r=>r.isci.suffix==="B"?{...r,selected:true}:r))}>Select Display</Btn>}{isDigital&&<Btn small color="#D4A040" onClick={()=>setRows(p=>p.map(r=>r.selected?{...r,placement:"ESPNweb"}:r))}>Set ESPN</Btn>}{isDigital&&<Btn small color="#9b7bb0" onClick={()=>setRows(p=>p.map(r=>r.selected&&r.isci.suffix!=="B"?{...r,placement:"GKBPS"}:r))}>Set GKBPS</Btn>}</div>
       {(vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")&&<div style={{marginTop:10}}>
-        {!isWKstream&&<React.Fragment><div style={{fontSize:12,fontWeight:700,color:"#4AC8E8",marginBottom:6}}>COMPANION BANNERS (paired with audio creatives)</div>
+        {!isWKstream&&vendorMode!=="Audacy"&&<React.Fragment><div style={{fontSize:12,fontWeight:700,color:"#4AC8E8",marginBottom:6}}>COMPANION BANNERS (paired with audio creatives)</div>
         {pandoraCompanions.map((c,ci)=><div key={ci} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
           <input value={c.name} onChange={e=>{const v=e.target.value;setPandoraCompanions(p=>p.map((x,i)=>i===ci?{...x,name:v}:x))}} placeholder="e.g. Pandora_Banner_Ad_350x250_CHI_CityscapeIA_Let_us_Deliver_for_You" style={{flex:1,padding:"4px 8px",borderRadius:4,border:"1px solid #4a3565",background:"#1e1233",color:"#E8DFF0",fontSize:11}}/>
           <input value={c.size} onChange={e=>{const v=e.target.value;setPandoraCompanions(p=>p.map((x,i)=>i===ci?{...x,size:v}:x))}} style={{width:80,padding:"4px 6px",borderRadius:4,border:"1px solid #4a3565",background:"#1e1233",color:"#94a3b8",fontSize:11}} placeholder="Size"/>
@@ -5269,7 +5269,7 @@ const App=()=>{
         </div>)}
         <button onClick={()=>setPandoraCompanions(p=>[...p,{name:"",size:"350x250"}])} style={{fontSize:11,padding:"2px 8px",borderRadius:4,border:"1px solid #4a3565",background:"transparent",color:"#4AC8E8",cursor:"pointer",fontWeight:600}}>+ Add Companion</button></React.Fragment>}
 
-        <div style={{display:"flex",alignItems:"center",gap:10,marginTop:10,marginBottom:6}}><div style={{fontSize:12,fontWeight:700,color:"#ec4899"}}>DISPLAY BANNERS{abTest?" (A/B test)":""}</div><label style={{fontSize:11,color:"#9B8EAD",display:"flex",alignItems:"center",gap:4,cursor:"pointer"}}><input type="checkbox" checked={abTest} onChange={e=>setAbTest(e.target.checked)}/> A/B Test</label></div>
+        {vendorMode!=="Audacy"&&<React.Fragment><div style={{display:"flex",alignItems:"center",gap:10,marginTop:10,marginBottom:6}}><div style={{fontSize:12,fontWeight:700,color:"#ec4899"}}>DISPLAY BANNERS{abTest?" (A/B test)":""}</div><label style={{fontSize:11,color:"#9B8EAD",display:"flex",alignItems:"center",gap:4,cursor:"pointer"}}><input type="checkbox" checked={abTest} onChange={e=>setAbTest(e.target.checked)}/> A/B Test</label></div>
         {(()=>{const _dc=Object.entries(DM).find(([_,n])=>n===est.market)?.[0]||"";const dbi=iscis.filter(i=>i.suffix==="B"&&i.brand===est.brand&&i.dma===_dc&&i.active!==false);return dbi.length?<select value="" onChange={e=>{const c=e.target.value;if(!c)return;const it=dbi.find(x=>x.code===c);if(!it)return;const sz=((String(it.title).match(/(\d+\s*x\s*\d+)/)||[])[1]||"").replace(/\s/g,"");setPandoraDisplays(p=>[...p.filter(x=>x.name.trim()),{name:it.code,size:sz}]);e.target.value=""}} style={{width:"100%",marginBottom:6,padding:"5px 8px",borderRadius:4,border:"1px solid #ec4899",background:"#1e1233",color:"#E8DFF0",fontSize:11}}><option value="">+ Add from registered display banners…</option>{dbi.map(i=><option key={i.code} value={i.code}>{i.code} — {i.title}</option>)}</select>:<div style={{fontSize:10,color:"#9B8EAD",marginBottom:6}}>No registered display-banner ISCIs for {est.market} — type them below or register them (media "Display").</div>})()}
         {pandoraDisplays.map((d,di)=><div key={di} style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
           {abTest&&<span style={{fontSize:11,fontWeight:800,color:"#ec4899",width:16,textAlign:"center"}}>{String.fromCharCode(65+di)}</span>}
@@ -5277,7 +5277,7 @@ const App=()=>{
           <input value={d.size} onChange={e=>{const v=e.target.value;setPandoraDisplays(p=>p.map((x,i)=>i===di?{...x,size:v}:x))}} style={{width:80,padding:"4px 6px",borderRadius:4,border:"1px solid #4a3565",background:"#1e1233",color:"#94a3b8",fontSize:11}} placeholder="Size"/>
           {pandoraDisplays.length>1&&<button onClick={()=>setPandoraDisplays(p=>p.filter((_,i)=>i!==di))} style={{border:"none",background:"transparent",color:"#E85A7A",cursor:"pointer",fontSize:14}}>✕</button>}
         </div>)}
-        <button onClick={()=>setPandoraDisplays(p=>[...p,{name:"",size:"3250x250"}])} style={{fontSize:11,padding:"2px 8px",borderRadius:4,border:"1px solid #4a3565",background:"transparent",color:"#ec4899",cursor:"pointer",fontWeight:600}}>+ Add Display Banner</button>
+        <button onClick={()=>setPandoraDisplays(p=>[...p,{name:"",size:"3250x250"}])} style={{fontSize:11,padding:"2px 8px",borderRadius:4,border:"1px solid #4a3565",background:"transparent",color:"#ec4899",cursor:"pointer",fontWeight:600}}>+ Add Display Banner</button></React.Fragment>}
       </div>}
       {vendorMode==="ESPN"&&(()=>{
         const allDmas=PAND_MKTS.map(m=>Object.entries(DM).find(([_,n])=>n===m)?.[0]||"").filter(Boolean);
