@@ -5055,11 +5055,11 @@ const App=()=>{
         }
         if(comps.length){
           y+=2;check(10);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(74,200,232);d.text("COMPANION BANNERS — Placement: CompanionBanners",mx,y);y+=5;
-          comps.forEach(function(x){check(9);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(x.name.trim(),mx,y);d.setFont("helvetica","normal");d.text(String(x.size||""),mx+96,y);var _cf=(iscis.find(function(i){return i.code===x.name.trim()})||{}).fileUrl;if(_cf){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download",mx+130,y,{url:dlUrl(_cf)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("TBD",mx+130,y)}y+=3.8;urlBlock(pandoraUrl(mkt,x.name.trim(),"CompanionBanners"));y+=1.2});
+          comps.forEach(function(x){check(9);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(x.name.trim(),mx,y);d.setFont("helvetica","normal");d.text(String(x.size||""),mx+96,y);var _cf=((iscis.find(function(i){return i.code===x.name.trim()&&i.fileUrl})||iscis.find(function(i){return i.code===x.name.trim()}))||{}).fileUrl;if(_cf){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download",mx+130,y,{url:dlUrl(_cf)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("TBD",mx+130,y)}y+=3.8;urlBlock(pandoraUrl(mkt,x.name.trim(),"CompanionBanners"));y+=1.2});
         }
         if(disps.length){
           y+=2;check(10);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(236,72,153);d.text("DISPLAY BANNERS — Placement: DisplayBanners",mx,y);y+=5;
-          disps.forEach(function(x){check(9);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(x.name.trim(),mx,y);d.setFont("helvetica","normal");d.text(String(x.size||""),mx+96,y);var _xf=(iscis.find(function(i){return i.code===x.name.trim()})||{}).fileUrl;if(_xf){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download",mx+130,y,{url:dlUrl(_xf)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("TBD",mx+130,y)}y+=3.8;urlBlock(pandoraUrl(mkt,x.name.trim(),"DisplayBanners"));y+=1.2});
+          disps.forEach(function(x){check(9);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(x.name.trim(),mx,y);d.setFont("helvetica","normal");d.text(String(x.size||""),mx+96,y);var _xf=((iscis.find(function(i){return i.code===x.name.trim()&&i.fileUrl})||iscis.find(function(i){return i.code===x.name.trim()}))||{}).fileUrl;if(_xf){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download",mx+130,y,{url:dlUrl(_xf)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("TBD",mx+130,y)}y+=3.8;urlBlock(pandoraUrl(mkt,x.name.trim(),"DisplayBanners"));y+=1.2});
         }
         y+=2;
       });
@@ -5163,7 +5163,7 @@ const App=()=>{
               // Replace market prefix in banner name for this market
               var name=c.name.trim();
               var url=pandoraUrl(mkt,name,"CompanionBanners");
-              var _cf=(iscis.find(function(i){return i.code===name})||{}).fileUrl;var cdl=_cf?"<a href='"+escHtml(dlUrl(_cf))+"' style='color:#5BC4A0;font-weight:700'>Download</a>":"TBD";
+              var _cf=((iscis.find(function(i){return i.code===name&&i.fileUrl})||iscis.find(function(i){return i.code===name}))||{}).fileUrl;var cdl=_cf?"<a href='"+escHtml(dlUrl(_cf))+"' style='color:#5BC4A0;font-weight:700'>Download</a>":"TBD";
               w.document.write("<tr><td style='font-family:monospace;font-size:10px'>"+escHtml(name)+"</td><td>"+escHtml(c.size)+"</td><td>"+cdl+"</td></tr>");
             });
             w.document.write("</tbody></table>");
@@ -5176,7 +5176,7 @@ const App=()=>{
             disps.forEach(function(d){
               var name=d.name.trim();
               var url=pandoraUrl(mkt,name,"DisplayBanners");
-              var _df=(iscis.find(function(i){return i.code===name})||{}).fileUrl;var ddl=_df?"<a href='"+escHtml(dlUrl(_df))+"' style='color:#5BC4A0;font-weight:700'>Download</a>":"TBD";
+              var _df=((iscis.find(function(i){return i.code===name&&i.fileUrl})||iscis.find(function(i){return i.code===name}))||{}).fileUrl;var ddl=_df?"<a href='"+escHtml(dlUrl(_df))+"' style='color:#5BC4A0;font-weight:700'>Download</a>":"TBD";
               w.document.write("<tr><td style='font-family:monospace;font-size:10px'>"+escHtml(name)+"</td><td>"+escHtml(d.size)+"</td><td>"+ddl+"</td></tr>");
             });
             w.document.write("</tbody></table>");
