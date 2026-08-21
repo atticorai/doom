@@ -4914,10 +4914,10 @@ const App=()=>{
     const[utmPlacement,setUtmPlacement]=useState("");
     const[displayMedium,setDisplayMedium]=useState("Display");
     // Pandora companion/display banner names
-    const[pandoraCompanions,setPandoraCompanions]=useState([{name:"",size:"350x250"}]);
-    // Hands-off: L&R preloads its registered display banner(s) automatically —
-    // the brand runs one banner across all streaming markets.
-    const[pandoraDisplays,setPandoraDisplays]=useState(()=>{if(isLRstream){const b=iscis.filter(i=>i.suffix==="B"&&i.brand===est.brand&&i.active!==false).map(i=>({name:i.code,size:((String(i.title).match(/(\d+\s*x\s*\d+)/)||[])[1]||"").replace(/\s/g,"")}));if(b.length)return b}return[{name:"",size:"3250x250"},{name:"",size:"3250x250"}]});
+    // Hands-off: L&R preloads its registered COMPANION banner automatically
+    // (LR26MR001B — one companion runs brand-wide across all streaming markets).
+    const[pandoraCompanions,setPandoraCompanions]=useState(()=>{if(isLRstream){const b=iscis.filter(i=>i.suffix==="B"&&i.brand===est.brand&&i.active!==false).map(i=>({name:i.code,size:((String(i.title).match(/(\d+\s*x\s*\d+)/)||[])[1]||"").replace(/\s/g,"")}));if(b.length)return b}return[{name:"",size:"350x250"}]});
+    const[pandoraDisplays,setPandoraDisplays]=useState([{name:"",size:"3250x250"},{name:"",size:"3250x250"}]);
     const[abTest,setAbTest]=useState(true);
     const[version,setVersion]=useState("1");
     const[flightDates,setFlightDates]=useState(flight);
@@ -5008,20 +5008,32 @@ const App=()=>{
       var info=function(l,v){d.setFont("helvetica","bold");d.setFontSize(9);d.setTextColor(60,60,60);d.text(l+":",mx,y);d.setFont("helvetica","normal");d.setTextColor(0,0,0);d.text(String(v==null?"":v),mx+38,y);y+=4.6};
       info("Agency","Atticor");info("Client",est.brand);info("Market",est.market);info("Vendor",vendorMode);info("Buyer",est.buyer);info("Media",vendorMode==="Paramount"?"Video Streaming":"Streaming Audio");info("Broadcast Month",workMonth);info("Flight Dates",flightDates);info("Estimate",est.num);info("Version","V"+version);
       y+=2;d.setDrawColor(8,145,178);d.setLineWidth(0.5);d.line(mx,y,mx+cw,y);y+=6;
-      var dmaCode=(Object.entries(DM).find(function(e){return e[1]===est.market})||[])[0]||"";
-      d.setFont("helvetica","bold");d.setFontSize(11);d.setTextColor(8,145,178);
-      d.text((est.market||"").toUpperCase()+" ("+dmaCode+")",mx,y);y+=6;
       var urlBlock=function(url){d.setTextColor(37,99,235);d.setFontSize(6.5);d.splitTextToSize(url,cw-6).forEach(function(ln){check(3.5);d.textWithLink(ln,mx+4,y,{url:url});y+=3});y+=2};
-      var audio=sel.filter(function(r){return r.isci.suffix!=="B"});
-      if(audio.length){
-        d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(5,150,105);d.text(audLabel+" — Placement: "+audPlc,mx,y);y+=5;
-        audio.forEach(function(r){check(11);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(String(r.isci.code),mx,y);d.setFont("helvetica","normal");d.text(String(r.isci.title||"").substring(0,36),mx+34,y);d.text(":"+String(r.isci.dur),mx+96,y);d.text(String(r.pct||"")+"%",mx+108,y);y+=3.8;urlBlock(pandoraUrl(est.market,r.isci.code,audPlc));check(4);if(r.isci.fileUrl){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download creative",mx+4,y,{url:dlUrl(r.isci.fileUrl)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("Creative: TBD",mx+4,y)}y+=5});
-      }
+      // Per-market sections, mirroring the print sheet exactly: each market gets
+      // its own header, audio rotation, and banner blocks with per-market URLs.
+      var audioAll=sel.filter(function(r){return r.isci.suffix!=="B"});
+      var comps=(isWKstream||vendorMode==="Audacy")?[]:pandoraCompanions.filter(function(x){return x.name.trim()});
       var disps=vendorMode==="Audacy"?[]:pandoraDisplays.filter(function(x){return x.name.trim()});
-      if(disps.length){
-        y+=2;check(10);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(236,72,153);d.text("DISPLAY BANNERS — Placement: DisplayBanners",mx,y);y+=5;
-        disps.forEach(function(x){check(9);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(x.name.trim(),mx,y);d.setFont("helvetica","normal");d.text(String(x.size||""),mx+96,y);var _xf=(iscis.find(function(i){return i.code===x.name.trim()})||{}).fileUrl;if(_xf){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download",mx+130,y,{url:dlUrl(_xf)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("TBD",mx+130,y)}y+=5});
-      }
+      PAND_MKTS.forEach(function(mkt){
+        var mktDma=(Object.entries(DM).find(function(e){return e[1]===mkt})||[])[0]||"";
+        var audio=PAND_MKTS.length===1?audioAll:audioAll.filter(function(r){return r.isci.dma===mktDma});
+        if(!audio.length&&!comps.length&&!disps.length)return;
+        check(10);d.setFont("helvetica","bold");d.setFontSize(11);d.setTextColor(8,145,178);
+        d.text(mkt.toUpperCase()+" ("+mktDma+")",mx,y);y+=6;
+        if(audio.length){
+          d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(5,150,105);d.text(audLabel+" — Placement: "+audPlc,mx,y);y+=5;
+          audio.forEach(function(r){check(11);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(String(r.isci.code),mx,y);d.setFont("helvetica","normal");d.text(String(r.isci.title||"").substring(0,36),mx+34,y);d.text(":"+String(r.isci.dur),mx+96,y);d.text(String(r.pct||"")+"%",mx+108,y);y+=3.8;urlBlock(pandoraUrl(mkt,r.isci.code,audPlc));check(4);if(r.isci.fileUrl){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download creative",mx+4,y,{url:dlUrl(r.isci.fileUrl)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("Creative: TBD",mx+4,y)}y+=5});
+        }
+        if(comps.length){
+          y+=2;check(10);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(74,200,232);d.text("COMPANION BANNERS — Placement: CompanionBanners",mx,y);y+=5;
+          comps.forEach(function(x){check(9);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(x.name.trim(),mx,y);d.setFont("helvetica","normal");d.text(String(x.size||""),mx+96,y);var _cf=(iscis.find(function(i){return i.code===x.name.trim()})||{}).fileUrl;if(_cf){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download",mx+130,y,{url:dlUrl(_cf)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("TBD",mx+130,y)}y+=3.8;urlBlock(pandoraUrl(mkt,x.name.trim(),"CompanionBanners"));y+=1.2});
+        }
+        if(disps.length){
+          y+=2;check(10);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(236,72,153);d.text("DISPLAY BANNERS — Placement: DisplayBanners",mx,y);y+=5;
+          disps.forEach(function(x){check(9);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(x.name.trim(),mx,y);d.setFont("helvetica","normal");d.text(String(x.size||""),mx+96,y);var _xf=(iscis.find(function(i){return i.code===x.name.trim()})||{}).fileUrl;if(_xf){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download",mx+130,y,{url:dlUrl(_xf)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("TBD",mx+130,y)}y+=3.8;urlBlock(pandoraUrl(mkt,x.name.trim(),"DisplayBanners"));y+=1.2});
+        }
+        y+=2;
+      });
       Object.entries(durGroups).forEach(function(e){var g=e[1];check(5);var ok=Math.abs(g.total-100)<0.5;d.setFont("helvetica","normal");d.setFontSize(8);d.setTextColor(ok?91:232,ok?196:90,ok?160:122);d.text((DM[g.dma]||g.dma)+" :"+g.dur+" rotation: "+g.total+"% "+(ok?"(OK)":"(CHECK)"),mx,y);y+=4});
       y+=6;check(14);d.setDrawColor(124,58,237);d.setLineWidth(0.5);d.line(mx,y,mx+cw,y);y+=6;
       d.setFont("helvetica","bold");d.setFontSize(9);d.setTextColor(0,0,0);d.text("Accepted by: __________________________",mx,y);d.text("Date: ______________",mx+cw-58,y);y+=6;
