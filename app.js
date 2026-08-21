@@ -5050,8 +5050,8 @@ const App=()=>{
         check(10);d.setFont("helvetica","bold");d.setFontSize(11);d.setTextColor(8,145,178);
         d.text(mkt.toUpperCase()+" ("+mktDma+")",mx,y);y+=6;
         if(audio.length){
-          d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(5,150,105);d.text(audLabel+" — Placement: "+audPlc,mx,y);y+=5;
-          audio.forEach(function(r){check(11);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(String(r.isci.code),mx,y);d.setFont("helvetica","normal");d.text(String(r.isci.title||"").substring(0,36),mx+34,y);d.text(":"+String(r.isci.dur),mx+96,y);d.text(String(r.pct||"")+"%",mx+108,y);y+=3.8;urlBlock(pandoraUrl(mkt,r.isci.code,audPlc));check(4);if(r.isci.fileUrl){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download creative",mx+4,y,{url:dlUrl(r.isci.fileUrl)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("Creative: TBD",mx+4,y)}y+=5});
+          d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(5,150,105);d.text(audLabel+(vendorMode==="Audacy"?"":" — Placement: "+audPlc),mx,y);y+=5;
+          audio.forEach(function(r){check(11);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(0,0,0);d.text(String(r.isci.code),mx,y);d.setFont("helvetica","normal");d.text(String(r.isci.title||"").substring(0,36),mx+34,y);d.text(":"+String(r.isci.dur),mx+96,y);d.text(String(r.pct||"")+"%",mx+108,y);y+=3.8;if(vendorMode!=="Audacy")urlBlock(pandoraUrl(mkt,r.isci.code,audPlc));check(4);if(r.isci.fileUrl){d.setTextColor(91,196,160);d.setFontSize(7);d.textWithLink("Download creative",mx+4,y,{url:dlUrl(r.isci.fileUrl)})}else{d.setTextColor(150,150,150);d.setFontSize(7);d.text("Creative: TBD",mx+4,y)}y+=5});
         }
         if(comps.length){
           y+=2;check(10);d.setFont("helvetica","bold");d.setFontSize(8);d.setTextColor(74,200,232);d.text("COMPANION BANNERS — Placement: CompanionBanners",mx,y);y+=5;
@@ -5146,12 +5146,16 @@ const App=()=>{
           if(!mktIscis.length)return;
           w.document.write('<div class="section" style="border-top-color:#4AC8E8">'+mkt.toUpperCase()+' ('+dma+')</div>');
           // Audio creatives
-          w.document.write('<div style="font-weight:700;font-size:11px;color:#059669;margin:8px 0 4px">'+audLabel+' — Placement: '+audPlc+'</div>');
-          w.document.write("<table><thead><tr><th>UTM_Content</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Placement</th><th>Full URL</th><th>Creative</th></tr></thead><tbody>");
+          w.document.write('<div style="font-weight:700;font-size:11px;color:#059669;margin:8px 0 4px">'+audLabel+(vendorMode==="Audacy"?'':' — Placement: '+audPlc)+'</div>');
+          w.document.write(vendorMode==="Audacy"?"<table><thead><tr><th>ISCI</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Creative</th></tr></thead><tbody>":"<table><thead><tr><th>UTM_Content</th><th>Title</th><th>Dur</th><th>Rot %</th><th>Placement</th><th>Full URL</th><th>Creative</th></tr></thead><tbody>");
           mktIscis.forEach(function(r){
-            var url=pandoraUrl(mkt,r.isci.code,audPlc);
             var dl=r.isci.fileUrl?"<a href='"+escHtml(dlUrl(r.isci.fileUrl))+"' style='color:#5BC4A0;font-weight:700'>Download</a>":"TBD";
-            w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+escHtml(r.isci.code)+"</td><td>"+escHtml(r.isci.title)+"</td><td>:"+escHtml(r.isci.dur)+"</td><td style='text-align:center;font-weight:700'>"+escHtml(r.pct||"")+"%</td><td>"+audPlc+"</td><td class='url'><a href='"+escHtml(url)+"' style='color:#4AC8E8'>"+escHtml(url)+"</a></td><td>"+dl+"</td></tr>");
+            if(vendorMode==="Audacy"){
+              w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+escHtml(r.isci.code)+"</td><td>"+escHtml(r.isci.title)+"</td><td>:"+escHtml(r.isci.dur)+"</td><td style='text-align:center;font-weight:700'>"+escHtml(r.pct||"")+"%</td><td>"+dl+"</td></tr>");
+            }else{
+              var url=pandoraUrl(mkt,r.isci.code,audPlc);
+              w.document.write("<tr><td style='font-family:monospace;font-weight:700;font-size:10px'>"+escHtml(r.isci.code)+"</td><td>"+escHtml(r.isci.title)+"</td><td>:"+escHtml(r.isci.dur)+"</td><td style='text-align:center;font-weight:700'>"+escHtml(r.pct||"")+"%</td><td>"+audPlc+"</td><td class='url'><a href='"+escHtml(url)+"' style='color:#4AC8E8'>"+escHtml(url)+"</a></td><td>"+dl+"</td></tr>");
+            }
           });
           w.document.write("</tbody></table>");
           // Companion banners
@@ -5228,8 +5232,8 @@ const App=()=>{
             <Inp label="Comments" value={comments} onChange={e=>setComments(e.target.value)} placeholder="Optional"/>
           </div>
         </div>
-        {isPlatform&&<div style={{background:"#1e1233",border:"1px solid #4a3565",borderRadius:6,padding:8}}>
-          <div style={{fontSize:12,fontWeight:700,color:"#D4A040",marginBottom:6}}>UTM PARAMETERS {(vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")?"(auto-generated per ISCI)":vendorMode==="ESPN"?"(per campaign)":""}</div>
+        {isPlatform&&vendorMode!=="Audacy"&&<div style={{background:"#1e1233",border:"1px solid #4a3565",borderRadius:6,padding:8}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#D4A040",marginBottom:6}}>UTM PARAMETERS {(vendorMode==="Pandora"||vendorMode==="Paramount")?"(auto-generated per ISCI)":vendorMode==="ESPN"?"(per campaign)":""}</div>
           {vendorMode==="ESPN"&&<div style={{marginBottom:6}}>
             <div style={{fontSize:11,color:"#94a3b8",marginBottom:4}}>Campaign:</div>
             <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{ESPN_CAMPAIGNS.map(c=><button key={c} onClick={()=>setEspnCampaign(c)} style={{padding:"4px 10px",borderRadius:4,border:espnCampaign===c?"2px solid #D4A040":"1px solid #4a3565",background:espnCampaign===c?"rgba(251,191,36,.15)":"transparent",color:espnCampaign===c?"#D4A040":"#94a3b8",fontSize:11,fontWeight:700,cursor:"pointer"}}>{c}</button>)}</div>
@@ -5253,7 +5257,7 @@ const App=()=>{
           </div>}
         </div>}
       </div>
-      {(vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")&&<div style={{marginBottom:8,padding:6,background:"rgba(37,99,235,.06)",borderRadius:5,border:"1px solid rgba(37,99,235,.15)",fontSize:10,fontFamily:"monospace"}}>
+      {(vendorMode==="Pandora"||vendorMode==="Paramount")&&<div style={{marginBottom:8,padding:6,background:"rgba(37,99,235,.06)",borderRadius:5,border:"1px solid rgba(37,99,235,.15)",fontSize:10,fontFamily:"monospace"}}>
         <div><span style={{color:"#5BC4A0"}}>{vendorMode==="Paramount"?"Video:":"Audio:"}</span> {pandoraUrl(est.market,"{ISCI}",audPlc)}</div>
         <div><span style={{color:"#4AC8E8"}}>Companion:</span> {pandoraUrl(est.market,"{BannerName}","CompanionBanners")}</div>
         <div><span style={{color:"#ec4899"}}>Display:</span> {pandoraUrl(est.market,"{BannerName}","DisplayBanners")}</div>
