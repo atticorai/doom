@@ -4167,7 +4167,7 @@ const App=()=>{
       <StatC label="WK OOH" value={POSTINGS.length} sub={`${[...new Set(POSTINGS.map(p=>p.dma))].length} DMAs · WK Advtg`} color="#D4A040" onClick={()=>navigateHash("ooh/wk")}/>
       <StatC label="PL OOH" value={PL_PANELS.length} sub={oohAlerts.length?`⚠ ${oohAlerts.length} due soon`:`${[...new Set(PL_PANELS.map(p=>p.market))].length} markets · Postman Law`} color="#9b7bb0" onClick={()=>navigateHash("ooh/pl")}/>
       <StatC label="L&R OOH" value={typeof LR_PANELS!=="undefined"?LR_PANELS.length:0} sub={typeof LR_PANELS!=="undefined"?`${[...new Set(LR_PANELS.map(p=>p.market))].length} markets · Lerner & Rowe`:"Lerner & Rowe"} color="#2FBF71" onClick={()=>navigateHash("ooh/lr")}/>
-      <StatC label="PDV OOH" value={typeof PDV_PANELS!=="undefined"?PDV_PANELS.length:0} sub={typeof PDV_PANELS!=="undefined"?`${[...new Set(PDV_PANELS.map(p=>p.market))].length} market · Parrish DeVaughn`:"Parrish DeVaughn"} color="#EE2B37" onClick={()=>navigateHash("ooh/pdv")}/>
+      <StatC label="PDV OOH" value={typeof PDV_PANELS!=="undefined"?PDV_PANELS.length:0} sub={typeof PDV_PANELS!=="undefined"?`${[...new Set(PDV_PANELS.map(p=>p.market))].length} markets · Parrish DeVaughn`:"Parrish DeVaughn"} color="#EE2B37" onClick={()=>navigateHash("ooh/pdv")}/>
       <StatC label="KE OOH" value={typeof KE_PANELS!=="undefined"?KE_PANELS.length:0} sub={typeof KE_PANELS!=="undefined"?`${[...new Set(KE_PANELS.map(p=>p.market))].length} market · Keches Law Group`:"Keches Law Group"} color="#1E5F9E" onClick={()=>navigateHash("ooh/ke")}/>
       <StatC label="Traffic Sent" value={sentCount} sub={<><span>{trafficHistory.length} total</span><Sparkline data={trafficByWeek} color="#4AC8E8"/></>} color="#4AC8E8" onClick={()=>setPg("library")}/>
     </div>
@@ -10990,7 +10990,7 @@ Rules:
     return <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",flexWrap:"wrap",gap:8}}>
         <div><img src={(typeof LOGO_PDV!=="undefined"?LOGO_PDV:"")} alt="Parrish DeVaughn" style={{height:34,marginBottom:6,background:"#fff",padding:"4px 8px",borderRadius:6}}/><PageHead title="Parrish DeVaughn — OOH Media Plan" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>Oklahoma City · {pdvPanels.length} placements ({fixed} fixed boards · {programs} rotating programs) · {totalUnits} total units · vendor CJ</p>
+          <p style={{fontSize:13,color:"#9B8EAD"}}>Oklahoma City &amp; Tulsa · {pdvPanels.length} placements ({fixed} fixed boards · {programs} rotating programs) · {totalUnits} total units · OKC vendor CJ · Tulsa vendor TBD</p>
         </div>
         <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
           <Btn small onClick={()=>{
@@ -14497,7 +14497,7 @@ Rules:
       </div>,damageEffects:<>{<BookInkSplatter style={{bottom:20,right:20,opacity:.4}}/>}{<BookHoofMark style={{top:20,left:20,opacity:.2,transform:"rotate(12deg) scale(.65)"}}/>}</>},
 
       {title:"Parrish DeVaughn Overview",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p>Parrish DeVaughn is Oklahoma — <b>Oklahoma City</b> is live and <b>Tulsa</b> is the expansion market. Jessica Flynn is the buyer.</p>
+        <p>Parrish DeVaughn is Oklahoma — <b>Oklahoma City</b> is live and <b>Tulsa</b> is the expansion market. Jessica Flynn is the buyer. Tulsa's planned OOH plant sits in the PDV board page: a <b>25-poster showing rotating every other month</b>, a rotary bulletin program, and <b>2 perm bulletins</b> — vendor, units, and flights land when the contract is executed.</p>
         <p>PDV leans on Local &amp; Experienced and No-Fee-Guarantee messaging, and it's the one brand with a <b>Motorcycle</b> category. Estimates are the real numbers (5372–6864) across eight products — Auto, AM News, Discretionary, Products, Thunder, EN/LN, CTV, YouTube.</p>
         <p>Brand red. <span style={{color:"#C4A0C8",fontWeight:700}}>{pdvActive} active ISCIs</span>. For Tulsa: lead with Local &amp; Experienced, add case types, always recommend bookend pairs.</p>
         <BookBrandFacts brand="Parrish DeVaughn"/>
