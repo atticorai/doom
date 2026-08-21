@@ -14541,7 +14541,7 @@ Rules:
       </div>,damageEffects:<>{<BookInkSplatter style={{bottom:20,right:20,opacity:.4}}/>}{<BookHoofMark style={{top:20,left:20,opacity:.2,transform:"rotate(12deg) scale(.65)"}}/>}</>},
 
       {title:"Parrish DeVaughn Overview",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p>Parrish DeVaughn is Oklahoma — <b>Oklahoma City</b> is live and <b>Tulsa</b> is the expansion market. Jessica Flynn is the buyer. Tulsa's planned OOH plant sits in the PDV board page: a <b>25-poster showing rotating every other month</b>, a rotary bulletin program, and <b>2 perm bulletins</b> — vendor, units, and flights land when the contract is executed.</p>
+        <p>Parrish DeVaughn is Oklahoma — <b>Oklahoma City</b> is live and <b>Tulsa</b> is the expansion market. Jessica Flynn is the buyer. Tulsa's OOH plant sits in the PDV board page: a <b>45-poster showing reposting every 60 days</b> (launches 9/13/2026) and <b>10 bulletin faces</b> including 2 permanents (launch 9/7/2026). Round one runs Thunder and Pepper &amp; Murry — bulletins 2/8, posters 8/37. The 🔁 Rotation Sheet button prints the vendor instructions.</p>
         <p>PDV leans on Local &amp; Experienced and No-Fee-Guarantee messaging, and it's the one brand with a <b>Motorcycle</b> category. Estimates are the real numbers (5372–6864) across eight products — Auto, AM News, Discretionary, Products, Thunder, EN/LN, CTV, YouTube.</p>
         <p>Brand red. <span style={{color:"#C4A0C8",fontWeight:700}}>{pdvActive} active ISCIs</span>. For Tulsa: lead with Local &amp; Experienced, add case types, always recommend bookend pairs.</p>
         <BookBrandFacts brand="Parrish DeVaughn"/>
