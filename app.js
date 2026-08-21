@@ -5211,7 +5211,7 @@ const App=()=>{
         var allIscis=sel.map(function(r){
           var isB=r.isci.suffix==="B";var med=isB?"Display":"Video";
           var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);
-          var espnUrl=(vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+(isB?"ESPNweb":"ESPNweb")+"&utm_Content="+r.isci.code;
+          var espnUrl=vendorMode==="Audacy"?"":(vendorMode==="Pandora"||vendorMode==="Paramount")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+(isB?"ESPNweb":"ESPNweb")+"&utm_Content="+r.isci.code;
           var gkbpsUrl=isB?"":baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code;
           return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:"ESPNweb",url:isPlatform?espnUrl:"",gkbpsUrl:isPlatform?gkbpsUrl:""}
         });
@@ -5361,7 +5361,7 @@ const App=()=>{
           var allIscis2=sel.map(function(r){
             var isB=r.isci.suffix==="B";var med=isB?"Display":"Video";
             var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);
-            var espnUrl=(vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement=ESPNweb&utm_Content="+r.isci.code:"");
+            var espnUrl=vendorMode==="Audacy"?"":(vendorMode==="Pandora"||vendorMode==="Paramount")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement=ESPNweb&utm_Content="+r.isci.code:"");
             var gkbpsUrl3=isB||!isPlatform?"":baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code;
             return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:"ESPNweb",url:espnUrl,gkbpsUrl:gkbpsUrl3}
           });
@@ -5440,7 +5440,7 @@ const App=()=>{
               notify(doomPick(DOOM.send));log(vendorLabel2+" Email","Sent - "+est.market+" "+workMonth);
               setTrafficHistory(function(p){
                 var allIscis3=sel.map(function(r){var isB=r.isci.suffix==="B";var med=isB?"Display":(isDigital?"Video":"Audio");var dmaCamp=utmCampaign.replace(dmaPrefix,r.isci.dma);var pl=r.placement||utmPlacement;
-                  return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:pl,url:(vendorMode==="Pandora"||vendorMode==="Paramount"||vendorMode==="Audacy")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+pl+"&utm_Content="+r.isci.code:""),gkbpsUrl:isDigital&&!isB?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code:""}});
+                  return {code:r.isci.code,title:r.isci.title,dur:r.isci.dur,pct:r.pct+"%",sched:r.sched,bookend:"",placement:pl,url:vendorMode==="Audacy"?"":(vendorMode==="Pandora"||vendorMode==="Paramount")?pandoraUrl(est.market,r.isci.code,isB?"DisplayBanners":audPlc):(isPlatform?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium="+med+"&UTM_Campaign="+dmaCamp+"&Placement="+pl+"&utm_Content="+r.isci.code:""),gkbpsUrl:isDigital&&!isB?baseUrl+"?UTM_Source="+utmSource+"&UTM_Medium=Video&UTM_Campaign="+dmaCamp+"&Placement=GKBPS&utm_Content="+r.isci.code:""}});
                 return [{ts:new Date().toISOString(),est:est.num,brand:est.brand,market:est.market,media:est.media,buyer:est.buyer,month:workMonth,flight:flightDates,version:version,comments:comments+" | Vendor: "+vendorLabel2,iscis:allIscis3.concat(pandoraDispRows()),stations:[staTag2],isOoh:false,status:"sent",isDigitalEspn:isDigital}].concat(p)});
             }else throw new Error("n8n "+resp2.status)
           }catch(err2){notify("Send failed: "+(err2.message||err2))}
