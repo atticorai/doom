@@ -171,6 +171,35 @@ select option{background:#12142a}
 
 .toast{position:fixed;bottom:22px;right:22px;max-width:420px;background:#12142a;color:var(--ink);border-radius:4px;padding:14px 18px;font-size:12.5px;line-height:1.5;z-index:90;box-shadow:0 16px 44px rgba(0,0,0,.6);display:none;border:1px solid var(--hair2);border-left:3px solid var(--gold)}
 .homefoot{margin-top:22px;font-size:12px;color:var(--faint);font-style:italic}
+.doorchip{border:1px solid rgba(255,255,255,.14);border-radius:3px;padding:8px 13px;font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);cursor:pointer}
+.doorchip:hover{border-color:var(--hair2);color:var(--gold)}
+.mailov{position:fixed;inset:0;background:rgba(4,5,10,.72);z-index:80;display:none}
+.mailov.open{display:block}
+.mailmod{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:680px;max-width:94vw;max-height:90vh;overflow-y:auto;background:#101325;border:1px solid var(--hair2);border-radius:6px;box-shadow:0 40px 120px rgba(0,0,0,.8);z-index:85;display:none}
+.mailmod.open{display:block}
+.mailhead{font-family:'Fraunces',serif;font-size:17px;color:var(--ink);padding:16px 20px;border-bottom:1px solid var(--hair)}
+.mailbody{padding:16px 20px}
+.mline{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.mline .mk{flex:0 0 58px;font-size:8.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+.mline input{flex:1}
+.mcontent{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.10);border-radius:3px;padding:14px 16px;font-size:12.5px;line-height:1.65;color:var(--body);white-space:pre-wrap;min-height:150px;outline:none}
+.mfoot{display:flex;gap:9px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.mfoot .mn{flex:1;font-size:10.5px;color:var(--faint);font-style:italic;min-width:200px}
+.rtable{width:100%;border-collapse:collapse;font-size:12.5px}
+.rtable th{text-align:left;font-size:8.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);padding:8px 10px;border-bottom:1px solid var(--hair)}
+.rtable td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.05);color:var(--body)}
+.rtable td b{color:var(--ink)}
+.rtable .m{text-align:right;font-family:'Fraunces',serif;color:var(--gold-hi)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.rpanel{background:var(--glass);border:1px solid var(--hair);border-radius:5px;padding:18px 20px}
+.rpanel h3{font-family:'Fraunces',serif;font-weight:500;font-size:17px;color:var(--ink);margin-bottom:3px}
+.rpanel .ps{font-size:11px;color:var(--mut);margin-bottom:12px}
+.feedstrip{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--glass2);border:1px solid var(--hair);border-radius:5px;padding:13px 16px;margin-bottom:16px}
+.feedstrip .fk{font-size:9px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.receipt{background:rgba(87,195,154,.07);border:1px solid rgba(87,195,154,.3);border-radius:5px;padding:13px 16px;margin-bottom:16px;font-size:12.5px;color:var(--body);display:none}
+.receipt .rh{font-size:9px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--pine);margin-bottom:7px}
+.receipt div.li{padding:2px 0}
+@media(max-width:760px){.duo{grid-template-columns:1fr}}
 @media(max-width:760px){
  .wrap{padding:0 14px 90px}
  .mast .wordmark{font-size:24px;letter-spacing:.28em}
@@ -193,6 +222,11 @@ select option{background:#12142a}
   </div>
 </div>
 <input type="file" id="importfile" accept="application/json" style="display:none">
+<div style="display:flex;justify-content:center;gap:9px;margin-top:18px;flex-wrap:wrap">
+  <span class="doorchip" data-door="MP@atticor.ai">FEED · MP@atticor.ai</span>
+  <span class="doorchip" data-door="Contracts">FEED · Contracts &amp; scans</span>
+  <span class="doorchip" data-door="Sheets · Notion · SharePoint">FEED · Sheets · Notion · SharePoint</span>
+</div>
 
 <div class="nav" id="nav"></div>
 
@@ -202,10 +236,27 @@ select option{background:#12142a}
 <section id="v-x" style="display:none"></section>
 <section id="v-board" style="display:none"></section>
 <section id="v-intake" style="display:none"></section>
+<section id="v-cal" style="display:none"></section>
+<section id="v-tickets" style="display:none"></section>
+<section id="v-rl" style="display:none"></section>
 <section id="v-ws" style="display:none"></section>
 
 </div>
 
+<div class="mailov" id="mailov"></div>
+<div class="mailmod" id="mailmod">
+  <div class="mailhead" id="mail-title">Preview</div>
+  <div class="mailbody">
+    <div class="mline"><span class="mk">To</span><input id="mail-to" placeholder="who it goes to"></div>
+    <div class="mline"><span class="mk">Cc</span><input value="emm.caban@atticor.ai" readonly></div>
+    <div class="mline"><span class="mk">Subject</span><input id="mail-subj"></div>
+    <div class="mcontent" id="mail-body" contenteditable="true"></div>
+    <div class="mfoot"><span class="mn">Nothing sends without your eyes. Sending stamps evidence and moves the operation.</span>
+      <button class="btn ghost sm" id="mail-app">Open in mail app</button>
+      <button class="btn ghost sm" id="mail-cancel">Cancel</button>
+      <button class="btn sm" id="mail-send">Send it</button></div>
+  </div>
+</div>
 <div class="toast" id="toastbox"></div>
 
 <script>
@@ -236,7 +287,7 @@ const LANES=["Ops — Emm","Ethics","Creative","Merch","Social","SEO","Vendor","
 function brandColor(n){const b=CFG.brands.find(x=>x.n===n);return b?b.c:"#8b8fa3"}
 
 /* ---------------- store ---------------- */
-const KEY="atticorOpsV1";
+const KEY="atticorOpsV2";
 /* ---- the seed: Emm's real book, expressed as live engine data. Edit, shift, delete — Reset restores it. ---- */
 function seedDB(){return {seq:200,log:[{t:Date.now(),kind:"in",text:"The record seeded — 11 real commitments, every date computed from its anchor."}],commitments:[
  {id:1,name:"Thanksgiving Meal Giveaway",brand:"Lerner & Rowe",dma:"Albuquerque",kind:"Sponsorship / Event",money:{c:2185,f:2185},
@@ -369,7 +420,46 @@ function seedDB(){return {seq:200,log:[{t:Date.now(),kind:"in",text:"The record 
   sched:[{kind:"chase",what:"Decision date — demographics scored, the sheet is ready",owner:"Kevin Rowe"}],
   tickets:[],theyOwe:[],rec:[]}
 ]}}
-let DB=seedDB();
+/* the world, per commitment: routing (Doom reuse · library · MerchHub · tickets), sources, capture, results */
+const AUG={
+ 1:{needs:[
+   {n:"Giveaway merch — 250 hats + 100 tees",d:"On Target Media · ship-to Expo NM Creative Arts Bldg",r:"ticket",mail:"tk1",hub:1},
+   {n:"Staffing — crew of 3",d:"names owed by Hazel by Oct 24 · chase armed",r:"ticket"},
+   {n:"Day-of photo album",d:"Drive › L&R › ABQ Thanksgiving › Day-of → Michelle cuts reels",r:"mine",ok:"Album created — link shared to crew + Michelle. Reel slot held."}],
+  capture:{album:"link ready — goes to crew Nov 9",photos:"—",video:"—",michelle:"queued — reel + newsletter slot held",published:"—"},
+  results:[["Attendance","—"],["Meals given","—"],["Social reach","—"],["Press","—"],["Spend final","—"]]},
+ 2:{needs:[
+   {n:"LED + concourse artwork",d:"Club specs · LED 2368×288 @30fps · concourse 12′×8′ print — nothing in the library fits",r:"ticket",mail:"tk2"},
+   {n:":30 TV spots",d:"in Doom's registry, cleared: PD26TV30A-OKC “Justice Rides” · PD26TV30B-OKC “Real People, Real Results”",r:"registry",ok:"Linked PD26TV30A-OKC + PD26TV30B-OKC — cleared-to-traffic, evidence stamped. Creative was never asked for what we own."},
+   {n:"Team Marks approval",d:"Club takes 20 business days — files go by Thu Aug 27",r:"ticket"}],
+  results:[["Spots aired","0 of 10 — season opens Oct 8"],["LED minutes","0 of 41 logged"],["Impressions","—"],["Season impact","—"]]},
+ 3:{needs:[
+   {n:"Live-mention script",d:"library suggests: IL disclaimer v3 + cleared LR-IL-RADLIVE-0425 · LR-IL-EVENT-0212",r:"library",mail:"tk4"},
+   {n:"Event display banner",d:"in the registry, fit Chicago: LR26PINK02-CHI “Strut Pink” · LR26DISP01-CHI · LR26DISP04-CHI",r:"registry",ok:"Linked LR26PINK02-CHI — Doom already held it. No creative ticket created."},
+   {n:"UTMs + landing page",d:"radio · social · display — only this deal's channels",r:"mine",ok:"Generated: lernerandrowe.com/sisterstrut · utm_campaign=sisterstrut26 · utm_source per channel. Pixels go to SEO, not this."},
+   {n:"Booth tees + 6×3 banner",d:"ship-to Odyssey CC · arrive Thu Oct 1",r:"ticket",mail:"tk3",hub:1}],
+  recon:["Contract (Apr): $25,000","Hazel's sheet (Aug 12): $27,500 — you chose the sheet","Notion: pending → synced Aug 19. All three kept, with provenance."],
+  capture:{album:"link created — crew + Michelle",photos:"—",video:"—",michelle:"queued — reel + newsletter wk of Oct 6",published:"—"},
+  results:[["Attendance","— expected 15,000"],["Impressions by channel","— radio · social · display"],["Press","—"],["Newsletter signups","—"],["Spend final","—"]]},
+ 4:{results:[["Sign impressions","12′×50′ · every home game"],["Makegood","6 extra PA reads — delivered June, station log filed"]]},
+ 5:{capture:{album:"done — Drive › L&R › Golf 26 › Album, 412 photos",photos:"received Jul 12 — C&C photographer",video:"received — 2:40 recap cut Jul 18",michelle:"done — reel + newsletter Jul 22",published:"done — reel, 2 posts, newsletter feature Jul 29"},
+  results:[["Spend","$365,000 + $6,971.61 production"],["Raised","$1,031,578 — 100% to nonprofits · 4th year $1M+"],["Attendance","144 golfers — sold out"],["Press","AZ Family “Good Morning Arizona” Apr 21 · Phoenix Business Journal · AZCentral"],["Social reach","210K · 38 posts — top: drone-finale reel, 41K"],["Newsletter signups","312"]],
+  expenses:[["Mister Softee — ice cream truck","$2,001.88 · chk 2098 · paid"],["Reflexx — live band","$1,000 dep · $9,000 due"],["Cre8ive — tables & chairs","$1,744.73 · paid"],["Mather Bros — ice","$2,225 · paid"]]},
+ 7:{anchorsAdd:{op:{label:"Fair opens",date:"2026-08-13"}},
+  schedAdd:[{base:"op",off:0,kind:"launch",what:"Fair opens — flight live on KEEY · KTLK · WCCO",done:1}],
+  results:[["Attendance","— fair reports Sep 2"],["Radio logs","— land Sep 3"],["Landing-page activity","— UTMs live, pulls itself"],["Spend","$60,000 — settled"]]},
+ 9:{needs:[
+   {n:"Display set + :15 video",d:"registry checked — zero Keches creative exists. Net-new: 970×250 · 728×90 · 300×250 · 300×600 + :15",r:"ticket",mail:"tk5"},
+   {n:"UTMs",d:"digital only — this deal's channels",r:"mine",ok:"Generated: keches.com/espn-boston · utm_campaign=espnboston26 · utm_content per unit."},
+   {n:"Tracking pixels",d:"page-side implementation by Fri Sep 11",r:"ticket",mail:"tk6"}]}
+};
+function applyAug(d){d.commitments.forEach(c=>{const a=AUG[c.id];if(!a)return;
+ Object.keys(a).forEach(k=>{
+  if(k==="anchorsAdd")Object.assign(c.anchors,a.anchorsAdd);
+  else if(k==="schedAdd")c.sched=a.schedAdd.concat(c.sched);
+  else c[k]=JSON.parse(JSON.stringify(a[k]));
+ })});return d}
+let DB=applyAug(seedDB());
 function save(){localStorage.setItem(KEY,JSON.stringify(DB))}
 function load(){try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&d.commitments)DB=d}}catch(e){}}
 load();
@@ -491,8 +581,168 @@ function buildTickets(c,f){
  return T;
 }
 
+/* ---------------- PRE / LIVE / POST — the lifecycle, engine underneath ---------------- */
+function phaseOf(c){
+ const ds=Object.keys(c.anchors||{}).map(k=>D(c.anchors[k].date)).sort((a,b)=>a-b);
+ if(!ds.length)return "PIPELINE";
+ if(TODAY<ds[0])return "PRE";
+ if(TODAY>ds[ds.length-1])return "POST";
+ return "LIVE";
+}
+const PHPILL={PRE:["warn","PRE"],LIVE:["ok","LIVE"],POST:["dim","POST"],PIPELINE:["late","NO ANCHOR"]};
+const RBADGE={registry:["pill ok","in the registry — link it"],mine:["pill warn","yours — one click"],library:["pill dim","library suggests"],ticket:["pill late","ticket out"],done:["pill ok","done ✓"]};
+const HUBSTEPS=["Ticketed","Ordered","Shipped","Delivered"];
+function hubchain(st){return '<div style="font-size:10px;color:var(--faint);margin:5px 0 2px">MerchHub reports back: '+HUBSTEPS.map((h,i)=>'<span style="font-weight:700;color:'+(i<st?"var(--pine)":i===st?"var(--gold)":"var(--faint)")+'">'+h+'</span>').join(' <span style="color:var(--faint)">→</span> ')+'</div>'}
+
+/* ---------------- mail — every send previewed, evidence stamped ---------------- */
+let curMailCtx=null;
+function openMailX(ctx){curMailCtx=ctx;
+ $("mail-title").textContent=ctx.title||"Preview";
+ $("mail-to").value=ctx.to||"";$("mail-subj").value=ctx.subj||"";$("mail-body").textContent=ctx.body||"";
+ $("mailov").classList.add("open");$("mailmod").classList.add("open");}
+function closeMailX(){$("mailov").classList.remove("open");$("mailmod").classList.remove("open")}
+$("mail-cancel").addEventListener("click",closeMailX);
+$("mailov").addEventListener("click",closeMailX);
+$("mail-app").addEventListener("click",()=>{
+ window.open("mailto:"+encodeURIComponent($("mail-to").value)+"?subject="+encodeURIComponent($("mail-subj").value)+"&body="+encodeURIComponent($("mail-body").textContent),"_blank")});
+$("mail-send").addEventListener("click",()=>{
+ const x=curMailCtx;closeMailX();if(!x)return;
+ if(x.ticket){const c=x.ticket.c,t=x.ticket.t;t.status="sent";t.to=$("mail-to").value;if(x.hub)t.hubst=1;
+  c.rec.unshift([fshort(TODAY)+" · out · Ticket",$("mail-subj").value+" — sent","evidence"]);
+  logEv("sent","<b>"+c.name+"</b> — ticket sent: "+$("mail-subj").value);DB.log[0].cid=c.id;save();
+  if(view==="ws")drawWS(c.id);if(view==="tickets")drawTix();nav();
+  toast(x.hub?"Sent — MerchHub owns it now. Ordered → shipped → delivered land back on this record; you never chase.":"Sent — evidence stamped, the operation moved.");}
+ else{logEv("sent","Letter sent — "+$("mail-subj").value);save();toast("Sent — on the record.")}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMailX()});
+function ticketMail(c,t){openMailX({title:"Ticket — "+c.name,to:t.to||"",subj:t.subj,body:t.body,ticket:{c:c,t:t},hub:!!(c.needs||[]).find(n=>n.mail===t.id&&n.hub)})}
+
+/* ---------------- letters — drafted by the record, sent by you ---------------- */
+function genMonthly(){
+ const start=D("2026-09-01"),end=D("2026-09-30");
+ const acts=allActs().filter(a=>a.d&&a.d>=start&&a.d<=end);
+ let out="SEPTEMBER — MARKETING OPERATIONS VISIBILITY\nBrand → market → commitment → dated actions · generated from the calendar\n";
+ [...new Set(DB.commitments.map(c=>c.brand))].forEach(b=>{
+  const ba=acts.filter(a=>{const c=DB.commitments.find(x=>x.id===a.cid);return c&&c.brand===b});
+  const ch=DB.commitments.filter(c=>c.brand===b).flatMap(actsFor).filter(a=>a.kind==="chase");
+  if(!ba.length&&!ch.length)return;
+  out+="\n"+b.toUpperCase()+"\n";
+  DB.commitments.filter(c=>c.brand===b).forEach(c=>{
+   const ca=ba.filter(a=>a.cid===c.id),cc=ch.filter(a=>a.cid===c.id);
+   if(!ca.length&&!cc.length)return;
+   out+="  "+c.dma+" — "+c.name+" ("+fm(c.money.f)+(/PROPOSAL/.test(c.notes||"")?" — PROPOSAL, not committed":"")+") · "+phaseOf(c)+"\n";
+   ca.forEach(a=>out+="    "+fshort(a.d)+"  "+a.what+(a.owner?" · "+a.owner:"")+"\n");
+   cc.forEach(a=>out+="    NO DATE  "+a.what+" — chasing "+a.owner+"\n");
+  });
+ });
+ out+="\nEvery date is computed from an anchor and carries its derivation. Reply with a correction and the record updates — with provenance.\n— Emm";
+ return out;
+}
+function genMonday(){
+ const lim=addDays(TODAY,7);
+ let out="MONDAY NOTE — WEEK OF "+fshort(TODAY).toUpperCase()+"\n";
+ [...new Set(DB.commitments.map(c=>c.brand))].forEach(b=>{
+  const rows=allActs().filter(a=>a.d&&a.d<=lim&&!a.done&&dtd(a.d)>=-3).filter(a=>{const c=DB.commitments.find(x=>x.id===a.cid);return c&&c.brand===b});
+  if(!rows.length)return;
+  out+="\n"+b+"\n"+rows.map(a=>"  "+fshort(a.d)+"  "+a.cname.split(" — ")[0]+": "+a.what.split(" — ")[0]+(a.owner&&a.owner!=="Emm"?" ("+a.owner+")":"")).join("\n")+"\n";
+ });
+ out+="\nChases with no date: "+allActs().filter(a=>a.kind==="chase").map(a=>a.cname.split(" — ")[0]).join(" · ")+"\n— Emm";
+ return out;
+}
+function genMichelle(){
+ let out="CONTENT BRIEF — UPCOMING\n\n";
+ DB.commitments.forEach(c=>{
+  if(!c.capture)return;
+  out+=c.name+" ("+c.brand+" · "+c.dma+")\n  album: "+c.capture.album+"\n  your slot: "+c.capture.michelle+"\n\n";
+ });
+ out+="Assets land in each album; the record flags you the day they arrive.\n— Emm";
+ return out;
+}
+function genRecapGolf(){
+ const c=DB.commitments.find(x=>x.id===5);
+ return "RECAP — CHARITY GOLF CLASSIC (L&R · Phoenix)\n\n"+(c.results||[]).map(r=>"• "+r[0]+": "+r[1]).join("\n")+"\n\nOpen: Reflexx balance $9,000 — memo drafted for Jordan Fermin.\n2027: the playbook carries structure, vendors, obligations; dates and costs reset for confirmation.\n— Emm";
+}
+
+/* ---------------- calendar — the engine's one schedule ---------------- */
+function drawCal(){
+ const acts=allActs().filter(a=>a.d&&dtd(a.d)>=-2&&dtd(a.d)<=60&&!a.done);
+ const later=allActs().filter(a=>a.d&&dtd(a.d)>60).length;
+ let lastWk=null,h='<h2 class="sec">The calendar <span class="tag">One schedule — every dated action with its reason. Hover for why</span></h2><div class="rule"></div><div class="xband">';
+ acts.forEach(a=>{
+  const wk=new Date(a.d);wk.setDate(wk.getDate()-((wk.getDay()+6)%7));
+  const wkKey=iso(wk);
+  if(wkKey!==lastWk){lastWk=wkKey;h+='<div style="font-size:8.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);padding:10px 18px 4px;border-bottom:1px solid rgba(255,255,255,.05)">week of '+fshort(wk)+'</div>'}
+  const kc=KINDCHIP[a.kind]||["#8b8fa3",a.kind];const c=DB.commitments.find(x=>x.id===a.cid);
+  h+='<div class="xrow" style="cursor:pointer" data-cal="'+a.cid+'" '+(a.why?'title="why: '+a.why.replace(/"/g,"&quot;")+'"':'')+'>'+
+   '<span style="flex:0 0 64px;font-size:10px;font-weight:800;letter-spacing:.08em;color:'+(dtd(a.d)===0?"var(--ox)":"var(--gold)")+'">'+(dtd(a.d)===0?"TODAY":fshort(a.d))+'</span>'+
+   '<span style="flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:'+brandColor(c?c.brand:"")+'"></span>'+
+   '<span class="xline"><b>'+a.cname.split(" — ")[0]+'</b> — '+a.what.split(" — ")[0]+(a.owner&&a.owner!=="Emm"?' · '+a.owner:'')+'</span>'+
+   '<span class="kchip" style="color:'+kc[0]+';border-color:'+kc[0]+'66">'+kc[1]+'</span></div>';
+ });
+ h+='</div><div class="homefoot">…'+later+' more dated actions further out — same calendar, same reasons. Chases with no date live on Next move.</div>';
+ $("v-cal").innerHTML=h;
+ document.querySelectorAll("[data-cal]").forEach(el=>el.addEventListener("click",()=>openWS(+el.dataset.cal)));
+}
+
+/* ---------------- tickets — a lens on what the operations produced ---------------- */
+function drawTix(){
+ const rows=DB.commitments.flatMap(c=>(c.tickets||[]).map(t=>({c:c,t:t})));
+ $("v-tickets").innerHTML='<h2 class="sec">Tickets <span class="tag">Only what others owe — each a real email, previewed, evidence on send</span></h2><div class="rule"></div>'+
+  (rows.length?'<div class="xband">'+rows.map((r,i)=>'<div class="xrow" style="cursor:pointer" data-tx="'+i+'">'+
+   '<span style="flex:0 0 84px;font-size:9px;font-weight:800;letter-spacing:.14em;color:var(--gold)">'+r.t.type+'</span>'+
+   '<span class="xline"><b>'+r.t.who+'</b> — '+r.t.subj+'<div style="font-size:10.5px;color:var(--faint)">'+r.c.name+' · '+r.c.brand+'</div></span>'+
+   '<span class="pill '+(r.t.status==="sent"?"ok":"warn")+'">'+(r.t.status==="sent"?"✓ sent · evidence":"draft — your eyes")+'</span></div>').join("")+'</div>'
+  :'<div class="quiet">Nothing owed by anyone else right now.</div>')+
+  '<div class="homefoot">Creative → Brandy · merch (ship-to · arrive-by · delivered) → John P + Jenny via MerchHub · pixels → SEO · social → Michelle · Ethics pre-aligned from the library. What Doom already owns never becomes a ticket.</div>';
+ document.querySelectorAll("[data-tx]").forEach(el=>el.addEventListener("click",()=>{const r=rows[+el.dataset.tx];ticketMail(r.c,r.t)}));
+}
+
+/* ---------------- reports & letters — money, measurement, visibility ---------------- */
+function drawRL(){
+ const pays=allActs().filter(a=>a.kind==="pay"&&!a.done&&a.d&&dtd(a.d)>=-30).sort((a,b)=>a.d-b.d).slice(0,9);
+ const brands=[...new Set(DB.commitments.map(c=>c.brand))];
+ const committed=brands.map(b=>{
+  const rows=DB.commitments.filter(c=>c.brand===b&&!/PROPOSAL/.test(c.notes||""));
+  return {b:b,n:rows.length,tot:rows.reduce((x,c)=>x+(+c.money.f||0),0),
+   drift:rows.reduce((x,c)=>x+((+c.money.f||0)-(+c.money.c||0)),0)}});
+ $("v-rl").innerHTML='<h2 class="sec">The record — what it did <span class="tag">For Seb, Danny, leadership</span></h2><div class="rule"></div>'+
+  '<div class="cards" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">'+
+  [["$1,031,578","Raised · Golf Classic","100% to nonprofits · 4th year $1M+"],["144","Golfers — sold out","recap sent · board + Jessica"],["210K","Social reach · Golf","38 posts · top reel 41K"],["$819,666","Committed · marketing","proposals excluded until signed"]].map(m=>
+   '<div class="dcard" style="cursor:default"><div class="amt" style="font-size:22px">'+m[0]+'</div><div class="nm" style="font-size:12px;margin-top:2px">'+m[1]+'</div><div class="meta">'+m[2]+'</div></div>').join("")+'</div>'+
+  '<h2 class="sec">Billing <span class="tag">Read-only for Jordan Fermin — estimate #s join Strata &amp; MediaNorm</span></h2><div class="rule"></div>'+
+  '<div class="duo"><div class="rpanel"><h3>Payments ahead</h3><div class="ps">Computed from the calendar, live.</div>'+
+   '<table class="rtable"><tr><th>Due</th><th>Commitment</th><th style="text-align:right">What</th></tr>'+
+   pays.map(a=>{const c=DB.commitments.find(x=>x.id===a.cid);return '<tr><td><b style="color:'+(dtd(a.d)<=5?"var(--ox)":"var(--ink)")+'">'+fshort(a.d)+'</b></td><td>'+(c?c.name:"")+'</td><td class="m">'+a.what.split(" — ")[0]+'</td></tr>'}).join("")+'</table></div>'+
+  '<div class="rpanel"><h3>Committed by brand</h3><div class="ps">Contract vs final — drift never hides. Proposals excluded.</div>'+
+   '<table class="rtable"><tr><th>Brand</th><th>#</th><th style="text-align:right">Committed</th><th style="text-align:right">Drift</th></tr>'+
+   committed.map(r=>'<tr><td><b style="color:'+brandColor(r.b)+'">'+r.b+'</b></td><td>'+r.n+'</td><td class="m">'+fm(r.tot)+'</td><td class="m" style="color:'+(r.drift?"var(--ox)":"var(--faint)")+'">'+(r.drift?"+"+fm(r.drift):"—")+'</td></tr>').join("")+'</table>'+
+   '<h3 style="font-size:14px;margin-top:16px">Renewals — marketing only</h3>'+
+   '<table class="rtable"><tr><td><b>OKC Thunder</b><div style="font-size:10px;color:var(--faint)">→ $301,925 final season</div></td><td>Sep 2028</td><td class="m"><span class="pill warn">~2 yrs</span></td></tr>'+
+   '<tr><td><b>Barons sign</b><div style="font-size:10px;color:var(--faint)">3-yr · $135K total</div></td><td>2028</td><td class="m"><span class="pill warn">~2 yrs</span></td></tr>'+
+   '<tr><td><b>Fiesta Bowl</b><div style="font-size:10px;color:var(--faint)">~$105K/yr</div></td><td>Jan</td><td class="m"><span class="pill late">~5 mo</span></td></tr></table></div></div>'+
+  '<h2 class="sec">Letters <span class="tag">Drafted by the record · sent by you</span></h2><div class="rule"></div>'+
+  '<div class="duo"><div class="rpanel"><h3>The Monday Note</h3><div class="ps">To Jessica — this week per brand, computed just now.</div><button class="btn sm" data-lt="monday">Preview this week’s</button></div>'+
+  '<div class="rpanel"><h3>The Monthly Letter</h3><div class="ps">Hazel’s ask — everything running next month, Brand → DMA → dates. Generated from the calendar.</div><button class="btn sm" data-lt="monthly">Preview September</button></div>'+
+  '<div class="rpanel"><h3>Content brief — Michelle</h3><div class="ps">Every album, every slot, computed from capture pipelines.</div><button class="btn sm" data-lt="michelle">Preview the brief</button></div>'+
+  '<div class="rpanel"><h3>Event recap — on wrap</h3><div class="ps">Assembles from results as evidence arrives.</div><button class="btn sm" data-lt="recap">Preview Golf recap</button></div></div>';
+ document.querySelectorAll("[data-lt]").forEach(b=>b.addEventListener("click",()=>{
+  const k=b.dataset.lt;
+  const L={monday:{title:"The Monday Note",to:"jessica@atticor.ai",subj:"Monday note — week of "+fshort(TODAY),body:genMonday()},
+   monthly:{title:"Monthly visibility — Hazel's ask",to:"marketing-ops@atticor.ai",subj:"September — marketing operations visibility",body:genMonthly()},
+   michelle:{title:"Content brief — Michelle",to:"michelle@atticor.ai",subj:"Content brief — upcoming events",body:genMichelle()},
+   recap:{title:"Recap — Golf Classic",to:"jessica@atticor.ai",subj:"Recap — Charity Golf Classic (L&R · Phoenix)",body:genRecapGolf()}}[k];
+  openMailX(L);
+ }));
+}
+/* the doors */
+document.querySelectorAll(".doorchip").forEach(d=>d.addEventListener("click",()=>{
+ const k=d.dataset.door;
+ toast(k==="MP@atticor.ai"?"The shared mailbox — live today. Forwarded contracts, invoices and confirmations land here, get read, and FEED the intake. Nothing files itself without you.":
+  k==="Contracts"?"Drop a contract — even a scan. Vision-read: billing, deadlines, ship-to, obligations pulled into the intake with a receipt showing exactly what the paper filled.":
+  "Hazel's Notion events DB, the spreadsheets, SharePoint live docs — linked, never copied. Changes surface as held updates with provenance; the human chooses truth.");
+}));
+
 /* ---------------- navigation ---------------- */
-const VIEWS=[["next","Next move"],["x","Exceptions"],["board","Board"],["intake","Intake"]];
+const VIEWS=[["next","Next move"],["cal","Calendar"],["board","Board"],["intake","Intake"],["tickets","Tickets"],["rl","Reports & Letters"]];
 let view=DB.commitments.length?"next":"intake";
 let curWS=null,wsSel=null,wsShift=null;
 function nav(){
@@ -501,8 +751,8 @@ function nav(){
 }
 function render(){
  nav();
- ["next","x","board","intake","ws"].forEach(k=>$("v-"+k).style.display=(view===k?"block":"none"));
- if(view==="next")drawNext();if(view==="x")drawX();if(view==="board")drawBoard();if(view==="intake")drawIntake();if(view==="ws")drawWS(curWS);
+ ["next","x","cal","board","intake","tickets","rl","ws"].forEach(k=>{const el=$("v-"+k);if(el)el.style.display=(view===k?"block":"none")});
+ if(view==="next")drawNext();if(view==="x")drawX();if(view==="cal")drawCal();if(view==="board")drawBoard();if(view==="intake")drawIntake();if(view==="tickets")drawTix();if(view==="rl")drawRL();if(view==="ws")drawWS(curWS);
  window.scrollTo(0,0);
 }
 
@@ -689,7 +939,7 @@ function drawBoard(){
   const dmas=[...new Set(rows.map(c=>c.dma))];
   return '<div class="bhead"><span class="bn" style="color:'+brandColor(b)+'">'+b+'</span><span class="bs">'+rows.length+' commitment'+(rows.length===1?"":"s")+' · '+fm(tot)+'</span><span class="bl"></span></div>'+
    dmas.map(d=>'<div class="dmahead">'+d+'</div><div class="cards">'+rows.filter(c=>c.dma===d).map(c=>{
-    const st=derivedStage(c);
+    const st=PHPILL[phaseOf(c)];
     return '<div class="dcard" data-id="'+c.id+'"><div class="toprow"><span class="nm">'+c.name+'</span><span class="amt">'+fm(c.money.f)+'</span></div>'+
      '<div class="meta">'+(c.kind||"")+(c.notes?" · "+c.notes.slice(0,60):"")+'</div>'+
      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span class="nxt">'+nextMove(c)+'</span><span class="pill '+st[0]+'">'+st[1]+'</span></div></div>';
@@ -702,7 +952,13 @@ function drawBoard(){
 let inkNeeds={};
 function drawIntake(){
  const brandOpts=CFG.brands.map(b=>'<option>'+b.n+'</option>').join("");
- $("v-intake").innerHTML='<h2 class="sec">Intake <span class="tag">The front door — one date in, the operation out</span></h2><div class="rule"></div>'+
+ $("v-intake").innerHTML='<h2 class="sec">Intake <span class="tag">The front door — the form leads, evidence feeds it</span></h2><div class="rule"></div>'+
+ '<div class="feedstrip"><span class="fk">Feed the intake</span>'+
+ '<button class="btn ghost sm" id="feed-contract">Attach a contract</button>'+
+ '<button class="btn ghost sm" data-feedtoast="Paste a forwarded email from MP@ — the record reads it and fills what it can. You check it, then create.">Paste an email</button>'+
+ '<button class="btn ghost sm" data-feedtoast="Link a row from Hazel’s sheet or the Notion events DB — synced, never copied; conflicts surface for you to choose truth.">Link a sheet / Notion row</button>'+
+ '<span style="flex:1;font-size:10.5px;color:var(--faint);font-style:italic;min-width:180px">Evidence fills the form — billing, vendor, deadlines, needs. You start the record; the paper does the typing.</span></div>'+
+ '<div class="receipt" id="receipt"></div>'+
  '<div class="form"><div class="fgrid">'+
  '<div class="fld c6"><label>Commitment / event / campaign</label><input type="text" id="f-name" placeholder="What did we commit to?"></div>'+
  '<div class="fld c3"><label>Brand</label><select id="f-brand">'+brandOpts+'</select></div>'+
@@ -774,6 +1030,28 @@ function drawIntake(){
   toast("Built. "+c.sched.length+" actions computed from your anchor"+(Object.keys(anchors).length>1?"s":"")+" — every date carries its why. Tickets drafted, nothing sent.");
   openWS(c.id);
  });
+ const fc=$("feed-contract");if(fc)fc.addEventListener("click",()=>{
+  $("f-name").value="Fiesta Bowl 2027";
+  $("f-brand").value="Lerner & Rowe";$("f-brand").dispatchEvent(new Event("change"));
+  $("f-dma").value="Phoenix";
+  $("f-mc").value="105000";$("f-mf").value="";
+  $("f-notes").value="Fiesta Bowl agreement — vision-read · payment split from §4 · SharePoint › L&R › Fiesta Bowl 27";
+  const ar=document.querySelector("#anch-list .rl");
+  if(ar){ar.querySelector(".a-l").value="Game day";ar.querySelector(".a-d").value="2027-01-01";ar.querySelector(".a-d").dispatchEvent(new Event("change"))}
+  ["creative","social","utms"].forEach(k=>{if(!inkNeeds[k]){inkNeeds[k]=true;const ch=document.querySelector('.chip[data-n="'+k+'"]');if(ch)ch.classList.add("on")}});
+  $("f-owe").value="Sideline signage — all broadcast games\n4 suite tickets + hospitality";
+  $("pay-add").click();
+  const pr=document.querySelectorAll("#pay-list .rl");const last=pr[pr.length-1];
+  last.querySelector(".p-d").value="2026-10-15";last.querySelector(".p-a").value="52500";last.querySelector(".p-l").value="payment 1 of 2 — §4";
+  const rc=$("receipt");rc.style.display="block";
+  rc.innerHTML='<div class="rh">Pulled from the Fiesta Bowl agreement — check it, then create</div>'+
+   '<div class="li">■ <b>Billing:</b> $105,000 — split $52,500 Oct 15 + $52,500 Dec 1 (§4)</div>'+
+   '<div class="li">■ <b>Anchor:</b> Game day Jan 1, 2027 — the workback computes from it on create</div>'+
+   '<div class="li">■ <b>Owed to us:</b> sideline signage · 4 suites + hospitality — tracked to proof</div>'+
+   '<div class="li">■ <b>Needs detected:</b> creative · social · UTMs — routed on create: registry first, yours one click, ticket only what others owe</div>';
+  toast("Contract read — billing, anchor, obligations and needs pulled in. Nothing files itself: check it, then create.");
+ });
+ document.querySelectorAll("[data-feedtoast]").forEach(b=>b.addEventListener("click",()=>toast(b.dataset.feedtoast)));
 }
 
 /* ---------------- the operation — the commitment IS the product ---------------- */
@@ -803,7 +1081,8 @@ function drawWS(id){
 
  let h='<div class="wshead"><button class="btn ghost sm" id="ws-back">← Board</button>'+
   '<div class="wsid"><div class="k">'+c.brand+' · '+c.dma+'</div><h2>'+c.name+'</h2>'+
-  '<div class="s">'+(c.kind||"")+' · <b>'+fm(c.money.f)+'</b>'+(c.money.f!==c.money.c&&c.money.c?' <span style="color:var(--ox)">(was '+fm(c.money.c)+')</span>':"")+' · <span class="pill '+derivedStage(c)[0]+'">'+derivedStage(c)[1]+'</span></div></div>'+
+  '<div class="s">'+(c.kind||"")+' · <b>'+fm(c.money.f)+'</b>'+(c.money.f!==c.money.c&&c.money.c?' <span style="color:var(--ox)">(was '+fm(c.money.c)+')</span>':"")+' · <span class="pill '+PHPILL[phaseOf(c)][0]+'">'+PHPILL[phaseOf(c)][1]+'</span></div>'+
+  '<div style="display:flex;gap:0;margin-top:10px">'+["PRE","LIVE","POST"].map(ph=>'<div style="flex:1;max-width:130px;text-align:center;font-size:9px;font-weight:800;letter-spacing:.2em;padding:6px 0;border-bottom:2px solid '+(phaseOf(c)===ph?"var(--gold)":"rgba(255,255,255,.08)")+';color:'+(phaseOf(c)===ph?"var(--gold-hi)":"var(--faint)")+'">'+ph+'</div>').join("")+'</div></div>'+
   '<div class="wsanch">'+Object.keys(c.anchors||{}).map(k=>'<label class="wsa"><span>'+c.anchors[k].label+'</span><input type="date" data-anch="'+k+'" value="'+c.anchors[k].date+'"></label>').join("")+'</div></div>';
 
  if(wsShift){
@@ -831,7 +1110,35 @@ function drawWS(id){
   h+='<div class="panel" style="padding:26px;text-align:center"><div class="dim3">No anchors yet — add one above and the operation computes itself.</div></div>';
  }
  if(undated.length)h+='<div class="wschase">'+undated.map(a=>'<span>◆ NO DATE — '+a.what.split(" — ")[0]+(a.owner?' · chasing <b style="color:var(--ink)">'+a.owner+'</b>':"")+'</span>').join("")+'</div>';
- h+='<div class="wsdetail" id="wsdetail">'+(wsSel!=null&&c.sched[wsSel]?wsDetail(c,resolveAct(c,c.sched[wsSel],wsSel)):'<span class="dim3">Click any item — owner, why its date exists, its ticket, mark done.</span>')+'</div>';
+ /* ---- PRE · the build: routing (Doom reuse · library · tickets) + sources ---- */
+ const ph=phaseOf(c);
+ const sec=(phn,title,tag,inner)=>inner?'<div style="margin-top:26px'+(ph===phn?';border-left:3px solid var(--gold);padding-left:16px':'')+'"><h2 class="sec" style="margin-top:0">'+title+' <span class="tag">'+tag+'</span></h2><div class="rule"></div>'+inner+'</div>':"";
+ let preIn="";
+ if(c.needs&&c.needs.length){
+  preIn+=c.needs.map((n,i)=>{const bd=RBADGE[n.r]||RBADGE.ticket;const tkt=n.mail?(c.tickets||[]).find(t=>t.id===n.mail):null;
+   return '<div style="padding:11px 0;border-bottom:1px solid rgba(255,255,255,.05)">'+
+    '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
+    '<div style="flex:1;min-width:220px"><b style="color:var(--ink);font-size:13px">'+n.n+'</b><div style="font-size:11.5px;color:var(--mut);margin-top:2px">'+n.d+'</div></div>'+
+    '<span class="'+bd[0]+'">'+bd[1]+'</span></div>'+
+    (n.hub?hubchain(tkt&&tkt.status==="sent"?(tkt.hubst||1):0):"")+
+    '<div style="margin-top:7px">'+(n.r==="done"?'<span class="pill ok">resolved ✓</span>':
+     n.mail?'<button class="btn ghost sm" data-need="'+c.id+':'+i+'" data-nm="'+n.mail+'">'+(n.r==="library"?"Draft with suggestions → preview":"Preview the ticket")+'</button>':
+     n.ok?'<button class="btn ghost sm" data-need="'+c.id+':'+i+'">'+(n.r==="registry"?"Link from the registry":"One click — it’s yours")+'</button>':"")+'</div></div>'}).join("");
+ }
+ if(c.recon)preIn+='<div style="margin-top:12px;background:rgba(87,195,154,.05);border:1px solid rgba(87,195,154,.25);border-radius:4px;padding:11px 14px"><div class="t2" style="color:var(--pine)">Sources — reconciled, human chose truth</div>'+c.recon.map(r=>'<div style="font-size:12px;color:var(--body);padding:2px 0">■ '+r+'</div>').join("")+'</div>';
+ h+=sec("PRE","Pre — the build","Who already has this? Registry first · library suggests · yours one click · ticket only what others owe",preIn);
+ /* ---- LIVE · the run: partner obligations ---- */
+ let liveIn="";
+ if(c.theyOwe&&c.theyOwe.length)liveIn+=(c.theyOwe||[]).map((o,i)=>'<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);flex-wrap:wrap;cursor:pointer" data-owe="'+i+'" title="click to cycle: expected → received → missed/makegood"><span style="color:var(--ink);font-weight:600;font-size:12.5px">'+o.n+'</span><span><span class="pill '+o.st[0]+'">'+o.st[1]+'</span>'+(o.pr?'<div style="font-size:10px;color:var(--pine);text-align:right;margin-top:2px">proof: '+o.pr+'</div>':"")+'</span></div>').join("");
+ h+=sec("LIVE","Live — the run","What the partner owes, each one tracked to proof — makegoods included",liveIn);
+ /* ---- POST · the closeout: capture + results + money settle ---- */
+ let postIn="";
+ if(c.results)postIn+='<div class="t2">Results — '+(ph==="POST"?"filed; this is how wrapped becomes true":"armed; the record chases these after the event")+'</div>'+c.results.map(r=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12.5px"><span style="color:var(--mut)">'+r[0]+'</span><span style="color:'+(r[1].indexOf("—")===0?"var(--faint)":"var(--ink)")+';font-weight:600;text-align:right">'+r[1]+'</span></div>').join("");
+ if(c.capture)postIn+='<div class="t2" style="margin-top:14px">Content capture — nothing disappears after the event</div>'+[["Shared album",c.capture.album],["Photos received",c.capture.photos],["Video received",c.capture.video],["Handed to Michelle",c.capture.michelle],["Published",c.capture.published]].map(r=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12.5px"><span style="color:var(--mut)">'+r[0]+'</span><span style="color:'+(/done|received/.test(r[1])?"var(--pine)":"var(--faint)")+';font-weight:600;text-align:right">'+r[1]+'</span></div>').join("");
+ if(c.expenses)postIn+='<div class="t2" style="margin-top:14px">Production ledger — check by check</div>'+c.expenses.map(e=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12.5px"><span style="color:var(--mut)">'+e[0]+'</span><span style="color:var(--ink);font-weight:600">'+e[1]+'</span></div>').join("");
+ if(c.id===5)postIn+='<div style="margin-top:12px;display:flex;gap:9px;flex-wrap:wrap"><button class="btn ghost sm" id="ws-recap">Preview the recap</button><button class="btn ghost sm" id="ws-play">Run the 2027 playbook</button></div>';
+ h+=sec("POST","Post — the closeout","Collection scheduled at intake: +1 attendance · +3 social · +5 press · +7 recap",postIn);
+ h+='<div class="wsdetail" id="wsdetail">' +(wsSel!=null&&c.sched[wsSel]?wsDetail(c,resolveAct(c,c.sched[wsSel],wsSel)):'<span class="dim3">Click any item — owner, why its date exists, its ticket, mark done.</span>')+'</div>';
 
  h+='<div class="addrow">'+
   '<div class="fld"><label>Add an item</label><input type="text" id="ad-what" placeholder="what happens"></div>'+
@@ -843,9 +1150,9 @@ function drawWS(id){
   '<button class="btn ghost sm" id="ad-go" style="margin-bottom:2px">Add</button></div>';
 
  const outs=(c.tickets||[]).map(t=>'<span class="outchip '+(t.status==="sent"?"snt":"")+'" data-tk="'+t.id+'">'+t.type+' · '+t.who+(t.status==="sent"?' · ✓ sent':' · draft')+'</span>').join("");
- const owes=(c.theyOwe||[]).map((o,i)=>'<span class="owe" data-owe="'+i+'" style="cursor:pointer" title="click to cycle: expected → received → missed">'+o.n+' <b class="pill '+o.st[0]+'" style="margin-left:5px">'+o.st[1]+'</b></span>').join("");
+
  h+='<div class="wsout"><div class="t2">This operation produced</div>'+(outs||'<span class="dim3">no tickets — nothing here is owed by anyone else yet</span>')+
-  (owes?'<div class="t2" style="margin-top:14px">The partner owes</div>'+owes:"")+
+  
   '<div class="t2" style="margin-top:14px">History — in and out, with proof</div>'+
   (c.rec||[]).map(r=>'<div class="recrow"><span class="recd">'+r[0]+'</span><span class="recw">'+r[1]+'</span><span class="pill '+(r[2]==="evidence"?"ok":"warn")+'">'+(r[2]==="evidence"?"✓ evidence":"awaiting you")+'</span></div>').join("")+
   (c.notes?'<div class="dim3" style="margin-top:12px">Source of record: '+c.notes+'</div>':"")+
@@ -853,6 +1160,14 @@ function drawWS(id){
 
  $("v-ws").innerHTML=h;
  $("ws-back").addEventListener("click",()=>{view="board";render()});
+ document.querySelectorAll("[data-need]").forEach(b=>b.addEventListener("click",()=>{
+  const pr=b.dataset.need.split(":");const cc=DB.commitments.find(x=>x.id===+pr[0]);const nd=cc.needs[+pr[1]];
+  if(b.dataset.nm){const t=(cc.tickets||[]).find(x=>x.id===b.dataset.nm);if(t)ticketMail(cc,t);return}
+  nd.r="done";cc.rec.unshift([fshort(TODAY)+" · done",nd.n+" — resolved from what we already own","evidence"]);
+  save();drawWS(cc.id);toast(nd.ok||"Resolved — evidence stamped.");
+ }));
+ const wr=$("ws-recap");if(wr)wr.addEventListener("click",()=>openMailX({title:"Recap — Golf Classic",to:"jessica@atticor.ai",subj:"Recap — Charity Golf Classic (L&R · Phoenix)",body:genRecapGolf()}));
+ const wp=$("ws-play");if(wp)wp.addEventListener("click",()=>toast("2027 draft: structure, vendors (Mister Softee, Reflexx, Cre8ive, Mather Bros), obligations, contacts, channels carried over. Dates, costs, deliverables, approvals reset — they wait in Intake for you."));
  $("ws-del").addEventListener("click",()=>{if(confirm("Delete "+c.name+" and its whole operation?")){DB.commitments=DB.commitments.filter(x=>x.id!==c.id);save();logEv("in","<b>"+c.name+"</b> — deleted by you.");view="board";render()}});
  document.querySelectorAll("#wsgrid .wchip").forEach(el=>el.addEventListener("click",()=>{
   wsSel=+el.dataset.ai;
@@ -934,20 +1249,7 @@ function drawLines(c,dated){
  svg.innerHTML=paths;
 }
 /* tickets — drafted by the operation, sent by you (real mailto) */
-function openTicket(c,tid){
- const t=(c.tickets||[]).find(x=>x.id===tid);if(!t)return;
- const to=prompt("To (email) — opens in your mail app:",t.to||"");
- if(to===null)return;
- t.to=to;
- const href="mailto:"+encodeURIComponent(to)+"?subject="+encodeURIComponent(t.subj)+"&body="+encodeURIComponent(t.body);
- window.open(href,"_blank");
- if(confirm("Mark this ticket sent? (stamps evidence on the record)")){
-  t.status="sent";
-  c.rec.unshift([fshort(TODAY)+" · out · Ticket",t.subj+" — sent to "+(t.who||to),"evidence"]);
-  logEv("sent","<b>"+c.name+"</b> — ticket sent: "+t.subj);DB.log[0].cid=c.id;
-  save();drawWS(c.id);
- } else save();
-}
+function openTicket(c,tid){const t=(c.tickets||[]).find(x=>x.id===tid);if(t)ticketMail(c,t)}
 
 /* ---------------- export / import / reset ---------------- */
 $("u-export").addEventListener("click",()=>{
@@ -964,7 +1266,7 @@ $("importfile").addEventListener("change",e=>{
  rd.readAsText(f);
 });
 $("u-reset").addEventListener("click",()=>{
- if(confirm("Reset the record on this device? OK restores the Atticor seed (your 11 real commitments). Export first if you want a copy of the current state.")){DB=seedDB();save();view="next";render();toast("Seed restored — 11 commitments, every date computed.")}else if(confirm("Wipe to a fully blank slate instead?")){DB={commitments:[],seq:1,log:[]};save();view="intake";render();toast("Blank slate.")}
+ if(confirm("Reset the record on this device? OK restores the Atticor seed (your 11 real commitments). Export first if you want a copy of the current state.")){DB=applyAug(seedDB());save();view="next";render();toast("Seed restored — 11 commitments, every date computed.")}else if(confirm("Wipe to a fully blank slate instead?")){DB={commitments:[],seq:1,log:[]};save();view="intake";render();toast("Blank slate.")}
 });
 
 render();
