@@ -237,7 +237,139 @@ function brandColor(n){const b=CFG.brands.find(x=>x.n===n);return b?b.c:"#8b8fa3
 
 /* ---------------- store ---------------- */
 const KEY="atticorOpsV1";
-let DB={commitments:[],seq:1,log:[]};
+/* ---- the seed: Emm's real book, expressed as live engine data. Edit, shift, delete — Reset restores it. ---- */
+function seedDB(){return {seq:200,log:[{t:Date.now(),kind:"in",text:"The record seeded — 11 real commitments, every date computed from its anchor."}],commitments:[
+ {id:1,name:"Thanksgiving Meal Giveaway",brand:"Lerner & Rowe",dma:"Albuquerque",kind:"Sponsorship / Event",money:{c:2185,f:2185},
+  notes:"Contract 260915-01 (scan, vision-read) — SharePoint › L&R › ABQ Thanksgiving 26 · A/P Rosa Alfaro · routing Jordan Fermin via MP@",
+  anchors:{ev:{label:"Event day",date:"2026-11-09"}},
+  sched:[
+   {date:"2026-08-25",kind:"pay",what:"$2,141.30 — early-pay in full keeps $43.70",owner:"Emm",why:"contract: 2% early-pay, 5-day window from Aug 20 execution",hot:1},
+   {date:"2026-10-09",kind:"pay",what:"$546.25 — 2nd payment if split",owner:"Emm",why:"contract payment schedule"},
+   {date:"2026-11-12",kind:"pay",what:"$546.25 — final if split",owner:"Emm",why:"contract payment schedule"},
+   {base:"ev",off:-21,kind:"back",what:"Merch order confirmed — 250 hats + 100 tees",owner:"John P + Jenny",offWhy:"On Target lead time",prot:"arrive-by Nov 5"},
+   {base:"ev",off:-16,kind:"back",what:"Staffing names — crew of 3",owner:"Hazel",offWhy:"crew confirm buffer"},
+   {base:"ev",off:-4,kind:"gate",what:"Merch arrives — Expo NM Creative Arts Bldg",owner:"MerchHub",offWhy:"ship buffer"},
+   {base:"ev",off:-1,kind:"task",what:"Share day-of album link — crew + Michelle",owner:"Emm",offWhy:"before doors"},
+   {base:"ev",off:0,kind:"event",what:"Event day — move-in 12 PM, show 4–7 PM"},
+   {base:"ev",off:1,kind:"wrap",what:"Attendance + meals given — Expo NM reports",owner:"Rosa Alfaro — Expo NM",offWhy:"wrap collection"},
+   {base:"ev",off:3,kind:"wrap",what:"Social metrics pulled",owner:"Michelle",offWhy:"wrap collection"},
+   {base:"ev",off:7,kind:"wrap",what:"Recap drafts — you send",owner:"Emm",offWhy:"wrap collection"}],
+  tickets:[{id:"tk1",type:"MERCH",who:"John P + Jenny",to:"",subj:"Merch — Thanksgiving ABQ giveaway (arrive Thu Nov 5)",body:"Hi John,\n\nThanksgiving Giveaway (L&R · Albuquerque · Mon Nov 9, move-in 12 PM):\n\n• 250 hats + 100 tees, giveaway tier — On Target\n\nSHIP TO: Expo New Mexico — Creative Arts Building, 300 San Pedro Dr NE, Albuquerque NM 87108\nARRIVE BY: Thu Nov 5\n\nConfirm ordered → shipped → delivered; the record tracks all three.\n\nEmm",status:"draft"}],
+  theyOwe:[],
+  rec:[["Aug 21 · in · Contract","260915-01 scan vision-read — billing, 4 deadlines, ship-to pulled","evidence"],["Aug 20 · in · MP@","Venue confirmed move-in 12 PM — schedule updated","evidence"]]},
+ {id:2,name:"OKC Thunder — Official PI Attorneys",brand:"Parrish DeVaughn",dma:"Oklahoma City",kind:"Sponsorship / Event",money:{c:293131,f:293131},
+  notes:"Thunder agreement — deadlines extracted from Exhibit B · $293,131/season × 5 · invoices: Mary Colton, CFO · est 4102",
+  anchors:{op:{label:"First home game",date:"2026-10-08"}},
+  sched:[
+   {date:"2026-08-21",kind:"hand",what:"Season artwork brief → Brandy",owner:"Emm",why:"season set requested — protects both Club dates",done:1},
+   {base:"op",off:-14,bd2:-20,kind:"gate",what:"Team Marks files → Club",owner:"Emm",offWhy:"contract: LED due",bd2Why:"Club marks clearance",prot:"the Sep 24 LED date",hot:1},
+   {base:"op",off:-34,kind:"back",what:"Concourse art back — 12′×8′ print PDF",owner:"Brandy",offWhy:"contract −30 + 4-day review buffer",prot:"the Sep 8 Club date"},
+   {base:"op",off:-30,kind:"gate",what:"Concourse artwork due to Club",owner:"Emm",offWhy:"contract: 30 days before opener"},
+   {base:"op",off:-20,kind:"back",what:"LED art back — 2368×288 @30fps loop",owner:"Brandy",offWhy:"contract −14 + 6-day review buffer",prot:"the Sep 24 LED date"},
+   {base:"op",off:-16,kind:"rev",what:"LED review + Club submit prep",owner:"Emm",offWhy:"2-day submit prep"},
+   {base:"op",off:-14,kind:"gate",what:"LED artwork due to Club",owner:"Emm",offWhy:"contract: 14 days before opener"},
+   {date:"2026-10-01",kind:"pay",what:"$97,710 — payment 1 of 3 · invoice Mary Colton",owner:"Emm",why:"contract schedule: Oct 1 · Nov 1 · Jan 1"},
+   {date:"2026-11-01",kind:"pay",what:"$97,710 — payment 2 of 3",owner:"Emm",why:"contract payment schedule"},
+   {base:"op",off:0,kind:"event",what:"First home game — Paycom Center · from here final ads reach the Club 10 business days before each broadcast"}],
+  tickets:[{id:"tk2",type:"CREATIVE",who:"Brandy",to:"",subj:"Brief — Thunder season artwork (concourse Sep 8 · LED Sep 24)",body:"Hi Brandy,\n\nThe Thunder agreement needs the season set. First home game is Thu Oct 8 — the contract counts backward from it:\n\n• Concourse panel — due Tue Sep 8 (30 days before) · 12′×8′ print PDF, 150dpi\n• LED signage — due Thu Sep 24 (14 days before) · 2368×288 @30fps, 60-sec loop\n• Team Marks to the Club by Thu Aug 27 — they take 20 business days\n\nThese dates are not ours to move.\n\nEmm",status:"draft"}],
+  theyOwe:[
+   {n:"10× :30 TV spots — Thunder broadcasts",st:["dim","Expected — 0 of 10 · season opens Oct 8"],pr:"aircheck per spot files here"},
+   {n:"LED minute — every home game (41)",st:["dim","Scheduled from Oct 8 — 0 of 41 logged"],pr:"courtside photo per game"},
+   {n:"Injury Report presenting partner",st:["dim","Expected — every broadcast"],pr:"screen grab per game"},
+   {n:"2 timeout promotions",st:["dim","Expected — Club owes the dates by Sep 15 · chase armed"],pr:"in-arena photo + PA script"}],
+  rec:[["Aug 20 · in · Contract","Exhibit B read — deadlines extracted and armed against the Oct 8 anchor","evidence"]]},
+ {id:3,name:"Sister Strut",brand:"Lerner & Rowe",dma:"Chicago",kind:"Sponsorship / Event",money:{c:25000,f:27500},
+  notes:"Odyssey agreement + booth map — SharePoint › L&R › Sister Strut 26 · handed off Postman Law → L&R · est 4193 · drift $25,000 → $27,500 accepted from Hazel's sheet Aug 12",
+  anchors:{ev:{label:"Event day",date:"2026-10-03"},mn:{label:"Radio flight start",date:"2026-09-15"}},
+  sched:[
+   {date:"2026-08-24",kind:"task",what:"Draft script with the library — IL disclaimer v3 + LR-IL-RADLIVE-0425 · LR-IL-EVENT-0212",owner:"Emm",why:"library pre-alignment before Ethics"},
+   {base:"mn",off:-18,kind:"hand",what:"Script → Ethics, pre-aligned",owner:"Emm",offWhy:"Ethics 5bd + revision buffer",hot:1},
+   {date:"2026-09-01",kind:"pay",what:"$27,500 — single invoice · Odyssey / Chris",owner:"Emm",why:"agreement: net on confirm"},
+   {base:"mn",off:-4,kind:"back",what:"Ethics verdict due",owner:"Ethics",offWhy:"traffic + station load buffer",prot:"the Sep 15 flight start"},
+   {base:"mn",off:0,kind:"launch",what:"Radio mentions begin — flight anchor, independent of event day"},
+   {base:"ev",off:-7,kind:"back",what:"Merch ships — MerchHub reports",owner:"John P + Jenny",offWhy:"ship buffer",prot:"the booth kit at the venue"},
+   {base:"ev",off:-2,kind:"gate",what:"Merch arrives — Odyssey CC booth kit",owner:"MerchHub",offWhy:"arrive-by buffer"},
+   {base:"ev",off:0,kind:"event",what:"Event day — Odyssey Country Club · 15,000 expected"},
+   {base:"ev",off:1,kind:"wrap",what:"Attendance — Odyssey / Chris reports",owner:"Chris — Odyssey",offWhy:"wrap collection"},
+   {base:"ev",off:3,kind:"wrap",what:"Social metrics pulled",owner:"Michelle",offWhy:"wrap collection"},
+   {base:"ev",off:5,kind:"wrap",what:"Press pickups logged",owner:"Emm",offWhy:"wrap collection"},
+   {base:"ev",off:7,kind:"wrap",what:"Recap drafts — you send",owner:"Emm",offWhy:"wrap collection"}],
+  tickets:[
+   {id:"tk3",type:"MERCH",who:"John P + Jenny",to:"",subj:"Merch — Sister Strut booth kit (arrive Thu Oct 1)",body:"Hi John,\n\nSister Strut (L&R · Chicago · Sat Oct 3):\n\n• Booth tees — qty TBC with Hazel\n• 6×3 step-and-repeat banner\n\nSHIP TO: Odyssey Country Club, 19110 S Ridgeland Ave, Tinley Park IL 60477 — booth c/o Lerner & Rowe\nARRIVE BY: Thu Oct 1\n\nConfirm ordered → shipped → delivered; the record tracks all three.\n\nEmm",status:"draft"},
+   {id:"tk4",type:"ETHICS",who:"Ethics",to:"",subj:"Review — L&R live-mention script (pre-aligned, IL library v3)",body:"Hi,\n\nSister Strut live-mention script — drafted WITH the library's IL disclaimer set v3 and two cleared scripts (LR-IL-RADLIVE-0425, LR-IL-EVENT-0212), so this should be close.\n\nRadio mentions begin Tue Sep 15 — verdict needed by Fri Sep 11. Approve or mark changes; your approval feeds the library.\n\nEmm",status:"draft"}],
+  theyOwe:[{n:"Booth 10×10 at the walk",st:["dim","Expected"],pr:""},{n:"Stage mentions ×2",st:["dim","Expected"],pr:""}],
+  rec:[["Aug 19 · in · Notion","Hazel's row synced — booth + staffing counts updated","evidence"],["Aug 12 · in · Sheet","Price conflict: contract $25,000 vs sheet $27,500 — you chose the sheet; both kept with provenance","evidence"]]},
+ {id:4,name:"Barons Bullpen + Armed Forces Night",brand:"Wettermark Keith",dma:"Birmingham",kind:"Sponsorship / Event",money:{c:45000,f:45000},
+  notes:"Regions Field · 12′×50′ outfield sign · 3-yr, $135K total, $3,750/mo · approval Jessica · WK Sponsorships workbook",
+  anchors:{},
+  sched:[
+   {kind:"chase",what:"Estimate # — until it exists, buyers and MediaNorm can't see this deal",owner:"Strata"},
+   {date:"2026-09-01",kind:"pay",what:"$3,750 — monthly invoice, spread 12 of 36",owner:"Emm",why:"agreement: $135K over 36 monthly payments"}],
+  tickets:[],
+  theyOwe:[
+   {n:"12′×50′ outfield sign — every home game",st:["ok","Received — up since April"],pr:"photo · Apr 14"},
+   {n:"Armed Forces Night activation",st:["dim","Scheduled — date owed by Barons, chasing"],pr:""},
+   {n:"PA reads ×2 per game",st:["late","Missed 3 games in May → makegood 6 extra reads, delivered June"],pr:"station log · Jun 30"}],
+  rec:[["Jun 30 · in","Station log — makegood reads delivered, missed-May closed","evidence"]]},
+ {id:5,name:"Charity Golf Classic",brand:"Lerner & Rowe",dma:"Phoenix",kind:"Sponsorship / Event",money:{c:365000,f:365000},
+  notes:"WRAPPED — raised $1,031,578, 100% to nonprofits, 4th year $1M+ · 144 golfers sold out · L&R workbook + check-level ledger (Mister Softee $2,001.88 chk 2098 · Cre8ive $1,744.73 · Mather Bros $2,225) · est 4187",
+  anchors:{ev:{label:"Event day",date:"2026-04-18"}},
+  sched:[
+   {base:"ev",off:0,kind:"event",what:"Event day — McCormick Ranch",done:1},
+   {base:"ev",off:7,kind:"wrap",what:"Recap sent — board + Jessica",owner:"Emm",offWhy:"wrap collection",done:1},
+   {date:"2026-08-26",kind:"pay",what:"Reflexx balance $9,000 — memo drafted for Jordan Fermin",owner:"Emm",why:"live band: $1,000 deposit paid, balance open",hot:1},
+   {date:"2027-01-15",kind:"task",what:"Run the 2027 playbook — structure, vendors, obligations carry; dates, costs, approvals reset",owner:"Emm",why:"annual — April flagship"}],
+  tickets:[],theyOwe:[],
+  rec:[["Aug 22 · in · MP@","Jordan Fermin fwd: Mister Softee invoice $2,001.88 — matched to chk 2098, filed","evidence"],["Jul 24 · out","Recap sent — board + Jessica","evidence"]]},
+ {id:6,name:"Boo Bash — WDXB",brand:"Wettermark Keith",dma:"Birmingham",kind:"Media flight",money:{c:5000,f:5000},
+  notes:"iHeart · Oct 30 · 300+ mentions · WK All Proposals",
+  anchors:{},
+  sched:[
+   {date:"2026-08-26",kind:"back",what:"Audience demo lands — A25–54",owner:"iHeart · Ada",prot:"the $5K confirm"},
+   {date:"2026-09-01",kind:"gate",what:"Confirm or pass — hold expires",owner:"Emm",why:"station hold terms"}],
+  tickets:[],theyOwe:[],
+  rec:[["Aug 19 · out · Ticket","Demo request sent — Ada, Amy CCd","evidence"]]},
+ {id:7,name:"MN State Fair",brand:"Postman Law",dma:"Minneapolis",kind:"Media flight",money:{c:60000,f:60000},
+  notes:"iHeart (KEEY · KTLK) + Audacy (WCCO) · est 2609, Minneapolis — Ken Lazar's book · packages sent Aug 12, evidence in Doom",
+  anchors:{ev:{label:"Fair close",date:"2026-09-01"}},
+  sched:[
+   {base:"ev",off:0,kind:"event",what:"Fair ends — wrap opens"},
+   {base:"ev",off:1,kind:"wrap",what:"Attendance — the fair reports it",owner:"iHeart + Audacy",offWhy:"wrap collection"},
+   {base:"ev",off:2,kind:"wrap",what:"Radio logs — KEEY · KTLK · WCCO",owner:"iHeart + Audacy",offWhy:"wrap collection"},
+   {base:"ev",off:7,kind:"wrap",what:"Recap → Jessica",owner:"Emm",offWhy:"wrap collection"}],
+  tickets:[],theyOwe:[],
+  rec:[["Aug 12 · out","Traffic packages sent — KEEY, KTLK, WCCO · evidence in Doom","evidence"]]},
+ {id:8,name:"New England Patriots",brand:"Keches Law",dma:"Boston",kind:"Sponsorship / Event",money:{c:0,f:0},
+  notes:"NFL · 26–27 season · KLG 2026 Sports Partnerships",
+  anchors:{},
+  sched:[{kind:"chase",what:"Asset list + pricing before the season locks",owner:"Patriots partnership team"}],
+  tickets:[],theyOwe:[],rec:[]},
+ {id:9,name:"ESPN Boston Digital",brand:"Keches Law",dma:"Boston",kind:"Media flight",money:{c:0,f:0},
+  notes:"Display + video · the one Keches exception this year · landing keches.com/espn-boston",
+  anchors:{lc:{label:"Launch",date:"2026-09-14"}},
+  sched:[
+   {base:"lc",off:-20,kind:"hand",what:"Creative brief → Brandy",owner:"Emm",offWhy:"squeezed — see the flag",lead:"creative — 10 business days",leadSafe:"Fri Aug 21",hot:1},
+   {base:"lc",off:-10,kind:"back",what:"Assets back — 970×250 · 728×90 · 300×250 · 300×600 + :15 video",owner:"Brandy",offWhy:"review + traffic chain",prot:"the Sep 14 launch"},
+   {base:"lc",off:-6,kind:"rev",what:"Review — Emm + Brandy",owner:"Emm",offWhy:"1-day fix window"},
+   {base:"lc",off:-5,kind:"hand",what:"Cleared → trafficked from Doom",owner:"Emm",offWhy:"ESPN load time"},
+   {base:"lc",off:-3,kind:"back",what:"Pixels + tracking live",owner:"SEO team",offWhy:"pre-launch verify",prot:"the Sep 14 launch"},
+   {base:"lc",off:0,kind:"launch",what:"Launch — ESPN Boston, display + video"}],
+  tickets:[
+   {id:"tk5",type:"CREATIVE",who:"Brandy",to:"",subj:"Brief — ESPN Boston (Keches): display set + :15",body:"Hi Brandy,\n\nKeches launches ESPN Boston Mon Sep 14. Registry checked — zero Keches creative exists. Net-new:\n\n• Display: 970×250 · 728×90 · 300×250 · 300×600\n• 1× :15 video, 1920×1080, ESPN pre-roll spec\n\nThe chain, dated: assets back Fri Sep 4 → review Tue Sep 8 → cleared + trafficked Wed Sep 9 → live Sep 14.\n\nEmm",status:"draft"},
+   {id:"tk6",type:"PIXELS",who:"SEO team",to:"",subj:"Pixels — ESPN Boston landing (Keches)",body:"Hi team,\n\nESPN Boston launches Mon Sep 14. Landing page + UTMs handled on my side — from you: pixel + page tracking live by Fri Sep 11.\n\nPage: keches.com/espn-boston\n\nEmm",status:"draft"}],
+  theyOwe:[],rec:[]},
+ {id:10,name:"St. Jude Radiothon",brand:"Wettermark Keith",dma:"Birmingham",kind:"Media flight",money:{c:15000,f:15000},
+  notes:"WDXB · December · WK Sponsorships",
+  anchors:{},
+  sched:[{kind:"chase",what:"December dates + IP scope",owner:"iHeart · Ada"}],
+  tickets:[],theyOwe:[],rec:[]},
+ {id:11,name:"Bulls vs Fire — the decision",brand:"Lerner & Rowe",dma:"Chicago",kind:"Partnership",money:{c:200000,f:140000},
+  notes:"PROPOSAL — not committed dollars. Bulls $200K: 41 United Center dates, A25–54 index 118 · Fire $140K: 17 Soldier Field dates, index 132. Cost per indexed point favors Fire ~2.1×. Kevin Rowe decides.",
+  anchors:{},
+  sched:[{kind:"chase",what:"Decision date — demographics scored, the sheet is ready",owner:"Kevin Rowe"}],
+  tickets:[],theyOwe:[],rec:[]}
+]}}
+let DB=seedDB();
 function save(){localStorage.setItem(KEY,JSON.stringify(DB))}
 function load(){try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&d.commitments)DB=d}}catch(e){}}
 load();
@@ -408,6 +540,11 @@ function movesList(){
      do:"Protect: "+a.what.split(" — ")[0]+" — "+fdate(a.d),
      why:"A contract/arrival date in "+n+" day"+(n===1?"":"s")+"."+(a.why?" Why it sits there: "+a.why+".":"")+" Open the operation to see what feeds it.",
      act:{t:"open",cid:c.id}});
+   } else if(a.kind==="chase"){
+    M.push({s:68,cid:c.id,ri:a.ri,judg:0,
+     do:"Chase "+(a.owner||"the counterparty")+" — "+a.what.split(" — ")[0]+" · "+c.name,
+     why:"No date exists for this, and a missing date is a risk, not a blank. "+a.what+".",
+     act:{t:"chase",owner:a.owner,what:a.what,c:c}});
    } else if(a.kind==="wrap"&&a.d&&n<=0&&n>=-3){
     M.push({s:60,cid:c.id,ri:a.ri,judg:0,
      do:"Collect: "+a.what.split(" — ")[0]+" — "+c.name,
@@ -827,7 +964,7 @@ $("importfile").addEventListener("change",e=>{
  rd.readAsText(f);
 });
 $("u-reset").addEventListener("click",()=>{
- if(confirm("Wipe the record on this device? Export first if you want a copy.")){DB={commitments:[],seq:1,log:[]};save();view="intake";render();toast("Blank slate.")}
+ if(confirm("Reset the record on this device? OK restores the Atticor seed (your 11 real commitments). Export first if you want a copy of the current state.")){DB=seedDB();save();view="next";render();toast("Seed restored — 11 commitments, every date computed.")}else if(confirm("Wipe to a fully blank slate instead?")){DB={commitments:[],seq:1,log:[]};save();view="intake";render();toast("Blank slate.")}
 });
 
 render();
