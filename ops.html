@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Atticor Ops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c14; --bg2:#10132a; --glass:rgba(255,255,255,.032); --glass2:rgba(255,255,255,.055);
+  --hair:rgba(212,175,110,.20); --hair2:rgba(212,175,110,.38);
+  --gold:#d4af6e; --gold-hi:#ecd9ae; --ink:#f2ecdf; --body:#c9c4b6; --mut:#8b8fa3; --faint:#5c6072;
+  --ox:#e4738a; --pine:#57c39a; --blue:#6ea8ff;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{background:#0a0c14}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--body);font-size:14px;min-height:100vh;
+ background:
+  radial-gradient(1200px 500px at 50% -80px, rgba(212,175,110,.10), transparent 60%),
+  radial-gradient(900px 700px at 85% 10%, rgba(110,130,255,.05), transparent 60%),
+  radial-gradient(1400px 900px at 15% 100%, rgba(120,70,160,.06), transparent 55%),
+  linear-gradient(180deg,#0b0e1c 0%, #0a0c14 34%, #08090f 100%);}
+::selection{background:rgba(212,175,110,.35)}
+.wrap{max-width:1280px;margin:0 auto;padding:0 26px 120px}
+a{color:var(--gold);cursor:pointer;text-decoration:none}
+a:hover{color:var(--gold-hi)}
+
+/* ---------- masthead ---------- */
+.mast{padding:34px 0 0;text-align:center;position:relative}
+.mast .wordmark{font-family:'Fraunces',serif;font-weight:600;font-size:34px;letter-spacing:.4em;color:var(--ink);text-shadow:0 0 40px rgba(212,175,110,.25)}
+.mast .sub{font-size:9.5px;font-weight:700;letter-spacing:.5em;text-transform:uppercase;color:var(--gold);margin-top:8px}
+.mastrule{width:220px;height:1px;margin:20px auto 0;background:linear-gradient(90deg,transparent,var(--gold),transparent);position:relative}
+.mastrule::after{content:'';position:absolute;left:50%;top:-3px;width:7px;height:7px;transform:translateX(-50%) rotate(45deg);background:var(--gold);box-shadow:0 0 12px rgba(212,175,110,.8)}
+.util{position:absolute;right:26px;top:34px;display:flex;gap:8px}
+.util button{background:none;border:1px solid rgba(255,255,255,.14);color:var(--mut);border-radius:3px;font-family:'Inter',sans-serif;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:7px 10px;cursor:pointer}
+.util button:hover{border-color:var(--hair2);color:var(--gold)}
+
+.nav{display:flex;justify-content:center;gap:6px;margin:26px 0 34px;flex-wrap:wrap}
+.nav button{background:none;border:1px solid transparent;border-radius:3px;color:var(--mut);font-family:'Inter',sans-serif;font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;padding:11px 20px;cursor:pointer;transition:all .15s}
+.nav button:hover{color:var(--ink)}
+.nav button.on{color:var(--gold-hi);border-color:var(--hair2);background:var(--glass);box-shadow:0 0 24px rgba(212,175,110,.10) inset}
+.nav .cnt{display:inline-block;background:var(--gold);color:#171408;border-radius:2px;font-size:9px;padding:1px 6px;margin-left:7px;letter-spacing:0}
+
+h2.sec{font-family:'Fraunces',serif;font-weight:500;font-size:24px;color:var(--ink);margin:38px 0 4px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+h2.sec .tag{font-family:'Inter',sans-serif;font-size:9px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:var(--gold)}
+.rule{height:1px;background:linear-gradient(90deg,var(--gold) 0 90px,var(--hair) 90px);margin:10px 0 18px;position:relative}
+.rule::after{content:'';position:absolute;left:0;top:-2.5px;width:6px;height:6px;transform:rotate(45deg);background:var(--gold)}
+
+.panel{background:var(--glass);border:1px solid var(--hair);border-radius:5px;backdrop-filter:blur(6px)}
+.btn{border:none;border-radius:3px;background:var(--gold);color:#171408;font-weight:800;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;padding:11px 18px;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 6px 24px -8px rgba(212,175,110,.5)}
+.btn:hover{background:var(--gold-hi)}
+.btn.ghost{background:none;border:1px solid rgba(255,255,255,.18);color:var(--body);box-shadow:none}
+.btn.ghost:hover{border-color:var(--hair2);color:var(--gold)}
+.btn.sm{font-size:9px;padding:8px 12px}
+.pill{display:inline-block;border-radius:2px;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 8px;border:1px solid}
+.pill.ok{color:var(--pine);border-color:rgba(87,195,154,.4);background:rgba(87,195,154,.08)}
+.pill.warn{color:var(--gold);border-color:rgba(212,175,110,.4);background:rgba(212,175,110,.08)}
+.pill.late{color:var(--ox);border-color:rgba(228,115,138,.4);background:rgba(228,115,138,.08)}
+.pill.dim{color:var(--mut);border-color:rgba(255,255,255,.14);background:none}
+
+/* ---------- empty hero ---------- */
+.hero{max-width:640px;margin:60px auto;text-align:center;padding:60px 40px;background:var(--glass);border:1px solid var(--hair);border-radius:6px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(400px 180px at 50% 0%,rgba(212,175,110,.12),transparent 70%);pointer-events:none}
+.hero .glyph{font-family:'Fraunces',serif;font-size:44px;color:var(--gold);text-shadow:0 0 30px rgba(212,175,110,.5)}
+.hero h3{font-family:'Fraunces',serif;font-weight:500;font-size:27px;color:var(--ink);margin:14px 0 10px}
+.hero p{font-size:13.5px;line-height:1.7;color:var(--mut);margin-bottom:24px}
+
+/* ---------- exceptions ---------- */
+.xband{background:var(--glass);border:1px solid var(--hair);border-radius:5px;overflow:hidden}
+.xband.hot{border-left:3px solid var(--ox)}
+.xrow{display:flex;align-items:center;gap:16px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.05);flex-wrap:wrap}
+.xrow:last-child{border-bottom:none}
+.xline{flex:1;font-size:13px;line-height:1.55;min-width:240px;color:var(--body)}
+.xline b{color:var(--ink)}
+.xgo{border:1px solid rgba(255,255,255,.16);background:none;border-radius:3px;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);padding:8px 13px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap}
+.xgo:hover{border-color:var(--hair2);color:var(--gold)}
+.quiet{font-size:12px;color:var(--faint);font-style:italic;padding:6px 2px}
+
+/* ---------- board ---------- */
+.bhead{display:flex;align-items:baseline;gap:14px;padding:30px 0 4px}
+.bhead .bn{font-family:'Fraunces',serif;font-weight:500;font-size:22px}
+.bhead .bs{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--mut)}
+.bhead .bl{flex:1;height:1px;background:var(--hair);align-self:center}
+.dmahead{font-size:9px;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:var(--mut);margin:16px 2px 10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.dcard{background:var(--glass);border:1px solid var(--hair);border-radius:5px;padding:16px 18px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden}
+.dcard::before{content:'';position:absolute;inset:0;background:radial-gradient(240px 90px at 20% 0%,rgba(212,175,110,.07),transparent 70%);opacity:0;transition:opacity .18s;pointer-events:none}
+.dcard:hover{border-color:var(--hair2);transform:translateY(-2px);box-shadow:0 16px 40px -18px rgba(0,0,0,.8)}
+.dcard:hover::before{opacity:1}
+.dcard .nm{font-family:'Fraunces',serif;font-weight:600;font-size:16.5px;color:var(--ink)}
+.dcard .amt{font-family:'Fraunces',serif;font-weight:600;font-size:16px;color:var(--gold-hi);white-space:nowrap}
+.dcard .toprow{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.dcard .meta{font-size:11.5px;color:var(--mut);margin:5px 0 9px}
+.dcard .nxt{font-size:11.5px;font-weight:600;color:var(--gold)}
+
+/* ---------- workspace ---------- */
+.wshead{display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap;margin:6px 0 16px}
+.wsid{flex:1;min-width:260px}
+.wsid .k{font-size:9px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
+.wsid h2{font-family:'Fraunces',serif;font-weight:500;font-size:30px;color:var(--ink);margin:4px 0 5px}
+.wsid .s{font-size:12.5px;color:var(--mut)}
+.wsid .s b{color:var(--gold-hi)}
+.wsanch{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.wsa{display:flex;flex-direction:column;gap:5px;font-size:8.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.wsa input{border:1px solid var(--hair2);border-radius:3px;padding:8px 10px;font-family:'Inter',sans-serif;font-size:12px;background:rgba(0,0,0,.35);color:var(--ink);color-scheme:dark}
+.shiftband{background:linear-gradient(180deg,rgba(212,175,110,.10),rgba(212,175,110,.04));border:1px solid var(--hair2);border-left:4px solid var(--gold);border-radius:5px;padding:15px 18px;margin-bottom:16px}
+.st2{font-size:9px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.sm2{font-size:12.5px;color:var(--body);line-height:1.55;margin:6px 0}
+.sm3{font-size:12px;color:var(--body);padding:2px 0 2px 4px}
+.sm3 s{color:var(--faint)}
+.sm3 b{color:var(--ink)}
+.wsscroll{overflow-x:auto;position:relative;background:rgba(0,0,0,.30);border:1px solid var(--hair);border-radius:6px}
+.wsgrid{display:grid;position:relative;min-width:720px}
+.wslines{position:absolute;top:0;left:0;pointer-events:none;z-index:1}
+.wsc{border-bottom:1px solid rgba(255,255,255,.05);border-right:1px solid rgba(255,255,255,.035);padding:8px;min-height:48px;position:relative;z-index:2}
+.wsc.corner,.wsc.laneh,.wsc.colh{background:rgba(255,255,255,.025)}
+.wsc.colh{text-align:center;padding:10px 6px 8px}
+.wsc.colh b{font-size:12px;display:block;color:var(--ink)}
+.wsc.colh span{font-size:8.5px;color:var(--faint);letter-spacing:.08em;text-transform:uppercase}
+.wsc.colh.anchcol{background:rgba(212,175,110,.10);border-top:2px solid var(--gold);box-shadow:0 0 30px rgba(212,175,110,.08) inset}
+.wsc.colh .al{font-size:7.5px;font-weight:800;letter-spacing:.12em;color:var(--gold);margin-bottom:3px}
+.wsc.colh.todaycol{box-shadow:inset 0 2px 0 var(--ox)}
+.wsc.laneh{font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);display:flex;align-items:center}
+.wchip{background:rgba(18,20,34,.92);border:1px solid rgba(255,255,255,.10);border-left:3px solid var(--faint);border-radius:3px;font-size:10.5px;font-weight:600;color:var(--body);line-height:1.35;padding:6px 8px;margin:2px 0;cursor:pointer;transition:all .12s}
+.wchip:hover{border-color:var(--hair2);color:var(--ink)}
+.wchip.sel{outline:1.5px solid var(--gold);color:var(--ink);box-shadow:0 0 18px rgba(212,175,110,.25)}
+.wchip.done{opacity:.45;text-decoration:line-through}
+.wchip.hot{border-left-color:var(--ox);background:rgba(228,115,138,.10)}
+.wschase{margin-top:12px;font-size:12px;color:var(--ox);display:flex;gap:20px;flex-wrap:wrap}
+.wsdetail{margin-top:14px;background:var(--glass);border:1px solid var(--hair);border-left:3px solid var(--gold);border-radius:5px;padding:14px 17px;min-height:54px}
+.dim3{font-size:12px;color:var(--faint);font-style:italic}
+.wd .wdh{font-size:14px;color:var(--ink);margin-bottom:9px}
+.wdrow{display:flex;gap:14px;padding:3px 0;font-size:12.5px}
+.wdrow span{flex:0 0 118px;font-size:8.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);padding-top:3px}
+.wdrow b{color:var(--body);font-weight:600}
+.kchip{display:inline-block;font-size:8.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border:1px solid;border-radius:2px;padding:2px 6px;margin-left:6px}
+.wsout{margin-top:22px;border-top:1px solid var(--hair);padding-top:16px}
+.t2{font-size:9px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--mut);margin:0 0 9px}
+.outchip{border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.25);border-radius:3px;font-size:11px;font-weight:700;padding:8px 12px;margin:0 7px 7px 0;cursor:pointer;color:var(--body);font-family:'Inter',sans-serif;display:inline-flex;gap:8px;align-items:center}
+.outchip:hover{border-color:var(--hair2);color:var(--gold)}
+.outchip.snt{border-color:rgba(87,195,154,.4);color:var(--pine)}
+.owe{display:inline-block;font-size:11px;font-weight:600;color:var(--body);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:3px;padding:5px 9px;margin:0 6px 6px 0}
+.recrow{display:flex;align-items:baseline;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);flex-wrap:wrap}
+.recrow:last-child{border-bottom:none}
+.recd{flex:0 0 auto;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.recw{flex:1;min-width:200px;font-size:12px;color:var(--body)}
+.addrow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:12px}
+.addrow .fld{min-width:120px}
+
+/* ---------- intake ---------- */
+.form{background:var(--glass);border:1px solid var(--hair);border-radius:6px;padding:26px 28px}
+.fgrid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.fld{display:flex;flex-direction:column;gap:6px}
+.c3{grid-column:span 3}.c4{grid-column:span 4}.c6{grid-column:span 6}.c12{grid-column:span 12}
+label{font-size:8.5px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--mut)}
+input[type=text],input[type=date],input[type=number],select,textarea{border:1px solid rgba(255,255,255,.14);border-radius:3px;background:rgba(0,0,0,.32);font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);padding:10px 12px;outline:none;width:100%;color-scheme:dark}
+input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+select option{background:#12142a}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.25);border-radius:3px;font-size:12px;font-weight:600;padding:8px 13px;cursor:pointer;color:var(--body)}
+.chip.on{background:var(--gold);border-color:var(--gold);color:#171408}
+.rowlist .rl{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.rowlist .rl input{flex:1;min-width:110px}
+.rowlist .rl .del{flex:0 0 auto}
+.mini{background:none;border:1px dashed rgba(255,255,255,.22);color:var(--mut);border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:8px 12px;cursor:pointer;font-family:'Inter',sans-serif}
+.mini:hover{border-color:var(--gold);color:var(--gold)}
+.formfoot{display:flex;gap:14px;align-items:center;margin-top:22px;flex-wrap:wrap}
+.formfoot .note{flex:1;font-size:11px;color:var(--faint);font-style:italic;min-width:220px}
+.leadwarn{background:rgba(228,115,138,.10);border:1px solid rgba(228,115,138,.35);border-radius:3px;padding:10px 13px;font-size:12px;color:var(--ox);margin-top:10px;display:none}
+
+.toast{position:fixed;bottom:22px;right:22px;max-width:420px;background:#12142a;color:var(--ink);border-radius:4px;padding:14px 18px;font-size:12.5px;line-height:1.5;z-index:90;box-shadow:0 16px 44px rgba(0,0,0,.6);display:none;border:1px solid var(--hair2);border-left:3px solid var(--gold)}
+.homefoot{margin-top:22px;font-size:12px;color:var(--faint);font-style:italic}
+@media(max-width:760px){
+ .wrap{padding:0 14px 90px}
+ .mast .wordmark{font-size:24px;letter-spacing:.28em}
+ .util{position:static;justify-content:center;margin-top:14px}
+ .c3,.c4,.c6{grid-column:span 12}
+ .wsid h2{font-size:24px}
+}
+</style>
+</head>
+<body>
+
+<div class="mast">
+  <div class="wordmark">ATTICOR&nbsp;OPS</div>
+  <div class="sub">Marketing Operations · The Record</div>
+  <div class="mastrule"></div>
+  <div class="util">
+    <button id="u-export">Export</button>
+    <button id="u-import">Import</button>
+    <button id="u-reset">Reset</button>
+  </div>
+</div>
+<input type="file" id="importfile" accept="application/json" style="display:none">
+
+<div class="nav" id="nav"></div>
+
+<div class="wrap">
+
+<section id="v-next"></section>
+<section id="v-x" style="display:none"></section>
+<section id="v-board" style="display:none"></section>
+<section id="v-intake" style="display:none"></section>
+<section id="v-ws" style="display:none"></section>
+
+</div>
+
+<div class="toast" id="toastbox"></div>
+
+<script>
+/* ============================================================
+   ATTICOR OPS — the record. Fully functional. Slightly blank.
+   The commitment is the product: it opens into its operation —
+   lanes × dates, computed from anchors, every date carrying why.
+   ============================================================ */
+const $=i=>document.getElementById(i);
+function toast(t){const b=$("toastbox");b.innerHTML=t;b.style.display="block";clearTimeout(b._t);b._t=setTimeout(()=>b.style.display="none",6000)}
+
+/* ---------------- configuration — the slightly-filled part of the slate ---------------- */
+const CFG={
+ brands:[
+  {n:"Lerner & Rowe",c:"#d8c559",dmas:["Phoenix","Tucson","Las Vegas","Albuquerque","Chicago"]},
+  {n:"Parrish DeVaughn",c:"#ff7b8a",dmas:["Oklahoma City","Tulsa"]},
+  {n:"Wettermark Keith",c:"#f0b445",dmas:["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan"]},
+  {n:"Postman Law",c:"#a687d6",dmas:["Chicago","Cincinnati","Denver","Minneapolis"]},
+  {n:"Keches Law",c:"#5aa9f2",dmas:["Boston"]}
+ ],
+ kinds:["Sponsorship / Event","Media flight","Partnership","Vendor agreement","Appearance"],
+ people:{ops:"Emm",creative:"Brandy",ethics:"Ethics",merch:"John P + Jenny",social:"Michelle",seo:"SEO team",finance:"Jordan Fermin"},
+ lead:{creative:{bd:10,label:"creative — 10 business days"},merch:{d:21,label:"merch — 21 days"},ethics:{bd:5,label:"Ethics — 5 business days"},seo:{bd:5,label:"SEO — 5 business days"},social:{bd:5,label:"social — 5 business days"}},
+ wrap:[[1,"Attendance / counts — vendor reports","Vendor"],[3,"Social metrics pulled","Michelle"],[5,"Press pickups logged","Emm"],[7,"Recap drafts — you send","Emm"]]
+};
+const KINDCHIP={hand:["#d4af6e","handoff"],back:["#e4738a","due back"],rev:["#6ea8ff","review"],pay:["#57c39a","payment"],event:["#f2ecdf","event"],launch:["#f2ecdf","launch"],gate:["#e4738a","contract"],wrap:["#8b8fa3","wrap"],task:["#d4af6e","yours"],chase:["#e4738a","chase"]};
+const LANES=["Ops — Emm","Ethics","Creative","Merch","Social","SEO","Vendor","Payments","Wrap"];
+function brandColor(n){const b=CFG.brands.find(x=>x.n===n);return b?b.c:"#8b8fa3"}
+
+/* ---------------- store ---------------- */
+const KEY="atticorOpsV1";
+let DB={commitments:[],seq:1,log:[]};
+function save(){localStorage.setItem(KEY,JSON.stringify(DB))}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&d.commitments)DB=d}}catch(e){}}
+load();
+function logEv(kind,text){DB.log.unshift({t:Date.now(),kind:kind,text:text});DB.log=DB.log.slice(0,80);save()}
+
+/* ---------------- the date engine — every computed date knows why it exists ---------------- */
+const TODAY=(()=>{const d=new Date();d.setHours(12,0,0,0);return d})();
+function D(s){return new Date(s+"T12:00:00")}
+function iso(d){return d.toISOString().slice(0,10)}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function addBD(d,n){const x=new Date(d);let s=n<0?-1:1,l=Math.abs(n);while(l>0){x.setDate(x.getDate()+s);const w=x.getDay();if(w!==0&&w!==6)l--}return x}
+function bdBetween(a,b){let n=0;const x=new Date(a);while(x<b){x.setDate(x.getDate()+1);const w=x.getDay();if(w!==0&&w!==6)n++}return n}
+function fdate(d){return d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}
+function fshort(d){return d.toLocaleDateString("en-US",{month:"short",day:"numeric"})}
+function dtd(d){return Math.round((d-TODAY)/86400000)}
+function fm(n){return n?"$"+Number(n).toLocaleString():"TBD"}
+
+function resolveAct(c,r,ri){
+ let d=null,why=r.why||null;
+ if(r.date)d=D(r.date);
+ else if(r.base&&c.anchors&&c.anchors[r.base]){
+  const ad=D(c.anchors[r.base].date);d=addDays(ad,r.off||0);
+  const lbl=c.anchors[r.base].label||r.base;
+  let chain=lbl+" "+fshort(ad);
+  if(r.off)chain+=" → "+Math.abs(r.off)+" day"+(Math.abs(r.off)===1?"":"s")+" "+(r.off<0?"before":"after")+(r.offWhy?" ("+r.offWhy+")":"");
+  if(r.bd2){d=addBD(d,r.bd2);chain+=" → "+Math.abs(r.bd2)+" business days"+(r.bd2Why?" ("+r.bd2Why+")":"")}
+  chain+=" = "+fshort(d);
+  why=chain;
+ }
+ return Object.assign({},r,{d:d,why:why,ri:ri,cid:c.id,cname:c.name,b:c.brand})
+}
+function actsFor(c){return (c.sched||[]).map((r,i)=>resolveAct(c,r,i))}
+function allActs(){return DB.commitments.flatMap(actsFor).sort((a,b)=>{if(!a.d)return 1;if(!b.d)return -1;return a.d-b.d})}
+
+function riskList(){
+ const out=[];
+ allActs().forEach(a=>{
+  if(a.done)return;
+  if(a.kind==="chase"||!a.d){out.push({chase:1,m:"<b>"+a.cname+"</b> — "+a.what+". No date exists; a missing date is a risk, not a blank.",cid:a.cid});return}
+  const n=dtd(a.d);
+  if(n<0&&["back","gate","pay","hand"].indexOf(a.kind)>=0)
+   out.push({m:"<b>"+a.cname+"</b> — "+a.what+" was due <b>"+fdate(a.d)+"</b> — "+Math.abs(n)+" day"+(Math.abs(n)===1?"":"s")+" overdue."+(a.prot?" Protects: "+a.prot+".":""),cid:a.cid,over:1});
+  else if(n>=0&&n<=7&&["pay","gate","back","hand"].indexOf(a.kind)>=0)
+   out.push({m:"<b>"+a.cname+"</b> — "+a.what+" · <b>"+fdate(a.d)+"</b>, in "+(n===0?"0 days — today":n+" day"+(n===1?"":"s"))+"."+(a.prot?" Protects: "+a.prot+".":""),cid:a.cid});
+  if(a.lead)out.push({m:"<b>"+a.cname+"</b> — "+a.what+": turnaround violates the "+a.lead+" standard. Latest safe request was "+a.leadSafe+". Flagged before send.",cid:a.cid,warn:1});
+ });
+ DB.commitments.forEach(c=>{if(!c.sched||!c.sched.length)out.push({chase:1,m:"<b>"+c.name+"</b> — intake exists but no operation yet: no anchors, no schedule. It can't protect anything.",cid:c.id})});
+ return out;
+}
+
+/* ---------------- workback templates — one date in, the operation out ---------------- */
+function buildSched(f){
+ /* f: {anchors:{a1:{label,date}...}, primary:"a1", needs:{...}, payments:[[date,amt,label]], kind} */
+ const S=[];const P=f.primary;const shipTo=f.shipTo||"the venue — add the address";
+ const evD=f.anchors[P]?D(f.anchors[P].date):null;
+ const leadCheck=(need,handOff)=>{ /* returns {bad,label,safe} */
+  const L=CFG.lead[need];if(!L||!evD)return null;
+  const backDate=addDays(evD,handOff);
+  const avail=L.bd?bdBetween(TODAY,backDate):Math.round((backDate-TODAY)/86400000);
+  const std=L.bd||L.d;
+  if(avail<std){const safe=L.bd?addBD(backDate,-std):addDays(backDate,-std);return {bad:1,label:L.label,safe:fshort(safe)}}
+  return null;
+ };
+ if(f.needs.creative){
+  const lc=leadCheck("creative",-16);
+  S.push(Object.assign({base:null,date:iso(TODAY),kind:"hand",what:"Creative brief → "+CFG.people.creative,owner:CFG.people.ops,why:"requested at intake",ticket:"creative"},lc&&lc.bad?{lead:lc.label,leadSafe:lc.safe,hot:1}:{}));
+  S.push({base:P,off:-16,kind:"back",what:"Assets back — "+CFG.people.creative,owner:CFG.people.creative,offWhy:"review + fix window",prot:"the "+(f.anchors[P].label||"anchor")});
+  S.push({base:P,off:-12,kind:"rev",what:"Review — "+CFG.people.ops+" + "+CFG.people.creative,owner:CFG.people.ops,offWhy:"clearance before traffic"});
+ }
+ if(f.needs.ethics){
+  S.push({base:P,off:-18,kind:"hand",what:"Script → Ethics, pre-aligned from the library",owner:CFG.people.ops,offWhy:"Ethics 5bd + revision buffer",ticket:"ethics"});
+  S.push({base:P,off:-4,kind:"back",what:"Ethics verdict due",owner:CFG.people.ethics,offWhy:"traffic + load buffer",prot:"the "+(f.anchors[P].label||"anchor")});
+ }
+ if(f.needs.merch){
+  S.push({base:P,off:-21,kind:"back",what:"Merch order confirmed — "+CFG.people.merch,owner:CFG.people.merch,offWhy:"merch lead time",prot:"arrive-by",ticket:"merch"});
+  S.push({base:P,off:-7,kind:"back",what:"Merch ships — MerchHub reports",owner:CFG.people.merch,offWhy:"ship buffer"});
+  S.push({base:P,off:-2,kind:"gate",what:"Merch arrives — "+shipTo,owner:"MerchHub",offWhy:"arrive-by buffer"});
+ }
+ if(f.needs.seo){
+  S.push({base:P,off:-3,kind:"back",what:"Pixels + page tracking live — "+CFG.people.seo,owner:CFG.people.seo,offWhy:"pre-launch verify",prot:"the "+(f.anchors[P].label||"anchor"),ticket:"seo"});
+ }
+ if(f.needs.social){
+  S.push({base:P,off:-10,kind:"hand",what:"Content brief → "+CFG.people.social,owner:CFG.people.ops,offWhy:"slot + cut time",ticket:"social"});
+ }
+ if(f.needs.utms){
+  S.push({base:null,date:iso(addDays(TODAY,1)),kind:"task",what:"Generate UTMs + landing page — yours, one click, no ticket",owner:CFG.people.ops,why:"landing pages and UTMs live with Emm"});
+ }
+ if(f.needs.album){
+  S.push({base:P,off:-1,kind:"task",what:"Share day-of photo album link — crew + "+CFG.people.social,owner:CFG.people.ops,offWhy:"before doors"});
+ }
+ if(f.needs.staffing){
+  S.push({base:P,off:-16,kind:"back",what:"Staffing names owed — Hazel",owner:"Hazel",offWhy:"crew confirm buffer"});
+ }
+ (f.payments||[]).forEach(p=>{if(p[0])S.push({date:p[0],kind:"pay",what:(p[1]?fm(+p[1])+" — ":"")+(p[2]||"payment"),owner:CFG.people.ops,why:"payment schedule from intake"})});
+ Object.keys(f.anchors).forEach(k=>{
+  S.push({base:k,off:0,kind:/launch/i.test(f.anchors[k].label)?"launch":"event",what:f.anchors[k].label});
+ });
+ if(f.wrap&&evD){CFG.wrap.forEach(w=>S.push({base:P,off:w[0],kind:"wrap",what:w[1],owner:w[2],offWhy:"wrap collection — armed at intake"}))}
+ return S;
+}
+function buildTickets(c,f){
+ const T=[];const P=f.primary;const aD=f.anchors[P]?D(f.anchors[P].date):null;
+ const add=(type,who,to,subj,body)=>T.push({id:"t"+(DB.seq++),type:type,who:who,to:to,subj:subj,body:body,status:"draft"});
+ if(f.needs.merch)add("MERCH",CFG.people.merch,"",
+  "Merch — "+c.name+(aD?" (arrive by "+fshort(addDays(aD,-2))+")":""),
+  "Hi,\n\n"+c.name+" ("+c.brand+" · "+c.dma+(aD?" · "+fshort(aD):"")+"):\n\n• [items + quantities]\n\nSHIP TO: "+(f.shipTo||"[address]")+"\nARRIVE BY: "+(aD?fshort(addDays(aD,-2)):"[date]")+"\n\nConfirm ordered → shipped → delivered; the record tracks all three.\n\nEmm");
+ if(f.needs.creative)add("CREATIVE",CFG.people.creative,"",
+  "Brief — "+c.name,
+  "Hi "+CFG.people.creative+",\n\n"+c.name+" needs:\n\n• [deliverables + specs]\n\nAssets back "+(aD?fshort(addDays(aD,-16)):"[date]")+" → review "+(aD?fshort(addDays(aD,-12)):"[date]")+" → "+(f.anchors[P]?f.anchors[P].label+" "+fshort(aD):"")+".\n\nEmm");
+ if(f.needs.ethics)add("ETHICS",CFG.people.ethics,"",
+  "Review — "+c.name+" script (pre-aligned)",
+  "Hi,\n\nScript for "+c.name+" — drafted with the library's approved language, so this should be close.\n\nVerdict needed by "+(aD?fshort(addDays(aD,-4)):"[date]")+". Approve or mark changes; your approval feeds the library.\n\nEmm");
+ if(f.needs.seo)add("PIXELS",CFG.people.seo,"",
+  "Pixels — "+c.name,
+  "Hi team,\n\n"+c.name+" — landing page + UTMs handled on my side. From you: pixel + page tracking live by "+(aD?fshort(addDays(aD,-3)):"[date]")+".\n\nEmm");
+ if(f.needs.social)add("SOCIAL",CFG.people.social,"",
+  "Content brief — "+c.name,
+  "Hi "+CFG.people.social+",\n\n"+c.name+" ("+(aD?fshort(aD):"")+") needs newsletter + social slots. Assets and album link will be on the record.\n\nEmm");
+ return T;
+}
+
+/* ---------------- navigation ---------------- */
+const VIEWS=[["next","Next move"],["x","Exceptions"],["board","Board"],["intake","Intake"]];
+let view=DB.commitments.length?"next":"intake";
+let curWS=null,wsSel=null,wsShift=null;
+function nav(){
+ $("nav").innerHTML=VIEWS.map(v=>'<button class="'+(v[0]===view?"on":"")+'" data-v="'+v[0]+'">'+v[1]+(v[0]==="next"&&xCount()?'<span class="cnt">'+xCount()+'</span>':"")+'</button>').join("");
+ document.querySelectorAll("#nav button").forEach(b=>b.addEventListener("click",()=>{view=b.dataset.v;render()}));
+}
+function render(){
+ nav();
+ ["next","x","board","intake","ws"].forEach(k=>$("v-"+k).style.display=(view===k?"block":"none"));
+ if(view==="next")drawNext();if(view==="x")drawX();if(view==="board")drawBoard();if(view==="intake")drawIntake();if(view==="ws")drawWS(curWS);
+ window.scrollTo(0,0);
+}
+
+/* ---------------- the decision engine — the record decides, you judge ---------------- */
+function movesList(){
+ const M=[];
+ DB.commitments.forEach(c=>{
+  const acts=actsFor(c);
+  acts.forEach(a=>{
+   if(a.done)return;
+   const n=a.d?dtd(a.d):null;
+   if(a.kind==="back"&&a.d&&n<0){
+    M.push({s:100+Math.abs(n),cid:c.id,ri:a.ri,judg:0,
+     do:"Chase "+(a.owner||"the owner")+" — "+a.what.split(" — ")[0],
+     why:"Due back "+fdate(a.d)+" ("+Math.abs(n)+" day"+(Math.abs(n)===1?"":"s")+" overdue)."+(a.why?" The date exists because: "+a.why+".":"")+(a.prot?" Every silent day eats the buffer protecting "+a.prot+".":""),
+     act:{t:"chase",owner:a.owner,what:a.what,c:c}});
+   } else if(a.lead){
+    M.push({s:92,cid:c.id,ri:a.ri,judg:1,
+     do:"Decide the squeeze — "+a.what.split(" — ")[0]+" · "+c.name,
+     why:"The requested turnaround violates the "+a.lead+" standard; the latest safe request date was "+a.leadSafe+". Sending tight risks the anchor; moving the anchor keeps the chain safe. The record can't weigh urgency against the relationship — that's yours.",
+     opts:[{l:"Send tight — log the accepted risk",run:function(){var r=c.sched[a.ri];delete r.lead;delete r.leadSafe;r.hot=1;c.rec.unshift([fshort(TODAY)+" · decision","Sent tight against the lead-time standard — risk accepted and logged.","evidence"]);save();drawNext();nav();toast("Logged. The due-back is now watched hard.")}},
+      {l:"Open the operation — move the anchor",run:function(){openWS(c.id)}}]});
+   } else if(["hand","task"].indexOf(a.kind)>=0&&a.d&&n<=0&&(!a.owner||a.owner===CFG.people.ops)){
+    M.push({s:80+Math.min(10,Math.abs(n||0)),cid:c.id,ri:a.ri,judg:0,
+     do:"Do now: "+a.what.split(" — ")[0]+" — "+c.name,
+     why:(n===0?"Scheduled today.":"Scheduled "+fdate(a.d)+" — "+Math.abs(n)+" day"+(Math.abs(n)===1?"":"s")+" behind.")+(a.why?" Why this date: "+a.why+".":"")+(a.prot?" It protects "+a.prot+".":""),
+     act:{t:"done",c:c,ri:a.ri}});
+   } else if(a.kind==="pay"&&a.d&&n>=0&&n<=5){
+    M.push({s:75-n,cid:c.id,ri:a.ri,judg:0,
+     do:"Send the payment memo — "+a.what.split(" — ")[0]+" · "+c.name,
+     why:"Due "+fdate(a.d)+" ("+(n===0?"today":"in "+n+" day"+(n===1?"":"s"))+"). "+(a.why?"Source: "+a.why+". ":"")+"Memo goes to "+CFG.people.finance+"; evidence stamps when you mark it done.",
+     act:{t:"done",c:c,ri:a.ri}});
+   } else if(a.kind==="gate"&&a.d&&n>=0&&n<=7){
+    M.push({s:70-n,cid:c.id,ri:a.ri,judg:0,
+     do:"Protect: "+a.what.split(" — ")[0]+" — "+fdate(a.d),
+     why:"A contract/arrival date in "+n+" day"+(n===1?"":"s")+"."+(a.why?" Why it sits there: "+a.why+".":"")+" Open the operation to see what feeds it.",
+     act:{t:"open",cid:c.id}});
+   } else if(a.kind==="wrap"&&a.d&&n<=0&&n>=-3){
+    M.push({s:60,cid:c.id,ri:a.ri,judg:0,
+     do:"Collect: "+a.what.split(" — ")[0]+" — "+c.name,
+     why:"Wrap collection armed at intake — "+(a.owner?a.owner+" owes it":"yours")+", the window is now. Evidence lands on the record; the recap assembles from it.",
+     act:{t:"chase",owner:a.owner,what:a.what,c:c}});
+   }
+  });
+  (c.tickets||[]).forEach(t=>{
+   if(t.status!=="sent"){
+    M.push({s:55,cid:c.id,judg:0,
+     do:"Send the "+t.type.toLowerCase()+" ticket — "+t.who+" · "+c.name,
+     why:"Drafted at intake, still unsent. Until it goes, "+(t.who||"the owner")+" doesn't know the clock started — and every waiting day shortens their runway against the dates this operation computed.",
+     act:{t:"ticket",c:c,tid:t.id}});
+   }
+  });
+  if(!c.sched||!c.sched.filter(r=>r.date||r.base).length){
+   M.push({s:88,cid:c.id,judg:1,
+    do:"Give "+c.name+" an anchor — it can't protect anything",
+    why:"The intake exists but no date does. Without an anchor there is no workback, no tripwires, no protection. Only you know the real date — or who to chase for it.",
+    opts:[{l:"Open the operation — set the anchor",run:function(){openWS(c.id)}}]});
+  }
+ });
+ M.sort((a,b)=>b.s-a.s);
+ return M.slice(0,8);
+}
+function runMove(m){
+ const a=m.act;if(!a)return;
+ if(a.t==="done"){const c=a.c;const r=c.sched[a.ri];r.done=1;
+  c.rec.unshift([fshort(TODAY)+" · done",r.what,"evidence"]);
+  logEv("sent","<b>"+c.name+"</b> — "+r.what+" · done, evidence stamped.");DB.log[0].cid=c.id;
+  save();drawNext();nav();toast("Done — evidence stamped. The next move moved up.");}
+ else if(a.t==="ticket"){openTicket(a.c,a.tid);drawNext();nav()}
+ else if(a.t==="chase"){const c=a.c;
+  const to=prompt("Chase goes to (email):","");if(to===null)return;
+  const subj="Following up — "+a.what.split(" — ")[0]+" ("+c.name+")";
+  const body="Hi,\n\nFollowing up on: "+a.what+" for "+c.name+".\nThe record shows nothing received yet — can you confirm status?\n\nEmm";
+  window.open("mailto:"+encodeURIComponent(to)+"?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(body),"_blank");
+  c.rec.unshift([fshort(TODAY)+" · out · Chase",subj,"evidence"]);
+  logEv("sent","<b>"+c.name+"</b> — chase sent: "+a.what.split(" — ")[0]);DB.log[0].cid=c.id;
+  save();drawNext();toast("Chase out — stamped on the record.")}
+ else if(a.t==="open"){openWS(a.cid)}
+}
+function moveCard(m,idx,big){
+ const c=DB.commitments.find(x=>x.id===m.cid);
+ return '<div class="xband" style="margin-bottom:12px;'+(big?'border-left:3px solid var(--gold);box-shadow:0 0 44px rgba(212,175,110,.08);':'')+'">'+
+  '<div style="padding:'+(big?'20px 22px':'14px 18px')+'">'+
+  '<div style="font-size:8.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:'+(m.judg?'var(--ox)':'var(--gold)')+'">'+(m.judg?"Judgment required":"Ready to execute")+(c?' · <span style="color:'+brandColor(c.brand)+'">'+c.brand+'</span>':'')+'</div>'+
+  '<div style="font-family:\'Fraunces\',serif;font-size:'+(big?'21px':'16px')+';color:var(--ink);margin:7px 0 8px">'+m.do+'</div>'+
+  '<div style="font-size:12.5px;color:var(--body);line-height:1.6;max-width:840px"><b style="color:var(--mut);font-size:9px;letter-spacing:.16em;text-transform:uppercase">Why · </b>'+m.why+'</div>'+
+  '<div style="display:flex;gap:9px;margin-top:13px;flex-wrap:wrap">'+
+  (m.judg?m.opts.map((o,j)=>'<button class="btn '+(j===0?'':'ghost ')+'sm" data-mvo="'+idx+':'+j+'">'+o.l+'</button>').join(""):
+   '<button class="btn sm" data-mv="'+idx+'">Do it — the record executes</button><button class="btn ghost sm" data-mvo2="'+m.cid+'">Open the operation</button>')+
+  '</div></div></div>';
+}
+function drawNext(){
+ if(!DB.commitments.length){
+  $("v-next").innerHTML='<div class="hero"><div class="glyph">◆</div><h3>The record is empty.</h3>'+
+   '<p>Feed it one commitment and it starts deciding: it computes the operation, ranks every pending move by consequence, explains its reasoning, and asks you only where judgment is genuinely required.</p>'+
+   '<button class="btn" id="beginbtn0">Feed it the first commitment →</button></div>';
+  $("beginbtn0").addEventListener("click",()=>{view="intake";render()});
+  return;
+ }
+ const M=movesList();
+ let h='<div style="margin-top:8px;font-size:9.5px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)">'+TODAY.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})+'</div>';
+ if(!M.length){
+  const nxt=allActs().find(a=>a.d&&dtd(a.d)>=0&&!a.done);
+  h+='<div class="hero" style="margin-top:30px"><div class="glyph">◆</div><h3>No move required.</h3><p>'+allActs().filter(a=>a.d&&!a.done).length+' dated actions are running with their tripwires armed.'+(nxt?' Next dated action: <b style="color:var(--ink)">'+fshort(nxt.d)+' — '+nxt.what.split(" — ")[0]+'</b>.':'')+' The record will speak when something needs you.</p></div>';
+ } else {
+  h+='<h2 class="sec">The move <span class="tag">The record decided — here is its reasoning</span></h2><div class="rule"></div>'+moveCard(M[0],0,true);
+  if(M.length>1)h+='<h2 class="sec">Behind it <span class="tag">Ranked by consequence — each executes or opens</span></h2><div class="rule"></div>'+M.slice(1).map((m,i)=>moveCard(m,i+1,false)).join("");
+ }
+ const g=xGroups();
+ const led=g.changed.concat(g.back).slice(0,6);
+ if(led.length)h+='<h2 class="sec">The ledger <span class="tag">What moved lately — stamped</span></h2><div class="rule"></div><div class="xband">'+
+  led.map(r=>'<div class="xrow"><span class="xline">'+r.t+'</span>'+(r.cid?'<button class="xgo" data-x="'+r.cid+'">Open</button>':"")+'</div>').join("")+'</div>';
+ $("v-next").innerHTML=h;
+ document.querySelectorAll("[data-mv]").forEach(b=>b.addEventListener("click",()=>{const m=movesList()[+b.dataset.mv];if(m)runMove(m)}));
+ document.querySelectorAll("[data-mvo]").forEach(b=>b.addEventListener("click",()=>{
+  const parts=b.dataset.mvo.split(":");const m=movesList()[+parts[0]];
+  if(m&&m.opts&&m.opts[+parts[1]])m.opts[+parts[1]].run();
+ }));
+ document.querySelectorAll("#v-next .xgo").forEach(b=>b.addEventListener("click",()=>openWS(+b.dataset.x)));
+}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-mvo2]");if(b)openWS(+b.dataset.mvo2)});
+
+/* ---------------- exceptions ---------------- */
+function xGroups(){
+ const notback=[],changed=[],threat=[],back=[];
+ allActs().forEach(a=>{if(a.kind==="back"&&!a.done&&a.d&&dtd(a.d)<=10)notback.push({t:"<b>"+a.cname+"</b> — "+a.what+" · due back <b>"+fdate(a.d)+"</b>"+(dtd(a.d)<0?" — <b>overdue</b>":"")+(a.owner?" from "+a.owner:"")+"; nothing received yet."+(a.prot?" Protects "+a.prot+".":""),cid:a.cid})});
+ DB.log.filter(l=>l.kind==="change").slice(0,5).forEach(l=>changed.push({t:l.text,cid:l.cid}));
+ riskList().forEach(r=>{if(!/due back/i.test(r.m))threat.push({t:r.m,cid:r.cid})});
+ DB.log.filter(l=>l.kind==="in"||l.kind==="sent").slice(0,5).forEach(l=>back.push({t:l.text,cid:l.cid}));
+ return {notback:notback,changed:changed,threat:threat.slice(0,8),back:back};
+}
+function xCount(){return movesList().length}
+function drawX(){
+ if(!DB.commitments.length){
+  $("v-x").innerHTML='<div class="hero"><div class="glyph">◆</div><h3>The record is empty.</h3>'+
+   '<p>No fake data. No demo. This runs on what you feed it: one commitment in through Intake, and its whole operation — workback, owners, tripwires, wrap — computes from your anchor date. Exceptions stay silent until something real needs you.</p>'+
+   '<button class="btn" id="beginbtn">Feed it the first commitment →</button></div>';
+  $("beginbtn").addEventListener("click",()=>{view="intake";render()});
+  return;
+ }
+ const g=xGroups();
+ const grp=(title,tag,rows,cls)=>'<h2 class="sec">'+title+' <span class="tag">'+tag+'</span></h2><div class="rule"></div>'+
+  (rows.length?'<div class="xband '+(cls||"")+'">'+rows.map(r=>'<div class="xrow"><span class="xline">'+r.t+'</span>'+(r.cid?'<button class="xgo" data-x="'+r.cid+'">Open the operation</button>':"")+'</div>').join("")+'</div>'
+  :'<div class="quiet">Nothing. Silence here is the point.</div>');
+ $("v-x").innerHTML='<div style="margin-top:8px;font-size:9.5px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)">'+TODAY.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})+'</div>'+
+  '<p style="font-family:\'Fraunces\',serif;font-size:19px;color:var(--ink);margin:8px 0 4px;max-width:720px">Exceptions only. Everything running to plan is invisible here — it lives inside each operation.</p>'+
+  grp("What changed","Reality moved — you decide what follows",g.changed,"hot")+
+  grp("What now threatens something","Computed from the schedules — nobody writes these",g.threat,"hot")+
+  grp("What hasn't come back","Sent, owed, silent",g.notback)+
+  grp("What came back / went out","Landed, filed, stamped",g.back)+
+  '<div class="homefoot">The record produces its outputs inside each operation — tickets, memos, recaps. Nothing auto-sends.</div>';
+ document.querySelectorAll(".xgo").forEach(b=>b.addEventListener("click",()=>openWS(+b.dataset.x)));
+}
+
+/* ---------------- board ---------------- */
+function derivedStage(c){
+ const acts=actsFor(c).filter(a=>a.d);
+ if(!acts.length)return ["dim","No dates"];
+ const anch=acts.filter(a=>a.base&&(a.off||0)===0);
+ const lastA=anch.length?anch[anch.length-1]:acts[acts.length-1];
+ if(dtd(lastA.d)<0)return ["dim","Wrapped"+(acts.some(a=>a.kind==="wrap"&&dtd(a.d)>=0)?" — collecting":"")];
+ if(acts.some(a=>dtd(a.d)<0))return ["ok","Running"];
+ return ["warn","Upcoming"];
+}
+function nextMove(c){
+ const a=actsFor(c).filter(x=>x.d&&dtd(x.d)>=0&&!x.done).sort((p,q)=>p.d-q.d)[0];
+ return a?("→ "+fshort(a.d)+" · "+a.what.split(" — ")[0]):"→ no future dates";
+}
+function drawBoard(){
+ if(!DB.commitments.length){
+  $("v-board").innerHTML='<div class="hero"><div class="glyph">◆</div><h3>Nothing on the board yet.</h3><p>Brand → market → commitment, each opening into its operation. It fills as you feed the intake.</p><button class="btn" id="beginbtn2">Open the intake →</button></div>';
+  $("beginbtn2").addEventListener("click",()=>{view="intake";render()});
+  return;
+ }
+ const brands=[...new Set(DB.commitments.map(c=>c.brand))];
+ $("v-board").innerHTML=brands.map(b=>{
+  const rows=DB.commitments.filter(c=>c.brand===b);
+  const tot=rows.reduce((x,c)=>x+(+c.money.f||0),0);
+  const dmas=[...new Set(rows.map(c=>c.dma))];
+  return '<div class="bhead"><span class="bn" style="color:'+brandColor(b)+'">'+b+'</span><span class="bs">'+rows.length+' commitment'+(rows.length===1?"":"s")+' · '+fm(tot)+'</span><span class="bl"></span></div>'+
+   dmas.map(d=>'<div class="dmahead">'+d+'</div><div class="cards">'+rows.filter(c=>c.dma===d).map(c=>{
+    const st=derivedStage(c);
+    return '<div class="dcard" data-id="'+c.id+'"><div class="toprow"><span class="nm">'+c.name+'</span><span class="amt">'+fm(c.money.f)+'</span></div>'+
+     '<div class="meta">'+(c.kind||"")+(c.notes?" · "+c.notes.slice(0,60):"")+'</div>'+
+     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span class="nxt">'+nextMove(c)+'</span><span class="pill '+st[0]+'">'+st[1]+'</span></div></div>';
+   }).join("")+'</div>').join("");
+ }).join("");
+ document.querySelectorAll(".dcard").forEach(el=>el.addEventListener("click",()=>openWS(+el.dataset.id)));
+}
+
+/* ---------------- intake — the front door ---------------- */
+let inkNeeds={};
+function drawIntake(){
+ const brandOpts=CFG.brands.map(b=>'<option>'+b.n+'</option>').join("");
+ $("v-intake").innerHTML='<h2 class="sec">Intake <span class="tag">The front door — one date in, the operation out</span></h2><div class="rule"></div>'+
+ '<div class="form"><div class="fgrid">'+
+ '<div class="fld c6"><label>Commitment / event / campaign</label><input type="text" id="f-name" placeholder="What did we commit to?"></div>'+
+ '<div class="fld c3"><label>Brand</label><select id="f-brand">'+brandOpts+'</select></div>'+
+ '<div class="fld c3"><label>Market — DMA</label><select id="f-dma"></select></div>'+
+ '<div class="fld c3"><label>Kind</label><select id="f-kind">'+CFG.kinds.map(k=>'<option>'+k+'</option>').join("")+'</select></div>'+
+ '<div class="fld c3"><label>Contracted $</label><input type="number" id="f-mc" placeholder="0"></div>'+
+ '<div class="fld c3"><label>Final $ (if drifted)</label><input type="number" id="f-mf" placeholder="same as contracted"></div>'+
+ '<div class="fld c3"><label>Ship-to (if merch)</label><input type="text" id="f-ship" placeholder="venue + address"></div>'+
+ '<div class="fld c12"><label>Anchors — the dates everything computes from</label><div class="rowlist" id="anch-list"></div><button class="mini" id="anch-add">+ another anchor</button></div>'+
+ '<div class="fld c12"><label>What this needs — each becomes dated work + a drafted ticket</label><div class="chips" id="f-needs"></div>'+
+ '<div style="font-size:10.5px;color:var(--faint);font-style:italic;margin-top:8px">The routing rule: what we already own gets linked, UTMs and landing pages are yours in one click, Ethics drafts pre-align from the library — only what others owe becomes a ticket.</div>'+
+ '<div class="leadwarn" id="leadwarn"></div></div>'+
+ '<div class="fld c12"><label>Payment schedule</label><div class="rowlist" id="pay-list"></div><button class="mini" id="pay-add">+ payment</button></div>'+
+ '<div class="fld c12"><label>They owe us — contracted benefits, one per line</label><textarea id="f-owe" rows="2" placeholder="10× :30 spots per season&#10;LED minute every home game"></textarea></div>'+
+ '<div class="fld c12"><label>Notes / source</label><input type="text" id="f-notes" placeholder="contract #, who sent it, where the doc lives"></div>'+
+ '</div><div class="formfoot"><span class="note">Create → the operation builds itself: workback computed from your anchors with every date carrying its reason · tripwires armed · wrap collection scheduled · tickets drafted, never sent without your eyes.</span>'+
+ '<button class="btn" id="f-create">Create — build the operation</button></div></div>';
+ const NEEDS=[["creative","Creative (net-new)"],["ethics","Ethics script"],["merch","Merch (ship-to)"],["staffing","Staffing"],["seo","Pixels / tracking"],["social","Social & newsletter"],["utms","UTMs + landing — yours"],["album","Day-of photo album"]];
+ const nb=$("f-needs");
+ nb.innerHTML=NEEDS.map(n=>'<span class="chip'+(inkNeeds[n[0]]?" on":"")+'" data-n="'+n[0]+'">'+n[1]+'</span>').join("");
+ nb.querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{const k=ch.dataset.n;inkNeeds[k]=!inkNeeds[k];ch.classList.toggle("on");leadPreview()}));
+ const syncD=()=>{const b=CFG.brands.find(x=>x.n===$("f-brand").value);$("f-dma").innerHTML=(b?b.dmas:[]).map(d=>'<option>'+d+'</option>').join("")};
+ $("f-brand").addEventListener("change",syncD);syncD();
+ const anchRow=(label,date)=>{const div=document.createElement("div");div.className="rl";
+  div.innerHTML='<input type="text" class="a-l" placeholder="Event day / Launch / Flight start" value="'+(label||"")+'"><input type="date" class="a-d" value="'+(date||"")+'"><button class="mini del">×</button>';
+  div.querySelector(".del").addEventListener("click",()=>{div.remove();leadPreview()});
+  div.querySelector(".a-d").addEventListener("change",leadPreview);
+  $("anch-list").appendChild(div)};
+ anchRow("Event day","");
+ $("anch-add").addEventListener("click",()=>anchRow("",""));
+ const payRow=()=>{const div=document.createElement("div");div.className="rl";
+  div.innerHTML='<input type="date" class="p-d"><input type="number" class="p-a" placeholder="amount"><input type="text" class="p-l" placeholder="what payment"><button class="mini del">×</button>';
+  div.querySelector(".del").addEventListener("click",()=>div.remove());
+  $("pay-list").appendChild(div)};
+ $("pay-add").addEventListener("click",payRow);
+ function leadPreview(){
+  const w=$("leadwarn");const firstD=document.querySelector(".a-d");
+  if(!firstD||!firstD.value||!inkNeeds.creative){w.style.display="none";return}
+  const backDate=addDays(D(firstD.value),-16);
+  const avail=bdBetween(TODAY,backDate);
+  if(avail<CFG.lead.creative.bd){w.style.display="block";
+   w.innerHTML="⚑ Creative would need assets back "+fshort(backDate)+" — that's "+avail+" business days from today against a "+CFG.lead.creative.bd+"-business-day standard. The engine will flag this on the brief before it sends.";}
+  else w.style.display="none";
+ }
+ $("f-create").addEventListener("click",()=>{
+  const name=$("f-name").value.trim();
+  if(!name){toast("It needs a name.");return}
+  const anchors={};let primary=null;let i=0;
+  document.querySelectorAll("#anch-list .rl").forEach(r=>{
+   const l=r.querySelector(".a-l").value.trim(),d=r.querySelector(".a-d").value;
+   if(l&&d){const k="a"+(i++);anchors[k]={label:l,date:d};if(!primary)primary=k}});
+  const payments=[];
+  document.querySelectorAll("#pay-list .rl").forEach(r=>{payments.push([r.querySelector(".p-d").value,r.querySelector(".p-a").value,r.querySelector(".p-l").value])});
+  const mc=+$("f-mc").value||0;const mf=+$("f-mf").value||mc;
+  const c={id:DB.seq++,name:name,brand:$("f-brand").value,dma:$("f-dma").value,kind:$("f-kind").value,
+   money:{c:mc,f:mf},notes:$("f-notes").value.trim(),
+   anchors:anchors,
+   theyOwe:$("f-owe").value.split("\n").map(s=>s.trim()).filter(Boolean).map(s=>({n:s,st:["dim","Expected"],pr:""})),
+   rec:[[fshort(TODAY)+" · in · Intake","Created by you — "+(Object.keys(anchors).length?Object.keys(anchors).map(k=>anchors[k].label+" "+fshort(D(anchors[k].date))).join(" · "):"no anchors yet"),"evidence"]],
+   tickets:[],sched:[]};
+  if(primary){
+   const f={anchors:anchors,primary:primary,needs:inkNeeds,payments:payments,shipTo:$("f-ship").value.trim(),wrap:/Sponsorship|Event|Appearance/.test(c.kind)};
+   c.sched=buildSched(f);
+   c.tickets=buildTickets(c,f);
+  }
+  DB.commitments.push(c);
+  logEv("in","<b>"+c.name+"</b> — intake created. "+c.sched.filter(r=>r.date||r.base).length+" dated actions computed"+(c.tickets.length?", "+c.tickets.length+" tickets drafted":"")+".");
+  save();inkNeeds={};
+  toast("Built. "+c.sched.length+" actions computed from your anchor"+(Object.keys(anchors).length>1?"s":"")+" — every date carries its why. Tickets drafted, nothing sent.");
+  openWS(c.id);
+ });
+}
+
+/* ---------------- the operation — the commitment IS the product ---------------- */
+function laneOf(a){
+ if(a.kind==="pay")return "Payments";
+ if(a.kind==="wrap")return "Wrap";
+ const o=a.owner||"";
+ if(o===CFG.people.creative)return "Creative";
+ if(o===CFG.people.ethics)return "Ethics";
+ if(o===CFG.people.merch||o==="MerchHub")return "Merch";
+ if(o===CFG.people.social)return "Social";
+ if(o===CFG.people.seo)return "SEO";
+ if(o&&o!==CFG.people.ops&&o!=="Hazel")return "Vendor";
+ return "Ops — Emm";
+}
+function openWS(id){curWS=id;wsSel=null;wsShift=null;view="ws";render()}
+function drawWS(id){
+ const c=DB.commitments.find(x=>x.id===id);
+ if(!c){$("v-ws").innerHTML="";return}
+ const acts=actsFor(c).sort((a,b)=>{if(!a.d)return 1;if(!b.d)return -1;return a.d-b.d});
+ const dated=acts.filter(a=>a.d);
+ const undated=acts.filter(a=>!a.d);
+ const cols=[...new Set(dated.map(a=>iso(a.d)))];
+ const lanes=LANES.filter(L=>dated.some(a=>laneOf(a)===L));
+ const anchorCols={};
+ dated.forEach(a=>{if(a.base&&(a.off||0)===0)anchorCols[iso(a.d)]=c.anchors[a.base].label});
+
+ let h='<div class="wshead"><button class="btn ghost sm" id="ws-back">← Board</button>'+
+  '<div class="wsid"><div class="k">'+c.brand+' · '+c.dma+'</div><h2>'+c.name+'</h2>'+
+  '<div class="s">'+(c.kind||"")+' · <b>'+fm(c.money.f)+'</b>'+(c.money.f!==c.money.c&&c.money.c?' <span style="color:var(--ox)">(was '+fm(c.money.c)+')</span>':"")+' · <span class="pill '+derivedStage(c)[0]+'">'+derivedStage(c)[1]+'</span></div></div>'+
+  '<div class="wsanch">'+Object.keys(c.anchors||{}).map(k=>'<label class="wsa"><span>'+c.anchors[k].label+'</span><input type="date" data-anch="'+k+'" value="'+c.anchors[k].date+'"></label>').join("")+'</div></div>';
+
+ if(wsShift){
+  const diffs=acts.filter(a=>a.base===wsShift.key);
+  h+='<div class="shiftband"><div class="st2">CHANGE — '+c.anchors[wsShift.key].label+' → '+fshort(D(wsShift.val))+'</div>'+
+   diffs.map(a=>{const nd=addDays(D(wsShift.val),a.off||0);return '<div class="sm3">◆ '+a.what.split(" — ")[0]+': <s>'+(a.d?fshort(a.d):"—")+'</s> → <b>'+fshort(nd)+'</b></div>'}).join("")+
+   '<div class="sm2">Everything on other anchors and fixed dates holds. Drafted tickets touching these dates should be re-checked before sending.</div>'+
+   '<div style="display:flex;gap:9px;margin-top:9px;flex-wrap:wrap"><button class="btn sm" id="ws-shift-yes">Accept — shift '+diffs.length+' dates</button><button class="btn ghost sm" id="ws-shift-no">Keep '+fshort(D(c.anchors[wsShift.key].date))+'</button></div></div>';
+ }
+
+ if(cols.length){
+  h+='<div class="wsscroll"><div class="wsgrid" id="wsgrid" style="grid-template-columns:126px repeat('+cols.length+',minmax(96px,1fr))">';
+  h+='<div class="wsc corner"></div>'+cols.map(k=>{const d=D(k);const n=dtd(d);
+   return '<div class="wsc colh '+(anchorCols[k]?"anchcol":"")+' '+(n===0?"todaycol":"")+'">'+(anchorCols[k]?'<div class="al">ANCHOR — '+anchorCols[k]+'</div>':"")+'<b>'+fshort(d)+'</b><span>'+d.toLocaleDateString("en-US",{weekday:"short"})+(n===0?" · today":"")+'</span></div>'}).join("");
+  lanes.forEach(L=>{
+   h+='<div class="wsc laneh">'+L+'</div>';
+   cols.forEach(k=>{
+    const cell=dated.filter(a=>laneOf(a)===L&&iso(a.d)===k);
+    h+='<div class="wsc cell">'+cell.map(a=>{const kc=KINDCHIP[a.kind]||["#8b8fa3",a.kind];
+     return '<div class="wchip '+(a.done?"done":"")+' '+(a.hot&&!a.done?"hot":"")+' '+(wsSel===a.ri?"sel":"")+'" data-ai="'+a.ri+'" style="border-left-color:'+kc[0]+'">'+a.what.split(" — ")[0]+'</div>'}).join("")+'</div>';
+   });
+  });
+  h+='</div><svg class="wslines" id="wslines"></svg></div>';
+ } else {
+  h+='<div class="panel" style="padding:26px;text-align:center"><div class="dim3">No anchors yet — add one above and the operation computes itself.</div></div>';
+ }
+ if(undated.length)h+='<div class="wschase">'+undated.map(a=>'<span>◆ NO DATE — '+a.what.split(" — ")[0]+(a.owner?' · chasing <b style="color:var(--ink)">'+a.owner+'</b>':"")+'</span>').join("")+'</div>';
+ h+='<div class="wsdetail" id="wsdetail">'+(wsSel!=null&&c.sched[wsSel]?wsDetail(c,resolveAct(c,c.sched[wsSel],wsSel)):'<span class="dim3">Click any item — owner, why its date exists, its ticket, mark done.</span>')+'</div>';
+
+ h+='<div class="addrow">'+
+  '<div class="fld"><label>Add an item</label><input type="text" id="ad-what" placeholder="what happens"></div>'+
+  '<div class="fld"><label>Owner</label><input type="text" id="ad-own" placeholder="Emm" style="width:110px"></div>'+
+  '<div class="fld"><label>Date</label><input type="date" id="ad-date"></div>'+
+  '<div class="fld"><label>or anchor − days</label><div style="display:flex;gap:6px">'+
+   '<select id="ad-anch" style="width:130px"><option value="">—</option>'+Object.keys(c.anchors||{}).map(k=>'<option value="'+k+'">'+c.anchors[k].label+'</option>').join("")+'</select>'+
+   '<input type="number" id="ad-off" placeholder="-7" style="width:70px"></div></div>'+
+  '<button class="btn ghost sm" id="ad-go" style="margin-bottom:2px">Add</button></div>';
+
+ const outs=(c.tickets||[]).map(t=>'<span class="outchip '+(t.status==="sent"?"snt":"")+'" data-tk="'+t.id+'">'+t.type+' · '+t.who+(t.status==="sent"?' · ✓ sent':' · draft')+'</span>').join("");
+ const owes=(c.theyOwe||[]).map((o,i)=>'<span class="owe" data-owe="'+i+'" style="cursor:pointer" title="click to cycle: expected → received → missed">'+o.n+' <b class="pill '+o.st[0]+'" style="margin-left:5px">'+o.st[1]+'</b></span>').join("");
+ h+='<div class="wsout"><div class="t2">This operation produced</div>'+(outs||'<span class="dim3">no tickets — nothing here is owed by anyone else yet</span>')+
+  (owes?'<div class="t2" style="margin-top:14px">The partner owes</div>'+owes:"")+
+  '<div class="t2" style="margin-top:14px">History — in and out, with proof</div>'+
+  (c.rec||[]).map(r=>'<div class="recrow"><span class="recd">'+r[0]+'</span><span class="recw">'+r[1]+'</span><span class="pill '+(r[2]==="evidence"?"ok":"warn")+'">'+(r[2]==="evidence"?"✓ evidence":"awaiting you")+'</span></div>').join("")+
+  (c.notes?'<div class="dim3" style="margin-top:12px">Source of record: '+c.notes+'</div>':"")+
+  '<div style="margin-top:16px"><button class="btn ghost sm" id="ws-del">Delete this commitment</button></div></div>';
+
+ $("v-ws").innerHTML=h;
+ $("ws-back").addEventListener("click",()=>{view="board";render()});
+ $("ws-del").addEventListener("click",()=>{if(confirm("Delete "+c.name+" and its whole operation?")){DB.commitments=DB.commitments.filter(x=>x.id!==c.id);save();logEv("in","<b>"+c.name+"</b> — deleted by you.");view="board";render()}});
+ document.querySelectorAll("#wsgrid .wchip").forEach(el=>el.addEventListener("click",()=>{
+  wsSel=+el.dataset.ai;
+  document.querySelectorAll("#wsgrid .wchip").forEach(x=>x.classList.remove("sel"));el.classList.add("sel");
+  $("wsdetail").innerHTML=wsDetail(c,resolveAct(c,c.sched[wsSel],wsSel));wireDetail(c);
+ }));
+ document.querySelectorAll("[data-anch]").forEach(inp=>inp.addEventListener("change",()=>{wsShift={key:inp.dataset.anch,val:inp.value};drawWS(id)}));
+ const sy=$("ws-shift-yes"),sn=$("ws-shift-no");
+ if(sy)sy.addEventListener("click",()=>{
+  const lbl=c.anchors[wsShift.key].label;const old=c.anchors[wsShift.key].date;
+  c.anchors[wsShift.key].date=wsShift.val;
+  c.rec.unshift([fshort(TODAY)+" · change",lbl+" moved "+fshort(D(old))+" → "+fshort(D(wsShift.val))+" — dependent dates recomputed, everything else held.","evidence"]);
+  logEv("change","<b>"+c.name+"</b> — "+lbl+" moved to <b>"+fshort(D(wsShift.val))+"</b>. Dependent dates shifted with their why-chains; other anchors held.");
+  DB.log[0].cid=c.id;save();wsShift=null;drawWS(id);nav();
+  toast("Shifted. Every dependent date moved and kept its reason. Everything else held.");
+ });
+ if(sn)sn.addEventListener("click",()=>{wsShift=null;drawWS(id)});
+ $("ad-go").addEventListener("click",()=>{
+  const what=$("ad-what").value.trim();if(!what){toast("Name the item.");return}
+  const own=$("ad-own").value.trim()||CFG.people.ops;
+  const ak=$("ad-anch").value;const off=+$("ad-off").value;
+  const r={kind:"task",what:what,owner:own};
+  if(ak&&!isNaN(off)){r.base=ak;r.off=off;r.offWhy="added by you"}
+  else if($("ad-date").value)r.date=$("ad-date").value;
+  else {toast("Give it a date or an anchor offset.");return}
+  c.sched.push(r);save();drawWS(id);toast("Added — it computes with the operation now.");
+ });
+ document.querySelectorAll("[data-tk]").forEach(el=>el.addEventListener("click",()=>openTicket(c,el.dataset.tk)));
+ document.querySelectorAll("[data-owe]").forEach(el=>el.addEventListener("click",()=>{
+  const o=c.theyOwe[+el.dataset.owe];
+  const cyc={dim:["ok","Received — proof attached"],ok:["late","Missed — makegood owed"],late:["dim","Expected"]};
+  o.st=cyc[o.st[0]]||["dim","Expected"];
+  if(o.st[0]==="ok")c.rec.unshift([fshort(TODAY)+" · in","Benefit received: "+o.n,"evidence"]);
+  save();drawWS(id);
+ }));
+ requestAnimationFrame(()=>drawLines(c,dated));
+}
+function wsDetail(c,a){
+ const kc=KINDCHIP[a.kind]||["#8b8fa3",a.kind];
+ return '<div class="wd"><div class="wdh"><b>'+a.what+'</b><span class="kchip" style="color:'+kc[0]+';border-color:'+kc[0]+'66">'+kc[1]+'</span></div>'+
+  '<div class="wdrow"><span>Date</span><b>'+(a.d?fdate(a.d):"no date — chase")+'</b></div>'+
+  '<div class="wdrow"><span>Owner</span><b>'+(a.owner||"—")+'</b></div>'+
+  (a.why?'<div class="wdrow"><span>Why this date</span><b>'+a.why+'</b></div>':"")+
+  (a.prot?'<div class="wdrow"><span>Protects</span><b>'+a.prot+'</b></div>':"")+
+  (a.lead?'<div class="wdrow"><span>Lead-time flag</span><b style="color:var(--ox)">violates the '+a.lead+' standard — latest safe was '+a.leadSafe+'</b></div>':"")+
+  '<div style="margin-top:10px;display:flex;gap:9px;flex-wrap:wrap">'+
+  (a.ticket&&c.tickets.some(t=>t.type.toLowerCase().indexOf(a.ticket)>=0||true)?'':'')+
+  '<button class="btn ghost sm" id="wd-done">'+(a.done?"Un-mark done":"Mark done — stamps evidence")+'</button>'+
+  '<button class="btn ghost sm" id="wd-del">Remove item</button></div></div>';
+}
+function wireDetail(c){
+ const dn=$("wd-done"),dl=$("wd-del");
+ if(dn)dn.addEventListener("click",()=>{const r=c.sched[wsSel];r.done=!r.done;
+  if(r.done)c.rec.unshift([fshort(TODAY)+" · done",r.what,"evidence"]);
+  save();drawWS(c.id)});
+ if(dl)dl.addEventListener("click",()=>{c.sched.splice(wsSel,1);wsSel=null;save();drawWS(c.id)});
+}
+function drawLines(c,dated){
+ const svg=$("wslines"),grid=$("wsgrid");if(!svg||!grid)return;
+ const gr=grid.getBoundingClientRect();
+ svg.setAttribute("width",grid.scrollWidth);svg.setAttribute("height",grid.scrollHeight);
+ svg.style.width=grid.scrollWidth+"px";svg.style.height=grid.scrollHeight+"px";
+ const pos={};
+ document.querySelectorAll("#wsgrid .wchip").forEach(el=>{const r=el.getBoundingClientRect();pos[el.dataset.ai]={x:r.left-gr.left+r.width/2,y:r.top-gr.top+r.height/2}});
+ const bases={};
+ dated.forEach(a=>{if(a.base!=null&&a.base!==""){(bases[a.base]=bases[a.base]||[]).push(a.ri)}});
+ let paths="";
+ const cols=["#d4af6e","#6ea8ff","#57c39a","#e4738a"];
+ Object.keys(bases).forEach((b,bi)=>{
+  const chain=bases[b].filter(ri=>pos[ri]);
+  chain.sort((p,q)=>pos[p].x-pos[q].x);
+  const col=cols[bi%cols.length];
+  for(let k=0;k<chain.length-1;k++){
+   const p1=pos[chain[k]],p2=pos[chain[k+1]];
+   const mx=(p1.x+p2.x)/2;
+   paths+='<path d="M'+p1.x+','+p1.y+' C'+mx+','+p1.y+' '+mx+','+p2.y+' '+p2.x+','+p2.y+'" fill="none" stroke="'+col+'" stroke-width="1.3" opacity="0.5"/>';
+  }
+ });
+ svg.innerHTML=paths;
+}
+/* tickets — drafted by the operation, sent by you (real mailto) */
+function openTicket(c,tid){
+ const t=(c.tickets||[]).find(x=>x.id===tid);if(!t)return;
+ const to=prompt("To (email) — opens in your mail app:",t.to||"");
+ if(to===null)return;
+ t.to=to;
+ const href="mailto:"+encodeURIComponent(to)+"?subject="+encodeURIComponent(t.subj)+"&body="+encodeURIComponent(t.body);
+ window.open(href,"_blank");
+ if(confirm("Mark this ticket sent? (stamps evidence on the record)")){
+  t.status="sent";
+  c.rec.unshift([fshort(TODAY)+" · out · Ticket",t.subj+" — sent to "+(t.who||to),"evidence"]);
+  logEv("sent","<b>"+c.name+"</b> — ticket sent: "+t.subj);DB.log[0].cid=c.id;
+  save();drawWS(c.id);
+ } else save();
+}
+
+/* ---------------- export / import / reset ---------------- */
+$("u-export").addEventListener("click",()=>{
+ const blob=new Blob([JSON.stringify(DB,null,1)],{type:"application/json"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+ a.download="atticor-ops-"+iso(TODAY)+".json";a.click();
+ toast("Exported — the record is yours, portable, never trapped.");
+});
+$("u-import").addEventListener("click",()=>$("importfile").click());
+$("importfile").addEventListener("change",e=>{
+ const f=e.target.files[0];if(!f)return;
+ const rd=new FileReader();
+ rd.onload=()=>{try{const d=JSON.parse(rd.result);if(d&&d.commitments){DB=d;save();render();toast("Imported — "+DB.commitments.length+" commitments live.")}else toast("That file isn't an Atticor Ops export.")}catch(err){toast("Couldn't read that file.")}};
+ rd.readAsText(f);
+});
+$("u-reset").addEventListener("click",()=>{
+ if(confirm("Wipe the record on this device? Export first if you want a copy.")){DB={commitments:[],seq:1,log:[]};save();view="intake";render();toast("Blank slate.")}
+});
+
+render();
+</script>
+</body>
+</html>
