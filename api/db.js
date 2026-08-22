@@ -21,7 +21,7 @@
 const { getSupabase } = require('./_supabase');
 const { archiveDoc } = require('./_archive');
 
-const ALLOWED_COLLECTIONS = new Set(['appData', 'trafficSheets', 'oohSheets']);
+const ALLOWED_COLLECTIONS = new Set(['appData', 'trafficSheets', 'oohSheets', 'opsData']);
 
 const handler = async function(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();

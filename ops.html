@@ -199,6 +199,29 @@ select option{background:#12142a}
 .receipt{background:rgba(87,195,154,.07);border:1px solid rgba(87,195,154,.3);border-radius:5px;padding:13px 16px;margin-bottom:16px;font-size:12.5px;color:var(--body);display:none}
 .receipt .rh{font-size:9px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--pine);margin-bottom:7px}
 .receipt div.li{padding:2px 0}
+.tmwrap{overflow-x:auto;background:rgba(0,0,0,.30);border:1px solid var(--hair);border-radius:6px;padding:6px 0}
+.bnode{cursor:pointer}
+.bnode:hover rect{stroke-opacity:1}
+.bnode:hover text{fill:#fff}
+@keyframes brk{0%,100%{opacity:1}50%{opacity:.55}}
+.brisk path[fill="#e4738a"],.brisk circle{animation:brk 1.6s infinite}
+.chasetag{border:1px dashed rgba(228,115,138,.5);color:var(--ox);border-radius:3px;font-size:10.5px;font-weight:700;padding:6px 10px;cursor:pointer;animation:brk 2.2s infinite}
+.chasetag:hover{border-style:solid}
+.cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cwh{font-size:8.5px;font-weight:800;letter-spacing:.22em;color:var(--faint);text-align:center;padding:4px 0}
+.cday{background:var(--glass);border:1px solid rgba(255,255,255,.06);border-radius:4px;min-height:96px;padding:6px 7px;position:relative}
+.cday.wkd{background:rgba(255,255,255,.015)}
+.cday.out{opacity:.32}
+.cday.tod{border-color:var(--ox);box-shadow:0 0 0 1px var(--ox) inset}
+.cday.anc{border-color:var(--hair2);box-shadow:0 0 26px rgba(212,175,110,.14) inset}
+.cnum{font-family:'Fraunces',serif;font-size:13px;color:var(--mut);margin-bottom:4px}
+.cday.tod .cnum{color:var(--ox);font-weight:700}
+.cday.anc .cnum{color:var(--gold-hi)}
+.cev{display:flex;align-items:center;gap:5px;background:rgba(18,20,34,.9);border:1px solid rgba(255,255,255,.08);border-left:2.5px solid;border-radius:2px;font-size:9.5px;font-weight:600;color:var(--body);padding:3px 5px;margin-bottom:3px;cursor:pointer;white-space:nowrap;overflow:hidden}
+.cev:hover{color:var(--ink);border-color:var(--hair2)}
+.cdot{flex:0 0 6px;width:6px;height:6px;border-radius:50%}
+.cmore{font-size:8.5px;color:var(--faint);font-weight:700}
+@media(max-width:760px){.cday{min-height:64px}.cev{font-size:8px}}
 @media(max-width:760px){.duo{grid-template-columns:1fr}}
 @media(max-width:760px){
  .wrap{padding:0 14px 90px}
@@ -219,6 +242,7 @@ select option{background:#12142a}
     <button id="u-export">Export</button>
     <button id="u-import">Import</button>
     <button id="u-reset">Reset</button>
+    <span id="syncbadge" style="align-self:center;font-size:8.5px;font-weight:800;letter-spacing:.14em;color:var(--faint)">…</span>
   </div>
 </div>
 <input type="file" id="importfile" accept="application/json" style="display:none">
@@ -239,6 +263,7 @@ select option{background:#12142a}
 <section id="v-cal" style="display:none"></section>
 <section id="v-tickets" style="display:none"></section>
 <section id="v-rl" style="display:none"></section>
+<section id="v-lib" style="display:none"></section>
 <section id="v-ws" style="display:none"></section>
 
 </div>
@@ -257,8 +282,17 @@ select option{background:#12142a}
       <button class="btn sm" id="mail-send">Send it</button></div>
   </div>
 </div>
+<div class="mailmod" id="readmod" style="z-index:86">
+  <div class="mailhead">Read a contract — the record extracts, you confirm</div>
+  <div class="mailbody">
+    <div style="font-size:11.5px;color:var(--mut);margin-bottom:9px">Paste the contract text (or a forwarded email). On the deployed site this goes to Claude through Doom's own /api/planner and fills the intake — billing, anchors, obligations, needs. Nothing is created until you press Create.</div>
+    <textarea id="read-text" rows="9" placeholder="Paste the agreement text here…"></textarea>
+    <div class="mfoot"><span class="mn" id="read-status"></span><button class="btn ghost sm" id="read-cancel">Cancel</button><button class="btn sm" id="read-go">Read it</button></div>
+  </div>
+</div>
 <div class="toast" id="toastbox"></div>
 
+<script src="data-isci.js"></script>
 <script>
 /* ============================================================
    ATTICOR OPS — the record. Fully functional. Slightly blank.
@@ -460,9 +494,30 @@ function applyAug(d){d.commitments.forEach(c=>{const a=AUG[c.id];if(!a)return;
   else c[k]=JSON.parse(JSON.stringify(a[k]));
  })});return d}
 let DB=applyAug(seedDB());
-function save(){localStorage.setItem(KEY,JSON.stringify(DB))}
+const SYNC={mode:"checking",ts:0,timer:null};
+function setSyncBadge(){const b=$("syncbadge");if(!b)return;
+ b.textContent=SYNC.mode==="cloud"?"● CLOUD — SYNCED":SYNC.mode==="checking"?"…":"○ LOCAL — SYNCS WHEN DEPLOYED";
+ b.style.color=SYNC.mode==="cloud"?"var(--pine)":"var(--faint)";}
+async function apiDb(body){const r=await fetch("/api/db",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(body)});if(!r.ok)throw new Error("db "+r.status);return r.json()}
+function save(){localStorage.setItem(KEY,JSON.stringify(DB));if(SYNC.mode==="cloud")cloudSave()}
+function cloudSave(){clearTimeout(SYNC.timer);SYNC.timer=setTimeout(async()=>{try{
+ const r=await apiDb({collection:"opsData",doc:"record",action:"get"});
+ if(r.exists){const d=typeof r.data==="string"?JSON.parse(r.data):r.data;
+  if(d&&d.commitments&&d.commitments.length>0&&(!DB.commitments||DB.commitments.length===0)){toast("The cloud record has data — refusing to overwrite it with an empty one. (Doom's rule.)");return}}
+ const w=await apiDb({collection:"opsData",doc:"record",action:"set",data:{data:DB,ts:Date.now()}});
+ SYNC.ts=w.ts||Date.now();setSyncBadge();
+}catch(e){SYNC.mode="local";setSyncBadge()}},900)}
+async function cloudLoad(){try{
+ const r=await apiDb({collection:"opsData",doc:"record",action:"get"});
+ SYNC.mode="cloud";
+ if(r.exists&&r.data){const d=typeof r.data==="string"?JSON.parse(r.data):r.data;
+  if(d&&d.commitments&&d.commitments.length){DB=d;SYNC.ts=r.ts||0}}
+ else cloudSave();
+ setSyncBadge();render();
+}catch(e){SYNC.mode="local";setSyncBadge()}}
 function load(){try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&d.commitments)DB=d}}catch(e){}}
 load();
+setTimeout(cloudLoad,400);
 function logEv(kind,text){DB.log.unshift({t:Date.now(),kind:kind,text:text});DB.log=DB.log.slice(0,80);save()}
 
 /* ---------------- the date engine — every computed date knows why it exists ---------------- */
@@ -605,14 +660,22 @@ $("mail-cancel").addEventListener("click",closeMailX);
 $("mailov").addEventListener("click",closeMailX);
 $("mail-app").addEventListener("click",()=>{
  window.open("mailto:"+encodeURIComponent($("mail-to").value)+"?subject="+encodeURIComponent($("mail-subj").value)+"&body="+encodeURIComponent($("mail-body").textContent),"_blank")});
-$("mail-send").addEventListener("click",()=>{
- const x=curMailCtx;closeMailX();if(!x)return;
- if(x.ticket){const c=x.ticket.c,t=x.ticket.t;t.status="sent";t.to=$("mail-to").value;if(x.hub)t.hubst=1;
-  c.rec.unshift([fshort(TODAY)+" · out · Ticket",$("mail-subj").value+" — sent","evidence"]);
-  logEv("sent","<b>"+c.name+"</b> — ticket sent: "+$("mail-subj").value);DB.log[0].cid=c.id;save();
+$("mail-send").addEventListener("click",async()=>{
+ const x=curMailCtx;if(!x)return;
+ const to=$("mail-to").value.trim(),subj=$("mail-subj").value,body=$("mail-body").textContent;
+ let delivered=false;
+ if(/@/.test(to)){
+  try{const r=await fetch("/api/send-traffic",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",
+   body:JSON.stringify({to:to,cc:"emm.caban@atticor.ai",subject:subj,message:body})});
+   if(r.ok)delivered=true;}catch(e){}
+ }
+ closeMailX();
+ if(x.ticket){const c=x.ticket.c,t=x.ticket.t;t.status="sent";t.to=to;if(x.hub)t.hubst=1;
+  c.rec.unshift([fshort(TODAY)+" · out · Ticket",subj+(delivered?" — DELIVERED":" — sent"),"evidence"]);
+  logEv("sent","<b>"+c.name+"</b> — ticket "+(delivered?"DELIVERED via the MP bridge":"sent")+": "+subj);DB.log[0].cid=c.id;save();
   if(view==="ws")drawWS(c.id);if(view==="tickets")drawTix();nav();
-  toast(x.hub?"Sent — MerchHub owns it now. Ordered → shipped → delivered land back on this record; you never chase.":"Sent — evidence stamped, the operation moved.");}
- else{logEv("sent","Letter sent — "+$("mail-subj").value);save();toast("Sent — on the record.")}});
+  toast((delivered?"Delivered — real email, out through the same bridge Doom's traffic uses. ":"Recorded as sent (the live bridge sends for real on the deployed site). ")+(x.hub?"MerchHub owns it now — ordered → shipped → delivered land back here.":"Evidence stamped, the operation moved."));}
+ else{logEv("sent","Letter "+(delivered?"DELIVERED":"sent")+" — "+subj);save();toast(delivered?"Delivered — real email, on the record.":"Recorded — sends for real on the deployed site.")}});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMailX()});
 function ticketMail(c,t){openMailX({title:"Ticket — "+c.name,to:t.to||"",subj:t.subj,body:t.body,ticket:{c:c,t:t},hub:!!(c.needs||[]).find(n=>n.mail===t.id&&n.hub)})}
 
@@ -634,6 +697,8 @@ function genMonthly(){
    cc.forEach(a=>out+="    NO DATE  "+a.what+" — chasing "+a.owner+"\n");
   });
  });
+ const pays=allActs().filter(a=>a.kind==="pay"&&a.d&&a.d>=start&&a.d<=end&&!a.done);
+ out+="\nMONEY — SEPTEMBER\n"+(pays.length?pays.map(a=>{const c=DB.commitments.find(x=>x.id===a.cid);return "  "+fshort(a.d)+"  "+(c?c.name:"")+" — "+a.what.split(" — ")[0]}).join("\n"):"  no payments fall in September")+"\n";
  out+="\nEvery date is computed from an anchor and carries its derivation. Reply with a correction and the record updates — with provenance.\n— Emm";
  return out;
 }
@@ -663,24 +728,32 @@ function genRecapGolf(){
 }
 
 /* ---------------- calendar — the engine's one schedule ---------------- */
+let calM=(()=>{const d=new Date(TODAY);d.setDate(1);return d})();
 function drawCal(){
- const acts=allActs().filter(a=>a.d&&dtd(a.d)>=-2&&dtd(a.d)<=60&&!a.done);
- const later=allActs().filter(a=>a.d&&dtd(a.d)>60).length;
- let lastWk=null,h='<h2 class="sec">The calendar <span class="tag">One schedule — every dated action with its reason. Hover for why</span></h2><div class="rule"></div><div class="xband">';
- acts.forEach(a=>{
-  const wk=new Date(a.d);wk.setDate(wk.getDate()-((wk.getDay()+6)%7));
-  const wkKey=iso(wk);
-  if(wkKey!==lastWk){lastWk=wkKey;h+='<div style="font-size:8.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);padding:10px 18px 4px;border-bottom:1px solid rgba(255,255,255,.05)">week of '+fshort(wk)+'</div>'}
-  const kc=KINDCHIP[a.kind]||["#8b8fa3",a.kind];const c=DB.commitments.find(x=>x.id===a.cid);
-  h+='<div class="xrow" style="cursor:pointer" data-cal="'+a.cid+'" '+(a.why?'title="why: '+a.why.replace(/"/g,"&quot;")+'"':'')+'>'+
-   '<span style="flex:0 0 64px;font-size:10px;font-weight:800;letter-spacing:.08em;color:'+(dtd(a.d)===0?"var(--ox)":"var(--gold)")+'">'+(dtd(a.d)===0?"TODAY":fshort(a.d))+'</span>'+
-   '<span style="flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:'+brandColor(c?c.brand:"")+'"></span>'+
-   '<span class="xline"><b>'+a.cname.split(" — ")[0]+'</b> — '+a.what.split(" — ")[0]+(a.owner&&a.owner!=="Emm"?' · '+a.owner:'')+'</span>'+
-   '<span class="kchip" style="color:'+kc[0]+';border-color:'+kc[0]+'66">'+kc[1]+'</span></div>';
- });
- h+='</div><div class="homefoot">…'+later+' more dated actions further out — same calendar, same reasons. Chases with no date live on Next move.</div>';
- $("v-cal").innerHTML=h;
- document.querySelectorAll("[data-cal]").forEach(el=>el.addEventListener("click",()=>openWS(+el.dataset.cal)));
+ const first=new Date(calM);
+ const start=new Date(first);start.setDate(1-((first.getDay()+6)%7));
+ const acts=allActs().filter(a=>a.d&&!a.done);
+ let cells="";
+ for(let i2=0;i2<42;i2++){
+  const d=addDays(start,i2);const inM=d.getMonth()===calM.getMonth();
+  const dayActs=acts.filter(a=>iso(a.d)===iso(d));
+  const isAnchor=dayActs.some(a=>a.base&&(a.off||0)===0);
+  cells+='<div class="cday'+(inM?"":" out")+(iso(d)===iso(TODAY)?" tod":"")+(isAnchor?" anc":"")+((d.getDay()===0||d.getDay()===6)?" wkd":"")+'">'+
+   '<div class="cnum">'+d.getDate()+'</div>'+
+   dayActs.slice(0,3).map(a=>{const c=DB.commitments.find(x=>x.id===a.cid);const kc=KINDCHIP[a.kind]||["#8b8fa3"];
+    return '<div class="cev" data-ws="'+a.cid+'" style="border-left-color:'+kc[0]+'" title="'+esc(a.cname+" — "+a.what+(a.why?" · why: "+a.why:""))+'"><span class="cdot" style="background:'+brandColor(c?c.brand:"")+'"></span>'+esc(a.what.split(" — ")[0].slice(0,17))+'</div>'}).join("")+
+   (dayActs.length>3?'<div class="cmore">+'+(dayActs.length-3)+'</div>':"")+
+   '</div>';
+ }
+ $("v-cal").innerHTML='<div style="display:flex;align-items:baseline;gap:16px;margin:8px 0 14px;flex-wrap:wrap">'+
+  '<h2 class="sec" style="margin:0">'+calM.toLocaleDateString("en-US",{month:"long",year:"numeric"})+' <span class="tag">Every dated action in its day — anchors glow, today is ringed</span></h2>'+
+  '<span style="flex:1"></span><button class="btn ghost sm" id="cal-prev">←</button><button class="btn ghost sm" id="cal-today">Today</button><button class="btn ghost sm" id="cal-next">→</button></div>'+
+  '<div class="cgrid">'+["MON","TUE","WED","THU","FRI","SAT","SUN"].map(w=>'<div class="cwh">'+w+'</div>').join("")+cells+'</div>'+
+  '<div class="homefoot">Hover an entry for its why. Tap it to stand in the operation. Chases with no date live on the Board’s parked strip and Next move.</div>';
+ $("cal-prev").addEventListener("click",()=>{calM.setMonth(calM.getMonth()-1);drawCal()});
+ $("cal-next").addEventListener("click",()=>{calM.setMonth(calM.getMonth()+1);drawCal()});
+ $("cal-today").addEventListener("click",()=>{calM=new Date(TODAY);calM.setDate(1);drawCal()});
+ document.querySelectorAll("#v-cal [data-ws]").forEach(el=>el.addEventListener("click",()=>openWS(+el.dataset.ws)));
 }
 
 /* ---------------- tickets — a lens on what the operations produced ---------------- */
@@ -715,6 +788,10 @@ function drawRL(){
   '<div class="rpanel"><h3>Committed by brand</h3><div class="ps">Contract vs final — drift never hides. Proposals excluded.</div>'+
    '<table class="rtable"><tr><th>Brand</th><th>#</th><th style="text-align:right">Committed</th><th style="text-align:right">Drift</th></tr>'+
    committed.map(r=>'<tr><td><b style="color:'+brandColor(r.b)+'">'+r.b+'</b></td><td>'+r.n+'</td><td class="m">'+fm(r.tot)+'</td><td class="m" style="color:'+(r.drift?"var(--ox)":"var(--faint)")+'">'+(r.drift?"+"+fm(r.drift):"—")+'</td></tr>').join("")+'</table>'+
+   '<h3 style="font-size:14px;margin-top:16px">Budget — planned vs committed</h3>'+
+   '<table class="rtable"><tr><th>Brand</th><th style="text-align:right">Planned</th><th style="text-align:right">Committed</th><th style="text-align:right">Room</th></tr>'+
+   committed.map(r=>{ensureLib();const pl=+DB.budgets[r.b]||0;const room=pl?pl-r.tot:0;
+    return '<tr><td><b style="color:'+brandColor(r.b)+'">'+r.b+'</b></td><td class="m"><input data-bud="'+esc(r.b)+'" type="number" value="'+(pl||"")+'" placeholder="set" style="width:110px;text-align:right;padding:5px 8px"></td><td class="m">'+fm(r.tot)+'</td><td class="m" style="color:'+(pl?(room>=0?"var(--pine)":"var(--ox)"):"var(--faint)")+'">'+(pl?(room>=0?fm(room):"−"+fm(-room)):"—")+'</td></tr>'}).join("")+'</table>'+
    '<h3 style="font-size:14px;margin-top:16px">Renewals — marketing only</h3>'+
    '<table class="rtable"><tr><td><b>OKC Thunder</b><div style="font-size:10px;color:var(--faint)">→ $301,925 final season</div></td><td>Sep 2028</td><td class="m"><span class="pill warn">~2 yrs</span></td></tr>'+
    '<tr><td><b>Barons sign</b><div style="font-size:10px;color:var(--faint)">3-yr · $135K total</div></td><td>2028</td><td class="m"><span class="pill warn">~2 yrs</span></td></tr>'+
@@ -724,6 +801,7 @@ function drawRL(){
   '<div class="rpanel"><h3>The Monthly Letter</h3><div class="ps">Hazel’s ask — everything running next month, Brand → DMA → dates. Generated from the calendar.</div><button class="btn sm" data-lt="monthly">Preview September</button></div>'+
   '<div class="rpanel"><h3>Content brief — Michelle</h3><div class="ps">Every album, every slot, computed from capture pipelines.</div><button class="btn sm" data-lt="michelle">Preview the brief</button></div>'+
   '<div class="rpanel"><h3>Event recap — on wrap</h3><div class="ps">Assembles from results as evidence arrives.</div><button class="btn sm" data-lt="recap">Preview Golf recap</button></div></div>';
+ document.querySelectorAll("[data-bud]").forEach(inp=>inp.addEventListener("change",()=>{ensureLib();DB.budgets[inp.dataset.bud]=+inp.value||0;save();drawRL();toast("Budget noted — the room column watches it against committed. Approval still lives with Jessica.")}));
  document.querySelectorAll("[data-lt]").forEach(b=>b.addEventListener("click",()=>{
   const k=b.dataset.lt;
   const L={monday:{title:"The Monday Note",to:"jessica@atticor.ai",subj:"Monday note — week of "+fshort(TODAY),body:genMonday()},
@@ -733,17 +811,62 @@ function drawRL(){
   openMailX(L);
  }));
 }
+/* ---------------- libraries — disclaimers, tags, Doom's assets ---------------- */
+function ensureLib(){if(!DB.lib)DB.lib={
+ disclaimers:[
+  {st:"IL",v:"v3",t:"“Lerner and Rowe is responsible for this advertisement. [Name] is licensed in Illinois. Prior results do not guarantee a similar outcome.”",cleared:"Ethics · Apr 25"},
+  {st:"AL",v:"v2",t:"“No representation is made that the quality of the legal services to be performed is greater than the quality of legal services performed by other lawyers.”",cleared:"Ethics · Feb 12"},
+  {st:"AZ",v:"v4",t:"“Lerner and Rowe is responsible for this advertising. Case results depend on a variety of factors unique to each case.”",cleared:"Ethics · Jan 30"}],
+ tags:["Auto Accidents","Brand","Community","Children","Veterans","Hispanic","Stadium","Cause","Event","Giveaway"]};
+ if(!DB.budgets)DB.budgets={};}
+function drawLib(){
+ ensureLib();
+ const q=(window.__libq||"");
+ const hits=(typeof D_I!=="undefined"?D_I:[]).filter(x=>{
+  if(!q)return false;const t=(x[0]+" "+x[1]+" "+x[3]+" "+x[4]+" "+x[8]).toLowerCase();return t.indexOf(q.toLowerCase())>=0}).slice(0,14);
+ $("v-lib").innerHTML='<h2 class="sec">The disclaimer library <span class="tag">Lives here — Ethics-cleared language, suggested into every script</span></h2><div class="rule"></div>'+
+  '<div class="xband">'+DB.lib.disclaimers.map((d,i)=>'<div class="xrow"><span style="flex:0 0 56px"><span class="pill warn">'+d.st+' · '+d.v+'</span></span><span class="xline">'+esc(d.t)+'<div style="font-size:10px;color:var(--pine);margin-top:3px">cleared: '+esc(d.cleared)+'</div></span><button class="xgo" data-dcopy="'+i+'">Copy into a script</button></div>').join("")+'</div>'+
+  '<div style="margin-top:10px"><button class="btn ghost sm" id="lib-addd">+ Add a disclaimer</button></div>'+
+  '<h2 class="sec">The tag library <span class="tag">One vocabulary across intake, assets, and reporting</span></h2><div class="rule"></div>'+
+  '<div class="chips">'+DB.lib.tags.map((t,i)=>'<span class="chip" data-tagdel="'+i+'" title="click to remove">'+esc(t)+'</span>').join("")+'<button class="mini" id="lib-addt">+ tag</button></div>'+
+  '<h2 class="sec">Doom&#39;s asset registry <span class="tag">Linked live — '+(typeof D_I!=="undefined"?D_I.length:0)+' ISCIs, searchable, never re-requested</span></h2><div class="rule"></div>'+
+  '<input type="text" id="lib-q" placeholder="Search code, title, brand, market, tag… try “Auto Accident” or “BRM”" value="'+esc(q)+'" style="max-width:460px">'+
+  (q?(hits.length?'<div class="xband" style="margin-top:10px">'+hits.map(x=>'<div class="xrow"><span style="flex:0 0 150px;font-size:11px;font-weight:800;color:var(--gold)">'+esc(x[0])+'</span><span class="xline">'+esc(x[1])+' <span style="color:var(--faint)">· '+esc(x[2])+' · :'+esc(x[5])+' · '+esc(x[3])+' · '+esc(x[4])+(x[8]?' · '+esc(x[8]):'')+'</span></span><span class="pill '+(x[7]?"ok":"dim")+'">'+(x[7]?"active":"inactive")+'</span></div>').join("")+'</div>'
+   :'<div class="quiet" style="margin-top:10px">Nothing matches — a creative ticket is honest here.</div>')
+  :'<div class="quiet" style="margin-top:10px">Type to search the registry Doom already maintains. What lives here never becomes a ticket.</div>');
+ const lq=$("lib-q");lq.addEventListener("input",()=>{window.__libq=lq.value;drawLib();const nq=$("lib-q");nq.focus();nq.setSelectionRange(nq.value.length,nq.value.length)});
+ document.querySelectorAll("[data-dcopy]").forEach(b=>b.addEventListener("click",()=>{const d=DB.lib.disclaimers[+b.dataset.dcopy];
+  openMailX({title:"Script draft — pre-aligned",to:"",subj:"Script draft — "+d.st+" disclaimer "+d.v,body:"[Script body]\n\nRequired disclaimer ("+d.st+", "+d.v+", "+d.cleared+"):\n"+d.t+"\n\nDrafted from the library — arrives at Ethics pre-aligned."})}));
+ $("lib-addd").addEventListener("click",()=>{const st=prompt("State (e.g. TN):");if(!st)return;const t=prompt("Disclaimer text:");if(!t)return;
+  DB.lib.disclaimers.push({st:st.toUpperCase(),v:"v1",t:t,cleared:"pending Ethics"});save();drawLib();toast("Added — it clears when Ethics approves, and every approval feeds the library.")});
+ $("lib-addt").addEventListener("click",()=>{const t=prompt("New tag:");if(!t)return;DB.lib.tags.push(t);save();drawLib()});
+ document.querySelectorAll("[data-tagdel]").forEach(b=>b.addEventListener("click",()=>{DB.lib.tags.splice(+b.dataset.tagdel,1);save();drawLib()}));
+}
 /* the doors */
-document.querySelectorAll(".doorchip").forEach(d=>d.addEventListener("click",()=>{
+document.querySelectorAll(".doorchip").forEach(d=>d.addEventListener("click",async()=>{
  const k=d.dataset.door;
- toast(k==="MP@atticor.ai"?"The shared mailbox — live today. Forwarded contracts, invoices and confirmations land here, get read, and FEED the intake. Nothing files itself without you.":
-  k==="Contracts"?"Drop a contract — even a scan. Vision-read: billing, deadlines, ship-to, obligations pulled into the intake with a receipt showing exactly what the paper filled.":
-  "Hazel's Notion events DB, the spreadsheets, SharePoint live docs — linked, never copied. Changes surface as held updates with provenance; the human chooses truth.");
+ if(k==="Contracts"){view="intake";render();setTimeout(()=>{const b=$("feed-read");if(b)b.click()},200);return}
+ if(k==="MP@atticor.ai"){toast("The shared mailbox — live in the org today. Forward a contract or invoice there, paste it into “Read a contract”, and the record extracts it. Direct inbox ingestion is the next build on this same rail.");return}
+ // Notion — the real door
+ toast("Reaching Hazel's Notion through /api/campaigns…");
+ try{
+  const r=await fetch("/api/campaigns",{credentials:"include"});
+  if(!r.ok)throw new Error("campaigns "+r.status);
+  const data=await r.json();
+  const rows=(data.campaigns||[]).filter(x=>x.name);
+  const have=new Set(DB.commitments.map(c=>c.name.toLowerCase()));
+  const fresh=rows.filter(x=>!have.has(String(x.name).toLowerCase()));
+  openMailX({title:"Hazel's Notion — "+rows.length+" campaigns read, "+fresh.length+" not yet in the record",to:"—",
+   subj:"Import happens one row at a time — nothing files itself",
+   body:fresh.slice(0,25).map(x=>"• "+x.name+" ("+(x.brand||"?")+(x.eventDate?" · "+x.eventDate:x.flightStart?" · "+x.flightStart:"")+(x.cost?" · $"+Number(x.cost).toLocaleString():"")+") — status: "+(x.status||"?")).join("\n")||"Everything in Notion already has an operation here.",});
+  window.__notionRows=fresh;
+  toast("Live read from Notion. To import a row: Intake → Read a contract works for agreements; one-click row import lands in the next push on this rail.");
+ }catch(e){toast("Notion answers on the deployed site (needs NOTION_API_KEY in Vercel + session). The door is /api/campaigns — already built into Doom, read-only, never clobbers.")}
 }));
 
 /* ---------------- navigation ---------------- */
-const VIEWS=[["next","Next move"],["cal","Calendar"],["board","Board"],["intake","Intake"],["tickets","Tickets"],["rl","Reports & Letters"]];
-let view=DB.commitments.length?"next":"intake";
+const VIEWS=[["board","The Board"],["cal","Calendar"],["next","Next move"],["intake","Intake"],["tickets","Tickets"],["rl","Reports & Letters"],["lib","Libraries"]];
+let view=DB.commitments.length?"board":"intake";
 let curWS=null,wsSel=null,wsShift=null;
 function nav(){
  $("nav").innerHTML=VIEWS.map(v=>'<button class="'+(v[0]===view?"on":"")+'" data-v="'+v[0]+'">'+v[1]+(v[0]==="next"&&xCount()?'<span class="cnt">'+xCount()+'</span>':"")+'</button>').join("");
@@ -751,8 +874,8 @@ function nav(){
 }
 function render(){
  nav();
- ["next","x","cal","board","intake","tickets","rl","ws"].forEach(k=>{const el=$("v-"+k);if(el)el.style.display=(view===k?"block":"none")});
- if(view==="next")drawNext();if(view==="x")drawX();if(view==="cal")drawCal();if(view==="board")drawBoard();if(view==="intake")drawIntake();if(view==="tickets")drawTix();if(view==="rl")drawRL();if(view==="ws")drawWS(curWS);
+ ["next","x","cal","board","intake","tickets","rl","lib","ws"].forEach(k=>{const el=$("v-"+k);if(el)el.style.display=(view===k?"block":"none")});
+ if(view==="next")drawNext();if(view==="x")drawX();if(view==="cal")drawCal();if(view==="board")drawBoard();if(view==="intake")drawIntake();if(view==="tickets")drawTix();if(view==="rl")drawRL();if(view==="lib")drawLib();if(view==="ws")drawWS(curWS);
  window.scrollTo(0,0);
 }
 
@@ -926,35 +1049,85 @@ function nextMove(c){
  const a=actsFor(c).filter(x=>x.d&&dtd(x.d)>=0&&!x.done).sort((p,q)=>p.d-q.d)[0];
  return a?("→ "+fshort(a.d)+" · "+a.what.split(" — ")[0]):"→ no future dates";
 }
+function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;")}
 function drawBoard(){
  if(!DB.commitments.length){
-  $("v-board").innerHTML='<div class="hero"><div class="glyph">◆</div><h3>Nothing on the board yet.</h3><p>Brand → market → commitment, each opening into its operation. It fills as you feed the intake.</p><button class="btn" id="beginbtn2">Open the intake →</button></div>';
-  $("beginbtn2").addEventListener("click",()=>{view="intake";render()});
-  return;
+  $("v-board").innerHTML='<div class="hero"><div class="glyph">◆</div><h3>Nothing on the board yet.</h3><p>The time-map fills as you feed the intake.</p><button class="btn" id="beginbtn2">Open the intake →</button></div>';
+  $("beginbtn2").addEventListener("click",()=>{view="intake";render()});return;
  }
+ const t0=addDays(TODAY,-10), t1=addDays(TODAY,132);
+ const PPD=10, W=Math.round((t1-t0)/86400000)*PPD+170;
+ const X=d=>170+Math.round((d-t0)/86400000*PPD);
  const brands=[...new Set(DB.commitments.map(c=>c.brand))];
- $("v-board").innerHTML=brands.map(b=>{
-  const rows=DB.commitments.filter(c=>c.brand===b);
-  const tot=rows.reduce((x,c)=>x+(+c.money.f||0),0);
-  const dmas=[...new Set(rows.map(c=>c.dma))];
-  return '<div class="bhead"><span class="bn" style="color:'+brandColor(b)+'">'+b+'</span><span class="bs">'+rows.length+' commitment'+(rows.length===1?"":"s")+' · '+fm(tot)+'</span><span class="bl"></span></div>'+
-   dmas.map(d=>'<div class="dmahead">'+d+'</div><div class="cards">'+rows.filter(c=>c.dma===d).map(c=>{
-    const st=PHPILL[phaseOf(c)];
-    return '<div class="dcard" data-id="'+c.id+'"><div class="toprow"><span class="nm">'+c.name+'</span><span class="amt">'+fm(c.money.f)+'</span></div>'+
-     '<div class="meta">'+(c.kind||"")+(c.notes?" · "+c.notes.slice(0,60):"")+'</div>'+
-     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span class="nxt">'+nextMove(c)+'</span><span class="pill '+st[0]+'">'+st[1]+'</span></div></div>';
-   }).join("")+'</div>').join("");
- }).join("");
- document.querySelectorAll(".dcard").forEach(el=>el.addEventListener("click",()=>openWS(+el.dataset.id)));
+ const riskCids=new Set(riskList().map(r=>r.cid));
+ let y=46,rows=[],heads=[],chased=[];
+ brands.forEach(b=>{
+  const cs=DB.commitments.filter(c=>c.brand===b);
+  const dated=cs.filter(c=>actsFor(c).some(a=>a.d));
+  const undated=cs.filter(c=>!actsFor(c).some(a=>a.d));
+  chased=chased.concat(undated);
+  if(!dated.length&&!undated.length)return;
+  heads.push({b:b,y:y,n:cs.length,tot:cs.filter(c=>!/PROPOSAL/.test(c.notes||"")).reduce((x,c)=>x+(+c.money.f||0),0)});
+  y+=26;
+  dated.forEach(c=>{rows.push({c:c,y:y});y+=40});
+  y+=16;
+ });
+ const H=y+26;
+ let svg='<svg width="'+W+'" height="'+H+'" style="display:block">';
+ let m=new Date(t0);m.setDate(1);
+ while(m<t1){const mm=new Date(m);if(mm>=t0)svg+='<line x1="'+X(mm)+'" y1="34" x2="'+X(mm)+'" y2="'+(H-18)+'" stroke="rgba(255,255,255,.06)"/><text x="'+(X(mm)+7)+'" y="24" fill="#8b8fa3" font-size="10" font-weight="800" letter-spacing="3">'+mm.toLocaleDateString("en-US",{month:"short"}).toUpperCase()+'</text>';m.setMonth(m.getMonth()+1)}
+ svg+='<line x1="'+X(TODAY)+'" y1="30" x2="'+X(TODAY)+'" y2="'+(H-18)+'" stroke="#e4738a" stroke-width="1.5" opacity=".85"/><text x="'+(X(TODAY)-18)+'" y="'+(H-6)+'" fill="#e4738a" font-size="9" font-weight="800" letter-spacing="2">TODAY</text>';
+ heads.forEach(hd=>{
+  svg+='<text x="8" y="'+(hd.y+15)+'" fill="'+brandColor(hd.b)+'" font-size="13" font-weight="700" font-family="Fraunces,serif">'+esc(hd.b)+'</text>';
+  svg+='<text x="8" y="'+(hd.y+15)+'" dx="0" dy="12" fill="#5c6072" font-size="8.5" font-weight="700" letter-spacing="1.5">'+hd.n+' · '+fm(hd.tot).replace("$","$")+'</text>';
+  svg+='<line x1="8" y1="'+(hd.y+22)+'" x2="'+(W-16)+'" y2="'+(hd.y+22)+'" stroke="'+brandColor(hd.b)+'" stroke-opacity=".18"/>';
+ });
+ rows.forEach(r=>{
+  const c=r.c,col=brandColor(c.brand);
+  const acts=actsFor(c).filter(a=>a.d);
+  const ds=acts.map(a=>a.d).sort((a,b)=>a-b);
+  let sD=ds[0],eD=ds[ds.length-1];
+  if(eD<t0||sD>t1){sD=sD>t1?t1:sD;} 
+  const cs=sD<t0?t0:sD, ce=eD>t1?t1:eD;
+  const x1=X(cs),x2=Math.max(X(ce),x1+10);
+  const anch=Object.keys(c.anchors||{}).map(k=>D(c.anchors[k].date)).sort((a,b)=>a-b);
+  svg+='<g class="bnode'+(riskCids.has(c.id)?" brisk":"")+'" data-ws="'+c.id+'">';
+  svg+='<rect x="'+(x1-4)+'" y="'+(r.y-2)+'" width="'+(x2-x1+90)+'" height="36" fill="transparent"/>';
+  svg+='<rect x="'+x1+'" y="'+(r.y+14)+'" width="'+(x2-x1)+'" height="9" rx="4.5" fill="'+col+'" opacity="0.18" stroke="'+col+'" stroke-opacity="0.5"/>';
+  if(anch.length){const a1=anch[0]<t0?t0:anch[0],a2=anch[anch.length-1]>t1?t1:anch[anch.length-1];
+   const ax1=X(a1),ax2=Math.max(X(a2),ax1+5);
+   svg+='<rect x="'+ax1+'" y="'+(r.y+14)+'" width="'+(ax2-ax1)+'" height="9" rx="4.5" fill="'+col+'" opacity="0.6"/>';}
+  acts.forEach(a=>{if(a.d<t0||a.d>t1)return;const ax=X(a.d);
+   if(a.base&&(a.off||0)===0)svg+='<path d="M'+ax+' '+(r.y+9)+' l6.5 9.5 -6.5 9.5 -6.5 -9.5 z" fill="#d4af6e" stroke="#0a0c14" stroke-width="1"><title>'+esc((c.anchors[a.base]?c.anchors[a.base].label:"anchor")+" · "+fshort(a.d))+'</title></path>';
+   else if(a.kind==="pay"&&!a.done)svg+='<path d="M'+ax+' '+(r.y+12)+' l5 6.5 -5 6.5 -5 -6.5 z" fill="#57c39a"><title>'+esc(a.what+" · "+fshort(a.d))+'</title></path>';
+   else if(a.kind==="gate"&&!a.done)svg+='<path d="M'+ax+' '+(r.y+12)+' l5 6.5 -5 6.5 -5 -6.5 z" fill="#e4738a"><title>'+esc(a.what+" · "+fshort(a.d))+'</title></path>';
+   else if(a.kind==="back"&&!a.done)svg+='<circle cx="'+ax+'" cy="'+(r.y+18.5)+'" r="2.8" fill="#e4738a" opacity=".85"><title>'+esc("due back: "+a.what+" · "+fshort(a.d))+'</title></circle>';
+  });
+  const nm=c.name.length>34?c.name.slice(0,33)+"…":c.name;
+  svg+='<text x="'+x1+'" y="'+(r.y+8)+'" fill="#f2ecdf" font-size="11.5" font-weight="600">'+esc(nm)+' <tspan fill="#8b8fa3" font-size="9.5" font-weight="500">· '+esc(c.dma)+' · '+fm(c.money.f)+(/PROPOSAL/.test(c.notes||"")?" · proposal":"")+'</tspan></text>';
+  svg+='</g>';
+ });
+ svg+='</svg>';
+ const M=movesList();
+ let h='<div style="margin:6px 0 14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">'+
+  (M.length?'<div style="flex:1;min-width:260px;font-size:13px;color:var(--body)"><span style="font-size:8.5px;font-weight:800;letter-spacing:.2em;color:var(--gold)">THE MOVE · </span><b style="color:var(--ink)">'+M[0].do+'</b></div>'+
+   (M[0].judg?'<button class="btn ghost sm" data-mvgo="1">Judge it — Next move</button>':'<button class="btn sm" data-mvrun="1">Do it</button><button class="btn ghost sm" data-mvgo="1">See the queue</button>')
+  :'<div style="flex:1;font-size:13px;color:var(--faint);font-style:italic">No move required — everything is running to plan.</div>')+
+  '<span style="font-size:9px;color:var(--faint);letter-spacing:.12em">◆ ANCHOR · <span style="color:#57c39a">◆</span> PAYMENT · <span style="color:#e4738a">◆</span> CONTRACT · <span style="color:#e4738a">●</span> DUE BACK · bright span = live window</span></div>';
+ h+='<div class="tmwrap">'+svg+'</div>';
+ if(chased.length)h+='<div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="font-size:8.5px;font-weight:800;letter-spacing:.2em;color:var(--ox)">NO DATE — PARKED OFF THE MAP</span>'+chased.map(c=>'<span class="chasetag" data-ws="'+c.id+'">'+esc(c.name.split(" — ")[0])+' · '+esc(c.brand)+'</span>').join("")+'</div>';
+ $("v-board").innerHTML=h;
+ document.querySelectorAll("#v-board [data-ws]").forEach(el=>el.addEventListener("click",()=>openWS(+el.dataset.ws)));
+ const mr=document.querySelector("[data-mvrun]");if(mr)mr.addEventListener("click",e=>{e.stopPropagation();runMove(movesList()[0])});
+ document.querySelectorAll("[data-mvgo]").forEach(b=>b.addEventListener("click",()=>{view="next";render()}));
 }
-
-/* ---------------- intake — the front door ---------------- */
 let inkNeeds={};
 function drawIntake(){
  const brandOpts=CFG.brands.map(b=>'<option>'+b.n+'</option>').join("");
  $("v-intake").innerHTML='<h2 class="sec">Intake <span class="tag">The front door — the form leads, evidence feeds it</span></h2><div class="rule"></div>'+
  '<div class="feedstrip"><span class="fk">Feed the intake</span>'+
- '<button class="btn ghost sm" id="feed-contract">Attach a contract</button>'+
+ '<button class="btn sm" id="feed-read">Read a contract — AI</button>'+
+ '<button class="btn ghost sm" id="feed-contract">Sample contract</button>'+
  '<button class="btn ghost sm" data-feedtoast="Paste a forwarded email from MP@ — the record reads it and fills what it can. You check it, then create.">Paste an email</button>'+
  '<button class="btn ghost sm" data-feedtoast="Link a row from Hazel’s sheet or the Notion events DB — synced, never copied; conflicts surface for you to choose truth.">Link a sheet / Notion row</button>'+
  '<span style="flex:1;font-size:10.5px;color:var(--faint);font-style:italic;min-width:180px">Evidence fills the form — billing, vendor, deadlines, needs. You start the record; the paper does the typing.</span></div>'+
@@ -1030,6 +1203,43 @@ function drawIntake(){
   toast("Built. "+c.sched.length+" actions computed from your anchor"+(Object.keys(anchors).length>1?"s":"")+" — every date carries its why. Tickets drafted, nothing sent.");
   openWS(c.id);
  });
+ const fr=$("feed-read");if(fr)fr.addEventListener("click",()=>{$("mailov").classList.add("open");$("readmod").classList.add("open");$("read-status").textContent="";});
+ const rc2=$("read-cancel");if(rc2&&!rc2._w){rc2._w=1;rc2.addEventListener("click",()=>{$("readmod").classList.remove("open");$("mailov").classList.remove("open")});}
+ const rg=$("read-go");if(rg&&!rg._w){rg._w=1;rg.addEventListener("click",async()=>{
+  const txt=$("read-text").value.trim();
+  if(txt.length<40){$("read-status").textContent="Paste the agreement text first.";return}
+  $("read-status").textContent="Reading…";
+  try{
+   const sys="You extract marketing commitment data from contracts and emails for Atticor Media. Brands: Lerner & Rowe, Parrish DeVaughn, Wettermark Keith, Postman Law, Keches Law. Return ONLY minified JSON, no prose, shape: {\"name\":str,\"brand\":str,\"dma\":str,\"kind\":one of [\"Sponsorship / Event\",\"Media flight\",\"Partnership\",\"Vendor agreement\",\"Appearance\"],\"money\":{\"c\":num,\"f\":num},\"shipTo\":str,\"notes\":str,\"anchors\":[{\"label\":str,\"date\":\"YYYY-MM-DD\"}],\"payments\":[[\"YYYY-MM-DD\",num,str]],\"theyOwe\":[str],\"needs\":{\"creative\":bool,\"ethics\":bool,\"merch\":bool,\"staffing\":bool,\"seo\":bool,\"social\":bool,\"utms\":bool,\"album\":bool}}. Use null-safe empty values when unknown. notes must cite where key facts came from.";
+   const r=await fetch("/api/planner",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",
+    body:JSON.stringify({model:"claude-sonnet-5",max_tokens:2000,system:sys,messages:[{role:"user",content:txt}]})});
+   if(!r.ok)throw new Error("planner "+r.status);
+   const data=await r.json();
+   let raw=(data.content&&data.content[0]&&data.content[0].text)||"";
+   raw=raw.replace(/^```json\s*/i,"").replace(/^```\s*/,"").replace(/```\s*$/,"").trim();
+   const j=JSON.parse(raw);
+   $("readmod").classList.remove("open");$("mailov").classList.remove("open");
+   if(j.name)$("f-name").value=j.name;
+   if(j.brand&&CFG.brands.some(b=>b.n===j.brand)){$("f-brand").value=j.brand;$("f-brand").dispatchEvent(new Event("change"))}
+   if(j.dma)$("f-dma").value=j.dma;
+   if(j.kind)$("f-kind").value=j.kind;
+   if(j.money){if(j.money.c)$("f-mc").value=j.money.c;if(j.money.f&&j.money.f!==j.money.c)$("f-mf").value=j.money.f}
+   if(j.shipTo)$("f-ship").value=j.shipTo;
+   if(j.notes)$("f-notes").value=j.notes;
+   if(j.anchors&&j.anchors.length){const ar=document.querySelector("#anch-list .rl");
+    if(ar){ar.querySelector(".a-l").value=j.anchors[0].label||"Event day";ar.querySelector(".a-d").value=j.anchors[0].date||"";ar.querySelector(".a-d").dispatchEvent(new Event("change"))}
+    j.anchors.slice(1).forEach(a=>{$("anch-add").click();const rows=document.querySelectorAll("#anch-list .rl");const last=rows[rows.length-1];last.querySelector(".a-l").value=a.label||"";last.querySelector(".a-d").value=a.date||""});}
+   (j.payments||[]).forEach(pm=>{$("pay-add").click();const rows=document.querySelectorAll("#pay-list .rl");const last=rows[rows.length-1];last.querySelector(".p-d").value=pm[0]||"";last.querySelector(".p-a").value=pm[1]||"";last.querySelector(".p-l").value=pm[2]||""});
+   if(j.theyOwe&&j.theyOwe.length)$("f-owe").value=j.theyOwe.join("\n");
+   Object.keys(j.needs||{}).forEach(k=>{if(j.needs[k]&&!inkNeeds[k]){inkNeeds[k]=true;const ch=document.querySelector('.chip[data-n="'+k+'"]');if(ch)ch.classList.add("on")}});
+   const rc=$("receipt");rc.style.display="block";
+   rc.innerHTML='<div class="rh">Read by the record — check every field, then create</div>'+
+    '<div class="li">■ <b>'+esc(j.name||"?")+'</b> · '+esc(j.brand||"?")+' · '+esc(j.dma||"?")+' · '+fm(j.money?j.money.f||j.money.c:0)+'</div>'+
+    '<div class="li">■ Anchors: '+((j.anchors||[]).map(a=>a.label+" "+a.date).join(" · ")||"none found — set one")+'</div>'+
+    '<div class="li">■ Payments: '+((j.payments||[]).length||"none")+' · Owed to us: '+((j.theyOwe||[]).length||"none")+' · Needs: '+Object.keys(j.needs||{}).filter(k=>j.needs[k]).join(", ")+'</div>';
+   toast("Contract read by Claude through your own planner API. Nothing files itself — check it, then create.");
+  }catch(e){$("read-status").textContent="Couldn't reach the AI here — it runs on the deployed site (your /api/planner). The sample button shows the flow."}
+ });}
  const fc=$("feed-contract");if(fc)fc.addEventListener("click",()=>{
   $("f-name").value="Fiesta Bowl 2027";
   $("f-brand").value="Lerner & Rowe";$("f-brand").dispatchEvent(new Event("change"));
@@ -1120,7 +1330,7 @@ function drawWS(id){
     '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
     '<div style="flex:1;min-width:220px"><b style="color:var(--ink);font-size:13px">'+n.n+'</b><div style="font-size:11.5px;color:var(--mut);margin-top:2px">'+n.d+'</div></div>'+
     '<span class="'+bd[0]+'">'+bd[1]+'</span></div>'+
-    (n.hub?hubchain(tkt&&tkt.status==="sent"?(tkt.hubst||1):0):"")+
+    (n.hub?(tkt&&tkt.status==="sent"?'<span data-hub="'+n.mail+'" style="cursor:pointer" title="MerchHub reported — click to advance">'+hubchain(tkt.hubst||1)+"</span>":hubchain(0)):"")+
     '<div style="margin-top:7px">'+(n.r==="done"?'<span class="pill ok">resolved ✓</span>':
      n.mail?'<button class="btn ghost sm" data-need="'+c.id+':'+i+'" data-nm="'+n.mail+'">'+(n.r==="library"?"Draft with suggestions → preview":"Preview the ticket")+'</button>':
      n.ok?'<button class="btn ghost sm" data-need="'+c.id+':'+i+'">'+(n.r==="registry"?"Link from the registry":"One click — it’s yours")+'</button>':"")+'</div></div>'}).join("");
@@ -1133,8 +1343,8 @@ function drawWS(id){
  h+=sec("LIVE","Live — the run","What the partner owes, each one tracked to proof — makegoods included",liveIn);
  /* ---- POST · the closeout: capture + results + money settle ---- */
  let postIn="";
- if(c.results)postIn+='<div class="t2">Results — '+(ph==="POST"?"filed; this is how wrapped becomes true":"armed; the record chases these after the event")+'</div>'+c.results.map(r=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12.5px"><span style="color:var(--mut)">'+r[0]+'</span><span style="color:'+(r[1].indexOf("—")===0?"var(--faint)":"var(--ink)")+';font-weight:600;text-align:right">'+r[1]+'</span></div>').join("");
- if(c.capture)postIn+='<div class="t2" style="margin-top:14px">Content capture — nothing disappears after the event</div>'+[["Shared album",c.capture.album],["Photos received",c.capture.photos],["Video received",c.capture.video],["Handed to Michelle",c.capture.michelle],["Published",c.capture.published]].map(r=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12.5px"><span style="color:var(--mut)">'+r[0]+'</span><span style="color:'+(/done|received/.test(r[1])?"var(--pine)":"var(--faint)")+';font-weight:600;text-align:right">'+r[1]+'</span></div>').join("");
+ if(c.results)postIn+='<div class="t2">Results — '+(ph==="POST"?"filed; this is how wrapped becomes true":"armed; the record chases these after the event")+' · <span style="color:var(--faint);text-transform:none;letter-spacing:0">click a value to record it — evidence stamps</span></div>'+c.results.map((r,i)=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12.5px"><span style="color:var(--mut)">'+r[0]+'</span><span data-res="'+i+'" style="cursor:pointer;color:'+(r[1].indexOf("—")===0?"var(--faint)":"var(--ink)")+';font-weight:600;text-align:right" title="click to record">'+r[1]+'</span></div>').join("");
+ if(c.capture)postIn+='<div class="t2" style="margin-top:14px">Content capture — nothing disappears after the event · <span style="color:var(--faint);text-transform:none;letter-spacing:0">click a stage to record it</span></div>'+[["Shared album",c.capture.album],["Photos received",c.capture.photos],["Video received",c.capture.video],["Handed to Michelle",c.capture.michelle],["Published",c.capture.published]].map(r=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12.5px"><span style="color:var(--mut)">'+r[0]+'</span><span data-cap="'+r[0]+'" style="cursor:pointer;color:'+(/done|received/.test(r[1])?"var(--pine)":"var(--faint)")+';font-weight:600;text-align:right" title="click to record">'+r[1]+'</span></div>').join("");
  if(c.expenses)postIn+='<div class="t2" style="margin-top:14px">Production ledger — check by check</div>'+c.expenses.map(e=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12.5px"><span style="color:var(--mut)">'+e[0]+'</span><span style="color:var(--ink);font-weight:600">'+e[1]+'</span></div>').join("");
  if(c.id===5)postIn+='<div style="margin-top:12px;display:flex;gap:9px;flex-wrap:wrap"><button class="btn ghost sm" id="ws-recap">Preview the recap</button><button class="btn ghost sm" id="ws-play">Run the 2027 playbook</button></div>';
  h+=sec("POST","Post — the closeout","Collection scheduled at intake: +1 attendance · +3 social · +5 press · +7 recap",postIn);
@@ -1163,8 +1373,43 @@ function drawWS(id){
  document.querySelectorAll("[data-need]").forEach(b=>b.addEventListener("click",()=>{
   const pr=b.dataset.need.split(":");const cc=DB.commitments.find(x=>x.id===+pr[0]);const nd=cc.needs[+pr[1]];
   if(b.dataset.nm){const t=(cc.tickets||[]).find(x=>x.id===b.dataset.nm);if(t)ticketMail(cc,t);return}
+  if(nd.r==="registry"&&typeof D_I!=="undefined"){
+   const DMAP={"Chicago":"CHI","Cincinnati":"CIN","Denver":"DEN","Minneapolis":"MSP","Birmingham":"BRM","Huntsville":"HSV","Knoxville":"KNX","Chattanooga":"CHA","Montgomery":"MTG","Dothan":"DHN","Nashville":"NSH"};
+   const code=DMAP[cc.dma];
+   const hits=D_I.filter(x=>x[3]===cc.brand&&(!code||x[4]===code)&&x[7]).slice(0,10);
+   if(hits.length){
+    openMailX({title:"Doom's registry — "+hits.length+" cleared assets fit "+cc.brand+" · "+cc.dma,to:"—",subj:"Pick by replying in the operation — this preview shows what Doom already holds",
+     body:hits.map(x=>"• "+x[0]+" — "+x[1]+" ("+x[2]+", :"+x[5]+")").join("\n")+"\n\nLinking the first match now — nobody gets asked for what we already own."});
+    nd.r="done";nd.ok="Linked "+hits[0][0]+" — “"+hits[0][1]+"” from Doom's live registry. Evidence stamped; creative was never asked.";
+    cc.rec.unshift([fshort(TODAY)+" · done",nd.n+" — linked "+hits[0][0]+" from Doom's registry","evidence"]);
+    save();drawWS(cc.id);toast(nd.ok);return;
+   }
+  }
   nd.r="done";cc.rec.unshift([fshort(TODAY)+" · done",nd.n+" — resolved from what we already own","evidence"]);
   save();drawWS(cc.id);toast(nd.ok||"Resolved — evidence stamped.");
+ }));
+ document.querySelectorAll("[data-res]").forEach(el=>el.addEventListener("click",()=>{
+  const i2=+el.dataset.res;const v=prompt("Record — "+c.results[i2][0]+":",c.results[i2][1].indexOf("—")===0?"":c.results[i2][1]);
+  if(v===null||!v.trim())return;
+  c.results[i2][1]=v.trim();
+  c.rec.unshift([fshort(TODAY)+" · in · Result",c.results[i2][0]+": "+v.trim(),"evidence"]);
+  logEv("in","<b>"+c.name+"</b> — result recorded: "+c.results[i2][0]+" = "+v.trim());DB.log[0].cid=c.id;
+  save();drawWS(c.id);toast("Recorded — evidence stamped. The recap assembles from this.");
+ }));
+ document.querySelectorAll("[data-cap]").forEach(el=>el.addEventListener("click",()=>{
+  const k={"Shared album":"album","Photos received":"photos","Video received":"video","Handed to Michelle":"michelle","Published":"published"}[el.dataset.cap];
+  if(!k)return;const v=prompt("Record — "+el.dataset.cap+":",/^—$/.test(c.capture[k])?"":c.capture[k]);
+  if(v===null||!v.trim())return;
+  c.capture[k]=v.trim();
+  c.rec.unshift([fshort(TODAY)+" · in · Capture",el.dataset.cap+": "+v.trim(),"evidence"]);
+  save();drawWS(c.id);toast("Captured — Michelle’s brief updates itself from this.");
+ }));
+ document.querySelectorAll("[data-hub]").forEach(el=>el.addEventListener("click",()=>{
+  const t=(c.tickets||[]).find(x=>x.id===el.dataset.hub);if(!t)return;
+  t.hubst=Math.min((t.hubst||1)+1,3);
+  const st=["Ticketed","Ordered","Shipped","Delivered"][t.hubst];
+  c.rec.unshift([fshort(TODAY)+" · in · MerchHub",t.subj.split(" — ")[0]+" — "+st.toLowerCase(),"evidence"]);
+  save();drawWS(c.id);toast("MerchHub reports: "+st+". On the record — you never chased it.");
  }));
  const wr=$("ws-recap");if(wr)wr.addEventListener("click",()=>openMailX({title:"Recap — Golf Classic",to:"jessica@atticor.ai",subj:"Recap — Charity Golf Classic (L&R · Phoenix)",body:genRecapGolf()}));
  const wp=$("ws-play");if(wp)wp.addEventListener("click",()=>toast("2027 draft: structure, vendors (Mister Softee, Reflexx, Cre8ive, Mather Bros), obligations, contacts, channels carried over. Dates, costs, deliverables, approvals reset — they wait in Intake for you."));
@@ -1215,7 +1460,7 @@ function wsDetail(c,a){
   (a.lead?'<div class="wdrow"><span>Lead-time flag</span><b style="color:var(--ox)">violates the '+a.lead+' standard — latest safe was '+a.leadSafe+'</b></div>':"")+
   '<div style="margin-top:10px;display:flex;gap:9px;flex-wrap:wrap">'+
   (a.ticket&&c.tickets.some(t=>t.type.toLowerCase().indexOf(a.ticket)>=0||true)?'':'')+
-  '<button class="btn ghost sm" id="wd-done">'+(a.done?"Un-mark done":"Mark done — stamps evidence")+'</button>'+
+  '<button class="btn ghost sm" id="wd-done">'+(a.done?"Un-mark":(a.kind==="back"?"Mark received — evidence":"Mark done — stamps evidence"))+'</button>'+
   '<button class="btn ghost sm" id="wd-del">Remove item</button></div></div>';
 }
 function wireDetail(c){
