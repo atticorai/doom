@@ -26,25 +26,50 @@ body{font-family:'Inter',system-ui,sans-serif;color:var(--body);font-size:14px;m
 a{color:var(--gold);cursor:pointer;text-decoration:none}
 a:hover{color:var(--gold-hi)}
 
-/* ---------- masthead ---------- */
-.mast{padding:34px 0 0;text-align:center;position:relative}
-.mast .wordmark{font-family:'Fraunces',serif;font-weight:600;font-size:34px;letter-spacing:.4em;color:var(--ink);text-shadow:0 0 40px rgba(212,175,110,.25)}
-.mast .sub{font-size:9.5px;font-weight:700;letter-spacing:.5em;text-transform:uppercase;color:var(--gold);margin-top:8px}
-.mastrule{width:220px;height:1px;margin:20px auto 0;background:linear-gradient(90deg,transparent,var(--gold),transparent);position:relative}
-.mastrule::after{content:'';position:absolute;left:50%;top:-3px;width:7px;height:7px;transform:translateX(-50%) rotate(45deg);background:var(--gold);box-shadow:0 0 12px rgba(212,175,110,.8)}
-.util{position:absolute;right:26px;top:34px;display:flex;gap:8px}
-.util button{background:none;border:1px solid rgba(255,255,255,.14);color:var(--mut);border-radius:3px;font-family:'Inter',sans-serif;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:7px 10px;cursor:pointer}
-.util button:hover{border-color:var(--hair2);color:var(--gold)}
+/* ---------- the app frame ---------- */
+.app{display:grid;grid-template-columns:236px 1fr;height:100vh;overflow:hidden}
+.sb{background:linear-gradient(180deg,#0c0e1a,#090b13);border-right:1px solid var(--hair);display:flex;flex-direction:column;padding:20px 0 14px;overflow-y:auto}
+.sb-logo{padding:0 20px 18px;border-bottom:1px solid rgba(255,255,255,.05);margin-bottom:12px}
+.lg1{font-family:'Fraunces',serif;font-weight:600;font-size:21px;letter-spacing:.3em;color:var(--ink);text-shadow:0 0 26px rgba(212,175,110,.3)}
+.lg2{font-family:'Fraunces',serif;font-weight:600;font-size:21px;letter-spacing:.3em;color:var(--gold)}
+.lg3{font-size:7.5px;font-weight:800;letter-spacing:.3em;color:var(--faint);margin-top:7px}
+.sb-nav{display:flex;flex-direction:column;gap:2px;padding:0 10px}
+.sbi{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:4px;border:none;background:none;color:var(--mut);font-family:'Inter',sans-serif;font-size:12px;font-weight:700;letter-spacing:.06em;cursor:pointer;text-align:left;border-left:2px solid transparent}
+.sbi .ni{width:16px;text-align:center;font-size:13px;opacity:.8}
+.sbi:hover{color:var(--ink);background:rgba(255,255,255,.03)}
+.sbi.on{color:var(--gold-hi);background:var(--glass2);border-left-color:var(--gold);box-shadow:0 0 24px rgba(212,175,110,.07) inset}
+.sbi .cnt{margin-left:auto;background:var(--gold);color:#171408;border-radius:2px;font-size:9px;padding:1px 6px}
+.sb-sec{font-size:7.5px;font-weight:800;letter-spacing:.28em;color:var(--faint);padding:18px 22px 8px}
+.sb-doors{display:flex;flex-direction:column;gap:2px;padding:0 10px}
+.doorchip{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:4px;font-size:10.5px;font-weight:700;color:var(--mut);cursor:pointer;border:none}
+.doorchip .di{width:16px;text-align:center;color:var(--gold);opacity:.7}
+.doorchip:hover{color:var(--gold);background:rgba(255,255,255,.03)}
+.sb-flex{flex:1}
+.sb-util{display:flex;align-items:center;gap:6px;padding:10px 18px 6px;border-top:1px solid rgba(255,255,255,.05)}
+.sb-util button{background:none;border:1px solid rgba(255,255,255,.12);color:var(--mut);border-radius:3px;width:26px;height:24px;font-size:11px;cursor:pointer}
+.sb-util button:hover{border-color:var(--hair2);color:var(--gold)}
+.sb-util #syncbadge{margin-left:auto;font-size:7.5px;font-weight:800;letter-spacing:.1em}
+.sb-user{padding:10px 20px 0;font-size:10px;font-weight:700;color:var(--mut);display:flex;align-items:center;gap:8px}
+.sb-user .dot{width:7px;height:7px;border-radius:50%;background:var(--pine);box-shadow:0 0 8px rgba(87,195,154,.8)}
+.mn{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{height:58px;flex:0 0 58px;border-bottom:1px solid var(--hair);display:flex;align-items:center;gap:14px;padding:0 24px;background:rgba(255,255,255,.015)}
+.tb-t{font-family:'Fraunces',serif;font-size:18px;color:var(--ink);line-height:1.1}
+.tb-s{font-size:10px;color:var(--faint);letter-spacing:.06em}
+.tb-flex{flex:1}
+.content{flex:1;overflow-y:auto;padding:20px 26px 60px}
+.wrap{max-width:none;margin:0;padding:0}
+@media(max-width:900px){
+ .app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+ .sb{flex-direction:row;align-items:center;overflow-x:auto;padding:8px 10px;gap:6px;border-right:none;border-bottom:1px solid var(--hair)}
+ .sb-logo{border:none;padding:0 10px 0 4px;margin:0}.lg1,.lg2{display:inline;font-size:13px;letter-spacing:.18em}.lg3{display:none}
+ .sb-nav{flex-direction:row}.sb-sec,.sb-doors,.sb-user{display:none}.sb-flex{display:none}
+ .sb-util{border:none;padding:0 4px}
+ .mn{height:auto;min-height:0}
+}
 
-.nav{display:flex;justify-content:center;gap:6px;margin:26px 0 34px;flex-wrap:wrap}
-.nav button{background:none;border:1px solid transparent;border-radius:3px;color:var(--mut);font-family:'Inter',sans-serif;font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;padding:11px 20px;cursor:pointer;transition:all .15s}
-.nav button:hover{color:var(--ink)}
-.nav button.on{color:var(--gold-hi);border-color:var(--hair2);background:var(--glass);box-shadow:0 0 24px rgba(212,175,110,.10) inset}
-.nav .cnt{display:inline-block;background:var(--gold);color:#171408;border-radius:2px;font-size:9px;padding:1px 6px;margin-left:7px;letter-spacing:0}
-
-h2.sec{font-family:'Fraunces',serif;font-weight:500;font-size:24px;color:var(--ink);margin:38px 0 4px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
-h2.sec .tag{font-family:'Inter',sans-serif;font-size:9px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:var(--gold)}
-.rule{height:1px;background:linear-gradient(90deg,var(--gold) 0 90px,var(--hair) 90px);margin:10px 0 18px;position:relative}
+h2.sec{font-family:'Fraunces',serif;font-weight:500;font-size:16.5px;color:var(--ink);margin:26px 0 3px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+h2.sec .tag{font-family:'Inter',sans-serif;font-size:8px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.rule{height:1px;background:linear-gradient(90deg,var(--gold) 0 56px,rgba(255,255,255,.06) 56px);margin:7px 0 12px;position:relative}
 .rule::after{content:'';position:absolute;left:0;top:-2.5px;width:6px;height:6px;transform:rotate(45deg);background:var(--gold)}
 
 .panel{background:var(--glass);border:1px solid var(--hair);border-radius:5px;backdrop-filter:blur(6px)}
@@ -234,28 +259,33 @@ select option{background:#12142a}
 </head>
 <body>
 
-<div class="mast">
-  <div class="wordmark">ATTICOR&nbsp;OPS</div>
-  <div class="sub">Marketing Operations · The Record</div>
-  <div class="mastrule"></div>
-  <div class="util">
-    <button id="u-export">Export</button>
-    <button id="u-import">Import</button>
-    <button id="u-reset">Reset</button>
-    <span id="syncbadge" style="align-self:center;font-size:8.5px;font-weight:800;letter-spacing:.14em;color:var(--faint)">…</span>
+<div class="app">
+<aside class="sb">
+  <div class="sb-logo"><div class="lg1">ATTICOR</div><div class="lg2">OPS</div><div class="lg3">MARKETING OPERATING SYSTEM</div></div>
+  <nav class="sb-nav" id="nav"></nav>
+  <div class="sb-sec">THE DOORS</div>
+  <div class="sb-doors">
+    <div class="doorchip" data-door="MP@atticor.ai"><span class="di">✉</span> MP@atticor.ai</div>
+    <div class="doorchip" data-door="Contracts"><span class="di">⎘</span> Contracts &amp; scans</div>
+    <div class="doorchip" data-door="Notion"><span class="di">◈</span> Notion · Sheets</div>
   </div>
-</div>
-<input type="file" id="importfile" accept="application/json" style="display:none">
-<div style="display:flex;justify-content:center;gap:9px;margin-top:18px;flex-wrap:wrap">
-  <span class="doorchip" data-door="MP@atticor.ai">FEED · MP@atticor.ai</span>
-  <span class="doorchip" data-door="Contracts">FEED · Contracts &amp; scans</span>
-  <span class="doorchip" data-door="Sheets · Notion · SharePoint">FEED · Sheets · Notion · SharePoint</span>
-</div>
-
-<div class="nav" id="nav"></div>
-
-<div class="wrap">
-
+  <div class="sb-flex"></div>
+  <div class="sb-util">
+    <button id="u-export" title="Export JSON">⇩</button>
+    <button id="u-import" title="Import JSON">⇧</button>
+    <button id="u-reset" title="Reset">↺</button>
+    <span id="syncbadge">…</span>
+  </div>
+  <div class="sb-user"><span class="dot"></span>Emm · Marketing Operations</div>
+</aside>
+<main class="mn">
+  <div class="topbar">
+    <div><div class="tb-t" id="tb-title"></div><div class="tb-s" id="tb-sub"></div></div>
+    <div class="tb-flex"></div>
+    <button class="btn ghost sm" id="tb-read">⎘ Read a contract</button>
+    <button class="btn sm" id="tb-new">+ New commitment</button>
+  </div>
+  <div class="content" id="content">
 <section id="v-next"></section>
 <section id="v-x" style="display:none"></section>
 <section id="v-board" style="display:none"></section>
@@ -266,8 +296,11 @@ select option{background:#12142a}
 <section id="v-lib" style="display:none"></section>
 <section id="v-ws" style="display:none"></section>
 
+  </div>
+</main>
 </div>
 
+<input type="file" id="importfile" accept="application/json" style="display:none">
 <div class="mailov" id="mailov"></div>
 <div class="mailmod" id="mailmod">
   <div class="mailhead" id="mail-title">Preview</div>
@@ -518,6 +551,8 @@ async function cloudLoad(){try{
 function load(){try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&d.commitments)DB=d}}catch(e){}}
 load();
 setTimeout(cloudLoad,400);
+setTimeout(()=>{const tn=$("tb-new");if(tn)tn.addEventListener("click",()=>{view="intake";render()});
+ const tr2=$("tb-read");if(tr2)tr2.addEventListener("click",()=>{view="intake";render();setTimeout(()=>{const b=$("feed-read");if(b)b.click()},150)});},300);
 function logEv(kind,text){DB.log.unshift({t:Date.now(),kind:kind,text:text});DB.log=DB.log.slice(0,80);save()}
 
 /* ---------------- the date engine — every computed date knows why it exists ---------------- */
@@ -868,15 +903,23 @@ document.querySelectorAll(".doorchip").forEach(d=>d.addEventListener("click",asy
 const VIEWS=[["board","The Board"],["cal","Calendar"],["next","Next move"],["intake","Intake"],["tickets","Tickets"],["rl","Reports & Letters"],["lib","Libraries"]];
 let view=DB.commitments.length?"board":"intake";
 let curWS=null,wsSel=null,wsShift=null;
+const NAVICON={board:"◧",cal:"▦",next:"◈",intake:"✚",tickets:"✉",rl:"Σ",lib:"⌘"};
+const TBSUB={board:()=>DB.commitments.length+" commitments · "+fm(DB.commitments.filter(c=>!/PROPOSAL/.test(c.notes||"")).reduce((x,c)=>x+(+c.money.f||0),0))+" committed",
+ cal:()=>"every dated action, with its reason",next:()=>xCount()+" moves ranked by consequence",
+ intake:()=>"the front door — evidence fills the form",tickets:()=>DB.commitments.flatMap(c=>c.tickets||[]).filter(t=>t.status!=="sent").length+" drafts awaiting your eyes",
+ rl:()=>"billing · measurement · the letters",lib:()=>"disclaimers · tags · Doom's registry",ws:()=>"the operation — PRE · LIVE · POST"};
 function nav(){
- $("nav").innerHTML=VIEWS.map(v=>'<button class="'+(v[0]===view?"on":"")+'" data-v="'+v[0]+'">'+v[1]+(v[0]==="next"&&xCount()?'<span class="cnt">'+xCount()+'</span>':"")+'</button>').join("");
- document.querySelectorAll("#nav button").forEach(b=>b.addEventListener("click",()=>{view=b.dataset.v;render()}));
+ $("nav").innerHTML=VIEWS.map(v=>'<button class="sbi '+(v[0]===view?"on":"")+'" data-v="'+v[0]+'"><span class="ni">'+(NAVICON[v[0]]||"·")+'</span>'+v[1]+(v[0]==="next"&&xCount()?'<span class="cnt">'+xCount()+'</span>':"")+'</button>').join("");
+ document.querySelectorAll("#nav .sbi").forEach(b=>b.addEventListener("click",()=>{view=b.dataset.v;render()}));
+ const tt=$("tb-title"),ts=$("tb-sub");
+ if(tt){const cur=VIEWS.find(v=>v[0]===view);tt.textContent=view==="ws"?(DB.commitments.find(c=>c.id===curWS)||{name:"Operation"}).name:(cur?cur[1]:"");
+  ts.textContent=(TBSUB[view]?TBSUB[view]():"")}
 }
 function render(){
  nav();
  ["next","x","cal","board","intake","tickets","rl","lib","ws"].forEach(k=>{const el=$("v-"+k);if(el)el.style.display=(view===k?"block":"none")});
  if(view==="next")drawNext();if(view==="x")drawX();if(view==="cal")drawCal();if(view==="board")drawBoard();if(view==="intake")drawIntake();if(view==="tickets")drawTix();if(view==="rl")drawRL();if(view==="lib")drawLib();if(view==="ws")drawWS(curWS);
- window.scrollTo(0,0);
+ const ct=$("content");if(ct)ct.scrollTop=0;
 }
 
 /* ---------------- the decision engine — the record decides, you judge ---------------- */
