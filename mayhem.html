@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mayhem</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#0A0E1C; --bg2:#0E1428; --card:#151D38; --card2:#1B2547; --line:#28345E; --line2:#35447E;
+  --ink:#EAEEF8; --muted:#8A94B8; --dim:#5A6488;
+  --gold:#E3B75B; --gold-dim:#8F7433; --cyan:#5FC9E8; --green:#5BC4A0; --ox:#C64B5E; --amber:#E8A15F;
+  --pl:#A67FC0; --wk:#D4A040; --lr:#E0724C; --ke:#4F9ED9; --pdv:#D14F5E;
+}
+*{box-sizing:border-box; margin:0}
+html{-webkit-text-size-adjust:100%}
+body{background:radial-gradient(900px 500px at 80% -10%, #131D3A 0%, transparent 55%), var(--bg);
+  color:var(--ink); font-family:Manrope,"Helvetica Neue",Arial,sans-serif; font-size:15px; line-height:1.5;
+  padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit; -webkit-tap-highlight-color:transparent}
+input,select{font-family:inherit; font-size:16px; background:var(--bg2); color:var(--ink);
+  border:1px solid var(--line); border-radius:8px; padding:11px 12px; width:100%}
+input:focus,select:focus{outline:1px solid var(--gold-dim); border-color:var(--gold-dim)}
+.mono{font-family:"IBM Plex Mono",monospace}
+.serif{font-family:Marcellus,Georgia,serif}
+
+/* ————— header: wordmark + brand rail + dma rail ————— */
+header{position:sticky; top:0; z-index:40; background:rgba(10,14,28,.92); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line); padding:10px 0 0}
+.hrow{display:flex; align-items:center; gap:12px; padding:0 16px 8px; max-width:1060px; margin:0 auto}
+.wm{font-family:Marcellus,serif; font-size:19px; letter-spacing:.28em; white-space:nowrap}
+.wm b{color:var(--gold); font-weight:400}
+.hdate{margin-left:auto; font-size:11px; color:var(--muted); text-align:right; line-height:1.3}
+.hdate b{color:var(--gold)}
+.rail{display:flex; gap:8px; overflow-x:auto; padding:2px 16px 10px; scrollbar-width:none; max-width:1060px; margin:0 auto; width:100%}
+.rail::-webkit-scrollbar{display:none}
+.bchip{flex:none; display:flex; align-items:center; gap:7px; padding:8px 14px; border-radius:22px;
+  border:1px solid var(--line); font-size:13px; font-weight:700; color:var(--muted); background:var(--bg2)}
+.bchip .d{width:9px; height:9px; border-radius:50%}
+.bchip.on{color:var(--ink); border-color:currentColor}
+.dmarail{border-top:1px dashed rgba(40,52,94,.6)}
+.dchip{flex:none; padding:6px 13px; border-radius:18px; border:1px solid var(--line); font-size:12px; font-weight:600; color:var(--muted)}
+.dchip.on{color:var(--gold); border-color:var(--gold-dim); background:var(--bg2)}
+
+main{max-width:1060px; margin:0 auto; padding:18px 16px 30px}
+
+/* ————— bottom tab bar ————— */
+#tabs{position:fixed; left:0; right:0; bottom:0; z-index:45; background:rgba(12,16,32,.96); backdrop-filter:blur(12px);
+  border-top:1px solid var(--line); display:flex; padding-bottom:env(safe-area-inset-bottom)}
+#tabs button{flex:1; padding:11px 4px 9px; text-align:center; color:var(--dim); font-size:11px; font-weight:700; letter-spacing:.06em}
+#tabs button .ic{display:block; font-size:19px; margin-bottom:2px; line-height:1}
+#tabs button.on{color:var(--gold)}
+#tabs .badge{display:inline-block; min-width:17px; background:var(--ox); color:#fff; font-size:10px; border-radius:9px; padding:1px 5px; margin-left:4px; vertical-align:2px}
+
+/* ————— voice ————— */
+.voice{margin:4px 0 18px}
+.voice .who{font-size:10px; letter-spacing:.28em; text-transform:uppercase; color:var(--gold-dim); margin-bottom:5px}
+.voice .say{font-family:Marcellus,serif; font-size:17.5px; line-height:1.55; text-wrap:balance}
+.voice .say em{color:var(--gold); font-style:normal}
+
+/* ————— judgment cards ————— */
+.jstack{display:grid; gap:10px; margin-bottom:24px}
+.sechead{display:flex; align-items:baseline; gap:10px; margin:0 0 10px}
+.sechead h2{font-family:Marcellus,serif; font-size:16px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold)}
+.sechead .sub{font-size:11.5px; color:var(--dim)}
+.jcard{display:flex; gap:12px; align-items:flex-start; text-align:left; background:var(--card); border:1px solid var(--line);
+  border-left:4px solid var(--gold); border-radius:12px; padding:14px 15px; width:100%}
+.jcard.red{border-left-color:var(--ox)}
+.jcard:active{background:var(--card2)}
+.jcard .jt{font-size:14.5px; font-weight:800; line-height:1.3}
+.jcard .js{font-size:12.5px; color:var(--muted); margin-top:3px; line-height:1.45}
+.jcard .go{margin-left:auto; align-self:center; flex:none; color:var(--gold); font-size:18px}
+.allclear{background:var(--card); border:1px dashed var(--line2); border-radius:12px; padding:16px; color:var(--muted); font-size:13.5px; font-style:italic}
+
+/* ————— agenda ————— */
+.dayhead{display:flex; align-items:baseline; gap:10px; margin:18px 0 8px}
+.dayhead .d{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--gold); letter-spacing:.05em}
+.dayhead .dw{font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:.1em}
+.dayhead.today .d{color:var(--cyan)}
+.arow{display:flex; gap:11px; align-items:center; background:var(--card); border:1px solid var(--line);
+  border-radius:10px; padding:11px 13px; width:100%; text-align:left; margin-bottom:7px}
+.arow:active{background:var(--card2)}
+.arow .bd{width:10px; height:10px; border-radius:50%; flex:none}
+.arow .k{flex:none; font-size:13px; width:18px; text-align:center; color:var(--muted)}
+.arow .tx{flex:1; min-width:0}
+.arow .tx b{font-size:13.5px; display:block; line-height:1.3}
+.arow .tx span{font-size:11.5px; color:var(--muted)}
+.arow.late{border-left:3px solid var(--ox)}
+.arow .st{flex:none; font-size:9.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; border-radius:4px; padding:2px 7px}
+.st.late{background:#4A1F26; color:#F08A9A}.st.open{background:#233158; color:#9FB4E8}
+.st.got{background:#173A31; color:#6FE0B8}.st.wait{background:#3A2A17; color:#E8B96F}.st.done{background:#173A31; color:#6FE0B8}
+
+/* ————— month calendar ————— */
+.calhead{display:flex; align-items:center; gap:10px; margin:2px 0 10px}
+.calhead .cm{font-family:Marcellus,serif; font-size:18px; letter-spacing:.05em}
+.calhead .cn{width:34px; height:34px; border-radius:9px; border:1px solid var(--line); color:var(--muted); font-size:15px}
+.calhead .cn:active{color:var(--gold)}
+.calhead .ov{margin-left:auto}
+.ovchip{display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:800; letter-spacing:.05em;
+  color:#F08A9A; border:1px solid #5A2630; background:#2A151B; border-radius:16px; padding:5px 11px}
+.cal{display:grid; grid-template-columns:repeat(7,1fr); gap:4px}
+.cal .dw{font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); text-align:center; padding:3px 0}
+.cd{aspect-ratio:.82; background:var(--card); border:1px solid var(--line); border-radius:9px; padding:5px 4px 4px;
+  display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0}
+.cd.out{opacity:.28}
+.cd.today{border-color:var(--gold); box-shadow:0 0 0 1px var(--gold-dim)}
+.cd .n{font-size:11px; font-family:"IBM Plex Mono",monospace; color:var(--muted); line-height:1}
+.cd.today .n{color:var(--gold); font-weight:700}
+.cd .pips{display:flex; flex-wrap:wrap; gap:2.5px; justify-content:center; align-content:flex-start; flex:1}
+.cd .pip{width:6px; height:6px; border-radius:50%}
+.cd .pip.anc{width:0; height:0; border:none; font-size:9px; line-height:6px; color:var(--gold); width:auto; height:auto}
+.cd .pip.lt{box-shadow:0 0 4px 1px rgba(198,75,94,.8)}
+.cd:active{background:var(--card2)}
+@media(min-width:900px){ .cd{aspect-ratio:1.15} .cd .pip{width:7px; height:7px} }
+
+/* ————— brands screen ————— */
+.brandsec{margin-bottom:26px}
+.brandsec>button.bh{display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:0 0 8px;
+  border-bottom:1px solid var(--line); margin-bottom:12px}
+.brandsec .bh h2{font-family:Marcellus,serif; font-size:20px; letter-spacing:.04em}
+.brandsec .bh .d{width:11px; height:11px; border-radius:50%}
+.brandsec .bh .meta{margin-left:auto; font-size:11.5px; color:var(--dim); text-align:right; line-height:1.35}
+.dmasec{margin:0 0 14px}
+.dmasec h3{font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-bottom:8px}
+.ccard{display:block; width:100%; text-align:left; background:var(--card); border:1px solid var(--line);
+  border-radius:12px; padding:13px 15px; margin-bottom:9px}
+.ccard:active{background:var(--card2)}
+.ccard .top{display:flex; align-items:center; gap:9px}
+.ccard .top b{font-size:15px}
+.pill{font-size:9.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; border-radius:12px; padding:2px 9px; flex:none; margin-left:auto}
+.p-pre{background:#233158; color:#9FB4E8}.p-live{background:#173A31; color:#6FE0B8}
+.p-wrapped{background:#22283C; color:#9AA4C8}.p-dec{background:#3A1F33; color:#E08AC8}
+.ccard .meta{font-size:12px; color:var(--muted); margin:4px 0 8px}
+.ccard .next{font-size:12.5px; background:var(--bg2); border-radius:8px; padding:7px 10px}
+.ccard .next .mono{color:var(--gold); font-size:11px}
+.ccard .next.red{border-left:3px solid var(--ox)}
+.grid2{display:grid; gap:0}
+@media(min-width:900px){
+  .grid2{grid-template-columns:1fr 1fr; gap:0 26px}
+  .todaygrid{display:grid; grid-template-columns:.95fr 1.05fr; gap:0 30px; align-items:start}
+}
+
+/* ————— commitment: the line ————— */
+.cback{display:inline-flex; align-items:center; gap:7px; color:var(--cyan); font-size:13px; font-weight:700; margin-bottom:12px}
+.chead{margin-bottom:6px}
+.chead h1{font-family:Marcellus,serif; font-size:26px; letter-spacing:.02em; line-height:1.15; display:flex; align-items:center; gap:10px}
+.chead h1 .d{width:12px; height:12px; border-radius:50%; flex:none}
+.chead .facts{font-size:12.5px; color:var(--muted); margin-top:5px; line-height:1.5}
+.chead .facts b{color:var(--ink)}
+.csay{font-family:Marcellus,serif; font-size:15px; color:var(--gold); line-height:1.55; margin:10px 0 16px}
+.phase{display:flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; margin-bottom:20px}
+.phase div{flex:1; text-align:center; padding:7px 2px; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); background:var(--bg2)}
+.phase div.done{color:var(--muted); background:var(--card)}
+.phase div.now{color:#141007; background:var(--gold); font-weight:800}
+
+.metro{position:relative; padding-left:104px; margin-bottom:8px}
+.metro::before{content:""; position:absolute; left:76px; top:8px; bottom:8px; width:2px;
+  background:linear-gradient(180deg, var(--line2), var(--gold-dim))}
+.stop{position:relative; padding:0 0 18px 26px}
+.stop .dt{position:absolute; left:-104px; width:72px; text-align:right; top:1px}
+.stop .dt .m{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--muted); display:block}
+.stop .dt .y{font-size:9.5px; color:var(--dim); text-transform:uppercase; letter-spacing:.08em}
+.stop::before{content:""; position:absolute; left:-33px; top:3px; width:12px; height:12px; border-radius:50%;
+  background:var(--cyan); border:3px solid var(--bg); box-shadow:0 0 0 1.5px var(--cyan)}
+.stop.done::before{background:var(--green); box-shadow:0 0 0 1.5px var(--green)}
+.stop.late::before{background:var(--ox); box-shadow:0 0 0 1.5px var(--ox), 0 0 10px rgba(198,75,94,.6)}
+.stop.anchor::before{width:18px; height:18px; left:-36px; top:0; background:var(--gold); box-shadow:0 0 0 2px var(--gold), 0 0 14px rgba(227,183,91,.5)}
+.stop.wrapstop::before{background:var(--bg2); box-shadow:0 0 0 1.5px var(--dim)}
+.stop button.sb{display:block; width:100%; text-align:left}
+.stop .sl{font-size:14px; font-weight:700; line-height:1.3}
+.stop.anchor .sl{font-family:Marcellus,serif; font-size:17px; color:var(--gold); font-weight:400}
+.stop .so{font-size:11.5px; color:var(--muted); margin-top:2px}
+.stop .lane{display:inline-block; font-size:9.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+  border:1px solid var(--line2); color:var(--muted); border-radius:4px; padding:1px 6px; margin-top:4px}
+.todaymark{position:relative; padding:2px 0 16px 26px}
+.todaymark::before{content:""; position:absolute; left:-70px; right:0; top:8px; border-top:1.5px dashed var(--gold)}
+.todaymark span{position:relative; background:var(--bg); padding:0 8px 0 0; font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--gold); font-weight:800}
+
+.seg{display:flex; gap:6px; margin:18px 0 12px; overflow-x:auto; scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:none; padding:8px 15px; border-radius:20px; border:1px solid var(--line); font-size:12.5px; font-weight:700; color:var(--muted)}
+.seg button.on{color:var(--gold); border-color:var(--gold-dim); background:var(--bg2)}
+.panel .row{display:flex; gap:10px; align-items:baseline; padding:9px 2px; font-size:13.5px; border-bottom:1px dashed rgba(40,52,94,.6)}
+.panel .row:last-child{border:none}
+.panel .row .mono{color:var(--gold); font-size:11.5px; flex:none; min-width:78px}
+.panel .row .mu{color:var(--muted); font-size:11.5px; display:block}
+.cbtns{display:flex; gap:9px; margin-top:18px; flex-wrap:wrap}
+.btn{background:var(--card2); border:1px solid var(--line2); color:var(--ink); border-radius:9px;
+  padding:10px 16px; font-weight:700; font-size:13px}
+.btn.gold{background:var(--gold); color:#191207; border-color:var(--gold)}
+
+/* ————— intake ————— */
+.feed{display:flex; gap:12px; align-items:center; background:var(--card); border:1px solid var(--line);
+  border-radius:11px; padding:13px 14px; margin-bottom:9px; text-align:left; width:100%}
+.feed:active{background:var(--card2)}
+.feed .fi{font-size:20px; flex:none}
+.feed b{display:block; font-size:14px}
+.feed span{font-size:11.5px; color:var(--muted)}
+.receipt{background:#12281F; border:1px solid #1F5C46; color:#8FE0BE; border-radius:8px; padding:9px 12px; font-size:12.5px; margin-bottom:8px}
+.receipt .mono{color:#5BC4A0; font-size:10.5px; display:block}
+.conflict{background:#33202A; border:1px solid #7A3A50; border-radius:10px; padding:13px 14px; margin:10px 0}
+.conflict h4{font-size:13px; color:#F0A0B4; margin-bottom:8px}
+.copt{display:flex; gap:10px; align-items:center; width:100%; text-align:left; padding:9px 10px; border:1px solid transparent; border-radius:8px; font-size:13.5px}
+.copt.on{border-color:var(--gold-dim); background:var(--bg2)}
+.copt .r{width:15px; height:15px; border-radius:50%; border:2px solid var(--dim); flex:none}
+.copt.on .r{border-color:var(--gold); background:var(--gold)}
+.f2{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px}
+.f1{margin-bottom:10px}
+label{display:block; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); margin-bottom:4px}
+.chipn{display:inline-flex; border:1px solid var(--line); border-radius:20px; padding:7px 14px; font-size:13px; color:var(--muted); margin:0 6px 7px 0}
+.chipn.on{color:var(--ink); border-color:var(--gold-dim); background:var(--bg2)}
+.formcard{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:17px 16px; margin-bottom:14px}
+.formcard h2{font-family:Marcellus,serif; font-size:17px; letter-spacing:.06em; margin-bottom:12px}
+@media(min-width:900px){ .intakegrid{display:grid; grid-template-columns:1.05fr .95fr; gap:22px; align-items:start} }
+
+/* ————— bottom sheet ————— */
+#sheetbg{position:fixed; inset:0; z-index:60; background:rgba(4,6,14,.6); backdrop-filter:blur(3px)}
+#sheetbg.hide{display:none}
+#sheet{position:fixed; left:0; right:0; bottom:0; z-index:61; background:linear-gradient(180deg,#182140,#111832);
+  border-top:1px solid var(--line2); border-radius:18px 18px 0 0; max-height:86vh; overflow:auto;
+  padding:10px 18px calc(22px + env(safe-area-inset-bottom)); transform:translateY(100%); transition:transform .32s cubic-bezier(.3,0,.2,1)}
+#sheet.up{transform:translateY(0)}
+@media(min-width:900px){ #sheet{left:50%; right:auto; width:620px; transform:translate(-50%,100%)} #sheet.up{transform:translate(-50%,0)} }
+#sheet .grab{width:38px; height:4px; border-radius:2px; background:var(--line2); margin:4px auto 14px}
+#sheet .lk{font-size:10px; letter-spacing:.26em; text-transform:uppercase; color:var(--gold-dim); margin-bottom:7px}
+#sheet h2{font-family:Marcellus,serif; font-size:20px; line-height:1.3; margin-bottom:9px}
+#sheet .body{font-size:14px; line-height:1.6}
+#sheet .body .q{color:var(--muted)}
+.why{margin:13px 0}
+.why .step{display:flex; gap:11px; padding:8px 0; border-bottom:1px dashed rgba(40,52,94,.7); font-size:13px; align-items:baseline}
+.why .step:last-child{border:none}
+.why .mono{color:var(--gold); font-size:11px; flex:none; min-width:80px}
+.mail{margin-top:13px; border:1px solid var(--line); border-radius:10px; overflow:hidden}
+.mail .mh{background:var(--bg2); padding:9px 13px; font-size:12px}
+.mail .mh b{color:var(--muted); display:inline-block; width:56px; font-weight:600}
+.mail .mb{background:#F4F2EC; color:#2A2C33; padding:14px 15px; font-size:13px; line-height:1.6; white-space:pre-wrap}
+.rulerow{display:flex; gap:10px; margin-top:16px}
+.rule{flex:1; border-radius:10px; padding:13px 10px; font-weight:800; font-size:14px; text-align:center}
+.rule.go{background:var(--gold); color:#191207}
+.rule.alt{border:1px solid var(--line2); color:var(--ink)}
+/* tickets + library */
+.stepper{display:flex; gap:4px; margin:8px 0 2px}
+.stepper span{flex:1; text-align:center; font-size:8.5px; letter-spacing:.05em; text-transform:uppercase;
+  color:var(--dim); border-top:3px solid var(--line); padding-top:4px}
+.stepper span.done{color:var(--green); border-color:var(--green)}
+.stepper span.now{color:var(--gold); border-color:var(--gold)}
+.stepper span.bad{color:var(--ox); border-color:var(--ox)}
+.tcard{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:12px 14px; margin-bottom:9px}
+.tcard .tt{font-size:13.5px; font-weight:800}
+.tcard .ts{font-size:11.5px; color:var(--muted); margin-top:2px}
+.doctrine{display:flex; gap:5px; flex-wrap:wrap; margin:10px 0}
+.doctrine span{font-size:10px; font-weight:700; letter-spacing:.04em; border:1px solid var(--line); color:var(--dim);
+  border-radius:14px; padding:4px 10px}
+.doctrine span.hit{color:var(--gold); border-color:var(--gold-dim); background:var(--bg2)}
+.libcard{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:13px 15px; margin-bottom:9px}
+.libcard .lt{font-size:13.5px; font-weight:800; display:flex; align-items:center; gap:8px}
+.libcard .lx{font-size:12.5px; color:var(--muted); margin-top:4px; line-height:1.5}
+.libcard .lm{font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--dim); margin-top:6px}
+.libcard .use{margin-top:8px}
+.rowbtn{flex:none; font-size:11px; font-weight:800; color:var(--cyan); border:1px solid var(--line2); border-radius:7px; padding:5px 10px}
+.rowbtn:active{color:var(--gold)}
+.utm{background:var(--bg2); border:1px solid var(--line); border-radius:8px; padding:9px 11px; margin-bottom:8px}
+.utm .uc{font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--cyan); word-break:break-all; line-height:1.5}
+.utm .ul{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:3px}
+.prodrow{display:flex; gap:8px; flex-wrap:wrap; margin:16px 0 4px}
+#toast{position:fixed; left:50%; bottom:calc(86px + env(safe-area-inset-bottom)); transform:translateX(-50%); background:var(--gold); color:#151007;
+  font-weight:800; font-size:12.5px; border-radius:9px; padding:10px 16px; z-index:99; opacity:0; pointer-events:none; transition:opacity .3s; max-width:92vw; text-align:center}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <div class="wm">MAY<b>H</b>EM</div>
+    <div style="font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim)">it works · you judge</div>
+    <div id="livebadge" style="font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); border:1px solid var(--line); border-radius:12px; padding:3px 9px">demo seed</div>
+    <div class="hdate">today<br><b class="mono">Mon, Aug 24</b></div>
+  </div>
+  <div class="rail" id="brail"></div>
+  <div class="rail dmarail" id="drail" style="display:none"></div>
+</header>
+
+<main id="app"></main>
+
+<nav id="tabs">
+  <button data-tab="today"><span class="ic">☉</span>Today<span id="jbadge" class="badge">4</span></button>
+  <button data-tab="brands"><span class="ic">◈</span>Brands</button>
+  <button data-tab="intake"><span class="ic">＋</span>Intake</button>
+  <button data-tab="library"><span class="ic">▤</span>Library</button>
+</nav>
+
+<div id="sheetbg" class="hide"></div>
+<div id="sheet"><div class="grab"></div><div id="sheetbody"></div></div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+const MS=86400000, TODAY=new Date(2026,7,24);
+function D(s){const p=s.split("-");return new Date(+p[0],+p[1]-1,+p[2]);}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function addD(d,n){return new Date(d.getTime()+n*MS);}
+const MONN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DOWN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+function fmt(d){return DOWN[d.getDay()]+", "+MONN[d.getMonth()]+" "+d.getDate();}
+function fmtS(d){return MONN[d.getMonth()]+" "+d.getDate();}
+function money(n){return "$"+n.toLocaleString("en-US");}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+
+const BR={
+ PL:{name:"Postman Law",hex:"#A67FC0",dmas:["Chicago","Cincinnati","Denver","Minneapolis"]},
+ WK:{name:"Wettermark Keith",hex:"#D4A040",dmas:["Birmingham","Huntsville","Knoxville","Chattanooga","Montgomery","Dothan"]},
+ LR:{name:"Lerner & Rowe",hex:"#E0724C",dmas:["Phoenix","Tucson","Albuquerque","Las Vegas","Chicago / NW Indiana"]},
+ KE:{name:"Keches",hex:"#4F9ED9",dmas:["Boston","Worcester","Providence"]},
+ PDV:{name:"Parrish DeVaughn",hex:"#D14F5E",dmas:["Oklahoma City","Tulsa"]}
+};
+
+/* acts: [lane, date, label, kind, status, why[]] */
+const C=[
+ {id:"sista",n:"Sista Strut",brand:"LR",dma:"Chicago / NW Indiana",ev:"2026-10-03",lch:"2026-09-15",ch:["radio","social"],tix:[{kind:"Ethics",to:"Ethics review",sub:"Sista Strut radio script — library pre-aligned",sent:"2026-08-24",due:"2026-09-11",state:1}],
+  fund:"L&R — handed from Postman Law",phase:"PRE",
+  say:"Handed from Postman Law with the money still unsigned. Both Learner partners have to rule — I keep that in writing.",
+  acts:[
+   ["Ops / Emm","2026-08-21","Creative brief out","send","late",["Launch Sep 15","creative back launch −11, brief −10 business days","= Aug 21 — already behind"]],
+   ["Creative","2026-09-04","Radio :30 due back — Brandy","dueback","open",["Launch Sep 15","vendors packaged launch −7, review buffer 4 days","= due back Sep 4"]],
+   ["Ethics","2026-09-11","Ethics verdict on script","dueback","open",["Event Oct 3","ethics lead 5 business days + air buffer","= verdict by Sep 11"]],
+   ["Merch","2026-09-12","Booth + merch order by — JP + Jenny","send","open",["Event Oct 3","21-day merch lead","= order by Sep 12"]],
+   ["Ops / Emm","2026-09-08","Package to iHeart","send","open",["Launch Sep 15","house rule: launch −7","= Sep 8"]],
+   ["Social","2026-09-28","Brief to Michelle","send","open",["Event Oct 3","social lead 5 business days","= Sep 28"]],
+   ["Vendor","2026-10-03","SISTA STRUT — EVENT DAY","anchor","open",["Hazel's tracker","event day"]],
+   ["Wrap","2026-10-04","+1 attendance report","wrap","open",["Event Oct 3","wrap cadence +1"]],
+   ["Wrap","2026-10-06","+3 social metrics","wrap","open",["Event Oct 3","wrap cadence +3"]],
+   ["Wrap","2026-10-10","+7 recap to leadership","wrap","open",["Event Oct 3","wrap cadence +7"]]],
+  owe:[["Radio :30 — new L&R cut","Brandy · due Sep 4","open"],["Booth — new build","order Sep 12","open"],["Merch — pink giveaway run","JP + Jenny · ship Sep 26","open"],["Staff plan — day-of","Emm + Hazel","open"],["Ethics pass on script","library pre-aligned","open"]],
+  they:[["iHeart on-air promo mentions","wait"],["Booth placement on route","wait"]],
+  mny:[["Contracted","$40,000"],["Final","— pending signed addendum"],["Actual","$2,140"]],
+  wrap:[["Oct 4","+1 attendance"],["Oct 6","+3 social"],["Oct 8","+5 press"],["Oct 10","+7 recap"]],
+  ppl:[["Owner","Emm"],["Events","Hazel"],["Approval","BOTH Learner partners"],["Creative","Brandy"],["Social","Michelle"],["Merch","JP + Jenny"]]},
+
+ {id:"thunder",n:"Thunder Sponsorship",brand:"PDV",dma:"Oklahoma City",ev:"2026-10-21",lch:"2026-10-21",ch:["tv","display","landing"],tix:[],
+  fund:"PDV — signed agreement",phase:"PRE",
+  say:"The contract told me everything: artwork fourteen days before the first game. I walked it back — the brief leaves Sep 18 or the chain breaks.",
+  acts:[
+   ["Ops / Emm","2026-09-15","50% payment — $92,500","pay","open",["Contract","payment milestone","Sep 15"]],
+   ["Ops / Emm","2026-09-18","LED brief out to Brandy","send","open",["Creative due Oct 2","creative lead 10 business days","= brief by Sep 18"]],
+   ["Creative","2026-10-02","LED artwork due back","dueback","open",["Artwork to Thunder Oct 7","review buffer 3 business days","= due back Oct 2"]],
+   ["Vendor","2026-10-07","Artwork to Thunder — CONTRACT DATE","dueback","open",["First game Oct 21","contract clause: artwork 14 days before","= Oct 7"]],
+   ["SEO / Web","2026-10-12","Landing page + UTMs live","dueback","open",["First game Oct 21","page live before promo starts","= Oct 12"]],
+   ["Vendor","2026-10-21","FIRST HOME GAME","anchor","open",["Signed agreement","season opener"]]],
+  owe:[["Courtside LED artwork","Brandy · to Thunder Oct 7","open"],["TV :30 — approved spot","linked from Doom · OKC ISCIs","got"],["Landing page + UTMs","Emm — one click","open"]],
+  they:[["TV :30 per game — 41 games","wait"],["Courtside LED per game","wait"],["Injury Report presenting","wait"],["Timeout promos + PA","wait"]],
+  mny:[["Contracted","$185,000"],["Milestones","Sep 15 + Jan 15 · $92,500 each"],["Actual","$0"]],
+  wrap:[["per game","affidavits + photo log land on the record"]],
+  ppl:[["Owner","Emm"],["Partner","Thunder partnership team"],["Creative","Brandy"],["Finance","Jordan Fermin"],["Approver","Jessica"]]},
+
+ {id:"abq",n:"Thanksgiving ABQ",brand:"LR",dma:"Albuquerque",ev:"2026-11-09",lch:null,
+  fund:"L&R — NM Expo contract 260915-01",phase:"PRE",
+  say:"Born from a forwarded email. I read the venue contract, caught the sheet disagreeing by $2,500, and you ruled. Provenance kept.",
+  acts:[
+   ["Ops / Emm","2026-09-15","Venue deposit to Rosa","pay","open",["Contract 260915-01","deposit milestone","Sep 15"]],
+   ["Ops / Emm","2026-10-05","Revised COI to venue","send","open",["Venue requirement","insurance before load-in","with Jake now"]],
+   ["Merch","2026-10-19","Merch order + ship-by","send","open",["Event Nov 9","21-day merch lead","= Oct 19"]],
+   ["Creative","2026-10-26","Signage pack due back","dueback","open",["Event Nov 9","venue pack + print window","= Oct 26"]],
+   ["Social","2026-11-02","Brief to Michelle","send","open",["Event Nov 9","social lead 5 business days","= Nov 2"]],
+   ["Vendor","2026-11-09","GIVEAWAY DAY — NM EXPO","anchor","open",["Hazel's email","event day Nov 9"]],
+   ["Wrap","2026-11-10","+1 attendance report","wrap","open",["Event Nov 9","wrap +1"]],
+   ["Wrap","2026-11-16","+7 recap","wrap","open",["Event Nov 9","wrap +7"]]],
+  owe:[["800 meals + gift cards","vendor orders via registry","open"],["Signage — venue pack","Brandy · Oct 26","open"],["Merch — giveaway tier","ship Oct 19","open"],["Security","unassigned — chase","late"]],
+  they:[["Venue access + tables/stanchions","wait"]],
+  mny:[["Contract said","$25,000"],["You ruled","$27,500 — Hazel's sheet, add-ons included"],["Actual","$1,023 — deposits paid"]],
+  wrap:[["Nov 10","+1 attendance"],["Nov 16","+7 recap"]],
+  ppl:[["Owner","Emm"],["Events","Hazel"],["Booking","Jordan — venues"],["Merch","JP + Jenny"],["Social","Michelle"]]},
+
+ {id:"riverfest",n:"WEBN Riverfest",brand:"PL",dma:"Cincinnati",ev:"2026-09-06",lch:"2026-08-31",ch:["radio"],tix:[{kind:"Merch",to:"John P + Jenny",sub:"Riverfest merch — ship-by Aug 16",sent:"2026-08-14",due:"2026-08-16",state:-1},{kind:"Social",to:"Michelle",sub:"Riverfest flight support",sent:"2026-08-18",due:"2026-08-28",state:2}],
+  fund:"Postman Law — $50K flight",phase:"PRE",alarm:true,
+  say:"The merch never shipped — ship-by died Aug 16 and nobody said a word. That silence is why the round trip exists. The chase is on your table.",
+  acts:[
+   ["Merch","2026-08-16","Merch ship-by — MISSED","send","late",["Event Sep 6","21-day merch lead","= Aug 16 — passed, no confirmation"]],
+   ["Ops / Emm","2026-08-28","Staff roster locks — Hazel","dueback","open",["Event Sep 6","day-of crew locks a week out","= Aug 28"]],
+   ["Ops / Emm","2026-08-31","Package to WEBN","send","open",["Launch Aug 31","assets already linked from Doom","ready"]],
+   ["Vendor","2026-09-06","FIREWORKS NIGHT","anchor","open",["Hazel's tracker","event day"]],
+   ["Wrap","2026-09-07","+1 attendance report","wrap","open",["Event Sep 6","wrap +1"]],
+   ["Wrap","2026-09-13","+7 recap","wrap","open",["Event Sep 6","wrap +7"]]],
+  owe:[["Merch shipment","ship-by Aug 16 — MISSED","late"],["Staff — day-of crew","Hazel · roster Aug 28","open"],["Radio assets","linked from Cincinnati ISCIs","got"]],
+  they:[["On-air mentions through event","wait"],["Attendance + event report","wait"]],
+  mny:[["Contracted","$50,000"],["Actual","$25,000 — first half invoiced"]],
+  wrap:[["Sep 7","+1 attendance"],["Sep 13","+7 recap"]],
+  ppl:[["Owner","Emm"],["Events + staffing","Hazel"],["Merch","JP + Jenny"],["Social","Michelle"]]},
+
+ {id:"mnfair",n:"MN State Fair",brand:"PL",dma:"Minneapolis",ev:"2026-09-07",lch:"2026-08-27",ch:["radio"],tix:[{kind:"Social",to:"Michelle",sub:"Fair capture cadence",sent:"2026-08-20",due:"2026-08-27",state:4}],
+  fund:"Postman Law — Sep portion only",phase:"LIVE",
+  say:"Live right now. Capture runs daily; the Oct media tail stays outside this record — the sheet drew that boundary and I keep it.",
+  acts:[
+   ["Social","2026-08-27","Daily capture begins","capture","done",["Fair opens","shared album cadence for Michelle"]],
+   ["Vendor","2026-09-07","FAIR CLOSES — LABOR DAY","anchor","open",["Tracker","close date"]],
+   ["Wrap","2026-09-08","+1 footfall report","wrap","open",["Close Sep 7","wrap +1"]],
+   ["Wrap","2026-09-14","+7 recap","wrap","open",["Close Sep 7","wrap +7"]]],
+  owe:[["Booth creative + signage","delivered","got"],["Daily capture — shared album","running","got"]],
+  they:[["Footfall + booth traffic report","wait"]],
+  mny:[["Contracted","$37,500"],["Actual","$37,500"]],
+  wrap:[["Sep 8","+1 footfall"],["Sep 14","+7 recap"]],
+  ppl:[["Owner","Emm"],["Events","Hazel"],["Social","Michelle"]]},
+
+ {id:"plaza",n:"Plaza District Festival",brand:"PDV",dma:"Oklahoma City",ev:"2026-09-26",lch:null,
+  fund:"PDV — Gold $2,500",phase:"PRE",alarm:true,
+  say:"The deadline lived inside a spreadsheet note: 'Plaza sponsorship deadline is Aug 15.' It passed nine days ago. I surfaced it — the chase is on your table.",
+  acts:[
+   ["Ops / Emm","2026-08-24","CHASE — payment + booth staffing","chase","late",["Tracker note","'deadline Aug 15' — passed","surfaced, not buried"]],
+   ["Vendor","2026-09-26","FESTIVAL DAY","anchor","open",["Tracker","event day"]],
+   ["Wrap","2026-09-27","+1 attendance","wrap","open",["Event Sep 26","wrap +1"]]],
+  owe:[["Booth staffing","[Confirm] — no names on the sheet","late"],["Booth + merch design","[Confirm]","open"]],
+  they:[["10x10 booth placement","wait"]],
+  mny:[["Committed","$2,500 — Gold tier"],["Paid","$0 — deadline passed"]],
+  wrap:[["Sep 27","+1 attendance"]],
+  ppl:[["Owner","Emm"],["Brand","Pepper + April"],["Merch","JP + Jenny"],["Social","Michelle"]]},
+
+ {id:"patriots",n:"Patriots Partnership",brand:"KE",dma:"Boston",ev:"2026-09-13",lch:null,
+  fund:"Keches — fee [Confirm]",phase:"PRE",
+  say:"Season opens Sep 13 and there is nothing on paper — fee and asset list still say [Confirm]. I chase until paper exists.",
+  acts:[
+   ["Ops / Emm","2026-08-26","Re-chase — fee + asset list","chase","open",["Keches sheet","[Confirm] on fee and assets","opener approaching"]],
+   ["Vendor","2026-09-13","REGULAR SEASON OPENER","anchor","open",["League schedule","opener"]]],
+  owe:[["Gameday creative pack","pending asset list","wait"]],
+  they:[["Full asset list + fee on paper","late"]],
+  mny:[["Fee","TBD — a chase, not a blank"]],
+  wrap:[["per game","asset delivery tracked to proof"]],
+  ppl:[["Owner","Emm"],["Partnerships","Victoria Tuttle + Hazel"],["Approvals","KLG leadership"]]},
+
+ {id:"stars",n:"Stars & Strings",brand:"LR",dma:"Chicago / NW Indiana",ev:"2026-10-25",lch:"2026-09-21",ch:["radio"],tix:[],
+  fund:"L&R — was 3 PL market lines",phase:"PRE",
+  say:"Three Postman Law market lines consolidated at the handoff. The old sheet keeps the boundary note; I keep the money honest.",
+  acts:[
+   ["Creative","2026-09-10","Radio :30s ×3 due back","dueback","open",["Launch Sep 21","launch −11","= Sep 10"]],
+   ["Ops / Emm","2026-09-14","Package to Audacy","send","open",["Launch Sep 21","launch −7","= Sep 14"]],
+   ["Vendor","2026-10-25","SHOW NIGHT","anchor","open",["Audacy","show date"]]],
+  owe:[["Radio :30s — 3 markets","Brandy · Sep 10","open"],["Social flight","Michelle","open"]],
+  they:[["Flight confirmations per market","wait"]],
+  mny:[["Contracted","$112,500 — consolidated"],["Final","pending addendum"]],
+  wrap:[["Oct 26","+1 report"]],
+  ppl:[["Owner","Emm"],["Events","Hazel"],["Creative","Brandy"],["Social","Michelle"]]},
+
+ {id:"golf",n:"Charity Golf Classic",brand:"LR",dma:"Phoenix",ev:"2026-04-18",lch:null,
+  fund:"L&R underwritten — flagship",phase:"WRAPPED",
+  say:"Wrapped and proven: $1,031,578 raised, check-level ledger reconciled, recap sent at +7. The playbook clones for 2027 with dates and costs reset.",
+  acts:[["Vendor","2026-04-18","TOURNAMENT DAY","anchor","done",["Tracker","flagship"]],
+        ["Wrap","2026-04-25","+7 recap — SENT","wrap","done",["Event Apr 18","wrap +7 · done"]]],
+  owe:[],they:[],
+  mny:[["Contracted","$365,000"],["Actual","$377,000 — check-level ledger on file"],["Raised","$1,031,578"]],
+  wrap:[["Raised","$1,031,578 — 3rd straight year over $1M"],["Impressions","750,000 — house benchmark"],["Content","reels via shared album"],["Playbook","ready for 2027"]],
+  ppl:[["Owner","Jordan / C&C / BOD"],["Ops","Emm"],["Events","Hazel"]]},
+
+ {id:"turkey",n:"Turkey Drive",brand:"KE",dma:"Boston",ev:"2026-11-21",lch:null,
+  fund:"Keches — playbook clone",phase:"PRE",
+  say:"Cloned from last year's playbook — structure, vendors, contacts carried; dates and costs reset, waiting on leadership.",
+  acts:[
+   ["Ops / Emm","2026-09-01","Confirm structure w/ leadership","chase","open",["Playbook","proposes Nov 21 from last year","confirm dates + costs"]],
+   ["Vendor","2026-11-21","GIVEAWAY DAY","anchor","open",["Playbook","proposed"]]],
+  owe:[["Signage + social pack","cloned — confirm","open"]],they:[],
+  mny:[["Cost","TBD — chase armed"]],
+  wrap:[["Nov 22","+1 report"]],
+  ppl:[["Owner","Emm"],["Approvals","KLG leadership — Flaherty / John U / Tim"]]},
+
+ {id:"bullsfire",n:"Bulls vs Fire — Decision",brand:"PL",dma:"Chicago",ev:null,lch:null,
+  fund:"Postman Law — proposals only",phase:"DECISION",
+  say:"A decision, not a commitment. Bulls $200K against Fire $140K — both ingested, neither counts as committed until a contract lands. No anchor, no schedule.",
+  acts:[],
+  owe:[["Comparison brief to leadership","generated from both proposals","got"]],they:[],
+  mny:[["Bulls — proposed","$200,000 yr 1"],["Fire — proposed","$140,000 from Jul 16"],["Committed","$0 — until signed"]],
+  wrap:[],
+  ppl:[["Decision","Jessica + leadership"],["Analysis","Emm"]]}
+];
+
+const BASEURL={PL:"postmanlaw.com",WK:"wettermarkkeith.com",LR:"lernerandrowe.com",KE:"kecheslaw.com",PDV:"parrishdevaughn.com"};
+const DISC=[
+ {b:"ALL",t:"Attorney Advertising",x:"“ATTORNEY ADVERTISING. Prior results do not guarantee a similar outcome.” — baseline on every paid placement, every brand.",m:"library · suggests on every creative + ethics ticket"},
+ {b:"WK",t:"Alabama required disclaimer",x:"“No representation is made that the quality of the legal services to be performed is greater than the quality of legal services performed by other lawyers.” — Alabama requires this exact language. Wettermark Keith runs Alabama.",m:"suggested automatically on any WK creative"},
+ {b:"ALL",t:"Fee language",x:"“No fee unless we win” must appear with costs/expenses qualifier where the state requires it. The library holds the per-state variant; creative makes the disclaimer — the library suggests it.",m:"your lens: 'we are going to get our asses sued if you run this'"},
+ {b:"ALL",t:"Sweepstakes / giveaway rules",x:"Any contest or giveaway (backpacks, Thanksgiving meals, sweepstakes) carries no-purchase-necessary + eligibility + sponsor ID. Suggested on every event with a giveaway component.",m:"triggers off the commitment's needs"}];
+const TAGS=[
+ {b:"PL",t:"Postman Law — tagline set",x:"Pulled from Doom's tagline library per brand. Seeded here — the real build reads Doom directly, never copies.",m:"linked from Doom"},
+ {b:"WK",t:"Wettermark Keith — tagline set",x:"Per-brand, per-market variants where they exist. Suggested into creative briefs so Brandy never hunts.",m:"linked from Doom"}];
+const VEND=[
+ {t:"On Target Media",r:"Merch vendor — all L&R tiers",c:"account rep · Drive folder linked",m:"internal $30–40 hats · $3 giveaway tier",lk:"Sista Strut · ABQ · Backpack playbooks"},
+ {t:"NM Expo (venue)",r:"Venue — Albuquerque",c:"Rosa — billing · deposits by check",m:"contract 260915-01 on file (SharePoint link)",lk:"Thanksgiving ABQ"},
+ {t:"Facepainterina",r:"Event vendor — ABQ",c:"505-417-6253 · deposit AMEX",m:"face painting / balloons",lk:"ABQ · Backpack ABQ"},
+ {t:"Brain Freezer",r:"Event vendor — ABQ",c:"Salena · 505-730-6297",m:"ice cream · paid 7/7 pattern",lk:"ABQ playbook"},
+ {t:"WEBN / iHeart Cincinnati",r:"Station partner — Cincinnati",c:"station rep · ship-to: station dock",m:"ship-to feeds merch tickets automatically",lk:"Riverfest"},
+ {t:"iHeart Chicago",r:"Station partner — Chicago / NW IN",c:"local rep",m:"Sista Strut route + on-air promos",lk:"Sista Strut"},
+ {t:"Audacy Chicago",r:"Station partner — 3-market flights",c:"Audacy rep",m:"Stars & Strings consolidated flight",lk:"Stars & Strings"},
+ {t:"McCormick Ranch Golf Club",r:"Venue — Phoenix flagship",c:"events office",m:"Golf Classic playbook venue",lk:"Golf Classic 2027 clone"}];
+const DOOMA=[
+ {dma:"Chicago",code:"PLCH26TV30-A",t:":30 TV — approved cut",med:"TV"},
+ {dma:"Chicago",code:"PLCH26DB-728",t:"728x90 display banner",med:"Display"},
+ {dma:"Cincinnati",code:"PLCN26RA30-B",t:":30 radio — approved cut",med:"Radio"},
+ {dma:"Oklahoma City",code:"PDOK26TV30-A",t:":30 TV — approved spot",med:"TV"},
+ {dma:"Oklahoma City",code:"PDOK26LED-CS",t:"Courtside LED base art",med:"Display"},
+ {dma:"Chicago / NW Indiana",code:"LRCH26RA30-A",t:":30 radio — needs L&R recut",med:"Radio"}];
+let J=[
+ {id:"j1",red:true,cid:"riverfest",t:"Riverfest merch never shipped",s:"Ship-by died Aug 16. Chase drafted to JP + Jenny — last safe ground date Aug 26.",
+  k:"POSTMAN LAW · CINCINNATI",h:"Send the Riverfest chase?",
+  body:"The shipment for Cincinnati (event <b>Sun, Sep 6</b>) had a ship-by of <b>Aug 16</b> — 21 days out per the merch lead. No confirmation ever came back. <span class='q'>Sent means nothing until 'shipped' comes home.</span>",
+  why:[["Sep 6","event day — fireworks night"],["Aug 16","ship-by = event −21 · merch lead"],["silence","ticketed Aug 14, nothing back"],["Aug 26","last safe ground date"]],
+  mail:{to:"John P; Jenny",cc:"Hazel; Emm",sub:"CHASE — Riverfest merch (event Sep 6)",
+   mb:"John, Jenny —\n\nRiverfest (Cincinnati, Sun Sep 6) had a ship-by of Aug 16 and nothing is confirmed on file.\n\nNeed today: tracking number or ship date. If it has not shipped, last safe ground date is Wed, Aug 26.\n\nShip-to (vendor registry): WEBN / iHeart Cincinnati — station dock.\n\n— Emm"},
+  yes:"Send it",no:"Hold",
+  onyes(){ toastMsg("Sent. Riverfest stays red until a tracking number lands on the record."); }},
+ {id:"j2",red:true,cid:"plaza",t:"Plaza deadline passed — Aug 15",s:"Buried in a tracker note. Chase to April drafted: Gold payment + booth staffing, one email.",
+  k:"PARRISH DEVAUGHN · OKLAHOMA CITY",h:"Send the Plaza chase?",
+  body:"The tracker held the deadline inside a note: <span class='q'>'Plaza sponsorship deadline is Aug 15.'</span> It passed nine days ago — payment unsent, booth staffing still <b>[Confirm]</b>. One email covers both.",
+  why:[["Aug 15","deadline — found in a note, not a column"],["Aug 24","today — 9 days past"],["Sep 26","festival day"],["risk","Gold slot + 10x10 booth"]],
+  mail:{to:"April Campos <festival@plazadistrict.org>",cc:"Pepper; Emm",sub:"Parrish DeVaughn — Gold sponsorship + booth, Sep 26",
+   mb:"Hi April,\n\nConfirming our Gold slot ($2,500) for Sep 26 is held while payment processes this week — our note showed Aug 15 and I want to make it right.\n\nAlso confirming 10x10 booth placement, and whether power is available.\n\nStaffing names to you by Sep 5.\n\n— Emm Caban · Parrish DeVaughn / Atticor"},
+  yes:"Send it",no:"Hold",
+  onyes(){ toastMsg("Sent to April. Plaza holds its slot or we hear why — on the record either way."); }},
+ {id:"j3",red:false,cid:"abq",t:"ABQ money — sources disagree",s:"Contract says $25,000. Hazel's sheet says $27,500 with add-ons. Which is true?",
+  k:"LERNER & ROWE · ALBUQUERQUE",h:"Which number is true?",
+  body:"The NM Expo contract (260915-01) reads <b>$25,000</b>. Hazel's Master Event Tracker reads <b>$27,500</b> — meal and gift-card add-ons included. <span class='q'>I never guess money. I hold both, and keep provenance either way.</span>",
+  why:[["Aug 22","contract ingested — $25,000"],["Aug 22","sheet pulled — $27,500"],["$2,500","the gap, held for you"],["now","your ruling becomes the committed number"]],
+  yes:"Sheet — $27,500",no:"Contract — $25,000",
+  onyes(){ toastMsg("Ruled: $27,500 per Hazel's sheet. Contract number kept as provenance."); },
+  onno(){ toastMsg("Ruled: $25,000 per contract. Sheet add-ons flagged for Hazel."); }},
+ {id:"j4",red:false,cid:"sista",t:"Michelle collides — week of Sep 1",s:"Three due-backs land on her at once. Moving the Sista brief 3 days clears it — still inside every lead.",
+  k:"CROSS-BRAND · OWNER LOAD",h:"Move the Sista Strut brief?",
+  body:"Riverfest support, MN Fair capture, and Sista Strut prep all land on Michelle the week of <b>Sep 1</b>. Moving the Sista brief from Sep 28 to <b>Sep 25</b> clears her week — <span class='q'>every date stays inside its lead standard. The ripple happens only if you approve.</span>",
+  why:[["scan","owner load across all brands"],["found","3 due-backs · 1 week · 1 person"],["propose","−3 days on the most flexible date"],["verified","all leads still hold"]],
+  yes:"Move it",no:"Leave it",
+  onyes(){ const c=C.find(x=>x.id==="sista"); const a=c.acts.find(x=>x[2]==="Brief to Michelle"); if(a)a[1]="2026-09-25"; toastMsg("Moved to Sep 25 — Michelle's week clears. Nothing else touched."); },
+  onno(){ toastMsg("Left as scheduled. The collision stays flagged."); }}
+];
+
+/* ————— state ————— */
+const S={tab:"today", brand:null, dma:null, open:null, calM:new Date(2026,7,1)};
+/* ————— LIVE RAILS — real when served on Doom's deploy ————— */
+const API={live:false};
+if(location.protocol.startsWith("http")){
+  fetch("/api/config",{credentials:"same-origin"}).then(r=>{ if(r.ok){ API.live=true;
+    const b=document.getElementById("livebadge");
+    b.textContent="LIVE — Doom's rails"; b.style.color="var(--gold)"; b.style.borderColor="var(--gold-dim)";
+    loadState();
+  }}).catch(()=>{});
+}
+function realSend(sub, body, done){
+  if(!API.live){ toastMsg("Demo mode — on the deploy this actually emails you. "+done); return; }
+  fetch("/api/send-traffic",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({to:"emm.caban@atticor.ai",subject:"[MAYHEM] "+sub,
+      message:"<div style=\"font-family:Arial,sans-serif;font-size:14px;line-height:1.6;white-space:pre-wrap\">"+body.replace(/</g,"&lt;")+"</div><p style=\"color:#888;font-size:12px\">Sent by Mayhem — to you first; nobody else until you say so.</p>"})})
+  .then(r=>toastMsg(r.ok?("SENT for real — check your inbox. "+done):"Send failed — rails reachable but n8n said no."))
+  .catch(()=>toastMsg("Send failed — network."));
+}
+function saveState(){
+  if(!API.live) return;
+  const tix={}; C.forEach(c=>{ if(c.tix&&c.tix.length) tix[c.id]=c.tix; });
+  fetch("/api/db",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({collection:"appData",doc:"mayhemState",action:"set",
+      data:{data:JSON.stringify({resolved:RESOLVED,tix}),ts:Date.now()}})}).catch(()=>{});
+}
+let RESOLVED=[];
+function loadState(){
+  fetch("/api/db",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({collection:"appData",doc:"mayhemState",action:"get"})})
+  .then(r=>r.json()).then(j=>{
+    const raw=j&&j.data&&j.data.data; if(!raw) return;
+    const st=JSON.parse(raw);
+    RESOLVED=st.resolved||[];
+    J=J.filter(x=>!RESOLVED.includes(x.id));
+    Object.keys(st.tix||{}).forEach(cid=>{ const c=C.find(x=>x.id===cid); if(c) c.tix=st.tix[cid]; });
+    render();
+  }).catch(()=>{});
+}
+function readLive(text){
+  if(!API.live){ toastMsg("Demo mode — on the deploy Mayhem reads this for real with its AI."); return; }
+  toastMsg("Reading… Mayhem's AI is on it.");
+  fetch("/api/planner",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-sonnet-5",max_tokens:1000,
+      system:"You extract marketing commitment facts from contracts, emails, or notes. Reply ONLY with JSON: {\"name\":string,\"brand\":one of PL,WK,LR,KE,PDV or null,\"dma\":string|null,\"eventDate\":\"YYYY-MM-DD\"|null,\"cost\":string|null,\"vendor\":string|null,\"needs\":array from [creative,merch,social,ethics,seo,staffing]}. Brands: PL=Postman Law, WK=Wettermark Keith, LR=Lerner & Rowe, KE=Keches, PDV=Parrish DeVaughn. No prose.",
+      messages:[{role:"user",content:text.slice(0,12000)}]})})
+  .then(r=>r.json()).then(j=>{
+    let t=(j.content&&j.content[0]&&j.content[0].text)||"";
+    const m=t.match(/\{[\s\S]*\}/); if(!m){ toastMsg("Read failed — no structure came back."); return; }
+    const x=JSON.parse(m[0]);
+    if(x.name)NC.name=x.name; if(x.brand&&BR[x.brand])NC.brand=x.brand; if(x.dma)NC.dma=x.dma;
+    if(x.eventDate)NC.event=x.eventDate; if(x.cost)NC.cost=String(x.cost); if(x.vendor)NC.vendor=x.vendor;
+    if(Array.isArray(x.needs))NC.needs=x.needs;
+    NC.receipts.push(["Read LIVE by Mayhem's AI — facts extracted, nothing guessed","/api/planner · claude-sonnet-5"]);
+    renderIntake(); toastMsg("Read for real. The form filled itself — you stay the judge.");
+  }).catch(()=>toastMsg("Read failed — network."));
+}
+const $=s=>document.querySelector(s);
+const app=$("#app");
+function toastMsg(m){ const t=$("#toast"); t.textContent=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2600); }
+function bhex(b){ return BR[b].hex; }
+function filt(list){ return list.filter(c=>(!S.brand||c.brand===S.brand)&&(!S.dma||c.dma===S.dma)); }
+function phasePill(p){ const m={PRE:"p-pre",LIVE:"p-live",WRAPPED:"p-wrapped",DECISION:"p-dec"};
+  return '<span class="pill '+m[p]+'">'+p+"</span>"; }
+
+/* ————— header rails ————— */
+function drawRails(){
+  $("#brail").innerHTML=
+    '<button class="bchip'+(S.brand===null?" on":"")+'" data-brand="">All brands</button>'+
+    Object.keys(BR).map(k=>'<button class="bchip'+(S.brand===k?" on":"")+'" data-brand="'+k+'" '+(S.brand===k?'style="color:'+bhex(k)+'"':"")+'><span class="d" style="background:'+bhex(k)+'"></span>'+BR[k].name+"</button>").join("");
+  const dr=$("#drail");
+  if(S.brand){
+    dr.style.display="flex";
+    dr.innerHTML='<button class="dchip'+(S.dma===null?" on":"")+'" data-dma="">All '+BR[S.brand].name+' markets</button>'+
+      BR[S.brand].dmas.map(d=>'<button class="dchip'+(S.dma===d?" on":"")+'" data-dma="'+esc(d)+'">'+esc(d)+"</button>").join("");
+  } else { dr.style.display="none"; S.dma=null; }
+}
+
+/* ————— TODAY ————— */
+function agendaActs(){
+  const rows=[];
+  filt(C).forEach(c=>c.acts.forEach(a=>{
+    const late=a[4]==="late"||(a[4]==="open"&&D(a[1])<TODAY&&a[3]!=="anchor"&&a[3]!=="wrap");
+    rows.push({c,a,late});
+  }));
+  return rows;
+}
+function renderToday(){
+  const jj=J.filter(j=>!S.brand||C.find(c=>c.id===j.cid).brand===S.brand);
+  const scope=S.brand?(BR[S.brand].name+(S.dma?" · "+S.dma:"")):"all five brands";
+  const rows=agendaActs();
+  const lateRows=rows.filter(r=>r.late);
+  const m=S.calM, y=m.getFullYear(), mo=m.getMonth();
+  const first=new Date(y,mo,1), start=addD(first,-first.getDay());
+  let cells="";
+  for(let i=0;i<42;i++){
+    const d=addD(start,i), di=iso(d), inMo=d.getMonth()===mo;
+    const todays=rows.filter(r=>r.a[1]===di);
+    const pips=todays.slice(0,6).map(r=>r.a[3]==="anchor"
+      ? '<span class="pip anc">★</span>'
+      : '<span class="pip'+(r.late?" lt":"")+'" style="background:'+(r.late?"var(--ox)":bhex(r.c.brand))+'"></span>').join("");
+    cells+='<button class="cd'+(inMo?"":" out")+(di===iso(TODAY)?" today":"")+'" data-day="'+di+'"><span class="n">'+d.getDate()+'</span><span class="pips">'+pips+"</span></button>";
+  }
+  const MFULL=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  app.innerHTML=
+   '<div class="todaygrid"><div>'+
+   '<div class="voice"><div class="who">Mayhem</div><div class="say">While you were out I read Hazel\u2019s email, built <em>Thanksgiving ABQ</em> from the venue contract, drafted the chases, and caught a $2,500 disagreement. Watching '+esc(scope)+'. '+(jj.length?('<em>'+jj.length+" judgment"+(jj.length>1?"s":"")+" need"+(jj.length>1?"":"s")+" you.</em>"):"<em>Nothing needs your judgment here.</em>")+"</div></div>"+
+   '<div class="sechead"><h2>Your judgment only</h2><span class="sub">everything else, Mayhem already handled</span></div>'+
+   '<div class="jstack">'+(jj.length? jj.map(j=>'<button class="jcard'+(j.red?" red":"")+'" data-j="'+j.id+'"><div><div class="jt">'+esc(j.t)+'</div><div class="js">'+esc(j.s)+'</div><div class="js mono" style="font-size:10px; margin-top:5px; color:var(--dim)">'+esc(j.k)+'</div></div><span class="go">\u203a</span></button>').join(""):'<div class="allclear">The table is clear for this view. Mayhem keeps working.</div>')+"</div>"+
+   "</div><div>"+
+   '<div class="sechead"><h2>The month</h2><span class="sub">a calendar means a calendar \u2014 tap a day</span></div>'+
+   '<div class="calhead"><button class="cn" data-cal="-1">\u2039</button><span class="cm">'+MFULL[mo]+" "+y+'</span><button class="cn" data-cal="1">\u203a</button>'+
+   (lateRows.length?'<span class="ov"><button class="ovchip" data-overdue="1">\u26a0 '+lateRows.length+" overdue</button></span>":"")+"</div>"+
+   '<div class="cal">'+DOWN.map(d=>'<span class="dw">'+d+"</span>").join("")+cells+"</div>"+
+   '<div style="font-size:10.5px; color:var(--dim); margin-top:8px">\u2605 anchor day \u00b7 dots are actions in brand colors \u00b7 red glows are overdue \u00b7 filtered by the rail above</div>'+
+   '<div class="sechead" style="margin-top:20px"><h2>Mayhem produces</h2><span class="sub">generated from the calendar \u2014 preview, then send</span></div>'+
+   '<div class="prodrow"><button class="btn" data-sheet="weekly">Monday note</button><button class="btn" data-sheet="monthly">September brief</button><button class="btn" data-sheet="budget">Budget check</button></div>'+
+   "</div></div>";
+}
+function aRow(r,K){
+  return '<button class="arow'+(r.late?" late":"")+'" data-why="'+r.c.id+"|"+r.a[1]+"|"+esc(r.a[2]).replace(/"/g,"")+'">'+
+   '<span class="bd" style="background:'+bhex(r.c.brand)+'"></span>'+
+   '<span class="k">'+(K[r.a[3]]||"·")+"</span>"+
+   '<span class="tx"><b>'+esc(r.a[2])+"</b><span>"+esc(r.c.n)+" · "+esc(r.c.dma)+"</span></span>"+
+   '<span class="st '+(r.late?"late":esc(r.a[4]))+'">'+(r.late?"late":esc(r.a[4]))+"</span></button>";
+}
+
+/* ————— BRANDS ————— */
+function renderBrands(){
+  const ks=S.brand?[S.brand]:Object.keys(BR);
+  app.innerHTML='<div class="grid2">'+ks.map(k=>{
+    const mine=C.filter(c=>c.brand===k&&(!S.dma||c.dma===S.dma));
+    const tot=mine.reduce((s,c)=>{const m=c.mny.find(x=>/Contracted|Committed/.test(x[0])); if(!m)return s;
+      const v=parseInt((m[1]||"").replace(/[^0-9]/g,""))||0; return s+v;},0);
+    const dmas=[...new Set(mine.map(c=>c.dma))];
+    return '<div class="brandsec"><button class="bh" data-brand="'+k+'">'+
+      '<span class="d" style="background:'+bhex(k)+'"></span><h2>'+BR[k].name+"</h2>"+
+      '<span class="meta">'+mine.length+' in motion<br>'+money(tot)+" committed</span></button>"+
+      (mine.length? dmas.map(d=>'<div class="dmasec"><h3>'+esc(d)+"</h3>"+
+        mine.filter(c=>c.dma===d).map(c=>{
+          const next=c.acts.filter(a=>a[4]!=="done"&&D(a[1])>=TODAY&&a[3]!=="anchor").sort((a,b)=>a[1]<b[1]?-1:1)[0];
+          const late=c.acts.some(a=>a[4]==="late"||(a[4]==="open"&&D(a[1])<TODAY&&a[3]!=="anchor"&&a[3]!=="wrap"));
+          return '<button class="ccard" data-open="'+c.id+'"><div class="top"><b>'+esc(c.n)+"</b>"+phasePill(c.phase)+"</div>"+
+           '<div class="meta">'+esc(c.fund)+(c.ev?' · anchor <span class="mono" style="color:var(--gold)">'+fmtS(D(c.ev))+"</span>":"")+"</div>"+
+           (next?'<div class="next'+(late?" red":"")+'">Next — <b>'+esc(next[2])+'</b> <span class="mono">'+fmt(D(next[1]))+"</span></div>":
+             (c.phase==="WRAPPED"?'<div class="next">Wrapped — results on file · playbook ready</div>':'<div class="next">Decision pending — proposal money only</div>'))+
+           "</button>";
+        }).join("")+"</div>").join("") : '<div class="allclear">Nothing in motion — intake is the front door.</div>')+
+      "</div>";
+  }).join("")+"</div>";
+}
+
+/* ————— COMMITMENT ————— */
+let seg="owed";
+function renderCommit(){
+  const c=C.find(x=>x.id===S.open); if(!c){S.open=null; return render();}
+  const acts=c.acts.slice().sort((a,b)=>a[1]<b[1]?-1:1);
+  let metro="", todayPlaced=false;
+  acts.forEach(a=>{
+    const d=D(a[1]);
+    if(!todayPlaced&&d>=TODAY){ metro+='<div class="todaymark"><span>Today · Aug 24</span></div>'; todayPlaced=true; }
+    const late=a[4]==="late"||(a[4]==="open"&&d<TODAY&&a[3]!=="anchor"&&a[3]!=="wrap");
+    const cls=a[3]==="anchor"?"anchor":(late?"late":(a[4]==="done"?"done":(a[3]==="wrap"?"wrapstop":"")));
+    metro+='<div class="stop '+cls+'"><div class="dt"><span class="m">'+fmtS(d)+'</span><span class="y">'+DOWN[d.getDay()]+"</span></div>"+
+      '<button class="sb" data-why="'+c.id+"|"+a[1]+"|"+esc(a[2]).replace(/"/g,"")+'"><div class="sl">'+esc(a[2])+"</div>"+
+      (late?'<div class="so" style="color:var(--ox); font-weight:700">overdue — surfaced</div>':"")+
+      '<span class="lane">'+esc(a[0])+"</span></button></div>";
+  });
+  if(!acts.length) metro='<div class="allclear">No anchor date — a decision has no schedule until a contract lands.</div>';
+  const segs=[["owed","We owe"],["tix","Tickets"+((c.tix&&c.tix.length)?" ("+c.tix.length+")":"")],["they","They owe"],["money","Money"],["people","People"],["wrap",c.phase==="WRAPPED"?"Results":"Wrap — armed"]];
+  const stM={open:"open",late:"late",got:"got",wait:"wait",done:"done"};
+  let pane="";
+  if(seg==="owed") pane=(c.owe.length?c.owe.map((o,i)=>'<div class="row"><span class="st '+stM[o[2]]+'">'+o[2]+'</span><div style="flex:1">'+esc(o[0])+'<span class="mu">'+esc(o[1])+"</span></div>"+((o[2]==="open"||o[2]==="late")?'<button class="rowbtn" data-tix="'+c.id+"|"+i+'">Route it</button>':"")+"</div>").join(""):'<div class="row mu">Nothing owed.</div>');
+  if(seg==="tix") pane=ticketsPane(c);
+  if(seg==="they") pane=(c.they.length?c.they.map(o=>'<div class="row"><span class="st '+stM[o[1]]+'">'+o[1]+"</span><div>"+esc(o[0])+"</div></div>").join(""):'<div class="row mu">No contracted benefits here.</div>');
+  if(seg==="money") pane=c.mny.map(m=>'<div class="row"><span class="mono">'+esc(m[0])+"</span><div>"+esc(m[1])+"</div></div>").join("");
+  if(seg==="people") pane=c.ppl.map(p=>'<div class="row"><span class="mono">'+esc(p[0])+"</span><div>"+esc(p[1])+"</div></div>").join("");
+  if(seg==="wrap") pane=(c.wrap.length?c.wrap.map(w=>'<div class="row"><span class="mono">'+esc(w[0])+"</span><div>"+esc(w[1])+"</div></div>").join(""):'<div class="row mu">Arms when an anchor exists.</div>');
+  const idx=c.phase==="WRAPPED"?3:(c.phase==="LIVE"?1:(c.phase==="DECISION"?-1:0));
+  app.innerHTML=
+   '<button class="cback" data-backb="1">‹ '+BR[c.brand].name+" · "+esc(c.dma)+"</button>"+
+   '<div class="grid2"><div>'+
+   '<div class="chead"><h1><span class="d" style="background:'+bhex(c.brand)+'"></span>'+esc(c.n)+"</h1>"+
+   '<div class="facts">'+esc(c.fund)+(c.ev?' · anchor <b class="mono" style="color:var(--gold)">'+fmt(D(c.ev))+"</b>":"")+"</div></div>"+
+   '<div class="csay">“'+esc(c.say)+'”</div>'+
+   '<div class="phase">'+["PRE","LIVE","POST"].map((p,i)=>'<div class="'+(i<idx?"done":(i===idx?"now":""))+'">'+p+"</div>").join("")+"</div>"+
+   '<div class="sechead"><h2>The line</h2><span class="sub">worked back from the anchor — tap a stop for its why</span></div>'+
+   '<div class="metro">'+metro+"</div>"+
+   "</div><div>"+
+   '<div class="seg">'+segs.map(s=>'<button class="'+(seg===s[0]?"on":"")+'" data-seg="'+s[0]+'">'+s[1]+"</button>").join("")+"</div>"+
+   '<div class="panel">'+pane+"</div>"+
+   '<div class="cbtns"><button class="btn" data-utm="'+c.id+'">UTMs \u2014 one click</button><button class="btn" data-sheet="monthly">Monthly brief</button>'+
+   (c.phase==="WRAPPED"?'<button class="btn gold" data-sheet="report">Event report</button>':"")+
+   "</div></div></div>";
+}
+
+/* ————— sheets ————— */
+function openSheet(html){ $("#sheetbody").innerHTML=html; $("#sheetbg").classList.remove("hide"); requestAnimationFrame(()=>$("#sheet").classList.add("up")); }
+function closeSheet(){ $("#sheet").classList.remove("up"); $("#sheetbg").classList.add("hide"); }
+function whySheet(cid,dt,label){
+  const c=C.find(x=>x.id===cid);
+  const a=c.acts.find(x=>x[1]===dt&&x[2]===label)||c.acts.find(x=>x[1]===dt);
+  if(!a) return;
+  openSheet('<div class="lk">'+BR[c.brand].name.toUpperCase()+" · "+esc(c.dma).toUpperCase()+'</div><h2>'+esc(a[2])+"</h2>"+
+   '<div class="body" style="color:var(--muted); font-size:13px">'+esc(c.n)+' · <b class="mono" style="color:var(--gold)">'+fmt(D(a[1]))+"</b></div>"+
+   '<div class="why">'+a[5].map((w,i)=>'<div class="step"><span class="mono">'+(i===0?"anchor":i===a[5].length-1?"result":"rule")+"</span><div>"+esc(w)+"</div></div>").join("")+"</div>"+
+   '<div class="body q" style="font-size:12.5px">If the anchor moves, this date moves with it — and you approve the ripple first.</div>'+
+   '<div class="rulerow"><button class="rule alt" data-closesheet="1">Close</button><button class="rule go" data-opencommit="'+c.id+'">Open '+esc(c.n)+"</button></div>");
+}
+function dayRowsHtml(rowsSel){
+  const K={anchor:"\u2605",send:"\u2197",dueback:"\u21a9",wrap:"\u25fd",pay:"$",capture:"\u25c9",chase:"\u2691"};
+  return rowsSel.map(r=>'<button class="arow'+(r.late?" late":"")+'" data-why="'+r.c.id+"|"+r.a[1]+"|"+esc(r.a[2]).replace(/"/g,"")+'">'+
+   '<span class="bd" style="background:'+bhex(r.c.brand)+'"></span>'+
+   '<span class="k">'+(K[r.a[3]]||"\u00b7")+"</span>"+
+   '<span class="tx"><b>'+esc(r.a[2])+"</b><span>"+esc(r.c.n)+" \u00b7 "+esc(r.c.dma)+"</span></span>"+
+   '<span class="st '+(r.late?"late":esc(r.a[4]))+'">'+(r.late?"late":esc(r.a[4]))+"</span></button>").join("");
+}
+function daySheet(di){
+  const rows=agendaActs().filter(r=>r.a[1]===di);
+  const d=D(di);
+  openSheet('<div class="lk">'+(di===iso(TODAY)?"TODAY \u00b7 ":"")+fmt(d).toUpperCase()+'</div><h2>'+(rows.length?rows.length+" action"+(rows.length>1?"s":"")+" on this day":"Nothing lands here")+"</h2>"+
+   (rows.length? dayRowsHtml(rows) : '<div class="body q">Quiet day \u2014 the workbacks keep counting underneath.</div>')+
+   '<div class="rulerow"><button class="rule alt" data-closesheet="1">Close</button></div>');
+}
+function overdueSheet(){
+  const rows=agendaActs().filter(r=>r.late).sort((a,b)=>a.a[1]<b.a[1]?-1:1);
+  openSheet('<div class="lk">SURFACED, NOT BURIED</div><h2>'+rows.length+' overdue</h2>'+dayRowsHtml(rows)+
+   '<div class="rulerow"><button class="rule alt" data-closesheet="1">Close</button></div>');
+}
+function judgSheet(id){
+  const j=J.find(x=>x.id===id); if(!j) return;
+  openSheet('<div class="lk">'+esc(j.k)+"</div><h2>"+esc(j.h)+'</h2><div class="body">'+j.body+"</div>"+
+   '<div class="why">'+j.why.map(w=>'<div class="step"><span class="mono">'+esc(w[0])+"</span><div>"+esc(w[1])+"</div></div>").join("")+"</div>"+
+   (j.mail?'<div class="mail"><div class="mh"><div><b>To</b> '+esc(j.mail.to)+"</div><div><b>Cc</b> "+esc(j.mail.cc)+"</div><div><b>Subject</b> "+esc(j.mail.sub)+'</div></div><div class="mb">'+esc(j.mail.mb)+"</div></div>":"")+
+   '<div class="rulerow"><button class="rule alt" data-jno="'+j.id+'">'+esc(j.no)+'</button><button class="rule go" data-jyes="'+j.id+'">'+esc(j.yes)+"</button></div>");
+}
+function monthlySheet(){
+  const rows={};
+  C.forEach(c=>{ if(!c.ev)return; const d=D(c.ev); if(d.getMonth()!==8)return; (rows[c.brand]=rows[c.brand]||[]).push(c); });
+  let mb="SEPTEMBER — PER BRAND, PER MARKET, EXACT DATES\n";
+  for(const b of Object.keys(rows)){ mb+="\n"+BR[b].name.toUpperCase()+"\n";
+    rows[b].forEach(c=>{ mb+="  · "+c.dma+" — "+c.n+" — "+fmt(D(c.ev))+(c.lch?" (media from "+fmtS(D(c.lch))+")":"")+"\n"; }); }
+  mb+="\nEvery line is live in Mayhem with owners and due-backs.\nSent mid-month for visibility — the way Hazel asked.";
+  openSheet('<div class="lk">GENERATED FROM THE CALENDAR</div><h2>September brief</h2>'+
+   '<div class="mail"><div class="mh"><div><b>To</b> Marketing team</div><div><b>Cc</b> Hazel; Jessica; Michelle</div><div><b>Subject</b> September at a glance — all brands</div></div><div class="mb">'+esc(mb)+"</div></div>"+
+   '<div class="rulerow"><button class="rule alt" data-closesheet="1">Close</button><button class="rule go" data-sendit="September brief">Send it</button></div>');
+}
+function reportSheet(){
+  const c=C.find(x=>x.id==="golf");
+  let mb="CHARITY GOLF CLASSIC · LERNER & ROWE · PHOENIX\n\nSpend: $377,000 actual against $365,000 contracted (check-level ledger on file)\n"+
+    c.wrap.map(w=>"• "+w[1]).join("\n")+"\n\nImpressions per the documented house benchmark method.";
+  openSheet('<div class="lk">WRAP — RESULTS ON FILE</div><h2>Golf Classic — event report</h2>'+
+   '<div class="mail"><div class="mh"><div><b>To</b> Seb; Danny Schwartz</div><div><b>Cc</b> Hazel; Jordan Fermin</div><div><b>Subject</b> Event report — Charity Golf Classic</div></div><div class="mb">'+esc(mb)+"</div></div>"+
+   '<div class="rulerow"><button class="rule alt" data-closesheet="1">Close</button><button class="rule go" data-sendit="Event report">Send to leadership</button></div>');
+}
+
+/* ————— tickets ————— */
+const TSTEPS=["Requested","Acknowledged","Due back","Received","Approved"];
+function ticketsPane(c){
+  const tix=c.tix||[];
+  if(!tix.length) return '<div class="row mu">No tickets out. Route a need from We owe \u2014 only what someone else owes becomes a ticket.</div>';
+  return tix.map(t=>{
+    const bad=t.state===-1;
+    return '<div class="tcard"><div class="tt">'+esc(t.kind)+" \u2192 "+esc(t.to)+'</div><div class="ts">'+esc(t.sub)+'</div>'+
+    '<div class="ts mono" style="font-size:10px">sent '+esc(t.sent.slice(5).replace("-","/"))+' \u00b7 due back <b style="color:var(--gold)">'+esc(t.due.slice(5).replace("-","/"))+"</b></div>"+
+    '<div class="stepper">'+TSTEPS.map((s,i)=>'<span class="'+(bad?(i<=1?"bad":""):(i<t.state?"done":(i===t.state?"now":"")))+'">'+s+"</span>").join("")+"</div>"+
+    (bad?'<div class="ts" style="color:var(--ox); font-weight:700">due-back passed with silence \u2014 the chase is on your table</div>':"")+
+    "</div>";
+  }).join("");
+}
+function routeSheet(cid,idx){
+  const c=C.find(x=>x.id===cid); const o=c.owe[idx]; const L=o[0].toLowerCase();
+  const doom=DOOMA.filter(a=>a.dma===c.dma&&((L.includes("radio")&&a.med==="Radio")||(L.includes("tv")&&a.med==="TV")||((L.includes("banner")||L.includes("display")||L.includes("led")||L.includes("signage"))&&a.med==="Display")));
+  let kind,to,due,body,libNote="";
+  const ev=c.ev?D(c.ev):TODAY;
+  if(L.includes("merch")||L.includes("booth")){ kind="Merch"; to="John P + Jenny"; due=iso(addD(ev,-21));
+    body="Merch ticket \u2014 "+c.n+" ("+c.dma+")\n\nNeed: "+o[0]+"\nShip-by: "+fmt(D(due))+" (21-day lead)\nShip-to (vendor registry): "+(c.id==="riverfest"?"WEBN / iHeart Cincinnati \u2014 station dock":"pulled from the registry for this vendor")+"\n\nReply with ordered \u2192 shipped \u2192 delivered \u2014 the round trip is tracked.\n\n\u2014 Emm"; }
+  else if(L.includes("social")||L.includes("newsletter")){ kind="Social"; to="Michelle"; due=iso(addBDx(ev,-5));
+    body="Social ticket \u2014 "+c.n+" ("+c.dma+")\n\nWhat: "+o[0]+"\nEvent: "+(c.ev?fmt(ev):"TBD")+"\nDue back: "+fmt(D(due))+"\n\nDates, campaign framing, and the shared-album link ride along \u2014 the way Hazel described the ticket.\n\n\u2014 Emm"; }
+  else if(L.includes("ethics")){ kind="Ethics"; to="Ethics review"; due=iso(addBDx(ev,-15)); libNote="Library suggests: Attorney Advertising line + "+(c.brand==="WK"?"the Alabama required disclaimer":"per-state fee language")+".";
+    body="Ethics ticket \u2014 "+c.n+"\n\nScript attached. "+libNote+"\nVerdict due back: "+fmt(D(due))+" \u2014 nothing airs without it.\n\n\u2014 Emm"; }
+  else if(L.includes("page")||L.includes("utm")||L.includes("pixel")){ kind="SEO / Web"; to="SEO team"; due=iso(addBDx(ev,-13));
+    body="SEO request \u2014 "+c.n+"\n\nNeed: "+o[0]+"\nLive by: "+fmt(D(due))+"\nUTMs are mine \u2014 generated in Mayhem; pixels and page-click are yours.\n\n\u2014 Emm"; }
+  else if(L.includes("staff")){ kind="Staffing"; to="Hazel"; due=iso(addD(ev,-7));
+    body="Staffing \u2014 "+c.n+"\n\nRoster locks "+fmt(D(due))+" so badges and call times go out with a week in hand.\n\n\u2014 Emm"; }
+  else { kind="Creative"; to="Brandy Newton"; due=iso(addBDx(ev,-25)); libNote="Library rides along: taglines for "+BR[c.brand].name+" + the disclaimer set creative needs.";
+    body="Creative brief \u2014 "+c.n+" ("+c.dma+")\n\nDeliverable: "+o[0]+"\nDue back: "+fmt(D(due))+" (creative lead standard \u2014 protects the launch)\n"+libNote+"\n\n\u2014 Emm"; }
+  openSheet('<div class="lk">'+BR[c.brand].name.toUpperCase()+" \u00b7 "+esc(c.dma).toUpperCase()+'</div><h2>Route: '+esc(o[0])+"</h2>"+
+   '<div class="doctrine"><span class="'+(doom.length?"hit":"")+'">1 \u00b7 already in Doom?</span><span>2 \u00b7 yours \u2014 one click</span><span class="'+(libNote?"hit":"")+'">3 \u00b7 library suggests</span><span class="hit">4 \u00b7 ticket out</span></div>'+
+   (doom.length?('<div class="libcard" style="border-color:var(--gold-dim)"><div class="lt">\u25c6 Found in Doom \u2014 link, don\u2019t recreate</div>'+doom.map(a=>'<div class="lx"><b class="mono" style="color:var(--cyan)">'+a.code+"</b> \u2014 "+esc(a.t)+' <button class="rowbtn" data-doomlink="'+a.code+'">Link it</button></div>').join("")+'<div class="lm">reads the ISCI registry \u00b7 never copies it</div></div>'):"")+
+   '<div class="mail"><div class="mh"><div><b>To</b> '+esc(to)+'</div><div><b>Cc</b> Hazel; Emm</div><div><b>Subject</b> '+esc(kind)+" \u2014 "+esc(c.n)+' \u00b7 due back '+fmt(D(due))+'</div></div><div class="mb">'+esc(body)+"</div></div>"+
+   '<div class="rulerow"><button class="rule alt" data-closesheet="1">Not yet</button><button class="rule go" data-sendtix=\''+cid+"|"+idx+"|"+kind+"|"+to+"|"+due+'\'>Send \u2014 due back '+D(due).getDate()+" "+MONN[D(due).getMonth()]+"</button></div>");
+}
+function addBDx(d,n){ let x=new Date(d), step=n<0?-1:1, left=Math.abs(n);
+  while(left>0){ x=addD(x,step); if(x.getDay()!==0&&x.getDay()!==6) left--; } return x; }
+function utmSheet(cid){
+  const c=C.find(x=>x.id===cid);
+  const ch=c.ch||[];
+  if(!ch.length){ openSheet('<div class="lk">'+esc(c.n).toUpperCase()+'</div><h2>No trackable channels</h2><div class="body q">This flight has no digital or streaming channels \u2014 so there are no UTMs. Mayhem does not invent tracking you don\u2019t need.</div><div class="rulerow"><button class="rule alt" data-closesheet="1">Close</button></div>'); return; }
+  const slug=c.n.toLowerCase().replace(/[^a-z0-9]+/g,"-");
+  const srcMap={radio:"iheart",tv:"broadcast",display:"partner",social:"organic-social",landing:"partner"};
+  openSheet('<div class="lk">'+BR[c.brand].name.toUpperCase()+' \u00b7 YOURS \u2014 ONE CLICK</div><h2>UTMs \u2014 '+esc(c.n)+'</h2>'+
+   '<div class="body q" style="margin-bottom:10px">Only the channels this flight actually has. Landing pages live with you; pixels live with SEO.</div>'+
+   ch.map(k=>'<div class="utm"><div class="ul">'+k+'</div><div class="uc">https://'+BASEURL[c.brand]+"/?utm_source="+(srcMap[k]||k)+"&utm_medium="+k+"&utm_campaign="+slug+'</div><button class="rowbtn" style="margin-top:6px" data-copyutm="'+k+'">Copy</button></div>').join("")+
+   '<div class="rulerow"><button class="rule alt" data-closesheet="1">Close</button></div>');
+}
+function weeklySheet(){
+  const rows=agendaActs().filter(r=>{ const d=D(r.a[1]); return d>=TODAY&&d<addD(TODAY,7); }).sort((a,b)=>a.a[1]<b.a[1]?-1:1);
+  const byB={};
+  rows.forEach(r=>{ (byB[r.c.brand]=byB[r.c.brand]||[]).push(r); });
+  let mb="MONDAY NOTE \u2014 WEEK OF AUG 24\n";
+  for(const b of Object.keys(byB)){ mb+="\n"+BR[b].name.toUpperCase()+"\n";
+    byB[b].forEach(r=>{ mb+="  \u00b7 "+fmtS(D(r.a[1]))+" \u2014 "+r.a[2]+" ("+r.c.n+" \u00b7 "+r.c.dma+")\n"; }); }
+  mb+="\nOverdue and chases ride the daily heartbeat \u2014 this is the week, per brand, per market.";
+  openSheet('<div class="lk">GENERATED \u2014 WEEKLY VISIBILITY</div><h2>Monday note</h2>'+
+   '<div class="mail"><div class="mh"><div><b>To</b> Jessica; Hazel</div><div><b>Cc</b> Michelle; Brandy</div><div><b>Subject</b> The week \u2014 all brands</div></div><div class="mb">'+esc(mb)+"</div></div>"+
+   '<div class="rulerow"><button class="rule alt" data-closesheet="1">Close</button><button class="rule go" data-sendit="Monday note">Send it</button></div>');
+}
+function budgetSheet(){
+  openSheet('<div class="lk">TRACKING \u2014 NOT OWNING. BUDGET IS NOT YOUR HOUSE.</div><h2>Budget check \u00b7 payments ahead</h2>'+
+   '<div class="why">'+
+   '<div class="step"><span class="mono">Sep 15</span><div>Thunder \u2014 50% milestone \u00b7 <b>$92,500</b> \u00b7 per contract \u2192 Jordan Fermin</div></div>'+
+   '<div class="step"><span class="mono">Sep 15</span><div>NM Expo \u2014 venue deposit \u00b7 check to Rosa \u2192 Jordan Fermin</div></div>'+
+   '<div class="step"><span class="mono">monthly</span><div>Hazel\u2019s check-in: <i>\u201care these budgets still accurate?\u201d</i> \u2014 per-vendor Drive sheets swept, drift flagged</div></div>'+
+   '<div class="step"><span class="mono">standing</span><div>Bulls-vs-Fire stays proposal money \u2014 $0 committed until signed</div></div>'+
+   "</div>"+
+   '<div class="rulerow"><button class="rule alt" data-closesheet="1">Close</button><button class="rule go" data-sendit="Payments-ahead note to Jordan">Send to Jordan</button></div>');
+}
+/* ————— LIBRARY ————— */
+let libSeg="disc";
+function renderLibrary(){
+  const segsL=[["disc","Disclaimers"],["tags","Taglines"],["vend","Vendor registry"],["doom","Doom assets"]];
+  let pane="";
+  if(libSeg==="disc") pane=DISC.filter(d=>!S.brand||d.b==="ALL"||d.b===S.brand).map(d=>'<div class="libcard"><div class="lt">'+(d.b!=="ALL"?'<span class="bd" style="width:9px;height:9px;border-radius:50%;background:'+bhex(d.b)+'"></span>':"")+esc(d.t)+'</div><div class="lx">'+esc(d.x)+'</div><div class="lm">'+esc(d.m)+'</div><button class="rowbtn use" data-uselib="'+esc(d.t)+'">Suggest into a ticket</button></div>').join("");
+  if(libSeg==="tags") pane=TAGS.filter(d=>!S.brand||d.b===S.brand).map(d=>'<div class="libcard"><div class="lt"><span class="bd" style="width:9px;height:9px;border-radius:50%;background:'+bhex(d.b)+'"></span>'+esc(d.t)+'</div><div class="lx">'+esc(d.x)+'</div><div class="lm">'+esc(d.m)+"</div></div>").join("")||'<div class="allclear">No tagline set for this filter.</div>';
+  if(libSeg==="vend") pane=VEND.map(v=>'<div class="libcard"><div class="lt">'+esc(v.t)+'</div><div class="lx"><b>'+esc(v.r)+"</b> \u00b7 "+esc(v.c)+"<br>"+esc(v.m)+'</div><div class="lm">linked: '+esc(v.lk)+"</div></div>").join("");
+  if(libSeg==="doom") pane='<div class="body q" style="font-size:12.5px; margin-bottom:10px">Reads Doom\u2019s ISCI registry live \u2014 code + DMA, linked, never copied. Routing checks here first.</div>'+DOOMA.filter(a=>!S.dma||a.dma===S.dma).map(a=>'<div class="libcard"><div class="lt mono" style="color:var(--cyan); font-size:12.5px">'+a.code+'</div><div class="lx">'+esc(a.t)+" \u00b7 "+esc(a.med)+" \u00b7 "+esc(a.dma)+'</div><div class="lm">\u25c6 lives in Doom</div></div>').join("");
+  app.innerHTML='<div class="sechead"><h2>The Library</h2><span class="sub">shared memory \u2014 it suggests; people decide</span></div>'+
+   '<div class="seg">'+segsL.map(s=>'<button class="'+(libSeg===s[0]?"on":"")+'" data-libseg="'+s[0]+'">'+s[1]+"</button>").join("")+"</div>"+
+   '<div class="grid2"><div>'+pane+"</div></div>";
+}
+/* ————— INTAKE ————— */
+const NC={name:"",brand:"",dma:"",event:"",cost:"",vendor:"",needs:[],receipts:[],conflict:null,chosen:null};
+function renderIntake(){
+  const needsAll=["creative","merch","social","ethics","seo","staffing"];
+  app.innerHTML='<div class="intakegrid"><div class="formcard"><h2>New commitment</h2>'+
+   NC.receipts.map(r=>'<div class="receipt">✓ '+esc(r[0])+'<span class="mono">'+esc(r[1])+"</span></div>").join("")+
+   (NC.conflict?'<div class="conflict"><h4>⚖ Sources disagree — you pick the truth</h4>'+
+     NC.conflict.map((o,i)=>'<button class="copt'+(NC.chosen===i?" on":"")+'" data-cf="'+i+'"><span class="r"></span><div><b>'+esc(o[0])+'</b><div style="font-size:11.5px; color:var(--muted)">'+esc(o[1])+"</div></div></button>").join("")+
+     '<div style="font-size:11px; color:var(--dim); margin-top:6px">Provenance is kept either way.</div></div>':"")+
+   '<div class="f1"><label>Commitment name</label><input id="f-name" value="'+esc(NC.name)+'"></div>'+
+   '<div class="f2"><div><label>Brand</label><select id="f-brand"><option value="">—</option>'+Object.keys(BR).map(k=>'<option value="'+k+'" '+(NC.brand===k?"selected":"")+">"+BR[k].name+"</option>").join("")+'</select></div>'+
+   '<div><label>DMA / market</label><input id="f-dma" value="'+esc(NC.dma)+'"></div></div>'+
+   '<div class="f2"><div><label>Event date — the anchor</label><input id="f-event" type="date" value="'+esc(NC.event)+'"></div>'+
+   '<div><label>Cost</label><input id="f-cost" value="'+esc(NC.cost)+'"></div></div>'+
+   '<div class="f1"><label>Vendor / partner</label><input id="f-vendor" value="'+esc(NC.vendor)+'"></div>'+
+   '<div class="f1"><label>What it needs</label>'+needsAll.map(n=>'<button class="chipn'+(NC.needs.includes(n)?" on":"")+'" data-need="'+n+'">'+n+"</button>").join("")+"</div>"+
+   '<div class="cbtns"><button class="btn gold" id="f-create">Create — build the workback</button><button class="btn" id="f-clear">Clear</button></div></div>'+
+   '<div><div class="formcard"><h2>Feed the intake</h2>'+
+   '<button class="feed" data-feed="email"><span class="fi">✉️</span><div><b>Read a forwarded email</b><span>FW: Thanksgiving event 11/9 New Mexico venue — from Hazel</span></div></button>'+
+   '<button class="feed" data-feed="contract"><span class="fi">📜</span><div><b>Read a contract</b><span>NM Expo agreement 260915-01 (scanned PDF)</span></div></button>'+
+   '<button class="feed" data-feed="sheet"><span class="fi">📊</span><div><b>Pull from Hazel&rsquo;s tracker</b><span>Master Event Tracker — Thanksgiving row</span></div></button>'+
+   '<div style="margin-top:12px"><label>Or paste ANYTHING — a contract, a forwarded email, meeting notes</label>'+
+   '<textarea id="live-paste" rows="4" style="font-family:inherit; font-size:13px; background:var(--bg2); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:10px; width:100%" placeholder="Paste it. Mayhem reads it for real on the deploy."></textarea>'+
+   '<div class="cbtns" style="margin-top:8px"><button class="btn gold" id="live-read">Read it — live AI</button></div></div>'+
+   '<div style="font-size:11.5px; color:var(--dim); margin-top:6px">Live feeds on the real build: MP@atticor.ai mailbox · Notion Master Tracker · SharePoint per brand · her Drive links. The form stays first; evidence fills it.</div></div>'+
+   '<div class="formcard"><h2>What happens on create</h2><div class="why">'+
+   '<div class="step"><span class="mono">anchor</span><div>The event date becomes the anchor — Mayhem builds the whole workback: creative, merch, social, ethics, SEO, vendor package, wrap collection. Every date carries its why.</div></div>'+
+   '<div class="step"><span class="mono">route</span><div>Every need runs the doctrine: already in Doom? link it · yours? one click · library suggests · only what others owe becomes a ticket.</div></div>'+
+   '<div class="step"><span class="mono">judge</span><div>Nothing sends without preview. Nothing changes state without evidence or you.</div></div>'+
+   "</div></div></div></div>";
+}
+function feed(kind){
+  if(kind==="email"){ Object.assign(NC,{name:"Thanksgiving Meal Giveaway — ABQ",brand:"LR",dma:"Albuquerque",event:"2026-11-09",vendor:"New Mexico Expo · Rosa (billing)",needs:["merch","social","staffing"]});
+    NC.receipts.push(["Read Hazel's forwarded email — date, venue, contact pulled","FW_Thanksgiving_11-9_NM_venue.msg"]); }
+  if(kind==="contract"){ Object.assign(NC,{cost:"$25,000"});
+    NC.receipts.push(["Read the venue contract — cost, deposit milestone, access terms","NM_Expo_260915-01.pdf · scanned, OCR"]); }
+  if(kind==="sheet"){ NC.receipts.push(["Pulled Hazel's tracker row — budget $27,500 with add-ons","Master Event Tracker · Thanksgiving"]);
+    NC.conflict=[["Contract — $25,000","NM Expo agreement 260915-01"],["Hazel's sheet — $27,500","meal + gift-card add-ons included"]]; }
+  renderIntake(); toastMsg("Evidence read — the form filled itself. You stay the judge.");
+}
+
+/* ————— render root ————— */
+function render(){
+  drawRails();
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===S.tab));
+  $("#jbadge").textContent=J.length; $("#jbadge").style.display=J.length?"":"none";
+  if(S.open) return renderCommit();
+  if(S.tab==="today") return renderToday();
+  if(S.tab==="brands") return renderBrands();
+  if(S.tab==="intake") return renderIntake();
+  if(S.tab==="library") return renderLibrary();
+}
+
+/* ————— events ————— */
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button"); if(!t) return;
+  if(t.dataset.tab!==undefined&&t.closest("#tabs")){ S.tab=t.dataset.tab; S.open=null; render(); window.scrollTo(0,0); return; }
+  if(t.dataset.brand!==undefined&&t.closest("#brail")){ S.brand=t.dataset.brand||null; S.dma=null; render(); return; }
+  if(t.dataset.brand!==undefined&&t.classList.contains("bh")){ S.brand=t.dataset.brand; S.dma=null; render(); window.scrollTo(0,0); return; }
+  if(t.dataset.dma!==undefined){ S.dma=t.dataset.dma||null; render(); return; }
+  if(t.dataset.open){ S.open=t.dataset.open; render(); window.scrollTo(0,0); return; }
+  if(t.dataset.backb){ S.open=null; S.tab="brands"; render(); return; }
+  if(t.dataset.cal){ S.calM=new Date(S.calM.getFullYear(), S.calM.getMonth()+ +t.dataset.cal, 1); render(); return; }
+  if(t.dataset.day){ daySheet(t.dataset.day); return; }
+  if(t.dataset.overdue){ overdueSheet(); return; }
+  if(t.dataset.j){ judgSheet(t.dataset.j); return; }
+  if(t.dataset.jyes){ const j=J.find(x=>x.id===t.dataset.jyes); closeSheet(); if(j&&j.onyes)j.onyes(); if(j&&j.mail) realSend(j.mail.sub, j.mail.mb, "Ruled: "+j.yes+"."); RESOLVED.push(t.dataset.jyes); J=J.filter(x=>x.id!==t.dataset.jyes); saveState(); render(); return; }
+  if(t.dataset.jno){ const j=J.find(x=>x.id===t.dataset.jno); closeSheet(); if(j&&j.onno){j.onno(); RESOLVED.push(t.dataset.jno); J=J.filter(x=>x.id!==t.dataset.jno); saveState();} else toastMsg("Held. It stays on the table — Mayhem does not forget."); render(); return; }
+  if(t.dataset.why){ const p=t.dataset.why.split("|"); whySheet(p[0],p[1],p.slice(2).join("|")); return; }
+  if(t.dataset.opencommit){ closeSheet(); S.open=t.dataset.opencommit; render(); window.scrollTo(0,0); return; }
+  if(t.dataset.closesheet){ closeSheet(); return; }
+  if(t.dataset.sendit){ closeSheet(); realSend(t.dataset.sendit, "Generated by Mayhem from the live calendar. Open the app for the full version.", "Stamped on the record."); return; }
+  if(t.dataset.sheet==="monthly"){ monthlySheet(); return; }
+  if(t.dataset.sheet==="weekly"){ weeklySheet(); return; }
+  if(t.dataset.sheet==="budget"){ budgetSheet(); return; }
+  if(t.dataset.tix){ const p=t.dataset.tix.split("|"); routeSheet(p[0],+p[1]); return; }
+  if(t.dataset.sendtix){ const p=t.dataset.sendtix.split("|"); const c=C.find(x=>x.id===p[0]);
+    (c.tix=c.tix||[]).push({kind:p[2],to:p[3],sub:p[2]+" \u2014 "+c.n,sent:iso(TODAY),due:p[4],state:0});
+    c.owe[+p[1]][2]="wait"; closeSheet(); seg="tix"; if(S.open===c.id) renderCommit();
+    saveState(); realSend(p[2]+" \u2014 "+c.n+" \u00b7 due back "+fmt(D(p[4])), "Ticket routed by Mayhem.\n\nCommitment: "+c.n+" ("+BR[c.brand].name+" \u00b7 "+c.dma+")\nTo: "+p[3]+"\nDue back: "+fmt(D(p[4])), "Due back "+fmt(D(p[4]))+"."); return; }
+  if(t.dataset.utm){ utmSheet(t.dataset.utm); return; }
+  if(t.dataset.copyutm){ toastMsg("Copied \u2014 "+t.dataset.copyutm+" UTM on the clipboard."); return; }
+  if(t.dataset.doomlink){ toastMsg("Linked "+t.dataset.doomlink+" from Doom \u2014 nothing recreated, nothing duplicated."); return; }
+  if(t.dataset.uselib){ toastMsg("\u201c"+t.dataset.uselib+"\u201d will ride the next ethics/creative ticket for this filter."); return; }
+  if(t.dataset.libseg){ libSeg=t.dataset.libseg; renderLibrary(); return; }
+  if(t.dataset.sheet==="report"){ reportSheet(); return; }
+  if(t.dataset.seg){ seg=t.dataset.seg; renderCommit(); return; }
+  if(t.dataset.feed){ feed(t.dataset.feed); return; }
+  if(t.dataset.cf!==undefined&&t.classList.contains("copt")){ NC.chosen=+t.dataset.cf; renderIntake(); return; }
+  if(t.dataset.need){ const n=t.dataset.need, i=NC.needs.indexOf(n); if(i>=0)NC.needs.splice(i,1); else NC.needs.push(n); renderIntake(); return; }
+  if(t.id==="live-read"){ const v=document.getElementById("live-paste").value.trim(); if(!v){ toastMsg("Paste something first."); return; } readLive(v); return; }
+  if(t.id==="f-clear"){ Object.assign(NC,{name:"",brand:"",dma:"",event:"",cost:"",vendor:"",needs:[],receipts:[],conflict:null,chosen:null}); renderIntake(); return; }
+  if(t.id==="f-create"){
+    NC.name=$("#f-name").value; NC.brand=$("#f-brand").value; NC.dma=$("#f-dma").value; NC.event=$("#f-event").value;
+    if(!NC.name||!NC.brand){ toastMsg("Name and brand first — Brand → DMA is the law."); return; }
+    if(NC.conflict&&NC.chosen===null){ toastMsg("Sources disagree — pick the truth first."); return; }
+    const id="new"+Date.now();
+    const acts=[];
+    if(NC.event){ const ev=D(NC.event);
+      if(NC.needs.includes("merch")) acts.push(["Merch",iso(addD(ev,-21)),"Merch order + ship-by","send","open",["Event "+fmt(ev),"21-day merch lead","= "+fmt(addD(ev,-21))]]);
+      if(NC.needs.includes("creative")) acts.push(["Creative",iso(addD(ev,-14)),"Creative due back","dueback","open",["Event "+fmt(ev),"creative lead + review buffer","= "+fmt(addD(ev,-14))]]);
+      if(NC.needs.includes("ethics")) acts.push(["Ethics",iso(addD(ev,-17)),"Ethics verdict","dueback","open",["Event "+fmt(ev),"ethics lead + air buffer","= "+fmt(addD(ev,-17))]]);
+      if(NC.needs.includes("social")) acts.push(["Social",iso(addD(ev,-7)),"Brief to Michelle","send","open",["Event "+fmt(ev),"social lead","= "+fmt(addD(ev,-7))]]);
+      if(NC.needs.includes("seo")) acts.push(["SEO / Web",iso(addD(ev,-13)),"Pixels + landing page live","dueback","open",["Event "+fmt(ev),"SEO lead","= "+fmt(addD(ev,-13))]]);
+      acts.push(["Vendor",NC.event,NC.name.toUpperCase()+" — EVENT DAY","anchor","open",["Intake","anchor date"]]);
+      acts.push(["Wrap",iso(addD(ev,1)),"+1 attendance report","wrap","open",["Event "+fmt(ev),"wrap +1"]]);
+      acts.push(["Wrap",iso(addD(ev,7)),"+7 recap","wrap","open",["Event "+fmt(ev),"wrap +7"]]);
+    }
+    const cost=NC.conflict?(NC.chosen===1?"$27,500 — ruled: Hazel's sheet":"$25,000 — ruled: contract"):(NC.cost||"TBD");
+    C.push({id,n:NC.name,brand:NC.brand,dma:NC.dma||BR[NC.brand].dmas[0],ev:NC.event||null,lch:null,
+      fund:BR[NC.brand].name+" — via intake",phase:"PRE",
+      say:"Built from "+(NC.receipts.length?NC.receipts.length+" pieces of evidence":"the form")+". The workback exists because the anchor does — every date below knows why.",
+      acts, owe:NC.needs.map(n=>[n[0].toUpperCase()+n.slice(1)+" — routed on create","doctrine: Doom → yours → library → ticket","open"]),
+      they:[], mny:[["Committed",cost]], wrap:NC.event?[[fmtS(addD(D(NC.event),1)),"+1 attendance"],[fmtS(addD(D(NC.event),7)),"+7 recap"]]:[],
+      ppl:[["Owner","Emm"],["Events","Hazel"]]});
+    S.open=id; S.tab="brands";
+    Object.assign(NC,{name:"",brand:"",dma:"",event:"",cost:"",vendor:"",needs:[],receipts:[],conflict:null,chosen:null});
+    render(); window.scrollTo(0,0); toastMsg("Created — Mayhem built the workback. Every date knows why it exists.");
+    return;
+  }
+});
+$("#sheetbg").addEventListener("click",closeSheet);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); });
+render();
+</script>
+</body>
+</html>
