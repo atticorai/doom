@@ -2089,10 +2089,10 @@ const useHash=()=>{
 const App=()=>{
   const[routeHash,navigateHash]=useHash();
   const isOohHub=routeHash.startsWith('ooh');
-  const isMopsHub=routeHash.startsWith('mops');
+  const isMopsHub=false; // marketing ops removed — rebuilding from scratch
   const[pg,setPgRaw]=useState("dash");
   const prevPgRef=React.useRef("dash");
-  const setPg=(p)=>{if(p==="oohHub"){navigateHash("ooh");return}if(p==="campaigns"){navigateHash("mops");return}prevPgRef.current=pg;setPgRaw(p)};
+  const setPg=(p)=>{if(p==="oohHub"){navigateHash("ooh");return}prevPgRef.current=pg;setPgRaw(p)};
   const[lightMode,setLightMode]=useState(()=>localStorage.getItem("dd_light")==="1");
   useEffect(()=>{
     var s=document.getElementById("dd-theme-style");
@@ -3747,8 +3747,7 @@ const App=()=>{
   const alertFeedRef=React.useRef("");
   React.useEffect(()=>{
     if(!dbLoaded)return;if(!saveRef.current)return;
-    const items=alerts.map(a=>({key:a.key,msg:a.msg,days:a.days,severity:a.severity,overdue:!!a.overdue}))
-      .concat(dndLedgerCompute(flights,iscis,hubCfg).filter(x=>x.days!=null&&x.days<=7).map(x=>({key:"dnd-"+x.key,msg:"⚑ Mayhem & Marketing Ops · "+x.who+" owes: "+x.what+" — "+x.flight+(x.due?" · due "+dndFd(x.due):""),days:x.days,severity:x.days<0?"critical":"warning",overdue:x.days<0})));
+    const items=alerts.map(a=>({key:a.key,msg:a.msg,days:a.days,severity:a.severity,overdue:!!a.overdue}));
     const sig=JSON.stringify(items);
     if(sig===alertFeedRef.current)return;
     alertFeedRef.current=sig;
@@ -13478,7 +13477,7 @@ Rules:
   };
 
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"campaigns",l:"Mayhem & Marketing Ops",e:"🔥"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"Overkill & OOH",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"Overkill & OOH",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
