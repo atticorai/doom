@@ -2093,10 +2093,10 @@ const useHash=()=>{
 const App=()=>{
   const[routeHash,navigateHash]=useHash();
   const isOohHub=routeHash.startsWith('ooh');
-  const isMopsHub=routeHash.startsWith('mops');
+  const isMopsHub=false; // marketing ops removed — rebuilding from scratch
   const[pg,setPgRaw]=useState("dash");
   const prevPgRef=React.useRef("dash");
-  const setPg=(p)=>{if(p==="oohHub"){navigateHash("ooh");return}if(p==="campaigns"){navigateHash("mops");return}prevPgRef.current=pg;setPgRaw(p)};
+  const setPg=(p)=>{if(p==="oohHub"){navigateHash("ooh");return}prevPgRef.current=pg;setPgRaw(p)};
   const[lightMode,setLightMode]=useState(()=>localStorage.getItem("dd_light")==="1");
   useEffect(()=>{
     var s=document.getElementById("dd-theme-style");
@@ -3751,8 +3751,7 @@ const App=()=>{
   const alertFeedRef=React.useRef("");
   React.useEffect(()=>{
     if(!dbLoaded)return;if(!saveRef.current)return;
-    const items=alerts.map(a=>({key:a.key,msg:a.msg,days:a.days,severity:a.severity,overdue:!!a.overdue}))
-      .concat(dndLedgerCompute(flights,iscis,hubCfg).filter(x=>x.days!=null&&x.days<=7).map(x=>({key:"dnd-"+x.key,msg:"⚑ Mayhem & Marketing Ops · "+x.who+" owes: "+x.what+" — "+x.flight+(x.due?" · due "+dndFd(x.due):""),days:x.days,severity:x.days<0?"critical":"warning",overdue:x.days<0})));
+    const items=alerts.map(a=>({key:a.key,msg:a.msg,days:a.days,severity:a.severity,overdue:!!a.overdue}));
     const sig=JSON.stringify(items);
     if(sig===alertFeedRef.current)return;
     alertFeedRef.current=sig;
@@ -13677,7 +13676,7 @@ Rules:
   };
 
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"campaigns",l:"Mayhem & Marketing Ops",e:"🔥"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"Overkill & OOH",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"mayhem",l:"Mayhem",e:"🌀",href:"/mayhem.html"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"Overkill & OOH",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
@@ -14784,6 +14783,12 @@ Rules:
         </div>
         <BookMarginNote author="muses">And so the guide comes to a close<br/>She taught them well, as heaven knows!</BookMarginNote>
       </div>,damageEffects:<>{<BookBurnMark style={{bottom:0,right:0,width:160,height:160,opacity:.3}}/>}{<BookLipstickMark style={{bottom:"25%",left:"25%",opacity:.6,transform:"rotate(-15deg) scale(1.5)"}}/>}</>},
+    {title:"Mayhem & Marketing",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>Marketing Operations now has its own wing. The 🌀 <b>Mayhem</b> door in the nav opens the Mayhem &amp; Marketing app — campaigns and events by Brand → DMA, intake, tickets and handoff loops, content &amp; results, AP/expense packets, landing pages &amp; UTMs, the disclaimer library, and its own Guide.</p>
+        <p>Mayhem is a routed app mounted beside Doom — it shares the login and saves its state through Doom's database, so it works from any machine you sign into. Doom stays traffic first and foremost; Mayhem runs the marketing department.</p>
+        <p style={{fontSize:11,opacity:.75}}>The Living Record — 08/25/2026: Mayhem &amp; Marketing integrated into Doom at /mayhem.html with durable state saves, the audited five-brand campaign book, and the Notion Master Tracker truth applied.</p>
+        <BookMarginNote author="meg">Two kingdoms, one login. Try to keep up.</BookMarginNote>
+      </div>},
     ];
     return[...BOOK_PAGES_1,...BOOK_PAGES_2,...BOOK_PAGES_3];
   },[iscis,stations,estimates,trafficHistory,workMonth]);
@@ -15001,7 +15006,7 @@ Rules:
           {estHits.map(e=><div key={e.num} onClick={()=>{setGlobalSearch("");setPg("est")}} style={{padding:"5px 8px",fontSize:14,color:"#9B8EAD",cursor:"pointer",borderBottom:"1px solid #3a2955"}} onMouseEnter={e=>e.target.style.background="#4a3565"} onMouseLeave={e=>e.target.style.background="transparent"}><span style={{fontWeight:700}}>{e.num}</span> <span style={{color:"#9B8EAD"}}>{e.market}</span></div>)}
         </div>})()}
       </div>
-      <nav style={{flex:1,minHeight:0,overflowY:"auto",padding:"3px 0",scrollbarWidth:"thin",scrollbarColor:"#4a3565 transparent"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:n.id==="campaigns"?isMopsHub:(pg===n.id&&!isOohHub&&!isMopsHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="campaigns"){const ct=dndLedger.filter(x=>x.days!=null&&x.days<=3).length;return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>setPg(n.id)} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 12px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative",transition:"all .15s",letterSpacing:a?.3:0}} onMouseEnter={e=>{if(!a)e.currentTarget.style.background="rgba(155,123,176,.06)"}} onMouseLeave={e=>{if(!a)e.currentTarget.style.background="transparent"}}><span style={{fontSize:14}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:12,fontWeight:800,padding:"1px 6px",borderRadius:10,background:typeof badge==="number"?"#E85A7A":"#D4A040",color:"#fff",boxShadow:typeof badge==="number"?"0 2px 8px rgba(232,90,122,.3)":"0 2px 8px rgba(212,160,64,.3)"}}>{badge}</span>}</button>})}</nav>
+      <nav style={{flex:1,minHeight:0,overflowY:"auto",padding:"3px 0",scrollbarWidth:"thin",scrollbarColor:"#4a3565 transparent"}}>{nav.map(n=>{const a=n.id==="oohHub"?isOohHub:n.id==="campaigns"?isMopsHub:(pg===n.id&&!isOohHub&&!isMopsHub);const badge=(()=>{if(n.id==="oohHub"){const now=new Date();const wk=new Date(now.getTime()+7*864e5);const ct=OOH_CREATIVE_CAL.filter(c=>{const d=new Date(c.due+"T00:00:00");return d>=now&&d<=wk}).length;return ct||null}if(n.id==="campaigns"){const ct=dndLedger.filter(x=>x.days!=null&&x.days<=3).length;return ct||null}if(n.id==="traf"){return daysRot!==null&&daysRot<=7?daysRot+"d":null}if(n.id==="isci"){const noFile=iscis.filter(i=>i.active&&!i.fileUrl).length;return noFile>0?noFile:null}if(n.id==="dash"){return alerts.length||null}return null})();return<button key={n.id} onClick={()=>{if(n.href){window.location.assign(n.href);return}setPg(n.id)}} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 12px",border:"none",background:a?"linear-gradient(90deg,rgba(212,160,64,.12),transparent)":"transparent",color:a?"#E8DFF0":"#6B5E80",fontSize:13,fontWeight:a?700:500,cursor:"pointer",textAlign:"left",borderLeft:a?"3px solid #D4A040":"3px solid transparent",position:"relative",transition:"all .15s",letterSpacing:a?.3:0}} onMouseEnter={e=>{if(!a)e.currentTarget.style.background="rgba(155,123,176,.06)"}} onMouseLeave={e=>{if(!a)e.currentTarget.style.background="transparent"}}><span style={{fontSize:14}}>{n.e}</span>{n.l}{badge&&<span style={{marginLeft:"auto",fontSize:12,fontWeight:800,padding:"1px 6px",borderRadius:10,background:typeof badge==="number"?"#E85A7A":"#D4A040",color:"#fff",boxShadow:typeof badge==="number"?"0 2px 8px rgba(232,90,122,.3)":"0 2px 8px rgba(212,160,64,.3)"}}>{badge}</span>}</button>})}</nav>
       <div style={{padding:"10px 12px",borderTop:"1px solid rgba(212,160,64,.1)",fontSize:12,color:"#6B5E80"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:700,color:"#D4A040",letterSpacing:1}}>D&D v6.2</span><button onClick={()=>setLightMode(p=>!p)} style={{background:"none",border:"1px solid #4a3565",borderRadius:99,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"#9B8EAD",padding:0}} title={lightMode?"Underworld":"Olympus"}>{lightMode?"\u{1F525}":"\u{2600}"}</button></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{iscis.filter(i=>i.active).length} active ISCIs</span>{lastSynced&&<span style={{color:syncError?"#E85A7A":"#5BC4A0"}}>{syncError?"Save failed":"Synced "+(Math.round((Date.now()-lastSynced.getTime())/1000)<60?Math.round((Date.now()-lastSynced.getTime())/1000)+"s ago":Math.round((Date.now()-lastSynced.getTime())/60000)+"m ago")}</span>}</div><div style={{marginTop:2,color:"#6B5E80",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>Signed in as <span style={{color:"#9B8EAD",fontWeight:700}}>{currentUser()}</span></span><span style={{display:"flex",gap:8}}><button onClick={()=>setShowChangePw(true)} style={{background:"none",border:"none",color:"#4AC8E8",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Change PIN</button><button onClick={signOut} style={{background:"none",border:"none",color:"#E85A7A",cursor:"pointer",fontSize:11,fontWeight:600,padding:0}}>Sign out</button></span></div></div>
     </div>
     <div style={{flex:1,overflowY:"auto",padding:16}}>
