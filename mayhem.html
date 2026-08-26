@@ -976,6 +976,7 @@ function openTrackingSetup(id){let lp=lpById(id);if(!lp)return;let t=lpTracking(
 function saveTrackingSetup(e,id,makeTicket=false){if(e)e.preventDefault();let lp=lpById(id);if(!lp)return;let t=lpTracking(lp);t.providers=[...document.querySelectorAll('.trkProvider:checked')].map(x=>x.value);t.events=[...document.querySelectorAll('.trkEvent:checked')].map(x=>x.value);t.ids={meta:document.getElementById('trkMeta')?.value.trim()||'',gtm:document.getElementById('trkGtm')?.value.trim()||'',ga4:document.getElementById('trkGa4')?.value.trim()||'',vendor:document.getElementById('trkVendor')?.value.trim()||'',other:document.getElementById('trkOther')?.value.trim()||''};t.owner=document.getElementById('trkOwner')?.value||'SEO';t.due=document.getElementById('trkDue')?.value||'';t.status=document.getElementById('trkStatus')?.value||'Not configured';t.proof=document.getElementById('trkProof')?.value.trim()||'';lp.updated=osToday();lp.notionStatus='Pending sync';let pair=lpCampaign(lp),c=pair.c||osRecord();if(c){let o=state.ops[c.id]||(state.ops[c.id]=genericOps());o=needObj(o);o.seo=o.seo||{};o.seo.landingPage=lp.name;o.seo.landingPageUrl=lp.url;o.seo.trackingRequirements={providers:t.providers,events:t.events,ids:t.ids,due:t.due,status:t.status};state.ops[c.id]=o;osSync(c,'Landing page tracking requirements updated')}saveState();closeModal();renderPage();if(makeTicket&&c){state.currentBrand=lp.brand;state.currentDMA=pair.d||lp.dma||state.currentDMA;state.currentCommit=c.id;saveState();openNewTicket(c.id,'SEO')}else toast('Tracking requirements saved')}
 function inspectTrackingHtml(html,t){let h=String(html||''),checks={};const contains=(s)=>s&&h.toLowerCase().includes(String(s).toLowerCase());if(t.providers.includes('meta'))checks.meta=!!(/connect\.facebook\.net\/.*fbevents\.js|\bfbq\s*\(/i.test(h)&&(t.ids.meta?contains(t.ids.meta):true));if(t.providers.includes('gtm'))checks.gtm=!!(/googletagmanager\.com\/gtm\.js|GTM-[A-Z0-9]+/i.test(h)&&(t.ids.gtm?contains(t.ids.gtm):true));if(t.providers.includes('ga4'))checks.ga4=!!(/googletagmanager\.com\/gtag\/js|\bgtag\s*\(/i.test(h)&&(t.ids.ga4?contains(t.ids.ga4):true));if(t.providers.includes('vendor'))checks.vendor=t.ids.vendor?contains(t.ids.vendor):false;if(t.providers.includes('other'))checks.other=t.ids.other?contains(t.ids.other):false;return checks}
 async function runTrackingCheck(id){let lp=lpById(id);if(!lp)return;let t=lpTracking(lp);if(!lp.url){toast('Landing page URL is missing');return}if(!t.providers.length&&!t.events.length){openTrackingSetup(id);toast('Choose what this page needs first');return}t.status='Checking…';t.lastChecked=osToday();saveState();renderPage();let result={url:lp.url,https:/^https:\/\//i.test(lp.url),providers:{},events:{},source:'',note:''};let serverData=null;try{let r=await fetch('/api/check-landing-page',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:lp.url,providers:t.providers,events:t.events,ids:t.ids})});if(r.ok)serverData=await r.json()}catch(e){}
+ if(serverData&&serverData.error)serverData=null;
  if(serverData){result={...result,...serverData,source:'server check'};result.providers=serverData.providers||serverData.tags||{};result.events=serverData.events||{}}
  else{try{let r=await fetch(lp.url,{method:'GET',mode:'cors',cache:'no-store'});let txt=await r.text();result.providers=inspectTrackingHtml(txt,t);result.source='page source';for(let ev of t.events)result.events[ev]=ev==='pageview'?true:null;result.note='Tag presence checked from page source. Click/form/conversion events still need a live event test.'}catch(e){result.source='needs deployed checker';result.note='The browser cannot inspect this external page because the site blocks cross-origin source access. The deployed /api/check-landing-page service can run the live check.'}}
  t.checks=result;t.lastChecked=osToday();t.checkSource=result.source;let providerReady=t.providers.every(k=>result.providers?.[k]===true),eventReady=t.events.every(k=>result.events?.[k]===true);t.status=(result.https&&providerReady&&eventReady)?'Ready':(result.source==='needs deployed checker'?'Installed — needs check':'Missing / unverified');lp.updated=osToday();let pair=lpCampaign(lp),c=pair.c;if(c)osSync(c,'Landing page tracking check updated');saveState();renderPage();openTrackingCheckResult(id)}
@@ -1483,15 +1484,196 @@ function applyDataTruthB7v3(){
 }
 /* ===== END FUNCTIONAL REPAIRS + QUICK QUESTIONS MERGE ===== */
 
+
+/* ===== MARKET-TRUE DISCLAIMERS · DOOM CREATIVE BRIDGE · HONEST TRACKING · L&R EMAIL MERGE (2026-08-26) =====
+   Guards in the Doom tradition: nothing state-specific crosses a state line,
+   nothing silently resolves to nothing, nothing stamps "Synced" before a sync. */
+;(function(){
+ /* ---------- A. MARKET-SPECIFIC DISCLAIMER GUARD ---------- */
+ const ST_NAMES={AL:'Alabama',TN:'Tennessee',IL:'Illinois',OH:'Ohio',CO:'Colorado',MN:'Minnesota',AZ:'Arizona',NV:'Nevada',NM:'New Mexico',WA:'Washington',OK:'Oklahoma',MA:'Massachusetts',NH:'New Hampshire',RI:'Rhode Island',CT:'Connecticut',FL:'Florida',GA:'Georgia',MS:'Mississippi',IN:'Indiana',OR:'Oregon',CA:'California',MI:'Michigan',TX:'Texas',KY:'Kentucky',WI:'Wisconsin'};
+ const NAME_TO_ST={};for(const k in ST_NAMES)NAME_TO_ST[ST_NAMES[k]]=k;
+ function mamMarketStates(rd){return String((rd&&rd.state)||'').split(/[\/,\-]/).map(x=>x.trim().toUpperCase()).filter(x=>/^[A-Z]{2}$/.test(x))}
+ function mamBoundStates(r){
+  const src=String((r&&r.note)||'')+' '+String((r&&r.text)||'');
+  const out=new Set();
+  let m=src.match(/required by the ([A-Z]{2}) state bar/i);if(m&&ST_NAMES[m[1].toUpperCase()])out.add(m[1].toUpperCase());
+  m=src.match(/required by the ([A-Za-z]{4,}) state bar/i);if(m&&NAME_TO_ST[m[1][0].toUpperCase()+m[1].slice(1).toLowerCase()])out.add(NAME_TO_ST[m[1][0].toUpperCase()+m[1].slice(1).toLowerCase()]);
+  return out.size?[...out]:null;
+ }
+ function mamSplitStateBlocks(text){
+  const names=Object.values(ST_NAMES).join('|');
+  const re=new RegExp('\\b('+names+')\\s*:\\s*','g');
+  let m,hits=[];
+  while((m=re.exec(text))!==null){hits.push({name:m[1],nameIdx:m.index+m[0].indexOf(m[1])})}
+  if(hits.length<2)return null;
+  const body=text.slice(0,hits[0].nameIdx).trim();
+  const blocks={};
+  hits.forEach(function(h,i){const end=(i+1<hits.length)?hits[i+1].nameIdx:text.length;blocks[NAME_TO_ST[h.name]]=text.slice(h.nameIdx,end).trim().replace(/[,;\s]+$/,'')});
+  return {body:body,blocks:blocks};
+ }
+ window.mamMarketizeDisclaimer=function(r,rd){
+  const res={r:r,warn:'',gap:false};
+  if(!rd||!r||!String(r.text||'').trim())return res;
+  const ms=mamMarketStates(rd);if(!ms.length)return res;
+  const bound=mamBoundStates(r);
+  if(bound&&!bound.some(st=>ms.includes(st))){
+   return {r:Object.assign({},r,{text:''}),gap:true,warn:'GUARD: the library language for this channel is '+bound.map(s=>ST_NAMES[s]||s).join(' / ')+'-specific'+(r.note?' — "'+r.note+'"':'')+'. This market is '+ms.map(s=>ST_NAMES[s]||s).join(' / ')+', so it is NOT suggested here. Route to Ethics for the correct language.'};
+  }
+  const sp=mamSplitStateBlocks(String(r.text));
+  if(sp){
+   const mine=ms.map(st=>sp.blocks[st]).filter(Boolean);
+   const others=Object.keys(sp.blocks).filter(st=>!ms.includes(st)).map(s=>ST_NAMES[s]||s);
+   if(mine.length)return {r:Object.assign({},r,{text:(sp.body+' '+mine.join(' ')).trim()}),gap:false,warn:'Market-specific block applied for '+ms.filter(st=>sp.blocks[st]).map(s=>ST_NAMES[s]).join(' / ')+(others.length?'; other states’ blocks ('+others.join(', ')+') removed for this market.':'.')};
+   return {r:Object.assign({},r,{text:sp.body}),gap:true,warn:'GUARD: the library carries per-state blocks ('+Object.keys(sp.blocks).map(s=>ST_NAMES[s]||s).join(', ')+') but none for '+ms.map(s=>ST_NAMES[s]||s).join(' / ')+'. Only the shared body is shown — confirm this market’s block with Ethics.'};
+  }
+  return res;
+ };
+ window.mamCoverageMisses=function(){
+  const out=[];
+  try{for(const b of brands())for(const d of markets(b)){const rc=repoForContext(b,d);if(!rc.rd)out.push(b+' · '+d)}}catch(e){}
+  return out;
+ };
+ const _mtC=mtCompliance;mtCompliance=function(b,d,label){const out=_mtC(b,d,label);try{
+  const rc=repoForContext(b,d);
+  if(!rc.rd){out.gap=true;out.required=true;out.dmaText=(out.dmaText?out.dmaText+' · ':'')+'GUARD: no disclaimer-library row resolves for '+b+' · '+d+' — compliance is blind here. Confirm requirements with Ethics.';return out}
+  const mz=mamMarketizeDisclaimer(out.r,rc.rd);out.r=mz.r;
+  if(mz.warn)out.dmaText=(out.dmaText?out.dmaText+' · ':'')+mz.warn;
+  if(mz.gap)out.gap=true;
+  out.required=!!out.dmaText||!!String((out.r&&out.r.text)||'').trim();
+ }catch(e){}return out};
+ const _cfc=complianceForChannel;complianceForChannel=function(label){const out=_cfc(label);try{
+  const ctx=intakeContext(),rc=repoForContext(ctx.brand,ctx.dma);
+  if(!rc.rd){out.gap=true;out.required=true;out.dmaText=(out.dmaText?out.dmaText+' · ':'')+'GUARD: no disclaimer-library row resolves for '+ctx.brand+' · '+ctx.dma+' — compliance is blind here. Confirm requirements with Ethics.';return out}
+  const mz=mamMarketizeDisclaimer(out.record,rc.rd);out.record=mz.r;out.text=(mz.r&&mz.r.text)||'';
+  if(mz.warn)out.dmaText=(out.dmaText?out.dmaText+' · ':'')+mz.warn;
+  if(mz.gap)out.gap=true;
+  out.required=!!String(out.text||'').trim()||!!out.dmaText;
+ }catch(e){}return out};
+ /* Library page: loud panel when an operating market has no row, or the two datasets drift */
+ const _rlib=renderLibraryPage;renderLibraryPage=function(el){_rlib(el);try{
+  const misses=mamCoverageMisses();
+  const divergent=[];
+  try{
+   const A=window.MAYHEM_DISCLAIMERS||{},B=window.MAYHEM_DISCLAIMER_WORKBOOK||{};
+   const alias={'Lerner and Rowe':'Lerner & Rowe','SSDI - National Disability':'SSDI / National Disability'};
+   for(const k in B){const ak=alias[k]||k;
+    if(!A[ak]){divergent.push('"'+k+'" exists only in the reading-room dataset');continue}
+    const at=(A[ak].channels||[]).map(c=>c.channel+'|'+String(c.text||'')).sort().join('~');
+    const bt=(B[k].channels||[]).map(c=>c.channel+'|'+String(c.text||'')).sort().join('~');
+    if(at!==bt)divergent.push(k+': channel language differs between the reading room and the recommendation engine');
+   }
+  }catch(e){}
+  if(misses.length||divergent.length){
+   const stats=el.querySelector('.grid4');
+   const html='<div class="panel" style="margin-top:12px;border-left:3px solid var(--red)"><h3>Library Guard</h3>'+
+    (misses.length?'<div class="fact"><div class="label">Operating markets with NO library row</div><div>'+misses.map(esc).join(' · ')+' — intake and tickets flag these to Ethics instead of pretending coverage.</div></div>':'')+
+    (divergent.length?'<div class="fact"><div class="label">Dataset drift</div><div>'+divergent.map(esc).join('<br>')+'</div></div>':'')+'</div>';
+   if(stats)stats.insertAdjacentHTML('afterend',html);
+  }
+ }catch(e){}};
+
+ /* ---------- B. DOOM → MAYHEM CREATIVE BRIDGE (real data, real links) ---------- */
+ /* Doom already persists its merged ISCI truth at appData/iscis. Pull it. */
+ function mamAdoptDoomCreative(rows){
+  if(!Array.isArray(rows)||!rows.length)return;
+  DOOM_ISCI.length=0;
+  rows.forEach(function(i){DOOM_ISCI.push([i.code||'',i.title||'',i.media||'',i.brand||'',i.dma||'',i.dur||'',i.suffix||'',i.active!==false,i.caseType||i.category||'',i.fileUrl||''])});
+  window.MAYHEM_DOOM_CREATIVE=DOOM_ISCI;window.__doomBridgeCount=DOOM_ISCI.length;
+ }
+ window.mamLoadDoomCreative=function(){
+  if(location.protocol==='file:')return;
+  try{fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({collection:'appData',doc:'iscis',action:'get'})}).then(function(r){return r.ok?r.json():null}).then(function(j){
+   let raw=j&&j.data&&j.data.data;if(!raw)return;
+   let rows=typeof raw==='string'?JSON.parse(raw):raw;
+   mamAdoptDoomCreative(rows);
+   try{renderPage()}catch(e){}
+  }).catch(function(){})}catch(e){}
+ };
+ window.addEventListener('DOMContentLoaded',function(){mamLoadDoomCreative()});
+ window.mamLatestCreative=function(b,d,media){
+  try{
+   const db=doomBrand(b),dm=doomDMA(d);
+   let rows=DOOM_ISCI.filter(r=>r[3]===db&&r[4]===dm&&r[7]===true&&(!media||r[2]===media)).sort((a,z)=>isciScore(z[0])-isciScore(a[0]));
+   const seen=new Set();
+   return rows.filter(function(r){const k=r[2]+'|'+String(r[5]||'');if(seen.has(k))return false;seen.add(k);return true}).slice(0,6);
+  }catch(e){return[]}
+ };
+ window.mamCreativeLinesFor=function(t){
+  try{
+   if(!['Creative','Partner','Vendor','Merch'].includes(t.type))return '';
+   const rows=mamLatestCreative(t.brand,t.dma);
+   if(!rows.length)return '';
+   return '\n\nLatest active creative in Doom for '+t.brand+' · '+t.dma+' (reuse first):\n'+rows.map(function(r){return '  '+r[0]+' — '+r[1]+(r[5]?' (:'+r[5]+')':'')+(r[9]?'\n    File: '+r[9]:'  (file link not stored in Doom)')}).join('\n');
+  }catch(e){return ''}
+ };
+ /* Ticket drafts now carry a real subject + body with the creative links, and the ticket view shows it copy-ready */
+ const _ct=createTicket;createTicket=function(e){_ct(e);try{
+  const t=state.tickets[state.tickets.length-1];
+  if(t&&!t.body){const c=commitById(t.commit,t.brand,t.dma);t.subject=subjectFor(t.type,c);t.body=bodyFor(t.type,c,t.ask)+mamCreativeLinesFor(t);saveState()}
+ }catch(err){}};
+ window.mamCopyTicketEmail=function(id){
+  try{const t=(state.tickets||[]).find(x=>String(x.id)===String(id));if(!t)return;
+   navigator.clipboard.writeText('Subject: '+(t.subject||'')+'\n\n'+(t.body||'')).then(function(){toast('Email copied — paste into Outlook')}).catch(function(){toast('Copy failed — select the text manually')});
+  }catch(e){}
+ };
+ const _ot=openTicket;openTicket=function(id){_ot(id);try{
+  const t=(state.tickets||[]).find(x=>String(x.id)===String(id));if(!t)return;
+  const ms=document.querySelectorAll('.modal');const m=ms[ms.length-1];
+  if(!m||m.querySelector('.mam-ticket-email'))return;
+  const c=commitById(t.commit,t.brand,t.dma);
+  if(!t.subject){t.subject=subjectFor(t.type,c)}
+  if(!t.body){t.body=bodyFor(t.type,c,t.ask)+mamCreativeLinesFor(t);saveState()}
+  m.insertAdjacentHTML('beforeend','<div class="panel flat mam-ticket-email" style="margin-top:10px"><h3>Email — ready to copy into Outlook</h3><div class="fact"><div class="label">Subject</div><div>'+esc(t.subject||'')+'</div></div><textarea readonly rows="8" style="width:100%;background:transparent;color:inherit;border:1px solid var(--line);border-radius:8px;padding:9px;font-size:11px;line-height:1.5">'+esc(t.body||'')+'</textarea><div class="actions" style="margin-top:8px"><button class="btn secondary" onclick="mamCopyTicketEmail(\''+t.id+'\')">Copy Email</button></div></div>');
+ }catch(e){}};
+
+ /* ---------- C. HONEST TRACKING STAMPS ---------- */
+ /* saveUtmBuild pre-stamped 'Synced' before any network call. Mirror the record's real Notion result instead. */
+ const _stn=syncToNotion;syncToNotion=function(c,reason){_stn(c,reason);try{
+  setTimeout(function(){
+   const st=(c.notion&&c.notion.status)||'';
+   const honest=st==='Synced'?'Synced':'Queued — with campaign push';
+   (state.utms||[]).forEach(function(u){if(u.record===c.id)u.notionStatus=honest});
+   (state.landingPages||[]).forEach(function(lp){if((lp.records||[]).includes(c.id))lp.notionStatus=honest});
+   saveState();
+  },2500);
+ }catch(e){}};
+ const _sub2=saveUtmBuild;saveUtmBuild=function(){
+  _sub2();
+  try{const c=commitById();
+   (state.utms||[]).forEach(function(u){if(u.record===c.id&&u.notionStatus==='Synced'&&!(c.notion&&c.notion.status==='Synced'))u.notionStatus='Queued — with campaign push'});
+   (state.landingPages||[]).forEach(function(lp){if((lp.records||[]).includes(c.id)&&lp.notionStatus==='Synced'&&!(c.notion&&c.notion.status==='Synced'))lp.notionStatus='Queued — with campaign push'});
+   saveState();
+  }catch(e){}
+ };
+
+ /* ---------- D. L&R MEDIA PARTNERSHIP EVENTS EMAIL (Aug 26) ---------- */
+ window.applyDataTruthB7v4=function(){
+  if(state._dataTruthB7v4)return;
+  const SRC='FW: L&R Media Partnership Events · Hazel fwd · Aug 26 2026';
+  state.contacts=state.contacts||[];
+  function addC(r){if(!state.contacts.some(x=>x.name===r.name&&x.org===r.org))state.contacts.push(r)}
+  addC({brand:'Lerner & Rowe',dma:'Nevada',org:'On Target Media Inc',name:'Barb Olson-Prezgay',role:'Media partner — L&R events/sponsorships calendar keeper',email:'barb@ontargetmediainc.com',shipTo:'',note:'Cell 702-327-4656 · Brian: brian@ontargetmediainc.com · VENDOR FRAUD NOTE from their own signature: they NEVER request wire transfers or ACH — always call to verify any payment request · source: '+SRC});
+  addC({brand:'Lerner & Rowe',dma:'Phoenix',org:'Lerner & Rowe',name:'Christa Luirette',role:'L&R events / city logistics',email:'cluirette@lernerandrowe.com',shipTo:'',note:'source: '+SRC});
+  addC({brand:'Lerner & Rowe',dma:'Phoenix',org:'Lerner & Rowe',name:'Cindy Ernst',role:'L&R events',email:'cernst@lernerandrowe.com',shipTo:'',note:'source: '+SRC});
+  state.sources=state.sources||[];
+  if(!state.sources.some(x=>x.id==='src-lr-mpe-0826'))state.sources.push({id:'src-lr-mpe-0826',brand:'Lerner & Rowe',dma:'Nevada',commit:'',type:'Email',name:'FW: L&R Media Partnership Events (Aug 26)',status:'Stored — sheets to reconcile',detail:'Jordan Moreno is building ONE master calendar of all L&R events (social, attendees, etc.) and asked for rest-of-2026 + committed 2027. On Target Media returned their 2026 + 2025 event/sponsorship calendars: 2026 https://docs.google.com/spreadsheets/d/1XWax8k4vGnpnojxAva7kd2aAyXitamDnHVAfZ42u7fk · 2025 https://docs.google.com/spreadsheets/d/1nJLRpDy4r81SQEh8t3cHvJ8tv4-KnKEnUaQ31DWdcJ8 — reconcile against the L&R book when opened.'});
+  state.tickets=state.tickets||[];
+  if(!state.tickets.some(x=>x.id==='tk-lr-master-cal'))state.tickets.push({id:'tk-lr-master-cal',brand:'Lerner & Rowe',dma:'Phoenix',commit:'',type:'Partner',ask:'Send Jordan Moreno the Atticor-side list: L&R media partnership events rest of 2026 + committed 2027 (for his master calendar)',ownerRole:'Events',owner:'Hazel Wolf',to:'hazel.wolf@atticor.ai',sent:'',due:'',protects:'Jordan’s single source of truth for social / attendees',status:'Draft',returnRequired:'List delivered to Jordan; On Target 2026 sheet reconciled against the Mayhem book',notes:'Jordan (Aug 26): building a master calendar of ALL events — ex. Hubbard Radio / St Mary’s Food Bank packing events, United Way events. On Target already replied with their 2026/2025 sheets (links in Sources).',history:[],returnData:null,source:SRC});
+  state._dataTruthB7v4=true;state._savedTs=Date.now();saveState();
+ };
+})();
+/* ===== END MARKET-TRUE DISCLAIMERS · BRIDGE · TRACKING · L&R MERGE ===== */
+
 try{applyDataTruthB7()}catch(e){}
 try{applyDataTruthB7v3()}catch(e){}
+try{applyDataTruthB7v4()}catch(e){}
 /* remote adopt after boot */
 window.addEventListener('DOMContentLoaded',function(){
  if(location.protocol==='file:')return;
  try{fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({collection:'appData',doc:'mayhemB7',action:'get'})}).then(function(r){return r.ok?r.json():null}).then(function(j){
   const remote=j&&j.data&&j.data.data&&j.data.data.brands?j.data.data:null;
   const rts=j&&j.data&&j.data.ts?j.data.ts:0;
-  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}renderShell();renderPage()}
+  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}renderShell();renderPage()}
  }).catch(function(){})}catch(e){}
 });
 /* ===== END DATA TRUTH + DOOM MOUNT ===== */
