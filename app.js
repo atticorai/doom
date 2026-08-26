@@ -916,6 +916,7 @@ const App=()=>{
   const[taglines,setTaglines]=useState([]);
   const taglinesDirtyRef=React.useRef(false);
   const[assetReviews,setAssetReviews]=useState({});
+  const assetReviewsDirtyRef=React.useRef(false);
   const[estimates,setEstimates]=useState(ESTIMATES);
   const[stations,setStations]=useState(STATIONS);
   const[modal,setModal]=useState(null);
