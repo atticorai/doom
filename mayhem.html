@@ -2162,6 +2162,137 @@ function applyDataTruthB7v3(){
  state._dataTruthB7v5=true;state._savedTs=Date.now();saveState();
 }
 
+/* ===== MERCHHUB CATALOG INTEGRATION (from the AtticorMerchHub prototype, per Emm · Aug 26 2026) =====
+   The approved catalog, L&R's existing merch designs, and the BoomPromo idea decks —
+   pulled from MerchHub so the Desk works from the same approved list it will inherit.
+   Demo orders/pools from the prototype are NOT imported (fiction, not truth). */
+;(function(){
+ window.MAM_MERCH_CATALOG=[
+  {name:"Quarter-Zip Pullover",cat:"Apparel",price:42},{name:"Cotton Tee",cat:"Apparel",price:11},{name:"Hoodie",cat:"Apparel",price:38},
+  {name:"Baseball Cap",cat:"Headwear",price:16},{name:"Knit Beanie",cat:"Headwear",price:14},
+  {name:"Canvas Tote",cat:"Bags",price:9},{name:"Commuter Backpack",cat:"Bags",price:34},
+  {name:"Tumbler 20oz",cat:"Drinkware",price:18},{name:"Insulated Bottle",cat:"Drinkware",price:22},
+  {name:"Bamboo Notebook",cat:"Eco-Friendly",price:8},{name:"Seed Paper Card",cat:"Eco-Friendly",price:2},
+  {name:"Ballpoint Pen",cat:"Office",price:1.2},{name:"Spiral Notebook",cat:"Office",price:6},
+  {name:"Wireless Charger",cat:"Technology",price:24},{name:"Leather Portfolio",cat:"Luxury Items",price:48}
+ ];
+ window.MAM_MERCH_BANK=[
+  {brand:"Lerner & Rowe",name:"Scales of Justice Cactus Tee (Natural)",status:"In stock",note:"Natural tee, desert 'Scales of Justice' back print."},
+  {brand:"Lerner & Rowe",name:"LR Cream/Black Snapback (OTTO)",status:"In stock",note:"OTTO classic mid-profile, 3D black LR."},
+  {brand:"Lerner & Rowe",name:"Gives Back Heart Tee (White/Blue)",status:"In stock",note:"LRGB event tee, blue heart print."},
+  {brand:"Lerner & Rowe",name:"LR Camo Snapback + Realtree Trucker",status:"Archived",note:"Embroidered LR / wordmark on camo + Realtree."},
+  {brand:"Lerner & Rowe",name:"SFE x L&R Arizona Tee (Black/Gold)",status:"Archived",note:"State Forty Eight collab, gold desert scene."}
+ ];
+ window.MAM_MERCH_DECKS=[
+  {brand:"Lerner & Rowe",label:"L&R Closing Gifts",url:"https://boompromo.commonsku.com/present.php?id=bf3869fb-77c6-4c91-979a-fbe86451dcfc"},
+  {brand:"Lerner & Rowe",label:"L&R Influencer Gifts",url:"https://boompromo.commonsku.com/present.php?id=b03981e1-5295-4ba2-8bc0-3bf1d10d8ffa"},
+  {brand:"Lerner & Rowe",label:"L&R Apparel Ideas",url:"https://boompromo.commonsku.com/present.php?id=e6b9630c-890b-4714-af66-631f5fffabdc"}
+ ];
+ function catFind(name){return MAM_MERCH_CATALOG.find(x=>x.name.toLowerCase()===String(name||'').toLowerCase().trim())||null}
+ /* need form: catalog picker + live cost estimate; bank items skip design */
+ const _openNeed=mamOpenMerchNeed;
+ window.mamOpenMerchNeed=function(prefillItem,opts){
+  _openNeed();
+  try{
+   const it=document.getElementById('mnItem');if(!it)return;
+   let dl=document.getElementById('mnCatalogList');
+   if(!dl){dl=document.createElement('datalist');dl.id='mnCatalogList';dl.innerHTML=MAM_MERCH_CATALOG.map(x=>'<option value="'+esc(x.name)+'">').join('');document.body.appendChild(dl)}
+   it.setAttribute('list','mnCatalogList');
+   const qty=document.getElementById('mnQty');
+   const est=document.createElement('div');est.id='mnEst';est.className='tiny';est.style.marginTop='4px';
+   it.parentElement.appendChild(est);
+   function upd(){const c=catFind(it.value);est.textContent=c?('Catalog: '+c.cat+' · $'+c.price+'/unit · est. '+moneyFmt((+qty.value||0)*c.price)+' at qty '+(+qty.value||0)):''}
+   it.addEventListener('input',upd);qty.addEventListener('input',upd);
+   if(prefillItem){it.value=prefillItem;if(opts&&opts.noDesign){const d=document.getElementById('mnDesign');if(d)d.value='no'}if(opts&&opts.note){const n=document.getElementById('mnNotes');if(n)n.value=opts.note}}
+   upd();
+  }catch(e){}
+ };
+ const _saveNeed=mamSaveMerchNeed;
+ window.mamSaveMerchNeed=function(e){
+  const item=document.getElementById('mnItem')?.value,qty=+document.getElementById('mnQty')?.value||1;
+  _saveNeed(e);
+  try{
+   const o=state.merchOrders[state.merchOrders.length-1];
+   const c=catFind(item);
+   if(o&&c){o.unitPrice=c.price;o.estCost=Math.round(qty*c.price*100)/100;o.notes=('Est. '+moneyFmt(o.estCost)+' ('+qty+' × $'+c.price+' catalog) · '+(o.notes||'')).replace(/ · $/,'');saveState()}
+  }catch(e2){}
+ };
+ /* Desk: catalog + existing designs + idea decks panels */
+ const _rmp=renderMerchPage;
+ window.renderMerchPage=function(el){
+  _rmp(el);
+  try{
+   const page=el.querySelector('.page');if(!page)return;
+   const byCat={};MAM_MERCH_CATALOG.forEach(x=>{(byCat[x.cat]=byCat[x.cat]||[]).push(x)});
+   const bank=MAM_MERCH_BANK.filter(x=>x.brand===state.currentBrand);
+   const decks=MAM_MERCH_DECKS.filter(x=>x.brand===state.currentBrand);
+   page.insertAdjacentHTML('beforeend',
+    '<div class="grid2" style="margin-top:12px"><div class="panel"><h3>Approved Catalog · from MerchHub</h3><div class="tiny" style="margin-bottom:7px">The approved item list with unit pricing. Two-tier rule of thumb per the L&R strategy: premium internal pieces vs low-cost giveaway items.</div>'+
+    Object.keys(byCat).map(function(cat){return '<div class="sectioncap" style="margin-top:8px">'+esc(cat)+'</div>'+byCat[cat].map(function(x){return '<div class="workline"><div class="top"><div class="name">'+esc(x.name)+'</div><span class="badge">$'+x.price+'/unit</span></div><div class="actions"><button class="btn ghost" onclick="mamOpenMerchNeed('+JSON.stringify(x.name).replaceAll('"','&quot;')+')">Need This</button></div></div>'}).join('')}).join('')+'</div>'+
+    '<div class="panel"><h3>Existing Designs · '+esc(state.currentBrand)+'</h3>'+
+    (bank.length?bank.map(function(x){return '<div class="workline"><div class="top"><div class="name">'+esc(x.name)+'</div><span class="badge '+(x.status==='In stock'?'green':'gold')+'">'+esc(x.status)+'</span></div><div class="detail">'+esc(x.note)+'</div><div class="actions">'+(x.status==='In stock'?'<button class="btn ghost" onclick="mamOpenMerchNeed('+JSON.stringify(x.name).replaceAll('"','&quot;')+',{noDesign:true,note:'+JSON.stringify('Existing design — no new creative needed. '+x.note).replaceAll('"','&quot;')+'})">Reorder / Use</button>':'')+'</div></div>'}).join(''):'<div class="fact"><div class="label">Designs</div><div>No existing designs on file for '+esc(state.currentBrand)+' yet — they live in MerchHub as it fills out.</div></div>')+
+    (decks.length?'<div class="sectioncap" style="margin-top:10px">Idea Decks (BoomPromo)</div>'+decks.map(function(d){return '<div class="fact"><div class="label">Deck</div><div><a href="'+esc(d.url)+'" target="_blank" style="color:var(--gold)">'+esc(d.label)+'</a></div></div>'}).join(''):'')+'</div></div>');
+  }catch(e){}
+ };
+})();
+/* ===== END MERCHHUB CATALOG INTEGRATION ===== */
+
+/* ===== BRAND KITS (from MerchHub BRAND_ASSETS + Catches thread · Aug 26 2026) ===== */
+;(function(){
+ window.MAM_BRAND_KITS={
+  'Atticor':{guidelines:[{label:'Brand Guidelines 2026 (PDF)',url:'',note:'[Confirm file location — lives in MerchHub/SharePoint]'},{label:'Canva Brand Kit',url:'https://www.canva.com/brand/kAG-ZtMOIGI',note:''}],palette:[['Dark Green','#081D01'],['Mid Green','#013828'],['Light Green','#D0D9BA'],['Off White','#F8FAF2']],fonts:['STK Bureau Serif — headlines','STK Miso — body & captions']},
+  'Lerner & Rowe':{guidelines:[{label:'L&R Brand Guidelines (PDF)',url:'',note:'[Confirm file location / link]'}],palette:[],fonts:[]},
+  'Keches Law':{guidelines:[{label:'Keches Cares brand guidelines',url:'',note:'OPEN CHASE — Victoria to provide (Catches thread · Aug 24)'}],palette:[],fonts:[]}
+ };
+ window.mamBrandKitLine=function(brand){
+  try{
+   const kits=[];
+   const bk=MAM_BRAND_KITS[brand];
+   if(bk)bk.guidelines.forEach(g=>kits.push(g.label+(g.url?': '+g.url:g.note?' — '+g.note:'')));
+   const ak=MAM_BRAND_KITS['Atticor'];
+   ak.guidelines.forEach(g=>{if(g.url)kits.push('Atticor '+g.label+': '+g.url)});
+   return kits.length?'\n\nBrand kit / guidelines:\n'+kits.map(k=>'  '+k).join('\n'):'';
+  }catch(e){return ''}
+ };
+ /* kits ride Creative / Merch / Social ticket emails via the same line builder tickets already use */
+ const _mcl=window.mamCreativeLinesFor;
+ window.mamCreativeLinesFor=function(t){
+  let s='';try{s=_mcl(t)||''}catch(e){}
+  try{if(['Creative','Merch','Social','Meta'].includes(t.type))s+=mamBrandKitLine(t.brand)}catch(e){}
+  return s;
+ };
+ /* Per-brand activation playbooks known from the events dump (files live in SharePoint) */
+ window.MAM_BRAND_PLAYBOOKS={
+  'Keches Law':[{label:'KLG Event Activation Playbook (PDF)',url:'',note:'[Confirm SharePoint location] — from the events dump'},{label:'KLG x Atticor Marketing Insight (PDF)',url:'',note:'[Confirm SharePoint location]'}],
+  'Parrish DeVaughn':[{label:'PDV Event Activation Playbook (PDF)',url:'',note:'[Confirm SharePoint location] — from the events dump'}]
+ };
+ /* Brand Playbook panel lives with Contacts & routing — kit + docs + existing designs + recurrence, per brand */
+ const _rrp=renderRegistryPage;
+ window.renderRegistryPage=function(el){
+  _rrp(el);
+  try{
+   const page=el.querySelector('.page');if(!page||el.querySelector('#brandPlaybookPanel'))return;
+   const b=state.currentBrand;
+   const k=MAM_BRAND_KITS[b];
+   const ak=MAM_BRAND_KITS['Atticor'];
+   const docs=(MAM_BRAND_PLAYBOOKS[b]||[]);
+   const bank=(window.MAM_MERCH_BANK||[]).filter(x=>x.brand===b);
+   const decks=(window.MAM_MERCH_DECKS||[]).filter(x=>x.brand===b);
+   const recur=(state.playbooks||[]).filter(x=>x.brand===b);
+   function kitHTML(name,kit){if(!kit)return '';return '<div class="fact"><div class="label">'+esc(name)+' kit</div><div>'+kit.guidelines.map(g=>g.url?'<a href="'+esc(g.url)+'" target="_blank" style="color:var(--gold)">'+esc(g.label)+'</a>':esc(g.label)+' <span style="color:var(--gold)">'+esc(g.note)+'</span>').join('<br>')+(kit.palette.length?'<br>'+kit.palette.map(p=>'<span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:'+p[1]+';margin-right:3px;vertical-align:middle"></span>'+esc(p[0])).join(' · '):'')+(kit.fonts.length?'<br>'+esc(kit.fonts.join(' · ')):'')+'</div></div>'}
+   page.insertAdjacentHTML('beforeend','<div class="panel" id="brandPlaybookPanel" style="margin-top:12px"><h3>Brand Playbook · '+esc(b)+'</h3><div class="tiny" style="margin-bottom:7px">The brand kit and guidelines ride every Creative / Merch / Social ticket automatically. Missing links are flagged, never faked.</div>'+
+    kitHTML(b,k)+kitHTML('Atticor',ak)+
+    (docs.length?'<div class="sectioncap" style="margin-top:8px">Activation playbooks</div>'+docs.map(d=>'<div class="fact"><div class="label">Doc</div><div>'+esc(d.label)+' <span style="color:var(--gold)">'+esc(d.note)+'</span></div></div>').join(''):'')+
+    (bank.length?'<div class="sectioncap" style="margin-top:8px">Existing merch designs</div>'+bank.map(x=>'<div class="fact"><div class="label">'+esc(x.status)+'</div><div>'+esc(x.name)+' — '+esc(x.note)+'</div></div>').join(''):'')+
+    (decks.length?'<div class="sectioncap" style="margin-top:8px">Idea decks (BoomPromo)</div>'+decks.map(d=>'<div class="fact"><div class="label">Deck</div><div><a href="'+esc(d.url)+'" target="_blank" style="color:var(--gold)">'+esc(d.label)+'</a></div></div>').join(''):'')+
+    (recur.length?'<div class="sectioncap" style="margin-top:8px">Saved recurrence playbooks</div>'+recur.map(x=>'<div class="fact"><div class="label">'+esc(x.dma||'')+'</div><div>'+esc(x.name)+' — '+esc(x.note||'')+'</div></div>').join(''):'')+
+    ((!k&&!docs.length&&!bank.length)?'<div class="fact"><div class="label">Playbook</div><div>Nothing on file for '+esc(b)+' yet — [Confirm] the guidelines and playbook locations with the brand manager.</div></div>':'')+
+    '</div>');
+  }catch(e){}
+ };
+})();
+/* ===== END BRAND KITS ===== */
+
 /* ===== PL CHICAGO CLOSURES + MERCH DESK SEED (per Emm · Aug 26 2026) ===== */
 ;function applyDataTruthB7v6(){
  if(state._dataTruthB7v6)return;
@@ -2201,6 +2332,17 @@ window.addEventListener('DOMContentLoaded',function(){
  }).catch(function(){})}catch(e){}
 });
 /* ===== END DATA TRUTH + DOOM MOUNT ===== */
+
+/* Context guard: a brand switch can never leave the DMA pointing into another brand's markets */
+;(function(){
+ function heal(){try{
+  const bk=state.brands[state.currentBrand];
+  if(!bk){state.currentBrand=brands()[0];state.currentDMA=markets(state.currentBrand)[0];saveState();return}
+  if(!bk.markets[state.currentDMA]){state.currentDMA=markets(state.currentBrand)[0]||state.currentDMA;state.currentCommit=(commitments(state.currentBrand,state.currentDMA)[0]||{}).id||'';saveState()}
+ }catch(e){}}
+ const _rpG=renderPage;renderPage=function(){heal();_rpG()};
+ const _rsG=renderShell;renderShell=function(){heal();return _rsG()};
+})();
 
 if(!location.hash)try{history.replaceState(null,'','#/home')}catch(e){}
 window.addEventListener('hashchange',function(){renderShell();renderPage()});
