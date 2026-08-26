@@ -11636,7 +11636,7 @@ Rules:
   };
 
   // ── NAV ───────────────────────────────────────────────
-  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"mayhem",l:"Mayhem",e:"🌀",href:"/mayhem.html"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"Overkill & OOH",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
+  const nav=[{id:"dash",l:"Command Center",e:"◉"},{id:"traf",l:"Traffic Center",e:"▶"},{id:"tracker",l:"Traffic Tracker",e:"📡"},{id:"mayhem",l:"Mayhem & Marketing Ops",e:"🌀",href:"/mayhem.html"},{id:"isci",l:"ISCI Registry",e:"◈"},{id:"oohHub",l:"Overkill & OOH",e:"🛣"},{id:"contracts",l:"Contracts",e:"📇"},{id:"est",l:"Estimates",e:"$"},{id:"sta",l:"Stations",e:"⊞"},{id:"metrics",l:"Metrics",e:"📊"},{id:"library",l:"Traffic Library",e:"📚"},{id:"planner",l:"AI Planner",e:"🧠"},{id:"notif",l:"Audit Log",e:"🔔"},...(isManagerRole()?[{id:"team",l:"Team",e:"👥"}]:[]),{id:"docs",l:"Guide",e:"📖"}];
   const[auditFilter,setAuditFilter]=useState("all");
   const[auditSearch,setAuditSearch]=useState("");
   const[auditBrand,setAuditBrand]=useState("all");
@@ -12743,10 +12743,10 @@ Rules:
         </div>
         <BookMarginNote author="muses">And so the guide comes to a close<br/>She taught them well, as heaven knows!</BookMarginNote>
       </div>,damageEffects:<>{<BookBurnMark style={{bottom:0,right:0,width:160,height:160,opacity:.3}}/>}{<BookLipstickMark style={{bottom:"25%",left:"25%",opacity:.6,transform:"rotate(-15deg) scale(1.5)"}}/>}</>},
-    {title:"Mayhem & Marketing",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p>Marketing Operations now has its own wing. The 🌀 <b>Mayhem</b> door in the nav opens the Mayhem &amp; Marketing app — campaigns and events by Brand → DMA, intake, tickets and handoff loops, content &amp; results, AP/expense packets, landing pages &amp; UTMs, the disclaimer library, and its own Guide.</p>
+    {title:"Mayhem & Marketing Ops",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <p>Marketing Operations now has its own wing. The 🌀 <b>Mayhem</b> door in the nav opens the Mayhem &amp; Marketing Ops app — campaigns and events by Brand → DMA, intake, tickets and handoff loops, content &amp; results, AP/expense packets, landing pages &amp; UTMs, the disclaimer library, and its own Guide.</p>
         <p>Mayhem is a routed app mounted beside Doom — it shares the login and saves its state through Doom's database, so it works from any machine you sign into. Doom stays traffic first and foremost; Mayhem runs the marketing department.</p>
-        <p style={{fontSize:11,opacity:.75}}>The Living Record — 08/25/2026: Mayhem &amp; Marketing integrated into Doom at /mayhem.html with durable state saves, the audited five-brand campaign book, and the Notion Master Tracker truth applied.</p>
+        <p style={{fontSize:11,opacity:.75}}>The Living Record — 08/25/2026: Mayhem &amp; Marketing Ops integrated into Doom at /mayhem.html with durable state saves, the audited five-brand campaign book, and the Notion Master Tracker truth applied.</p>
         <BookMarginNote author="meg">Two kingdoms, one login. Try to keep up.</BookMarginNote>
       </div>},
     ];
