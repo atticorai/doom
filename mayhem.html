@@ -2052,7 +2052,7 @@ function applyDataTruthB7v3(){
   '<div class="grid4"><div class="stat"><b>'+orders.length+'</b><span>open orders</span></div><div class="stat"><b>'+orders.filter(o=>o.needsDesign&&o.status==='In Design').length+'</b><span>in design</span></div><div class="stat"><b>'+stock.reduce((s,x)=>s+(+x.onHand||0),0)+'</b><span>units on hand</span></div><div class="stat"><b>'+mm().filter(x=>x.dir==='out').length+'</b><span>send-outs logged</span></div></div>'+
   '<div class="panel" style="margin-top:12px"><h3>Order Pipeline</h3>'+(orders.length?orders.map(function(o,i){
    const ix=MERCH_FLOW.indexOf(o.status);
-   return '<div class="workline"><div class="top"><div class="name">'+esc(o.item)+' ×'+o.qty+' · '+esc(o.brand)+(o.event?' · '+esc(o.event):'')+'</div><span class="badge '+(ix>=4?'green':'gold')+'">'+esc(o.status)+'</span></div><div class="detail">'+(o.needsDesign?'Needs design (Jon P + Creative) · ':'No design needed · ')+(o.shipTo?'ship-to: '+esc(o.shipTo)+' · ':'')+(o.due?'needed by '+fmtDate(o.due)+' · ':'')+esc(o.vendor||'vendor TBD')+(o.ticketId?' · ticket sent':'')+'</div><div class="actions">'+(ix<MERCH_FLOW.length-1?'<button class="btn secondary" onclick="mamMerchAdvance(\''+o.id+'\')">→ '+esc(MERCH_FLOW[ix+1])+'</button>':'')+(!o.ticketId?'<button class="btn" onclick="mamMerchTicket(\''+o.id+'\')">Ticket to Jon P</button>':'')+'</div></div>';
+   return '<div class="workline"><div class="top"><div class="name">'+esc(o.item)+' ×'+o.qty+' · '+esc(o.brand)+(o.event?' · '+esc(o.event):'')+'</div><span class="badge '+(ix>=4?'green':'gold')+'">'+esc(o.status)+'</span></div><div class="detail">'+(o.needsDesign?'Needs design (Jon P + Creative) · ':'No design needed · ')+(o.shipTo?'ship-to: '+esc(o.shipTo)+' · ':'')+(o.due?'needed by '+fmtDate(o.due)+' · ':'')+esc(o.vendor||'vendor TBD')+(o.ticketId?' · ticket sent':'')+(o.notes?'<br><span style="color:var(--gold)">'+esc(String(o.notes).slice(0,160))+'</span>':'')+'</div><div class="actions">'+(ix<MERCH_FLOW.length-1?'<button class="btn secondary" onclick="mamMerchAdvance(\''+o.id+'\')">→ '+esc(MERCH_FLOW[ix+1])+'</button>':'')+(!o.ticketId?'<button class="btn" onclick="mamMerchTicket(\''+o.id+'\')">Ticket to Jon P</button>':'')+'</div></div>';
   }).join(''):'<div class="fact"><div class="label">Orders</div><div>No open merch orders. Log a need to start one.</div></div>')+(done.length?'<div class="tiny" style="margin-top:6px">'+done.length+' received order'+(done.length===1?'':'s')+' on the record.</div>':'')+'</div>'+
   '<div class="grid2" style="margin-top:12px"><div class="panel"><h3>Inventory — what we have</h3>'+(stock.length?stock.map(function(s,i){
    return '<div class="workline"><div class="top"><div class="name">'+esc(s.item)+' · '+esc(s.brand||'All brands')+'</div><span class="badge '+((+s.onHand||0)>0?'green':'red')+'">'+(+s.onHand||0)+' on hand</span></div><div class="detail">'+esc(s.status||'On Hand')+(s.location?' · '+esc(s.location):'')+(s.updated?' · updated '+fmtDate(s.updated):'')+'</div><div class="actions"><button class="btn ghost" onclick="mamStockAdj(\''+s.id+'\',1)">+1</button><button class="btn ghost" onclick="mamStockAdj(\''+s.id+'\',-1)">−1</button><button class="btn secondary" onclick="mamOpenSendOut(\''+s.id+'\')">Send Out</button></div></div>';
@@ -2162,17 +2162,42 @@ function applyDataTruthB7v3(){
  state._dataTruthB7v5=true;state._savedTs=Date.now();saveState();
 }
 
+/* ===== PL CHICAGO CLOSURES + MERCH DESK SEED (per Emm · Aug 26 2026) ===== */
+;function applyDataTruthB7v6(){
+ if(state._dataTruthB7v6)return;
+ /* Chicago Postman Law — past events closed per Emm; wrap/results can still attach */
+ [['pl-smokeout','Windy City Smokeout'],['pl-fiesta-del-sol','Fiesta Del Sol'],['pl-painters14','Painters DC 14 Golf Outing']].forEach(function(pair){
+  try{
+   const c=state.brands['Postman Law'].markets['Chicago'].commitments.find(x=>x.id===pair[0]);
+   if(c&&!/closed/i.test(String(c.state||''))){
+    c.state='Closed';
+    if(!/Closed per Emm/.test(c.meta||''))c.meta=((c.meta||'')+' · Closed per Emm (Aug 26) — event has passed; wrap/results still attach here.').trim();
+    addEvidence(c.id,'status','Closed per Emm (Aug 26) — event passed');
+   }
+  }catch(e){}
+ });
+ /* Merch Desk — the real merch loops already in the sources, so the room opens with truth, not blanks */
+ state.merchOrders=state.merchOrders||[];
+ function addMO(o){if(!state.merchOrders.some(x=>x.id===o.id))state.merchOrders.push(o)}
+ var hit=typeof mayhemFind==='function'?mayhemFind(/riverfest/i):null;
+ addMO({id:'mo-riverfest-booth',brand:'Postman Law',dma:'Cincinnati',commit:hit?hit.c.id:'',item:'WEBN Riverfest booth merch + tent/booth items',qty:1,status:'Ordered',needsDesign:false,event:'WEBN Riverfest · Sep 6',shipTo:'iHeartMedia c/o Chad Schaefer, 8044 Montgomery Rd., Suite 650, Cincinnati, OH 45236',due:'',vendor:'',notes:'[Confirm status + quantities] Load-in email (Aug 21): booth items ship to Chad Schaefer, his team delivers to the booth, Hype staff set up. Tracker: merch needs iHeart approval 2 weeks prior — that window is already open.',ticketId:null,history:[{date:'2026-08-26',event:'Logged from WEBN load-in email'}],source:'WEBN Fireworks Load-In · Aug 21 2026'});
+ hit=typeof mayhemFind==='function'?mayhemFind(/sister strut|sista strut/i):null;
+ addMO({id:'mo-sista-merch',brand:'Lerner & Rowe',dma:'Chicago',commit:hit?hit.c.id:'',item:'Sista Strut new merch + new booth',qty:1,status:'Requested',needsDesign:true,event:'Sista Strut 3K · Oct 3',shipTo:'',due:'',vendor:'',notes:'[Confirm items + quantities] Per Hazel: Oct 3 Sista Strut needs new merch and a new booth, L&R people involved, final approval owner to confirm. Design needed — route to Jon P with Creative looped.',ticketId:null,history:[{date:'2026-08-26',event:'Logged from Hazel 1:1 spec'}],source:'Hazel 1:1 / scope §2.12'});
+ state._dataTruthB7v6=true;state._savedTs=Date.now();saveState();
+}
+
 try{applyDataTruthB7()}catch(e){}
 try{applyDataTruthB7v3()}catch(e){}
 try{applyDataTruthB7v4()}catch(e){}
 try{applyDataTruthB7v5()}catch(e){}
+try{applyDataTruthB7v6()}catch(e){}
 /* remote adopt after boot */
 window.addEventListener('DOMContentLoaded',function(){
  if(location.protocol==='file:')return;
  try{fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({collection:'appData',doc:'mayhemB7',action:'get'})}).then(function(r){return r.ok?r.json():null}).then(function(j){
   const remote=j&&j.data&&j.data.data&&j.data.data.brands?j.data.data:null;
   const rts=j&&j.data&&j.data.ts?j.data.ts:0;
-  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}renderShell();renderPage()}
+  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}renderShell();renderPage()}
  }).catch(function(){})}catch(e){}
 });
 /* ===== END DATA TRUTH + DOOM MOUNT ===== */
