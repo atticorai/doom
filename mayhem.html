@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mayhem & Marketing Ops — Home</title>
+<script src="/vendor/pdf.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -189,7 +190,7 @@ function repoDMA(){let n=state.currentDMA.toLowerCase();return repoBrand().dmas.
 function repoChannel(ch='Radio'){return repoBrand().channels.find(x=>x.channel===ch)||null}
 function disclaimerStatus(r){if(!r)return ['Missing','red'];let t=(r.text||'').toLowerCase();if(t.startsWith('tbd')||t.includes('need to make a disclaimer'))return ['Gap','red'];if(t.startsWith('pending'))return ['Pending','gold'];return ['Language present','green']}
 function routeParts(){let h=(location.hash||'#/home').replace(/^#\/?/,'');return h.split('/').filter(Boolean)}
-function pageName(){let p=routeParts()[0]||'home';p=p.replace('.html','').replace('index','home');return ['home','brands','commitment','intake','tickets','results','finance','reports','tracking','library','registry','calendar'].includes(p)?p:'home'}
+function pageName(){let p=routeParts()[0]||'home';p=p.replace('.html','').replace('index','home');return ['home','brands','commitment','intake','tickets','results','finance','reports','tracking','library','registry','calendar','merch'].includes(p)?p:'home'}
 function pageFile(p){return '#/'+p}
 function go(p){if(location.hash===pageFile(p)){renderShell();renderPage()}else location.hash=pageFile(p)}
 function setBrand(b){state.currentBrand=b;state.currentDMA=markets(b)[0];state.currentCommit=commitments(b,state.currentDMA)[0]?.id||'';saveState();renderShell();renderPage()}
@@ -213,7 +214,7 @@ function allCommitments(){let out=[];for(let [b,bo] of Object.entries(state.bran
 function totalCommitted(b){return allCommitments().filter(x=>!b||x.brand===b).reduce((s,x)=>s+Number(x.money?.final||0),0)}
 function findCommitName(id,b,d){return commitById(id,b,d)?.name||id}
 
-function renderPage(){let target=document.getElementById('page');if(!target)return;({home:renderHome,brands:renderBrandsPage,commitment:renderCommitmentPage,intake:renderIntakePage,tickets:renderTicketsPage,finance:renderFinancePage,reports:renderReportsPage,tracking:renderTrackingPage,library:renderLibraryPage,registry:renderRegistryPage,calendar:renderCalendarPage}[pageName()]||renderHome)(target);applyTheme()}
+function renderPage(){let target=document.getElementById('page');if(!target)return;({home:renderHome,brands:renderBrandsPage,commitment:renderCommitmentPage,intake:renderIntakePage,tickets:renderTicketsPage,finance:renderFinancePage,reports:renderReportsPage,tracking:renderTrackingPage,library:renderLibraryPage,registry:renderRegistryPage,calendar:renderCalendarPage,merch:renderMerchPage}[pageName()]||renderHome)(target);applyTheme()}
 function pageHead(title,sub,actions=''){return `<div class="pagehead"><div><div class="eyebrow">${esc(state.currentBrand)} · ${esc(state.currentDMA)}</div><h1>${title}</h1><p>${sub}</p></div><div class="pageactions">${actions}</div></div>`}
 
 function renderHome(el){
@@ -534,7 +535,7 @@ function downloadScopedReport(){let rb=reportState(),blob=buildReportBodyScoped(
 function reportsScopeControls(rb){let cfg=REPORT_SETUP[rb.type],html='';if(cfg.scope==='all'){html+=`<div class="field" style="min-width:220px"><label>Scope</label><input value="ALL BRANDS" readonly></div>`}else{rb.brand=state.currentBrand;html+=`<div class="field" style="min-width:220px"><label>Brand</label><input value="${esc(state.currentBrand)}" readonly></div>`;let dmas=markets(state.currentBrand);html+=`<div class="field"><label>DMA</label><select id="rDMA" onchange="reportDMAChanged()">${cfg.scope==='brand'?'<option value="ALL">All DMAs</option>':''}${dmas.map(d=>`<option ${d===rb.dma?'selected':''}>${esc(d)}</option>`).join('')}</select></div>`}if(cfg.scope==='record'){let d=rb.dma==='ALL'?markets(state.currentBrand)[0]:rb.dma,rows=commitments(state.currentBrand,d);html+=`<div class="field"><label>Campaign / event</label><select id="rRecord" onchange="reportState().record=this.value;saveState();reportState().recipients=[];renderReportsPage(document.getElementById('page'))">${rows.map(c=>`<option value="${c.id}" ${c.id===rb.record?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>`}if(rb.type.includes('Monthly Update'))html+=`<div class="field"><label>Month</label><input id="rMonth" type="month" value="${rb.month}" onchange="reportState().month=this.value;saveState();renderReportPreview()"></div>`;return html}
 function openAllBrandsMonthlyReport(){let rb=reportState();rb.type='All Brands Monthly Update';rb.brand=state.currentBrand;rb.dma='ALL';rb.record='ALL';rb.recipients=[];saveState();renderReportsPage(document.getElementById('page'))}
 function openCurrentBrandReports(){let rb=reportState();rb.type='Brand Monthly Update';rb.brand=state.currentBrand;rb.dma='ALL';rb.record=state.currentCommit;rb.recipients=[];saveState();renderReportsPage(document.getElementById('page'))}
-renderReportsPage=function(el){let rb=reportState();if(!REPORT_SETUP[rb.type])rb.type='Brand Monthly Update';let allBrands=rb.type==='All Brands Monthly Update';if(!allBrands)rb.brand=state.currentBrand;if(!rb.brand)rb.brand=state.currentBrand;if(REPORT_SETUP[rb.type].scope==='record'){let d=rb.dma==='ALL'?state.currentDMA:rb.dma;if(!markets(rb.brand).includes(d))rb.dma=markets(rb.brand)[0];let rows=commitments(rb.brand,rb.dma);if(!rows.some(c=>c.id===rb.record))rb.record=rows[0]?.id||''}if(!rb.recipients?.length)rb.recipients=reportDefaults(rb.type,rb);saveState();let templates=state.templates.filter(t=>rb.type==='All Brands Monthly Update'||t.brand===rb.brand);el.innerHTML=`<div class="page">${pageHead('Updates & Reports',allBrands?'ALL BRANDS monthly reporting mode. This is the only place Mayhem can intentionally cross brand boundaries.':'Reports and emails stay locked to '+state.currentBrand+'. Switch brands at the top to work in another brand.',`<button class="btn secondary" onclick="mayhemPhoneView()">Phone view</button>${allBrands?`<button class="btn secondary" onclick="openCurrentBrandReports()">Back to ${esc(state.currentBrand)} reports</button>`:`<button class="btn secondary" onclick="openAllBrandsMonthlyReport()">All Brands Monthly Update</button>`}<button class="btn secondary" onclick="downloadScopedReport()">Export current update</button><button class="btn secondary" onclick="downloadLeadership()">Export Data (CSV)</button><button class="btn secondary" onclick="downloadHazelView()">Hazel View (Excel)</button>`)}<div class="panel"><div class="toolbar" style="align-items:end"><div class="field" style="min-width:220px"><label>What are you creating?</label>${allBrands?`<input value="All Brands Monthly Update" readonly>`:`<select id="rType" onchange="reportTypeChanged()">${Object.keys(REPORT_SETUP).filter(x=>x!=='All Brands Monthly Update').map(x=>`<option ${x===rb.type?'selected':''}>${x}</option>`).join('')}</select>`}</div>${reportsScopeControls(rb)}<div style="margin-left:auto"><button class="btn" onclick="renderReportPreview()">Generate / refresh</button></div></div><div style="margin-top:14px"><div class="sectioncap">Potential recipients</div><div class="tiny" style="margin-bottom:7px">Suggested contacts are selected automatically. Add or remove anyone before sending.</div><div class="pillrow" id="reportRecipients2"></div></div></div><div class="mailreport" style="margin-top:12px"><div class="content"><div class="emailbox"><div class="emailhead"><div class="lab">To</div><div id="rTo"></div></div><div class="emailhead"><div class="lab">Subject</div><div><input id="rSubject" style="width:100%;background:transparent;border:0;color:inherit;font:inherit" value=""></div></div><div style="padding:12px"><textarea id="rBody" rows="22" style="width:100%;background:transparent;color:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;line-height:1.5"></textarea></div></div><div class="actions" style="margin-top:10px"><button class="btn" onclick="sendScopedReport()">Send + stamp</button><button class="btn secondary" onclick="go('registry')">Edit contacts</button></div></div></div>${templates.length?`<div class="panel" style="margin-top:12px"><h3>Saved formats for ${rb.type==='All Brands Monthly Update'?'all brands':esc(rb.brand)}</h3>${templates.map(t=>`<div class="workline"><div class="top"><div class="name">${esc(t.name)}</div><span class="badge ${t.status==='Mapped'?'green':'gold'}">${t.status}</span></div><div class="detail">${esc(t.audience)} · ${esc(t.format)}</div><div class="actions"><button class="btn secondary" onclick="previewTemplate('${t.name.replaceAll("'","\\'")}')">Preview / export</button></div></div>`).join('')}</div>`:''}</div>`;setTimeout(renderReportPreview,0)}
+renderReportsPage=function(el){let rb=reportState();if(!REPORT_SETUP[rb.type])rb.type='Brand Monthly Update';let allBrands=rb.type==='All Brands Monthly Update';if(!allBrands)rb.brand=state.currentBrand;if(!rb.brand)rb.brand=state.currentBrand;if(REPORT_SETUP[rb.type].scope==='record'){let d=rb.dma==='ALL'?state.currentDMA:rb.dma;if(!markets(rb.brand).includes(d))rb.dma=markets(rb.brand)[0];let rows=commitments(rb.brand,rb.dma);if(!rows.some(c=>c.id===rb.record))rb.record=rows[0]?.id||''}if(!rb.recipients?.length)rb.recipients=reportDefaults(rb.type,rb);saveState();let templates=state.templates.filter(t=>rb.type==='All Brands Monthly Update'||t.brand===rb.brand);el.innerHTML=`<div class="page">${pageHead('Updates & Reports',allBrands?'ALL BRANDS monthly reporting mode. This is the only place Mayhem can intentionally cross brand boundaries.':'Reports and emails stay locked to '+state.currentBrand+'. Switch brands at the top to work in another brand.',`<button class="btn secondary" onclick="mayhemPhoneView()">Phone view</button>${allBrands?`<button class="btn secondary" onclick="openCurrentBrandReports()">Back to ${esc(state.currentBrand)} reports</button>`:`<button class="btn secondary" onclick="openAllBrandsMonthlyReport()">All Brands Monthly Update</button>`}<button class="btn secondary" onclick="downloadScopedReport()">Export current update</button><button class="btn secondary" onclick="downloadLeadership()">Export Data (CSV)</button><button class="btn secondary" onclick="downloadHazelView()">Hazel View (Excel)</button><button class="btn" onclick="mamNotionPull()">Pull from Notion</button>`)}<div class="panel"><div class="toolbar" style="align-items:end"><div class="field" style="min-width:220px"><label>What are you creating?</label>${allBrands?`<input value="All Brands Monthly Update" readonly>`:`<select id="rType" onchange="reportTypeChanged()">${Object.keys(REPORT_SETUP).filter(x=>x!=='All Brands Monthly Update').map(x=>`<option ${x===rb.type?'selected':''}>${x}</option>`).join('')}</select>`}</div>${reportsScopeControls(rb)}<div style="margin-left:auto"><button class="btn" onclick="renderReportPreview()">Generate / refresh</button></div></div><div style="margin-top:14px"><div class="sectioncap">Potential recipients</div><div class="tiny" style="margin-bottom:7px">Suggested contacts are selected automatically. Add or remove anyone before sending.</div><div class="pillrow" id="reportRecipients2"></div></div></div><div class="mailreport" style="margin-top:12px"><div class="content"><div class="emailbox"><div class="emailhead"><div class="lab">To</div><div id="rTo"></div></div><div class="emailhead"><div class="lab">Subject</div><div><input id="rSubject" style="width:100%;background:transparent;border:0;color:inherit;font:inherit" value=""></div></div><div style="padding:12px"><textarea id="rBody" rows="22" style="width:100%;background:transparent;color:inherit;border:1px solid var(--line);border-radius:8px;padding:10px;line-height:1.5"></textarea></div></div><div class="actions" style="margin-top:10px"><button class="btn" onclick="sendScopedReport()">Send + stamp</button><button class="btn secondary" onclick="go('registry')">Edit contacts</button></div></div></div>${templates.length?`<div class="panel" style="margin-top:12px"><h3>Saved formats for ${rb.type==='All Brands Monthly Update'?'all brands':esc(rb.brand)}</h3>${templates.map(t=>`<div class="workline"><div class="top"><div class="name">${esc(t.name)}</div><span class="badge ${t.status==='Mapped'?'green':'gold'}">${t.status}</span></div><div class="detail">${esc(t.audience)} · ${esc(t.format)}</div><div class="actions"><button class="btn secondary" onclick="previewTemplate('${t.name.replaceAll("'","\\'")}')">Preview / export</button></div></div>`).join('')}</div>`:''}</div>`;setTimeout(renderReportPreview,0)}
 function homeNeedsFor(b,d){let out=[],rows=commitments(b,d);for(let c of rows){let o=needObj(state.ops[c.id]||genericOps());if(!c.anchor&&!/closed/i.test(String(c.state)))out.push({title:c.name,kind:c.sourceTiming?'SOURCE TIMING':'DATE MISSING',text:c.sourceTiming?(c.sourceTiming+' · exact day not provided in source.'):'Event / launch date is missing.',label:'Add date',act:`editPrimaryDateFor('${b.replaceAll("'","\\'")}','${d.replaceAll("'","\\'")}','${c.id}')`});if(o.decision)out.push({title:c.name,kind:'UPDATE / CONFLICT',text:cleanUiText(o.decision),label:'Fix here',act:c.id==='sister'?`selectRecord('${b.replaceAll("'","\\'")}','${d.replaceAll("'","\\'")}','${c.id}');resolveDateConflict()`:`selectRecord('${b.replaceAll("'","\\'")}','${d.replaceAll("'","\\'")}','${c.id}');editRecord('${c.id}')`});let ts=state.tickets.filter(t=>t.brand===b&&t.dma===d&&t.commit===c.id&&t.status!=='Closed');for(let t of ts){let route=roleContact(t.ownerRole||t.type,b,d),to=t.to||route?.email||'';if(!to)out.push({title:`${c.name} · ${t.type}`,kind:'EMAIL MISSING',text:`${t.type} ticket cannot send until the contact has an email.`,label:'Fix contact',act:`state.currentBrand='${b.replaceAll("'","\\'")}';state.currentDMA='${d.replaceAll("'","\\'")}';saveState();go('registry')`});else if(t.sent&&!t.returnData)out.push({title:`${c.name} · ${t.type}`,kind:'WAITING ON RETURN',text:`Sent ${fmtDate(t.sent)} · due back ${fmtDate(t.due)}.`,label:'Open ticket',act:`selectRecord('${b.replaceAll("'","\\'")}','${d.replaceAll("'","\\'")}','${c.id}');openTicket(${t.id})`})}}
  let ps=(state.payments||[]).filter(p=>p.brand===b&&p.dma===d&&p.status!=='Paid');if(ps.length)out.push({title:'AP / Expenses',kind:'OPEN',text:`${ps.length} payment / expense item${ps.length===1?'':'s'} still open.`,label:'Open AP / Expenses',act:`state.currentBrand='${b.replaceAll("'","\\'")}';state.currentDMA='${d.replaceAll("'","\\'")}';saveState();go('finance')`});return out}
 renderHome=function(el){let b=state.currentBrand,ds=markets(b),brandTickets=state.tickets.filter(t=>t.brand===b&&t.status!=='Closed'),brandPays=(state.payments||[]).filter(p=>p.brand===b&&p.status!=='Paid'),brandNeeds=ds.reduce((n,d)=>n+homeNeedsFor(b,d).length,0);el.innerHTML=`<div class="page">${pageHead(b,'Home is scoped to the selected brand. Each DMA keeps its own campaigns, tickets, AP / expenses and items that need attention.',`<button class="btn" onclick="go('intake')">New intake</button>`)}<div class="grid3"><div class="stat"><b>${ds.length}</b><span>DMAs</span></div><div class="stat"><b>${brandTickets.length}</b><span>open tickets</span></div><div class="stat"><b>${brandNeeds}</b><span>needs attention</span></div></div><div class="market-grid" style="margin-top:12px">${ds.map(d=>{let needs=homeNeedsFor(b,d),rows=commitments(b,d),next=rows.filter(c=>c.anchor).sort((a,z)=>a.anchor.localeCompare(z.anchor))[0];return `<div class="market-card"><div class="dma">${esc(d)}</div><div class="sub">${rows.length} campaign / event${rows.length===1?'':'s'}${next?' · next '+esc(next.name)+' '+fmtDate(next.anchor):''}</div>${needs.length?needs.map(x=>`<div class="decision"><div class="k">${esc(x.kind)}</div><div class="t">${esc(x.title)}</div><div class="m">${esc(x.text)}</div><div class="actions"><button class="btn secondary" onclick="${x.act}">${esc(x.label)}</button></div></div>`).join(''):'<div class="fact"><div class="label">Status</div><div>No open flags in this DMA.</div></div>'}<div class="actions" style="margin-top:9px"><button class="btn ghost" onclick="state.currentDMA='${d.replaceAll("'","\\'")}';state.currentCommit=commitments('${b.replaceAll("'","\\'")}','${d.replaceAll("'","\\'")}')[0]?.id||'';saveState();go('brands')">Open ${esc(d)}</button></div></div>`}).join('')}</div></div>`}
@@ -833,13 +834,13 @@ function osWaiting(c=osRecord(),b=state.currentBrand,d=state.currentDMA){return 
 function osNotionPayload(c=osRecord(),b=state.currentBrand,d=state.currentDMA){let o=osOps(c);return {brand:b,dma:d,campaign:{id:c.id,name:c.name,type:c.kind,date:c.anchor||'',partner:c.partner||'',money:c.money||{},channels:c.channelPlan||c.channels||''},work:{needs:o.needs,creative:o.creative,ethics:o.ethics,merch:o.merch,staffing:o.staffing,obligations:o.obligations},content:contentFor(c,b,d),results:resultsFor(c,b,d),vendorReports:vendorReportsFor(c,b,d),landingPages:(state.landingPages||[]).filter(x=>x.brand===b&&(x.records||[]).includes(c.id)),utms:(state.utms||[]).filter(x=>x.brand===b&&x.dma===d&&x.record===c.id),payments:(state.payments||[]).filter(x=>x.brand===b&&x.dma===d&&x.commit===c.id)}}
 function osSync(c=osRecord(),reason='Updated in Mayhem'){c.osNotion=osNotionPayload(c);syncToNotion(c,reason);saveState()}
 
-pageName=function(){let p=routeParts()[0]||'home';p=p.replace('.html','').replace('index','home');return ['home','brands','commitment','intake','tickets','results','finance','reports','tracking','library','registry','guide','calendar'].includes(p)?p:'home'};
+pageName=function(){let p=routeParts()[0]||'home';p=p.replace('.html','').replace('index','home');return ['home','brands','commitment','intake','tickets','results','finance','reports','tracking','library','registry','guide','calendar','merch'].includes(p)?p:'home'};
 function osChip(label,sub,act,cls=''){return `<button class="oschip ${cls}" onclick="${act}"><div class="k">${esc(label)}</div><div class="sub">${esc(sub)}</div></button>`}
 function osBarHTML(){let c=osRecord(),o=osOps(c),content=contentFor(c),vr=vendorReportsFor(c),pages=(state.landingPages||[]).filter(x=>x.brand===state.currentBrand&&(x.records||[]).includes(c.id)),us=(state.utms||[]).filter(x=>x.brand===state.currentBrand&&x.dma===state.currentDMA&&x.record===c.id),pays=(state.payments||[]).filter(x=>x.brand===state.currentBrand&&x.dma===state.currentDMA&&x.commit===c.id&&x.status!=='Paid'),owed=(o.obligations||[]).filter(x=>!/received|complete|delivered|proofed/i.test(String(x.status))),mt=content.filter(x=>x.metricsStatus==='Due'||x.metricsStatus==='Overdue').length;return `<div class="osbar" id="osbar"><div class="osbar-title"><b>${esc(c.name)}</b><span>${esc(state.currentDMA)} · ${esc(c.kind)}</span></div>${osChip('Tickets',`${osOpenCount(c)} open · ${osWaiting(c)} waiting`,`go('tickets')`,osWaiting(c)?'warn':'')}${osChip('Creative',o.creative?.status||'Check Doom',`openTicketPlanner('${c.id}','Creative')`)}${osChip('Ethics',o.ethics?.status||'Check',`go('library')`,/gap|changes|pending/i.test(String(o.ethics?.status))?'warn':'')}${osChip('Content & Social',`${content.length} item${content.length===1?'':'s'}${mt?' · '+mt+' metrics due':''}`,`goResultsTab('content')`,mt?'warn':'')}${osChip('Pages / UTMs',`${pages.length} page${pages.length===1?'':'s'} · ${us.length} UTM${us.length===1?'':'s'}`,`go('tracking')`)}${osChip('Results',`${resultValue(c,'Impressions').toLocaleString()} impr. · ${resultValue(c,'Attendance').toLocaleString()} att.`,`goResultsTab('results')`)}${osChip('AP / Expenses',`${pays.length} open`,`go('finance')`,pays.length?'gold':'good')}${osChip('Partner Owed',`${owed.length} open · ${vr.length} report${vr.length===1?'':'s'}`,`goResultsTab('vendors')`,owed.length?'gold':'good')}</div>`}
-shellHTML=function(){return `<header class="topbar" id="topbar"><div class="branding"><div><div class="doom">Doom & Deliverables</div><div class="mayhem"><span class="slash">/</span> Mayhem & Marketing Ops</div></div></div><div class="brand-switch">${brands().map(b=>`<button class="${b===state.currentBrand?'active':''}" onclick="setBrand('${b.replaceAll("'","\\'")}')"><span class="full">${esc(b)}</span><span class="short">${BRAND_SHORT[b]}</span></button>`).join('')}</div><button class="theme" id="themeBtn" onclick="toggleTheme()">☀</button></header><aside class="sidebar" id="sidebar"><div class="navhead">Mayhem & Marketing Ops</div>${navLink('home','Home')}${navLink('brands','Brands')}${navLink('intake','Intake')}${navLink('tickets','Tickets',state.tickets.filter(t=>t.status!=='Closed').length)}${navLink('results','Content & Results')}${navLink('finance','AP / Expenses')}${navLink('calendar','Calendar')}${navLink('tracking','Landing Pages & UTMs')}${navLink('reports','Updates & Reports')}${navLink('library','Disclaimer Library')}${navLink('registry','Contacts')}<div class="sidefoot">One campaign record. Every ticket, return, result, page, UTM and report writes back to it.</div></aside><div class="contextbar" id="contextbar"><label>DMA</label><select onchange="setDMA(this.value)">${markets().map(d=>`<option ${d===state.currentDMA?'selected':''}>${esc(d)}</option>`).join('')}</select><label>Campaign / Event</label><select onchange="setCommit(this.value)">${commitments().map(c=>`<option value="${c.id}" ${c.id===state.currentCommit?'selected':''}>${esc(c.name)}</option>`).join('')}</select><div class="spacer"></div><button class="btn secondary" onclick="go('commitment')">Open</button><button class="btn" onclick="go('intake')">+ Intake</button></div>`}
+shellHTML=function(){return `<header class="topbar" id="topbar"><div class="branding"><div><div class="doom">Doom & Deliverables</div><div class="mayhem"><span class="slash">/</span> Mayhem & Marketing Ops</div></div></div><div class="brand-switch">${brands().map(b=>`<button class="${b===state.currentBrand?'active':''}" onclick="setBrand('${b.replaceAll("'","\\'")}')"><span class="full">${esc(b)}</span><span class="short">${BRAND_SHORT[b]}</span></button>`).join('')}</div><button class="theme" id="themeBtn" onclick="toggleTheme()">☀</button></header><aside class="sidebar" id="sidebar"><div class="navhead">Mayhem & Marketing Ops</div>${navLink('home','Home')}${navLink('brands','Brands')}${navLink('intake','Intake')}${navLink('tickets','Tickets',state.tickets.filter(t=>t.status!=='Closed').length)}${navLink('results','Content & Results')}${navLink('finance','AP / Expenses')}${navLink('calendar','Calendar')+navLink('merch','Merch Desk')}${navLink('tracking','Landing Pages & UTMs')}${navLink('reports','Updates & Reports')}${navLink('library','Disclaimer Library')}${navLink('registry','Contacts')}<div class="sidefoot">One campaign record. Every ticket, return, result, page, UTM and report writes back to it.</div></aside><div class="contextbar" id="contextbar"><label>DMA</label><select onchange="setDMA(this.value)">${markets().map(d=>`<option ${d===state.currentDMA?'selected':''}>${esc(d)}</option>`).join('')}</select><label>Campaign / Event</label><select onchange="setCommit(this.value)">${commitments().map(c=>`<option value="${c.id}" ${c.id===state.currentCommit?'selected':''}>${esc(c.name)}</option>`).join('')}</select><div class="spacer"></div><button class="btn secondary" onclick="go('commitment')">Open</button><button class="btn" onclick="go('intake')">+ Intake</button></div>`}
 renderShell=function(){['topbar','sidebar','contextbar','osbar'].forEach(id=>{let e=document.getElementById(id);if(e)e.outerHTML=''});document.getElementById('app').insertAdjacentHTML('afterbegin',shellHTML());applyTheme()}
 initShell=function(){osEnsure();let app=document.getElementById('app');app.insertAdjacentHTML('afterbegin',shellHTML());applyTheme();renderPage()}
-renderPage=function(){let target=document.getElementById('page');if(!target)return;({home:renderHome,brands:renderBrandsPage,commitment:renderCommitmentPage,intake:renderIntakePage,tickets:renderTicketsPage,results:renderResultsPage,finance:renderFinancePage,reports:renderReportsPage,tracking:renderTrackingPage,library:renderLibraryPage,registry:renderRegistryPage,calendar:renderCalendarPage}[pageName()]||renderHome)(target);applyTheme();setTimeout(augmentTrackingUI,0)}
+renderPage=function(){let target=document.getElementById('page');if(!target)return;({home:renderHome,brands:renderBrandsPage,commitment:renderCommitmentPage,intake:renderIntakePage,tickets:renderTicketsPage,results:renderResultsPage,finance:renderFinancePage,reports:renderReportsPage,tracking:renderTrackingPage,library:renderLibraryPage,registry:renderRegistryPage,calendar:renderCalendarPage,merch:renderMerchPage}[pageName()]||renderHome)(target);applyTheme();setTimeout(augmentTrackingUI,0)}
 cleanUiText=function(s){return String(s||'').replace(/commitments?/gi,'campaigns / events').replace(/judg(e)?ments?/gi,'items needing attention').replace(/handoffs?/gi,'tickets').replace(/operating desk/gi,'Mayhem').replace(/review consequence/gi,'fix here')}
 function osSelect(b,d,id){state.currentBrand=b;state.currentDMA=d;state.currentCommit=id;saveState()}
 function selectRecord(b,d,id){osSelect(b,d,id)}
@@ -893,7 +894,7 @@ mtSaveReturn=function(e,id){e.preventDefault();let t=state.tickets.find(x=>Strin
  state.ops[c.id]=o;addEvidence(t.commit,'return',`${t.type} returned · ${d.summary}`);osSync(c,`${t.type} ticket return written back`);closeModal();renderShell();openTicket(id)}
 function renderNeedDetails(){let merch=[...document.querySelectorAll('.needChk')].find(x=>x.value==='merch'),social=[...document.querySelectorAll('.needChk')].find(x=>x.value==='social'),box=document.getElementById('merchChoiceDetails');if(!box)return;let h='';if(merch?.checked)h+=`<div class="panel flat" style="margin-top:9px"><h3>Merch</h3><div class="pillrow">${MERCH_TYPES.map(x=>`<button type="button" class="pillbtn merchType" onclick="this.classList.toggle('on')">${x}</button>`).join('')}</div><label class="choice" style="display:block;margin-top:9px;min-height:0"><input type="checkbox" id="merchDesign"><div class="ct">Does the merch need a design?</div><div class="cm">Yes = Creative ticket too. No = straight to merch fulfillment.</div></label></div>`;if(social?.checked)h+=`<div class="panel flat" style="margin-top:9px"><h3>Content & Social</h3><div class="sectioncap">What needs to happen?</div><div class="ticket-choice-grid">${['Pre-event post','Newsletter','Day-of Story','Day-of Reel','Post-event recap','Partner tag / collab','Photo album / content pickup'].map(x=>`<label class="ticket-choice"><input type="checkbox" class="socialItem" value="${x}" onchange="this.parentElement.classList.toggle('on',this.checked)">${x}</label>`).join('')}</div><div class="sectioncap" style="margin-top:9px">Where?</div><div class="ticket-choice-grid">${['Instagram','Facebook','Newsletter','LinkedIn','TikTok'].map(x=>`<label class="ticket-choice"><input type="checkbox" class="socialPlatform" value="${x}" onchange="this.parentElement.classList.toggle('on',this.checked)">${x}</label>`).join('')}</div><div class="formgrid" style="margin-top:9px"><div class="field c6"><label>Photo / Video Destination</label><select id="socialDestination"><option>Shared event album</option><option>Drive / SharePoint event folder</option><option>Partner shared folder</option><option>Set later</option></select></div><div class="field c6"><label>Post-event Metrics</label><select id="socialMetrics"><option>Required</option><option>Not required</option></select></div></div></div>`;box.innerHTML=h}
 function readSocialIntake(){return {items:[...document.querySelectorAll('.socialItem:checked')].map(x=>x.value),platforms:[...document.querySelectorAll('.socialPlatform:checked')].map(x=>x.value),destination:document.getElementById('socialDestination')?.value||'Shared event album',metrics:document.getElementById('socialMetrics')?.value||'Required'}}
-renderIntakePage=function(el){el.innerHTML=`<div class="page">${pageHead('Intake','The form starts the operating system. Select what is true once; Mayhem builds the work, return requirements, Notion record and follow-up from it.',`<button class="btn secondary" onclick="openFeedForm()">Use a source to prefill</button>`)}<div class="formtabs"><button class="active" onclick="showIntakeForm('new',this)">New Campaign / Event</button><button onclick="showIntakeForm('update',this)">Update Existing</button><button onclick="goResultsTab('vendors')">Results / Vendor Report</button><button onclick="openPartnerContact()">Partner Contact</button></div><div class="panel" id="intakeBody"></div></div>`;showIntakeForm('new',document.querySelector('.formtabs button'))}
+renderIntakePage=function(el){el.innerHTML=`<div class="page">${pageHead('Intake','The form starts the operating system. Select what is true once; Mayhem builds the work, return requirements, Notion record and follow-up from it.',`<button class="btn secondary" onclick="openFeedForm()">Use a source to prefill</button><button class="btn secondary" onclick="mamOpenCsvImport()">Import Spreadsheet (CSV)</button>`)}<div class="formtabs"><button class="active" onclick="showIntakeForm('new',this)">New Campaign / Event</button><button onclick="showIntakeForm('update',this)">Update Existing</button><button onclick="goResultsTab('vendors')">Results / Vendor Report</button><button onclick="openPartnerContact()">Partner Contact</button></div><div class="panel" id="intakeBody"></div></div>`;showIntakeForm('new',document.querySelector('.formtabs button'))}
 showIntakeForm=function(kind,btn){if(btn){document.querySelectorAll('.formtabs button').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}let c=osRecord();if(kind==='update'){document.getElementById('intakeBody').innerHTML=`<div class="formgrid"><div class="field c4"><label>Campaign / Event</label><input value="${esc(c.name)}" readonly></div><div class="field c4"><label>What Changed?</label><select id="uField" onchange="updateCurrentField()"><option>Event / launch date</option><option>Final cost</option><option>Partner / vendor</option><option>Estimate #</option><option>Campaign / event name</option></select></div><div class="field c4"><label>Source</label><select id="uSource"><option>Email</option><option>Notion</option><option>Contract amendment</option><option>Excel / spreadsheet</option><option>Partner update</option><option>Manual confirmation</option></select></div><div class="field c6"><label>Current</label><input id="uCurrent" readonly></div><div class="field c6"><label>New Value</label><input id="uIncoming" required></div><div class="c12"><button class="btn" onclick="stageChange()">Review / Apply Change</button></div></div>`;updateCurrentField();return}
  document.getElementById('intakeBody').innerHTML=`<form onsubmit="createCommitment(event)" class="formgrid" id="commitmentForm"><div class="field c4"><label>Brand</label><select id="fBrand" onchange="intakeBrandChanged();renderComplianceFlags()">${brands().map(x=>`<option ${x===state.currentBrand?'selected':''}>${x}</option>`).join('')}</select></div><div class="field c4"><label>DMA</label><select id="fDMA" onchange="intakeDMAChanged();renderComplianceFlags()">${markets().map(x=>`<option ${x===state.currentDMA?'selected':''}>${esc(x)}</option>`).join('')}</select></div><div class="field c4"><label>Type</label><select id="fKind" onchange="renderIntakeChoices()"><option>Event + Sponsorship</option><option>Event</option><option>Sponsorship</option><option>Partnership</option><option>Sports Partnership</option><option>Media Flight</option><option>Community</option><option>Appearance</option><option>Vendor Agreement</option></select></div><div class="field c6"><label>Campaign / Event / Sponsorship</label><input id="fName" required placeholder="Name"></div><div class="field c6"><label>Partner / Vendor</label><input id="fPartner" list="partnerList" placeholder="Choose saved or enter once"><datalist id="partnerList">${state.contacts.filter(x=>x.brand===state.currentBrand&&x.dma===state.currentDMA).map(x=>`<option value="${esc(x.org)}">`).join('')}</datalist></div><div class="field c3"><label>Start / Event Date</label><input id="fAnchor" type="date"></div><div class="field c3"><label>End Date</label><input id="fEnd" type="date"></div><div class="field c6"><label>Location / Venue</label><input id="fLocation" list="locationList" placeholder="Choose known location or enter once"><datalist id="locationList">${state.contacts.filter(x=>x.brand===state.currentBrand&&x.dma===state.currentDMA&&x.shipTo).map(x=>`<option value="${esc(x.shipTo)}">`).join('')}</datalist></div><div class="field c3"><label>Proposed $</label><input id="fProposed" type="number"></div><div class="field c3"><label>Contracted $</label><input id="fContracted" type="number"></div><div class="field c3"><label>Campaign Total $</label><input id="fFinal" type="number" readonly placeholder="Calculated from costs"></div><div class="field c3"><label>Estimate #</label><select id="fEstimateMode" onchange="mamRenderEstimateIntake()"><option>Use Existing</option><option>Assign New</option><option>Not Needed</option></select><input id="fEstimate" type="hidden"><div id="fEstimateChoice" class="tiny" style="margin-top:6px"></div></div><div class="field c4"><label>Funding Entity if Different</label><input id="fFunding"></div><div class="field c4"><label>Ops Owner</label><select id="fOwner"><option>Events</option><option>Operations</option><option>Marketing Lead</option></select></div><div class="field c4"><label>Final Approval</label><select id="fApprover"><option>Marketing Lead</option><option>Brand / client approval</option><option>Other / confirm</option></select></div><div class="c12"><div class="sectioncap">Where does this run / show up?</div><div class="channelgrid" id="channelChoices"></div><div id="intakeCompliance"></div></div><div class="c12"><div class="sectioncap">What are they giving us?</div><div class="choicegrid" id="owedChoices"></div></div><div class="c12"><div class="sectioncap">What do we need to make it happen?</div><div class="choicegrid" id="needChoices"></div><div id="merchChoiceDetails"></div></div><div class="c12"><div class="feedbar"><div class="copy"><b>Already have a contract, email, workbook or Notion row?</b> Use it to fill the form. It does not replace the form.</div><button class="btn secondary" type="button" onclick="openFeedForm()">Fill from Source</button></div></div><div class="c12"><button class="btn">Create → Notion → Build Work</button></div></form>`;setTimeout(()=>{renderIntakeChoices();renderChannelChoices();mamRenderEstimateIntake()},0)}
 function intakeBrandChanged(){let b=document.getElementById('fBrand').value,sel=document.getElementById('fDMA');sel.innerHTML=markets(b).map(x=>`<option>${esc(x)}</option>`).join('');intakeDMAChanged()}
@@ -939,7 +940,7 @@ const _releaseSendScoped=sendScopedReport;sendScopedReport=function(){let rb=rep
 const _releaseInitShell=initShell;initShell=function(){_releaseInitShell();releaseMigrateMichelle();renderShell();renderPage()};
 const _releaseRenderShell=renderShell;renderShell=function(){releaseMigrateMichelle();_releaseRenderShell()};
 
-function openFeedForm(){modal('Fill Intake from Source','The form remains the intake. Mayhem uses the source to prefill only facts it can recognize, then you confirm them.',`<div class="formgrid"><div class="field c4"><label>Source</label><select id="feedType"><option>Email</option><option>Contract / PDF</option><option>Excel / spreadsheet</option><option>Notion</option><option>Copied partner note</option></select></div><div class="field c8"><label>File / Email Subject</label><input id="feedName" placeholder="Subject or file name"></div><div class="field c12"><label>Paste Source Text</label><textarea id="feedText" rows="10" placeholder="Paste the email, contract facts, spreadsheet rows or Notion details here."></textarea></div><div class="c12"><button class="btn" type="button" onclick="applyFeedToForm()">Fill Intake Fields</button></div></div>`) }
+function openFeedForm(){modal('Fill Intake from Source','The form remains the intake. Mayhem uses the source to prefill only facts it can recognize, then you confirm them.',`<div class="formgrid"><div class="field c4"><label>Source</label><select id="feedType"><option>Email</option><option>Contract / PDF</option><option>Excel / spreadsheet</option><option>Notion</option><option>Copied partner note</option></select></div><div class="field c8"><label>File / Email Subject</label><input id="feedName" placeholder="Subject or file name"></div><div class="field c12"><label>Paste Source Text</label><textarea id="feedText" rows="10" placeholder="Paste the email, contract facts, spreadsheet rows or Notion details here."></textarea></div><div class="field c12"><label>Or Attach the File (PDF — clean or scanned — TXT, CSV, EML)</label><input type="file" id="feedFile" accept=".pdf,.txt,.csv,.eml"></div><div class="c12"><button class="btn" type="button" onclick="mamReadSourceAI()">Read with AI (contracts / scans)</button> <button class="btn secondary" type="button" onclick="applyFeedToForm()">Quick Fill (no AI)</button></div></div>`) }
 function sourcePickBrand(text){let low=text.toLowerCase();let m=[['Lerner & Rowe',['lerner & rowe','lerner and rowe']],['Parrish DeVaughn',['parrish devaughn','parrish devaughn']],['Wettermark Keith',['wettermark keith','wk firm']],['Postman Law',['postman law']],['Keches Law',['keches law group','keches law','klg']]];for(let [b,a] of m)if(a.some(x=>low.includes(x)))return b;return document.getElementById('fBrand')?.value||state.currentBrand}
 function sourcePickDMA(text,brand){let low=text.toLowerCase();let aliases={'Chicago':['chicago'],'Phoenix':['phoenix'],'Oklahoma City':['oklahoma city','okc'],'Tulsa':['tulsa'],'Boston':['boston','new england','patriots'],'Birmingham':['birmingham'],'Huntsville':['huntsville'],'Montgomery':['montgomery'],'Minneapolis':['minneapolis','twin cities'],'Cincinnati':['cincinnati'],'Denver':['denver']};for(let d of markets(brand)){let checks=[d.toLowerCase(),...(aliases[d]||[])];if(checks.some(x=>low.includes(x)))return d}return markets(brand)[0]||''}
 function sourceCampaignName(subject,text){let x=String(subject||'').replace(/^\s*(fw|fwd|re)\s*:\s*/i,'').replace(/\s*:\s*(immediate\s+)?campaign\s+priorities.*$/i,'').trim();if(x&&x.length<100)return x;let m=text.match(/(?:campaign|event|sponsorship|partnership)\s*(?:name)?\s*[:\-]\s*([^\n|]{3,80})/i);return m?m[1].trim():''}
@@ -963,7 +964,7 @@ function openMobileMore(){document.getElementById('mobileMore')?.classList.add('
 function closeMobileMore(){document.getElementById('mobileMore')?.classList.remove('open')}
 function mobileNavHTML(){let p=pageName(),on=x=>p===x?'on':'';return `<nav class="mobile-nav" id="mobileNav"><button class="${on('home')}" onclick="mobileGo('home')"><span class="ico">⌂</span>Home</button><button class="${on('brands')}" onclick="mobileGo('brands')"><span class="ico">◫</span>Brands</button><button class="${on('intake')}" onclick="mobileGo('intake')"><span class="ico">＋</span>Intake</button><button class="${on('results')}" onclick="mobileGo('results')"><span class="ico">◎</span>Results</button><button onclick="openMobileMore()"><span class="ico">•••</span>More</button></nav><div class="mobile-more-back" id="mobileMore" onclick="if(event.target===this)closeMobileMore()"><div class="mobile-more"><h3>Mayhem & Marketing Ops</h3><div class="mobile-more-grid"><button onclick="mobileGo('tickets')">Tickets</button><button onclick="mobileGo('finance')">AP / Expenses</button><button onclick="mobileGo('tracking')">Landing Pages & UTMs</button><button onclick="mobileGo('reports')">Updates & Reports</button><button onclick="mobileGo('library')">Disclaimer Library</button><button onclick="mobileGo('registry')">Contacts</button></div></div></div>`}
 const _mamShellBeforeMobile=shellHTML;
-shellHTML=function(){return `<header class="topbar" id="topbar"><div class="branding"><div><div class="doom">Doom & Deliverables</div><div class="mayhem"><span class="slash">/</span> Mayhem & Marketing Ops</div></div></div><select class="mobile-brand-select" onchange="setBrand(this.value)">${brands().map(b=>`<option ${b===state.currentBrand?'selected':''}>${esc(b)}</option>`).join('')}</select><div class="brand-switch">${brands().map(b=>`<button style="${mamBrandStyle(b)}" class="${b===state.currentBrand?'active':''}" onclick="setBrand('${b.replaceAll("'","\\'")}')"><span class="full">${esc(b)}</span><span class="short">${BRAND_SHORT[b]}</span></button>`).join('')}</div><button class="theme" id="themeBtn" onclick="toggleTheme()">☀</button></header><aside class="sidebar" id="sidebar"><div class="navhead">Mayhem & Marketing Ops</div>${navLink('home','Home')}${navLink('brands','Brands')}${navLink('intake','Intake')}${navLink('tickets','Tickets',state.tickets.filter(t=>t.status!=='Closed').length)}${navLink('results','Content & Results')}${navLink('finance','AP / Expenses')}${navLink('calendar','Calendar')}${navLink('tracking','Landing Pages & UTMs')}${navLink('reports','Updates & Reports')}${navLink('library','Disclaimer Library')}${navLink('registry','Contacts')}<div class="sidefoot">One campaign record. Every request, return, result, page, UTM and report writes back to it.</div></aside>${pageName()==='home'?'':`<div class="contextbar" id="contextbar"><label>DMA</label><select aria-label="DMA" onchange="setDMA(this.value)">${markets().map(d=>`<option ${d===state.currentDMA?'selected':''}>${esc(d)}</option>`).join('')}</select><label>Campaign / Event</label><select aria-label="Campaign / Event" onchange="setCommit(this.value)">${commitments().map(c=>`<option value="${c.id}" ${c.id===state.currentCommit?'selected':''}>${esc(c.name)}</option>`).join('')}</select><div class="spacer"></div><button class="btn secondary" onclick="go('commitment')">Open</button><button class="btn" onclick="go('intake')">+ Intake</button></div>`}${mobileNavHTML()}`}
+shellHTML=function(){return `<header class="topbar" id="topbar"><div class="branding"><div><div class="doom">Doom & Deliverables</div><div class="mayhem"><span class="slash">/</span> Mayhem & Marketing Ops</div></div></div><select class="mobile-brand-select" onchange="setBrand(this.value)">${brands().map(b=>`<option ${b===state.currentBrand?'selected':''}>${esc(b)}</option>`).join('')}</select><div class="brand-switch">${brands().map(b=>`<button style="${mamBrandStyle(b)}" class="${b===state.currentBrand?'active':''}" onclick="setBrand('${b.replaceAll("'","\\'")}')"><span class="full">${esc(b)}</span><span class="short">${BRAND_SHORT[b]}</span></button>`).join('')}</div><button class="theme" id="themeBtn" onclick="toggleTheme()">☀</button></header><aside class="sidebar" id="sidebar"><div class="navhead">Mayhem & Marketing Ops</div>${navLink('home','Home')}${navLink('brands','Brands')}${navLink('intake','Intake')}${navLink('tickets','Tickets',state.tickets.filter(t=>t.status!=='Closed').length)}${navLink('results','Content & Results')}${navLink('finance','AP / Expenses')}${navLink('calendar','Calendar')+navLink('merch','Merch Desk')}${navLink('tracking','Landing Pages & UTMs')}${navLink('reports','Updates & Reports')}${navLink('library','Disclaimer Library')}${navLink('registry','Contacts')}<div class="sidefoot">One campaign record. Every request, return, result, page, UTM and report writes back to it.</div></aside>${pageName()==='home'?'':`<div class="contextbar" id="contextbar"><label>DMA</label><select aria-label="DMA" onchange="setDMA(this.value)">${markets().map(d=>`<option ${d===state.currentDMA?'selected':''}>${esc(d)}</option>`).join('')}</select><label>Campaign / Event</label><select aria-label="Campaign / Event" onchange="setCommit(this.value)">${commitments().map(c=>`<option value="${c.id}" ${c.id===state.currentCommit?'selected':''}>${esc(c.name)}</option>`).join('')}</select><div class="spacer"></div><button class="btn secondary" onclick="go('commitment')">Open</button><button class="btn" onclick="go('intake')">+ Intake</button></div>`}${mobileNavHTML()}`}
 const _mamRenderShellMobile=renderShell;renderShell=function(){_mamRenderShellMobile();mamApplyBrand()}
 const _mamInitShellMobile=initShell;initShell=function(){_mamInitShellMobile();mamApplyBrand()}
 
@@ -1047,7 +1048,7 @@ document.head.appendChild(mamLayoutFixCss);
 
 mobileNavHTML=function(){let p=pageName(),on=x=>p===x?'on':'';return `<nav class="mobile-nav" id="mobileNav"><button class="${on('home')}" onclick="mobileGo('home')"><span class="ico">⌂</span>Home</button><button class="${on('brands')}" onclick="mobileGo('brands')"><span class="ico">◫</span>Brands</button><button class="${on('intake')}" onclick="mobileGo('intake')"><span class="ico">＋</span>Intake</button><button class="${on('results')}" onclick="mobileGo('results')"><span class="ico">◎</span>Results</button><button onclick="openMobileMore()"><span class="ico">•••</span>More</button></nav><div class="mobile-more-back" id="mobileMore" onclick="if(event.target===this)closeMobileMore()"><div class="mobile-more"><h3>Mayhem & Marketing Ops</h3><div class="mobile-more-grid"><button onclick="mobileGo('tickets')">Tickets</button><button onclick="mobileGo('finance')">AP / Expenses</button><button onclick="mobileGo('tracking')">Landing Pages & UTMs</button><button onclick="mobileGo('reports')">Updates & Reports</button><button onclick="mobileGo('library')">Disclaimer Library</button><button onclick="mobileGo('registry')">Contacts</button><button id="mobileThemeBtn" onclick="toggleTheme();applyTheme()">Appearance</button></div></div></div>`}
 
-shellHTML=function(){return `<header class="topbar" id="topbar"><div class="branding"><div><div class="doom">Doom & Deliverables</div><div class="mayhem"><span class="slash">/</span> Mayhem & Marketing Ops</div></div></div><select class="mobile-brand-select" aria-label="Brand" onchange="setBrand(this.value)">${brands().map(b=>`<option ${b===state.currentBrand?'selected':''}>${esc(b)}</option>`).join('')}</select><div class="brand-switch">${brands().map(b=>`<button style="${mamBrandStyle(b)}" class="${b===state.currentBrand?'active':''}" onclick="setBrand('${b.replaceAll("'","\\'")}')"><span class="full">${esc(b)}</span><span class="short">${BRAND_SHORT[b]}</span></button>`).join('')}</div></header><aside class="sidebar" id="sidebar"><div class="navhead">Mayhem & Marketing Ops</div>${navLink('home','Home')}${navLink('brands','Brands')}${navLink('intake','Intake')}${navLink('tickets','Tickets',state.tickets.filter(t=>t.status!=='Closed').length)}${navLink('results','Content & Results')}${navLink('finance','AP / Expenses')}${navLink('calendar','Calendar')}${navLink('tracking','Landing Pages & UTMs')}${navLink('reports','Updates & Reports')}${navLink('library','Disclaimer Library')}${navLink('registry','Contacts')}<div class="nav-theme-wrap"><span class="nav-theme-label">Appearance</span><button class="nav-theme" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle light or dark mode">☀</button></div><div class="sidefoot">One campaign record. Every request, return, result, page, UTM and report writes back to it.</div></aside>${pageName()==='home'?'':`<div class="contextbar" id="contextbar"><label>DMA</label><select aria-label="DMA" onchange="setDMA(this.value)">${markets().map(d=>`<option ${d===state.currentDMA?'selected':''}>${esc(d)}</option>`).join('')}</select><label>Campaign / Event</label><select aria-label="Campaign / Event" onchange="setCommit(this.value)">${commitments().map(c=>`<option value="${c.id}" ${c.id===state.currentCommit?'selected':''}>${esc(c.name)}</option>`).join('')}</select><div class="spacer"></div><button class="btn secondary" onclick="go('commitment')">Open</button><button class="btn" onclick="go('intake')">+ Intake</button></div>`}${mobileNavHTML()}`}
+shellHTML=function(){return `<header class="topbar" id="topbar"><div class="branding"><div><div class="doom">Doom & Deliverables</div><div class="mayhem"><span class="slash">/</span> Mayhem & Marketing Ops</div></div></div><select class="mobile-brand-select" aria-label="Brand" onchange="setBrand(this.value)">${brands().map(b=>`<option ${b===state.currentBrand?'selected':''}>${esc(b)}</option>`).join('')}</select><div class="brand-switch">${brands().map(b=>`<button style="${mamBrandStyle(b)}" class="${b===state.currentBrand?'active':''}" onclick="setBrand('${b.replaceAll("'","\\'")}')"><span class="full">${esc(b)}</span><span class="short">${BRAND_SHORT[b]}</span></button>`).join('')}</div></header><aside class="sidebar" id="sidebar"><div class="navhead">Mayhem & Marketing Ops</div>${navLink('home','Home')}${navLink('brands','Brands')}${navLink('intake','Intake')}${navLink('tickets','Tickets',state.tickets.filter(t=>t.status!=='Closed').length)}${navLink('results','Content & Results')}${navLink('finance','AP / Expenses')}${navLink('calendar','Calendar')+navLink('merch','Merch Desk')}${navLink('tracking','Landing Pages & UTMs')}${navLink('reports','Updates & Reports')}${navLink('library','Disclaimer Library')}${navLink('registry','Contacts')}<div class="nav-theme-wrap"><span class="nav-theme-label">Appearance</span><button class="nav-theme" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle light or dark mode">☀</button></div><div class="sidefoot">One campaign record. Every request, return, result, page, UTM and report writes back to it.</div></aside>${pageName()==='home'?'':`<div class="contextbar" id="contextbar"><label>DMA</label><select aria-label="DMA" onchange="setDMA(this.value)">${markets().map(d=>`<option ${d===state.currentDMA?'selected':''}>${esc(d)}</option>`).join('')}</select><label>Campaign / Event</label><select aria-label="Campaign / Event" onchange="setCommit(this.value)">${commitments().map(c=>`<option value="${c.id}" ${c.id===state.currentCommit?'selected':''}>${esc(c.name)}</option>`).join('')}</select><div class="spacer"></div><button class="btn secondary" onclick="go('commitment')">Open</button><button class="btn" onclick="go('intake')">+ Intake</button></div>`}${mobileNavHTML()}`}
 
 const _mamApplyThemeLayout=applyTheme;applyTheme=function(){_mamApplyThemeLayout();let m=document.getElementById('mobileThemeBtn');if(m)m.textContent=theme()==='light'?'Switch to Dark':'Switch to Light'};
 /* ===== END FINAL RENDER + HEADER LAYOUT FIX ===== */
@@ -1091,7 +1092,7 @@ document.head.appendChild(mamFinalUiCss);
 /* Product name appears once: in the header. */
 mobileNavHTML=function(){let p=pageName(),on=x=>p===x?'on':'';return `<nav class="mobile-nav" id="mobileNav"><button class="${on('home')}" onclick="mobileGo('home')"><span class="ico">⌂</span>Home</button><button class="${on('brands')}" onclick="mobileGo('brands')"><span class="ico">◫</span>Brands</button><button class="${on('intake')}" onclick="mobileGo('intake')"><span class="ico">＋</span>Intake</button><button class="${on('results')}" onclick="mobileGo('results')"><span class="ico">◎</span>Results</button><button onclick="openMobileMore()"><span class="ico">•••</span>More</button></nav><div class="mobile-more-back" id="mobileMore" onclick="if(event.target===this)closeMobileMore()"><div class="mobile-more"><h3>More</h3><div class="mobile-more-grid"><button onclick="mobileGo('tickets')">Tickets</button><button onclick="mobileGo('finance')">AP / Expenses</button><button onclick="mobileGo('tracking')">Landing Pages & UTMs</button><button onclick="mobileGo('reports')">Updates & Reports</button><button onclick="mobileGo('library')">Disclaimer Library</button><button onclick="mobileGo('registry')">Contacts</button><button id="mobileThemeBtn" onclick="toggleTheme();applyTheme()">Appearance</button></div></div></div>`};
 
-shellHTML=function(){return `<header class="topbar" id="topbar"><div class="branding"><div><div class="doom">Doom & Deliverables</div><div class="mayhem"><span class="slash">/</span> Mayhem & Marketing Ops</div></div></div><select class="mobile-brand-select" aria-label="Brand" onchange="setBrand(this.value)">${brands().map(b=>`<option ${b===state.currentBrand?'selected':''}>${esc(b)}</option>`).join('')}</select><div class="brand-switch">${brands().map(b=>`<button style="${mamBrandStyle(b)}" class="${b===state.currentBrand?'active':''}" onclick="setBrand('${b.replaceAll("'","\\'")}')"><span class="full">${esc(b)}</span><span class="short">${BRAND_SHORT[b]}</span></button>`).join('')}</div></header><aside class="sidebar" id="sidebar">${navLink('home','Home')}${navLink('brands','Brands')}${navLink('intake','Intake')}${navLink('tickets','Tickets',state.tickets.filter(t=>t.status!=='Closed').length)}${navLink('results','Content & Results')}${navLink('finance','AP / Expenses')}${navLink('calendar','Calendar')}${navLink('tracking','Landing Pages & UTMs')}${navLink('reports','Updates & Reports')}${navLink('library','Disclaimer Library')}${navLink('registry','Contacts')}<div class="nav-theme-wrap"><span class="nav-theme-label">Appearance</span><button class="nav-theme" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle light or dark mode">☀</button></div><div class="sidefoot">One campaign record. Every request, return, result, page, UTM and report writes back to it.</div></aside>${pageName()==='home'?'':`<div class="contextbar" id="contextbar"><label>DMA</label><select aria-label="DMA" onchange="setDMA(this.value)">${markets().map(d=>`<option ${d===state.currentDMA?'selected':''}>${esc(d)}</option>`).join('')}</select><label>Campaign / Event</label><select aria-label="Campaign / Event" onchange="setCommit(this.value)">${commitments().map(c=>`<option value="${c.id}" ${c.id===state.currentCommit?'selected':''}>${esc(c.name)}</option>`).join('')}</select><div class="spacer"></div><button class="btn secondary" onclick="go('commitment')">Open</button><button class="btn" onclick="go('intake')">+ Intake</button></div>`}${mobileNavHTML()}`};
+shellHTML=function(){return `<header class="topbar" id="topbar"><div class="branding"><div><div class="doom">Doom & Deliverables</div><div class="mayhem"><span class="slash">/</span> Mayhem & Marketing Ops</div></div></div><select class="mobile-brand-select" aria-label="Brand" onchange="setBrand(this.value)">${brands().map(b=>`<option ${b===state.currentBrand?'selected':''}>${esc(b)}</option>`).join('')}</select><div class="brand-switch">${brands().map(b=>`<button style="${mamBrandStyle(b)}" class="${b===state.currentBrand?'active':''}" onclick="setBrand('${b.replaceAll("'","\\'")}')"><span class="full">${esc(b)}</span><span class="short">${BRAND_SHORT[b]}</span></button>`).join('')}</div></header><aside class="sidebar" id="sidebar">${navLink('home','Home')}${navLink('brands','Brands')}${navLink('intake','Intake')}${navLink('tickets','Tickets',state.tickets.filter(t=>t.status!=='Closed').length)}${navLink('results','Content & Results')}${navLink('finance','AP / Expenses')}${navLink('calendar','Calendar')+navLink('merch','Merch Desk')}${navLink('tracking','Landing Pages & UTMs')}${navLink('reports','Updates & Reports')}${navLink('library','Disclaimer Library')}${navLink('registry','Contacts')}<div class="nav-theme-wrap"><span class="nav-theme-label">Appearance</span><button class="nav-theme" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle light or dark mode">☀</button></div><div class="sidefoot">One campaign record. Every request, return, result, page, UTM and report writes back to it.</div></aside>${pageName()==='home'?'':`<div class="contextbar" id="contextbar"><label>DMA</label><select aria-label="DMA" onchange="setDMA(this.value)">${markets().map(d=>`<option ${d===state.currentDMA?'selected':''}>${esc(d)}</option>`).join('')}</select><label>Campaign / Event</label><select aria-label="Campaign / Event" onchange="setCommit(this.value)">${commitments().map(c=>`<option value="${c.id}" ${c.id===state.currentCommit?'selected':''}>${esc(c.name)}</option>`).join('')}</select><div class="spacer"></div><button class="btn secondary" onclick="go('commitment')">Open</button><button class="btn" onclick="go('intake')">+ Intake</button></div>`}${mobileNavHTML()}`};
 
 /* Home should not repeat the product name. */
 const _mamAlignedHome=renderHome;
@@ -1247,9 +1248,9 @@ canonicalSavePartnerEdit=function(e,oldOrg,oldName){e.preventDefault();let x=sta
 
 backToDoom=function(){try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'MAYHEM_BACK_TO_DOOM'},'*');return}}catch(e){}if(history.length>1)history.back()}
 mobileNavHTML=function(){let p=pageName(),on=x=>p===x?'on':'';return `<nav class="mobile-nav" id="mobileNav"><button class="${on('home')}" onclick="mobileGo('home')"><span class="ico">⌂</span>Home</button><button class="${on('brands')}" onclick="mobileGo('brands')"><span class="ico">◫</span>Brands</button><button class="${on('intake')}" onclick="mobileGo('intake')"><span class="ico">＋</span>Intake</button><button class="${on('results')}" onclick="mobileGo('results')"><span class="ico">◎</span>Results</button><button onclick="openMobileMore()"><span class="ico">•••</span>More</button></nav><div class="mobile-more-back" id="mobileMore" onclick="if(event.target===this)closeMobileMore()"><div class="mobile-more"><h3>More</h3><div class="mobile-more-grid"><button onclick="mobileGo('tickets')">Tickets</button><button onclick="mobileGo('finance')">AP / Expenses</button><button onclick="mobileGo('tracking')">Landing Pages & UTMs</button><button onclick="mobileGo('reports')">Updates & Reports</button><button onclick="mobileGo('library')">Disclaimer Library</button><button onclick="mobileGo('registry')">Contacts</button><button id="mobileThemeBtn" onclick="toggleTheme();applyTheme()">Appearance</button><button onclick="backToDoom()">Back to Doom</button></div></div></div>`};
-shellHTML=function(){return `<header class="topbar" id="topbar"><div class="branding"><div><div class="doom">Doom & Deliverables</div><div class="mayhem"><span class="slash">/</span> Mayhem & Marketing Ops</div></div></div><select class="mobile-brand-select" aria-label="Brand" onchange="setBrand(this.value)">${brands().map(b=>`<option ${b===state.currentBrand?'selected':''}>${esc(b)}</option>`).join('')}</select><div class="brand-switch">${brands().map(b=>`<button style="${typeof mamBrandStyle==='function'?mamBrandStyle(b):''}" class="${b===state.currentBrand?'active':''}" onclick="setBrand('${b.replaceAll("'","\'")}')"><span class="full">${esc(b)}</span><span class="short">${BRAND_SHORT[b]}</span></button>`).join('')}</div></header><aside class="sidebar" id="sidebar">${navLink('home','Home')}${navLink('brands','Brands')}${navLink('intake','Intake')}${navLink('tickets','Tickets',(state.tickets||[]).filter(t=>t.status!=='Closed').length)}${typeof renderResultsPage==='function'?navLink('results','Content & Results'):''}${navLink('finance','AP / Expenses')}${navLink('calendar','Calendar')}${navLink('tracking','Landing Pages & UTMs')}${navLink('reports','Updates & Reports')}${navLink('library','Disclaimer Library')}${navLink('registry','Contacts')}<div class="nav-theme-wrap"><span class="nav-theme-label">Appearance</span><button class="nav-theme" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle light or dark mode">☀</button><button class="btn ghost" style="margin-left:8px" onclick="backToDoom()">Back to Doom</button></div><div class="sidefoot">Brand → DMA → campaign / event.</div></aside>${pageName()==='home'?'':`<div class="contextbar" id="contextbar"><label>DMA</label><select aria-label="DMA" onchange="setDMA(this.value)">${markets().map(d=>`<option ${d===state.currentDMA?'selected':''}>${esc(d)}</option>`).join('')}</select><label>Campaign / Event</label><select aria-label="Campaign / Event" onchange="setCommit(this.value)">${commitments().map(c=>`<option value="${c.id}" ${c.id===state.currentCommit?'selected':''}>${esc(c.name)}</option>`).join('')}</select><div class="spacer"></div><button class="btn secondary" onclick="go('commitment')">Open</button><button class="btn" onclick="go('intake')">+ Intake</button></div>`}${typeof mobileNavHTML==='function'?mobileNavHTML():''}`}
+shellHTML=function(){return `<header class="topbar" id="topbar"><div class="branding"><div><div class="doom">Doom & Deliverables</div><div class="mayhem"><span class="slash">/</span> Mayhem & Marketing Ops</div></div></div><select class="mobile-brand-select" aria-label="Brand" onchange="setBrand(this.value)">${brands().map(b=>`<option ${b===state.currentBrand?'selected':''}>${esc(b)}</option>`).join('')}</select><div class="brand-switch">${brands().map(b=>`<button style="${typeof mamBrandStyle==='function'?mamBrandStyle(b):''}" class="${b===state.currentBrand?'active':''}" onclick="setBrand('${b.replaceAll("'","\'")}')"><span class="full">${esc(b)}</span><span class="short">${BRAND_SHORT[b]}</span></button>`).join('')}</div></header><aside class="sidebar" id="sidebar">${navLink('home','Home')}${navLink('brands','Brands')}${navLink('intake','Intake')}${navLink('tickets','Tickets',(state.tickets||[]).filter(t=>t.status!=='Closed').length)}${typeof renderResultsPage==='function'?navLink('results','Content & Results'):''}${navLink('finance','AP / Expenses')}${navLink('calendar','Calendar')+navLink('merch','Merch Desk')}${navLink('tracking','Landing Pages & UTMs')}${navLink('reports','Updates & Reports')}${navLink('library','Disclaimer Library')}${navLink('registry','Contacts')}<div class="nav-theme-wrap"><span class="nav-theme-label">Appearance</span><button class="nav-theme" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle light or dark mode">☀</button><button class="btn ghost" style="margin-left:8px" onclick="backToDoom()">Back to Doom</button></div><div class="sidefoot">Brand → DMA → campaign / event.</div></aside>${pageName()==='home'?'':`<div class="contextbar" id="contextbar"><label>DMA</label><select aria-label="DMA" onchange="setDMA(this.value)">${markets().map(d=>`<option ${d===state.currentDMA?'selected':''}>${esc(d)}</option>`).join('')}</select><label>Campaign / Event</label><select aria-label="Campaign / Event" onchange="setCommit(this.value)">${commitments().map(c=>`<option value="${c.id}" ${c.id===state.currentCommit?'selected':''}>${esc(c.name)}</option>`).join('')}</select><div class="spacer"></div><button class="btn secondary" onclick="go('commitment')">Open</button><button class="btn" onclick="go('intake')">+ Intake</button></div>`}${typeof mobileNavHTML==='function'?mobileNavHTML():''}`}
 renderShell=function(){['topbar','sidebar','contextbar','osbar','mobileNav'].forEach(id=>{let e=document.getElementById(id);if(e)e.remove()});document.getElementById('app').insertAdjacentHTML('afterbegin',shellHTML());applyTheme()}
-renderPage=function(){let target=document.getElementById('page');if(!target)return;({home:renderHome,brands:renderBrandsPage,commitment:renderCommitmentPage,intake:renderIntakePage,tickets:renderTicketsPage,results:typeof renderResultsPage==='function'?renderResultsPage:renderCommitmentPage,finance:renderFinancePage,reports:renderReportsPage,tracking:renderTrackingPage,library:renderLibraryPage,registry:renderRegistryPage,calendar:renderCalendarPage}[pageName()]||renderHome)(target);applyTheme();if(typeof augmentTrackingUI==='function')setTimeout(augmentTrackingUI,0)}
+renderPage=function(){let target=document.getElementById('page');if(!target)return;({home:renderHome,brands:renderBrandsPage,commitment:renderCommitmentPage,intake:renderIntakePage,tickets:renderTicketsPage,results:typeof renderResultsPage==='function'?renderResultsPage:renderCommitmentPage,finance:renderFinancePage,reports:renderReportsPage,tracking:renderTrackingPage,library:renderLibraryPage,registry:renderRegistryPage,calendar:renderCalendarPage,merch:renderMerchPage}[pageName()]||renderHome)(target);applyTheme();if(typeof augmentTrackingUI==='function')setTimeout(augmentTrackingUI,0)}
 
 ;
 
@@ -1730,6 +1731,406 @@ function applyDataTruthB7v3(){
  };
 })();
 /* ===== END REAL EMAIL TRANSPORT + HAZEL VIEW ===== */
+
+/* ===== NOTION PULL+RECONCILE · CONTRACT READER · DEADLINE ENGINE · CSV IMPORT · BUDGET CHECKS (2026-08-26) ===== */
+;(function(){
+ const mamNorm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+
+ /* ---------- NOTION: PULL + RECONCILE (push already real) ---------- */
+ window.mamNotionPull=async function(){
+  if(location.protocol==='file:'){toast('Serve from Doom to pull Notion');return}
+  toast('Pulling from Notion…');
+  let j=null;
+  try{const r=await fetch('/api/campaigns?refresh=1');if(!r.ok)throw new Error(r.status);j=await r.json()}catch(e){toast('Notion pull failed — '+String(e.message||e).slice(0,60));return}
+  const rows=(j&&j.campaigns)||[];
+  if(!rows.length){toast('Notion returned nothing'+((j&&j.errors&&j.errors.length)?' — '+j.errors.map(e=>e.src).join(', ')+' errored':''));return}
+  const brandOf=nb=>{const n=mamNorm(nb);if(!n)return null;return brands().find(b=>mamNorm(b).includes(n)||n.includes(mamNorm(b)))||null};
+  const book=allCommitments();
+  const diffs=[],adds=[];
+  for(const r of rows){
+   const nm=mamNorm(r.name);if(!nm)continue;
+   const hit=book.find(c=>{const cn=mamNorm(c.name);return cn===nm||(nm.length>8&&(cn.includes(nm)||nm.includes(cn)))});
+   const rDate=r.eventDate||r.flightStart||r.launch||r.targetLaunch||null;
+   const rCost=(typeof r.cost==='number')?r.cost:(r.cost?(Number(String(r.cost).replace(/[^0-9.]/g,''))||null):null);
+   if(hit){
+    if(rDate&&hit.anchor&&rDate!==hit.anchor)diffs.push({kind:'Date differs',c:hit,notion:rDate,mayhem:hit.anchor,row:r});
+    else if(rDate&&!hit.anchor)diffs.push({kind:'Date only in Notion',c:hit,notion:rDate,mayhem:hit.sourceTiming||'(no date)',row:r});
+    if(rCost&&typeof (hit.money&&hit.money.final)==='number'&&hit.money.final>0&&Math.abs(rCost-hit.money.final)>1)diffs.push({kind:'Money differs',c:hit,notion:rCost,mayhem:hit.money.final,row:r});
+    else if(rCost&&(!hit.money||!hit.money.final||hit.money.final===0||hit.money.final==='TBD'))diffs.push({kind:'Money only in Notion',c:hit,notion:rCost,mayhem:'TBD',row:r});
+   }else{
+    const b=brandOf(r.brand);
+    if(r.src==='events'&&b&&!/denied|declin|cancel|complete/i.test(String(r.status||'')))adds.push({b,row:r,rDate,rCost});
+   }
+  }
+  state.notionPull={ts:Date.now(),fetched:j.fetched||'',total:rows.length,diffs:diffs.length,adds:adds.length,errors:j.errors||[]};
+  window.__mamPull={diffs,adds};
+  saveState();
+  mamShowNotionReconcile();
+ };
+ window.mamShowNotionReconcile=function(){
+  const P=window.__mamPull||{diffs:[],adds:[]};
+  const open=P.diffs.filter(d=>!d.done).length+P.adds.filter(a=>!a.done).length;
+  const head=`Pulled ${state.notionPull?.total||0} Notion rows · ${P.diffs.length} conflict${P.diffs.length===1?'':'s'} · ${P.adds.length} not in the book${(state.notionPull?.errors||[]).length?' · SOURCE ERRORS: '+state.notionPull.errors.map(e=>e.src).join(', '):''}`;
+  const body=
+   (P.diffs.length?'<div class="sectioncap">Conflicts — you decide, nothing overwrites itself</div>'+P.diffs.map((d,i)=>d.done?`<div class="fact"><div class="label">${esc(d.kind)}</div><div>${esc(d.c.name)} — ${d.done==='accepted'?'Notion value applied':'Mayhem value kept'}</div></div>`:`<div class="decision"><div class="k">${esc(d.kind)}</div><div class="t">${esc(d.c.brand)} · ${esc(d.c.dma)} · ${esc(d.c.name)}</div><div class="m">Notion: <b>${esc(String(d.notion))}</b> · Mayhem: <b>${esc(String(d.mayhem))}</b></div><div class="actions"><button class="btn" onclick="mamAcceptNotion(${i})">Accept Notion</button><button class="btn secondary" onclick="mamKeepMayhem(${i})">Keep Mayhem</button>${d.row.url?`<a class="btn ghost" href="${esc(d.row.url)}" target="_blank">Open in Notion</a>`:''}</div></div>`).join(''):'')+
+   (P.adds.length?'<div class="sectioncap" style="margin-top:10px">In Notion, not in the book</div>'+P.adds.map((a,i)=>a.done?`<div class="fact"><div class="label">Added</div><div>${esc(a.row.name)}</div></div>`:`<div class="decision"><div class="k">NOT IN MAYHEM</div><div class="t">${esc(a.b)} — ${esc(a.row.name)}</div><div class="m">${esc(a.row.status||'')}${a.rDate?' · '+fmtDate(a.rDate):''}${a.rCost?' · '+moneyFmt(a.rCost):''}${(a.row.dmas||[]).length?' · '+esc(a.row.dmas.join(', ')):''}</div><div class="actions"><button class="btn" onclick="mamAddFromNotion(${i})">Add to Book</button><button class="btn secondary" onclick="window.__mamPull.adds[${i}].done='skipped';mamShowNotionReconcile()">Skip</button></div></div>`).join(''):'')+
+   (!P.diffs.length&&!P.adds.length?'<div class="fact"><div class="label">Reconcile</div><div>The book matches Notion — nothing to decide.</div></div>':'');
+  modal('Notion Reconcile',head,body+`<div class="tiny" style="margin-top:10px">Every accepted change is stamped with Notion provenance in Sources. ${open?open+' still open.':'All decided.'}</div>`);
+ };
+ function mamRealRec(c){try{return state.brands[c.brand].markets[c.dma].commitments.find(x=>x.id===c.id)||c}catch(e){return c}}
+ window.mamAcceptNotion=function(i){
+  const d=(window.__mamPull||{}).diffs[i];if(!d||d.done)return;
+  const c=mamRealRec(d.c);
+  if(/date/i.test(d.kind)){c.anchor=d.notion}
+  else{c.money=c.money||{};c.money.final=d.notion;if(!c.money.contracted)c.money.contracted=d.notion}
+  state.sources=state.sources||[];
+  state.sources.push({id:Date.now()+i,brand:c.brand,dma:c.dma,commit:c.id,type:'Notion',name:'Notion reconcile — '+d.kind,status:'Applied',detail:String(d.mayhem)+' → '+String(d.notion)+(d.row.url?' · '+d.row.url:'')});
+  addEvidence(c.id,'notion',d.kind+': '+d.mayhem+' → '+d.notion+' (accepted from Notion pull)');
+  d.done='accepted';saveState();mamShowNotionReconcile();
+ };
+ window.mamKeepMayhem=function(i){
+  const d=(window.__mamPull||{}).diffs[i];if(!d||d.done)return;
+  const c=mamRealRec(d.c);
+  state.sources=state.sources||[];
+  state.sources.push({id:Date.now()+i,brand:c.brand,dma:c.dma,commit:c.id,type:'Notion',name:'Notion reconcile — '+d.kind,status:'Kept Mayhem value',detail:'Notion said '+String(d.notion)+'; kept '+String(d.mayhem)});
+  d.done='kept';saveState();mamShowNotionReconcile();
+ };
+ window.mamAddFromNotion=function(i){
+  const a=(window.__mamPull||{}).adds[i];if(!a||a.done)return;
+  const r=a.row,b=a.b;
+  const dmaList=(r.dmas&&r.dmas.length?r.dmas:(r.markets||[]));
+  const d=markets(b).find(m=>dmaList.some(x=>mamNorm(x).includes(mamNorm(m))||mamNorm(m).includes(mamNorm(x))))||markets(b)[0];
+  if(!state.brands[b].markets[d])state.brands[b].markets[d]={memory:[],commitments:[]};
+  const id='nt'+Date.now();
+  state.brands[b].markets[d].commitments.push({id,kind:r.category||'Event',name:r.name,state:r.status||'Pre',anchor:a.rDate||'',endDate:r.flightEnd||'',partner:(r.partners||[]).join(', '),location:'',funding:b,channels:(r.assets||[]).join(', '),meta:'Pulled from Notion'+(r.url?' · '+r.url:''),money:{proposed:'',contracted:'',final:a.rCost||'',estimate:''},source:'Notion pull '+new Date().toISOString().slice(0,10)});
+  addEvidence(id,'notion','Created from Notion pull'+(r.url?' · '+r.url:''));
+  a.done=true;saveState();mamShowNotionReconcile();
+ };
+
+ /* ---------- DEADLINE ENGINE: derived dates with their why, weekend rollback, wrap arming ---------- */
+ function mamAddDays(ds,n){const d=new Date(ds+'T00:00:00');if(isNaN(d))return ds;d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+ function mamRollBack(ds){const d=new Date(ds+'T00:00:00');if(isNaN(d))return ds;if(d.getDay()===0)d.setDate(d.getDate()-2);if(d.getDay()===6)d.setDate(d.getDate()-1);return d.toISOString().slice(0,10)}
+ window.mamDerivedDates=function(c){
+  if(!c.anchor||/closed|denied|complete/i.test(String(c.state||'')))return [];
+  const today=new Date().toISOString().slice(0,10);
+  const out=[
+   {date:mamRollBack(mamAddDays(c.anchor,-11)),label:'Creative due back',why:'launch −11: creative back 4 days before the vendor package (house standard, rolled off weekends)'},
+   {date:mamRollBack(mamAddDays(c.anchor,-7)),label:'Package to vendors',why:'launch −7: assets to campaign vendors a week out (house standard, rolled off weekends)'}
+  ];
+  if(c.anchor<=today){
+   out.push({date:mamAddDays(c.anchor,1),label:'Attendance count due',why:'event +1 · wrap workflow'});
+   out.push({date:mamAddDays(c.anchor,3),label:'Social metrics due',why:'event +3 · wrap workflow'});
+   out.push({date:mamAddDays(c.anchor,5),label:'Press / coverage due',why:'event +5 · wrap workflow'});
+   out.push({date:mamAddDays(c.anchor,7),label:'Recap due',why:'event +7 · wrap workflow'});
+  }
+  return out;
+ };
+ const _ce=calEntries;calEntries=function(){
+  const out=_ce();
+  try{
+   for(const b in state.brands)for(const d in state.brands[b].markets)for(const c of state.brands[b].markets[d].commitments){
+    mamDerivedDates(c).forEach(x=>out.push({date:x.date,label:x.label+' — '+c.name,sub:x.why,brand:b,kind:'rule'}));
+   }
+  }catch(e){}
+  return out;
+ };
+ window.mamCollisions=function(){
+  const wk=x=>{const d=new Date(x+'T00:00:00');if(isNaN(d))return '';const j=new Date(d.getFullYear(),0,1);return d.getFullYear()+'-w'+Math.ceil((((d-j)/86400000)+j.getDay()+1)/7)};
+  const map={};
+  (state.tickets||[]).filter(t=>t.due&&t.status!=='Closed').forEach(t=>{const k=(t.owner||t.ownerRole||t.type)+'|'+wk(t.due);(map[k]=map[k]||[]).push(t)});
+  return Object.entries(map).filter(([,v])=>v.length>=3).map(([k,v])=>({owner:k.split('|')[0],week:k.split('|')[1],n:v.length,asks:v.map(t=>t.ask).slice(0,4)}));
+ };
+ const _rcp=renderCalendarPage;renderCalendarPage=function(el){_rcp(el);try{
+  const cols=mamCollisions();
+  if(cols.length){
+   el.querySelector('.page').insertAdjacentHTML('beforeend','<div class="panel" style="margin-top:12px;border-left:3px solid var(--gold)"><h3>Load Collisions</h3>'+cols.map(c=>'<div class="fact"><div class="label">'+esc(c.owner)+' · '+esc(c.week)+'</div><div>'+c.n+' due-backs the same week: '+esc(c.asks.join(' · '))+'</div></div>').join('')+'</div>');
+  }
+ }catch(e){}};
+ const _wb=mayhemWeeklyBody;mayhemWeeklyBody=function(){
+  let s=_wb();
+  try{
+   const cols=mamCollisions();
+   if(cols.length)s+='\n\nLoad collisions:\n'+cols.map(c=>'  '+c.owner+' — '+c.n+' due-backs in week '+c.week).join('\n');
+   const stale=mamStaleBudgets();
+   if(stale.length)s+='\n\nBudget checks due ('+stale.length+'): '+stale.slice(0,6).map(x=>x.name).join(' · ')+(stale.length>6?' · +'+(stale.length-6)+' more':'');
+  }catch(e){}
+  return s;
+ };
+
+ /* ---------- BUDGET CHECK-INS: monthly "are these still accurate" ---------- */
+ window.mamStaleBudgets=function(){
+  const out=[];const today=Date.now();
+  try{for(const b in state.brands)for(const d in state.brands[b].markets)for(const c of state.brands[b].markets[d].commitments){
+   if(/closed|denied|complete/i.test(String(c.state||'')))continue;
+   const f=c.money&&c.money.final;if(!(typeof f==='number'&&f>0))continue;
+   const chk=(state.budgetChecks||{})[c.id];
+   if(!chk||today-new Date(chk+'T00:00:00').getTime()>30*86400000)out.push({id:c.id,name:c.name,brand:b,dma:d,final:f,last:chk||''});
+  }}catch(e){}
+  return out;
+ };
+ window.mamConfirmBudget=function(id){(state.budgetChecks=state.budgetChecks||{})[id]=new Date().toISOString().slice(0,10);addEvidence(id,'budget','Budget confirmed still accurate (monthly check-in)');saveState();renderPage();toast('Budget confirmed')};
+ const _rfp=renderFinancePage;renderFinancePage=function(el){_rfp(el);try{
+  const rows=commitments(state.currentBrand,state.currentDMA).filter(c=>typeof (c.money&&c.money.final)==='number'&&c.money.final>0&&!/closed|denied|complete/i.test(String(c.state||'')));
+  if(!rows.length)return;
+  el.querySelector('.page').insertAdjacentHTML('beforeend','<div class="panel" style="margin-top:12px"><h3>Budget Check-ins · monthly “is this still accurate”</h3>'+rows.map(c=>{
+   const chk=(state.budgetChecks||{})[c.id];
+   const stale=!chk||Date.now()-new Date(chk+'T00:00:00').getTime()>30*86400000;
+   return '<div class="workline"><div class="top"><div class="name">'+esc(c.name)+' · '+moneyFmt(c.money.final)+'</div><span class="badge '+(stale?'gold':'green')+'">'+(chk?(stale?'STALE — confirmed '+fmtDate(chk):'Confirmed '+fmtDate(chk)):'NEVER CONFIRMED')+'</span></div><div class="actions"><button class="btn secondary" onclick="mamConfirmBudget(\''+c.id+'\')">Confirm Still Accurate</button></div></div>'
+  }).join('')+'</div>');
+ }catch(e){}};
+
+ /* ---------- CSV IMPORT: repeatable spreadsheet intake, clean + flag, never crash or silently drop ---------- */
+ window.mamOpenCsvImport=function(){
+  modal('Import Spreadsheet (CSV)','Export the sheet as CSV and drop it here. Mayhem cleans and flags what it finds, previews everything, and nothing enters the book until you say so.',
+  `<div class="formgrid"><div class="field c6"><label>CSV File</label><input type="file" id="csvFile" accept=".csv,text/csv"></div><div class="field c3"><label>Brand</label><select id="csvBrand">${brands().map(x=>`<option ${x===state.currentBrand?'selected':''}>${esc(x)}</option>`).join('')}</select></div><div class="field c3"><label>Default DMA</label><select id="csvDMA">${markets(state.currentBrand).map(x=>`<option>${esc(x)}</option>`).join('')}</select></div><div class="c12"><button class="btn" type="button" onclick="mamParseCsv()">Preview Import</button></div><div class="c12" id="csvPreview"></div></div>`);
+ };
+ function mamCsvRows(text){
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const ch=text[i];
+   if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}
+   else if(ch==='"')q=true;
+   else if(ch===','){row.push(cur);cur=''}
+   else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cur);cur='';if(row.some(x=>x.trim()!==''))rows.push(row);row=[]}
+   else cur+=ch;
+  }
+  if(cur!==''||row.length){row.push(cur);if(row.some(x=>x.trim()!==''))rows.push(row)}
+  return rows;
+ }
+ function mamCleanDate(v){
+  const s=String(v||'').trim();if(!s)return {val:'',flag:''};
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return {val:s,flag:''};
+  const m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if(m){let[,mo,dd,yy]=m;yy=yy.length===2?'20'+yy:yy;const d=new Date(+yy,+mo-1,+dd);
+   if(d.getMonth()+1!==+mo||d.getDate()!==+dd)return {val:'',flag:'[Confirm] bad date "'+s+'"'};
+   return {val:yy+'-'+String(mo).padStart(2,'0')+'-'+String(dd).padStart(2,'0'),flag:''}}
+  const d2=new Date(s);if(!isNaN(d2))return {val:d2.toISOString().slice(0,10),flag:''};
+  return {val:'',flag:'[Confirm] unreadable date "'+s+'"'};
+ }
+ function mamCleanMoney(v){
+  const s=String(v||'').trim();if(!s||/^(tbd|n\/?a|-)$/i.test(s))return {val:'',flag:''};
+  const n=Number(s.replace(/[$,\s]/g,''));
+  if(isNaN(n))return {val:'',flag:'[Confirm] unreadable cost "'+s+'"'};
+  return {val:n,flag:''};
+ }
+ window.mamParseCsv=async function(){
+  const f=document.getElementById('csvFile')?.files?.[0];
+  if(!f){toast('Choose a CSV file first');return}
+  const text=await f.text();
+  const rows=mamCsvRows(text);
+  if(rows.length<2){document.getElementById('csvPreview').innerHTML='<div class="fact"><div class="label">Import</div><div>No data rows found.</div></div>';return}
+  const hdr=rows[0].map(h=>h.toLowerCase().trim());
+  const col=(...names)=>hdr.findIndex(h=>names.some(n=>h.includes(n)));
+  const ix={name:col('event','campaign','activation','name','sponsorship'),date:col('event date','start','date'),end:col('end'),cost:col('final','cost','amount','committed','$'),dma:col('dma','market','city'),status:col('status','state'),partner:col('partner','vendor','org'),notes:col('note','comment')};
+  if(ix.name<0){document.getElementById('csvPreview').innerHTML='<div class="fact"><div class="label">Import</div><div>Could not find a name/event column. Headers seen: '+esc(hdr.join(', '))+'</div></div>';return}
+  const b=document.getElementById('csvBrand').value,defD=document.getElementById('csvDMA').value;
+  const book=allCommitments();
+  const out=[];
+  for(let r=1;r<rows.length;r++){
+   const row=rows[r];const name=(row[ix.name]||'').trim();if(!name)continue;
+   const flags=[];
+   const dt=ix.date>=0?mamCleanDate(row[ix.date]):{val:'',flag:''};if(dt.flag)flags.push(dt.flag);
+   const en=ix.end>=0?mamCleanDate(row[ix.end]):{val:'',flag:''};if(en.flag)flags.push(en.flag);
+   const mo=ix.cost>=0?mamCleanMoney(row[ix.cost]):{val:'',flag:''};if(mo.flag)flags.push(mo.flag);
+   let dma=ix.dma>=0?String(row[ix.dma]||'').trim():'';
+   const match=markets(b).find(m=>mamNorm(dma).includes(mamNorm(m))||mamNorm(m).includes(mamNorm(dma)));
+   if(dma&&!match)flags.push('[Confirm] market "'+dma+'" is not an operating '+b+' market — filed under '+defD);
+   dma=match||defD;
+   const _n=mamNorm(name);const exists=book.some(c=>{const cn=mamNorm(c.name);return cn===_n||(_n.length>6&&(cn.includes(_n)||_n.includes(cn)))});
+   out.push({name,anchor:dt.val,end:en.val,final:mo.val,dma,status:ix.status>=0?String(row[ix.status]||'').trim():'',partner:ix.partner>=0?String(row[ix.partner]||'').trim():'',notes:ix.notes>=0?String(row[ix.notes]||'').trim():'',flags,exists});
+  }
+  window.__mamCsv={b,file:f.name,rows:out};
+  const news=out.filter(x=>!x.exists);
+  document.getElementById('csvPreview').innerHTML='<div class="sectioncap" style="margin-top:8px">'+out.length+' rows · '+news.length+' new · '+(out.length-news.length)+' already in the book (skipped) · '+out.filter(x=>x.flags.length).length+' flagged</div>'+
+   out.slice(0,40).map(x=>'<div class="fact"><div class="label">'+(x.exists?'SKIP':(x.flags.length?'FLAG':'NEW'))+'</div><div>'+esc(x.name)+' · '+esc(x.dma)+(x.anchor?' · '+fmtDate(x.anchor):'')+(x.final?' · '+moneyFmt(x.final):'')+(x.flags.length?'<br><span style="color:var(--gold)">'+esc(x.flags.join(' · '))+'</span>':'')+'</div></div>').join('')+(out.length>40?'<div class="tiny">+'+(out.length-40)+' more rows…</div>':'')+
+   (news.length?'<div style="margin-top:9px"><button class="btn" onclick="mamCommitCsv()">Import '+news.length+' New Row'+(news.length===1?'':'s')+'</button></div>':'');
+ };
+ window.mamCommitCsv=function(){
+  const P=window.__mamCsv;if(!P)return;
+  let made=0;
+  for(const x of P.rows){
+   if(x.exists)continue;
+   if(!state.brands[P.b].markets[x.dma])state.brands[P.b].markets[x.dma]={memory:[],commitments:[]};
+   const id='csv'+Date.now()+made;
+   state.brands[P.b].markets[x.dma].commitments.push({id,kind:'Event',name:x.name,state:x.status||'Pre',anchor:x.anchor,endDate:x.end,partner:x.partner,location:'',funding:P.b,channels:'',meta:(x.flags.join(' · ')||'')+(x.notes?(x.flags.length?' · ':'')+x.notes.slice(0,140):''),money:{proposed:'',contracted:'',final:x.final||'',estimate:''},source:'Spreadsheet import · '+P.file});
+   addEvidence(id,'import','Imported from '+P.file+(x.flags.length?' · '+x.flags.join(' · '):''));
+   made++;
+  }
+  state.sources=state.sources||[];
+  state.sources.push({id:Date.now(),brand:P.b,dma:'',commit:'',type:'Excel / spreadsheet',name:'Import · '+P.file,status:'Applied',detail:made+' records created; existing rows skipped; unreadable dates/costs flagged [Confirm], never dropped.'});
+  saveState();closeModal();renderShell();renderPage();toast(made+' records imported from '+P.file);
+ };
+
+ /* ---------- AI SOURCE READER: contracts (text + scanned PDFs), emails, notes → intake ---------- */
+ const MAM_EXTRACT_SYS='You extract structured marketing-campaign facts from a source document (contract, email, spreadsheet text, or scanned pages). Respond with ONLY a JSON object, no prose, no code fences: {"name":string|null,"brand":string|null,"market":string|null,"kind":string|null,"start":"YYYY-MM-DD"|null,"end":"YYYY-MM-DD"|null,"partner":string|null,"location":string|null,"proposed":number|null,"contracted":number|null,"final":number|null,"funding":string|null,"estimate":string|null,"we_owe":string[],"they_owe":string[],"payments":[{"amount":number,"due":"YYYY-MM-DD"|null,"to":string}],"contacts":[{"name":string,"email":string|null,"role":string|null}],"notes":string|null,"unconfirmed":string[]}. Use null for anything the source does not state. NEVER invent facts; anything ambiguous goes in "unconfirmed".';
+ window.mamReadSourceAI=async function(){
+  const fileEl=document.getElementById('feedFile');
+  const pasted=document.getElementById('feedText')?.value||'';
+  const label=document.getElementById('feedName')?.value||'';
+  const f=fileEl&&fileEl.files&&fileEl.files[0];
+  let blocks=[],srcName=label||(f?f.name:'Pasted source');
+  if(f){
+   if(/\.pdf$/i.test(f.name)){
+    if(typeof pdfjsLib==='undefined'){toast('PDF reader is not loaded — serve from Doom');return}
+    let doc;
+    try{pdfjsLib.GlobalWorkerOptions.workerSrc='/vendor/pdf.worker.min.js';doc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise}
+    catch(e){toast('Could not open the PDF — '+String(e.message||e).slice(0,60));return}
+    let all='';
+    for(let p=1;p<=Math.min(doc.numPages,20);p++){const pg=await doc.getPage(p);const tc=await pg.getTextContent();all+=tc.items.map(i=>i.str).join(' ')+'\n'}
+    if(all.replace(/\s+/g,'').length>200){blocks.push({type:'text',text:'DOCUMENT TEXT ('+f.name+'):\n'+all.slice(0,60000)})}
+    else{
+     toast('Scanned PDF — reading pages as images…');
+     for(let p=1;p<=Math.min(doc.numPages,8);p++){
+      const pg=await doc.getPage(p);const vp=pg.getViewport({scale:1.6});
+      const cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;
+      await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+      blocks.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:cv.toDataURL('image/jpeg',0.8).split(',')[1]}});
+     }
+    }
+   }else{
+    try{blocks.push({type:'text',text:'SOURCE FILE ('+f.name+'):\n'+String(await f.text()).slice(0,60000)})}catch(e){toast('Could not read the file');return}
+   }
+  }
+  if(pasted.trim())blocks.push({type:'text',text:'PASTED SOURCE:\n'+pasted.slice(0,60000)});
+  if(!blocks.length){toast('Attach a file or paste the source first');return}
+  blocks.push({type:'text',text:'Extract the campaign facts from the source above per the system instructions.'});
+  toast('Reading the source…');
+  let data=null;
+  try{
+   const r=await fetch('/api/planner',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-5',max_tokens:4000,system:MAM_EXTRACT_SYS,messages:[{role:'user',content:blocks}]})});
+   if(!r.ok)throw new Error('planner '+r.status);
+   const j=await r.json();
+   const t=(j.content&&j.content[0]&&j.content[0].text)||'';
+   data=JSON.parse(t.replace(/^\s*```(?:json)?\s*/i,'').replace(/\s*```\s*$/,''));
+  }catch(e){toast('AI reading failed — '+String(e.message||e).slice(0,80));return}
+  window.__mamExtract={data,srcName};
+  mamShowExtractPreview();
+ };
+ window.mamShowExtractPreview=function(){
+  const E=window.__mamExtract;if(!E)return;const d=E.data;
+  const row=(k,v)=>v!==null&&v!==undefined&&String(v).length?'<div class="fact"><div class="label">'+esc(k)+'</div><div>'+esc(String(Array.isArray(v)?v.join(' · '):v))+'</div></div>':'';
+  modal('Source Read — Confirm Before It Enters',esc(E.srcName)+' · nothing is saved until you fill the form and create',
+   row('Name',d.name)+row('Brand',d.brand)+row('Market',d.market)+row('Type',d.kind)+row('Start',d.start)+row('End',d.end)+row('Partner',d.partner)+row('Location',d.location)+row('Proposed',d.proposed)+row('Contracted',d.contracted)+row('Final',d.final)+row('Funding',d.funding)+row('Estimate #',d.estimate)+row('We owe',d.we_owe)+row('They owe',d.they_owe)+((d.payments||[]).length?'<div class="fact"><div class="label">Payments</div><div>'+d.payments.map(p=>moneyFmt(p.amount)+(p.due?' due '+fmtDate(p.due):'')+(p.to?' → '+esc(p.to):'')).join('<br>')+'</div></div>':'')+((d.contacts||[]).length?'<div class="fact"><div class="label">Contacts</div><div>'+d.contacts.map(c=>esc(c.name)+(c.email?' <'+esc(c.email)+'>':'')+(c.role?' · '+esc(c.role):'')).join('<br>')+'</div></div>':'')+row('Notes',d.notes)+((d.unconfirmed||[]).length?'<div class="decision"><div class="k">UNCONFIRMED — the source did not settle these</div><div class="m">'+esc(d.unconfirmed.join(' · '))+'</div></div>':'')+
+   '<div class="actions" style="margin-top:10px"><button class="btn" onclick="mamApplyExtract()">Fill Intake Form</button><button class="btn secondary" onclick="closeModal()">Discard</button></div>');
+ };
+ window.mamApplyExtract=function(){
+  const E=window.__mamExtract;if(!E)return;const d=E.data;
+  const b=brands().find(x=>d.brand&&(mamNorm(x).includes(mamNorm(d.brand))||mamNorm(d.brand).includes(mamNorm(x))));
+  closeModal();
+  if(b){state.currentBrand=b;const m=markets(b).find(x=>d.market&&(mamNorm(x).includes(mamNorm(d.market))||mamNorm(d.market).includes(mamNorm(x))));if(m)state.currentDMA=m;saveState()}
+  location.hash='#/intake';
+  setTimeout(function(){
+   try{
+    const set=(id,v)=>{const el=document.getElementById(id);if(el&&v!==null&&v!==undefined&&String(v).length)el.value=v};
+    if(b){set('fBrand',b);intakeBrandChanged()}
+    const m=b?markets(b).find(x=>d.market&&(mamNorm(x).includes(mamNorm(d.market))||mamNorm(d.market).includes(mamNorm(x)))):null;
+    if(m)set('fDMA',m);
+    set('fName',d.name);set('fAnchor',d.start);set('fEnd',d.end);set('fPartner',d.partner);set('fLocation',d.location);set('fProposed',d.proposed);set('fContracted',d.contracted);set('fFunding',d.funding);
+    state.sources=state.sources||[];
+    state.sources.push({id:Date.now(),brand:b||state.currentBrand,dma:m||state.currentDMA,commit:'',type:'Contract / PDF',name:'AI source read · '+E.srcName,status:'Prefilled intake — pending create',detail:'Extracted: '+[d.name,d.start,d.contracted?('$'+d.contracted):null].filter(Boolean).join(' · ')+((d.unconfirmed||[]).length?' · UNCONFIRMED: '+d.unconfirmed.join(' · '):'')});
+    saveState();
+    toast('Form filled from the source — confirm and create');
+   }catch(e){}
+  },450);
+ };
+})();
+/* ===== END NOTION PULL · READER · ENGINE · IMPORT · BUDGET ===== */
+
+/* ===== MERCH DESK — MerchHub stand-in (2026-08-26, per Emm: MerchHub is blocked; log needs, ticket Jon P / creative, track inventory + send-outs until it ships) =====
+   Statuses and stock shape mirror the MerchHub prototype (FLOW / onHand) so this data migrates clean when MerchHub is built. */
+;(function(){
+ const MERCH_FLOW=["Requested","In Design","Awaiting Approval","Approved","Ordered","In Production","Shipped","Received"];
+ window.MAM_MERCH_FLOW=MERCH_FLOW;
+ function mo(){return state.merchOrders=state.merchOrders||[]}
+ function ms(){return state.merchStock=state.merchStock||[]}
+ function mm(){return state.merchMoves=state.merchMoves||[]}
+ window.renderMerchPage=function(el){
+  const orders=mo().filter(o=>o.status!=='Received'&&o.status!=='Cancelled');
+  const done=mo().filter(o=>o.status==='Received');
+  const stock=ms();
+  const moves=mm().slice(-14).reverse();
+  el.innerHTML='<div class="page">'+pageHead('Merch Desk','MerchHub stand-in until it ships: log what an event needs, ticket it to Jon P (and Creative when it needs a design), and keep inventory + send-outs on the record. Statuses mirror MerchHub so the data migrates clean.','<button class="btn" onclick="mamOpenMerchNeed()">+ Merch Need</button><button class="btn secondary" onclick="mamOpenStockItem()">+ Inventory Item</button>')+
+  '<div class="grid4"><div class="stat"><b>'+orders.length+'</b><span>open orders</span></div><div class="stat"><b>'+orders.filter(o=>o.needsDesign&&o.status==='In Design').length+'</b><span>in design</span></div><div class="stat"><b>'+stock.reduce((s,x)=>s+(+x.onHand||0),0)+'</b><span>units on hand</span></div><div class="stat"><b>'+mm().filter(x=>x.dir==='out').length+'</b><span>send-outs logged</span></div></div>'+
+  '<div class="panel" style="margin-top:12px"><h3>Order Pipeline</h3>'+(orders.length?orders.map(function(o,i){
+   const ix=MERCH_FLOW.indexOf(o.status);
+   return '<div class="workline"><div class="top"><div class="name">'+esc(o.item)+' ×'+o.qty+' · '+esc(o.brand)+(o.event?' · '+esc(o.event):'')+'</div><span class="badge '+(ix>=4?'green':'gold')+'">'+esc(o.status)+'</span></div><div class="detail">'+(o.needsDesign?'Needs design (Jon P + Creative) · ':'No design needed · ')+(o.shipTo?'ship-to: '+esc(o.shipTo)+' · ':'')+(o.due?'needed by '+fmtDate(o.due)+' · ':'')+esc(o.vendor||'vendor TBD')+(o.ticketId?' · ticket sent':'')+'</div><div class="actions">'+(ix<MERCH_FLOW.length-1?'<button class="btn secondary" onclick="mamMerchAdvance(\''+o.id+'\')">→ '+esc(MERCH_FLOW[ix+1])+'</button>':'')+(!o.ticketId?'<button class="btn" onclick="mamMerchTicket(\''+o.id+'\')">Ticket to Jon P</button>':'')+'</div></div>';
+  }).join(''):'<div class="fact"><div class="label">Orders</div><div>No open merch orders. Log a need to start one.</div></div>')+(done.length?'<div class="tiny" style="margin-top:6px">'+done.length+' received order'+(done.length===1?'':'s')+' on the record.</div>':'')+'</div>'+
+  '<div class="grid2" style="margin-top:12px"><div class="panel"><h3>Inventory — what we have</h3>'+(stock.length?stock.map(function(s,i){
+   return '<div class="workline"><div class="top"><div class="name">'+esc(s.item)+' · '+esc(s.brand||'All brands')+'</div><span class="badge '+((+s.onHand||0)>0?'green':'red')+'">'+(+s.onHand||0)+' on hand</span></div><div class="detail">'+esc(s.status||'On Hand')+(s.location?' · '+esc(s.location):'')+(s.updated?' · updated '+fmtDate(s.updated):'')+'</div><div class="actions"><button class="btn ghost" onclick="mamStockAdj(\''+s.id+'\',1)">+1</button><button class="btn ghost" onclick="mamStockAdj(\''+s.id+'\',-1)">−1</button><button class="btn secondary" onclick="mamOpenSendOut(\''+s.id+'\')">Send Out</button></div></div>';
+  }).join(''):'<div class="fact"><div class="label">Inventory</div><div>Nothing tracked yet. Add what is on hand.</div></div>')+'</div>'+
+  '<div class="panel"><h3>Send-out Log — what left, where, for what</h3>'+(moves.length?moves.map(function(v){
+   return '<div class="fact"><div class="label">'+fmtDate(v.date)+'</div><div>'+(v.dir==='out'?'OUT — ':'IN — ')+esc(v.item)+' ×'+v.qty+(v.event?' · '+esc(v.event):'')+(v.to?' → '+esc(v.to):'')+(v.note?' · '+esc(v.note):'')+'</div></div>';
+  }).join(''):'<div class="fact"><div class="label">Log</div><div>No send-outs logged yet.</div></div>')+'</div></div></div>';
+ };
+ window.mamOpenMerchNeed=function(){
+  const c=commitById();
+  modal('Log a Merch Need',state.currentBrand+' · '+state.currentDMA+(c?' · '+c.name:''),
+  '<form class="formgrid" onsubmit="mamSaveMerchNeed(event)"><div class="field c6"><label>Item</label><input id="mnItem" required placeholder="Canvas tote, tee, banner…"></div><div class="field c2"><label>Qty</label><input id="mnQty" type="number" value="100" required></div><div class="field c4"><label>Needed By</label><input id="mnDue" type="date"></div><div class="field c6"><label>Event / Campaign</label><input id="mnEvent" value="'+esc(c?c.name:'')+'"></div><div class="field c6"><label>Ship-to</label><input id="mnShip" list="mnShipList" placeholder="From the vendor registry or enter once"><datalist id="mnShipList">'+state.contacts.filter(x=>x.shipTo).map(x=>'<option value="'+esc(x.shipTo)+'">').join('')+'</datalist></div><div class="field c6"><label>Vendor</label><input id="mnVendor" placeholder="SwagMyBrand / On Target / TBD"></div><div class="field c6"><label>Design?</label><select id="mnDesign"><option value="yes">Needs a design — Jon P + Creative</option><option value="no">No design — straight to fulfillment</option></select></div><div class="field c12"><label>Notes / specs</label><input id="mnNotes"></div><div class="c12"><button class="btn">Log Need + Prepare Ticket</button></div></form>');
+ };
+ window.mamSaveMerchNeed=function(e){
+  e.preventDefault();
+  const c=commitById();
+  const o={id:'mo'+Date.now(),brand:state.currentBrand,dma:state.currentDMA,commit:c?c.id:'',item:document.getElementById('mnItem').value.trim(),qty:+document.getElementById('mnQty').value||1,status:'Requested',needsDesign:document.getElementById('mnDesign').value==='yes',event:document.getElementById('mnEvent').value.trim(),shipTo:document.getElementById('mnShip').value.trim(),due:document.getElementById('mnDue').value,vendor:document.getElementById('mnVendor').value.trim(),notes:document.getElementById('mnNotes').value.trim(),ticketId:null,history:[{date:new Date().toISOString().slice(0,10),event:'Requested'}]};
+  mo().push(o);if(c)addEvidence(c.id,'merch','Merch need logged: '+o.item+' ×'+o.qty);
+  saveState();closeModal();renderPage();toast('Need logged — ticket it to Jon P when ready');
+ };
+ window.mamMerchAdvance=function(id){
+  const o=mo().find(x=>x.id===id);if(!o)return;
+  const ix=MERCH_FLOW.indexOf(o.status);if(ix<0||ix>=MERCH_FLOW.length-1)return;
+  o.status=MERCH_FLOW[ix+1];
+  (o.history=o.history||[]).push({date:new Date().toISOString().slice(0,10),event:o.status});
+  if(o.status==='Received'&&o.qty){
+   let s=ms().find(x=>mamNormLoose(x.item)===mamNormLoose(o.item)&&(!x.brand||x.brand===o.brand));
+   if(!s){s={id:'st'+Date.now(),item:o.item,brand:o.brand,onHand:0,status:'On Hand',location:'',updated:''};ms().push(s)}
+   s.onHand=(+s.onHand||0)+o.qty;s.updated=new Date().toISOString().slice(0,10);
+   mm().push({id:'mv'+Date.now(),dir:'in',item:o.item,qty:o.qty,event:o.event,to:'',date:s.updated,note:'Order received into inventory'});
+  }
+  if(o.commit)addEvidence(o.commit,'merch',o.item+' → '+o.status);
+  saveState();renderPage();
+ };
+ function mamNormLoose(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}
+ window.mamMerchTicket=async function(id){
+  const o=mo().find(x=>x.id===id);if(!o)return;
+  const merchRoute=(state.teamContacts||[]).find(x=>x.role==='Merch')||{};
+  const t={id:Date.now(),brand:o.brand,dma:o.dma,commit:o.commit,type:'Merch',ask:o.item+' ×'+o.qty+(o.event?' for '+o.event:''),ownerRole:'Merch',owner:merchRoute.name||'Jon Podschun',to:merchRoute.email||'jon.podschun@atticor.ai',sent:'',due:o.due||'',protects:o.event||'',status:'Draft',returnRequired:o.needsDesign?'Design proof → approval → order confirmation + tracking':'Order confirmation + tracking',notes:o.notes,history:[],returnData:null};
+  const c=commitById(o.commit,o.brand,o.dma);
+  t.subject='Merch — '+o.brand+' · '+(o.event||o.dma)+' — '+o.item+' ×'+o.qty;
+  t.body=['Hello,','','MERCH REQUEST'+(o.needsDesign?' (DESIGN NEEDED — please loop Creative)':''),'Item: '+o.item+' ×'+o.qty,'Brand: '+o.brand+' · '+o.dma,o.event?'Event / campaign: '+o.event:'',o.due?'Needed by: '+fmtDate(o.due):'Needed by: TBD',o.shipTo?'Ship-to: '+o.shipTo:'Ship-to: TBD',o.vendor?'Vendor: '+o.vendor:'','',o.notes?'Notes: '+o.notes:'','PLEASE RETURN: '+t.returnRequired].filter(Boolean).join('\n')+((typeof mamCreativeLinesFor==='function'&&o.needsDesign)?mamCreativeLinesFor(t):'');
+  state.tickets.push(t);
+  o.ticketId=t.id;o.status=o.needsDesign?'In Design':'Awaiting Approval';
+  (o.history=o.history||[]).push({date:new Date().toISOString().slice(0,10),event:'Ticketed to '+t.owner});
+  if(o.commit)addEvidence(o.commit,'merch','Merch ticket created for '+o.item+' ×'+o.qty+' → '+t.owner);
+  saveState();renderPage();openTicket(t.id);
+ };
+ window.mamOpenStockItem=function(){
+  modal('Add Inventory Item','What we already have on hand',
+  '<form class="formgrid" onsubmit="mamSaveStockItem(event)"><div class="field c6"><label>Item</label><input id="stItem" required></div><div class="field c3"><label>Brand</label><select id="stBrand"><option value="">All brands</option>'+brands().map(x=>'<option>'+esc(x)+'</option>').join('')+'</select></div><div class="field c3"><label>On Hand</label><input id="stQty" type="number" value="0" required></div><div class="field c6"><label>Status</label><select id="stStatus"><option>On Hand</option><option>Sourcing</option></select></div><div class="field c6"><label>Location</label><input id="stLoc" placeholder="Office, storage, vendor…"></div><div class="c12"><button class="btn">Add to Inventory</button></div></form>');
+ };
+ window.mamSaveStockItem=function(e){
+  e.preventDefault();
+  ms().push({id:'st'+Date.now(),item:document.getElementById('stItem').value.trim(),brand:document.getElementById('stBrand').value,onHand:+document.getElementById('stQty').value||0,status:document.getElementById('stStatus').value,location:document.getElementById('stLoc').value.trim(),updated:new Date().toISOString().slice(0,10)});
+  saveState();closeModal();renderPage();toast('Inventory item added');
+ };
+ window.mamStockAdj=function(id,n){
+  const s=ms().find(x=>x.id===id);if(!s)return;
+  s.onHand=Math.max(0,(+s.onHand||0)+n);s.updated=new Date().toISOString().slice(0,10);
+  saveState();renderPage();
+ };
+ window.mamOpenSendOut=function(id){
+  const s=ms().find(x=>x.id===id);if(!s)return;
+  modal('Send Out — '+s.item,(+s.onHand||0)+' on hand',
+  '<form class="formgrid" onsubmit="mamSaveSendOut(event,\''+id+'\')"><div class="field c3"><label>Qty</label><input id="soQty" type="number" value="1" min="1" max="'+(+s.onHand||0)+'" required></div><div class="field c9"><label>Event / Campaign</label><input id="soEvent" value="'+esc(commitById()?commitById().name:'')+'"></div><div class="field c12"><label>Ship-to / handed to</label><input id="soTo" list="soToList" required><datalist id="soToList">'+state.contacts.filter(x=>x.shipTo).map(x=>'<option value="'+esc(x.shipTo)+'">').join('')+'</datalist></div><div class="field c12"><label>Note</label><input id="soNote"></div><div class="c12"><button class="btn">Log Send-out</button></div></form>');
+ };
+ window.mamSaveSendOut=function(e,id){
+  e.preventDefault();
+  const s=ms().find(x=>x.id===id);if(!s)return;
+  const qty=Math.min(+document.getElementById('soQty').value||1,+s.onHand||0);
+  if(qty<1){toast('Nothing on hand to send');return}
+  s.onHand=(+s.onHand||0)-qty;s.updated=new Date().toISOString().slice(0,10);
+  mm().push({id:'mv'+Date.now(),dir:'out',item:s.item,qty,event:document.getElementById('soEvent').value.trim(),to:document.getElementById('soTo').value.trim(),date:s.updated,note:document.getElementById('soNote').value.trim()});
+  saveState();closeModal();renderPage();toast(qty+' × '+s.item+' logged out');
+ };
+})();
+/* ===== END MERCH DESK ===== */
 
 try{applyDataTruthB7()}catch(e){}
 try{applyDataTruthB7v3()}catch(e){}
