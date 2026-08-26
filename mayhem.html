@@ -2132,16 +2132,47 @@ function applyDataTruthB7v3(){
 })();
 /* ===== END MERCH DESK ===== */
 
+/* ===== CHICAGO FIRE FC PARTNERSHIP (FW: L&R | 9/9 Asset Specs · Aug 26 2026) =====
+   The scope's live Bulls-vs-Fire decision resolved to the Fire: onboarding is
+   underway, kickoff 9/9 at Soldier Field, final in-stadium assets due Sep 3. */
+;function applyDataTruthB7v5(){
+ if(state._dataTruthB7v5)return;
+ const SRC='FW: Lerner & Rowe | 9/9 Asset Specs · Will Hagerup (Chicago Fire FC) → Hazel → Brandy · Aug 26 2026';
+ const lb=state.brands['Lerner & Rowe']&&state.brands['Lerner & Rowe'].markets['Chicago'];
+ if(lb&&!lb.commitments.some(c=>/chicago fire/i.test(c.name))){
+  lb.commitments.push({id:'lr-chicago-fire',kind:'Sports Partnership',name:'Chicago Fire FC Partnership',state:'In Progress',anchor:'2026-09-09',endDate:'',partner:'Chicago Fire FC',location:'Soldier Field, Chicago',funding:'Lerner & Rowe',channels:'In-stadium LED, Videoboard, Partnership assets',meta:'DECISION RESOLVED: the Bulls-vs-Fire comparison landed on the Fire — onboarding underway per Will Hagerup (Aug 26). Kickoff 9/9 vs Inter Miami, sold-out Soldier Field. HARD DATE: final in-stadium assets due Thu Sep 3. Proposal money was $140,000/yr — contract not yet in hand [Confirm contracted amount]. Dedicated Fire partner rep to be named this week; official kickoff call targeted next week.',money:{proposed:140000,contracted:'',final:'',estimate:''},source:SRC});
+  const o=state.ops['lr-chicago-fire']=state.ops['lr-chicago-fire']||genericOps();
+  o.anchors=o.anchors||[];
+  [['Sep 3','FINAL in-stadium assets due to the Fire — HARD DATE',SRC],
+   ['Next week','Official kickoff call (Fire to schedule) — dedicated rep to be named',SRC],
+   ['Sep 9','Partnership kickoff — Fire vs Inter Miami, Soldier Field',SRC]
+  ].forEach(function(a){if(!o.anchors.some(x=>x[1]===a[1]))o.anchors.push(a)});
+ }
+ state.tickets=state.tickets||[];
+ if(!state.tickets.some(x=>x.id==='tk-fire-assets')){
+  state.tickets.push({id:'tk-fire-assets',brand:'Lerner & Rowe',dma:'Chicago',commit:'lr-chicago-fire',type:'Creative',ask:'Chicago Fire 9/9 in-stadium creative — all three asset packages',ownerRole:'Creative',owner:'Brandy Newton',to:'brandy.newton@atticor.ai',sent:'2026-08-26',due:'2026-09-03',protects:'Sep 9 kickoff match — assets must clear Fire approval first',status:'Sent',returnRequired:'Final files in spec by Thu Sep 3: Field LED, Fascia LED (200 + 300 level), Videoboard wings',notes:'SPECS FROM THE FIRE (verbatim): FIELD LED — :30 QuickTime ProRes 422 .MOV @ 60 FPS or .PNG, 24,960 (w) x 144 (h) px, built in :30 rotations. FASCIA LED — ProRes 422 .MOV @ 59.94 FPS, 200 Level 8,096 x 48 px, 300 Level 7,200 x 48 px, :30 rotations. VIDEOBOARD WING GRAPHICS — live video or native-resolution .PNG, 864 x 900 px each, content split across the two wings as one cohesive look, :10 rotation. Fire offered to work directly with creative on formatting — Will Hagerup / Julia Hull.',subject:'Creative — Chicago Fire 9/9 in-stadium assets (L&R · Chicago) — due Sep 3',body:'Per Hazel (Aug 26): assets for the Sep 9 Fire match. Everything is needed by Sep 3 for Fire approval. Full specs in ticket notes — Field LED, Fascia LED (both levels), Videoboard wings. Kickoff call being scheduled.',history:[{date:'2026-08-26',event:'Sent',detail:'Hazel forwarded specs to Brandy directly'}],returnData:null,source:SRC});
+ }
+ state.contacts=state.contacts||[];
+ function addC(r){if(!state.contacts.some(x=>x.name===r.name&&x.org===r.org))state.contacts.push(r)}
+ addC({brand:'Lerner & Rowe',dma:'Chicago',org:'Chicago Fire FC',name:'Will Hagerup',role:'Director, Partnership Sales — onboarding lead',email:'whagerup@chicagofirefc.com',shipTo:'410 N. Michigan Ave, Ste 1400, Chicago, IL 60611',note:'414-699-2502 · source: '+SRC});
+ addC({brand:'Lerner & Rowe',dma:'Chicago',org:'Chicago Fire FC',name:'Julia Hull',role:'VP of Strategy',email:'jhull@chicagofirefc.com',shipTo:'',note:'source: '+SRC});
+ addC({brand:'Lerner & Rowe',dma:'Chicago',org:'Chicago Fire FC',name:'Goyo Perez',role:'Partnerships',email:'gperez@chicagofirefc.com',shipTo:'',note:'source: '+SRC});
+ state.sources=state.sources||[];
+ if(!state.sources.some(x=>x.id==='src-fire-0826'))state.sources.push({id:'src-fire-0826',brand:'Lerner & Rowe',dma:'Chicago',commit:'lr-chicago-fire',type:'Email',name:'FW: L&R | 9/9 Asset Specs (Aug 26)',status:'Applied',detail:'Fire partnership onboarding confirmed (Bulls-vs-Fire decision resolved to Fire). Kickoff 9/9 vs Inter Miami, Soldier Field. Final assets due Sep 3 — Creative ticket to Brandy sent by Hazel. Field LED / Fascia LED / Videoboard wing specs captured verbatim on the ticket. Fire contacts added. Open chases: dedicated Fire rep (this week), kickoff call (next week), contracted amount [Confirm].'});
+ state._dataTruthB7v5=true;state._savedTs=Date.now();saveState();
+}
+
 try{applyDataTruthB7()}catch(e){}
 try{applyDataTruthB7v3()}catch(e){}
 try{applyDataTruthB7v4()}catch(e){}
+try{applyDataTruthB7v5()}catch(e){}
 /* remote adopt after boot */
 window.addEventListener('DOMContentLoaded',function(){
  if(location.protocol==='file:')return;
  try{fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({collection:'appData',doc:'mayhemB7',action:'get'})}).then(function(r){return r.ok?r.json():null}).then(function(j){
   const remote=j&&j.data&&j.data.data&&j.data.data.brands?j.data.data:null;
   const rts=j&&j.data&&j.data.ts?j.data.ts:0;
-  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}renderShell();renderPage()}
+  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}renderShell();renderPage()}
  }).catch(function(){})}catch(e){}
 });
 /* ===== END DATA TRUTH + DOOM MOUNT ===== */
