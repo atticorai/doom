@@ -2433,6 +2433,45 @@ window.addEventListener('DOMContentLoaded',function(){
  try{const c=commitById(id);if(loc!==null)c.location=loc;if(end!==null)c.endDate=end;saveState();renderPage()}catch(x){}
 }})();
 
+/* ===== MERCH DESK v2 — tabbed, uncluttered (per Emm) ===== */
+;(function(){
+ window.mamMerchTab=function(t){state.merchTab=t;saveState();renderPage()};
+ window.renderMerchPage=function(el){
+  const tab=state.merchTab||'work';
+  const orders=(state.merchOrders||[]).filter(o=>o.status!=='Received'&&o.status!=='Cancelled');
+  const stock=state.merchStock||[];
+  const moves=(state.merchMoves||[]).slice(-20).reverse();
+  const FLOW=window.MAM_MERCH_FLOW||[];
+  const tabs='<div class="subnav" style="margin-top:2px">'+[['work','Work · '+orders.length],['stock','Inventory & Send-outs'],['catalog','Catalog & Designs']].map(t2=>'<button class="'+(tab===t2[0]?'active':'')+'" onclick="mamMerchTab(\''+t2[0]+'\')">'+t2[1]+'</button>').join('')+'</div>';
+  let body='';
+  if(tab==='work'){
+   body='<div class="grid3"><div class="stat"><b>'+orders.length+'</b><span>open orders</span></div><div class="stat"><b>'+orders.filter(o=>o.status==='In Design').length+'</b><span>in design</span></div><div class="stat"><b>'+orders.filter(o=>['Ordered','In Production','Shipped'].includes(o.status)).length+'</b><span>committed / moving</span></div></div>'+
+   '<div class="panel" style="margin-top:12px"><h3>Order Pipeline</h3>'+(orders.length?orders.map(function(o){
+    const ix=FLOW.indexOf(o.status);
+    return '<div class="workline"><div class="top"><div class="name">'+esc(o.item)+' ×'+o.qty+' · '+esc(o.brand)+(o.event?' · '+esc(o.event):'')+'</div><span class="badge '+(ix>=4?'green':'gold')+'">'+esc(o.status)+'</span></div><div class="detail">'+(o.needsDesign?'Needs design · ':'')+(o.shipTo?'ship-to: '+esc(o.shipTo)+' · ':'')+(o.due?'needed by '+fmtDate(o.due)+' · ':'')+esc(o.vendor||'vendor TBD')+(o.ticketId?' · ticket sent':'')+(o.notes?'<br><span style="color:var(--gold)">'+esc(String(o.notes).slice(0,140))+'</span>':'')+'</div><div class="actions">'+(ix<FLOW.length-1?'<button class="btn secondary" onclick="mamMerchAdvance(\''+o.id+'\')">→ '+esc(FLOW[ix+1])+'</button>':'')+(!o.ticketId?'<button class="btn" onclick="mamMerchTicket(\''+o.id+'\')">Ticket to Jon P</button>':'')+'</div></div>';
+   }).join(''):'<div class="fact"><div class="label">Orders</div><div>No open merch orders. Log a need, or start from the Catalog tab.</div></div>')+'</div>';
+  }else if(tab==='stock'){
+   body='<div class="grid2"><div class="panel"><h3>Inventory — what we have</h3>'+(stock.length?stock.map(function(s){
+    return '<div class="workline"><div class="top"><div class="name">'+esc(s.item)+' · '+esc(s.brand||'All brands')+'</div><span class="badge '+((+s.onHand||0)>0?'green':'red')+'">'+(+s.onHand||0)+' on hand</span></div><div class="detail">'+esc(s.status||'On Hand')+(s.location?' · '+esc(s.location):'')+(s.updated?' · updated '+fmtDate(s.updated):'')+'</div><div class="actions"><button class="btn ghost" onclick="mamStockAdj(\''+s.id+'\',1)">+1</button><button class="btn ghost" onclick="mamStockAdj(\''+s.id+'\',-1)">−1</button><button class="btn secondary" onclick="mamOpenSendOut(\''+s.id+'\')">Send Out</button></div></div>';
+   }).join(''):'<div class="fact"><div class="label">Inventory</div><div>Nothing tracked yet — add what is on hand.</div></div>')+'</div>'+
+   '<div class="panel"><h3>Send-out Log</h3>'+(moves.length?moves.map(function(v){
+    return '<div class="fact"><div class="label">'+fmtDate(v.date)+'</div><div>'+(v.dir==='out'?'OUT — ':'IN — ')+esc(v.item)+' ×'+v.qty+(v.event?' · '+esc(v.event):'')+(v.to?' → '+esc(v.to):'')+(v.note?' · '+esc(v.note):'')+'</div></div>';
+   }).join(''):'<div class="fact"><div class="label">Log</div><div>No send-outs logged yet.</div></div>')+'</div></div>';
+  }else{
+   const byCat={};(window.MAM_MERCH_CATALOG||[]).forEach(x=>{(byCat[x.cat]=byCat[x.cat]||[]).push(x)});
+   const bank=(window.MAM_MERCH_BANK||[]).filter(x=>x.brand===state.currentBrand);
+   const decks=(window.MAM_MERCH_DECKS||[]).filter(x=>x.brand===state.currentBrand);
+   body='<div class="grid2"><div class="panel"><h3>Approved Catalog · from MerchHub</h3><div class="tiny" style="margin-bottom:7px">Unit pricing from the approved list. Premium internal pieces vs low-cost giveaway items per the two-tier strategy.</div><table class="ticket-table"><tr><th>Item</th><th>Category</th><th>$/unit</th><th></th></tr>'+
+    Object.keys(byCat).map(cat=>byCat[cat].map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+esc(cat)+'</td><td>$'+x.price+'</td><td><button class="btn ghost" onclick="mamOpenMerchNeed('+JSON.stringify(x.name).replaceAll('"','&quot;')+')">Need</button></td></tr>').join('')).join('')+'</table></div>'+
+   '<div class="panel"><h3>Existing Designs · '+esc(state.currentBrand)+'</h3>'+
+    (bank.length?bank.map(function(x){return '<div class="workline"><div class="top"><div class="name">'+esc(x.name)+'</div><span class="badge '+(x.status==='In stock'?'green':'gold')+'">'+esc(x.status)+'</span></div><div class="detail">'+esc(x.note)+'</div><div class="actions">'+(x.status==='In stock'?'<button class="btn ghost" onclick="mamOpenMerchNeed('+JSON.stringify(x.name).replaceAll('"','&quot;')+',{noDesign:true,note:'+JSON.stringify('Existing design — no new creative needed. '+x.note).replaceAll('"','&quot;')+'})">Reorder / Use</button>':'')+'</div></div>'}).join(''):'<div class="fact"><div class="label">Designs</div><div>No existing designs on file for '+esc(state.currentBrand)+' yet.</div></div>')+
+    (decks.length?'<div class="sectioncap" style="margin-top:10px">Idea Decks (BoomPromo)</div>'+decks.map(d=>'<div class="fact"><div class="label">Deck</div><div><a href="'+esc(d.url)+'" target="_blank" style="color:var(--gold)">'+esc(d.label)+'</a></div></div>').join(''):'')+'</div></div>';
+  }
+  el.innerHTML='<div class="page">'+pageHead('Merch Desk','MerchHub stand-in until it ships: log needs, ticket Jon P (Creative looped for designs), track inventory and send-outs. Statuses mirror MerchHub for a clean migration.','<button class="btn" onclick="mamOpenMerchNeed()">+ Merch Need</button><button class="btn secondary" onclick="mamOpenStockItem()">+ Inventory Item</button>')+tabs+'<div style="margin-top:12px">'+body+'</div></div>';
+ };
+})();
+/* ===== END MERCH DESK v2 ===== */
+
 /* Context guard: a brand switch can never leave the DMA pointing into another brand's markets */
 ;(function(){
  function heal(){try{
