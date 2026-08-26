@@ -50,6 +50,7 @@ const DEFAULT_TEAM = [
   { name: 'Marti Rodda', role: 'member', title: 'Wettermark Keith Marketing Manager' },
   { name: 'Jon Podschun', role: 'member', title: 'Senior Graphic Designer' },
   { name: 'Michelle Diaz', role: 'member', title: 'Social Media Marketing Coordinator' },
+  { name: 'Brandy Newton', role: 'member', title: 'Creative Ops Manager' },
 ];
 
 async function readUsersDoc(supabase) {
