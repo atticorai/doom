@@ -147,6 +147,29 @@ async function createInNotion(body, token) {
   if (channels.length) properties['Channels'] = { multi_select: channels.map(c => ({ name: c })) };
   if (states.length) properties['Target Markets'] = { multi_select: states.map(s => ({ name: s })) };
   if (body.launch) properties['Target Launch Date'] = { date: { start: String(body.launch).slice(0, 10) } };
+  // With a pageId this becomes an in-place update of the page Mayhem already
+  // created — Status is left alone so Notion-side workflow moves aren't
+  // stomped. If the page was deleted/archived over there, fall through to a
+  // fresh create so the push still lands.
+  const pageId = String(body.pageId || '').trim();
+  if (pageId) {
+    const upd = { ...properties };
+    delete upd['Status'];
+    const uresp = await fetch('https://api.notion.com/v1/pages/' + pageId, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Notion-Version': NOTION_VERSION,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ properties: upd }),
+    });
+    const udata = await uresp.json().catch(() => ({}));
+    if (uresp.ok) return { id: udata.id || pageId, url: udata.url || null, updated: true };
+    if (uresp.status !== 404 && !/archiv/i.test(String(udata.message || ''))) {
+      const e = new Error('Notion ' + uresp.status + ': ' + String(udata.message || '').slice(0, 300)); e.code = 502; throw e;
+    }
+  }
   const resp = await fetch('https://api.notion.com/v1/pages', {
     method: 'POST',
     headers: {

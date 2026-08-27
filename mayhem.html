@@ -400,14 +400,14 @@ async function sendFinancePacket(id){let p=state.payments.find(x=>x.id===id),fin
 function syncToNotion(c,reason='Updated from Mayhem'){
  state.notionPushes=state.notionPushes||[];
  let today=new Date().toISOString().slice(0,10);
- c.notion={status:'Queued — Notion not connected',last:today,reason};
+ c.notion={status:'Queued — Notion not connected',last:today,reason,notionUrl:(c.notion&&c.notion.notionUrl)||'',notionId:(c.notion&&c.notion.notionId)||''};
  state.notionPushes.push({id:Date.now(),brand:state.currentBrand,dma:state.currentDMA,record:c.id,name:c.name,date:today,reason});
  if(location.protocol!=='file:'){
   try{
-   fetch('/api/campaigns',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:c.name,brand:state.currentBrand,markets:state.currentDMA,launch:c.anchor||undefined,description:(reason+' | Mayhem status: '+(c.state||'')+(typeof c.money?.final==='number'&&c.money.final>0?' | Cost: $'+c.money.final.toLocaleString():''))})})
+   fetch('/api/campaigns',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:c.name,brand:state.currentBrand,markets:state.currentDMA,launch:c.anchor||undefined,pageId:(c.notion&&c.notion.notionId)||undefined,description:(reason+' | Mayhem status: '+(c.state||'')+(typeof c.money?.final==='number'&&c.money.final>0?' | Cost: $'+c.money.final.toLocaleString():''))})})
    .then(function(r){return r.ok?r.json():Promise.reject(r.status)})
-   .then(function(j){c.notion={status:'Synced',last:today,reason,notionUrl:(j&&j.url)||''};saveState();try{renderPage()}catch(e){}})
-   .catch(function(){c.notion={status:'Queued — Notion push failed',last:today,reason};saveState();try{renderPage()}catch(e){}});
+   .then(function(j){c.notion={status:'Synced',last:today,reason,notionUrl:(j&&j.url)||(c.notion&&c.notion.notionUrl)||'',notionId:(j&&j.id)||(c.notion&&c.notion.notionId)||''};saveState();try{renderPage()}catch(e){}})
+   .catch(function(){c.notion={status:'Queued — Notion push failed',last:today,reason,notionUrl:(c.notion&&c.notion.notionUrl)||'',notionId:(c.notion&&c.notion.notionId)||''};saveState();try{renderPage()}catch(e){}});
   }catch(e){}
  }
  saveState();
@@ -2391,7 +2391,7 @@ window.addEventListener('DOMContentLoaded',function(){
     (all.length>5?'<div class="calmore">+'+(all.length-5)+' more — click the day</div>':'')+'</div>';
   }
   el.innerHTML='<div class="page">'+pageHead('Calendar','The working surface. Every campaign, ticket due-back, payment, and engine working date, in brand color. Click any day for the full detail; click through to the record, ticket, or AP room.',
-   '<button class="btn secondary" onclick="mamCalFeeds()">Feeds / Subscribe</button><button class="btn secondary" onclick="mamPartnerCalPull()">Pull Partner Calendar</button><select class="calfilter" onchange="calSetFilter(this.value)"><option value="ALL" '+((state.calBrandFilter||'ALL')==='ALL'?'selected':'')+'>All brands</option>'+brands().map(b=>'<option '+(state.calBrandFilter===b?'selected':'')+'>'+esc(b)+'</option>').join('')+'</select><button class="btn secondary" onclick="calShift(-1)">‹ Prev</button><button class="btn secondary" onclick="calShift(1)">Next ›</button>')+
+   '<button class="btn secondary" onclick="mamCalFeeds()">Feeds / Subscribe</button><button class="btn secondary" onclick="mamPartnerCalPull()">Pull Partner Calendar</button><button class="btn secondary" onclick="mamCalNotionPush()">Push to Notion</button><select class="calfilter" onchange="calSetFilter(this.value)"><option value="ALL" '+((state.calBrandFilter||'ALL')==='ALL'?'selected':'')+'>All brands</option>'+brands().map(b=>'<option '+(state.calBrandFilter===b?'selected':'')+'>'+esc(b)+'</option>').join('')+'</select><button class="btn secondary" onclick="calShift(-1)">‹ Prev</button><button class="btn secondary" onclick="calShift(1)">Next ›</button>')+
    (function(){let a='<div class="calagenda">';const dk=Object.keys(byDay).map(Number).sort((x,z)=>x-z);if(!dk.length)a+='<div class="fact"><div class="label">'+label+'</div><div>Nothing dated this month'+(state.calBrandFilter&&state.calBrandFilter!=='ALL'?' for '+state.calBrandFilter:'')+'.</div></div>';dk.forEach(function(day){const iso=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');const ord2={campaign:0,payment:1,ticket:2,rule:3};const es=(byDay[day]||[]).slice().sort((p,q)=>(ord2[p.kind]??9)-(ord2[q.kind]??9));a+='<div class="cala-day" onclick="calOpenDay(\''+iso+'\')"><div class="cala-date">'+fmtDate(iso)+'</div>'+es.map(function(e){const col=(typeof MAM_BRAND_COLORS!=='undefined'&&MAM_BRAND_COLORS[e.brand])||'#8a93a6';return '<div class="cala-item'+(e.kind!=='campaign'?' calsoft':'')+'" style="border-left:3px solid '+col+'">'+esc(e.label)+'<span class="cala-sub">'+esc(e.sub||'')+'</span></div>'}).join('')+'</div>'});return a+'</div>'})()+'<div class="calhead">'+label+'</div><div class="calweek">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>'<div>'+x+'</div>').join('')+'</div><div class="calgrid">'+cells+'</div><div class="callegend">'+brands().map(function(b){const col=(typeof MAM_BRAND_COLORS!=='undefined'&&MAM_BRAND_COLORS[b])||'#8a93a6';return '<span class="calkey"><i style="background:'+col+'"></i>'+esc(b)+'</span>'}).join('')+'<span class="calkey"><i style="background:transparent;border:1px solid var(--line)"></i>italic = ticket / payment / working date</span></div>'+
    ((typeof mamCollisions==='function'&&mamCollisions().length)?'<div class="panel" style="margin-top:12px;border-left:3px solid var(--gold)"><h3>Load Collisions</h3>'+mamCollisions().map(c=>'<div class="fact"><div class="label">'+esc(c.owner)+' · '+esc(c.week)+'</div><div>'+c.n+' due-backs the same week: '+esc(c.asks.join(' · '))+'</div></div>').join('')+'</div>':'')+'</div>';
  };
@@ -2661,9 +2661,11 @@ window.addEventListener('DOMContentLoaded',function(){
   if(!name)return;
   if(!state.brands[b].markets[d])state.brands[b].markets[d]={memory:[],commitments:[]};
   const id='ca'+Date.now();
-  state.brands[b].markets[d].commitments.push({id,kind:document.getElementById('qaKind').value,name,state:'Pre',anchor:date,endDate:'',partner:'',location:'',funding:b,channels:'',meta:'',money:{proposed:'',contracted:'',final:'',estimate:''},source:'Added from the calendar · '+new Date().toISOString().slice(0,10)});
+  const qaRec={id,kind:document.getElementById('qaKind').value,name,state:'Pre',anchor:date,endDate:'',partner:'',location:'',funding:b,channels:'',meta:'',money:{proposed:'',contracted:'',final:'',estimate:''},source:'Added from the calendar · '+new Date().toISOString().slice(0,10)};
+  state.brands[b].markets[d].commitments.push(qaRec);
   addEvidence(id,'intake','Added from the calendar for '+fmtDate(date));
   state.currentBrand=b;state.currentDMA=d;state.currentCommit=id;saveState();
+  try{syncToNotion(qaRec,'Added from the Mayhem calendar')}catch(e){}
   closeModal();renderShell();renderPage();
   toast('On the book — open it any time to fill in the rest');
  };
@@ -2705,7 +2707,7 @@ window.addEventListener('DOMContentLoaded',function(){
   const opens=(state.tickets||[]).filter(t=>t.status!=='Closed'&&t.due).sort((a,z2)=>String(a.due).localeCompare(String(z2.due))).slice(0,8);
   const pays=(state.payments||[]).filter(p=>p.status!=='Paid');
   P.push({t:'Open Loops — Live',body:(pays.length?pgP('<b>Money open:</b> '+pays.map(p=>esc(p.vendor)+' '+moneyFmt(p.amount)+(p.due?' due '+fmtDate(p.due):'')).join(' · ')):'')+(opens.length?opens.map(t=>'<p class="mbook-tight"><b class="mbook-lead" style="font-size:12px">'+fmtDate(t.due)+'</b> — '+esc(deName(String(t.ask)).slice(0,70))+'<br><span class="mbook-sub">'+esc(t.ownerRole||'owner on the ticket')+' · '+esc(t.status)+'</span></p>').join(''):pgP('Nothing owed back with a date on it. Suspicious.'))+meg('This page is why you open the book on Mondays.'),fx:ink('top:26px;left:20px;opacity:.3')});
-  const integ=[['Notion','live, both ways — you judge every conflict'],['Doom creative','live — ISCIs with file links ride tickets'],['Doom mail','live in test mode — every send lands in-house'],['Contract reading','live — clean or scanned PDFs into intake'],['Calendar feeds','live — partners subscribe by link'],['Partner calendar pull','live — their events enter with you as the gate'],['MerchHub','blocked — the Merch Desk stands in'],['Email ingestion','pending — merged by hand, with receipts'],['Outlook internal feed','IT-blocked — parked, built, waiting']];
+  const integ=[['Notion','live, both ways — you judge every conflict; the calendar pushes any month on demand'],['Doom creative','live — ISCIs with file links ride tickets'],['Doom mail','live in test mode — every send lands in-house'],['Contract reading','live — clean or scanned PDFs into intake'],['Calendar feeds','live — partners subscribe by link'],['Partner calendar pull','live — their events enter with you as the gate'],['MerchHub','blocked — the Merch Desk stands in'],['Email ingestion','pending — merged by hand, with receipts'],['Outlook internal feed','IT-blocked — parked, built, waiting']];
   P.push({t:'The Machinery',body:integ.map(x=>'<p class="mbook-tight"><b class="mbook-lead">'+esc(x[0])+'</b> — '+esc(x[1])+'</p>').join('')+meg('Nothing on this page pretends. That was expensive to earn.'),fx:ink('bottom:20px;left:20px;opacity:.4')});
   const srcs=(state.sources||[]).slice().reverse().slice(0,18);
   const half=Math.ceil(srcs.length/2)||1;
@@ -2838,6 +2840,54 @@ window.addEventListener('DOMContentLoaded',function(){
 ;(function(){const _rpMb=renderPage;renderPage=function(){try{const p=pageName();if(p==='guide'&&window.__mbLast!=='guide')window.__mbClosed=true;window.__mbLast=p}catch(e){}_rpMb()}})();
 
 /* Context guard: a brand switch can never leave the DMA pointing into another brand's markets */
+/* ===== CALENDAR → NOTION PUSH (2026-08-27, per Emm: the calendar needs to push to Notion) ===== */
+;(function(){
+ function monthRecs(){
+  const y=CAL_MONTH[0],mo=CAL_MONTH[1],out=[];
+  brands().forEach(function(b){
+   if(state.calBrandFilter&&state.calBrandFilter!=='ALL'&&state.calBrandFilter!==b)return;
+   markets(b).forEach(function(d){
+    ((state.brands[b].markets[d]||{}).commitments||[]).forEach(function(c){
+     if(!c.anchor)return;
+     const p=String(c.anchor).slice(0,10).split('-').map(Number);
+     if(p[0]!==y||p[1]!==mo+1)return;
+     if(/denied|archiv/i.test(c.state||''))return;
+     out.push({c:c,b:b,d:d,closed:/closed|done|wrapped/i.test(c.state||'')});
+    });
+   });
+  });
+  return out;
+ }
+ window.mamCalNotionPush=function(){
+  const rows=monthRecs(),open=rows.filter(r=>!r.closed);
+  const label=new Date(CAL_MONTH[0],CAL_MONTH[1],1).toLocaleString('en-US',{month:'long',year:'numeric'});
+  if(!open.length){modal('Push to Notion',label,'<div class="fact"><div class="label">Nothing to push</div><div>No open dated records on '+esc(label)+(rows.length?' — the '+rows.length+' closed or denied record'+(rows.length>1?'s':'')+' stay home.':'.')+'</div></div><div class="actions" style="margin-top:8px"><button class="btn secondary" onclick="closeModal()">Close</button></div>');return}
+  modal('Push to Notion',label+' — nothing leaves without your say-so',
+   '<div class="fact"><div class="label">'+open.length+' dated record'+(open.length>1?'s':'')+' → the Campaign Management database</div><div>Records Notion already holds are updated in place — no duplicates. New ones get a page. Closed and denied records stay home'+(rows.length-open.length?' ('+(rows.length-open.length)+' skipped)':'')+'.</div></div>'+
+   open.map(r=>'<div class="workline"><div class="top"><div class="name">'+esc(r.c.name)+'</div><span class="badge '+((r.c.notion&&r.c.notion.notionId)?'gold':'green')+'">'+((r.c.notion&&r.c.notion.notionId)?'Update':'New page')+'</span></div><div class="detail">'+esc(r.b)+' · '+esc(r.d)+' · '+fmtDate(r.c.anchor)+'</div></div>').join('')+
+   '<div class="actions" style="margin-top:10px"><button class="btn" onclick="mamCalNotionPushGo()">Push '+open.length+' to Notion</button><button class="btn secondary" onclick="closeModal()">Not now</button></div>');
+ };
+ function pushOne(r){
+  const c=r.c,today=new Date().toISOString().slice(0,10);
+  return fetch('/api/campaigns',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:c.name,brand:r.b,markets:r.d,launch:c.anchor||undefined,pageId:(c.notion&&c.notion.notionId)||undefined,description:('Calendar push from Mayhem | Mayhem status: '+(c.state||'')+(typeof (c.money||{}).final==='number'&&c.money.final>0?' | Cost: $'+c.money.final.toLocaleString():''))})})
+   .then(function(x){return x.ok?x.json():Promise.reject(x.status)})
+   .then(function(j){c.notion={status:'Synced',last:today,reason:'Calendar push',notionUrl:(j&&j.url)||(c.notion&&c.notion.notionUrl)||'',notionId:(j&&j.id)||(c.notion&&c.notion.notionId)||''};state.notionPushes=state.notionPushes||[];state.notionPushes.push({id:Date.now()+Math.floor(Math.random()*1e4),brand:r.b,dma:r.d,record:c.id,name:c.name,date:today,reason:'Calendar push'});return {ok:true,name:c.name}})
+   .catch(function(err){c.notion=Object.assign({},c.notion||{},{status:'Queued — Notion push failed',last:today,reason:'Calendar push'});return {ok:false,name:c.name,err:'Notion didn’t answer ('+String(err).slice(0,30)+')'}});
+ }
+ window.mamCalNotionPushGo=async function(){
+  const rows=monthRecs().filter(r=>!r.closed);
+  closeModal();toast('Pushing '+rows.length+' to Notion…');
+  const res=[];
+  for(const r of rows){res.push(await pushOne(r))}
+  saveState();try{renderPage()}catch(e){}
+  const bad=res.filter(x=>!x.ok);
+  modal('Push to Notion','The honest result',
+   '<div class="fact"><div class="label">'+(res.length-bad.length)+' of '+res.length+' landed in Notion</div><div>'+(bad.length?'These didn’t make it — they stay marked Queued and ride the next push:':'Every open record on the month is in the Campaign Management database.')+'</div></div>'+
+   bad.map(x=>'<div class="workline"><div class="top"><div class="name">'+esc(x.name)+'</div><span class="badge red">Failed</span></div><div class="detail">'+esc(x.err||'')+'</div></div>').join('')+
+   '<div class="actions" style="margin-top:10px"><button class="btn" onclick="closeModal()">Done</button></div>');
+ };
+})();
+/* ===== END CALENDAR → NOTION PUSH ===== */
 ;(function(){
  function heal(){try{
   const bk=state.brands[state.currentBrand];
