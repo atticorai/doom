@@ -2329,7 +2329,7 @@ window.addEventListener('DOMContentLoaded',function(){
  try{fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({collection:'appData',doc:'mayhemB7',action:'get'})}).then(function(r){return r.ok?r.json():null}).then(function(j){
   const remote=j&&j.data&&j.data.data&&j.data.data.brands?j.data.data:null;
   const rts=j&&j.data&&j.data.ts?j.data.ts:0;
-  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}try{applyDataTruthB7v7()}catch(e){}renderShell();renderPage()}
+  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}try{applyDataTruthB7v7()}catch(e){}try{state.tickets=(state.tickets||[]).filter(x=>x.id!=='tk-cal-brainstorm')}catch(e){}renderShell();renderPage()}
  }).catch(function(){})}catch(e){}
 });
 /* ===== END DATA TRUTH + DOOM MOUNT ===== */
@@ -2460,11 +2460,11 @@ window.addEventListener('DOMContentLoaded',function(){
   const SRC='Re: Calendars · Jordan Moreno ↔ Hazel (cc Michelle) · Aug 27 2026';
   state.sources=state.sources||[];
   if(!state.sources.some(x=>x.id==='src-calendars-0827'))state.sources.push({id:'src-calendars-0827',brand:'Lerner & Rowe',dma:'Phoenix',commit:'',type:'Email',name:'Re: Calendars (Aug 27)',status:'Applied',detail:'Jordan started the L&R master calendar in Google Calendar but it can’t do what he needs — assign roles, share, color code — and he’s shopping for calendaring software. Hazel: used Notion before, had an integrated calendar in Outlook; brainstorm set for Monday. Mayhem’s answer: subscribable live feeds from the book — internal full feed for Atticor Outlooks, partner-scoped L&R-events-only feed for Jordan’s Google Calendar (roles as owners, brand color-coding on his side, share handled by Google).'});
-  state.tickets=state.tickets||[];
-  if(!state.tickets.some(x=>x.id==='tk-cal-brainstorm'))state.tickets.push({id:'tk-cal-brainstorm',brand:'Lerner & Rowe',dma:'Phoenix',commit:'',type:'Partner',ask:'Calendar brainstorm with Jordan — bring the Mayhem answer (live subscribe feeds, partner-scoped)',ownerRole:'Events',owner:'Hazel Wolf',to:'hazel.wolf@atticor.ai',sent:'2026-08-27',due:'',protects:'Jordan is actively shopping calendar tools — the book should be the source, not another site',status:'Sent',returnRequired:'Decision: Mayhem feeds adopted (or what’s missing)',notes:'DATE TBD — Hazel floated Monday with a question mark; not confirmed, chase the real time. PER EMM (Aug 27): the internal Outlook feed is BLOCKED BY IT (tenant policy — internet calendar subscriptions), separate from the pending email integration. Parked until IT allows it; pitch the partner Google feed only. Jordan needs: assign roles, share, color code. The partner feed gives him L&R events with owners in his own Google Calendar, where color-coding and sharing are native. Feeds panel is on the Calendar room. Michelle was cc’d on the thread.',history:[],returnData:null,source:SRC});
+
   state._dataTruthB7v7=true;state._savedTs=Date.now();saveState();
  };
  try{applyDataTruthB7v7()}catch(e){}
+ try{const n=(state.tickets||[]).length;state.tickets=(state.tickets||[]).filter(x=>x.id!=='tk-cal-brainstorm');if(state.tickets.length!==n){state._savedTs=Date.now();saveState()}}catch(e){} /* removed per Emm Aug 27 */
 })();
 /* ===== END CALENDAR FEEDS + MERGE ===== */
 
