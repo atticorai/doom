@@ -2608,6 +2608,46 @@ window.addEventListener('DOMContentLoaded',function(){
 })();
 /* ===== END THE GUIDE ===== */
 
+/* ===== FEEDS PANEL v2 — self-diagnosing (per Emm: setup failed, panel must say why) ===== */
+;(function(){
+ window.mamCalFeedTest=async function(url,ix){
+  const out=document.getElementById('feedTest'+ix);if(out)out.textContent='Testing…';
+  try{
+   const r=await fetch(url);
+   const t=await r.text();
+   if(r.ok&&/BEGIN:VCALENDAR/.test(t)){const n=(t.match(/BEGIN:VEVENT/g)||[]).length;if(out){out.textContent='✓ FEED IS LIVE — '+n+' event'+(n===1?'':'s')+' being served. Safe to hand out.';out.style.color='var(--green)'}return}
+   let j=null;try{j=JSON.parse(t)}catch(e){}
+   if(out){out.style.color='var(--red)';let msg;if(r.status===404)msg='Token mismatch — the URL token doesn’t match what’s saved in Vercel. Re-open this panel after the redeploy and copy the URL fresh.';else if(r.status===503)msg=(j&&j.detail)||'The saved book isn’t reachable yet — open Mayhem once so it saves, then retest.';else msg='Failed ('+r.status+') — '+((j&&j.error)?(j.error+(j.detail?': '+j.detail:'')):t.slice(0,80));out.textContent='✗ '+msg}
+  }catch(e){if(out){out.style.color='var(--red)';out.textContent='✗ Could not reach the feed service.'}}
+ };
+ window.mamCalFeeds=async function(){
+  toast('Checking feeds…');
+  let r=null,j=null;
+  try{r=await fetch('/api/calendar-feed?info=1');j=await r.json()}catch(e){
+   modal('Calendar Feeds','Service not reachable','<div class="fact"><div class="label">The feed service didn’t answer</div><div>Most likely the newest deploy hasn’t finished yet. Give Vercel a minute and press Re-check.</div></div><div class="actions" style="margin-top:8px"><button class="btn" onclick="closeModal();mamCalFeeds()">Re-check</button></div>');
+   return;
+  }
+  if(r.status===401){modal('Calendar Feeds','Signed-out session','<div class="fact"><div class="label">The service didn’t recognize your sign-in</div><div>Go back to Doom, sign in again, then reopen Mayhem and press Re-check.</div></div><div class="actions" style="margin-top:8px"><button class="btn" onclick="closeModal();mamCalFeeds()">Re-check</button></div>');return}
+  const howTo='<div class="fact"><div class="label">Google Calendar (Jordan)</div><div>Other calendars → + → From URL → paste the partner URL.</div></div><div class="fact"><div class="label">Outlook</div><div>Add calendar → Subscribe from web. (Currently blocked by our IT for internal use.)</div></div>';
+  if(!j.configured){
+   modal('Calendar Feeds — one-time setup','Follow the four steps exactly; the usual failure is skipping step 4',
+    '<div class="fact"><div class="label">Step 1</div><div>Vercel → your project → Settings → Environment Variables → Add.</div></div>'+
+    '<div class="fact"><div class="label">Step 2</div><div>Name: <b>MAYHEM_CAL_FEEDS</b> — exactly that, no spaces.</div></div>'+
+    '<div class="fact"><div class="label">Step 3</div><div>Value: paste the JSON below AS-IS — no quotes added around it, one line, and make sure <b>Production</b> is ticked.</div></div>'+
+    '<div class="fact"><div class="label">Step 4 — the one everyone misses</div><div><b>Redeploy.</b> Saved env changes do nothing until the next deploy (Deployments → ⋯ on the latest → Redeploy).</div></div>'+
+    ((j&&j.example)?'<div class="fact"><div class="label">Your ready-made value</div><div style="word-break:break-all;font-family:monospace;font-size:10px">'+esc(j.example)+'</div></div><div class="actions" style="margin-top:8px"><button class="btn secondary" onclick="navigator.clipboard.writeText('+JSON.stringify(j.example).replaceAll('"','&quot;')+').then(()=>toast(\'Copied\'))">Copy Value</button><button class="btn" onclick="closeModal();mamCalFeeds()">Re-check After Redeploy</button></div>':'')+
+    '<div class="sectioncap" style="margin-top:10px">Once it’s live</div>'+howTo);
+   return;
+  }
+  modal('Calendar Feeds — live from the book','Press Test on each feed before handing anything out.',
+   j.feeds.map(function(f,ix){
+    const label=f.scope==='internal'?'INTERNAL — full book, all brands. Atticor eyes only (Outlook subscribe is IT-blocked for now).':'PARTNER — '+esc(f.brand||'')+' events only. No money, no tickets, no other brands. This is Jordan’s link.';
+    return '<div class="fact"><div class="label">'+label+'</div><div style="word-break:break-all;font-size:10.5px">'+esc(f.url)+'</div><div id="feedTest'+ix+'" class="tiny" style="margin-top:4px"></div></div><div class="actions" style="margin-bottom:10px"><button class="btn" onclick="mamCalFeedTest(\''+f.url+'\','+ix+')">Test</button><button class="btn secondary" onclick="navigator.clipboard.writeText(\''+f.url+'\').then(()=>toast(\'Feed URL copied\'))">Copy URL</button></div>';
+   }).join('')+'<div class="sectioncap" style="margin-top:6px">How they subscribe</div>'+howTo);
+ };
+})();
+/* ===== END FEEDS PANEL v2 ===== */
+
 /* Context guard: a brand switch can never leave the DMA pointing into another brand's markets */
 ;(function(){
  function heal(){try{
