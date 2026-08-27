@@ -1221,6 +1221,9 @@ const App=()=>{
         try{if(docs.lrOohIscis?.data){const d=JSON.parse(docs.lrOohIscis.data);if(Object.keys(d).length)setLrPanels(prev=>prev.map(p=>{if(d[p.unit]===undefined)return p;const v=d[p.unit];const list=Array.isArray(v)?v.filter(Boolean):(v?[v]:[]);return{...p,isciList:list,isci:list[0]||""}}))}}catch(_e){console.warn("lrOohIscis load skipped",_e)}
         try{if(docs.lrOohIsciPct?.data){const d=JSON.parse(docs.lrOohIsciPct.data);if(Object.keys(d).length)setLrPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isciPct:Array.isArray(d[p.unit])?d[p.unit]:[]}:p))}}catch(_e){console.warn("lrOohIsciPct load skipped",_e)}
         try{if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}}catch(_e){console.warn("oohPhotos load skipped",_e)}
+        // Command Center alert dismissals persist — without this they reset on
+        // every reload, which reads as "there's no way to dismiss an alert".
+        try{if(docs.alertsDismissed?.data){const d=JSON.parse(docs.alertsDismissed.data);if(Array.isArray(d)&&d.length)setAlertsDismissed(d)}}catch(_e){console.warn("alertsDismissed load skipped",_e)}
         console.log("Supabase: loaded",Object.keys(docs).length,"collections");
         loadCompleteRef.current=true;
         trafficDirtyRef.current=false;// loaded data is not a user edit — don't auto-resave it
@@ -2412,7 +2415,9 @@ const App=()=>{
     return a.filter(x=>!alertsDismissed.includes(x.key)&&(x.days>=-1||x.overdue)).sort((a,b)=>a.days-b.days);
   },[alertsDismissed,oohContracts,iscis]);
 
-  const dismissAlert=(key)=>setAlertsDismissed(p=>[...p,key]);
+  const dismissAlert=(key)=>{setAlertsDismissed(p=>p.includes(key)?p:[...p,key]);notify("Alert dismissed — it won't come back. Restore from the alerts header if you change your mind.")};
+  // Saves even when empty — "restore all" writes [] and must stick across reloads.
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("alertsDismissed",alertsDismissed)},[alertsDismissed,dbLoaded]);
 
   // ── ALERT HEARTBEAT FEED ──────────────────────────────
   // The daily email digest (api/heartbeat.js, run by a Vercel cron) can't do
@@ -2827,13 +2832,14 @@ const App=()=>{
         </React.Fragment>)}
       </div>
     </div>
-    {alerts.length>0&&<div style={{padding:12,borderRadius:12,background:"linear-gradient(135deg,rgba(232,90,122,.08),rgba(212,160,64,.05))",border:"1px solid rgba(232,90,122,.2)",boxShadow:"0 4px 20px rgba(232,90,122,.08),0 0 0 1px rgba(232,90,122,.05) inset"}}><div style={{fontSize:13,fontWeight:800,color:"#D4A040",marginBottom:6,textTransform:"uppercase",letterSpacing:1}}>⚡ {alerts.length} Alert{alerts.length>1?"s":""} — {doomPick(DOOM.alert)}</div>{alerts.slice(0,alertsExpanded?999:5).map(a=><div key={a.key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px solid rgba(155,123,176,.1)"}}>
+    {alerts.length>0&&<div style={{padding:12,borderRadius:12,background:"linear-gradient(135deg,rgba(232,90,122,.08),rgba(212,160,64,.05))",border:"1px solid rgba(232,90,122,.2)",boxShadow:"0 4px 20px rgba(232,90,122,.08),0 0 0 1px rgba(232,90,122,.05) inset"}}><div style={{fontSize:13,fontWeight:800,color:"#D4A040",marginBottom:6,textTransform:"uppercase",letterSpacing:1,display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:8,flexWrap:"wrap"}}><span>⚡ {alerts.length} Alert{alerts.length>1?"s":""} — {doomPick(DOOM.alert)}</span>{alertsDismissed.length>0&&<button onClick={()=>{if(!confirm("Bring back all "+alertsDismissed.length+" dismissed alert"+(alertsDismissed.length>1?"s":"")+"?"))return;setAlertsDismissed([]);log("Alerts Restored",alertsDismissed.length+" dismissed alerts brought back");notify("Dismissed alerts restored")}} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"#6B5E80",fontWeight:600,textTransform:"none",letterSpacing:0,padding:0}}>{alertsDismissed.length} dismissed · restore</button>}</div>{alerts.slice(0,alertsExpanded?999:5).map(a=><div key={a.key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px solid rgba(155,123,176,.1)"}}>
       <span style={{fontSize:13,color:a.severity==="critical"?"#E85A7A":"#D4A040",fontWeight:600}}>{a.severity==="critical"?"🔥":"⚠"} {a.msg} ({a.days}d)</span>
       <span style={{display:"flex",gap:8,alignItems:"center"}}>
         {a.report&&<button onClick={()=>openCreativeBrief(a.report)} style={{background:"rgba(91,196,160,.15)",border:"1px solid #5BC4A0",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:700,color:"#5BC4A0",padding:"2px 9px",whiteSpace:"nowrap"}}>📄 Creative Brief</button>}
         <button onClick={()=>dismissAlert(a.key)} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#6B5E80"}}>✕</button>
       </span>
     </div>)}{alerts.length>5&&<button onClick={()=>setAlertsExpanded(p=>!p)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#4AC8E8",fontWeight:600,marginTop:4,padding:0}}>{alertsExpanded?"Show less":"+"+String(alerts.length-5)+" more"}</button>}</div>}
+    {alerts.length===0&&alertsDismissed.length>0&&<div style={{fontSize:12,color:"#6B5E80",display:"flex",gap:6,alignItems:"baseline"}}><span>🔔 All quiet.</span><button onClick={()=>{if(!confirm("Bring back all "+alertsDismissed.length+" dismissed alert"+(alertsDismissed.length>1?"s":"")+"?"))return;setAlertsDismissed([]);log("Alerts Restored",alertsDismissed.length+" dismissed alerts brought back");notify("Dismissed alerts restored")}} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"#6B5E80",fontWeight:600,padding:0,textDecoration:"underline",textDecorationStyle:"dotted"}}>{alertsDismissed.length} dismissed · restore</button></div>}
     {nextRot&&daysRot<=14&&!alerts.some(a=>a.type==="rotation")&&<Cd style={{padding:10,borderColor:daysRot<=7?"#fecaca":"#fde68a",background:daysRot<=7?"#3a1f35":"#fffbeb"}}><div style={{fontSize:14,fontWeight:700,color:daysRot<=7?"#E85A7A":"#D4A040"}}>⚠ Rotation Due: {nextRot.month} — {fD(nextRot.rotDue)} ({daysRot}d)</div></Cd>}
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:7}}>
       <StatC label="Active ISCIs" value={ai.length} sub={<><span>{iscis.length-ai.length} inactive</span><Sparkline data={iscisByMonth} color="#4AC8E8"/></>} color="#4AC8E8" onClick={()=>setPg("isci")}/>
@@ -9712,6 +9718,27 @@ Rules:
       w.document.write('</table></body></html>');w.document.close();
       log("PDV OOH Board List",(mktF||"All")+" · "+fl.length+" boards");notify("PDV board list — "+fl.length+" boards");
     };
+    // Lamar spec-sheet reference — the artwork/production specs per market
+    // (PDFs served from /specs/, facts in PDV_SPECS notes). Mirrors L&R's.
+    const openPdvVendorSpecs=()=>{
+      if(typeof PDV_SPECS==="undefined"){notify("Spec reference not loaded");return}
+      const order=["TUL","OKC"];
+      const w=window.open("","","width=1080,height=920");
+      w.document.write('<html><head><title>Parrish DeVaughn — OOH Vendor Spec Sheets</title>');
+      w.document.write('<style>body{font-family:Arial,Helvetica,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}h3{margin:18px 0 4px;color:'+ACC+';border-bottom:2px solid '+ACC+';padding-bottom:3px}table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px}th,td{border:1px solid #ccc;padding:5px 8px;text-align:left;vertical-align:top}th{background:'+ACC+';color:#fff}a{color:#1565c0;text-decoration:none}a:hover{text-decoration:underline}tr:nth-child(even){background:#fdf2f3}.note{color:#555;font-size:10px;white-space:pre-line}.dl{position:fixed;top:12px;right:12px;background:'+ACC+';color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{.dl{display:none}body{margin:12px}a{color:#1a1a1a}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<div style="text-align:center;margin-bottom:8px"><h2>PARRISH DEVAUGHN</h2><div style="font-weight:bold;color:#555">OOH VENDOR SPEC SHEETS — LAMAR PRODUCTION SPECS BY MARKET</div></div>');
+      let total=0;
+      order.forEach(dma=>{const rows=PDV_SPECS[dma];if(!rows||!rows.length)return;total+=rows.length;
+        w.document.write('<h3>'+escHtml(mktNames[dma]||dma)+' <span style="color:#888;font-weight:normal;font-size:11px">('+dma+')</span></h3>');
+        w.document.write('<table><tr><th style="width:14%">Vendor</th><th style="width:26%">Type / Size</th><th style="width:10%">Spec Sheet</th><th>Production Notes</th></tr>');
+        rows.forEach(r=>{w.document.write('<tr><td><b>'+escHtml(r.company)+'</b></td><td>'+escHtml(r.spec||"")+'</td><td>'+(r.link?'<a href="'+escHtml(r.link)+'" target="_blank">📎 Open</a>':'—')+'</td><td class="note">'+escHtml(r.note||"")+'</td></tr>')});
+        w.document.write('</table>');
+      });
+      w.document.write('<div style="margin-top:14px;font-size:11px;color:#555;border-left:3px solid '+ACC+';padding-left:8px">'+total+' Lamar spec sheets. Tulsa poster materials are due 10 days before each start date. Source: Lamar Tulsa / Lamar OKC spec PDFs.</div>');
+      w.document.write('</body></html>');w.document.close();
+      log("PDV Vendor Spec Sheets","opened reference");
+    };
     // Vendor-facing creative rotation sheet — built from the boards' seeded
     // isciList/isciPct and the registry's creative links. Groups boards that
     // share a rotation (same ISCI set) so bulletins and posters each print as
@@ -9765,7 +9792,7 @@ Rules:
     return <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",flexWrap:"wrap",gap:8}}>
         <div><img src={(typeof LOGO_PDV!=="undefined"?LOGO_PDV:"")} alt="Parrish DeVaughn" style={{height:34,marginBottom:6,background:"#fff",padding:"4px 8px",borderRadius:6}}/><PageHead title="Parrish DeVaughn — OOH Media Plan" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>Oklahoma City &amp; Tulsa · {pdvPanels.length} placements ({fixed} fixed boards · {programs} rotating programs) · {totalUnits} total units · OKC vendor CJ · Tulsa vendor TBD</p>
+          <p style={{fontSize:13,color:"#9B8EAD"}}>Oklahoma City &amp; Tulsa · {pdvPanels.length} placements ({fixed} fixed boards · {programs} rotating programs) · {totalUnits} total units · vendors {vendors.filter(Boolean).join(", ")||"TBD"}</p>
         </div>
         <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
           <Btn small onClick={()=>{
@@ -9777,7 +9804,9 @@ Rules:
           <Btn small onClick={()=>openOohSizesReport("Parrish DeVaughn")} color="#5BC4A0">📏 Size Report</Btn>
           <Btn small onClick={printBoardList} color="#4AC8E8">🖨 Board List</Btn>
           <Btn small onClick={printRotationSheet} color="#D4A040">🔁 Rotation Sheet</Btn>
+          <Btn small onClick={openPdvVendorSpecs} color="#9b7bb0">📎 Vendor Specs</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
+          <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>🗺 Map</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
         </div>
       </div>
@@ -9801,7 +9830,20 @@ Rules:
           <div style={{fontSize:14,color:"#9B8EAD"}}>{pdvPanels.reduce((a,p)=>a+(p.numUnits||1),0)} total units</div>
         </div>
       </div>
-      {viewMode==="cards"?
+      {viewMode==="map"?
+        <Cd><div style={{padding:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:6}}>
+            <div style={{fontSize:14,fontWeight:700}}>📍 PDV OOH Board Locations</div>
+            <div style={{display:"flex",gap:10,alignItems:"center",fontSize:14,color:"#9B8EAD"}}>
+              <span style={{display:"flex",gap:4,alignItems:"center"}}><span style={{width:9,height:9,borderRadius:5,background:"#D4A040",display:"inline-block"}}/>Perm</span>
+              <span style={{display:"flex",gap:4,alignItems:"center"}}><span style={{width:9,height:9,borderRadius:5,background:ACC,display:"inline-block"}}/>Rotary</span>
+              <span style={{display:"flex",gap:4,alignItems:"center"}}><span style={{width:9,height:9,borderRadius:5,background:"#4AC8E8",display:"inline-block"}}/>Other</span>
+            </div>
+          </div>
+          <OohMap pins={fl.filter(p=>p.lat&&p.lng).map(p=>({id:p.unit,lat:p.lat,lng:p.lng,vendor:p.vendor,location:p.location,size:p.size,market:p.market,media:p.media,status:p.media+" · "+fmtFl(p.flight)+(p.approx?" · ⚠ approx location — verify":"")}))} colorFn={p=>/^Perm/.test(p.media)?"#D4A040":/^Rotary/.test(p.media)?ACC:"#4AC8E8"} height={440}/>
+          <div style={{fontSize:14,color:"#9B8EAD",marginTop:6}}>Rotary bulletin locations move — pins show the vendor's start locations. Coordinates are placed from the vendor's location text (⚠ approximate) until exact lat/longs come in. Boards with no coordinates (the poster showing) aren't pinned.</div>
+        </div></Cd>
+      :viewMode==="cards"?
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
           {fl.map((p,i)=>{const posted=p.status==="posted";return <div key={i} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:"#2d1f42",borderLeft:"4px solid "+ACC}}>
             <div style={{padding:10}}>
@@ -12578,7 +12620,7 @@ Rules:
       </div>,damageEffects:<>{<BookInkSplatter style={{bottom:20,right:20,opacity:.4}}/>}{<BookHoofMark style={{top:20,left:20,opacity:.2,transform:"rotate(12deg) scale(.65)"}}/>}</>},
 
       {title:"Parrish DeVaughn Overview",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p>Parrish DeVaughn is Oklahoma — <b>Oklahoma City</b> is live and <b>Tulsa</b> is the expansion market. Jessica Flynn is the buyer. Tulsa's OOH plant sits in the PDV board page: a <b>45-poster showing reposting every 60 days</b> (launches 9/13/2026) and <b>10 bulletin faces</b> including 2 permanents (launch 9/7/2026). Round one runs Thunder and Pepper &amp; Murry — bulletins 2/8, posters 8/37. The 🔁 Rotation Sheet button prints the vendor instructions.</p>
+        <p>Parrish DeVaughn is Oklahoma — <b>Oklahoma City</b> is live and <b>Tulsa</b> is the expansion market. Jessica Flynn is the buyer. Tulsa's OOH plant sits in the PDV board page, per the vendor plant list: a <b>45-poster showing reposting every 60 days</b> (9/14–10/11 &amp; 11/9–12/6), <b>2 permanent bulletins</b> (24892 at 14'x48', 24992 at 10'x40' — needs its own art size), and <b>10 rotary bulletins</b> whose locations move (all bulletins 9/7/26–9/5/27). Round one runs Thunder and Pepper &amp; Murry — rotary bulletins 2/8, posters 8/37; perm designs TBD. The 🔁 Rotation Sheet button prints the vendor instructions, and the 🗺 Map view pins every board (coordinates approximate until verified).</p>
         <p>PDV leans on Local &amp; Experienced and No-Fee-Guarantee messaging, and it's the one brand with a <b>Motorcycle</b> category. Estimates are the real numbers (5372–6864) across eight products — Auto, AM News, Discretionary, Products, Thunder, EN/LN, CTV, YouTube.</p>
         <p>Brand red. <span style={{color:"#C4A0C8",fontWeight:700}}>{pdvActive} active ISCIs</span>. For Tulsa: lead with Local &amp; Experienced, add case types, always recommend bookend pairs.</p>
         <BookBrandFacts brand="Parrish DeVaughn"/>
