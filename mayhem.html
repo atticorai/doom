@@ -2363,7 +2363,7 @@ window.addEventListener('DOMContentLoaded',function(){
   modal(fmtDate(date),es.length+' item'+(es.length===1?'':'s')+' on the book this day',(es.map(function(e,i){
    const col=(typeof MAM_BRAND_COLORS!=='undefined'&&MAM_BRAND_COLORS[e.brand])||'#8a93a6';
    return '<div class="decision" style="border-left:4px solid '+col+'"><div class="k">'+KINDS[e.kind]+(e.brand?' · '+esc(e.brand):'')+'</div><div class="t">'+esc(e.label)+'</div><div class="m">'+esc(e.sub||'')+(e.detail?'<br>'+esc(e.detail):'')+'</div><div class="actions"><button class="btn secondary" onclick="closeModal();calOpenEntry(\''+date+'\','+i+')">'+(e.kind==='ticket'?'Open Ticket':e.kind==='payment'?'Open AP / Expenses':'Open Campaign')+'</button></div></div>';
-  }).join(''))||'<div class="fact"><div class="label">Day</div><div>Nothing dated on the book.</div></div>');
+  }).join(''))+'<div class="actions" style="margin-top:10px"><button class="btn" onclick="closeModal();mamCalQuickAdd(\''+date+'\')">+ Add to This Day</button></div>'||'');
  };
  window.renderCalendarPage=function(el){
   const y=CAL_MONTH[0],mo=CAL_MONTH[1];
@@ -2647,6 +2647,28 @@ window.addEventListener('DOMContentLoaded',function(){
  };
 })();
 /* ===== END FEEDS PANEL v2 ===== */
+
+/* ===== ADD FROM THE CALENDAR (per Emm: adding shouldn't require walking to Intake) ===== */
+;(function(){
+ window.mamCalQuickAdd=function(date){
+  modal('Add to '+fmtDate(date),'A quick record — it lands in the book like any intake, with this date as its day. Open it after to add money, partner, channels.',
+   '<form class="formgrid" onsubmit="mamCalQuickAddSave(event,\''+date+'\')"><div class="field c4"><label>Brand</label><select id="qaBrand">'+brands().map(b=>'<option '+(b===state.currentBrand?'selected':'')+'>'+esc(b)+'</option>').join('')+'</select></div><div class="field c4"><label>Market</label><select id="qaDMA">'+markets(state.currentBrand).map(d=>'<option '+(d===state.currentDMA?'selected':'')+'>'+esc(d)+'</option>').join('')+'</select></div><div class="field c4"><label>Type</label><select id="qaKind"><option>Event</option><option>Sponsorship</option><option>Partnership</option><option>Appearance</option><option>Community</option><option>Media Flight</option></select></div><div class="field c12"><label>Name</label><input id="qaName" required placeholder="What is it?"></div><div class="c12"><button class="btn">Add to the Book</button></div></form>');
+  setTimeout(function(){const bSel=document.getElementById('qaBrand');if(bSel)bSel.onchange=function(){document.getElementById('qaDMA').innerHTML=markets(this.value).map(d=>'<option>'+esc(d)+'</option>').join('')}},50);
+ };
+ window.mamCalQuickAddSave=function(e,date){
+  e.preventDefault();
+  const b=document.getElementById('qaBrand').value,d=document.getElementById('qaDMA').value,name=document.getElementById('qaName').value.trim();
+  if(!name)return;
+  if(!state.brands[b].markets[d])state.brands[b].markets[d]={memory:[],commitments:[]};
+  const id='ca'+Date.now();
+  state.brands[b].markets[d].commitments.push({id,kind:document.getElementById('qaKind').value,name,state:'Pre',anchor:date,endDate:'',partner:'',location:'',funding:b,channels:'',meta:'',money:{proposed:'',contracted:'',final:'',estimate:''},source:'Added from the calendar · '+new Date().toISOString().slice(0,10)});
+  addEvidence(id,'intake','Added from the calendar for '+fmtDate(date));
+  state.currentBrand=b;state.currentDMA=d;state.currentCommit=id;saveState();
+  closeModal();renderShell();renderPage();
+  toast('On the book — open it any time to fill in the rest');
+ };
+})();
+/* ===== END ADD FROM THE CALENDAR ===== */
 
 /* Context guard: a brand switch can never leave the DMA pointing into another brand's markets */
 ;(function(){
