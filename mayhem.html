@@ -2322,13 +2322,14 @@ try{applyDataTruthB7v3()}catch(e){}
 try{applyDataTruthB7v4()}catch(e){}
 try{applyDataTruthB7v5()}catch(e){}
 try{applyDataTruthB7v6()}catch(e){}
+try{applyDataTruthB7v7()}catch(e){}
 /* remote adopt after boot */
 window.addEventListener('DOMContentLoaded',function(){
  if(location.protocol==='file:')return;
  try{fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({collection:'appData',doc:'mayhemB7',action:'get'})}).then(function(r){return r.ok?r.json():null}).then(function(j){
   const remote=j&&j.data&&j.data.data&&j.data.data.brands?j.data.data:null;
   const rts=j&&j.data&&j.data.ts?j.data.ts:0;
-  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}renderShell();renderPage()}
+  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}try{applyDataTruthB7v7()}catch(e){}renderShell();renderPage()}
  }).catch(function(){})}catch(e){}
 });
 /* ===== END DATA TRUTH + DOOM MOUNT ===== */
@@ -2339,7 +2340,7 @@ window.addEventListener('DOMContentLoaded',function(){
   const out=[];
   try{
    for(const b in state.brands)for(const d in state.brands[b].markets)for(const c of state.brands[b].markets[d].commitments){
-    if(c.anchor)out.push({date:c.anchor,kind:'campaign',label:c.name,sub:b+' · '+d+(c.location?' · '+c.location:''),detail:[c.kind,c.partner,(typeof (c.money&&c.money.final)==='number'&&c.money.final>0)?moneyFmt(c.money.final):null].filter(Boolean).join(' · '),brand:b,dma:d,cid:c.id});
+    if(c.anchor)out.push({date:c.anchor,kind:'campaign',label:c.name,sub:b+' · '+d+(c.location?' · '+c.location:''),detail:[c.kind,c.partner,c.owner?('Owner: '+c.owner):null,(typeof (c.money&&c.money.final)==='number'&&c.money.final>0)?moneyFmt(c.money.final):null].filter(Boolean).join(' · '),brand:b,dma:d,cid:c.id});
     if(c.endDate&&c.endDate!==c.anchor)out.push({date:c.endDate,kind:'campaign',label:c.name+' — ends',sub:b+' · '+d,detail:'',brand:b,dma:d,cid:c.id});
     if(typeof mamDerivedDates==='function'){const cutoff=new Date(Date.now()-7*86400000).toISOString().slice(0,10);mamDerivedDates(c).forEach(function(x){if(x.date>=cutoff)out.push({date:x.date,kind:'rule',label:x.label+' — '+c.name,sub:x.why,detail:b+' · '+d,brand:b,dma:d,cid:c.id})})}
    }
@@ -2390,7 +2391,7 @@ window.addEventListener('DOMContentLoaded',function(){
     (all.length>5?'<div class="calmore">+'+(all.length-5)+' more — click the day</div>':'')+'</div>';
   }
   el.innerHTML='<div class="page">'+pageHead('Calendar','The working surface. Every campaign, ticket due-back, payment, and engine working date, in brand color. Click any day for the full detail; click through to the record, ticket, or AP room.',
-   '<select class="calfilter" onchange="calSetFilter(this.value)"><option value="ALL" '+((state.calBrandFilter||'ALL')==='ALL'?'selected':'')+'>All brands</option>'+brands().map(b=>'<option '+(state.calBrandFilter===b?'selected':'')+'>'+esc(b)+'</option>').join('')+'</select><button class="btn secondary" onclick="calShift(-1)">‹ Prev</button><button class="btn secondary" onclick="calShift(1)">Next ›</button>')+
+   '<button class="btn secondary" onclick="mamCalFeeds()">Feeds / Subscribe</button><select class="calfilter" onchange="calSetFilter(this.value)"><option value="ALL" '+((state.calBrandFilter||'ALL')==='ALL'?'selected':'')+'>All brands</option>'+brands().map(b=>'<option '+(state.calBrandFilter===b?'selected':'')+'>'+esc(b)+'</option>').join('')+'</select><button class="btn secondary" onclick="calShift(-1)">‹ Prev</button><button class="btn secondary" onclick="calShift(1)">Next ›</button>')+
    (function(){let a='<div class="calagenda">';const dk=Object.keys(byDay).map(Number).sort((x,z)=>x-z);if(!dk.length)a+='<div class="fact"><div class="label">'+label+'</div><div>Nothing dated this month'+(state.calBrandFilter&&state.calBrandFilter!=='ALL'?' for '+state.calBrandFilter:'')+'.</div></div>';dk.forEach(function(day){const iso=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');const ord2={campaign:0,payment:1,ticket:2,rule:3};const es=(byDay[day]||[]).slice().sort((p,q)=>(ord2[p.kind]??9)-(ord2[q.kind]??9));a+='<div class="cala-day" onclick="calOpenDay(\''+iso+'\')"><div class="cala-date">'+fmtDate(iso)+'</div>'+es.map(function(e){const col=(typeof MAM_BRAND_COLORS!=='undefined'&&MAM_BRAND_COLORS[e.brand])||'#8a93a6';return '<div class="cala-item'+(e.kind!=='campaign'?' calsoft':'')+'" style="border-left:3px solid '+col+'">'+esc(e.label)+'<span class="cala-sub">'+esc(e.sub||'')+'</span></div>'}).join('')+'</div>'});return a+'</div>'})()+'<div class="calhead">'+label+'</div><div class="calweek">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>'<div>'+x+'</div>').join('')+'</div><div class="calgrid">'+cells+'</div><div class="callegend">'+brands().map(function(b){const col=(typeof MAM_BRAND_COLORS!=='undefined'&&MAM_BRAND_COLORS[b])||'#8a93a6';return '<span class="calkey"><i style="background:'+col+'"></i>'+esc(b)+'</span>'}).join('')+'<span class="calkey"><i style="background:transparent;border:1px solid var(--line)"></i>italic = ticket / payment / working date</span></div>'+
    ((typeof mamCollisions==='function'&&mamCollisions().length)?'<div class="panel" style="margin-top:12px;border-left:3px solid var(--gold)"><h3>Load Collisions</h3>'+mamCollisions().map(c=>'<div class="fact"><div class="label">'+esc(c.owner)+' · '+esc(c.week)+'</div><div>'+c.n+' due-backs the same week: '+esc(c.asks.join(' · '))+'</div></div>').join('')+'</div>':'')+'</div>';
  };
@@ -2432,6 +2433,40 @@ window.addEventListener('DOMContentLoaded',function(){
  _sre(e,id);
  try{const c=commitById(id);if(loc!==null)c.location=loc;if(end!==null)c.endDate=end;saveState();renderPage()}catch(x){}
 }})();
+
+/* ===== CALENDAR FEEDS + RE: CALENDARS MERGE (Aug 27 · Jordan's master-calendar thread) ===== */
+;(function(){
+ window.mamCalFeeds=async function(){
+  toast('Checking feeds…');
+  let j=null;
+  try{const r=await fetch('/api/calendar-feed?info=1');j=await r.json();if(r.status===401){toast('Sign in to Doom first');return}}catch(e){toast('Feed service unreachable');return}
+  const howTo='<div class="fact"><div class="label">Subscribe — Outlook</div><div>Calendar → Add calendar → Subscribe from web → paste the URL. Outlook refreshes it on its own.</div></div><div class="fact"><div class="label">Subscribe — Google Calendar</div><div>Other calendars → + → From URL → paste the URL. Jordan can color-code and share it inside Google like any calendar.</div></div>';
+  if(!j||!j.configured){
+   modal('Calendar Feeds — one-time setup','The book becomes a live calendar anyone can subscribe to',
+    '<div class="fact"><div class="label">Not configured yet</div><div>'+esc((j&&j.message)||'Feed service returned nothing.')+'</div></div>'+
+    ((j&&j.example)?'<div class="fact"><div class="label">Paste into Vercel → Settings → Environment Variables as MAYHEM_CAL_FEEDS</div><div style="word-break:break-all;font-family:monospace;font-size:10px">'+esc(j.example)+'</div></div><div class="actions" style="margin-top:8px"><button class="btn secondary" onclick="navigator.clipboard.writeText('+JSON.stringify(j.example).replaceAll('"','&quot;')+').then(()=>toast(\'Copied\'))">Copy JSON</button></div>':'')+
+    '<div class="sectioncap" style="margin-top:10px">Once configured</div>'+howTo);
+   return;
+  }
+  modal('Calendar Feeds — live from the book','Subscribe once; Outlook / Google refresh on their own. The book stays the single source of truth.',
+   j.feeds.map(function(f){
+    const label=f.scope==='internal'?'INTERNAL — full book (campaigns, due-backs, payments, all brands). For Atticor eyes only.':'PARTNER — '+esc(f.brand||'')+' events only: names, dates, locations, owners. No money, no tickets, no other brands. Safe for '+esc(f.brand||'the partner')+'.';
+    return '<div class="fact"><div class="label">'+label+'</div><div style="word-break:break-all;font-size:10.5px">'+esc(f.url)+'</div></div><div class="actions" style="margin-bottom:10px"><button class="btn secondary" onclick="navigator.clipboard.writeText(\''+f.url+'\').then(()=>toast(\'Feed URL copied\'))">Copy URL</button></div>';
+   }).join('')+'<div class="sectioncap" style="margin-top:6px">How they subscribe</div>'+howTo);
+ };
+ /* Re: Calendars (Aug 27) — merge with provenance */
+ window.applyDataTruthB7v7=function(){
+  if(state._dataTruthB7v7)return;
+  const SRC='Re: Calendars · Jordan Moreno ↔ Hazel (cc Michelle) · Aug 27 2026';
+  state.sources=state.sources||[];
+  if(!state.sources.some(x=>x.id==='src-calendars-0827'))state.sources.push({id:'src-calendars-0827',brand:'Lerner & Rowe',dma:'Phoenix',commit:'',type:'Email',name:'Re: Calendars (Aug 27)',status:'Applied',detail:'Jordan started the L&R master calendar in Google Calendar but it can’t do what he needs — assign roles, share, color code — and he’s shopping for calendaring software. Hazel: used Notion before, had an integrated calendar in Outlook; brainstorm set for Monday. Mayhem’s answer: subscribable live feeds from the book — internal full feed for Atticor Outlooks, partner-scoped L&R-events-only feed for Jordan’s Google Calendar (roles as owners, brand color-coding on his side, share handled by Google).'});
+  state.tickets=state.tickets||[];
+  if(!state.tickets.some(x=>x.id==='tk-cal-brainstorm'))state.tickets.push({id:'tk-cal-brainstorm',brand:'Lerner & Rowe',dma:'Phoenix',commit:'',type:'Partner',ask:'Calendar brainstorm with Jordan — bring the Mayhem answer (live subscribe feeds, partner-scoped)',ownerRole:'Events',owner:'Hazel Wolf',to:'hazel.wolf@atticor.ai',sent:'2026-08-27',due:'',protects:'Jordan is actively shopping calendar tools — the book should be the source, not another site',status:'Sent',returnRequired:'Decision: Mayhem feeds adopted (or what’s missing)',notes:'DATE TBD — Hazel floated Monday with a question mark; not confirmed, chase the real time. Jordan needs: assign roles, share, color code. The partner feed gives him L&R events with owners in his own Google Calendar, where color-coding and sharing are native. Feeds panel is on the Calendar room. Michelle was cc’d on the thread.',history:[],returnData:null,source:SRC});
+  state._dataTruthB7v7=true;state._savedTs=Date.now();saveState();
+ };
+ try{applyDataTruthB7v7()}catch(e){}
+})();
+/* ===== END CALENDAR FEEDS + MERGE ===== */
 
 /* ===== MERCH DESK v2 — tabbed, uncluttered (per Emm) ===== */
 ;(function(){
