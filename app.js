@@ -9712,6 +9712,27 @@ Rules:
       w.document.write('</table></body></html>');w.document.close();
       log("PDV OOH Board List",(mktF||"All")+" · "+fl.length+" boards");notify("PDV board list — "+fl.length+" boards");
     };
+    // Lamar spec-sheet reference — the artwork/production specs per market
+    // (PDFs served from /specs/, facts in PDV_SPECS notes). Mirrors L&R's.
+    const openPdvVendorSpecs=()=>{
+      if(typeof PDV_SPECS==="undefined"){notify("Spec reference not loaded");return}
+      const order=["TUL","OKC"];
+      const w=window.open("","","width=1080,height=920");
+      w.document.write('<html><head><title>Parrish DeVaughn — OOH Vendor Spec Sheets</title>');
+      w.document.write('<style>body{font-family:Arial,Helvetica,sans-serif;margin:26px;color:#1a1a1a}h2{margin:0;letter-spacing:2px}h3{margin:18px 0 4px;color:'+ACC+';border-bottom:2px solid '+ACC+';padding-bottom:3px}table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px}th,td{border:1px solid #ccc;padding:5px 8px;text-align:left;vertical-align:top}th{background:'+ACC+';color:#fff}a{color:#1565c0;text-decoration:none}a:hover{text-decoration:underline}tr:nth-child(even){background:#fdf2f3}.note{color:#555;font-size:10px;white-space:pre-line}.dl{position:fixed;top:12px;right:12px;background:'+ACC+';color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.2)}@media print{.dl{display:none}body{margin:12px}a{color:#1a1a1a}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<div style="text-align:center;margin-bottom:8px"><h2>PARRISH DEVAUGHN</h2><div style="font-weight:bold;color:#555">OOH VENDOR SPEC SHEETS — LAMAR PRODUCTION SPECS BY MARKET</div></div>');
+      let total=0;
+      order.forEach(dma=>{const rows=PDV_SPECS[dma];if(!rows||!rows.length)return;total+=rows.length;
+        w.document.write('<h3>'+escHtml(mktNames[dma]||dma)+' <span style="color:#888;font-weight:normal;font-size:11px">('+dma+')</span></h3>');
+        w.document.write('<table><tr><th style="width:14%">Vendor</th><th style="width:26%">Type / Size</th><th style="width:10%">Spec Sheet</th><th>Production Notes</th></tr>');
+        rows.forEach(r=>{w.document.write('<tr><td><b>'+escHtml(r.company)+'</b></td><td>'+escHtml(r.spec||"")+'</td><td>'+(r.link?'<a href="'+escHtml(r.link)+'" target="_blank">📎 Open</a>':'—')+'</td><td class="note">'+escHtml(r.note||"")+'</td></tr>')});
+        w.document.write('</table>');
+      });
+      w.document.write('<div style="margin-top:14px;font-size:11px;color:#555;border-left:3px solid '+ACC+';padding-left:8px">'+total+' Lamar spec sheets. Tulsa poster materials are due 10 days before each start date. Source: Lamar Tulsa / Lamar OKC spec PDFs.</div>');
+      w.document.write('</body></html>');w.document.close();
+      log("PDV Vendor Spec Sheets","opened reference");
+    };
     // Vendor-facing creative rotation sheet — built from the boards' seeded
     // isciList/isciPct and the registry's creative links. Groups boards that
     // share a rotation (same ISCI set) so bulletins and posters each print as
@@ -9765,7 +9786,7 @@ Rules:
     return <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",flexWrap:"wrap",gap:8}}>
         <div><img src={(typeof LOGO_PDV!=="undefined"?LOGO_PDV:"")} alt="Parrish DeVaughn" style={{height:34,marginBottom:6,background:"#fff",padding:"4px 8px",borderRadius:6}}/><PageHead title="Parrish DeVaughn — OOH Media Plan" pgKey="ooh"/>
-          <p style={{fontSize:13,color:"#9B8EAD"}}>Oklahoma City &amp; Tulsa · {pdvPanels.length} placements ({fixed} fixed boards · {programs} rotating programs) · {totalUnits} total units · OKC vendor CJ · Tulsa vendor TBD</p>
+          <p style={{fontSize:13,color:"#9B8EAD"}}>Oklahoma City &amp; Tulsa · {pdvPanels.length} placements ({fixed} fixed boards · {programs} rotating programs) · {totalUnits} total units · vendors {vendors.filter(Boolean).join(", ")||"TBD"}</p>
         </div>
         <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
           <Btn small onClick={()=>{
@@ -9777,6 +9798,7 @@ Rules:
           <Btn small onClick={()=>openOohSizesReport("Parrish DeVaughn")} color="#5BC4A0">📏 Size Report</Btn>
           <Btn small onClick={printBoardList} color="#4AC8E8">🖨 Board List</Btn>
           <Btn small onClick={printRotationSheet} color="#D4A040">🔁 Rotation Sheet</Btn>
+          <Btn small onClick={openPdvVendorSpecs} color="#9b7bb0">📎 Vendor Specs</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>🗺 Map</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
