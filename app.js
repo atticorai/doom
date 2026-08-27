@@ -11053,6 +11053,7 @@ Rules:
           <Btn small onClick={printBoardList} color="#4AC8E8">🖨 Board List</Btn>
           <Btn small onClick={printRotationSheet} color="#D4A040">🔁 Rotation Sheet</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
+          <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>🗺 Map</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
         </div>
       </div>
@@ -11076,7 +11077,20 @@ Rules:
           <div style={{fontSize:14,color:"#9B8EAD"}}>{pdvPanels.reduce((a,p)=>a+(p.numUnits||1),0)} total units</div>
         </div>
       </div>
-      {viewMode==="cards"?
+      {viewMode==="map"?
+        <Cd><div style={{padding:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:6}}>
+            <div style={{fontSize:14,fontWeight:700}}>📍 PDV OOH Board Locations</div>
+            <div style={{display:"flex",gap:10,alignItems:"center",fontSize:14,color:"#9B8EAD"}}>
+              <span style={{display:"flex",gap:4,alignItems:"center"}}><span style={{width:9,height:9,borderRadius:5,background:"#D4A040",display:"inline-block"}}/>Perm</span>
+              <span style={{display:"flex",gap:4,alignItems:"center"}}><span style={{width:9,height:9,borderRadius:5,background:ACC,display:"inline-block"}}/>Rotary</span>
+              <span style={{display:"flex",gap:4,alignItems:"center"}}><span style={{width:9,height:9,borderRadius:5,background:"#4AC8E8",display:"inline-block"}}/>Other</span>
+            </div>
+          </div>
+          <OohMap pins={fl.filter(p=>p.lat&&p.lng).map(p=>({id:p.unit,lat:p.lat,lng:p.lng,vendor:p.vendor,location:p.location,size:p.size,market:p.market,media:p.media,status:p.media+" · "+fmtFl(p.flight)+(p.approx?" · ⚠ approx location — verify":"")}))} colorFn={p=>/^Perm/.test(p.media)?"#D4A040":/^Rotary/.test(p.media)?ACC:"#4AC8E8"} height={440}/>
+          <div style={{fontSize:14,color:"#9B8EAD",marginTop:6}}>Rotary bulletin locations move — pins show the vendor's start locations. Coordinates are placed from the vendor's location text (⚠ approximate) until exact lat/longs come in. Boards with no coordinates (the poster showing) aren't pinned.</div>
+        </div></Cd>
+      :viewMode==="cards"?
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
           {fl.map((p,i)=>{const posted=p.status==="posted";return <div key={i} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:"#2d1f42",borderLeft:"4px solid "+ACC}}>
             <div style={{padding:10}}>
@@ -14556,7 +14570,7 @@ Rules:
       </div>,damageEffects:<>{<BookInkSplatter style={{bottom:20,right:20,opacity:.4}}/>}{<BookHoofMark style={{top:20,left:20,opacity:.2,transform:"rotate(12deg) scale(.65)"}}/>}</>},
 
       {title:"Parrish DeVaughn Overview",content:<div style={{display:"flex",flexDirection:"column",gap:14}}>
-        <p>Parrish DeVaughn is Oklahoma — <b>Oklahoma City</b> is live and <b>Tulsa</b> is the expansion market. Jessica Flynn is the buyer. Tulsa's OOH plant sits in the PDV board page: a <b>45-poster showing reposting every 60 days</b> (launches 9/13/2026) and <b>10 bulletin faces</b> including 2 permanents (launch 9/7/2026). Round one runs Thunder and Pepper &amp; Murry — bulletins 2/8, posters 8/37. The 🔁 Rotation Sheet button prints the vendor instructions.</p>
+        <p>Parrish DeVaughn is Oklahoma — <b>Oklahoma City</b> is live and <b>Tulsa</b> is the expansion market. Jessica Flynn is the buyer. Tulsa's OOH plant sits in the PDV board page, per the vendor plant list: a <b>45-poster showing reposting every 60 days</b> (9/14–10/11 &amp; 11/9–12/6), <b>2 permanent bulletins</b> (24892 at 14'x48', 24992 at 10'x40' — needs its own art size), and <b>10 rotary bulletins</b> whose locations move (all bulletins 9/7/26–9/5/27). Round one runs Thunder and Pepper &amp; Murry — rotary bulletins 2/8, posters 8/37; perm designs TBD. The 🔁 Rotation Sheet button prints the vendor instructions, and the 🗺 Map view pins every board (coordinates approximate until verified).</p>
         <p>PDV leans on Local &amp; Experienced and No-Fee-Guarantee messaging, and it's the one brand with a <b>Motorcycle</b> category. Estimates are the real numbers (5372–6864) across eight products — Auto, AM News, Discretionary, Products, Thunder, EN/LN, CTV, YouTube.</p>
         <p>Brand red. <span style={{color:"#C4A0C8",fontWeight:700}}>{pdvActive} active ISCIs</span>. For Tulsa: lead with Local &amp; Experienced, add case types, always recommend bookend pairs.</p>
         <BookBrandFacts brand="Parrish DeVaughn"/>
