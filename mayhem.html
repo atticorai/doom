@@ -2248,9 +2248,9 @@ function applyDataTruthB7v3(){
   try{
    const kits=[];
    const bk=MAM_BRAND_KITS[brand];
-   if(bk)bk.guidelines.forEach(g=>kits.push(g.label+(g.url?': '+g.url:g.note?' — '+g.note:'')));
+   if(bk)bk.guidelines.forEach(g=>{const u=(window.mamDocUrl?mamDocUrl(g.label,g.url):g.url);kits.push(g.label+(u?': '+u:g.note?' — '+g.note:''))});
    const ak=MAM_BRAND_KITS['Atticor'];
-   ak.guidelines.forEach(g=>{if(g.url)kits.push('Atticor '+g.label+': '+g.url)});
+   ak.guidelines.forEach(g=>{const u=(window.mamDocUrl?mamDocUrl(g.label,g.url):g.url);if(u)kits.push('Atticor '+g.label+': '+u)});
    return kits.length?'\n\nBrand kit / guidelines:\n'+kits.map(k=>'  '+k).join('\n'):'';
   }catch(e){return ''}
  };
@@ -2279,10 +2279,10 @@ function applyDataTruthB7v3(){
    const bank=(window.MAM_MERCH_BANK||[]).filter(x=>x.brand===b);
    const decks=(window.MAM_MERCH_DECKS||[]).filter(x=>x.brand===b);
    const recur=(state.playbooks||[]).filter(x=>x.brand===b);
-   function kitHTML(name,kit){if(!kit)return '';return '<div class="fact"><div class="label">'+esc(name)+' kit</div><div>'+kit.guidelines.map(g=>g.url?'<a href="'+esc(g.url)+'" target="_blank" style="color:var(--gold)">'+esc(g.label)+'</a>':esc(g.label)+' <span style="color:var(--gold)">'+esc(g.note)+'</span>').join('<br>')+(kit.palette.length?'<br>'+kit.palette.map(p=>'<span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:'+p[1]+';margin-right:3px;vertical-align:middle"></span>'+esc(p[0])).join(' · '):'')+(kit.fonts.length?'<br>'+esc(kit.fonts.join(' · ')):'')+'</div></div>'}
+   function kitHTML(name,kit){if(!kit)return '';return '<div class="fact"><div class="label">'+esc(name)+' kit</div><div>'+kit.guidelines.map(g=>{const u=(window.mamDocUrl?mamDocUrl(g.label,g.url):g.url);return (u?'<a href="'+esc(u)+'" target="_blank" style="color:var(--gold)">'+esc(g.label)+'</a>':esc(g.label)+' <span style="color:var(--gold)">'+esc(g.note)+'</span>')+' <button class="btn ghost" style="padding:1px 7px;font-size:10px" data-k="'+esc(g.label)+'" onclick="mamDocLinkEdit(this.dataset.k)">'+(u?'Edit link':'Add SharePoint link')+'</button>'}).join('<br>')+(kit.palette.length?'<br>'+kit.palette.map(p=>'<span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:'+p[1]+';margin-right:3px;vertical-align:middle"></span>'+esc(p[0])).join(' · '):'')+(kit.fonts.length?'<br>'+esc(kit.fonts.join(' · ')):'')+'</div></div>'}
    page.insertAdjacentHTML('beforeend','<div class="panel" id="brandPlaybookPanel" style="margin-top:12px"><h3>Brand Playbook · '+esc(b)+'</h3><div class="tiny" style="margin-bottom:7px">The brand kit and guidelines ride every Creative / Merch / Social ticket automatically. Missing links are flagged, never faked.</div>'+
     kitHTML(b,k)+kitHTML('Atticor',ak)+
-    (docs.length?'<div class="sectioncap" style="margin-top:8px">Activation playbooks</div>'+docs.map(d=>'<div class="fact"><div class="label">Doc</div><div>'+esc(d.label)+' <span style="color:var(--gold)">'+esc(d.note)+'</span></div></div>').join(''):'')+
+    (docs.length?'<div class="sectioncap" style="margin-top:8px">Activation playbooks</div>'+docs.map(d=>{const u=(window.mamDocUrl?mamDocUrl(d.label,d.url):d.url);return '<div class="fact"><div class="label">Doc</div><div>'+(u?'<a href="'+esc(u)+'" target="_blank" style="color:var(--gold)">'+esc(d.label)+'</a>':esc(d.label)+' <span style="color:var(--gold)">'+esc(d.note)+'</span>')+' <button class="btn ghost" style="padding:1px 7px;font-size:10px" data-k="'+esc(d.label)+'" onclick="mamDocLinkEdit(this.dataset.k)">'+(u?'Edit link':'Add SharePoint link')+'</button></div></div>'}).join(''):'')+
     (bank.length?'<div class="sectioncap" style="margin-top:8px">Existing merch designs</div>'+bank.map(x=>'<div class="fact"><div class="label">'+esc(x.status)+'</div><div>'+esc(x.name)+' — '+esc(x.note)+'</div></div>').join(''):'')+
     (decks.length?'<div class="sectioncap" style="margin-top:8px">Idea decks (BoomPromo)</div>'+decks.map(d=>'<div class="fact"><div class="label">Deck</div><div><a href="'+esc(d.url)+'" target="_blank" style="color:var(--gold)">'+esc(d.label)+'</a></div></div>').join(''):'')+
     (recur.length?'<div class="sectioncap" style="margin-top:8px">Saved recurrence playbooks</div>'+recur.map(x=>'<div class="fact"><div class="label">'+esc(x.dma||'')+'</div><div>'+esc(x.name)+' — '+esc(x.note||'')+'</div></div>').join(''):'')+
@@ -2710,7 +2710,7 @@ window.addEventListener('DOMContentLoaded',function(){
   P.push({t:'Merch Desk — The Stand-In That Works',body:pgP('<b>Why it exists:</b> MerchHub is not built yet. Until it ships, this room does the job: log what an event needs, ticket it to Merch (Creative looped when it needs a design), and track what we own and what we hand out.')+pgP('<b>Three tabs:</b> the work (statuses mirror MerchHub’s eight, so migration is clean), the stock (Received adds to inventory; send-outs subtract and log), and the catalog — approved items with real prices that estimate an order while you type. Existing designs reorder without a design round.')+pgP('<b>The rule:</b> merch approvals follow the brand — most route through Creative Ops; Keches is the exception and approves its own.'),fx:lips('top:30px;right:26px;opacity:.4;transform:rotate(14deg)')});
   P.push({t:'Landing Pages & UTMs — Honest Tracking',body:pgP('<b>What it is for:</b> the links and tags a campaign stands on. UTMs generate from the record so naming never drifts; landing pages attach to the records they serve.')+pgP('<b>The pixel check is real:</b> it fetches the actual page and looks for the actual tags. “Verified” means found; “unknown” means the check could not tell — and it says so. This room never claims certainty it does not have.')+pgP('<b>Sync stamps tell the truth:</b> “Synced” means Notion confirmed it. “Queued” means it has not — and it will ride the next campaign push rather than pretend.'),fx:burn('top:16px;left:12px;width:66px;height:66px;opacity:.16')});
   P.push({t:'Updates & Reports — The Monday Note',body:pgP('<b>What it is for:</b> what leadership sees. The Monday note gathers the week itself — what moved, what is due, whose plate is overloaded (three or more due-backs in a week flags a collision), and what money went stale.')+pgP('<b>Scoped sends:</b> every report knows its audience and its brand scope; cross-brand leaks are blocked at the door. Exports run to CSV, and the leadership view to Excel, whenever a meeting needs a file instead of a screen.')+pgP('<b>Same mail truth as tickets:</b> in TEST mode every report lands in-house first. What better place to rehearse the story than on yourself.'),fx:ink('top:28px;right:20px;opacity:.3')});
-  P.push({t:'Disclaimer Library — The Guard',body:pgP('<b>The rule it enforces:</b> state-bound language never crosses a state line. Required blocks attach only in the states that demand them; a record in a market the library does not cover routes to Ethics instead of guessing.')+pgP('<b>How it guards:</b> the state-bar detector reads the language itself, splits per-state blocks apart, and withholds anything that would land in the wrong market. Coverage gaps are flagged loudly on the page, and the library checks itself against the workbook for drift.')+pgP('<b>Your part:</b> when Ethics answers a flagged gap, the answer goes INTO the library — so the same question never flags twice.'),fx:burn('bottom:14px;left:12px;width:70px;height:70px;opacity:.18')});
+  P.push({t:'Disclaimer Library — The Guard',body:pgP('<b>The rule it enforces:</b> state-bound language never crosses a state line. Required blocks attach only in the states that demand them; a record in a market the library does not cover routes to Ethics instead of guessing.')+pgP('<b>How it guards:</b> the state-bar detector reads the language itself, splits per-state blocks apart, and withholds anything that would land in the wrong market. Coverage gaps are flagged loudly on the page, and the library checks itself against the workbook for drift.')+pgP('<b>Your part:</b> when Ethics answers a flagged gap, the answer goes INTO the library — so the same question never flags twice.')+pgP('<b>The live workbook:</b> the library is a snapshot of the disclaimer Excel on SharePoint. Link it once on this page and Mayhem reads the current sheets on demand and shows what drifted — nothing legal ever applies itself.'),fx:burn('bottom:14px;left:12px;width:70px;height:70px;opacity:.18')});
   P.push({t:'Contacts — The Only Room With Names',body:pgP('<b>Law VIII lives here.</b> Every human being — internal seats, brand counterparts, vendors, venue logistics, partner reps — with their numbers, emails and notes, grouped by organization and brand.')+pgP('<b>Also here: the playbooks.</b> Brand kits (palettes, fonts, the Canva kit), activation playbooks, and the chases for the guideline documents still owed to us. A ticket that needs a brand kit pulls its line from here automatically.')+pgP('<b>Keep it honest:</b> when a rep changes, change it here and it changes everywhere — the book, the tickets, the de-namer all read from this room.'),fx:ink('bottom:22px;right:18px;opacity:.35')});
   P.push({t:'The Guide — This Book',body:pgP('<b>What you are holding</b> is the department’s manual and memory. The front half is how the operation is meant to run; the back half is what the system knows right now — those pages rewrite themselves on every open.')+pgP('<b>How to read it:</b> the Index tab jumps anywhere. Purple margin notes are the house voice; pink ones are the chorus. The damage is decorative. The content is not.')+pgP('<b>When the app changes, this book changes</b> — that is a standing rule of every build. If a page describes something the app no longer does, that is a bug, and it gets fixed like one.')+pgP('<b>And it writes back.</b> The \u270e on any written page lets you rewrite it in your own words — saved to the book for everyone, on every device, with the original recoverable. Pages marked live have no pencil: they write themselves.')+meg('A guide that lies is worse than no guide. This one is not allowed to.'),fx:drool('top:40%;left:14px;width:56px;height:56px;opacity:.2')});
   /* ---- PART III · THE BRANDS ---- */
@@ -2728,7 +2728,7 @@ window.addEventListener('DOMContentLoaded',function(){
   const opens=(state.tickets||[]).filter(t=>t.status!=='Closed'&&t.due).sort((a,z2)=>String(a.due).localeCompare(String(z2.due))).slice(0,8);
   const pays=(state.payments||[]).filter(p=>p.status!=='Paid');
   P.push({t:'Open Loops — Live',body:(pays.length?pgP('<b>Money open:</b> '+pays.map(p=>esc(p.vendor)+' '+moneyFmt(p.amount)+(p.due?' due '+fmtDate(p.due):'')).join(' · ')):'')+(opens.length?opens.map(t=>'<p class="mbook-tight"><b class="mbook-lead" style="font-size:12px">'+fmtDate(t.due)+'</b> — '+esc(deName(String(t.ask)).slice(0,70))+'<br><span class="mbook-sub">'+esc(t.ownerRole||'owner on the ticket')+' · '+esc(t.status)+'</span></p>').join(''):pgP('Nothing owed back with a date on it. Suspicious.'))+meg('This page is why you open the book on Mondays.'),live:true,fx:ink('top:26px;left:20px;opacity:.3')});
-  const integ=[['Notion','live, both ways — you judge every conflict; the calendar pushes any month on demand'],['Doom creative','live — ISCIs with file links ride tickets'],['Doom mail','live in test mode — every send lands in-house'],['Contract reading','live — clean or scanned PDFs into intake'],['Calendar feeds','live — partners subscribe by link'],['Partner calendar pull','live — their events enter with you as the gate'],['MerchHub','blocked — the Merch Desk stands in'],['Email ingestion','pending — merged by hand, with receipts'],['Outlook internal feed','IT-blocked — parked, built, waiting']];
+  const integ=[['Notion','live, both ways — you judge every conflict; the calendar pushes any month on demand'],['Doom creative','live — ISCIs with file links ride tickets'],['Doom mail','live in test mode — every send lands in-house'],['Contract reading','live — clean or scanned PDFs into intake'],['Calendar feeds','live — partners subscribe by link'],['Partner calendar pull','live — their events enter with you as the gate'],['SharePoint documents','linked in-app — kits, playbooks, and the live disclaimer workbook read on demand'],['MerchHub','blocked — the Merch Desk stands in'],['Email ingestion','pending — merged by hand, with receipts'],['Outlook internal feed','IT-blocked — parked, built, waiting']];
   P.push({t:'The Machinery',body:integ.map(x=>'<p class="mbook-tight"><b class="mbook-lead">'+esc(x[0])+'</b> — '+esc(x[1])+'</p>').join('')+meg('Nothing on this page pretends. That was expensive to earn.'),live:true,fx:ink('bottom:20px;left:20px;opacity:.4')});
   P.push({t:'When Things Jam',body:pgP('<b>A feed link says “not configured”</b> — the deploy has not caught up. The Feeds panel diagnoses itself: follow its four steps, redeploy, press Re-check.')+pgP('<b>A Notion push says Queued</b> — Notion did not answer. Nothing is lost; the record rides the next push. Push again from the calendar or the record when Notion is back.')+pgP('<b>A send “arrived” in the wrong inbox</b> — that is TEST mode doing its job: every send lands in-house, stamped with its intended recipient, until mail is flipped live.')+pgP('<b>The contract reader shrugged</b> — a scan too rough even for it. The flagged [Confirm] fields are the honest residue; fill them by hand and the record is whole.')+pgP('<b>Anything else</b> — walk the spine (page III): find the record, read its sources, and the jam names itself.'),fx:burn('top:18px;right:14px;width:76px;height:76px;opacity:.2')});
   const srcs=(state.sources||[]).slice().reverse().slice(0,18);
@@ -3124,6 +3124,66 @@ window.addEventListener('DOMContentLoaded',function(){
  try{applyDataTruthB7v8()}catch(e){}
 })();
 /* ===== END DATA TRUTH v8 ===== */
+/* ===== SHAREPOINT LINKS + LIVE DISCLAIMER WORKBOOK (2026-08-27, per Emm: "we're supposed to link to our sharepoint… so you can see the live disclaimer excel") ===== */
+;(function(){
+ const WB_KEY='Disclaimer Workbook (SharePoint)';
+ window.mamDocUrl=function(label,seed){try{const o=(state.docLinks||{})[label];return (o&&o.url)||seed||''}catch(e){return seed||''}};
+ window.mamDocLinkEdit=function(label){
+  const cur=mamDocUrl(label,'');
+  modal('Link — '+label,'Paste the SharePoint share link once; it saves for everyone and rides tickets, panels and one-pagers from then on.',
+   '<div class="field c12"><label>SharePoint / OneDrive link</label><input id="dlUrl" value="'+esc(cur)+'" placeholder="https://…sharepoint.com/…"></div>'+
+   '<div class="detail" style="margin-top:4px">Https only. For a file the server must read (the live workbook), the share needs “Anyone with the link — view” until IT approves the Graph app; people-only links still open fine in the browser.</div>'+
+   '<div class="actions" style="margin-top:10px"><button class="btn" data-k="'+esc(label)+'" onclick="mamDocLinkSave(this.dataset.k)">Save Link</button>'+(cur?'<button class="btn secondary" data-k="'+esc(label)+'" onclick="mamDocLinkClear(this.dataset.k)">Remove</button>':'')+'<button class="btn secondary" onclick="closeModal()">Cancel</button></div>');
+ };
+ window.mamDocLinkSave=function(label){
+  const u=String((document.getElementById('dlUrl')||{}).value||'').trim();
+  if(!/^https:\/\//i.test(u)){toast('Needs an https link');return}
+  state.docLinks=state.docLinks||{};
+  state.docLinks[label]={url:u,updated:new Date().toISOString().slice(0,10)};
+  (state.sources=state.sources||[]).push({id:Date.now(),type:'Doc',name:'Document linked · '+label,status:'Applied',detail:'SharePoint link saved in-app',brand:'',dma:''});
+  saveState();closeModal();renderPage();toast('Linked — it rides tickets and the one-pager now');
+ };
+ window.mamDocLinkClear=function(label){
+  if(state.docLinks)delete state.docLinks[label];
+  saveState();closeModal();renderPage();toast('Link removed');
+ };
+ const _rlpSP=renderLibraryPage;
+ window.renderLibraryPage=function(el){
+  _rlpSP(el);
+  try{
+   const page=el.querySelector('.page');if(!page||el.querySelector('#liveWbPanel'))return;
+   const u=mamDocUrl(WB_KEY,'');
+   page.insertAdjacentHTML('beforeend','<div class="panel" id="liveWbPanel" style="margin-top:12px"><h3>The Live Workbook — SharePoint</h3>'+
+    (u?'<div class="fact"><div class="label">Linked</div><div style="word-break:break-all"><a href="'+esc(u)+'" target="_blank" rel="noopener" style="color:var(--gold)">Open the live disclaimer workbook</a></div></div>'+
+      '<div class="actions" style="margin-top:8px"><button class="btn" onclick="mamWorkbookRead()">Read the Live Workbook</button><button class="btn secondary" data-k="'+esc(WB_KEY)+'" onclick="mamDocLinkEdit(this.dataset.k)">Edit Link</button></div><div id="wbReadOut"></div>'
+     :'<div class="fact"><div class="label">Not linked yet</div><div>The library below is the workbook as of its last snapshot. Paste the SharePoint link to the live Excel and Mayhem reads the current sheets on demand and shows what drifted — the library itself changes only by a person’s hand.</div></div>'+
+      '<div class="actions" style="margin-top:8px"><button class="btn" data-k="'+esc(WB_KEY)+'" onclick="mamDocLinkEdit(this.dataset.k)">Add SharePoint Link</button></div>')+
+   '</div>');
+  }catch(e){}
+ };
+ window.mamWorkbookRead=async function(){
+  const u=mamDocUrl(WB_KEY,'');if(!u)return;
+  const out=document.getElementById('wbReadOut');
+  if(out)out.innerHTML='<div class="detail" style="margin-top:8px">Reading the live workbook…</div>';
+  let j=null;
+  try{const r=await fetch('/api/sharepoint-doc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u})});j=await r.json().catch(()=>null);if(!r.ok&&j&&!j.message)j={error:'fetch_failed',message:'Service answered '+r.status}}catch(e){}
+  if(!out)return;
+  if(!j||j.error){
+   out.innerHTML='<div class="fact" style="margin-top:8px"><div class="label">✗ Could not read it</div><div>'+esc((j&&j.message)||'The service didn’t answer — most likely the newest deploy hasn’t finished. Redeploy, then try again.')+'</div></div>';
+   return;
+  }
+  const norm=s2=>String(s2||'').toLowerCase().replace(/[^a-z]/g,'');
+  const libBrands=Object.keys(window.MAYHEM_DISCLAIMERS||{});
+  let html='<div class="fact" style="margin-top:8px"><div class="label">✓ Live read</div><div>'+j.sheets.length+' sheet'+(j.sheets.length===1?'':'s')+' · '+j.sheets.reduce((n,s2)=>n+s2.rows.length,0)+' rows · fetched '+esc(String(j.fetched).slice(11,16))+' UTC. Review only — legal language changes in the library only by a person.</div></div>';
+  j.sheets.forEach(function(s2){
+   const hit=libBrands.find(b=>norm(b)===norm(s2.name)||norm(s2.name).includes(norm(b).slice(0,6)));
+   const prev=s2.rows.slice(0,3).map(r=>r.filter(Boolean).slice(0,3).join(' · ')).filter(Boolean).map(x=>'<div class="detail">'+esc(String(x).slice(0,120))+'</div>').join('');
+   html+='<div class="workline"><div class="top"><div class="name">'+esc(s2.name)+'</div><span class="badge '+(hit?'green':'red')+'">'+(hit?'In the library':'NOT in the library — review')+'</span></div><div class="detail">'+s2.rows.length+' rows'+(hit?' · maps to '+esc(hit):'')+'</div>'+prev+'</div>';
+  });
+  out.innerHTML=html;
+ };
+})();
+/* ===== END SHAREPOINT LINKS + LIVE DISCLAIMER WORKBOOK ===== */
 ;(function(){
  function heal(){try{
   const bk=state.brands[state.currentBrand];
