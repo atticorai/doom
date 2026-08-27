@@ -2391,7 +2391,7 @@ window.addEventListener('DOMContentLoaded',function(){
     (all.length>5?'<div class="calmore">+'+(all.length-5)+' more — click the day</div>':'')+'</div>';
   }
   el.innerHTML='<div class="page">'+pageHead('Calendar','The working surface. Every campaign, ticket due-back, payment, and engine working date, in brand color. Click any day for the full detail; click through to the record, ticket, or AP room.',
-   '<button class="btn secondary" onclick="mamCalFeeds()">Feeds / Subscribe</button><select class="calfilter" onchange="calSetFilter(this.value)"><option value="ALL" '+((state.calBrandFilter||'ALL')==='ALL'?'selected':'')+'>All brands</option>'+brands().map(b=>'<option '+(state.calBrandFilter===b?'selected':'')+'>'+esc(b)+'</option>').join('')+'</select><button class="btn secondary" onclick="calShift(-1)">‹ Prev</button><button class="btn secondary" onclick="calShift(1)">Next ›</button>')+
+   '<button class="btn secondary" onclick="mamCalFeeds()">Feeds / Subscribe</button><button class="btn secondary" onclick="mamPartnerCalPull()">Pull Partner Calendar</button><select class="calfilter" onchange="calSetFilter(this.value)"><option value="ALL" '+((state.calBrandFilter||'ALL')==='ALL'?'selected':'')+'>All brands</option>'+brands().map(b=>'<option '+(state.calBrandFilter===b?'selected':'')+'>'+esc(b)+'</option>').join('')+'</select><button class="btn secondary" onclick="calShift(-1)">‹ Prev</button><button class="btn secondary" onclick="calShift(1)">Next ›</button>')+
    (function(){let a='<div class="calagenda">';const dk=Object.keys(byDay).map(Number).sort((x,z)=>x-z);if(!dk.length)a+='<div class="fact"><div class="label">'+label+'</div><div>Nothing dated this month'+(state.calBrandFilter&&state.calBrandFilter!=='ALL'?' for '+state.calBrandFilter:'')+'.</div></div>';dk.forEach(function(day){const iso=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');const ord2={campaign:0,payment:1,ticket:2,rule:3};const es=(byDay[day]||[]).slice().sort((p,q)=>(ord2[p.kind]??9)-(ord2[q.kind]??9));a+='<div class="cala-day" onclick="calOpenDay(\''+iso+'\')"><div class="cala-date">'+fmtDate(iso)+'</div>'+es.map(function(e){const col=(typeof MAM_BRAND_COLORS!=='undefined'&&MAM_BRAND_COLORS[e.brand])||'#8a93a6';return '<div class="cala-item'+(e.kind!=='campaign'?' calsoft':'')+'" style="border-left:3px solid '+col+'">'+esc(e.label)+'<span class="cala-sub">'+esc(e.sub||'')+'</span></div>'}).join('')+'</div>'});return a+'</div>'})()+'<div class="calhead">'+label+'</div><div class="calweek">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>'<div>'+x+'</div>').join('')+'</div><div class="calgrid">'+cells+'</div><div class="callegend">'+brands().map(function(b){const col=(typeof MAM_BRAND_COLORS!=='undefined'&&MAM_BRAND_COLORS[b])||'#8a93a6';return '<span class="calkey"><i style="background:'+col+'"></i>'+esc(b)+'</span>'}).join('')+'<span class="calkey"><i style="background:transparent;border:1px solid var(--line)"></i>italic = ticket / payment / working date</span></div>'+
    ((typeof mamCollisions==='function'&&mamCollisions().length)?'<div class="panel" style="margin-top:12px;border-left:3px solid var(--gold)"><h3>Load Collisions</h3>'+mamCollisions().map(c=>'<div class="fact"><div class="label">'+esc(c.owner)+' · '+esc(c.week)+'</div><div>'+c.n+' due-backs the same week: '+esc(c.asks.join(' · '))+'</div></div>').join('')+'</div>':'')+'</div>';
  };
@@ -2506,6 +2506,86 @@ window.addEventListener('DOMContentLoaded',function(){
  };
 })();
 /* ===== END MERCH DESK v2 ===== */
+
+/* ===== PARTNER CALENDAR PULL — the other half of the sync (per Emm: Jordan's calendar syncs WITH ours) ===== */
+;(function(){
+ const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+ window.mamPartnerCalSetup=function(){
+  const cfg=state.partnerCalendars||{};
+  modal('Partner Calendar — pull their events into the book','They share their calendar’s secret link once; Mayhem reads it and YOU approve what enters. Nothing writes itself.',
+   '<div class="fact"><div class="label">How they get the link (Google Calendar)</div><div>Settings → their calendar → “Integrate calendar” → copy the <b>Secret address in iCal format</b>. Outlook: Calendar settings → Shared calendars → Publish → ICS link.</div></div>'+
+   '<form class="formgrid" onsubmit="mamPartnerCalSave(event)"><div class="field c4"><label>Brand this calendar belongs to</label><select id="pcBrand">'+brands().map(b=>'<option '+(b==='Lerner & Rowe'?'selected':'')+'>'+esc(b)+'</option>').join('')+'</select></div><div class="field c8"><label>Their secret calendar link</label><input id="pcUrl" placeholder="https://calendar.google.com/calendar/ical/…/basic.ics" value="'+esc(cfg['Lerner & Rowe']||'')+'" required></div><div class="c12"><button class="btn">Save + Pull Now</button></div></form>'+
+   (Object.keys(cfg).length?'<div class="sectioncap" style="margin-top:8px">Saved calendars</div>'+Object.entries(cfg).map(([b,u])=>'<div class="fact"><div class="label">'+esc(b)+'</div><div style="word-break:break-all;font-size:10px">'+esc(u)+'</div></div>').join(''):''));
+ };
+ window.mamPartnerCalSave=function(e){
+  e.preventDefault();
+  const b=document.getElementById('pcBrand').value,u=document.getElementById('pcUrl').value.trim();
+  (state.partnerCalendars=state.partnerCalendars||{})[b]=u;saveState();closeModal();
+  mamPartnerCalPull(b);
+ };
+ window.mamPartnerCalPull=async function(brand){
+  const cfg=state.partnerCalendars||{};
+  brand=brand||Object.keys(cfg)[0];
+  if(!brand||!cfg[brand]){mamPartnerCalSetup();return}
+  toast('Pulling '+brand+' partner calendar…');
+  let j=null;
+  try{
+   const r=await fetch('/api/ical-pull',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:cfg[brand]})});
+   j=await r.json();
+   if(!r.ok){toast('Pull failed — '+esc(j.error||r.status));return}
+  }catch(e){toast('Pull failed — service unreachable');return}
+  const book=[];for(const d in state.brands[brand].markets)for(const c of state.brands[brand].markets[d].commitments)book.push({c,d});
+  const diffs=[],adds=[];
+  for(const ev of (j.events||[])){
+   if(!ev.start)continue;
+   const nm=norm(ev.summary);if(!nm)continue;
+   const hit=book.find(x=>{const cn=norm(x.c.name);return cn===nm||(nm.length>8&&(cn.includes(nm)||nm.includes(cn)))});
+   if(hit){
+    if(hit.c.anchor&&ev.start!==hit.c.anchor)diffs.push({kind:'Date differs',c:hit.c,d:hit.d,theirs:ev.start,ours:hit.c.anchor,ev});
+    else if(!hit.c.anchor)diffs.push({kind:'Date only in their calendar',c:hit.c,d:hit.d,theirs:ev.start,ours:hit.c.sourceTiming||'(no date)',ev});
+   }else{
+    adds.push({ev});
+   }
+  }
+  window.__mamPcPull={brand,diffs,adds,fetched:j.fetched,count:j.count};
+  state.partnerCalLastPull={brand,ts:Date.now(),count:j.count,diffs:diffs.length,adds:adds.length};saveState();
+  mamShowPartnerCalReconcile();
+ };
+ window.mamShowPartnerCalReconcile=function(){
+  const P=window.__mamPcPull;if(!P)return;
+  const open=P.diffs.filter(d=>!d.done).length+P.adds.filter(a=>!a.done).length;
+  modal('Partner Calendar Reconcile — '+esc(P.brand),P.count+' events in their calendar · '+P.diffs.length+' conflict'+(P.diffs.length===1?'':'s')+' · '+P.adds.length+' not in the book',
+   (P.diffs.length?'<div class="sectioncap">Conflicts — you decide</div>'+P.diffs.map((d,i)=>d.done?'<div class="fact"><div class="label">'+esc(d.kind)+'</div><div>'+esc(d.c.name)+' — '+(d.done==='accepted'?'their date applied':'our date kept')+'</div></div>':'<div class="decision"><div class="k">'+esc(d.kind)+'</div><div class="t">'+esc(d.c.name)+' · '+esc(d.d)+'</div><div class="m">Their calendar: <b>'+fmtDate(d.theirs)+'</b> · Our book: <b>'+esc(String(d.ours).match(/^\d{4}-/)?fmtDate(d.ours):d.ours)+'</b></div><div class="actions"><button class="btn" onclick="mamPcAccept('+i+')">Accept Theirs</button><button class="btn secondary" onclick="mamPcKeep('+i+')">Keep Ours</button></div></div>').join(''):'')+
+   (P.adds.length?'<div class="sectioncap" style="margin-top:10px">In their calendar, not in the book</div>'+P.adds.map((a,i)=>a.done?'<div class="fact"><div class="label">'+(a.done==='added'?'Added':'Skipped')+'</div><div>'+esc(a.ev.summary)+'</div></div>':'<div class="decision"><div class="k">NOT IN MAYHEM</div><div class="t">'+esc(a.ev.summary)+'</div><div class="m">'+fmtDate(a.ev.start)+(a.ev.end?' – '+fmtDate(a.ev.end):'')+(a.ev.location?' · '+esc(a.ev.location):'')+(a.ev.recurring?' · recurring':'')+'</div><div class="actions"><button class="btn" onclick="mamPcAdd('+i+')">Add to Book</button><button class="btn secondary" onclick="window.__mamPcPull.adds['+i+'].done=\'skipped\';mamShowPartnerCalReconcile()">Skip</button></div></div>').join(''):'')+
+   (!P.diffs.length&&!P.adds.length?'<div class="fact"><div class="label">Reconcile</div><div>The book already matches their calendar.</div></div>':'')+
+   '<div class="tiny" style="margin-top:10px">Every accepted change is stamped with partner-calendar provenance in Sources. '+(open?open+' still open.':'All decided.')+'</div>');
+ };
+ window.mamPcAccept=function(i){
+  const P=window.__mamPcPull;const d=P.diffs[i];if(!d||d.done)return;
+  const real=state.brands[P.brand].markets[d.d].commitments.find(x=>x.id===d.c.id);if(!real)return;
+  const old=real.anchor||d.ours;real.anchor=d.theirs;
+  state.sources.push({id:Date.now()+i,brand:P.brand,dma:d.d,commit:real.id,type:'Partner calendar',name:'Partner calendar reconcile — '+d.kind,status:'Applied',detail:String(old)+' → '+d.theirs});
+  addEvidence(real.id,'partner-cal',d.kind+': '+old+' → '+d.theirs+' (accepted from partner calendar)');
+  d.done='accepted';saveState();mamShowPartnerCalReconcile();
+ };
+ window.mamPcKeep=function(i){
+  const P=window.__mamPcPull;const d=P.diffs[i];if(!d||d.done)return;
+  state.sources.push({id:Date.now()+i,brand:P.brand,dma:d.d,commit:d.c.id,type:'Partner calendar',name:'Partner calendar reconcile — '+d.kind,status:'Kept Mayhem value',detail:'Their calendar said '+d.theirs+'; kept '+d.ours});
+  d.done='kept';saveState();mamShowPartnerCalReconcile();
+ };
+ window.mamPcAdd=function(i){
+  const P=window.__mamPcPull;const a=P.adds[i];if(!a||a.done)return;
+  const ev=a.ev;
+  const matched=markets(P.brand).find(m=>norm(ev.location||'').includes(norm(m))||norm(ev.summary).includes(norm(m)));
+  const d=matched||markets(P.brand)[0];
+  if(!state.brands[P.brand].markets[d])state.brands[P.brand].markets[d]={memory:[],commitments:[]};
+  const id='pc'+Date.now();
+  state.brands[P.brand].markets[d].commitments.push({id,kind:'Event',name:ev.summary,state:'Pre',anchor:ev.start,endDate:ev.end||'',partner:'',location:ev.location||'',funding:P.brand,channels:'',meta:(matched?'':'[Confirm market] location “'+(ev.location||'not given')+'” matched no operating market — filed under '+d+'. ')+'From the partner calendar'+(ev.recurring?' · recurring on their side':'')+(ev.description?' · '+String(ev.description).slice(0,120):''),money:{proposed:'',contracted:'',final:'',estimate:''},source:'Partner calendar pull · '+new Date().toISOString().slice(0,10)});
+  addEvidence(id,'partner-cal','Created from the partner calendar pull');
+  a.done='added';saveState();mamShowPartnerCalReconcile();
+ };
+})();
+/* ===== END PARTNER CALENDAR PULL ===== */
 
 /* ===== THE GUIDE — restored as a LIVE document (was dropped in the b7 rebuilds) =====
    Nothing here is hand-maintained: brands, markets, routes, and the Living
