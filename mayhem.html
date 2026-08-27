@@ -1208,7 +1208,7 @@ function openBrandDMA(b,d){
 }
 renderBrandsPage=function(el){
  let b=state.currentBrand;
- el.innerHTML=`<div class="page">${pageHead(`${b} — Campaign / Event Book`,'Brand → DMA → Campaign / Event.',`<button class="btn" onclick="go('intake')">+ New Intake</button>`)}<div class="market-grid">${markets(b).map(d=>{let m=state.brands[b].markets[d],active=d===state.currentDMA;return `<div class="market-card ${active?'active-dma':''}"><div class="market-head" role="button" tabindex="0" onclick="openBrandDMA('${b.replaceAll("'","\\'")}','${d.replaceAll("'","\\'")}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBrandDMA('${b.replaceAll("'","\\'")}','${d.replaceAll("'","\\'")}')}"><div><div class="dma">${esc(d)}</div><div class="sub">${m.commitments.length} campaign / event${m.commitments.length===1?'':'s'}</div></div></div>${m.commitments.map(c=>`<div class="commit-row" onclick="routeToCommit('${b.replaceAll("'","\\'")}','${d.replaceAll("'","\\'")}','${c.id}')"><div><div class="name">${esc(c.name)}</div><div class="meta">${c.anchor?fmtDate(c.anchor):esc(c.sourceTiming||c.meta||'Date TBD')}${c.money?.estimate?' · Est. '+esc(c.money.estimate):''}</div></div><span class="badge ${/closed|completed/i.test(c.state)?'green':/needs|pending/i.test(c.state)?'red':'gold'}">${esc(c.state)}</span></div>`).join('')||'<div class="fact"><div class="label">Campaigns / Events</div><div>No current records in this DMA.</div></div>'}</div>`}).join('')}</div></div>`;
+ el.innerHTML=`<div class="page">${pageHead(`${b} — Campaign / Event Book`,'Brand → DMA → Campaign / Event.',`<button class="btn secondary" onclick="mamBrandOnePager()">Brand One-Pager</button><button class="btn" onclick="go('intake')">+ New Intake</button>`)}<div class="market-grid">${markets(b).map(d=>{let m=state.brands[b].markets[d],active=d===state.currentDMA;return `<div class="market-card ${active?'active-dma':''}"><div class="market-head" role="button" tabindex="0" onclick="openBrandDMA('${b.replaceAll("'","\\'")}','${d.replaceAll("'","\\'")}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBrandDMA('${b.replaceAll("'","\\'")}','${d.replaceAll("'","\\'")}')}"><div><div class="dma">${esc(d)}</div><div class="sub">${m.commitments.length} campaign / event${m.commitments.length===1?'':'s'}</div></div></div>${m.commitments.map(c=>`<div class="commit-row" onclick="routeToCommit('${b.replaceAll("'","\\'")}','${d.replaceAll("'","\\'")}','${c.id}')"><div><div class="name">${esc(c.name)}</div><div class="meta">${c.anchor?fmtDate(c.anchor):esc(c.sourceTiming||c.meta||'Date TBD')}${c.money?.estimate?' · Est. '+esc(c.money.estimate):''}</div></div><span class="badge ${/closed|completed/i.test(c.state)?'green':/needs|pending/i.test(c.state)?'red':'gold'}">${esc(c.state)}</span></div>`).join('')||'<div class="fact"><div class="label">Campaigns / Events</div><div>No current records in this DMA.</div></div>'}</div>`}).join('')}</div></div>`;
 }
 function canonicalTicketCard(t){let c=commitById(t.commit,t.brand,t.dma),ret=t.returnData?(typeof returnSummary==='function'?returnSummary(t):(t.returnData.summary||'')):'';return `<div class="ticket-card"><div class="ticket-card-top"><div><div class="ticket-type">${esc(t.type||'Ticket')}</div><div class="ticket-title">${esc(t.ask||'')}</div><div class="ticket-meta">${esc(c?.name||'Campaign / Event')} · ${esc(t.owner||t.ownerRole||'Unassigned')}${t.to?' · '+esc(t.to):''}</div></div><span class="badge ${t.status==='Closed'?'green':t.status==='Changes'?'red':'gold'}">${esc(t.status||'Draft')}</span></div><div class="ticket-detail"><b>Due back:</b> ${t.due?fmtDate(t.due):'Not set'} · <b>Protects:</b> ${esc(t.protects||'Not set')}</div>${t.returnRequired?`<div class="ticket-detail"><b>Return required:</b> ${esc(t.returnRequired)}</div>`:''}${ret?`<div class="returnstamp"><b>Returned:</b> ${esc(ret)}</div>`:''}<div class="ticketactions"><button class="btn secondary" onclick="openTicket(${t.id})">Open</button></div></div>`}
 renderTicketsPage=function(el){let ts=(state.tickets||[]).filter(t=>t.brand===state.currentBrand&&t.dma===state.currentDMA).sort((a,b)=>String(a.due||'9999').localeCompare(String(b.due||'9999')));el.innerHTML=`<div class="page">${pageHead('Tickets',`${state.currentBrand} · ${state.currentDMA} · requests that actually leave your desk.`,`<button class="btn" onclick="openNewTicket(state.currentCommit,'Other')">+ New Ticket</button>`)}<div class="grid3"><div class="stat"><b>${ts.filter(t=>t.status==='Draft').length}</b><span>draft / need to send</span></div><div class="stat"><b>${ts.filter(t=>t.sent&&!t.returnData&&t.status!=='Closed').length}</b><span>waiting on return</span></div><div class="stat"><b>${ts.filter(t=>t.status==='Closed').length}</b><span>closed</span></div></div><div class="panel" style="margin-top:12px"><h3>${esc(state.currentDMA)} tickets</h3>${ts.length?ts.map(canonicalTicketCard).join(''):'<div class="fact"><div class="label">Tickets</div><div>No tickets have been created for this DMA.</div></div>'}</div></div>`}
@@ -2701,7 +2701,7 @@ window.addEventListener('DOMContentLoaded',function(){
   P.push({t:'How Work Moves',body:pgP('<b>Everything follows one spine.</b> A deal enters through Intake and becomes a record. The record’s dates arm the House Clock, which writes deadlines onto the Calendar. Deadlines become Tickets — asks with owners and due-backs. Tickets go out by mail; what comes back lands in Content &amp; Results as proof. Money flows through AP. The Monday note reports what moved and what stalled.')+pgP('<b>So when something looks wrong, walk the spine.</b> A missing deadline traces to a record with no date. A silent vendor traces to a ticket never sent. A wrong dollar on a report traces to a record whose money went stale. The room is never the problem — the record behind it is.')+pgP('<b>And nothing skips the spine.</b> Work that arrives sideways — a hallway ask, a text, an email — gets a record first, or it does not exist.')+muse('One spine, one flow, from intake to wrap —','if it isn’t on a record, it fell in a gap!'),fx:ink('top:26px;right:18px;opacity:.3')});
   /* ---- PART II · THE ROOMS (one page per room of the app) ---- */
   P.push({t:'Home — The Pulse',body:pgP('<b>What it is for:</b> the first ninety seconds of the day. Every open flag across every brand, by market — stale money, dateless records, unsent tickets, missed returns.')+pgP('<b>The routine:</b> read the flags, open the worst one first, work it where it lives. A flag never clears by itself — it clears because the record underneath it got fixed.')+pgP('<b>The trap:</b> a quiet Home is not a finished department. Flags only know what records know. If a deal never entered the book, no flag will ever miss it — that is why the Calendar and the Living Record get a look even on quiet days.'),fx:burn('bottom:12px;left:14px;width:70px;height:70px;opacity:.16')});
-  P.push({t:'Brands — The Book of Record',body:pgP('<b>What it is for:</b> the records themselves. Brand → market → record; each record carries its whole life — dates with their why, three-stage money, tickets, obligations, returns, and every source that ever touched it.')+pgP('<b>Editing:</b> every fact on the truth panel edits in place. Every edit pushes to Notion and stamps its reason. The context bar up top is the address of what you are looking at — if the numbers look wrong, check the address first.')+pgP('<b>Archive rules:</b> denied and superseded records move to the archive and stay there. They never delete, and they never quietly come back — resurrecting one is a deliberate act with a paper trail.'),fx:ink('bottom:20px;right:16px;opacity:.35')});
+  P.push({t:'Brands — The Book of Record',body:pgP('<b>What it is for:</b> the records themselves. Brand → market → record; each record carries its whole life — dates with their why, three-stage money, tickets, obligations, returns, and every source that ever touched it.')+pgP('<b>Editing:</b> every fact on the truth panel edits in place. Every edit pushes to Notion and stamps its reason. The context bar up top is the address of what you are looking at — if the numbers look wrong, check the address first.')+pgP('<b>Archive rules:</b> denied and superseded records move to the archive and stay there. They never delete, and they never quietly come back — resurrecting one is a deliberate act with a paper trail.')+pgP('<b>The Brand One-Pager</b> lives here too: one button builds the whole brand on a page — calendar, budget, latest creative with links, merch, kit, contacts — ready to copy into an email for the brand managers.'),fx:ink('bottom:20px;right:16px;opacity:.35')});
   P.push({t:'Intake — The Four Doors',body:pgP('<b>Work enters four ways,</b> and each door stamps its source:')+'<p class="mbook-tight"><span class="mbook-rom">I.</span> <b>The form</b> — channels chosen drive what the deal will need: creative specs, disclaimers, Meta, social, Ethics.</p><p class="mbook-tight"><span class="mbook-rom">II.</span> <b>A contract</b> — drop the PDF; the reader pulls dates, dollars, obligations and contacts, even from scans. Anything it is not sure of arrives flagged [Confirm], never guessed.</p><p class="mbook-tight"><span class="mbook-rom">III.</span> <b>A spreadsheet</b> — CSV import that recognizes records it already holds and skips them.</p><p class="mbook-tight"><span class="mbook-rom">IV.</span> <b>Notion</b> — the pull shows every difference side by side; you accept theirs, keep ours, or add the new. Nothing merges itself.</p>'+meg('Four doors, one rule: everything that enters says where it came from.'),fx:burn('top:14px;right:12px;width:64px;height:64px;opacity:.18')});
   P.push({t:'Tickets — The Outbound Machine',body:pgP('<b>What a ticket is:</b> an ask, an owner, a due-back, and what it protects. '+openTk.length+' are open right now. A ticket without a due-back is a wish, not a ticket.')+pgP('<b>Routes:</b> Creative, Merch, Social, Meta, Ethics, Partner — each route knows its recipient, and the brand kit line rides every body so nobody designs off the wrong palette. Creative tickets pull the latest cut from Doom automatically, links included.')+pgP('<b>Mail truth:</b> every send goes through real mail — but in TEST mode, every send lands in-house with its intended recipient stamped on it. Nothing reaches a vendor until the switch flips. What the ticket says was sent, was sent.'),fx:ink('top:30px;left:18px;opacity:.3')});
   P.push({t:'Content & Results — Proof, Not Vibes',body:pgP('<b>What it is for:</b> what we are owed back. Every obligation a partner signed up for lives here with an expected count and a proof source — stage mentions, booth photos, social posts, attendance.')+pgP('<b>Wrap arms itself:</b> the day after an event ends, the wrap sequence starts asking — attendance at +1, social metrics at +3, press at +5, the recap at +7. Nobody has to remember; the clock does.')+pgP('<b>The standard:</b> a sponsorship without collected proof is a donation. When renewal talk starts, this room is the argument.'),fx:drool('top:34%;right:12px;width:60px;height:60px;opacity:.2')});
@@ -2993,6 +2993,78 @@ window.addEventListener('DOMContentLoaded',function(){
  };
 })();
 /* ===== END CALENDAR → NOTION PUSH ===== */
+/* ===== BRAND ONE-PAGER (2026-08-27, per Hazel via Emm: one page overview to communicate with the brand managers — social calendar, doom links, merch links, budgets) ===== */
+;(function(){
+ function opData(b){
+  const today=new Date().toISOString().slice(0,10);
+  const dated=[],tbd=[];
+  markets(b).forEach(function(d){
+   ((state.brands[b].markets[d]||{}).commitments||[]).forEach(function(c){
+    if(/denied|archiv/i.test(c.state||''))return;
+    const closed=/closed|done|wrapped/i.test(c.state||'');
+    if(c.anchor){if(String(c.anchor).slice(0,10)>=today&&!closed)dated.push({c:c,d:d})}
+    else if(!closed)tbd.push({c:c,d:d});
+   });
+  });
+  dated.sort(function(a,z2){return String(a.c.anchor).localeCompare(String(z2.c.anchor))});
+  let contracted=0,final=0;
+  markets(b).forEach(function(d){((state.brands[b].markets[d]||{}).commitments||[]).forEach(function(c){
+   if(/denied|archiv|closed|done|wrapped/i.test(c.state||''))return;
+   contracted+=(+((c.money||{}).contracted)||0);final+=(+((c.money||{}).final)||0);
+  })});
+  const unpaid=(state.payments||[]).filter(function(p){return p.brand===b&&p.status!=='Paid'});
+  const creative=[];
+  try{markets(b).forEach(function(d){(mamLatestCreative(b,d)||[]).slice(0,3).forEach(function(r){creative.push({d:d,code:r[0],title:r[1],media:r[2],dur:r[5],url:r[9]||''})})})}catch(e){}
+  const orders=(state.merchOrders||[]).filter(function(o){return o.brand===b&&o.status!=='Received'&&o.status!=='Cancelled'});
+  const stock=(state.merchStock||[]).filter(function(s2){return s2.brand===b&&(+s2.onHand||0)>0});
+  const decks=(window.MAM_MERCH_DECKS||[]).filter(function(x){return x.brand===b});
+  const kit=(function(){try{return String(mamBrandKitLine(b)||'').replace(/^\s*Brand kit \/ guidelines:\s*/,'').split('\n').map(function(x){return x.trim()}).filter(Boolean)}catch(e){return[]}})();
+  const contacts=(state.contacts||[]).filter(function(x){return x.brand===b});
+  return {b:b,today:today,dated:dated,tbd:tbd,contracted:contracted,final:final,unpaid:unpaid,creative:creative.slice(0,12),orders:orders,stock:stock,decks:decks,kit:kit,contacts:contacts};
+ }
+ function opText(D){
+  const L=[];
+  L.push(D.b+' — Brand Overview · '+fmtDate(D.today));L.push('');
+  L.push('CALENDAR (upcoming)');
+  D.dated.forEach(function(r){L.push('  '+fmtDate(r.c.anchor)+' — '+r.c.name+' ('+r.d+') · '+(r.c.state||''))});
+  D.tbd.forEach(function(r){L.push('  Date TBD — '+r.c.name+' ('+r.d+')')});
+  if(!D.dated.length&&!D.tbd.length)L.push('  Nothing open on the calendar.');
+  L.push('');L.push('BUDGET (open records)');
+  L.push('  Contracted '+moneyFmt(D.contracted)+' · Final '+moneyFmt(D.final)+' — proposal money not included');
+  D.unpaid.forEach(function(p){L.push('  Open payment: '+p.vendor+' '+moneyFmt(p.amount)+(p.due?' due '+fmtDate(p.due):''))});
+  if(D.creative.length){L.push('');L.push('LATEST CREATIVE (out of Doom)');D.creative.forEach(function(r){L.push('  '+r.code+' — '+r.title+' ('+r.d+' · '+r.media+(r.dur?' :'+r.dur:'')+')'+(r.url?' '+r.url:''))})}
+  L.push('');L.push('MERCH');
+  D.orders.forEach(function(o){L.push('  In flight: '+o.item+' ×'+o.qty+' — '+o.status)});
+  D.stock.forEach(function(s2){L.push('  On hand: '+s2.item+' ×'+s2.onHand)});
+  D.decks.forEach(function(x){L.push('  Deck: '+x.label+' — '+x.url)});
+  if(!D.orders.length&&!D.stock.length&&!D.decks.length)L.push('  Nothing in flight.');
+  if(D.kit.length){L.push('');L.push('BRAND KIT / GUIDELINES');D.kit.forEach(function(k){L.push('  '+k)})}
+  if(D.contacts.length){L.push('');L.push('KEY CONTACTS');D.contacts.forEach(function(x){L.push('  '+(x.org||'')+' · '+(x.name||'')+(x.role?' — '+x.role:'')+(x.email?' · '+x.email:''))})}
+  L.push('');L.push('Live views: '+location.origin+'/mayhem.html (Mayhem) · '+location.origin+'/ (Doom)');
+  L.push('Calendar feed link: from the Feeds / Subscribe panel on the Mayhem calendar.');
+  return L.join('\n');
+ }
+ window.mamBrandOnePager=function(){
+  const D=opData(state.currentBrand);
+  window.__mamOnePagerText=opText(D);
+  function sec(t,inner){return '<div class="fact" style="margin-top:10px"><div class="label">'+t+'</div><div style="min-width:0">'+inner+'</div></div>'}
+  const cal=(D.dated.map(function(r){return '<div class="workline"><div class="top"><div class="name">'+esc(r.c.name)+'</div><span class="badge gold">'+fmtDate(r.c.anchor)+'</span></div><div class="detail">'+esc(r.d)+' · '+esc(r.c.state||'')+'</div></div>'}).join('')+
+   (D.tbd.length?'<div class="detail" style="margin-top:6px">Date TBD: '+D.tbd.map(function(r){return esc(r.c.name)+' ('+esc(r.d)+')'}).join(' · ')+'</div>':''))||'<div>Nothing open on the calendar.</div>';
+  const bud='<div><b>'+moneyFmt(D.contracted)+'</b> contracted · <b>'+moneyFmt(D.final)+'</b> final across open records <span class="detail">(proposal money not included)</span></div>'+
+   (D.unpaid.length?D.unpaid.map(function(p){return '<div class="detail">Open payment: '+esc(p.vendor)+' '+moneyFmt(p.amount)+(p.due?' due '+fmtDate(p.due):'')+'</div>'}).join(''):'');
+  const cre=D.creative.length?D.creative.map(function(r){return '<div class="detail">'+esc(r.code)+' — '+esc(r.title)+' <span style="opacity:.7">('+esc(r.d)+' · '+esc(r.media)+(r.dur?' :'+esc(String(r.dur)):'')+')</span>'+(r.url?' · <a href="'+esc(r.url)+'" target="_blank" rel="noopener">file</a>':'')+'</div>'}).join(''):'<div>No active creative on the Doom bridge for this brand.</div>';
+  const mer=(D.orders.map(function(o){return '<div class="detail">In flight: '+esc(o.item)+' ×'+esc(String(o.qty))+' — '+esc(o.status)+'</div>'}).join('')+
+   D.stock.map(function(s2){return '<div class="detail">On hand: '+esc(s2.item)+' ×'+esc(String(s2.onHand))+'</div>'}).join('')+
+   D.decks.map(function(x){return '<div class="detail">Deck: <a href="'+esc(x.url)+'" target="_blank" rel="noopener">'+esc(x.label)+'</a></div>'}).join(''))||'<div>Nothing in flight.</div>';
+  const kit=D.kit.length?D.kit.map(function(k){return '<div class="detail">'+esc(k)+'</div>'}).join(''):'<div>No kit on file — the chase is logged in Contacts.</div>';
+  const con=D.contacts.length?D.contacts.map(function(x){return '<div class="detail"><b>'+esc(x.org||'')+'</b> · '+esc(x.name||'')+(x.role?' — '+esc(x.role):'')+(x.email?' · '+esc(x.email):'')+'</div>'}).join(''):'<div>No contacts filed for this brand yet.</div>';
+  modal(D.b+' — Brand One-Pager','Everything a brand manager needs on one page · '+fmtDate(D.today),
+   sec('On the calendar',cal)+sec('Budget',bud)+sec('Latest creative — out of Doom, links included',cre)+sec('Merch',mer)+sec('Brand kit / guidelines',kit)+sec('Key contacts',con)+
+   sec('Share it','<div class="detail">Copy drops the whole overview as clean text for an email or Teams post. When mail goes live, this page can send itself.</div>')+
+   '<div class="actions" style="margin-top:10px"><button class="btn" onclick="navigator.clipboard.writeText(window.__mamOnePagerText).then(function(){toast(\'Copied — paste into an email or Teams\')})">Copy for Email / Teams</button><button class="btn secondary" onclick="closeModal()">Close</button></div>');
+ };
+})();
+/* ===== END BRAND ONE-PAGER ===== */
 ;(function(){
  function heal(){try{
   const bk=state.brands[state.currentBrand];
