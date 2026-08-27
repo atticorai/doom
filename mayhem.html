@@ -2672,11 +2672,11 @@ window.addEventListener('DOMContentLoaded',function(){
 })();
 /* ===== END ADD FROM THE CALENDAR ===== */
 
-/* ===== THE GUIDE, AS THE BOOK v2 (full mimic of Doom's tome — Mayhem gold; content LIVE) ===== */
+/* ===== THE GUIDE, AS THE BOOK v3 (true tome: paired leaves, 3D turns, two-page spread — Doom's mechanics, Mayhem gold; content LIVE, one page per room) ===== */
 ;(function(){
  try{var l=document.getElementById('mbookFonts');if(l)l.href='https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=MedievalSharp&family=Caveat:wght@600&display=swap';else{l=document.createElement('link');l.id='mbookFonts';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=MedievalSharp&family=Caveat:wght@600&display=swap';document.head.appendChild(l)}}catch(e){}
- const GOLD='#d4a642',GOLD_SOFT='rgba(212,166,66,.55)',INK='#2a1a12',MEG='#6b4a8f',MUSE='#b85c7e';
- const ROM=['','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI','XXII'];
+ const ROM=['','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI','XXII','XXIII','XXIV','XXV','XXVI','XXVII','XXVIII','XXIX','XXX','XXXI','XXXII','XXXIII','XXXIV'];
+ const GOLD_SOFT='rgba(212,166,66,.5)';
  function orn(pos){const m={'tl':'top:10px;left:10px;border-top:2px solid;border-left:2px solid','tr':'top:10px;right:10px;border-top:2px solid;border-right:2px solid','bl':'bottom:10px;left:10px;border-bottom:2px solid;border-left:2px solid','br':'bottom:10px;right:10px;border-bottom:2px solid;border-right:2px solid'};return '<div class="mbook-orn" style="'+m[pos]+';border-color:'+GOLD_SOFT+'"></div>'}
  function keyDiv(){return '<div class="mbook-key"></div>'}
  function meg(t){return '<div class="mbook-note">'+esc(t)+'<span class="mbook-note-sig">— Meg</span></div>'}
@@ -2691,13 +2691,34 @@ window.addEventListener('DOMContentLoaded',function(){
   function deName(s){s=String(s||'');try{const ppl=[];(state.contacts||[]).forEach(function(c){if(c.name&&String(c.name).trim().length>3)ppl.push([String(c.name).trim(),String(c.role||c.org||'contact').split(' — ')[0].split('—')[0].trim().slice(0,44)])});(state.teamContacts||[]).forEach(function(c){if(c.name&&String(c.name).trim().length>3)ppl.push([String(c.name).trim(),String(c.role||'the team').trim()])});ppl.sort(function(a,z2){return z2[0].length-a[0].length});ppl.forEach(function(p2){if(s.indexOf(p2[0])>=0)s=s.split(p2[0]).join('the '+p2[1])})}catch(e){}return s}
   function bookCount(b){let n=0;markets(b).forEach(d=>{n+=(state.brands[b].markets[d]?.commitments||[]).length});return n}
   function statesFor(b){try{const rb=window.MAYHEM_DISCLAIMERS[(typeof DOOM_BRAND!=='undefined'&&DOOM_BRAND[b])||b];return [...new Set((rb?.dmas||[]).map(x=>x.state).filter(Boolean))].join(', ')}catch(e){return ''}}
-  P.push({t:'What This Is',body:pgP('The operating book of the marketing department. One record per deal; every date, dollar, ticket and return lives against it; Notion, the calendar feeds, and the reports all flow from it.')+pgP('This book is the knowledge that is NOT on the screens: who funds what, who approves what, which state demands which words, what the house deadlines are, and who to call. The pages marked <b>live</b> rewrite themselves from the system.')+meg('Everything in here writes itself. The judgment is still your job.'),fx:burn('bottom:8px;right:8px;width:100px;height:100px;opacity:.22')});
+  const openTk=(state.tickets||[]).filter(t=>t.status!=='Closed');
+  const unpaid=(state.payments||[]).filter(p=>p.status!=='Paid');
+  let allRecs=0;brands().forEach(b=>{allRecs+=bookCount(b)});
+  /* ---- PART I · THE OPERATION ---- */
+  P.push({t:'What This Is',body:pgP('The operating book of the marketing department. One record per deal; every date, dollar, ticket and return lives against it; Notion, the calendar feeds, and the reports all flow from it. Right now the book holds <b>'+allRecs+' records</b> across '+brands().length+' brands, with '+openTk.length+' tickets open and '+unpaid.length+' payments unpaid.')+pgP('This book is the knowledge that is NOT on the screens: how work is meant to move, who funds what, which state demands which words, what the house deadlines are, and what to do when something jams. The pages marked <b>live</b> rewrite themselves from the system every time the book opens.')+meg('Everything in here writes itself. The judgment is still your job.'),fx:burn('bottom:8px;right:8px;width:100px;height:100px;opacity:.22')});
   const laws=['One record per deal — its whole life in one place.','Nothing overwrites itself: conflicts surface for a decision, and every merge carries its source.','Proposal money is never shown as committed money.','Dates carry their why; the engine rolls them off weekends.','Disclaimers are market-true — unknown coverage flags to Ethics.','Email runs in TEST mode until it is flipped live — every send lands in-house until then.','Superseded truth is archived, never deleted.','Names live in one room only — Contacts. Everywhere else, this book speaks in roles.'];
   P.push({t:'The Laws',body:laws.map((x,i)=>'<p class="mbook-tight"><span class="mbook-rom">'+ROM[i+1]+'.</span> '+esc(x)+'</p>').join('')+meg('Break one and I will know.'),fx:burn('top:12px;left:10px;width:76px;height:76px;opacity:.18')});
+  P.push({t:'How Work Moves',body:pgP('<b>Everything follows one spine.</b> A deal enters through Intake and becomes a record. The record’s dates arm the House Clock, which writes deadlines onto the Calendar. Deadlines become Tickets — asks with owners and due-backs. Tickets go out by mail; what comes back lands in Content &amp; Results as proof. Money flows through AP. The Monday note reports what moved and what stalled.')+pgP('<b>So when something looks wrong, walk the spine.</b> A missing deadline traces to a record with no date. A silent vendor traces to a ticket never sent. A wrong dollar on a report traces to a record whose money went stale. The room is never the problem — the record behind it is.')+pgP('<b>And nothing skips the spine.</b> Work that arrives sideways — a hallway ask, a text, an email — gets a record first, or it does not exist.')+muse('One spine, one flow, from intake to wrap —','if it isn’t on a record, it fell in a gap!'),fx:ink('top:26px;right:18px;opacity:.3')});
+  /* ---- PART II · THE ROOMS (one page per room of the app) ---- */
+  P.push({t:'Home — The Pulse',body:pgP('<b>What it is for:</b> the first ninety seconds of the day. Every open flag across every brand, by market — stale money, dateless records, unsent tickets, missed returns.')+pgP('<b>The routine:</b> read the flags, open the worst one first, work it where it lives. A flag never clears by itself — it clears because the record underneath it got fixed.')+pgP('<b>The trap:</b> a quiet Home is not a finished department. Flags only know what records know. If a deal never entered the book, no flag will ever miss it — that is why the Calendar and the Living Record get a look even on quiet days.'),fx:burn('bottom:12px;left:14px;width:70px;height:70px;opacity:.16')});
+  P.push({t:'Brands — The Book of Record',body:pgP('<b>What it is for:</b> the records themselves. Brand → market → record; each record carries its whole life — dates with their why, three-stage money, tickets, obligations, returns, and every source that ever touched it.')+pgP('<b>Editing:</b> every fact on the truth panel edits in place. Every edit pushes to Notion and stamps its reason. The context bar up top is the address of what you are looking at — if the numbers look wrong, check the address first.')+pgP('<b>Archive rules:</b> denied and superseded records move to the archive and stay there. They never delete, and they never quietly come back — resurrecting one is a deliberate act with a paper trail.'),fx:ink('bottom:20px;right:16px;opacity:.35')});
+  P.push({t:'Intake — The Four Doors',body:pgP('<b>Work enters four ways,</b> and each door stamps its source:')+'<p class="mbook-tight"><span class="mbook-rom">I.</span> <b>The form</b> — channels chosen drive what the deal will need: creative specs, disclaimers, Meta, social, Ethics.</p><p class="mbook-tight"><span class="mbook-rom">II.</span> <b>A contract</b> — drop the PDF; the reader pulls dates, dollars, obligations and contacts, even from scans. Anything it is not sure of arrives flagged [Confirm], never guessed.</p><p class="mbook-tight"><span class="mbook-rom">III.</span> <b>A spreadsheet</b> — CSV import that recognizes records it already holds and skips them.</p><p class="mbook-tight"><span class="mbook-rom">IV.</span> <b>Notion</b> — the pull shows every difference side by side; you accept theirs, keep ours, or add the new. Nothing merges itself.</p>'+meg('Four doors, one rule: everything that enters says where it came from.'),fx:burn('top:14px;right:12px;width:64px;height:64px;opacity:.18')});
+  P.push({t:'Tickets — The Outbound Machine',body:pgP('<b>What a ticket is:</b> an ask, an owner, a due-back, and what it protects. '+openTk.length+' are open right now. A ticket without a due-back is a wish, not a ticket.')+pgP('<b>Routes:</b> Creative, Merch, Social, Meta, Ethics, Partner — each route knows its recipient, and the brand kit line rides every body so nobody designs off the wrong palette. Creative tickets pull the latest cut from Doom automatically, links included.')+pgP('<b>Mail truth:</b> every send goes through real mail — but in TEST mode, every send lands in-house with its intended recipient stamped on it. Nothing reaches a vendor until the switch flips. What the ticket says was sent, was sent.'),fx:ink('top:30px;left:18px;opacity:.3')});
+  P.push({t:'Content & Results — Proof, Not Vibes',body:pgP('<b>What it is for:</b> what we are owed back. Every obligation a partner signed up for lives here with an expected count and a proof source — stage mentions, booth photos, social posts, attendance.')+pgP('<b>Wrap arms itself:</b> the day after an event ends, the wrap sequence starts asking — attendance at +1, social metrics at +3, press at +5, the recap at +7. Nobody has to remember; the clock does.')+pgP('<b>The standard:</b> a sponsorship without collected proof is a donation. When renewal talk starts, this room is the argument.'),fx:drool('top:34%;right:12px;width:60px;height:60px;opacity:.2')});
+  P.push({t:'AP / Expenses — The Ledger',body:pgP('<b>What it is for:</b> every dollar promised, across the whole book at once — '+unpaid.length+' open payment'+(unpaid.length===1?'':'s')+' right now, overdue and due-soon called out, each one a click from the record it belongs to.')+pgP('<b>Budget check-ins:</b> every active record’s money gets a monthly “still accurate” confirmation. Thirty days without one and the record goes stale — and stale money rides the Monday note until someone owns it.')+pgP('<b>The fraud rule lives here too:</b> a payment request that changes a vendor’s known method — a sudden wire, a new account — gets a phone call to a number we already had, never a payment.'),fx:burn('bottom:10px;right:14px;width:72px;height:72px;opacity:.18')});
+  P.push({t:'Calendar — The Clock on the Wall',body:pgP('<b>What is on it:</b> campaigns in bold, ticket due-backs, payment dates, and the house-rule deadlines each with their why. Filter by brand; open any day for the detail; add straight to a day and the record files itself — to the book and to Notion.')+pgP('<b>In and out:</b> partners subscribe by feed link and see only what their scope allows — never money, never tickets. A partner’s own calendar pulls in through reconcile, with you as the gate and unmatched markets flagged, never guessed. And any month pushes to Notion on demand — shown first, confirmed by you, no duplicates ever.')+pgP('<b>On the phone</b> the grid becomes an agenda list — same truth, thumb-sized.'),fx:ink('bottom:18px;left:20px;opacity:.35')});
+  P.push({t:'Merch Desk — The Stand-In That Works',body:pgP('<b>Why it exists:</b> MerchHub is not built yet. Until it ships, this room does the job: log what an event needs, ticket it to Merch (Creative looped when it needs a design), and track what we own and what we hand out.')+pgP('<b>Three tabs:</b> the work (statuses mirror MerchHub’s eight, so migration is clean), the stock (Received adds to inventory; send-outs subtract and log), and the catalog — approved items with real prices that estimate an order while you type. Existing designs reorder without a design round.')+pgP('<b>The rule:</b> merch approvals follow the brand — most route through Creative Ops; Keches is the exception and approves its own.'),fx:lips('top:30px;right:26px;opacity:.4;transform:rotate(14deg)')});
+  P.push({t:'Landing Pages & UTMs — Honest Tracking',body:pgP('<b>What it is for:</b> the links and tags a campaign stands on. UTMs generate from the record so naming never drifts; landing pages attach to the records they serve.')+pgP('<b>The pixel check is real:</b> it fetches the actual page and looks for the actual tags. “Verified” means found; “unknown” means the check could not tell — and it says so. This room never claims certainty it does not have.')+pgP('<b>Sync stamps tell the truth:</b> “Synced” means Notion confirmed it. “Queued” means it has not — and it will ride the next campaign push rather than pretend.'),fx:burn('top:16px;left:12px;width:66px;height:66px;opacity:.16')});
+  P.push({t:'Updates & Reports — The Monday Note',body:pgP('<b>What it is for:</b> what leadership sees. The Monday note gathers the week itself — what moved, what is due, whose plate is overloaded (three or more due-backs in a week flags a collision), and what money went stale.')+pgP('<b>Scoped sends:</b> every report knows its audience and its brand scope; cross-brand leaks are blocked at the door. Exports run to CSV, and the leadership view to Excel, whenever a meeting needs a file instead of a screen.')+pgP('<b>Same mail truth as tickets:</b> in TEST mode every report lands in-house first. What better place to rehearse the story than on yourself.'),fx:ink('top:28px;right:20px;opacity:.3')});
+  P.push({t:'Disclaimer Library — The Guard',body:pgP('<b>The rule it enforces:</b> state-bound language never crosses a state line. Required blocks attach only in the states that demand them; a record in a market the library does not cover routes to Ethics instead of guessing.')+pgP('<b>How it guards:</b> the state-bar detector reads the language itself, splits per-state blocks apart, and withholds anything that would land in the wrong market. Coverage gaps are flagged loudly on the page, and the library checks itself against the workbook for drift.')+pgP('<b>Your part:</b> when Ethics answers a flagged gap, the answer goes INTO the library — so the same question never flags twice.'),fx:burn('bottom:14px;left:12px;width:70px;height:70px;opacity:.18')});
+  P.push({t:'Contacts — The Only Room With Names',body:pgP('<b>Law VIII lives here.</b> Every human being — internal seats, brand counterparts, vendors, venue logistics, partner reps — with their numbers, emails and notes, grouped by organization and brand.')+pgP('<b>Also here: the playbooks.</b> Brand kits (palettes, fonts, the Canva kit), activation playbooks, and the chases for the guideline documents still owed to us. A ticket that needs a brand kit pulls its line from here automatically.')+pgP('<b>Keep it honest:</b> when a rep changes, change it here and it changes everywhere — the book, the tickets, the de-namer all read from this room.'),fx:ink('bottom:22px;right:18px;opacity:.35')});
+  P.push({t:'The Guide — This Book',body:pgP('<b>What you are holding</b> is the department’s manual and memory. The front half is how the operation is meant to run; the back half is what the system knows right now — those pages rewrite themselves on every open.')+pgP('<b>How to read it:</b> the Index tab jumps anywhere. Purple margin notes are the house voice; pink ones are the chorus. The damage is decorative. The content is not.')+pgP('<b>When the app changes, this book changes</b> — that is a standing rule of every build. If a page describes something the app no longer does, that is a bug, and it gets fixed like one.')+meg('A guide that lies is worse than no guide. This one is not allowed to.'),fx:drool('top:40%;left:14px;width:56px;height:56px;opacity:.2')});
+  /* ---- PART III · THE BRANDS ---- */
   P.push({t:'Lerner & Rowe',body:pgP('<b>The hardest brand.</b> '+bookCount('Lerner & Rowe')+' records across '+markets('Lerner & Rowe').length+' markets ('+esc(statesFor('Lerner & Rowe')||'AZ, NV, NM, IL, IN, TN, WA')+').')+pgP('<b>Money has three doors:</b> L&R (the firm), LRGB (Gives Back — the charitable arm; Thanksgiving, backpacks, giveaways market under LRGB), and LRIA. The same event can split across them — never assume the brand is the funder.')+pgP('<b>Who runs what:</b> the firm’s director of charitable giving runs LRGB and is building the master calendar — it syncs with ours through the calendar bridge, and 2027 nationwide planning runs through that desk. Event logistics has its own leads, plus per-market event people. On Target Media is the Vegas media partner and keeps the L&R event/sponsorship calendars. Every name is in Contacts.')+pgP('<b>Live now:</b> the Chicago Fire partnership is onboarding — kickoff Sep 9, Soldier Field; asset hard-date Sep 3 with Creative Ops; the Fire’s partnership leads are in Contacts.')+muse('The hardest brand, the widest map —','mind the funding, mind the gap!'),fx:ink('top:24px;right:16px;opacity:.3')});
   P.push({t:'Postman Law',body:pgP(bookCount('Postman Law')+' records · Chicago, Cincinnati, Denver, Minneapolis (IL, OH, CO, MN).')+pgP('<b>Mostly closed for the rest of the year</b> — the running slate runs; the denied slate (Sanctuary, Alice, Canine, both Meals on Wheels) lives in the Archive and must never come back as active.')+pgP('<b>Some events were handed to Lerner & Rowe mid-year</b> (Sista Strut, Stars & Strings, ChiGivesBack) — the record follows the brand that runs it.')+pgP('<b>Riverfest operating facts:</b> $50,000 to WEBN/iHeartMedia; COI must name WEBN-FM and iHeartMedia as additional insured at $1M/$2M; merch needs iHeart approval two weeks before the event; everything ships to iHeartMedia c/o their Cincinnati events lead (in Contacts), 8044 Montgomery Rd., Suite 650, Cincinnati 45236 — their team delivers to the booth, Hype staff work it.')+meg('The Ohio booth runs on one address and one COI. Lose neither.'),fx:burn('bottom:10px;right:14px;width:80px;height:80px;opacity:.2')});
   P.push({t:'Keches Law',body:pgP(bookCount('Keches Law')+' records · Boston (MA/NH reach).')+pgP('<b>Who runs what:</b> the firm’s partnerships &amp; events lead owns merch decisions for this brand — the one exception to the usual Creative-Ops merch routing — and firm approvals run through the managing partners. Numbers are in Contacts.')+pgP('<b>Rest of 2026, confirmed:</b> the Turkey Drive and Stuff the Sleigh — nothing else except internal staff events. A 98.5 Sports Hub tailgate is talks-only; no work builds from it.')+pgP('<b>Catches for College:</b> landing-page draft due Sep 9 (confirmed), social rollout starts Sep 8, season-long with 98.5. The Keches Cares fund distributes randomly across the scholarship accounts — college, union, teamsters, kids-for-chance.')+pgP('<b>Open chases:</b> Keches Cares brand guidelines, owed by the partnerships lead; Google Business Profile owner access (atticoraccess@gmail.com on KLG + Meehan Boyle) for LSAs.'),fx:lips('top:36px;right:28px;opacity:.45;transform:rotate(16deg)')});
   P.push({t:'Wettermark Keith & PDV',body:pgP('<b>WK:</b> '+bookCount('Wettermark Keith')+' records across '+markets('Wettermark Keith').length+' markets, split between Alabama and Tennessee — and that split is legal, not cosmetic: the AL bar’s required advertising language belongs ONLY in AL markets. The library enforces it; Ethics decides Tennessee. WK’s brand-side counterpart is its marketing manager — in Contacts.')+pgP('<b>Parrish DeVaughn:</b> '+bookCount('Parrish DeVaughn')+' records · Tulsa + OKC. The firm’s personal appearances are a workload of their own (OK Kids Korral roughly a dozen times a year, Pink Tie Guy, Humane Society).')+pgP('<b>The PDV lesson:</b> its tracker had [Confirm] in nearly every row and a sponsorship deadline buried in a note. That failure is why Mayhem exists — gaps become flagged chases with owners, and deadlines get surfaced, never buried.')+meg('One buried deadline built this whole system. Remember that.'),fx:ink('bottom:16px;left:18px;opacity:.35')});
+  /* ---- PART IV · THE RULES OF THE HOUSE ---- */
   P.push({t:'Money Rules',body:pgP('<b>Three numbers, never blurred:</b> proposed → contracted → final. A proposal (the Fire’s $140K/yr, Star Tribune’s package) is never displayed as committed. Actual spend can go check-level (the Golf ledger shape).')+pgP('<b>Funding entity ≠ brand.</b> Ask every time — L&R vs LRGB vs LRIA, and Postman events that L&R took over.')+pgP('<b>Estimate numbers</b> are the future join key to MediaNorm — record them even when they feel optional. Media-buy spend itself stays in MediaNorm; Mayhem tracks the commitment.')+pgP('<b>Budget check-ins:</b> every active record’s money gets a monthly “still accurate” confirmation; thirty days without one goes stale and rides the Monday note.')+pgP('<b>Vendor fraud rule:</b> On Target Media never requests wire transfers or ACH — any payment request claiming otherwise gets a phone call, not a payment.'),fx:burn('top:16px;left:12px;width:70px;height:70px;opacity:.16')});
   P.push({t:'The House Clock',body:pgP('<b>Backwards from launch:</b> assets to campaign vendors at <b>launch −7</b>; creative due back at <b>launch −11</b> (four days of review before the package). Both roll off weekends automatically.')+pgP('<b>Media reality:</b> stations turn things in one to three days — never promise a vendor faster than creative can deliver.')+pgP('<b>After an event, wrap arms itself:</b> attendance +1, social metrics +3, press +5, recap +7.')+pgP('<b>Every ticket carries a due-back and what it protects.</b> When one person owes three or more returns in a week, the collision flags — on the calendar and in the Monday note.')+pgP('<b>Known vendor lead times:</b> iHeart merch approval, two weeks pre-event. Hype staffing wants names and pricing locked well before event week.')+muse('Minus eleven, minus seven — hold the line,','and every launch will land on time!'),fx:ink('top:30px;right:22px;opacity:.35')});
   let comp='';try{const A=window.MAYHEM_DISCLAIMERS||{};brands().forEach(function(b){const key=(typeof DOOM_BRAND!=='undefined'&&DOOM_BRAND[b])||b;const rb=A[key];if(!rb)return;comp+='<p class="mbook-tight"><b class="mbook-lead" style="font-size:12px">'+esc(b)+'</b> — '+esc(statesFor(b))+'</p>'})}catch(e){}
@@ -2709,133 +2730,217 @@ window.addEventListener('DOMContentLoaded',function(){
   P.push({t:'Open Loops — Live',body:(pays.length?pgP('<b>Money open:</b> '+pays.map(p=>esc(p.vendor)+' '+moneyFmt(p.amount)+(p.due?' due '+fmtDate(p.due):'')).join(' · ')):'')+(opens.length?opens.map(t=>'<p class="mbook-tight"><b class="mbook-lead" style="font-size:12px">'+fmtDate(t.due)+'</b> — '+esc(deName(String(t.ask)).slice(0,70))+'<br><span class="mbook-sub">'+esc(t.ownerRole||'owner on the ticket')+' · '+esc(t.status)+'</span></p>').join(''):pgP('Nothing owed back with a date on it. Suspicious.'))+meg('This page is why you open the book on Mondays.'),fx:ink('top:26px;left:20px;opacity:.3')});
   const integ=[['Notion','live, both ways — you judge every conflict; the calendar pushes any month on demand'],['Doom creative','live — ISCIs with file links ride tickets'],['Doom mail','live in test mode — every send lands in-house'],['Contract reading','live — clean or scanned PDFs into intake'],['Calendar feeds','live — partners subscribe by link'],['Partner calendar pull','live — their events enter with you as the gate'],['MerchHub','blocked — the Merch Desk stands in'],['Email ingestion','pending — merged by hand, with receipts'],['Outlook internal feed','IT-blocked — parked, built, waiting']];
   P.push({t:'The Machinery',body:integ.map(x=>'<p class="mbook-tight"><b class="mbook-lead">'+esc(x[0])+'</b> — '+esc(x[1])+'</p>').join('')+meg('Nothing on this page pretends. That was expensive to earn.'),fx:ink('bottom:20px;left:20px;opacity:.4')});
+  P.push({t:'When Things Jam',body:pgP('<b>A feed link says “not configured”</b> — the deploy has not caught up. The Feeds panel diagnoses itself: follow its four steps, redeploy, press Re-check.')+pgP('<b>A Notion push says Queued</b> — Notion did not answer. Nothing is lost; the record rides the next push. Push again from the calendar or the record when Notion is back.')+pgP('<b>A send “arrived” in the wrong inbox</b> — that is TEST mode doing its job: every send lands in-house, stamped with its intended recipient, until mail is flipped live.')+pgP('<b>The contract reader shrugged</b> — a scan too rough even for it. The flagged [Confirm] fields are the honest residue; fill them by hand and the record is whole.')+pgP('<b>Anything else</b> — walk the spine (page III): find the record, read its sources, and the jam names itself.'),fx:burn('top:18px;right:14px;width:76px;height:76px;opacity:.2')});
   const srcs=(state.sources||[]).slice().reverse().slice(0,18);
   const half=Math.ceil(srcs.length/2)||1;
   [srcs.slice(0,half),srcs.slice(half)].forEach(function(chunk,ci){
    if(!chunk.length)return;
    P.push({t:'The Living Record'+(ci?' · II':''),body:chunk.map(s=>{const dn=deName(String(s.detail||''));return '<p class="mbook-tight"><b class="mbook-lead" style="font-size:12px">'+esc(deName(s.name||''))+'</b>'+(s.status?' — '+esc(s.status):'')+(dn?'<br><span class="mbook-sub">'+esc(dn.slice(0,140))+(dn.length>140?'…':'')+'</span>':'')+'</p>'}).join(''),fx:ci?burn('top:14px;right:12px;width:80px;height:80px;opacity:.2'):ink('top:30px;right:24px;opacity:.35')});
   });
+  P.push({t:'The Fine Print',body:pgP('This book rebuilt itself the moment you opened it — the counts, the seats, the loops and the record pages are as of right now, not as of whenever someone last remembered to update a document.')+pgP('It has exactly one job: that nothing about this operation lives only in somebody’s head.')+meg('You’re welcome.'),fx:lips('bottom:60px;right:30px;opacity:.5;transform:rotate(-12deg)')});
   return P;
  }
+ /* ---- leaf-stack rendering (Doom's mechanics) ---- */
+ let LEAF=0,LOCKED=true;
+ function pageFace(pg,i){
+  if(!pg)return '<div class="mbook-face-inner mbook-parch"></div>';
+  return '<div class="mbook-face-inner mbook-parch">'+orn('tl')+orn('tr')+orn('bl')+orn('br')+
+   '<div class="mbook-flicker"></div>'+
+   '<div class="mbook-inner">'+
+    '<div style="text-align:center;flex-shrink:0"><div class="mbook-rune">Ω</div><h2 class="mbook-title">'+esc(pg.t)+'</h2>'+keyDiv()+'</div>'+
+    '<div class="mbook-body">'+pg.body+'</div>'+
+    '<div style="flex-shrink:0">'+keyDiv()+'<div class="mbook-folio">— '+(ROM[i+1]||(i+1))+' —</div></div>'+
+   '</div>'+
+   '<div class="mbook-fx">'+(pg.fx||'')+'</div>'+
+  '</div>';
+ }
+ function coverFront(){
+  return '<div class="mbook-face-inner mbook-leather">'+orn('tl')+orn('tr')+orn('bl')+orn('br')+
+   '<div class="mbook-cov-hair"></div>'+
+   '<div class="mbook-cov-runes" style="top:34px">Ω · Δ · Φ · Ξ · Σ · Λ</div>'+
+   '<div style="text-align:center;position:relative;z-index:10">'+
+    '<div class="mbook-medal">♔</div>'+
+    '<p class="mbook-cov-eyebrow">Megara Presents</p>'+keyDiv()+
+    '<h1 class="mbook-cov-title">Mayhem &<br>Marketing Ops</h1>'+keyDiv()+
+    '<h2 class="mbook-cov-sub">A Guide to the<br>Marketing Department</h2>'+
+    '<p class="mbook-cov-hand">Keep up.</p>'+
+   '</div>'+
+   '<div class="mbook-cov-runes" style="bottom:48px">Σ · Ξ · Φ · Δ · Ω</div>'+
+   '<div class="mbook-cov-spine"></div>'+
+  '</div>';
+ }
+ function coverInside(){
+  return '<div class="mbook-face-inner mbook-parch"><div class="mbook-inner" style="align-items:center;justify-content:center;text-align:center">'+
+   '<div class="mbook-rune" style="font-size:18px">Ω</div>'+keyDiv()+
+   '<div style="font-family:MedievalSharp,Georgia,serif;font-size:13px;color:#4a3520;max-width:80%;line-height:1.7">For the department that does nothing half-assed.<br><br>Property of Marketing Operations.<br>If found, return immediately —<br>it knows things.</div>'+
+   keyDiv()+'<div class="mbook-cov-hand" style="color:#8b5fbf;font-size:20px;font-family:Caveat,cursive">— M.</div>'+
+  '</div></div>';
+ }
+ function totalLeaves(P){return Math.ceil(P.length/2)+1}
+ window.mbookFlipTo=function(n){
+  if(LOCKED&&n>0)return;
+  const P=livePages(),T=totalLeaves(P);
+  n=Math.min(Math.max(0,n|0),T-0);if(n===LEAF)return;
+  LEAF=n;window.__mbOpen=LEAF>0;
+  mbookApply(P,T);
+ };
+ window.mbookNext=function(){mbookFlipTo(LEAF+1)};
+ window.mbookPrev=function(){mbookFlipTo(LEAF-1)};
+ window.mbookJump=function(i){const P=livePages();i=Math.min(Math.max(0,i|0),P.length-1);mbookFlipTo(Math.floor(i/2)+((i%2)?2:1))};
  window.mbookUnlock=function(){
-  const c=document.getElementById('mbookCover');
-  if(c){c.classList.add('opening');setTimeout(function(){window.__mbOpen=true;renderPage()},750)}
-  else{window.__mbOpen=true;renderPage()}
+  if(!LOCKED&&LEAF>0)return;
+  LOCKED=false;window.__mbOpen=true;
+  const cl=document.getElementById('mbClasp');if(cl)cl.classList.add('unlatched');
+  setTimeout(function(){mbookFlipTo(1)},450);
  };
- window.mbookGo=function(n){
-  const total=livePages().length;
-  const cur=Math.min(Math.max(0,(state.guidePage||0)+n),total-1);
-  if(cur===(state.guidePage||0))return;
-  const leaf=document.getElementById('mbookLeaf');
-  state.guidePage=cur;saveState();
-  if(leaf){leaf.classList.remove('turnL','turnR');void leaf.offsetWidth;leaf.classList.add(n>0?'turnR':'turnL');setTimeout(function(){renderPage()},260)}
-  else renderPage();
+ window.mbookLeafClick=function(idx){
+  if(LOCKED)return;
+  if(LEAF===idx)mbookNext();else if(LEAF===idx+1)mbookPrev();
  };
- window.mbookJump=function(i){const total=livePages().length;state.guidePage=Math.min(Math.max(0,i|0),total-1);saveState();renderPage()};
+ function mbookApply(P,T){
+  const box=document.getElementById('mbBox');if(!box)return;
+  const shift=document.getElementById('mbShift');
+  if(shift)shift.classList.toggle('open',LEAF>0);
+  for(let k=0;k<T;k++){
+   const el=document.getElementById('mbLeaf'+k);if(!el)continue;
+   const flipped=LEAF>k;
+   el.classList.toggle('flipped',flipped);
+   el.style.zIndex=flipped?(10+k):(10+T-k);
+  }
+  const edge=document.getElementById('mbEdge');if(edge)edge.style.display=(LEAF>0&&LEAF<T)?'block':'none';
+  const tab=document.getElementById('mbTab');if(tab)tab.style.display=LEAF>0?'flex':'none';
+  const cl=document.getElementById('mbClasp');if(cl)cl.style.display=LEAF>0?'none':'flex';
+  /* mark the visible pair for tests + accessibility */
+  document.querySelectorAll('.mbook-face.curL,.mbook-face.curR').forEach(f=>f.classList.remove('curL','curR'));
+  if(LEAF>0){
+   const right=document.querySelector('#mbLeaf'+LEAF+' .mbook-face.front');
+   const left=document.querySelector('#mbLeaf'+(LEAF-1)+' .mbook-face.back');
+   if(right)right.classList.add('curR');
+   if(left)left.classList.add('curL');
+  }
+  const hint=document.getElementById('mbHint');
+  if(hint){
+   let tx='Unlock the clasp.';
+   if(LEAF>0){
+    if(LEAF>=T)tx='The back cover. It ends, like all good things.';
+    else if(LEAF===1)tx='Page 1 of '+P.length;
+    else{const l2=(LEAF-1)*2,r2=l2+1;tx=r2>P.length?('Page '+l2+' of '+P.length):('Pages '+l2+'–'+r2+' of '+P.length)}
+   }
+   hint.textContent=tx;
+  }
+  const pb=document.getElementById('mbPrev'),nb=document.getElementById('mbNext');
+  if(pb)pb.disabled=LOCKED||LEAF<=0;if(nb)nb.disabled=LOCKED||LEAF>=T;
+  const nav=document.getElementById('mbNav');if(nav)nav.classList.toggle('open',LEAF>0);
+ }
  window.mbookToc=function(){
   const P=livePages();
   modal('Table of Contents','The book, live',P.map((p,i)=>'<div class="workline" style="cursor:pointer" onclick="closeModal();mbookJump('+i+')"><div class="top"><div class="name" style="font-family:Cinzel,serif">'+esc(p.t)+'</div><span class="badge">'+(ROM[i+1]||i+1)+'</span></div></div>').join(''));
  };
  window.renderGuidePage=function(el){
-  if(window.__mbClosed){window.__mbOpen=false;state.guidePage=0;window.__mbClosed=false}
-  if(!window.__mbOpen){
-   el.innerHTML='<div class="page"><div class="mbook-stage"><div class="mbook-halo"></div><div class="mbook mbook-coverwrap" id="mbookCover">'+
-    '<div class="mbook-leather">'+orn('tl')+orn('tr')+orn('bl')+orn('br')+
-    '<div class="mbook-cov-hair"></div>'+
-    '<div class="mbook-cov-runes" style="top:34px">Ω · Δ · Φ · Ξ · Σ · Λ</div>'+
-    '<div style="text-align:center;position:relative;z-index:10">'+
-     '<div class="mbook-medal">♔</div>'+
-     '<p class="mbook-cov-eyebrow">Megara Presents</p>'+keyDiv()+
-     '<h1 class="mbook-cov-title">Mayhem &<br>Marketing Ops</h1>'+keyDiv()+
-     '<h2 class="mbook-cov-sub">A Guide to the<br>Marketing Department</h2>'+
-     '<p class="mbook-cov-hand">Keep up.</p>'+
-    '</div>'+
-    '<div class="mbook-cov-runes" style="bottom:48px">Σ · Ξ · Φ · Δ · Ω</div>'+
-    '<div class="mbook-cov-spine"></div>'+
-    '</div>'+
-    '<button class="mbook-clasp" onclick="mbookUnlock()" aria-label="Open the book"><span class="mbook-clasp-ring"></span><span class="mbook-clasp-om">Ω</span></button>'+
-   '</div><div class="mbook-nav"><span class="mbook-hint">Unlock the clasp.</span></div></div></div>';
-   return;
+  if(window.__mbClosed){window.__mbOpen=false;LEAF=0;LOCKED=true;window.__mbClosed=false}
+  const P=livePages(),T=totalLeaves(P);
+  if(LEAF>=T)LEAF=T-1;
+  let leaves='';
+  for(let k=T-1;k>=1;k--){
+   const fi=(k-1)*2,bi=fi+1;
+   leaves+='<div class="mbook-leaf" id="mbLeaf'+k+'" onclick="mbookLeafClick('+k+')">'+
+    '<div class="mbook-face front">'+pageFace(P[fi],fi)+'</div>'+
+    '<div class="mbook-face back">'+pageFace(P[bi],bi)+'</div>'+
+   '</div>';
   }
-  const P=livePages();
-  const i=Math.min(state.guidePage||0,P.length-1);
-  const pg=P[i];
-  el.innerHTML='<div class="page"><div class="mbook-stage"><div class="mbook-halo"></div><div class="mbook" id="mbookLeaf">'+
-   '<div class="mbook-spine"></div>'+orn('tl')+orn('tr')+orn('bl')+orn('br')+
-   '<button class="mbook-index" onclick="mbookToc()">☰ Index</button>'+
-   '<div class="mbook-flicker"></div>'+
-   '<div class="mbook-inner">'+
-    '<div style="text-align:center;flex-shrink:0"><div class="mbook-rune">Ω</div><h2 class="mbook-title">'+esc(pg.t)+'</h2>'+keyDiv()+'</div>'+
-    '<div class="mbook-body">'+pg.body+'</div>'+
-    '<div style="flex-shrink:0">'+keyDiv()+'<div class="mbook-folio">— '+(ROM[i+1]||i+1)+' —</div></div>'+
+  const cover='<div class="mbook-leaf" id="mbLeaf0" onclick="mbookLeafClick(0)">'+
+   '<div class="mbook-face front">'+coverFront()+'</div>'+
+   '<div class="mbook-face back">'+coverInside()+'</div>'+
+  '</div>';
+  el.innerHTML='<div class="page"><div class="mbook-stage">'+
+   '<div class="mbook-shift" id="mbShift">'+
+    '<div class="mbook-halo"></div>'+
+    '<div class="mbook-box" id="mbBox">'+
+     '<div class="mbook-backcover"></div>'+
+     '<div class="mbook-parchbase"></div>'+
+     '<div class="mbook-edge" id="mbEdge"><div class="mbook-edge-fill"></div>'+Array.from({length:8}).map((_,i)=>'<div class="mbook-edge-line" style="top:'+(8+i*11)+'%"></div>').join('')+'</div>'+
+     leaves+cover+
+     '<button class="mbook-index" id="mbTab" onclick="mbookToc()" style="display:none">☰ Index</button>'+
+     '<button class="mbook-clasp" id="mbClasp" onclick="mbookUnlock()" aria-label="Open the book"><span class="mbook-clasp-ring"></span><span class="mbook-clasp-om">Ω</span></button>'+
+    '</div>'+
    '</div>'+
-   '<div class="mbook-fx">'+(pg.fx||'')+'</div>'+
-  '</div>'+
-  '<div class="mbook-nav"><button class="mbook-btn" '+(i===0?'disabled':'')+' onclick="mbookGo(-1)">‹ Previous</button><span class="mbook-hint">'+(i+1)+' of '+P.length+'</span><button class="mbook-btn" '+(i===P.length-1?'disabled':'')+' onclick="mbookGo(1)">Next ›</button></div>'+
+   '<div class="mbook-nav" id="mbNav"><button class="mbook-btn" id="mbPrev" onclick="mbookPrev()">‹ Previous</button><span class="mbook-hint" id="mbHint">Unlock the clasp.</span><button class="mbook-btn" id="mbNext" onclick="mbookNext()">Next ›</button></div>'+
   '</div></div>';
+  mbookApply(P,T);
  };
  const st=document.createElement('style');
  st.textContent=[
- '.mbook-stage{position:relative;display:flex;flex-direction:column;align-items:center;padding:18px 0 34px}',
- '.mbook-halo{position:absolute;top:8px;width:min(460px,96vw);aspect-ratio:3/5;border-radius:32px;background:radial-gradient(ellipse at center,rgba(212,166,66,.28) 0%,rgba(212,166,66,.12) 40%,transparent 70%);pointer-events:none;z-index:1;animation:mbookPulse 3s infinite alternate}',
+ '.mbook-stage{position:relative;display:flex;flex-direction:column;align-items:center;padding:18px 0 34px;overflow:hidden;width:100%}',
+ '.mbook-shift{position:relative;width:min(400px,88vw);transition:transform .6s ease-out}',
+ '.mbook-shift.open{transform:translateX(50%)}',
+ '.mbook-halo{position:absolute;inset:-20px;border-radius:32px;background:radial-gradient(ellipse at center,rgba(212,166,66,.28) 0%,rgba(212,166,66,.12) 40%,transparent 70%);pointer-events:none;z-index:0;animation:mbookPulse 3s infinite alternate}',
+ '.mbook-shift.open .mbook-halo{inset:-20px -20px -20px calc(-100% - 20px)}',
  '@keyframes mbookPulse{from{opacity:.7}to{opacity:1}}',
- '.mbook{position:relative;width:min(420px,92vw);aspect-ratio:3/5;border-radius:16px;background:linear-gradient(180deg,#f7eccc 0%,#ead8a4 55%,#d8c084 100%);box-shadow:inset 0 0 60px rgba(120,100,60,.35),0 0 40px 10px rgba(212,166,66,.35),0 0 80px 20px rgba(212,166,66,.16),0 0 120px 40px rgba(212,166,66,.08),0 14px 36px rgba(0,0,0,.55);border:1px solid rgba(120,80,30,.55);display:flex;perspective:1400px;transform-origin:left center;z-index:2}',
- '.mbook.turnR{animation:mbookTurnR .55s ease}','.mbook.turnL{animation:mbookTurnL .55s ease}',
- '@keyframes mbookTurnR{0%{transform:rotateY(0)}45%{transform:rotateY(-14deg);filter:brightness(.92)}100%{transform:rotateY(0)}}',
- '@keyframes mbookTurnL{0%{transform:rotateY(0)}45%{transform:rotateY(10deg);filter:brightness(.95)}100%{transform:rotateY(0)}}',
- '.mbook-spine{position:absolute;left:0;top:0;bottom:0;width:46px;border-radius:16px 0 0 16px;background:linear-gradient(to right,rgba(0,0,0,.35),rgba(100,70,30,.08),transparent);pointer-events:none;z-index:4}',
+ '.mbook-box{position:relative;width:100%;aspect-ratio:3/5;perspective:2000px;border-radius:16px;box-shadow:0 0 40px 10px rgba(212,166,66,.3),0 0 80px 20px rgba(212,166,66,.14),0 0 120px 40px rgba(212,166,66,.07),0 14px 36px rgba(0,0,0,.55)}',
+ '.mbook-backcover{position:absolute;inset:0;z-index:0;border-radius:16px;border:4px solid #111;background:radial-gradient(ellipse at 30% 20%,#33241a 0%,#241812 45%,#150d08 100%)}',
+ '.mbook-parchbase{position:absolute;inset:0;z-index:1;border-radius:16px;background:linear-gradient(180deg,#f7eccc 0%,#ead8a4 55%,#d8c084 100%);border:1px solid rgba(120,80,30,.55)}',
+ '.mbook-edge{position:absolute;top:12px;right:-2px;bottom:12px;width:5px;z-index:5;border-radius:0 3px 3px 0;overflow:hidden;display:none}',
+ '.mbook-edge-fill{width:100%;height:100%;background:linear-gradient(to bottom,rgba(212,166,66,.15),rgba(212,166,66,.35),rgba(212,166,66,.15))}',
+ '.mbook-edge-line{position:absolute;width:100%;height:1px;background:rgba(120,80,30,.3)}',
+ '.mbook-leaf{position:absolute;inset:0;transform-origin:left center;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.45,.05,.25,1);cursor:pointer}',
+ '.mbook-leaf.flipped{transform:rotateY(-180deg)}',
+ '.mbook-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;overflow:hidden}',
+ '.mbook-face.back{transform:rotateY(180deg)}',
+ '.mbook-face-inner{position:absolute;inset:0;border-radius:16px;overflow:hidden;display:flex;flex-direction:column}',
+ '.mbook-parch{background:linear-gradient(180deg,#f7eccc 0%,#ead8a4 55%,#d8c084 100%);box-shadow:inset 0 0 60px rgba(120,100,60,.35);border:1px solid rgba(120,80,30,.55)}',
+ '.mbook-face.front .mbook-parch{box-shadow:inset 0 0 60px rgba(120,100,60,.35),inset 12px 0 24px -12px rgba(80,55,25,.5)}',
+ '.mbook-face.back .mbook-parch{box-shadow:inset 0 0 60px rgba(120,100,60,.35),inset -12px 0 24px -12px rgba(80,55,25,.5)}',
+ '.mbook-leather{background:radial-gradient(ellipse at 30% 20%,#33241a 0%,#241812 45%,#150d08 100%);border:4px solid #111;align-items:center;justify-content:center}',
  '.mbook-orn{position:absolute;width:26px;height:26px;z-index:5;pointer-events:none}',
  '.mbook-flicker{position:absolute;inset:0;border-radius:16px;pointer-events:none;z-index:6;mix-blend-mode:soft-light;background:rgba(255,200,100,.05);animation:mbookFlick 3s ease-in-out infinite}',
  '@keyframes mbookFlick{0%,100%{opacity:.5}50%{opacity:1}}',
- '.mbook-inner{position:relative;z-index:8;flex:1;display:flex;flex-direction:column;padding:26px 26px 18px 48px;overflow-y:auto}',
+ '.mbook-inner{position:relative;z-index:8;flex:1;display:flex;flex-direction:column;padding:24px 22px 16px 30px;overflow-y:auto}',
+ '.mbook-face.back .mbook-inner{padding:24px 30px 16px 22px}',
  '.mbook-rune{font-family:Cinzel,serif;font-size:12px;color:rgba(212,166,66,.55)}',
- '.mbook-title{font-family:Cinzel,serif!important;font-size:21px;letter-spacing:.05em;margin:6px 0;color:#d4a642;text-shadow:0 0 8px rgba(212,166,66,.45),0 0 20px rgba(212,166,66,.18),0 1px 2px rgba(0,0,0,.2)}',
+ '.mbook-title{font-family:Cinzel,serif!important;font-size:18px;letter-spacing:.04em;margin:6px 0;color:#d4a642;text-shadow:0 0 8px rgba(212,166,66,.45),0 0 20px rgba(212,166,66,.18),0 1px 2px rgba(0,0,0,.2)}',
  '.mbook-key{height:8px;margin:6px auto;width:60%;background:repeating-linear-gradient(90deg,rgba(212,166,66,.55) 0 8px,transparent 8px 12px);opacity:.5;border-radius:2px}',
- '.mbook-body{font-family:MedievalSharp,Georgia,serif;font-size:13.5px;line-height:1.65;color:#2a1a12;flex:1;padding:6px 2px}',
- '.mbook-body p{margin:8px 0}',
- '.mbook-note{margin:14px 16px 4px 6px;padding:8px 12px;border-left:2px solid rgba(212,166,66,.55);font-style:italic;font-family:Georgia,serif;font-size:12.5px;color:#6b4a8f;background:rgba(139,95,191,.06);border-radius:0 8px 8px 0}',
+ '.mbook-body{font-family:MedievalSharp,Georgia,serif;font-size:12.5px;line-height:1.6;color:#2a1a12;flex:1;padding:4px 2px}',
+ '.mbook-body p{margin:7px 0}',
+ '.mbook-note{margin:12px 12px 4px 4px;padding:7px 10px;border-left:2px solid rgba(212,166,66,.55);font-style:italic;font-family:Georgia,serif;font-size:12px;color:#6b4a8f;background:rgba(139,95,191,.06);border-radius:0 8px 8px 0}',
  '.mbook-note-sig{display:block;text-align:right;font-family:Cinzel,serif;font-size:10px;font-style:normal;color:#8b5fbf;margin-top:2px}',
- '.mbook-folio{text-align:center;font-family:Cinzel,serif;font-size:13px;letter-spacing:.15em;color:#d4a642;text-shadow:0 0 6px rgba(212,166,66,.3)}',
+ '.mbook-note.muse{color:#b85c7e;border-left-color:rgba(184,92,126,.5);background:rgba(184,92,126,.07);font-family:Caveat,cursive;font-size:15px;line-height:1.35}',
+ '.mbook-note-sig.muse{color:#b85c7e}',
+ '.mbook-folio{text-align:center;font-family:Cinzel,serif;font-size:12px;letter-spacing:.15em;color:#d4a642;text-shadow:0 0 6px rgba(212,166,66,.3)}',
  '.mbook-fx{position:absolute;inset:0;border-radius:16px;overflow:hidden;pointer-events:none;z-index:2}',
  '.mbook-burn{position:absolute;border-radius:50%;mix-blend-mode:multiply;filter:blur(4px);background:radial-gradient(circle,rgba(20,10,5,.9) 0%,rgba(60,30,10,.6) 40%,transparent 100%)}',
  '.mbook-ink{position:absolute;width:34px;height:34px;mix-blend-mode:multiply;background:radial-gradient(circle at 40% 40%,rgba(20,15,40,.75) 0 6px,transparent 7px),radial-gradient(circle at 70% 60%,rgba(20,15,40,.5) 0 3px,transparent 4px),radial-gradient(circle at 55% 20%,rgba(20,15,40,.4) 0 2px,transparent 3px)}',
  '.mbook-drool{position:absolute;border-radius:50%;mix-blend-mode:multiply;filter:blur(2px);background:radial-gradient(circle,rgba(0,100,150,.3) 0%,rgba(0,150,200,.1) 60%,transparent 100%)}',
  '.mbook-lips{position:absolute;font-size:22px;mix-blend-mode:multiply;filter:grayscale(.2) opacity(.8)}',
- '.mbook-nav{display:flex;gap:10px;margin-top:14px;align-items:center;z-index:2}',
+ '.mbook-nav{display:flex;gap:10px;margin-top:16px;align-items:center;z-index:2;transition:transform .6s ease-out}',
  '.mbook-btn{font-family:Cinzel,serif;font-size:12px;letter-spacing:.08em;padding:9px 16px;border-radius:9px;border:1px solid rgba(212,166,66,.55);background:var(--panel2);color:#d4a642;cursor:pointer}',
  '.mbook-btn:disabled{opacity:.35;cursor:default}',
  '.mbook-btn:not(:disabled):hover{box-shadow:0 0 12px rgba(212,166,66,.25)}',
- '.mbook-hint{font-family:Cinzel,serif;font-size:11px;letter-spacing:.12em;color:var(--mut)}',
- '.mbook-coverwrap{background:none!important;border:none!important;box-shadow:0 0 40px 10px rgba(212,166,66,.35),0 0 80px 20px rgba(212,166,66,.16),0 14px 36px rgba(0,0,0,.55)!important;transform-origin:left center}',
- '.mbook-coverwrap.opening{animation:mbookOpen .8s ease forwards}',
- '@keyframes mbookOpen{0%{transform:rotateY(0)}100%{transform:rotateY(-140deg);opacity:.1}}',
- '.mbook-leather{position:absolute;inset:0;border-radius:16px;border:4px solid #111;background:radial-gradient(ellipse at 30% 20%,#33241a 0%,#241812 45%,#150d08 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}',
+ '.mbook-hint{font-family:Cinzel,serif;font-size:11px;letter-spacing:.12em;color:var(--mut);min-width:150px;text-align:center}',
  '.mbook-cov-hair{position:absolute;inset:12px;border:1px solid rgba(212,166,66,.22);border-radius:8px;pointer-events:none}',
  '.mbook-cov-runes{position:absolute;left:0;right:0;text-align:center;font-family:Cinzel,serif;font-size:10px;letter-spacing:.5em;color:rgba(212,166,66,.35)}',
  '.mbook-medal{width:56px;height:56px;margin:0 auto 20px;border-radius:50%;border:2px solid rgba(212,166,66,.5);display:flex;align-items:center;justify-content:center;font-family:Cinzel,serif;font-size:24px;color:rgba(212,166,66,.75);background:rgba(0,0,0,.3)}',
  '.mbook-cov-eyebrow{font-family:Cinzel,serif;color:rgba(212,166,66,.55);font-size:11px;letter-spacing:.3em;text-transform:uppercase;margin-bottom:10px}',
- '.mbook-cov-title{font-family:Cinzel,serif;font-size:27px;color:#D4A040;margin:14px 0;line-height:1.2;letter-spacing:.05em;animation:mbookPulse 3s infinite alternate;text-shadow:0 0 12px rgba(212,166,66,.4)}',
+ '.mbook-cov-title{font-family:Cinzel,serif;font-size:26px;color:#D4A040;margin:14px 0;line-height:1.2;letter-spacing:.05em;animation:mbookPulse 3s infinite alternate;text-shadow:0 0 12px rgba(212,166,66,.4)}',
  '.mbook-cov-sub{font-family:MedievalSharp,Georgia,serif;color:rgba(232,215,180,.75);font-size:12px;letter-spacing:.15em;text-transform:uppercase;margin-top:10px}',
  '.mbook-cov-hand{font-family:Caveat,cursive;color:rgba(212,139,165,.85);font-size:23px;margin-top:14px;font-style:italic}',
  '.mbook-cov-spine{position:absolute;left:0;top:0;bottom:0;width:40px;border-radius:16px 0 0 16px;background:linear-gradient(to right,#000,#151009,transparent);opacity:.85}',
- '.mbook-clasp{position:absolute;right:-10px;top:50%;transform:translateY(-50%);z-index:40;width:44px;height:96px;border-radius:8px 10px 10px 8px;border:1px solid rgba(212,166,66,.4);background:linear-gradient(135deg,#241a12,#120c07);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 14px rgba(0,0,0,.5)}',
+ '.mbook-clasp{position:absolute;right:-10px;top:50%;transform:translateY(-50%);z-index:60;width:44px;height:96px;border-radius:8px 10px 10px 8px;border:1px solid rgba(212,166,66,.4);background:linear-gradient(135deg,#241a12,#120c07);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 14px rgba(0,0,0,.5)}',
  '.mbook-clasp:hover{box-shadow:0 0 16px rgba(212,166,66,.35)}',
+ '.mbook-clasp.unlatched{animation:mbClaspOff .45s ease forwards}',
+ '@keyframes mbClaspOff{to{transform:translateY(-50%) translateX(26px) rotate(12deg);opacity:0}}',
  '.mbook-clasp-ring{width:16px;height:16px;border-radius:50%;border:2px solid rgba(212,166,66,.6);background:#160d06;display:block}',
  '.mbook-clasp-om{color:rgba(212,166,66,.7);font-size:11px;font-family:Cinzel,serif}',
- '.mbook-index{position:absolute;top:-1px;left:50%;transform:translateX(-50%);z-index:30;font-family:Cinzel,serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(120,80,30,.75);background:rgba(247,236,204,.9);border:1px solid rgba(120,80,30,.35);border-top:none;border-radius:0 0 10px 10px;padding:5px 14px;cursor:pointer}',
- '.mbook-index:hover{color:#7a5210}',
- '.mbook-lead{font-family:Cinzel,serif;font-size:12.5px}',
- '.mbook-sub{font-size:11.5px;opacity:.8}',
- '.mbook-tight{margin:6px 0!important}',
+ '.mbook-index{position:absolute;top:-13px;left:50%;transform:translateX(-50%);z-index:70;font-family:Cinzel,serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(212,166,66,.75);background:#1d1626;border:1px solid rgba(212,166,66,.35);border-bottom:none;border-radius:8px 8px 0 0;padding:5px 14px;cursor:pointer;align-items:center}',
+ '.mbook-index:hover{color:#d4a642}',
+ '.mbook-lead{font-family:Cinzel,serif;font-size:12px}',
+ '.mbook-sub{font-size:11px;opacity:.8}',
+ '.mbook-tight{margin:5px 0!important}',
  '.mbook-rom{font-family:Cinzel,serif;color:#d4a642}',
- '.mbook-chip{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}',
- '.mbook-note.muse{color:#b85c7e;border-left-color:rgba(184,92,126,.5);background:rgba(184,92,126,.07);font-family:Caveat,cursive;font-size:16px;line-height:1.35}',
- '.mbook-note-sig.muse{color:#b85c7e}',
- '@media(max-width:700px){.mbook-inner{padding:20px 14px 14px 26px}.mbook-clasp{right:2px}.mbook-stage{overflow:hidden;width:100%}}'
+ '@media(max-width:760px){.mbook-shift.open{transform:none}.mbook-shift.open .mbook-halo{inset:-20px}.mbook-inner{padding:20px 14px 14px 22px}.mbook-face.back .mbook-inner{padding:20px 22px 14px 14px}.mbook-clasp{right:2px}.mbook-nav{transform:none!important}}'
  ].join('');
  document.head.appendChild(st);
 })();
-/* ===== END THE GUIDE, AS THE BOOK v2 ===== */
+/* ===== END THE GUIDE, AS THE BOOK v3 ===== */
 
 ;(function(){const _rpMb=renderPage;renderPage=function(){try{const p=pageName();if(p==='guide'&&window.__mbLast!=='guide')window.__mbClosed=true;window.__mbLast=p}catch(e){}_rpMb()}})();
 
