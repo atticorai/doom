@@ -1221,6 +1221,9 @@ const App=()=>{
         try{if(docs.lrOohIscis?.data){const d=JSON.parse(docs.lrOohIscis.data);if(Object.keys(d).length)setLrPanels(prev=>prev.map(p=>{if(d[p.unit]===undefined)return p;const v=d[p.unit];const list=Array.isArray(v)?v.filter(Boolean):(v?[v]:[]);return{...p,isciList:list,isci:list[0]||""}}))}}catch(_e){console.warn("lrOohIscis load skipped",_e)}
         try{if(docs.lrOohIsciPct?.data){const d=JSON.parse(docs.lrOohIsciPct.data);if(Object.keys(d).length)setLrPanels(prev=>prev.map(p=>d[p.unit]!==undefined?{...p,isciPct:Array.isArray(d[p.unit])?d[p.unit]:[]}:p))}}catch(_e){console.warn("lrOohIsciPct load skipped",_e)}
         try{if(docs.oohPhotos?.data){const d=JSON.parse(docs.oohPhotos.data);if(Object.keys(d).length)setOohPhotos(d)}}catch(_e){console.warn("oohPhotos load skipped",_e)}
+        // Command Center alert dismissals persist — without this they reset on
+        // every reload, which reads as "there's no way to dismiss an alert".
+        try{if(docs.alertsDismissed?.data){const d=JSON.parse(docs.alertsDismissed.data);if(Array.isArray(d)&&d.length)setAlertsDismissed(d)}}catch(_e){console.warn("alertsDismissed load skipped",_e)}
         console.log("Supabase: loaded",Object.keys(docs).length,"collections");
         loadCompleteRef.current=true;
         trafficDirtyRef.current=false;// loaded data is not a user edit — don't auto-resave it
@@ -2412,7 +2415,9 @@ const App=()=>{
     return a.filter(x=>!alertsDismissed.includes(x.key)&&(x.days>=-1||x.overdue)).sort((a,b)=>a.days-b.days);
   },[alertsDismissed,oohContracts,iscis]);
 
-  const dismissAlert=(key)=>setAlertsDismissed(p=>[...p,key]);
+  const dismissAlert=(key)=>{setAlertsDismissed(p=>p.includes(key)?p:[...p,key]);notify("Alert dismissed — it won't come back. Restore from the alerts header if you change your mind.")};
+  // Saves even when empty — "restore all" writes [] and must stick across reloads.
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("alertsDismissed",alertsDismissed)},[alertsDismissed,dbLoaded]);
 
   // ── ALERT HEARTBEAT FEED ──────────────────────────────
   // The daily email digest (api/heartbeat.js, run by a Vercel cron) can't do
@@ -2827,13 +2832,14 @@ const App=()=>{
         </React.Fragment>)}
       </div>
     </div>
-    {alerts.length>0&&<div style={{padding:12,borderRadius:12,background:"linear-gradient(135deg,rgba(232,90,122,.08),rgba(212,160,64,.05))",border:"1px solid rgba(232,90,122,.2)",boxShadow:"0 4px 20px rgba(232,90,122,.08),0 0 0 1px rgba(232,90,122,.05) inset"}}><div style={{fontSize:13,fontWeight:800,color:"#D4A040",marginBottom:6,textTransform:"uppercase",letterSpacing:1}}>⚡ {alerts.length} Alert{alerts.length>1?"s":""} — {doomPick(DOOM.alert)}</div>{alerts.slice(0,alertsExpanded?999:5).map(a=><div key={a.key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px solid rgba(155,123,176,.1)"}}>
+    {alerts.length>0&&<div style={{padding:12,borderRadius:12,background:"linear-gradient(135deg,rgba(232,90,122,.08),rgba(212,160,64,.05))",border:"1px solid rgba(232,90,122,.2)",boxShadow:"0 4px 20px rgba(232,90,122,.08),0 0 0 1px rgba(232,90,122,.05) inset"}}><div style={{fontSize:13,fontWeight:800,color:"#D4A040",marginBottom:6,textTransform:"uppercase",letterSpacing:1,display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:8,flexWrap:"wrap"}}><span>⚡ {alerts.length} Alert{alerts.length>1?"s":""} — {doomPick(DOOM.alert)}</span>{alertsDismissed.length>0&&<button onClick={()=>{if(!confirm("Bring back all "+alertsDismissed.length+" dismissed alert"+(alertsDismissed.length>1?"s":"")+"?"))return;setAlertsDismissed([]);log("Alerts Restored",alertsDismissed.length+" dismissed alerts brought back");notify("Dismissed alerts restored")}} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"#6B5E80",fontWeight:600,textTransform:"none",letterSpacing:0,padding:0}}>{alertsDismissed.length} dismissed · restore</button>}</div>{alerts.slice(0,alertsExpanded?999:5).map(a=><div key={a.key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px solid rgba(155,123,176,.1)"}}>
       <span style={{fontSize:13,color:a.severity==="critical"?"#E85A7A":"#D4A040",fontWeight:600}}>{a.severity==="critical"?"🔥":"⚠"} {a.msg} ({a.days}d)</span>
       <span style={{display:"flex",gap:8,alignItems:"center"}}>
         {a.report&&<button onClick={()=>openCreativeBrief(a.report)} style={{background:"rgba(91,196,160,.15)",border:"1px solid #5BC4A0",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:700,color:"#5BC4A0",padding:"2px 9px",whiteSpace:"nowrap"}}>📄 Creative Brief</button>}
         <button onClick={()=>dismissAlert(a.key)} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#6B5E80"}}>✕</button>
       </span>
     </div>)}{alerts.length>5&&<button onClick={()=>setAlertsExpanded(p=>!p)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#4AC8E8",fontWeight:600,marginTop:4,padding:0}}>{alertsExpanded?"Show less":"+"+String(alerts.length-5)+" more"}</button>}</div>}
+    {alerts.length===0&&alertsDismissed.length>0&&<div style={{fontSize:12,color:"#6B5E80",display:"flex",gap:6,alignItems:"baseline"}}><span>🔔 All quiet.</span><button onClick={()=>{if(!confirm("Bring back all "+alertsDismissed.length+" dismissed alert"+(alertsDismissed.length>1?"s":"")+"?"))return;setAlertsDismissed([]);log("Alerts Restored",alertsDismissed.length+" dismissed alerts brought back");notify("Dismissed alerts restored")}} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"#6B5E80",fontWeight:600,padding:0,textDecoration:"underline",textDecorationStyle:"dotted"}}>{alertsDismissed.length} dismissed · restore</button></div>}
     {nextRot&&daysRot<=14&&!alerts.some(a=>a.type==="rotation")&&<Cd style={{padding:10,borderColor:daysRot<=7?"#fecaca":"#fde68a",background:daysRot<=7?"#3a1f35":"#fffbeb"}}><div style={{fontSize:14,fontWeight:700,color:daysRot<=7?"#E85A7A":"#D4A040"}}>⚠ Rotation Due: {nextRot.month} — {fD(nextRot.rotDue)} ({daysRot}d)</div></Cd>}
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:7}}>
       <StatC label="Active ISCIs" value={ai.length} sub={<><span>{iscis.length-ai.length} inactive</span><Sparkline data={iscisByMonth} color="#4AC8E8"/></>} color="#4AC8E8" onClick={()=>setPg("isci")}/>
