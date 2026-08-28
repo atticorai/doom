@@ -3321,7 +3321,7 @@ window.addEventListener('DOMContentLoaded',function(){
  window.mamOneUpPanel=function(){
   modal('OneUp — Social Metrics','OneUp is the social publishing tool. It can only ever know SOCIAL numbers — never radio, TV, OOH or paid media. Those stay with the vendors.',
    '<div class="fact"><div class="label">What this does</div><div>Asks OneUp directly what it is willing to hand over, and reports exactly what came back. Read-only: this can never post, schedule, or delete anything.</div></div>'+
-   '<div class="actions" style="margin-top:8px"><button class="btn" onclick="mamOneUpProbe()">Test the OneUp Connection</button><button class="btn secondary" onclick="closeModal()">Close</button></div>'+
+   '<div class="actions" style="margin-top:8px"><button class="btn" onclick="mamOneUpRollup()">Pull Social Numbers \u2014 All Brands</button><button class="btn secondary" onclick="mamOneUpProbe()">Test the Connection</button><button class="btn secondary" onclick="closeModal()">Close</button></div>'+
    '<div id="oneupOut"></div>');
  };
  window.mamOneUpProbe=async function(){
@@ -3363,6 +3363,44 @@ window.addEventListener('DOMContentLoaded',function(){
   }
   out.innerHTML=html;
  };
+ window.mamOneUpRollup=async function(){
+  const out=document.getElementById('oneupOut');
+  if(out)out.innerHTML='<div class="detail" style="margin-top:10px">Reading every connected account \u2014 this takes up to a minute across all the platforms\u2026</div>';
+  let j=null,code=0;
+  try{
+   const r=await fetch('/api/oneup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'rollup',preset:'last_30_days'})});
+   code=r.status;j=await r.json().catch(function(){return null});
+  }catch(e){}
+  if(!out)return;
+  if(!j){out.innerHTML='<div class="fact" style="margin-top:10px"><div class="label">\u2717 No answer</div><div>The service did not respond'+(code?' ('+code+')':'')+'. If the deploy just went out, give it a minute.</div></div>';return}
+  if(j.error){out.innerHTML='<div class="fact" style="margin-top:10px"><div class="label">\u2717 '+esc(j.error)+'</div><div>'+esc(j.message||'')+'</div></div>';return}
+  const rows=j.rows||[];
+  if(!rows.length){out.innerHTML='<div class="fact" style="margin-top:10px"><div class="label">Accounts came back, numbers did not</div><div>'+esc(j.note||'Nothing readable yet.')+' Shape: '+esc(j.shape||'')+'</div></div>';return}
+  /* group by brand using the map; unknown accounts are shown, never guessed into a brand */
+  const groups={};
+  rows.forEach(function(r){
+   const b=mamOneUpBrand(r.name)||'[Unmatched account \u2014 confirm the brand]';
+   (groups[b]=groups[b]||[]).push(r);
+  });
+  const money=function(n){return (n===null||n===undefined)?'\u2014':Number(n).toLocaleString()};
+  let html='<div class="fact" style="margin-top:10px"><div class="label">Last 30 days \u00b7 '+j.attempted+' of '+j.accounts+' accounts read</div><div>'+
+   (j.planGated?'<b>'+j.planGated+'</b> account(s) refused for plan reasons \u2014 analytics need Intermediate or above. ':'')+
+   ((j.stale||[]).length?'<b>'+j.stale.length+'</b> account(s) reported all zeros \u2014 almost certainly the connections OneUp says need refreshing, not a dead month.':'Numbers below are as OneUp reports them.')+'</div></div>';
+  Object.keys(groups).sort().forEach(function(b){
+   const rs=groups[b];
+   const tot=rs.reduce(function(a,r){return a+(r.ok&&r.impressions?r.impressions:0)},0);
+   const eng=rs.reduce(function(a,r){return a+(r.ok&&r.engagements?r.engagements:0)},0);
+   html+='<div class="sectioncap" style="margin-top:10px">'+esc(b)+' \u2014 '+money(tot)+' impressions \u00b7 '+money(eng)+' engagements</div>';
+   rs.forEach(function(r){
+    const bad=!r.ok, stale=r.ok&&r.suspectStale;
+    html+='<div class="workline"><div class="top"><div class="name">'+esc(r.name||'(unnamed)')+' \u00b7 '+esc(r.platform)+'</div><span class="badge '+(bad?'red':stale?'gold':'green')+'">'+(bad?(r.error==='plan'?'plan':'error'):stale?'needs refresh?':'ok')+'</span></div>'+
+     '<div class="detail">'+(bad?esc(r.note||('status '+r.status)):('Impressions '+money(r.impressions)+' \u00b7 Reach '+money(r.reach)+' \u00b7 Engagements '+money(r.engagements)+' \u00b7 Followers '+money(r.followers)))+'</div></div>';
+   });
+  });
+  html+='<div class="fact" style="margin-top:10px"><div class="label">Reading these honestly</div><div>Google Business Profile never returns interactions \u2014 a dash there means unavailable, not zero. An account marked \u201cneeds refresh?\u201d reported nothing at all; fix the connection in OneUp before quoting its month.</div></div>';
+  out.innerHTML=html;
+ };
+
  const _rrsp=renderResultsPage;
  window.renderResultsPage=function(el){
   _rrsp(el);
