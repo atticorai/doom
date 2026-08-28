@@ -2329,7 +2329,7 @@ window.addEventListener('DOMContentLoaded',function(){
  try{fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({collection:'appData',doc:'mayhemB7',action:'get'})}).then(function(r){return r.ok?r.json():null}).then(function(j){
   const remote=j&&j.data&&j.data.data&&j.data.data.brands?j.data.data:null;
   const rts=j&&j.data&&j.data.ts?j.data.ts:0;
-  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}try{applyDataTruthB7v7()}catch(e){}try{applyDataTruthB7v8()}catch(e){}try{applyDataTruthB7v9()}catch(e){}try{applyDataTruthB7v10()}catch(e){}try{state.tickets=(state.tickets||[]).filter(x=>x.id!=='tk-cal-brainstorm')}catch(e){}renderShell();renderPage()}
+  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}try{applyDataTruthB7v7()}catch(e){}try{applyDataTruthB7v8()}catch(e){}try{applyDataTruthB7v9()}catch(e){}try{applyDataTruthB7v10()}catch(e){}try{applyDataTruthB7v11()}catch(e){}try{state.tickets=(state.tickets||[]).filter(x=>x.id!=='tk-cal-brainstorm')}catch(e){}renderShell();renderPage()}
  }).catch(function(){})}catch(e){}
 });
 /* ===== END DATA TRUTH + DOOM MOUNT ===== */
@@ -2728,7 +2728,7 @@ window.addEventListener('DOMContentLoaded',function(){
   const opens=(state.tickets||[]).filter(t=>t.status!=='Closed'&&t.due).sort((a,z2)=>String(a.due).localeCompare(String(z2.due))).slice(0,8);
   const pays=(state.payments||[]).filter(p=>p.status!=='Paid');
   P.push({t:'Open Loops — Live',body:(pays.length?pgP('<b>Money open:</b> '+pays.map(p=>esc(p.vendor)+' '+moneyFmt(p.amount)+(p.due?' due '+fmtDate(p.due):'')).join(' · ')):'')+(opens.length?opens.map(t=>'<p class="mbook-tight"><b class="mbook-lead" style="font-size:12px">'+fmtDate(t.due)+'</b> — '+esc(deName(String(t.ask)).slice(0,70))+'<br><span class="mbook-sub">'+esc(t.ownerRole||'owner on the ticket')+' · '+esc(t.status)+'</span></p>').join(''):pgP('Nothing owed back with a date on it. Suspicious.'))+meg('This page is why you open the book on Mondays.'),live:true,fx:ink('top:26px;left:20px;opacity:.3')});
-  const integ=[['Notion','live, both ways — you judge every conflict; the calendar pushes any month on demand'],['Doom creative','live — ISCIs with file links ride tickets'],['Doom mail','live in test mode — every send lands in-house'],['Contract reading','live — clean or scanned PDFs into intake'],['Calendar feeds','live — partners subscribe by link'],['Partner calendar pull','live — their events enter with you as the gate'],['SharePoint documents','linked in-app — kits, playbooks, and the live disclaimer workbook read on demand'],['MerchHub','blocked — the Merch Desk stands in'],['Email ingestion','pending — merged by hand, with receipts'],['Outlook internal feed','IT-blocked — parked, built, waiting']];
+  const integ=[['Notion','live, both ways — you judge every conflict; the calendar pushes any month on demand'],['Doom creative','live — ISCIs with file links ride tickets'],['Doom mail','live in test mode — every send lands in-house'],['Contract reading','live — clean or scanned PDFs into intake'],['Calendar feeds','live — partners subscribe by link'],['Partner calendar pull','live — their events enter with you as the gate'],['SharePoint documents','linked in-app — kits, playbooks, and the live disclaimer workbook read on demand'],['MerchHub','blocked — the Merch Desk stands in; sync agreed once it ships'],['Monday.com (Creative)','agreed at the demo — an events board mirror, pending the Creative Ops conversation'],['1UP analytics','pending — impression-scope check first, then reporting hooks'],['Email ingestion','pending — merged by hand, with receipts'],['Outlook internal feed','IT-blocked — parked, built, waiting']];
   P.push({t:'The Machinery',body:integ.map(x=>'<p class="mbook-tight"><b class="mbook-lead">'+esc(x[0])+'</b> — '+esc(x[1])+'</p>').join('')+meg('Nothing on this page pretends. That was expensive to earn.'),live:true,fx:ink('bottom:20px;left:20px;opacity:.4')});
   P.push({t:'When Things Jam',body:pgP('<b>A feed link says “not configured”</b> — the deploy has not caught up. The Feeds panel diagnoses itself: follow its four steps, redeploy, press Re-check.')+pgP('<b>A Notion push says Queued</b> — Notion did not answer. Nothing is lost; the record rides the next push. Push again from the calendar or the record when Notion is back.')+pgP('<b>A send “arrived” in the wrong inbox</b> — that is TEST mode doing its job: every send lands in-house, stamped with its intended recipient, until mail is flipped live.')+pgP('<b>The contract reader shrugged</b> — a scan too rough even for it. The flagged [Confirm] fields are the honest residue; fill them by hand and the record is whole.')+pgP('<b>Anything else</b> — walk the spine (page III): find the record, read its sources, and the jam names itself.'),fx:burn('top:18px;right:14px;width:76px;height:76px;opacity:.2')});
   const srcs=(state.sources||[]).slice().reverse().slice(0,18);
@@ -3231,9 +3231,9 @@ window.addEventListener('DOMContentLoaded',function(){
    const withE=rows.filter(function(r){return (r.c.money||{}).estimate});
    const open=rows.filter(function(r){return !(r.c.money||{}).estimate&&!/closed|denied|archiv|done|wrapped/i.test(r.c.state||'')});
    function q(s2){return String(s2).replaceAll("'","\\'")}
-   page.insertAdjacentHTML('beforeend','<div class="panel" id="estLedger" style="margin-top:12px"><h3>Estimate Ledger — whole book</h3><div class="tiny" style="margin-bottom:7px">An estimate is built HERE (EV series) or built in DOOM (bare numbers) — the two never cross. Mayhem suggests the next EV code itself and never mints, picks, or edits a Doom number; Doom joins below came from Doom’s own data and are read-only here. Optional per record, expected on every new one.</div>'+
+   page.insertAdjacentHTML('beforeend','<div class="panel" id="estLedger" style="margin-top:12px"><h3>Estimate Ledger — whole book</h3><div class="tiny" style="margin-bottom:7px">An estimate is built HERE (EV series) or built in DOOM (bare numbers) — the two never cross. The EV code doubles as the PO number: vendors quote it on every invoice, so electronic invoices match their event automatically. Mayhem suggests the next code itself and never mints, picks, or edits a Doom number; Doom joins below are read-only here. Per the demo ruling: every event carries one.</div>'+
     (withE.length?withE.map(function(r){return '<div class="payment"><div>'+esc(r.c.money.estimate)+'</div><div><b>'+esc(r.c.name)+'</b><div class="meta">'+esc(r.b)+' · '+esc(r.d)+(/^EV/i.test(r.c.money.estimate)?' · Mayhem event code':' · Doom media estimate (join key — Doom owns it)')+'</div></div><button class="btn secondary" onclick="routeToCommit(\''+q(r.b)+'\',\''+q(r.d)+'\',\''+q(r.c.id)+'\')">Open</button></div>'}).join(''):'<div class="fact"><div class="label">Ledger</div><div>No estimates assigned anywhere yet.</div></div>')+
-    (open.length?'<div class="sectioncap" style="margin-top:8px">Open records without an estimate ('+open.length+')</div>'+open.slice(0,14).map(function(r){return '<div class="payment"><div>—</div><div><b>'+esc(r.c.name)+'</b><div class="meta">'+esc(r.b)+' · '+esc(r.d)+'</div></div><button class="btn secondary" onclick="mamAssignEv(\''+q(r.c.id)+'\',\''+q(r.b)+'\',\''+q(r.d)+'\')">Assign EV Code</button></div>'}).join('')+(open.length>14?'<div class="tiny">…and '+(open.length-14)+' more without one.</div>':''):'')+
+    (open.length?'<div class="sectioncap" style="margin-top:8px">Open records without an estimate ('+open.length+')</div><div class="actions" style="margin:6px 0"><button class="btn" onclick="mamMintAllEv()">Mint EV / PO for All '+open.length+' Open</button></div>'+open.slice(0,14).map(function(r){return '<div class="payment"><div>—</div><div><b>'+esc(r.c.name)+'</b><div class="meta">'+esc(r.b)+' · '+esc(r.d)+'</div></div><button class="btn secondary" onclick="mamAssignEv(\''+q(r.c.id)+'\',\''+q(r.b)+'\',\''+q(r.d)+'\')">Assign EV Code</button></div>'}).join('')+(open.length>14?'<div class="tiny">…and '+(open.length-14)+' more without one.</div>':''):'')+
    '</div>');
   }catch(e){}
  };
@@ -3282,6 +3282,40 @@ window.addEventListener('DOMContentLoaded',function(){
  try{applyDataTruthB7v10()}catch(e){}
 })();
 /* ===== END DATA TRUTH v10 ===== */
+/* ===== DEMO FOLLOW-THROUGH (2026-08-28): PO/estimate everywhere, per Hazel at the demo ===== */
+;(function(){
+ window.mamMintAllEv=function(){
+  const rows=[];
+  brands().forEach(function(b){markets(b).forEach(function(d){((state.brands[b].markets[d]||{}).commitments||[]).forEach(function(c){
+   if(!(c.money||{}).estimate&&!/closed|denied|archiv|done|wrapped/i.test(c.state||''))rows.push({c:c,b:b,d:d});
+  })})});
+  if(!rows.length){toast('Every open record already carries an estimate');return}
+  let minted=[];
+  rows.forEach(function(r){r.c.money=r.c.money||{};r.c.money.estimate=mamNextEvEstimate();minted.push(r.c.money.estimate+' \u2192 '+r.c.name)});
+  (state.sources=state.sources||[]).push({id:Date.now(),type:'Estimate',name:'PO / estimate numbers minted for all open records ('+rows.length+')',status:'Applied',detail:'Per the demo ruling (Aug 28): every event carries an estimate so electronic invoices match by code. '+minted.slice(0,10).join(' \u00b7 ')+(minted.length>10?' \u2026':''),brand:'',dma:''});
+  saveState();renderPage();toast(rows.length+' EV / PO codes minted \u2014 vendors quote them on invoices');
+ };
+ const _mtE=mtEmail;
+ window.mtEmail=function(t){
+  const m=_mtE(t);
+  try{
+   const c=mtRecord(t);
+   const est=c&&c.money&&c.money.estimate;
+   if(est)m.body+='\n\nREFERENCE PO / ESTIMATE #: '+est+' \u2014 please include this number on every invoice and delivery for this event.';
+  }catch(e){}
+  return m;
+ };
+ window.applyDataTruthB7v11=function(){
+  if(state._dataTruthB7v11)return;
+  const hit=mayhemFind(/thunder/i);
+  if(hit&&!/unsure the budget/.test(hit.c.meta||''))hit.c.meta=((hit.c.meta||'')+' \u00b7 At the demo (Aug 28) the team was unsure the budget-needed flag is real \u2014 [Confirm whether a budget is actually required] before anyone chases it.').trim();
+  state.sources=state.sources||[];
+  if(!state.sources.some(function(x){return x.id==='src-demo-0828'}))state.sources.push({id:'src-demo-0828',brand:'',dma:'',commit:'',type:'Meeting',name:'The demo \u2014 Mayhem shown to the team (Aug 28)',status:'Applied',detail:'Received well; props to leadership promised. Rulings: every event gets a PO/estimate number NOW (EV codes double as PO \u2014 done in-app); intake stays the single source of truth; pick ONE calendar/email lane (shared Outlook mailboxes per brand vs Google vs Notion) before building further \u2014 decision open. Asks logged with owners: logins+PIN instructions to the team \u00b7 hub feature list (Social) \u00b7 stakeholder call or overview email before launch \u00b7 loop in Creative Ops + the Monday ticketing board \u00b7 Merch intake review \u00b7 reporting alignment (leadership + analytics seat) \u00b7 brand-manager calendar + AP view \u00b7 flesh out Content & Results with Social \u00b7 two intake users added (Emma, Karissa \u2014 spellings to confirm) \u00b7 DNS/domain conversation \u00b7 MerchHub vendor call \u00b7 1UP impression-scope check. Roadmap agreed: brand-scoped logins (a brand manager sees only their brand), Monday board mirror, ambassador/creator tracking, Doom task sync. Transcription note for future email ingestion: \u201cLearn and Grow\u201d=Lerner & Rowe \u00b7 \u201cCatches\u201d=Keches \u00b7 \u201cRubly\u201d=Rublee \u00b7 \u201cAtticore\u201d=Atticor.'});
+  state._dataTruthB7v11=true;state._savedTs=Date.now();saveState();
+ };
+ try{applyDataTruthB7v11()}catch(e){}
+})();
+/* ===== END DEMO FOLLOW-THROUGH ===== */
 ;(function(){
  function heal(){try{
   const bk=state.brands[state.currentBrand];
