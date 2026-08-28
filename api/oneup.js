@@ -176,23 +176,38 @@ module.exports = async (req, res) => {
       const livePosts = posts.filter(r => r.answered);
       const liveAnalytics = analytics.filter(r => r.answered);
 
-      // A plan verdict falls out of the results, and it is stated plainly.
+      // A plan verdict falls out of the results — but only when the status
+      // codes support it. 404 across the analytics set means those endpoint
+      // NAMES are wrong, which is a different problem from a plan gate
+      // (401/402/403). Saying "upgrade your plan" on the strength of 404s
+      // would be a guess dressed as a finding.
+      const anStatuses = analytics.map(r => r.status);
+      const gated = anStatuses.some(c => c === 401 || c === 402 || c === 403);
+      const allNotFound = anStatuses.length > 0 && anStatuses.every(c => c === 404);
       let verdict, detail;
       if (!liveConn.length && !livePosts.length && !liveAnalytics.length) {
         verdict = 'no_endpoints';
         detail = 'The key reached OneUp but no read endpoint answered. Worth confirming the key is active on the account.';
       } else if (liveAnalytics.length) {
         verdict = 'analytics_available';
-        detail = 'Analytics are available on this plan — social numbers can flow into records automatically.';
+        detail = 'Analytics answered — social numbers can flow onto records automatically.';
+      } else if (gated) {
+        verdict = 'plan_gated';
+        detail = 'The analytics endpoints exist but this plan cannot read them (OneUp returned a permission error). Per their docs, analytics need Intermediate, Growth or Business — Basic does not include them.';
+      } else if (allNotFound) {
+        verdict = 'analytics_names_unknown';
+        detail = 'The connection works, but every analytics name tried came back 404 — "no such endpoint". That usually means the real names differ from the ones tried, NOT that the plan lacks analytics. The exact names are on each analytics page in OneUp\u2019s docs; with them, this connects properly.';
       } else {
-        verdict = 'publishing_only';
-        detail = 'The connection works, but no analytics endpoint answered. Per OneUp\u2019s docs, analytics require the Intermediate, Growth or Business plan — Basic does not include them. Until the plan changes, use the dashboard\u2019s Custom Report export instead.';
+        verdict = 'analytics_unclear';
+        detail = 'The connection works; the analytics endpoints neither answered nor returned a clear permission error. Codes are listed below.';
       }
+
       return res.end(JSON.stringify({
         checked: new Date().toISOString(),
         base: BASE,
         auth: 'apiKey query parameter',
         verdict, detail,
+        analyticsStatuses: analytics.map(r => ({ endpoint: r.endpoint, status: r.status })),
         connection: liveConn.map(r => ({ endpoint: r.endpoint, shape: r.shape })),
         posts: livePosts.map(r => ({ endpoint: r.endpoint, shape: r.shape })),
         analytics: liveAnalytics.map(r => ({ endpoint: r.endpoint, shape: r.shape })),
