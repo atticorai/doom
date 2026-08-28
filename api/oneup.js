@@ -96,6 +96,38 @@ async function get(base, path, params, key, timeoutMs) {
   } finally { clearTimeout(timer); }
 }
 
+// Walk a payload and describe its structure, so an unrecognised response can
+// be read at a glance instead of guessed at.
+function outline(v, depth, path) {
+  depth = depth || 0; path = path || '$';
+  if (depth > 3) return [];
+  if (Array.isArray(v)) {
+    const first = v.find(x => x && typeof x === 'object');
+    return [path + ' = array(' + v.length + ')' + (first ? ' of objects with: ' + Object.keys(first).slice(0, 14).join(', ') : '')];
+  }
+  if (v && typeof v === 'object') {
+    const out = [path + ' = object{' + Object.keys(v).slice(0, 14).join(', ') + '}'];
+    Object.keys(v).slice(0, 8).forEach(k => { out.push(...outline(v[k], depth + 1, path + '.' + k)); });
+    return out;
+  }
+  return [path + ' = ' + (typeof v) + (typeof v === 'string' ? ' "' + String(v).slice(0, 40) + '"' : '')];
+}
+
+// Find the account list wherever OneUp nests it: a bare array, an array under
+// any key, or platform-keyed buckets ({facebook:[...], instagram:[...]}).
+function findAccountArrays(v, depth) {
+  depth = depth || 0;
+  if (depth > 4 || !v || typeof v !== 'object') return [];
+  if (Array.isArray(v)) return v.some(x => x && typeof x === 'object') ? [{ key: null, rows: v }] : [];
+  let out = [];
+  Object.keys(v).forEach(k => {
+    const child = v[k];
+    if (Array.isArray(child) && child.some(x => x && typeof x === 'object')) out.push({ key: k, rows: child });
+    else out = out.concat(findAccountArrays(child, depth + 1));
+  });
+  return out;
+}
+
 function describe(json) {
   if (json === null || json === undefined) return 'not JSON';
   if (Array.isArray(json)) {
@@ -240,15 +272,21 @@ module.exports = async (req, res) => {
       const acctResp = await get(BASE_APP, 'listsocialaccounts', {}, key, 15000);
       if (!acctResp.ok) { res.statusCode = 502; return res.end(JSON.stringify({ error: 'accounts_failed', status: acctResp.status, message: scrub(acctResp.text, key).slice(0, 240) })); }
       const raw = (acctResp.json && acctResp.json.data !== undefined) ? acctResp.json.data : acctResp.json;
-      const list = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? (Object.values(raw).find(Array.isArray) || []) : []);
+      // Buckets can be platform-keyed; remember the key so it can supply the
+      // platform when the row itself does not name one.
+      const buckets = findAccountArrays(raw, 0);
+      const list = [];
+      buckets.forEach(b => b.rows.forEach(r => list.push(Object.assign({ __bucket: b.key }, r))));
       if (!list.length) {
         return res.end(JSON.stringify({ fetched: new Date().toISOString(), accounts: 0, rows: [],
-          note: 'No account list came back in a shape we recognised.', shape: describe(raw), sample: raw }));
+          note: 'OneUp answered, but no list of accounts was found inside the response.',
+          shape: describe(raw), outline: outline(raw, 0, 'data'),
+          sample: JSON.stringify(raw).slice(0, 1200) }));
       }
       // Field names are not documented, so detect them rather than assume.
       const idOf = (a) => a.social_network_id || a.id || a.network_id || a.account_id || null;
       const nameOf = (a) => a.name || a.account_name || a.page_name || a.username || a.title || '';
-      const platOf = (a) => String(a.platform || a.social_network || a.network || a.type || a.channel || '')
+      const platOf = (a) => String(a.platform || a.social_network || a.network || a.type || a.channel || a.__bucket || '')
         .toLowerCase().replace(/[^a-z]/g, '')
         .replace('googlebusiness', 'googlebusinessprofile').replace('gbp', 'googlebusinessprofile')
         .replace('twitter', 'x').replace('metaads', 'metaads');
@@ -256,9 +294,16 @@ module.exports = async (req, res) => {
       ['preset', 'start_date', 'end_date', 'timezone'].forEach(k => { if (body && body[k]) period[k] = String(body[k]); });
       if (!period.preset && !period.start_date) period.preset = 'last_30_days';
 
-      const targets = list.map(a => ({ id: idOf(a), name: nameOf(a), platform: platOf(a) }))
-        .filter(t => t.id && PLATFORMS.includes(t.platform));
+      const mapped = list.map(a => ({ id: idOf(a), name: nameOf(a), platform: platOf(a) }));
+      const targets = mapped.filter(t => t.id && PLATFORMS.includes(t.platform));
       const skipped = list.length - targets.length;
+      if (!targets.length) {
+        return res.end(JSON.stringify({ fetched: new Date().toISOString(), accounts: list.length, rows: [],
+          note: 'Found ' + list.length + ' account rows, but could not read an id and a known platform from them.',
+          outline: outline(raw, 0, 'data'),
+          sampleRow: JSON.stringify(list[0]).slice(0, 800),
+          mappedSample: mapped.slice(0, 5) }));
+      }
       const cap = Math.min(targets.length, Number(body && body.limit) || 80);
       const rows = [];
       const started = Date.now();
@@ -314,4 +359,6 @@ module.exports.REPORTS = REPORTS;
 module.exports.analyticsPathAllowed = analyticsPathAllowed;
 module.exports.readOverview = readOverview;
 module.exports.describe = describe;
+module.exports.outline = outline;
+module.exports.findAccountArrays = findAccountArrays;
 module.exports.scrub = scrub;

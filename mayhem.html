@@ -3375,7 +3375,14 @@ window.addEventListener('DOMContentLoaded',function(){
   if(!j){out.innerHTML='<div class="fact" style="margin-top:10px"><div class="label">\u2717 No answer</div><div>The service did not respond'+(code?' ('+code+')':'')+'. If the deploy just went out, give it a minute.</div></div>';return}
   if(j.error){out.innerHTML='<div class="fact" style="margin-top:10px"><div class="label">\u2717 '+esc(j.error)+'</div><div>'+esc(j.message||'')+'</div></div>';return}
   const rows=j.rows||[];
-  if(!rows.length){out.innerHTML='<div class="fact" style="margin-top:10px"><div class="label">Accounts came back, numbers did not</div><div>'+esc(j.note||'Nothing readable yet.')+' Shape: '+esc(j.shape||'')+'</div></div>';return}
+  if(!rows.length){
+   let d='<div class="fact" style="margin-top:10px"><div class="label">Couldn\u2019t read the account list</div><div>'+esc(j.note||'Nothing readable yet.')+'</div></div>';
+   if(j.accounts)d+='<div class="detail">Rows found: '+j.accounts+'</div>';
+   if(j.outline&&j.outline.length)d+='<div class="sectioncap" style="margin-top:8px">What OneUp actually sent</div>'+j.outline.slice(0,14).map(function(x){return '<div class="detail" style="font-family:monospace;font-size:10.5px">'+esc(x)+'</div>'}).join('');
+   if(j.sampleRow)d+='<div class="sectioncap" style="margin-top:8px">One account row</div><div class="detail" style="font-family:monospace;font-size:10.5px;word-break:break-all">'+esc(j.sampleRow)+'</div>';
+   else if(j.sample)d+='<div class="sectioncap" style="margin-top:8px">Raw sample</div><div class="detail" style="font-family:monospace;font-size:10.5px;word-break:break-all">'+esc(j.sample)+'</div>';
+   d+='<div class="fact" style="margin-top:8px"><div class="label">Send this over</div><div>Copy the lines above \u2014 they name the real field names, which is all that\u2019s left to finish the wiring.</div></div>';
+   out.innerHTML=d;return}
   /* group by brand using the map; unknown accounts are shown, never guessed into a brand */
   const groups={};
   rows.forEach(function(r){
