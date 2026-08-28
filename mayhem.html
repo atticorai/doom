@@ -2329,7 +2329,7 @@ window.addEventListener('DOMContentLoaded',function(){
  try{fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({collection:'appData',doc:'mayhemB7',action:'get'})}).then(function(r){return r.ok?r.json():null}).then(function(j){
   const remote=j&&j.data&&j.data.data&&j.data.data.brands?j.data.data:null;
   const rts=j&&j.data&&j.data.ts?j.data.ts:0;
-  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}try{applyDataTruthB7v7()}catch(e){}try{applyDataTruthB7v8()}catch(e){}try{applyDataTruthB7v9()}catch(e){}try{state.tickets=(state.tickets||[]).filter(x=>x.id!=='tk-cal-brainstorm')}catch(e){}renderShell();renderPage()}
+  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}try{applyDataTruthB7v7()}catch(e){}try{applyDataTruthB7v8()}catch(e){}try{applyDataTruthB7v9()}catch(e){}try{applyDataTruthB7v10()}catch(e){}try{state.tickets=(state.tickets||[]).filter(x=>x.id!=='tk-cal-brainstorm')}catch(e){}renderShell();renderPage()}
  }).catch(function(){})}catch(e){}
 });
 /* ===== END DATA TRUTH + DOOM MOUNT ===== */
@@ -3256,6 +3256,32 @@ window.addEventListener('DOMContentLoaded',function(){
  };
 })();
 /* ===== END ESTIMATE LEDGER ===== */
+/* ===== DATA TRUTH v10 — the date audit (Aug 28): public-source recoveries + honest chases ===== */
+;(function(){
+ window.applyDataTruthB7v10=function(){
+  if(state._dataTruthB7v10)return;
+  function stamp(re,fn){const hit=mayhemFind(re);if(hit)fn(hit.c)}
+  stamp(/LOVEPUP Family Fest/i,function(c){
+   if(!c.anchor){c.anchor='2026-11-07';c.state='Confirmed';
+    c.meta=((c.meta||'')+' · DATE RECOVERED from the LovePup Foundation’s official 2026 event page (checked Aug 28): Sat Nov 7, 4–8pm, Vertuccio Farms. Scope of the L&R presence [Confirm with brand].').trim()}
+  });
+  stamp(/Walk 4 Kids/i,function(c){
+   if(!c.anchor){c.anchor='2026-12-06';
+    c.meta=((c.meta||'')+' · DATE RECOVERED from RMHC Southern Arizona’s official 2026 event page (checked Aug 28): Sun Dec 6, opens 8am, walk 9am, Sam Lena Park. Scope of the L&R presence [Confirm with brand].').trim()}
+  });
+  stamp(/Crimson Bells/i,function(c){
+   if(!/Public-source check/.test(c.meta||''))c.meta=((c.meta||'')+' · Public-source check (Aug 28): no “Crimson Bells Gala” found published for Salvation Army Tucson — Salvation Army PHOENIX runs a “Silver Bells Gala”. [Confirm the event name AND date with the L&R events team] before anything builds from this record.').trim();
+  });
+  stamp(/STUDIO 215/i,function(c){
+   if(!/Public-source check/.test(c.meta||''))c.meta=((c.meta||'')+' · Public-source check (Aug 28): 2026 date not yet published — the museum’s 2025 gala was Nov 15, and “215” matches its address (215 N 7th St). [Confirm date with the brand counterpart].').trim();
+  });
+  state.sources=state.sources||[];
+  if(!state.sources.some(x=>x.id==='src-date-audit-0828'))state.sources.push({id:'src-date-audit-0828',brand:'Lerner & Rowe',dma:'Phoenix',commit:'',type:'Audit',name:'Date audit — every dateless record checked (Aug 28)',status:'Applied',detail:'28 records had no day-level date. 24 are honest: their sources gave only a month, a season, or “ongoing”, and the records say so. 2 recovered from official event pages (LOVEPUP Nov 7 · Walk 4 Kids Dec 6). 2 flagged: Crimson Bells (event name unverifiable publicly — Phoenix runs “Silver Bells”) and STUDIO 215 (2026 date unpublished). Biggest untapped source for the rest: the first real Pull from Notion, plus the partner-calendar bridge once the master calendar fills.'});
+  state._dataTruthB7v10=true;state._savedTs=Date.now();saveState();
+ };
+ try{applyDataTruthB7v10()}catch(e){}
+})();
+/* ===== END DATA TRUTH v10 ===== */
 ;(function(){
  function heal(){try{
   const bk=state.brands[state.currentBrand];
