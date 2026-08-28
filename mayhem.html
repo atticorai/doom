@@ -3390,9 +3390,15 @@ window.addEventListener('DOMContentLoaded',function(){
    (groups[b]=groups[b]||[]).push(r);
   });
   const money=function(n){return (n===null||n===undefined)?'\u2014':Number(n).toLocaleString()};
+  const broken=j.broken||[];
   let html='<div class="fact" style="margin-top:10px"><div class="label">Last 30 days \u00b7 '+j.attempted+' of '+j.accounts+' accounts read</div><div>'+
    (j.planGated?'<b>'+j.planGated+'</b> account(s) refused for plan reasons \u2014 analytics need Intermediate or above. ':'')+
-   ((j.stale||[]).length?'<b>'+j.stale.length+'</b> account(s) reported all zeros \u2014 almost certainly the connections OneUp says need refreshing, not a dead month.':'Numbers below are as OneUp reports them.')+'</div></div>';
+   ((j.stale||[]).length?'<b>'+j.stale.length+'</b> account(s) reported all zeros. ':'')+
+   'Numbers below are as OneUp reports them.</div></div>';
+  if(broken.length){
+   html+='<div class="fact" style="margin-top:8px"><div class="label" style="color:#8f2438">\u26a0 '+broken.length+' broken connection'+(broken.length===1?'':'s')+' \u2014 fix these in OneUp</div><div>OneUp itself flags these accounts as needing a refresh or expired. They report nothing, so every month they are down is under-counted. Not skipped quietly \u2014 listed here:</div></div>'+
+    broken.map(function(x){return '<div class="detail">\u2022 '+esc(x.name||'(unnamed)')+' \u00b7 '+esc(x.platform||'?')+(x.expired?' \u2014 expired':' \u2014 needs refresh')+'</div>'}).join('');
+  }
   Object.keys(groups).sort().forEach(function(b){
    const rs=groups[b];
    const tot=rs.reduce(function(a,r){return a+(r.ok&&r.impressions?r.impressions:0)},0);
@@ -3400,7 +3406,8 @@ window.addEventListener('DOMContentLoaded',function(){
    html+='<div class="sectioncap" style="margin-top:10px">'+esc(b)+' \u2014 '+money(tot)+' impressions \u00b7 '+money(eng)+' engagements</div>';
    rs.forEach(function(r){
     const bad=!r.ok, stale=r.ok&&r.suspectStale;
-    html+='<div class="workline"><div class="top"><div class="name">'+esc(r.name||'(unnamed)')+' \u00b7 '+esc(r.platform)+'</div><span class="badge '+(bad?'red':stale?'gold':'green')+'">'+(bad?(r.error==='plan'?'plan':'error'):stale?'needs refresh?':'ok')+'</span></div>'+
+    const mkt=mamOneUpMarket(r.name,b);
+    html+='<div class="workline"><div class="top"><div class="name">'+esc(String(r.name||'(unnamed)').slice(0,70))+' \u00b7 '+esc(r.platform)+(mkt?' \u00b7 '+esc(mkt):'')+'</div><span class="badge '+(bad?'red':stale?'gold':'green')+'">'+(bad?(r.error==='needs_refresh'?'broken':r.error==='plan'?'plan':'error'):stale?'zeros':'ok')+'</span></div>'+
      '<div class="detail">'+(bad?esc(r.note||('status '+r.status)):('Impressions '+money(r.impressions)+' \u00b7 Reach '+money(r.reach)+' \u00b7 Engagements '+money(r.engagements)+' \u00b7 Followers '+money(r.followers)))+'</div></div>';
    });
   });
@@ -3428,11 +3435,30 @@ window.addEventListener('DOMContentLoaded',function(){
   'wkfirm':'Wettermark Keith',
   'Parrish DeVaughn Inj':'Parrish DeVaughn','Parrish DeVaughn':'Parrish DeVaughn'
  };
+ /* Account names run long — "Postman Law | Minneapolis Personal Injury Attorneys
+    (860 Blue Gentian Rd…)" — so match brand keywords anywhere in the string. */
+ window.MAM_ONEUP_KEYWORDS=[
+  ['lerner','Lerner & Rowe'],['lrgb','Lerner & Rowe'],['gives back','Lerner & Rowe'],
+  ['keches','Keches Law'],
+  ['wkfirm','Wettermark Keith'],['wettermark','Wettermark Keith'],
+  ['parrish','Parrish DeVaughn'],['devaughn','Parrish DeVaughn'],
+  ['postman','Postman Law']
+ ];
  window.mamOneUpBrand=function(acct){
   const a=String(acct||'').trim();
   if(MAM_ONEUP_BRANDS[a])return MAM_ONEUP_BRANDS[a];
-  const hit=Object.keys(MAM_ONEUP_BRANDS).find(function(k){return a.toLowerCase().indexOf(k.toLowerCase())===0});
-  return hit?MAM_ONEUP_BRANDS[hit]:null;
+  const low=a.toLowerCase();
+  const hit=MAM_ONEUP_KEYWORDS.find(function(k){return low.indexOf(k[0])>=0});
+  return hit?hit[1]:null;
+ };
+ /* GBP runs one account per location — pull the market out of the name when we
+    recognise it, so location numbers can sit under the right DMA later. */
+ window.mamOneUpMarket=function(acct,brand){
+  try{
+   const low=String(acct||'').toLowerCase();
+   const ms=brand&&state.brands[brand]?markets(brand):[];
+   return ms.find(function(m){return low.indexOf(String(m).toLowerCase())>=0})||null;
+  }catch(e){return null}
  };
  window.applyDataTruthB7v12=function(){
   if(state._dataTruthB7v12)return;

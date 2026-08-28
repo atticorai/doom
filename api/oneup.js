@@ -25,7 +25,7 @@ const APP_ENDPOINTS = ['listcategory', 'listcategoryaccount', 'listsocialaccount
 
 // Analytics platforms and the reports each exposes (per OneUp's docs).
 const PLATFORMS = ['facebook', 'instagram', 'linkedin', 'threads', 'snapchat',
-  'pinterest', 'bluesky', 'youtube', 'tiktok', 'googlebusinessprofile', 'metaads'];
+  'pinterest', 'bluesky', 'youtube', 'tiktok', 'googlebusinessprofile', 'metaads', 'x'];
 const REPORTS = ['overview', 'posts', 'reels', 'stories', 'demographics'];
 
 // Which metric key means "impressions" on each platform's overview.
@@ -36,6 +36,28 @@ const IMPRESSION_KEYS = ['page_media_view', 'impressions', 'media_views',
   'page_story_impressions_by_story_id', 'post_impressions'];
 const REACH_KEYS = ['page_total_media_view_unique', 'reach', 'unique_views'];
 const ENGAGEMENT_KEYS = ['page_post_engagements', 'engagements', 'interactions'];
+
+// OneUp labels each account with a short network code (observed: "GBP").
+// Map every plausible code/name onto the analytics path segment.
+const NETWORK_TYPE = {
+  FB: 'facebook', FACEBOOK: 'facebook', PAGE: 'facebook',
+  IG: 'instagram', INSTAGRAM: 'instagram',
+  LI: 'linkedin', LINKEDIN: 'linkedin',
+  TW: 'x', X: 'x', TWITTER: 'x',
+  TT: 'tiktok', TIKTOK: 'tiktok',
+  YT: 'youtube', YOUTUBE: 'youtube',
+  PIN: 'pinterest', PINTEREST: 'pinterest',
+  TH: 'threads', THREADS: 'threads',
+  SC: 'snapchat', SNAPCHAT: 'snapchat',
+  BS: 'bluesky', BSKY: 'bluesky', BLUESKY: 'bluesky',
+  GBP: 'googlebusinessprofile', GMB: 'googlebusinessprofile',
+  GOOGLEBUSINESSPROFILE: 'googlebusinessprofile',
+  METAADS: 'metaads', META_ADS: 'metaads', ADS: 'metaads',
+};
+function platformFor(code) {
+  const k = String(code || '').toUpperCase().replace(/[^A-Z_]/g, '');
+  return NETWORK_TYPE[k] || NETWORK_TYPE[k.replace(/_/g, '')] || null;
+}
 
 function analyticsPathAllowed(p) {
   const m = String(p || '').match(/^([a-z]+)\/([a-z]+)$/);
@@ -284,17 +306,21 @@ module.exports = async (req, res) => {
           sample: JSON.stringify(raw).slice(0, 1200) }));
       }
       // Field names are not documented, so detect them rather than assume.
-      const idOf = (a) => a.social_network_id || a.id || a.network_id || a.account_id || null;
-      const nameOf = (a) => a.name || a.account_name || a.page_name || a.username || a.title || '';
-      const platOf = (a) => String(a.platform || a.social_network || a.network || a.type || a.channel || a.__bucket || '')
-        .toLowerCase().replace(/[^a-z]/g, '')
-        .replace('googlebusiness', 'googlebusinessprofile').replace('gbp', 'googlebusinessprofile')
-        .replace('twitter', 'x').replace('metaads', 'metaads');
+      // Field names confirmed against a live account list (Aug 28).
+      const idOf = (a) => a.social_account_id || a.social_network_id || a.id || a.network_id || a.account_id || null;
+      const nameOf = (a) => a.full_name || a.username || a.name || a.account_name || a.page_name || a.title || '';
+      const platOf = (a) => platformFor(a.social_network_type || a.platform || a.social_network || a.network || a.type || a.channel || a.__bucket) || '';
       const period = {};
       ['preset', 'start_date', 'end_date', 'timezone'].forEach(k => { if (body && body[k]) period[k] = String(body[k]); });
       if (!period.preset && !period.start_date) period.preset = 'last_30_days';
 
-      const mapped = list.map(a => ({ id: idOf(a), name: nameOf(a), platform: platOf(a) }));
+      const mapped = list.map(a => ({
+        id: idOf(a), name: nameOf(a), platform: platOf(a),
+        // OneUp tells us itself which connections are broken — no inference needed.
+        needRefresh: a.need_refresh === true || a.need_refresh === 1,
+        expired: a.is_expired === true || a.is_expired === 1,
+        networkType: a.social_network_type || null,
+      }));
       const targets = mapped.filter(t => t.id && PLATFORMS.includes(t.platform));
       const skipped = list.length - targets.length;
       if (!targets.length) {
@@ -311,8 +337,17 @@ module.exports = async (req, res) => {
         if (Date.now() - started > 55000) break; // stay inside the function budget
         const batch = targets.slice(i, i + 5);
         const done = await Promise.all(batch.map(async (t) => {
+          // Do not spend a call on a connection OneUp already says is broken —
+          // it would return zeros and look like a bad month.
+          if (t.needRefresh || t.expired) {
+            return { ...t, ok: false, status: 0, error: 'needs_refresh',
+              note: t.expired ? 'OneUp reports this connection expired' : 'OneUp reports this connection needs refreshing' };
+          }
           try {
-            const r = await get(BASE_ANALYTICS, t.platform + '/overview', { social_network_id: t.id, ...period }, key, 12000);
+            // The docs name the parameter social_network_id; the account list
+            // calls the value social_account_id. Send both rather than bet on one.
+            const r = await get(BASE_ANALYTICS, t.platform + '/overview',
+              { social_network_id: t.id, social_account_id: t.id, ...period }, key, 12000);
             if (!r.ok) {
               const gate = (r.status === 401 || r.status === 402 || r.status === 403);
               return { ...t, ok: false, status: r.status, error: gate ? 'plan' : 'error', note: scrub(r.text, key).slice(0, 120) };
@@ -337,11 +372,13 @@ module.exports = async (req, res) => {
         rows.push(...done);
       }
       const gated = rows.filter(r => r.error === 'plan').length;
+      const broken = mapped.filter(r => r.needRefresh || r.expired).map(r => ({ name: r.name, platform: r.platform, expired: r.expired }));
       return res.end(JSON.stringify({
         fetched: new Date().toISOString(), period,
         accounts: list.length, attempted: rows.length, skipped,
         planGated: gated,
         stale: rows.filter(r => r.ok && r.suspectStale).map(r => r.name),
+        broken,
         rows,
       }));
     }
@@ -360,5 +397,6 @@ module.exports.analyticsPathAllowed = analyticsPathAllowed;
 module.exports.readOverview = readOverview;
 module.exports.describe = describe;
 module.exports.outline = outline;
+module.exports.platformFor = platformFor;
 module.exports.findAccountArrays = findAccountArrays;
 module.exports.scrub = scrub;
