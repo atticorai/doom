@@ -2329,7 +2329,7 @@ window.addEventListener('DOMContentLoaded',function(){
  try{fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({collection:'appData',doc:'mayhemB7',action:'get'})}).then(function(r){return r.ok?r.json():null}).then(function(j){
   const remote=j&&j.data&&j.data.data&&j.data.data.brands?j.data.data:null;
   const rts=j&&j.data&&j.data.ts?j.data.ts:0;
-  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}try{applyDataTruthB7v7()}catch(e){}try{applyDataTruthB7v8()}catch(e){}try{state.tickets=(state.tickets||[]).filter(x=>x.id!=='tk-cal-brainstorm')}catch(e){}renderShell();renderPage()}
+  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}try{applyDataTruthB7v7()}catch(e){}try{applyDataTruthB7v8()}catch(e){}try{applyDataTruthB7v9()}catch(e){}try{state.tickets=(state.tickets||[]).filter(x=>x.id!=='tk-cal-brainstorm')}catch(e){}renderShell();renderPage()}
  }).catch(function(){})}catch(e){}
 });
 /* ===== END DATA TRUTH + DOOM MOUNT ===== */
@@ -2723,7 +2723,7 @@ window.addEventListener('DOMContentLoaded',function(){
   P.push({t:'The House Clock',body:pgP('<b>Backwards from launch:</b> assets to campaign vendors at <b>launch −7</b>; creative due back at <b>launch −11</b> (four days of review before the package). Both roll off weekends automatically.')+pgP('<b>Media reality:</b> stations turn things in one to three days — never promise a vendor faster than creative can deliver.')+pgP('<b>After an event, wrap arms itself:</b> attendance +1, social metrics +3, press +5, recap +7.')+pgP('<b>Every ticket carries a due-back and what it protects.</b> When one person owes three or more returns in a week, the collision flags — on the calendar and in the Monday note.')+pgP('<b>Known vendor lead times:</b> iHeart merch approval, two weeks pre-event. Hype staffing wants names and pricing locked well before event week.')+muse('Minus eleven, minus seven — hold the line,','and every launch will land on time!'),fx:ink('top:30px;right:22px;opacity:.35')});
   let comp='';try{const A=window.MAYHEM_DISCLAIMERS||{};brands().forEach(function(b){const key=(typeof DOOM_BRAND!=='undefined'&&DOOM_BRAND[b])||b;const rb=A[key];if(!rb)return;comp+='<p class="mbook-tight"><b class="mbook-lead" style="font-size:12px">'+esc(b)+'</b> — '+esc(statesFor(b))+'</p>'})}catch(e){}
   P.push({t:'Compliance Map — Live',body:pgP('<b>The rule:</b> state-bound language never crosses a state line. The engine withholds it and flags Ethics rather than guess.')+pgP('<b>Known hard requirements:</b> Alabama bar language on all WK advertising in AL markets. Illinois and Ohio require an identifying office address on OOH. Postman’s TV disclaimer carries per-state attorney blocks — each market gets its own block only.')+comp+pgP('<b>Blind spots flag loudly:</b> operating markets with no library row (currently the L&R Yuma / Flagstaff / Nevada gap) route every check to Ethics until the library covers them.'),live:true,fx:ink('bottom:22px;right:16px;opacity:.35')});
-  P.push({t:'Vendors & Allies — Live',body:pgP('<b>The Hype Agency</b> — event staffing; three loops open across Riverfest, Sista Strut and the Thunder tailgate.')+pgP('<b>iHeart Cincinnati</b> — venue logistics and the Riverfest ship-to.')+pgP('<b>On Target Media</b> — L&R Vegas events/sponsorships. No wire/ACH, ever.')+pgP('<b>Chicago Fire FC</b> — partnership leads engaged; a dedicated rep is being assigned.')+pgP('<b>Merch:</b> SwagMyBrand fulfills; BoomPromo holds the L&R idea decks; the approved catalog and existing designs live on the Merch Desk.')+pgP('<span class="mbook-sub">This page is the map, not the phone book — every human’s name, number and address lives in Contacts.</span>'),fx:drool('top:36%;right:10px;width:64px;height:64px;opacity:.2')});
+  P.push({t:'Vendors & Allies — Live',body:pgP('<b>The Hype Agency</b> — event staffing. Staff counts locked for all three fall activations (Riverfest 2 · Sista Strut 2 · Thunder Tailgate 2); still owed: exact shift windows, their staff picks with pricing — and we owe them a branded deck per event.')+pgP('<b>iHeart Cincinnati</b> — venue logistics and the Riverfest ship-to.')+pgP('<b>On Target Media</b> — L&R Vegas events/sponsorships. No wire/ACH, ever.')+pgP('<b>Chicago Fire FC</b> — partnership leads engaged; a dedicated rep is being assigned.')+pgP('<b>Merch:</b> SwagMyBrand fulfills; BoomPromo holds the L&R idea decks; the approved catalog and existing designs live on the Merch Desk.')+pgP('<span class="mbook-sub">This page is the map, not the phone book — every human’s name, number and address lives in Contacts.</span>'),fx:drool('top:36%;right:10px;width:64px;height:64px;opacity:.2')});
   P.push({t:'The Seats — Live',body:pgP('The roles this operation runs on. Who sits in each seat — names, emails, numbers — lives in Contacts, the only room that carries names.')+(state.teamContacts||[]).map(t=>'<p class="mbook-tight"><b class="mbook-lead">'+esc(t.role)+'</b>'+(t.email?'':' — <span style="color:#8f2438">email missing in Contacts</span>')+'</p>').join(''),live:true,fx:burn('bottom:10px;left:12px;width:64px;height:64px;opacity:.16')});
   const opens=(state.tickets||[]).filter(t=>t.status!=='Closed'&&t.due).sort((a,z2)=>String(a.due).localeCompare(String(z2.due))).slice(0,8);
   const pays=(state.payments||[]).filter(p=>p.status!=='Paid');
@@ -3184,6 +3184,21 @@ window.addEventListener('DOMContentLoaded',function(){
  };
 })();
 /* ===== END SHAREPOINT LINKS + LIVE DISCLAIMER WORKBOOK ===== */
+/* ===== DATA TRUTH v9 — Re: Additional Staffing rundown (Hype ↔ Marketing & Comms · Aug 24–27) ===== */
+;(function(){
+ window.applyDataTruthB7v9=function(){
+  if(state._dataTruthB7v9)return;
+  function stamp(re,txt){const hit=mayhemFind(re);if(hit&&!/Hype staffing rundown/.test(hit.c.meta||''))hit.c.meta=((hit.c.meta||'')+' · '+txt).trim()}
+  stamp(/riverfest/i,'Hype staffing rundown (Aug 27): 2 staff — 1 event manager + 1 merch activation, ~2–8pm Sat Sep 6. [Exact shift hours pending run-of-show] · [Hype pricing estimate pending] · [Branded deck owed to Hype].');
+  stamp(/sista strut|sister strut/i,'Hype staffing rundown (Aug 27): 2 staff — both merch activation, ~5-hour morning shift Sat Oct 3 (1.5-hr pre-walk festival + 3K, setup/teardown included). [Exact window pending run-of-show] · [Hype pricing estimate pending] · [Branded deck owed to Hype].');
+  stamp(/thunder/i,'Hype staffing rundown (Aug 27): 2 staff, ~4 hours Mon Oct 6, roles being finalized. [Exact shift hours pending run-of-show] · [Hype pricing estimate pending] · [Branded deck owed to Hype].');
+  state.sources=state.sources||[];
+  if(!state.sources.some(x=>x.id==='src-hype-staffing-0827'))state.sources.push({id:'src-hype-staffing-0827',brand:'Postman Law',dma:'Cincinnati',commit:(mayhemFind(/riverfest/i)||{c:{}}).c.id||'',type:'Email',name:'Re: Additional Staffing — the rundown (Aug 24–27)',status:'Applied',detail:'Staff counts confirmed for all three Hype activations: Riverfest Sep 6 (2 — event manager + merch, ~2–8pm) · Sista Strut Oct 3 (2 merch, ~5-hr morning) · Thunder Tailgate Oct 6, Tulsa (2, ~4 hrs). Still open: exact shift windows (run-of-show), Hype staff suggestions + pricing, branded decks owed to Hype per event. No tickets created — informational merge.'});
+  state._dataTruthB7v9=true;state._savedTs=Date.now();saveState();
+ };
+ try{applyDataTruthB7v9()}catch(e){}
+})();
+/* ===== END DATA TRUTH v9 ===== */
 ;(function(){
  function heal(){try{
   const bk=state.brands[state.currentBrand];
