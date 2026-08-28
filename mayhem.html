@@ -3399,16 +3399,24 @@ window.addEventListener('DOMContentLoaded',function(){
    html+='<div class="fact" style="margin-top:8px"><div class="label" style="color:#8f2438">\u26a0 '+broken.length+' broken connection'+(broken.length===1?'':'s')+' \u2014 fix these in OneUp</div><div>OneUp itself flags these accounts as needing a refresh or expired. They report nothing, so every month they are down is under-counted. Not skipped quietly \u2014 listed here:</div></div>'+
     broken.map(function(x){return '<div class="detail">\u2022 '+esc(x.name||'(unnamed)')+' \u00b7 '+esc(x.platform||'?')+(x.expired?' \u2014 expired':' \u2014 needs refresh')+'</div>'}).join('');
   }
+  const shaky=rows.filter(function(r){return mamOneUpBrand(r.name)&&!mamOneUpConfident(r.name)});
+  if(shaky.length){
+   html+='<div class="fact" style="margin-top:8px"><div class="label">\u2753 '+shaky.length+' account'+(shaky.length===1?'':'s')+' attributed on a partial name match \u2014 confirm before quoting</div><div>These share a word with a brand but are not obviously the same entity. Their numbers ARE included in the totals below; say the word and they move or split out.</div></div>'+
+    shaky.map(function(r){return '<div class="detail">\u2022 '+esc(String(r.name).slice(0,70))+' \u2192 counted as <b>'+esc(mamOneUpBrand(r.name))+'</b></div>'}).join('');
+  }
   Object.keys(groups).sort().forEach(function(b){
    const rs=groups[b];
    const tot=rs.reduce(function(a,r){return a+(r.ok&&r.impressions?r.impressions:0)},0);
    const eng=rs.reduce(function(a,r){return a+(r.ok&&r.engagements?r.engagements:0)},0);
-   html+='<div class="sectioncap" style="margin-top:10px">'+esc(b)+' \u2014 '+money(tot)+' impressions \u00b7 '+money(eng)+' engagements</div>';
+   const reporting=rs.filter(function(r){return r.ok&&r.impressions}).length;
+   html+='<div class="sectioncap" style="margin-top:10px">'+esc(b)+' \u2014 '+money(tot)+' impressions \u00b7 '+money(eng)+' engagements <span style="opacity:.7;text-transform:none">(from '+reporting+' of '+rs.length+' accounts \u2014 the rest returned no impression figure)</span></div>';
    rs.forEach(function(r){
     const bad=!r.ok, stale=r.ok&&r.suspectStale;
     const mkt=mamOneUpMarket(r.name,b);
     html+='<div class="workline"><div class="top"><div class="name">'+esc(String(r.name||'(unnamed)').slice(0,70))+' \u00b7 '+esc(r.platform)+(mkt?' \u00b7 '+esc(mkt):'')+'</div><span class="badge '+(bad?'red':stale?'gold':'green')+'">'+(bad?(r.error==='needs_refresh'?'broken':r.error==='plan'?'plan':'error'):stale?'zeros':'ok')+'</span></div>'+
-     '<div class="detail">'+(bad?esc(r.note||('status '+r.status)):('Impressions '+money(r.impressions)+' \u00b7 Reach '+money(r.reach)+' \u00b7 Engagements '+money(r.engagements)+' \u00b7 Followers '+money(r.followers)))+'</div></div>';
+     '<div class="detail">'+(bad?esc(String(r.note||('status '+r.status)).slice(0,110)):('Impressions '+money(r.impressions)+' \u00b7 Reach '+money(r.reach)+' \u00b7 Engagements '+money(r.engagements)+' \u00b7 Followers '+money(r.followers)))+'</div>'+
+     ((!bad&&!r.impressions&&(r.metricKeys||[]).length)?'<div class="detail" style="font-family:monospace;font-size:10px;opacity:.75">metrics offered: '+esc(r.metricKeys.join(', '))+'</div>':'')+
+     '</div>';
    });
   });
   html+='<div class="fact" style="margin-top:10px"><div class="label">Reading these honestly</div><div>Google Business Profile never returns interactions \u2014 a dash there means unavailable, not zero. An account marked \u201cneeds refresh?\u201d reported nothing at all; fix the connection in OneUp before quoting its month.</div></div>';
@@ -3450,6 +3458,16 @@ window.addEventListener('DOMContentLoaded',function(){
   const low=a.toLowerCase();
   const hit=MAM_ONEUP_KEYWORDS.find(function(k){return low.indexOf(k[0])>=0});
   return hit?hit[1]:null;
+ };
+ /* A keyword found at the START of the account name is the brand. Found in the
+    MIDDLE it may be a different entity that merely shares a word — "Keller
+    Postman LLC" is not obviously "Postman Law". Those get surfaced for a human
+    decision instead of being folded silently into someone's totals. */
+ window.mamOneUpConfident=function(acct){
+  const low=String(acct||'').toLowerCase().trim();
+  const hit=MAM_ONEUP_KEYWORDS.find(function(k){return low.indexOf(k[0])>=0});
+  if(!hit)return false;
+  return low.indexOf(hit[0])<=2;
  };
  /* GBP runs one account per location — pull the market out of the name when we
     recognise it, so location numbers can sit under the right DMA later. */

@@ -32,10 +32,16 @@ const REPORTS = ['overview', 'posts', 'reels', 'stories', 'demographics'];
 // Facebook is documented (page_media_view); others are checked against a
 // candidate list at read time and reported honestly when none match, rather
 // than silently picking a number that means something else.
-const IMPRESSION_KEYS = ['page_media_view', 'impressions', 'media_views',
-  'page_story_impressions_by_story_id', 'post_impressions'];
-const REACH_KEYS = ['page_total_media_view_unique', 'reach', 'unique_views'];
-const ENGAGEMENT_KEYS = ['page_post_engagements', 'engagements', 'interactions'];
+// Each platform names its metrics differently. Facebook's are documented;
+// the rest are collected here as they are confirmed. Anything unmatched is
+// reported with the keys that WERE present, so the gap is visible.
+const IMPRESSION_KEYS = ['page_media_view', 'impressions', 'media_views', 'post_impressions',
+  'page_story_impressions_by_story_id', 'views', 'video_views', 'total_impressions',
+  'ig_impressions', 'li_impressions', 'profile_views', 'plays', 'total_plays'];
+const REACH_KEYS = ['page_total_media_view_unique', 'reach', 'unique_views',
+  'accounts_reached', 'total_media_view_unique', 'unique_impressions'];
+const ENGAGEMENT_KEYS = ['page_post_engagements', 'engagements', 'interactions',
+  'total_interactions', 'engagement', 'reactions', 'post_interactions'];
 
 // OneUp labels each account with a short network code (observed: "GBP").
 // Map every plausible code/name onto the analytics path segment.
@@ -59,9 +65,26 @@ function platformFor(code) {
   return NETWORK_TYPE[k] || NETWORK_TYPE[k.replace(/_/g, '')] || null;
 }
 
+// Live probing showed two path segments are wrong: api/googlebusinessprofile
+// and api/x both 404. Rather than guess again, each platform carries a list of
+// candidate segments and the first one that answers is remembered.
+const PATH_ALIASES = {
+  googlebusinessprofile: ['gbp', 'google', 'googlebusiness', 'google_business_profile', 'googlebusinessprofile'],
+  x: ['twitter', 'x'],
+  metaads: ['metaads', 'meta_ads', 'ads'],
+};
+const ALIAS_MEMO = {};
+function aliasesFor(platform) {
+  if (ALIAS_MEMO[platform]) return [ALIAS_MEMO[platform]];
+  return PATH_ALIASES[platform] || [platform];
+}
+
 function analyticsPathAllowed(p) {
-  const m = String(p || '').match(/^([a-z]+)\/([a-z]+)$/);
-  return !!(m && PLATFORMS.includes(m[1]) && REPORTS.includes(m[2]));
+  const m = String(p || '').match(/^([a-z_]+)\/([a-z]+)$/);
+  if (!m || !REPORTS.includes(m[2])) return false;
+  if (PLATFORMS.includes(m[1])) return true;
+  // alias segments (e.g. gbp, twitter) are equally read-only
+  return Object.values(PATH_ALIASES).some(list => list.includes(m[1]));
 }
 
 function sessionSecret() {
@@ -346,11 +369,18 @@ module.exports = async (req, res) => {
           try {
             // The docs name the parameter social_network_id; the account list
             // calls the value social_account_id. Send both rather than bet on one.
-            const r = await get(BASE_ANALYTICS, t.platform + '/overview',
-              { social_network_id: t.id, social_account_id: t.id, ...period }, key, 12000);
+            let r = null, usedPath = null;
+            for (const seg of aliasesFor(t.platform)) {
+              r = await get(BASE_ANALYTICS, seg + '/overview',
+                { social_network_id: t.id, social_account_id: t.id, ...period }, key, 12000);
+              usedPath = seg;
+              // 404 means "no such route" — try the next spelling. Anything
+              // else (success, permission, bad param) is a real answer.
+              if (r.status !== 404) { if (r.ok) ALIAS_MEMO[t.platform] = seg; break; }
+            }
             if (!r.ok) {
               const gate = (r.status === 401 || r.status === 402 || r.status === 403);
-              return { ...t, ok: false, status: r.status, error: gate ? 'plan' : 'error', note: scrub(r.text, key).slice(0, 120) };
+              return { ...t, ok: false, status: r.status, error: gate ? 'plan' : 'error', triedPath: usedPath, note: scrub(r.text, key).slice(0, 120) };
             }
             const sum = readOverview(r.json);
             return {
@@ -363,7 +393,8 @@ module.exports = async (req, res) => {
               // A stale OneUp connection reports zeros; say so rather than
               // letting a zero pass as a real month.
               suspectStale: (sum.impressions ? sum.impressions.value : 0) === 0 && (sum.followers || 0) === 0,
-              metricKeys: sum.impressions ? undefined : sum.metricKeys.slice(0, 12),
+              metricKeys: sum.metricKeys.slice(0, 16),
+              usedPath,
             };
           } catch (e) {
             return { ...t, ok: false, status: 0, error: 'unreachable', note: scrub(e.message, key).slice(0, 100) };
