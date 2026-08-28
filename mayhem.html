@@ -2329,7 +2329,7 @@ window.addEventListener('DOMContentLoaded',function(){
  try{fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({collection:'appData',doc:'mayhemB7',action:'get'})}).then(function(r){return r.ok?r.json():null}).then(function(j){
   const remote=j&&j.data&&j.data.data&&j.data.data.brands?j.data.data:null;
   const rts=j&&j.data&&j.data.ts?j.data.ts:0;
-  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}try{applyDataTruthB7v7()}catch(e){}try{applyDataTruthB7v8()}catch(e){}try{applyDataTruthB7v9()}catch(e){}try{applyDataTruthB7v10()}catch(e){}try{applyDataTruthB7v11()}catch(e){}try{state.tickets=(state.tickets||[]).filter(x=>x.id!=='tk-cal-brainstorm')}catch(e){}renderShell();renderPage()}
+  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}try{applyDataTruthB7v7()}catch(e){}try{applyDataTruthB7v8()}catch(e){}try{applyDataTruthB7v9()}catch(e){}try{applyDataTruthB7v10()}catch(e){}try{applyDataTruthB7v11()}catch(e){}try{applyDataTruthB7v12()}catch(e){}try{state.tickets=(state.tickets||[]).filter(x=>x.id!=='tk-cal-brainstorm')}catch(e){}renderShell();renderPage()}
  }).catch(function(){})}catch(e){}
 });
 /* ===== END DATA TRUTH + DOOM MOUNT ===== */
@@ -2728,7 +2728,7 @@ window.addEventListener('DOMContentLoaded',function(){
   const opens=(state.tickets||[]).filter(t=>t.status!=='Closed'&&t.due).sort((a,z2)=>String(a.due).localeCompare(String(z2.due))).slice(0,8);
   const pays=(state.payments||[]).filter(p=>p.status!=='Paid');
   P.push({t:'Open Loops — Live',body:(pays.length?pgP('<b>Money open:</b> '+pays.map(p=>esc(p.vendor)+' '+moneyFmt(p.amount)+(p.due?' due '+fmtDate(p.due):'')).join(' · ')):'')+(opens.length?opens.map(t=>'<p class="mbook-tight"><b class="mbook-lead" style="font-size:12px">'+fmtDate(t.due)+'</b> — '+esc(deName(String(t.ask)).slice(0,70))+'<br><span class="mbook-sub">'+esc(t.ownerRole||'owner on the ticket')+' · '+esc(t.status)+'</span></p>').join(''):pgP('Nothing owed back with a date on it. Suspicious.'))+meg('This page is why you open the book on Mondays.'),live:true,fx:ink('top:26px;left:20px;opacity:.3')});
-  const integ=[['Notion','live, both ways — you judge every conflict; the calendar pushes any month on demand'],['Doom creative','live — ISCIs with file links ride tickets'],['Doom mail','live in test mode — every send lands in-house'],['Contract reading','live — clean or scanned PDFs into intake'],['Calendar feeds','live — partners subscribe by link'],['Partner calendar pull','live — their events enter with you as the gate'],['SharePoint documents','linked in-app — kits, playbooks, and the live disclaimer workbook read on demand'],['MerchHub','blocked — the Merch Desk stands in; sync agreed once it ships'],['Monday.com (Creative)','agreed at the demo — an events board mirror, pending the Creative Ops conversation'],['OneUp (1UP)','connected read-only — social numbers only; the app asks OneUp what it will hand over and reports it'],['Email ingestion','pending — merged by hand, with receipts'],['Outlook internal feed','IT-blocked — parked, built, waiting']];
+  const integ=[['Notion','live, both ways — you judge every conflict; the calendar pushes any month on demand'],['Doom creative','live — ISCIs with file links ride tickets'],['Doom mail','live in test mode — every send lands in-house'],['Contract reading','live — clean or scanned PDFs into intake'],['Calendar feeds','live — partners subscribe by link'],['Partner calendar pull','live — their events enter with you as the gate'],['SharePoint documents','linked in-app — kits, playbooks, and the live disclaimer workbook read on demand'],['MerchHub','blocked — the Merch Desk stands in; sync agreed once it ships'],['Monday.com (Creative)','agreed at the demo — an events board mirror, pending the Creative Ops conversation'],['OneUp (1UP)','read-only — social only, and it covers ALL posts on our accounts, not just ones we scheduled'],['Email ingestion','pending — merged by hand, with receipts'],['Outlook internal feed','IT-blocked — parked, built, waiting']];
   P.push({t:'The Machinery',body:integ.map(x=>'<p class="mbook-tight"><b class="mbook-lead">'+esc(x[0])+'</b> — '+esc(x[1])+'</p>').join('')+meg('Nothing on this page pretends. That was expensive to earn.'),live:true,fx:ink('bottom:20px;left:20px;opacity:.4')});
   P.push({t:'When Things Jam',body:pgP('<b>A feed link says “not configured”</b> — the deploy has not caught up. The Feeds panel diagnoses itself: follow its four steps, redeploy, press Re-check.')+pgP('<b>A Notion push says Queued</b> — Notion did not answer. Nothing is lost; the record rides the next push. Push again from the calendar or the record when Notion is back.')+pgP('<b>A send “arrived” in the wrong inbox</b> — that is TEST mode doing its job: every send lands in-house, stamped with its intended recipient, until mail is flipped live.')+pgP('<b>The contract reader shrugged</b> — a scan too rough even for it. The flagged [Confirm] fields are the honest residue; fill them by hand and the record is whole.')+pgP('<b>Anything else</b> — walk the spine (page III): find the record, read its sources, and the jam names itself.'),fx:burn('top:18px;right:14px;width:76px;height:76px;opacity:.2')});
   const srcs=(state.sources||[]).slice().reverse().slice(0,18);
@@ -3365,6 +3365,43 @@ window.addEventListener('DOMContentLoaded',function(){
  };
 })();
 /* ===== END ONEUP ===== */
+/* ===== ONEUP: what the dashboard told us (Aug 28) — brand map, scope answer, honesty rules ===== */
+;(function(){
+ /* OneUp account names as they appear in its analytics, mapped to our brands.
+    Two Facebook-side spellings exist for L&R ("Lerner and Rowe" / "Lerner & Rowe") — both are ours. */
+ window.MAM_ONEUP_BRANDS={
+  'Lerner and Rowe':'Lerner & Rowe','Lerner & Rowe':'Lerner & Rowe',
+  'Keches Law Group':'Keches Law',
+  'wkfirm':'Wettermark Keith',
+  'Parrish DeVaughn Inj':'Parrish DeVaughn','Parrish DeVaughn':'Parrish DeVaughn'
+ };
+ window.mamOneUpBrand=function(acct){
+  const a=String(acct||'').trim();
+  if(MAM_ONEUP_BRANDS[a])return MAM_ONEUP_BRANDS[a];
+  const hit=Object.keys(MAM_ONEUP_BRANDS).find(function(k){return a.toLowerCase().indexOf(k.toLowerCase())===0});
+  return hit?MAM_ONEUP_BRANDS[hit]:null;
+ };
+ window.applyDataTruthB7v12=function(){
+  if(state._dataTruthB7v12)return;
+  state.sources=state.sources||[];
+  if(!state.sources.some(function(x){return x.id==='src-oneup-0828'}))state.sources.push({id:'src-oneup-0828',brand:'',dma:'',commit:'',type:'System',name:'OneUp (1UP) — scope question ANSWERED (Aug 28)',status:'Applied',detail:'Straight from OneUp\u2019s analytics page: \u201cOneUp will show analytics for all posts, not just posts that were published through OneUp.\u201d So it covers whole connected accounts, not only what we scheduled \u2014 the open question from the demo is closed. Connected: Facebook 9 pages \u00b7 Instagram 7 \u00b7 Google Business Profile 32 locations \u00b7 LinkedIn 6 \u00b7 TikTok 3 \u00b7 Pinterest 2 \u00b7 Threads 1 \u00b7 YouTube 1 \u00b7 X 1 \u00b7 Meta Ads. Metrics available: followers, post views, post interactions, post count, and a per-post list (account, platform, published, media views, interactions) with Custom Report + export. TWO STANDING CAVEATS: (1) OneUp warns when connected accounts need refreshing \u2014 a stale account silently reports zeros, so any pull must surface the warning rather than treat a zero as truth; (2) Google Business Profile returns no post interactions at all (their API limitation) \u2014 never report GBP engagement as zero, report it as unavailable.'});
+  state._dataTruthB7v12=true;state._savedTs=Date.now();saveState();
+ };
+ try{applyDataTruthB7v12()}catch(e){}
+ /* the panel now leads with the answer, not the question */
+ const _oup=window.mamOneUpPanel;
+ window.mamOneUpPanel=function(){
+  _oup();
+  try{
+   const ms=document.querySelectorAll('.modal');const m=ms[ms.length-1];if(!m)return;
+   const out=document.getElementById('oneupOut');
+   const html='<div class="fact" style="margin-top:8px"><div class="label">\u2713 Scope \u2014 answered</div><div>OneUp reports on <b>all posts</b> on the connected accounts, not only ones scheduled through it. Straight from its analytics page (Aug 28).</div></div>'+
+    '<div class="fact"><div class="label">Two things it cannot tell you</div><div>Google Business Profile returns no post interactions (their API limit) \u2014 that is <b>unavailable</b>, never zero engagement. And when OneUp flags accounts needing a refresh, their numbers read as zeros \u2014 check that warning before trusting a low month.</div></div>';
+   if(out)out.insertAdjacentHTML('beforebegin',html);else m.insertAdjacentHTML('beforeend',html);
+  }catch(e){}
+ };
+})();
+/* ===== END ONEUP DASHBOARD FACTS ===== */
 /* ===== END DEMO FOLLOW-THROUGH ===== */
 ;(function(){
  function heal(){try{
