@@ -80,5 +80,5 @@ const D_I=[["NSHWK2615006R","Auto Accident V2_15","Radio","Wettermark Keith","NS
 ["OKCPDV26JP002O","PDV Static Jr. Poster - Oklahoma City - Pepper & Murry - 4'11x10'11","OOH","Parrish DeVaughn","OKC","4'11x10'11","O",true,"Brand",""],
 ["OKCPDV26DB001O","PDV Digital Bulletin - Oklahoma City - Thunder - 400x1400","OOH","Parrish DeVaughn","OKC","400x1400","O",true,"Sports",""],
 ["OKCPDV26DB002O","PDV Digital Bulletin - Oklahoma City - Pepper & Murry - 400x1400","OOH","Parrish DeVaughn","OKC","400x1400","O",true,"Brand",""],
-["OKCPDV26DB003O","PDV Digital Bulletin - Oklahoma City - Thunder - 400x840","OOH","Parrish DeVaughn","OKC","400x840","O",true,"Sports",""],
-["OKCPDV26DB004O","PDV Digital Bulletin - Oklahoma City - Pepper & Murry - 400x840","OOH","Parrish DeVaughn","OKC","400x840","O",true,"Brand",""]];
+["OKCPDV26DP001O","PDV Digital Poster - Oklahoma City - Thunder - 400x840","OOH","Parrish DeVaughn","OKC","400x840","O",true,"Sports",""],
+["OKCPDV26DP002O","PDV Digital Poster - Oklahoma City - Pepper & Murry - 400x840","OOH","Parrish DeVaughn","OKC","400x840","O",true,"Brand",""]];
