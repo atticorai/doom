@@ -24,16 +24,32 @@ const crypto = require('crypto');
 
 const BASE = 'https://www.oneupapp.io/api/';
 
-// Read-only endpoint names we are willing to call. Naming follows the
-// documented convention (lowercase, no separators, e.g. scheduletextpost).
-// Nothing that writes is listed, and nothing outside this list is callable.
-const READ_ENDPOINTS = [
-  'getcategories', 'categories',
-  'getsocialnetworks', 'getsocialaccounts', 'socialnetworks', 'accounts',
-  'getposts', 'listposts', 'posts',
-  'getanalytics', 'analytics', 'getpostanalytics', 'getinsights', 'insights',
-  'getreports', 'reports',
+// Read-only endpoint names, taken from OneUp's own documentation index.
+// `listcategory` is confirmed verbatim in their auth example; the rest follow
+// the same convention (lowercase, no separators), with a couple of plausible
+// spellings each where the docs only gave a human label.
+//
+// NOTHING THAT WRITES IS LISTED. No schedule*, create*, upload*, edit*,
+// delete*, reply*, or refresh-comment endpoints — this connector cannot post
+// to a client's social account even if asked to.
+const CONNECTION_ENDPOINTS = [
+  'listcategory', 'listcategories',
+  'listcategoryaccounts', 'listcategoryaccount',
+  'listsocialaccounts', 'listsocialaccount',
 ];
+const POST_ENDPOINTS = [
+  'listpublishedposts', 'listscheduledposts', 'listfailedposts', 'listdraftposts',
+];
+// Analytics — per OneUp's docs these require Intermediate, Growth or Business
+// (not available on Basic). Probing them tells us the plan as a side effect.
+const ANALYTICS_ENDPOINTS = [
+  'facebookanalytics', 'instagramanalytics', 'linkedinanalytics',
+  'tiktokanalytics', 'youtubeanalytics', 'pinterestanalytics',
+  'threadsanalytics', 'snapchatanalytics', 'blueskyanalytics',
+  'googlebusinessprofileanalytics', 'gbpanalytics', 'metaadsanalytics',
+  'analyticsoverview',
+];
+const READ_ENDPOINTS = [].concat(CONNECTION_ENDPOINTS, POST_ENDPOINTS, ANALYTICS_ENDPOINTS);
 
 function sessionSecret() {
   if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
@@ -131,29 +147,58 @@ module.exports = async (req, res) => {
 
   try {
     if (action === 'probe') {
-      const results = [];
-      for (const name of READ_ENDPOINTS) {
-        try {
-          const r = await callOneUp(name, {}, key, 9000);
-          results.push({
-            endpoint: name,
-            status: r.status,
-            answered: r.ok && r.json !== null,
-            shape: r.ok ? describe(r.json) : null,
-            note: r.ok ? null : scrub(r.text, key).slice(0, 140),
-          });
-        } catch (e) {
-          results.push({ endpoint: name, status: 0, answered: false, shape: null, note: scrub(e.message, key).slice(0, 120) });
+      // Run in small parallel batches so a 30-endpoint sweep stays quick.
+      async function sweep(list) {
+        const out = [];
+        for (let i = 0; i < list.length; i += 6) {
+          const batch = list.slice(i, i + 6);
+          const done = await Promise.all(batch.map(async (name) => {
+            try {
+              const r = await callOneUp(name, {}, key, 8000);
+              return {
+                endpoint: name, status: r.status, answered: r.ok && r.json !== null,
+                shape: r.ok ? describe(r.json) : null,
+                note: r.ok ? null : scrub(r.text, key).slice(0, 140),
+              };
+            } catch (e) {
+              return { endpoint: name, status: 0, answered: false, shape: null, note: scrub(e.message, key).slice(0, 120) };
+            }
+          }));
+          out.push(...done);
         }
+        return out;
       }
-      const live = results.filter(r => r.answered);
+      const conn = await sweep(CONNECTION_ENDPOINTS);
+      const posts = await sweep(POST_ENDPOINTS);
+      const analytics = await sweep(ANALYTICS_ENDPOINTS);
+      const all = [].concat(conn, posts, analytics);
+      const liveConn = conn.filter(r => r.answered);
+      const livePosts = posts.filter(r => r.answered);
+      const liveAnalytics = analytics.filter(r => r.answered);
+
+      // A plan verdict falls out of the results, and it is stated plainly.
+      let verdict, detail;
+      if (!liveConn.length && !livePosts.length && !liveAnalytics.length) {
+        verdict = 'no_endpoints';
+        detail = 'The key reached OneUp but no read endpoint answered. Worth confirming the key is active on the account.';
+      } else if (liveAnalytics.length) {
+        verdict = 'analytics_available';
+        detail = 'Analytics are available on this plan — social numbers can flow into records automatically.';
+      } else {
+        verdict = 'publishing_only';
+        detail = 'The connection works, but no analytics endpoint answered. Per OneUp\u2019s docs, analytics require the Intermediate, Growth or Business plan — Basic does not include them. Until the plan changes, use the dashboard\u2019s Custom Report export instead.';
+      }
       return res.end(JSON.stringify({
         checked: new Date().toISOString(),
         base: BASE,
         auth: 'apiKey query parameter',
-        working: live.map(r => ({ endpoint: r.endpoint, shape: r.shape })),
-        tried: results.length,
-        all: results,
+        verdict, detail,
+        connection: liveConn.map(r => ({ endpoint: r.endpoint, shape: r.shape })),
+        posts: livePosts.map(r => ({ endpoint: r.endpoint, shape: r.shape })),
+        analytics: liveAnalytics.map(r => ({ endpoint: r.endpoint, shape: r.shape })),
+        working: [].concat(liveConn, livePosts, liveAnalytics).map(r => ({ endpoint: r.endpoint, shape: r.shape })),
+        tried: all.length,
+        all,
       }));
     }
 
@@ -183,5 +228,7 @@ module.exports = async (req, res) => {
 };
 
 module.exports.READ_ENDPOINTS = READ_ENDPOINTS;
+module.exports.CONNECTION_ENDPOINTS = CONNECTION_ENDPOINTS;
+module.exports.ANALYTICS_ENDPOINTS = ANALYTICS_ENDPOINTS;
 module.exports.describe = describe;
 module.exports.scrub = scrub;

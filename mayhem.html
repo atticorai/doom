@@ -3340,18 +3340,22 @@ window.addEventListener('DOMContentLoaded',function(){
    return;
   }
   if(j.error){out.innerHTML='<div class="fact" style="margin-top:10px"><div class="label">\u2717 '+esc(j.error)+'</div><div>'+esc(j.message||'')+'</div></div>';return}
-  const live=j.working||[];
-  let html='<div class="fact" style="margin-top:10px"><div class="label">'+(live.length?'\u2713 Connected':'Connected, but nothing readable')+'</div><div>Key accepted at '+esc(j.base)+' \u00b7 tried '+j.tried+' read endpoints \u00b7 '+live.length+' answered.</div></div>';
-  if(live.length){
-   html+='<div class="sectioncap" style="margin-top:8px">What OneUp will hand over</div>'+live.map(function(x){
-    return '<div class="workline"><div class="top"><div class="name">'+esc(x.endpoint)+'</div><span class="badge green">answers</span></div><div class="detail">'+esc(x.shape||'')+'</div></div>';
-   }).join('');
-   html+='<div class="fact" style="margin-top:8px"><div class="label">Next</div><div>Send this list to Emm\u2019s build \u2014 the fields above tell us exactly which numbers can land on records, and whether they cover the whole account or only OneUp\u2019s own posts. Nothing is written to the book until that is confirmed.</div></div>';
-  }else{
-   html+='<div class="fact"><div class="label">What that means</div><div>The key works, but none of the read endpoints answered \u2014 usually because analytics are on a higher OneUp plan than Basic. Worth checking the plan before anyone counts on these numbers.</div></div>';
-   html+='<div class="sectioncap" style="margin-top:8px">What came back</div>'+(j.all||[]).slice(0,8).map(function(x){
-    return '<div class="detail">'+esc(x.endpoint)+' \u2014 '+(x.status||'no response')+(x.note?' \u00b7 '+esc(String(x.note).slice(0,80)):'')+'</div>';
-   }).join('');
+  const conn=j.connection||[],an=j.analytics||[],po=j.posts||[];
+  const V={analytics_available:['\u2713 Analytics are live','green'],publishing_only:['Connected \u2014 but analytics are not on this plan','gold'],no_endpoints:['\u2717 Nothing answered','red']};
+  const v=V[j.verdict]||['Connected','gold'];
+  let html='<div class="fact" style="margin-top:10px"><div class="label">'+esc(v[0])+'</div><div>'+esc(j.detail||'')+'</div></div>';
+  function listOf(t,rows){return rows.length?('<div class="sectioncap" style="margin-top:8px">'+t+'</div>'+rows.map(function(x){return '<div class="workline"><div class="top"><div class="name">'+esc(x.endpoint)+'</div><span class="badge green">answers</span></div><div class="detail">'+esc(x.shape||'')+'</div></div>'}).join('')):''}
+  html+=listOf('Analytics \u2014 the numbers we want',an);
+  html+=listOf('Posts',po);
+  html+=listOf('Connection / accounts',conn);
+  if(j.verdict==='publishing_only'){
+   html+='<div class="fact" style="margin-top:8px"><div class="label">What to do</div><div>Either upgrade the OneUp plan (Intermediate and above unlock the analytics endpoints), or keep pulling numbers by hand: OneUp \u2192 Analytics \u2192 <b>Custom Report</b> \u2192 export, then drop the file into Mayhem. Same numbers, one extra click a month.</div></div>';
+  }
+  if(j.verdict==='analytics_available'){
+   html+='<div class="fact" style="margin-top:8px"><div class="label">Next</div><div>Send this list over and the numbers get wired onto event records \u2014 with the brand map already in place and the two standing caveats (stale accounts read as zeros, Google Business Profile interactions unavailable) enforced.</div></div>';
+  }
+  if(!conn.length&&!an.length&&!po.length){
+   html+='<div class="sectioncap" style="margin-top:8px">What came back</div>'+(j.all||[]).slice(0,8).map(function(x){return '<div class="detail">'+esc(x.endpoint)+' \u2014 '+(x.status||'no response')+'</div>'}).join('');
   }
   out.innerHTML=html;
  };
