@@ -414,6 +414,56 @@ module.exports = async (req, res) => {
       }));
     }
 
+    // ── posts: individual posts in a date window, for event attribution ──
+    // Account totals belong to a brand; only per-post numbers can honestly be
+    // tied to one event. This returns the posts and their stats; deciding
+    // which belong to which event is a human's call, made in the app.
+    if (action === 'posts') {
+      const accounts = Array.isArray(body && body.accounts) ? body.accounts.slice(0, 12) : [];
+      if (!accounts.length) { res.statusCode = 400; return res.end(JSON.stringify({ error: 'no_accounts', message: 'Send the accounts to read posts from.' })); }
+      const start = String((body && body.start_date) || '');
+      const end = String((body && body.end_date) || '');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {
+        res.statusCode = 400; return res.end(JSON.stringify({ error: 'bad_window', message: 'Need a start_date and end_date as YYYY-MM-DD.' }));
+      }
+      const out = [], problems = [];
+      for (let i = 0; i < accounts.length; i += 4) {
+        const batch = accounts.slice(i, i + 4);
+        const done = await Promise.all(batch.map(async (a) => {
+          const platform = String(a.platform || '');
+          const id = String(a.id || '');
+          if (!id || !PLATFORMS.includes(platform)) return { skip: true };
+          try {
+            let r = null;
+            for (const seg of aliasesFor(platform)) {
+              r = await get(BASE_ANALYTICS, seg + '/posts',
+                { social_network_id: id, social_account_id: id, start_date: start, end_date: end }, key, 15000);
+              if (r.status !== 404) { if (r.ok) ALIAS_MEMO[platform] = seg; break; }
+            }
+            if (!r || !r.ok) return { error: { account: a.name || id, platform, status: r ? r.status : 0, note: r ? scrub(r.text, key).slice(0, 100) : 'unreachable' } };
+            const d = (r.json && r.json.data) || {};
+            const rows = Array.isArray(d.posts) ? d.posts : (Array.isArray(d) ? d : []);
+            return { posts: rows.map(p2 => {
+              const st = p2.stats || {};
+              const views = Number(st.media_views || st.impressions || st.views || 0) || 0;
+              const eng = ['reactions', 'comments', 'shares', 'clicks', 'interactions']
+                .reduce((n, k) => n + (Number(st[k]) || 0), 0);
+              return {
+                id: String(p2.id || ''), account: a.name || '', platform,
+                text: String(p2.message || p2.content || p2.caption || '').slice(0, 180),
+                url: p2.permalink_url || p2.url || '',
+                published: String(p2.created_time || p2.published_at || '').slice(0, 10),
+                impressions: views, engagements: eng,
+              };
+            }) };
+          } catch (e) { return { error: { account: a.name || id, platform, status: 0, note: scrub(e.message, key).slice(0, 100) } }; }
+        }));
+        done.forEach(x => { if (x && x.posts) out.push(...x.posts); if (x && x.error) problems.push(x.error); });
+      }
+      out.sort((a, b) => String(b.published).localeCompare(String(a.published)));
+      return res.end(JSON.stringify({ fetched: new Date().toISOString(), window: { start, end }, count: out.length, posts: out, problems }));
+    }
+
     res.statusCode = 400;
     return res.end(JSON.stringify({ error: 'unknown_action' }));
   } catch (e) {
