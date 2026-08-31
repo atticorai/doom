@@ -856,7 +856,7 @@ function osSignalList(b,d){let out=[],today=osToday();for(let c of commitments(b
 function renderHome(el){let totals={attention:0,waiting:0,metrics:0,reports:0};for(let b of brands())for(let d of markets(b)){let s=osSignalList(b,d);totals.attention+=s.filter(x=>x.red).length;totals.waiting+=state.tickets.filter(t=>t.brand===b&&t.dma===d&&t.status!=='Closed'&&t.sent&&!t.returnData).length;totals.metrics+=s.filter(x=>x.type==='CONTENT & SOCIAL METRICS').length;totals.reports+=s.filter(x=>x.type==='PARTNER REPORT / PROOF').length}el.innerHTML=`<div class="page">${pageHead('Mayhem & Marketing Ops','Cross-brand operating pulse. It shows what the system is waiting on by Brand → DMA and lets you work the issue from here.',`<button class="btn" onclick="go('intake')">New Intake</button>`)}<div class="os-grid"><div class="os-card"><div class="title">Needs Action</div><div class="value">${totals.attention}</div><div class="sub">blocked / overdue / missing</div></div><div class="os-card"><div class="title">Waiting on Return</div><div class="value">${totals.waiting}</div><div class="sub">tickets already sent</div></div><div class="os-card"><div class="title">Content & Social Metrics Due</div><div class="value">${totals.metrics}</div><div class="sub">social / newsletter results</div></div><div class="os-card"><div class="title">Partner Reports Due</div><div class="value">${totals.reports}</div><div class="sub">attendance / impressions / proof</div></div></div><div style="margin-top:16px">${brands().map(b=>`<section class="home-brand"><div class="home-brand-head"><div><div class="home-brand-name">${esc(b)}</div><div class="home-brand-meta">Operating pulse by DMA — not the campaign book.</div></div><button class="btn ghost" onclick="setBrand('${b.replaceAll("'","\\'")}');go('brands')">Browse ${esc(BRAND_SHORT[b]||b)}</button></div><div class="home-dmas">${markets(b).map(d=>{let sig=osSignalList(b,d),waiting=state.tickets.filter(t=>t.brand===b&&t.dma===d&&t.status!=='Closed'&&t.sent&&!t.returnData).length,next=commitments(b,d).filter(c=>c.anchor&&c.anchor>=osToday()).sort((a,z)=>a.anchor.localeCompare(z.anchor))[0];return `<div class="home-dma"><div class="dma-name">${esc(d)}</div><div class="home-next">${next?'Next: '+esc(next.name)+' · '+fmtDate(next.anchor):'No upcoming dated campaign / event'}</div><div class="home-pulse"><div class="pulsebit"><b>${sig.filter(x=>x.red).length}</b><span>action</span></div><div class="pulsebit"><b>${waiting}</b><span>waiting</span></div><div class="pulsebit"><b>${sig.filter(x=>x.type.includes('REPORT')||x.type.includes('METRICS')).length}</b><span>results due</span></div></div>${sig.slice(0,4).map(x=>`<div class="signal ${x.red?'red':''}"><div class="type">${esc(x.type)}</div><div class="name">${esc(x.name)}</div><div class="copy">${esc(x.copy)}</div><div class="actions"><button class="btn ghost" onclick="${x.act}">${esc(x.label)}</button></div></div>`).join('')||'<div class="home-clear" style="margin-top:10px">No open flags in this DMA.</div>'}${sig.length>4?`<div class="home-clear" style="margin-top:7px">+ ${sig.length-4} more open signal${sig.length-4===1?'':'s'}</div>`:''}</div>`}).join('')}</div></section>`).join('')}</div></div>`}
 function resultsTabButton(id,label){return `<button class="${(state.resultsTab||'results')===id?'active':''}" onclick="state.resultsTab='${id}';saveState();renderPage()">${label}</button>`}
 function metricCards(c){let names=['Attendance','Impressions','Reach','Engagement','Clicks','Views','Leads / Scans','Newsletter Opens'];return names.map(n=>`<div class="result-card"><span>${esc(n)}</span><b>${resultValue(c,n).toLocaleString()}</b><div class="result-meta">${resultsFor(c).filter(x=>x.type===n).length} source${resultsFor(c).filter(x=>x.type===n).length===1?'':'s'}</div></div>`).join('')}
-function renderResultsPage(el){let c=osRecord(),tab=state.resultsTab||'results',o=osOps(c);el.innerHTML=`<div class="page">${pageHead('Content & Results','Content & Social, vendor reporting, attendance, impressions, engagement and post-event closeout all write back to this campaign / event.',`<button class="btn secondary" onclick="openResultMetric()">+ Result</button><button class="btn" onclick="openVendorReport()">+ Vendor Report</button>`)}<div class="os-tabs">${resultsTabButton('results','Results')}${resultsTabButton('content','Content & Social')}${resultsTabButton('vendors','Vendor Reports')}${resultsTabButton('post','Post-Event')}</div><div id="resultsBody">${tab==='content'?contentTabHTML(c):tab==='vendors'?vendorTabHTML(c,o):tab==='post'?postTabHTML(c,o):resultsTabHTML(c)}</div></div>`}
+function renderResultsPage(el){let c=osRecord(),tab=state.resultsTab||'results',o=osOps(c);el.innerHTML=`<div class="page">${pageHead('Content & Results','Content & Social, vendor reporting, attendance, impressions, engagement and post-event closeout all write back to this campaign / event.',`<button class="btn secondary" onclick="openResultMetric()">+ Result</button><button class="btn" onclick="openVendorReport()">+ Vendor Report</button>`)}<div class="os-tabs">${resultsTabButton('social','Social')}${resultsTabButton('results','Results')}${resultsTabButton('content','Content & Social')}${resultsTabButton('vendors','Vendor Reports')}${resultsTabButton('post','Post-Event')}</div><div id="resultsBody">${tab==='content'?contentTabHTML(c):tab==='vendors'?vendorTabHTML(c,o):tab==='post'?postTabHTML(c,o):resultsTabHTML(c)}</div></div>`}
 function resultsTabHTML(c){let rows=resultsFor(c).slice().sort((a,b)=>String(b.received||'').localeCompare(String(a.received||'')));return `<div class="results-grid">${metricCards(c)}</div><div class="panel" style="margin-top:12px"><div class="track-head"><div><h3>Result Ledger</h3><div class="tiny">Every number keeps its source. Vendor reports and Content & Social metrics write here automatically.</div></div><button class="btn" onclick="openResultMetric()">+ Add / Correct Result</button></div>${rows.length?rows.map(x=>`<div class="report-row"><div class="top"><div><div class="name">${esc(x.type)} · ${Number(x.value).toLocaleString()}</div><div class="result-meta">${esc(x.source||'Manual')}${x.period?' · '+esc(x.period):''} · received ${fmtDate(x.received)}</div></div><button class="btn ghost" onclick="editResultMetric('${x.id}')">Edit</button></div></div>`).join(''):'<div class="fact"><div class="label">Results</div><div>No result values logged yet.</div></div>'}</div>`}
 function openResultMetric(id=''){let c=osRecord(),x=id?(state.results||[]).find(r=>String(r.id)===String(id)):null;modal(id?'Edit result':'Add result',`${state.currentBrand} · ${state.currentDMA} · ${c.name}`,`<form class="formgrid" onsubmit="saveResultMetric(event,'${id}')"><div class="field c4"><label>Metric</label><select id="resType">${['Attendance','Impressions','Reach','Engagement','Clicks','Views','Leads / Scans','Newsletter Opens','Shares','Comments','Saves'].map(v=>`<option ${v===x?.type?'selected':''}>${v}</option>`).join('')}</select></div><div class="field c4"><label>Value</label><input id="resValue" type="number" min="0" value="${x?.value||''}" required></div><div class="field c4"><label>Reporting Period</label><input id="resPeriod" value="${esc(x?.period||'')}"></div><div class="field c6"><label>Source</label><select id="resSource">${['Vendor report','Content & Social','Partner proof','Internal report','Manual correction'].map(v=>`<option ${v===x?.source?'selected':''}>${v}</option>`).join('')}</select></div><div class="field c6"><label>Source / Report Link</label><input id="resLink" value="${esc(x?.link||'')}"></div><div class="c12"><button class="btn">Save result + sync to Notion</button></div></form>`) }
 function editResultMetric(id){openResultMetric(id)}
@@ -3487,19 +3487,54 @@ window.addEventListener('DOMContentLoaded',function(){
   _rhOneUp(el);
   try{
    mamOneUpAuto();                                   // fetches itself, quietly
-   const pend=mamSocialPending();
-   if(!pend.length)return;
-   const page=el.querySelector('.page');if(!page||el.querySelector('#socialPending'))return;
-   const q=function(x){return String(x).replaceAll("'","\\'")};
-   page.insertAdjacentHTML('afterbegin','<div class="panel" id="socialPending" style="margin-bottom:12px"><h3>Social results waiting on you \u00b7 '+pend.length+'</h3><div class="tiny" style="margin-bottom:7px">These events have finished. The posts are pulled and waiting \u2014 the only thing left is confirming which ones belong, which is not a call a machine should make.</div>'+
-    pend.slice(0,6).map(function(p){
-     return '<div class="workline"><div class="top"><div class="name">'+esc(p.name)+'</div><span class="badge gold">ended '+fmtDate(p.ended)+'</span></div><div class="detail">'+esc(p.brand)+' \u00b7 '+esc(p.dma)+'</div><div class="actions"><button class="btn secondary" onclick="mamSocialGo(\''+q(p.brand)+'\',\''+q(p.dma)+'\',\''+q(p.id)+'\')">Confirm its posts</button></div></div>';
-    }).join('')+(pend.length>6?'<div class="tiny">\u2026and '+(pend.length-6)+' more.</div>':'')+'</div>');
   }catch(e){}
+ };
+ /* The Social tab belongs to the brand, not to a campaign. Most posts support
+    no campaign at all — they are engagement — so nothing here demands a record.
+    A post that genuinely did support one can be tagged; that is the exception. */
+ window.mamSocialTab=function(el){
+  const b=state.currentBrand;
+  const cs=(state.channelStats||[]).filter(function(x){return x.brand===b});
+  const periods=[...new Set(cs.map(function(x){return x.period}))].sort().reverse();
+  const per=state.socialPeriod&&periods.includes(state.socialPeriod)?state.socialPeriod:(periods[0]||'');
+  const rows=cs.filter(function(x){return x.period===per});
+  const n=function(v){return (v===null||v===undefined)?'\u2014':Number(v).toLocaleString()};
+  const sum=function(k){return rows.reduce(function(a,x){return a+(typeof x[k]==='number'?x[k]:0)},0)};
+  const has=function(k){return rows.some(function(x){return typeof x[k]==='number'})};
+  let html='<div class="panel"><h3>Social \u00b7 '+esc(b)+'</h3><div class="tiny" style="margin-bottom:7px">Everything this brand posted \u2014 campaign or not. Most social is engagement, not an event, so nothing here is tied to a campaign record unless someone says it is.</div>';
+  if(!periods.length){
+   html+='<div class="fact"><div class="label">Nothing pulled yet</div><div>OneUp numbers arrive on their own once a day. If this stays empty, check the connection below.</div></div>';
+  }else{
+   html+='<div class="field c6"><label>Month</label><select onchange="state.socialPeriod=this.value;saveState();renderPage()">'+periods.map(function(p){return '<option '+(p===per?'selected':'')+'>'+esc(p)+'</option>'}).join('')+'</select></div>';
+   html+='<div class="grid4" style="margin-top:10px">'+
+    '<div class="stat"><b>'+(has('impressions')?n(sum('impressions')):'\u2014')+'</b><span>impressions</span></div>'+
+    '<div class="stat"><b>'+(has('reach')?n(sum('reach')):'\u2014')+'</b><span>reach</span></div>'+
+    '<div class="stat"><b>'+(has('engagements')?n(sum('engagements')):'\u2014')+'</b><span>engagements</span></div>'+
+    '<div class="stat"><b>'+(has('followers')?n(sum('followers')):'\u2014')+'</b><span>followers</span></div></div>';
+   html+='<div class="sectioncap" style="margin-top:10px">By account</div>'+rows.map(function(r){
+    return '<div class="workline"><div class="top"><div class="name">'+esc(String(r.account).slice(0,60))+' \u00b7 '+esc(r.platform)+(r.market?' \u00b7 '+esc(r.market):'')+'</div><span class="badge '+(r.confident?'green':'gold')+'">'+(r.confident?'ok':'name match \u2014 confirm')+'</span></div>'+
+     '<div class="detail">Impressions '+n(r.impressions)+' \u00b7 Reach '+n(r.reach)+' \u00b7 Engagements '+n(r.engagements)+' \u00b7 Followers '+n(r.followers)+'</div></div>';
+   }).join('');
+   html+='<div class="detail" style="margin-top:8px">A dash means the platform did not report that figure \u2014 Google Business Profile never returns engagement, for instance. It is not zero.</div>';
+  }
+  html+='</div>';
+  return html;
  };
  window.renderResultsPage=function(el){
   _rrsp(el);
   try{mamOneUpAuto()}catch(e){}
+  try{if((state.resultsTab||'')==='social'){
+   /* Social replaces the record-shaped body rather than stacking on it —
+      none of those panels apply to posts that support no campaign. */
+   const body=el.querySelector('#resultsBody');
+   if(body)body.innerHTML=mamSocialTab(el);
+   const head=el.querySelector('.pagehead');
+   if(head){
+    const h=head.querySelector('h1');if(h)h.textContent='Social';
+    const sub=head.querySelector('p,.sub,.subtitle');
+    if(sub)sub.textContent='What this brand posted, month by month. Social is mostly engagement rather than campaign work, so nothing here is tied to a campaign / event record.';
+   }
+  }}catch(e){}
   try{
    const page=el.querySelector('.page');if(!page||el.querySelector('#oneupPanel'))return;
    /* Saved channel performance, by brand and period. Brand-level on purpose. */
