@@ -3482,8 +3482,24 @@ window.addEventListener('DOMContentLoaded',function(){
  };
 
  const _rrsp=renderResultsPage;
+ const _rhOneUp=renderHome;
+ window.renderHome=function(el){
+  _rhOneUp(el);
+  try{
+   mamOneUpAuto();                                   // fetches itself, quietly
+   const pend=mamSocialPending();
+   if(!pend.length)return;
+   const page=el.querySelector('.page');if(!page||el.querySelector('#socialPending'))return;
+   const q=function(x){return String(x).replaceAll("'","\\'")};
+   page.insertAdjacentHTML('afterbegin','<div class="panel" id="socialPending" style="margin-bottom:12px"><h3>Social results waiting on you \u00b7 '+pend.length+'</h3><div class="tiny" style="margin-bottom:7px">These events have finished. The posts are pulled and waiting \u2014 the only thing left is confirming which ones belong, which is not a call a machine should make.</div>'+
+    pend.slice(0,6).map(function(p){
+     return '<div class="workline"><div class="top"><div class="name">'+esc(p.name)+'</div><span class="badge gold">ended '+fmtDate(p.ended)+'</span></div><div class="detail">'+esc(p.brand)+' \u00b7 '+esc(p.dma)+'</div><div class="actions"><button class="btn secondary" onclick="mamSocialGo(\''+q(p.brand)+'\',\''+q(p.dma)+'\',\''+q(p.id)+'\')">Confirm its posts</button></div></div>';
+    }).join('')+(pend.length>6?'<div class="tiny">\u2026and '+(pend.length-6)+' more.</div>':'')+'</div>');
+  }catch(e){}
+ };
  window.renderResultsPage=function(el){
   _rrsp(el);
+  try{mamOneUpAuto()}catch(e){}
   try{
    const page=el.querySelector('.page');if(!page||el.querySelector('#oneupPanel'))return;
    /* Saved channel performance, by brand and period. Brand-level on purpose. */
@@ -3523,6 +3539,69 @@ window.addEventListener('DOMContentLoaded',function(){
    }
    page.insertAdjacentHTML('beforeend','<div class="panel" id="oneupPanel" style="margin-top:12px"><h3>Social Metrics \u2014 OneUp</h3><div class="tiny" style="margin-bottom:7px">Social numbers only \u2014 impressions and engagement on posts. Radio, TV, OOH and paid media never come from here. Read-only: Mayhem can never post through OneUp. Account totals are brand-level; they are not one event\u2019s numbers.</div><div class="actions"><button class="btn secondary" onclick="mamOneUpPanel()">Check the OneUp Connection</button><button class="btn secondary" onclick="mamSocialMatch(state.currentCommit)">Match Posts to This Record</button></div>'+matched+saved+'</div>');
   }catch(e){}
+ };
+
+/* ---- Law IX: nobody presses "pull". The numbers fetch themselves once a day
+   and save themselves; the only thing that ever reaches a human is the one
+   judgement a machine must not make — which posts belong to which event. ---- */
+ window.mamOneUpAuto=async function(){
+  try{
+   if(window.__mamOneUpAutoRan)return;window.__mamOneUpAutoRan=true;
+   const today=new Date().toISOString().slice(0,10);
+   if((state.oneupAuto||{}).date===today)return;      // once a day is plenty
+   const month=today.slice(0,7);
+   const r=await fetch('/api/oneup',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'rollup',start_date:month+'-01',end_date:today})});
+   const j=await r.json().catch(function(){return null});
+   if(!j||j.error||!j.rows)return;                    // silence on failure: never invent numbers
+   j.periodLabel=month;window.__mamOneUpLast=j;
+   const before=(state.channelStats||[]).length;
+   mamOneUpSaveQuiet(j);
+   state.oneupAuto={date:today,rows:(state.channelStats||[]).length-before,period:month};
+   saveState();
+   try{renderPage()}catch(e){}
+  }catch(e){}
+ };
+ /* same rules as the manual save — broken, blank and unmatched are never stored */
+ window.mamOneUpSaveQuiet=function(j){
+  state.channelStats=state.channelStats||[];
+  (j.rows||[]).forEach(function(r){
+   if(!r.ok)return;
+   if(!r.impressions&&!r.engagements&&!r.followers)return;
+   const brand=mamOneUpBrand(r.name);if(!brand)return;
+   const market=mamOneUpMarket(r.name,brand)||'';
+   const period=j.periodLabel||'';
+   const key=[brand,market,r.platform,r.name,period].join('|');
+   const row={id:'cs'+Date.now()+Math.random(),key,brand:brand,market:market,platform:r.platform,account:r.name,period:period,
+    impressions:(r.impressions===0||r.impressions)?r.impressions:null,
+    reach:(r.reach===0||r.reach)?r.reach:null,
+    engagements:(r.engagements===0||r.engagements)?r.engagements:null,
+    followers:(r.followers===0||r.followers)?r.followers:null,
+    source:'OneUp',fetched:new Date().toISOString().slice(0,10),confident:mamOneUpConfident(r.name)};
+   const hit=state.channelStats.find(function(x){return x.key===key});
+   if(hit)Object.assign(hit,row,{id:hit.id});else state.channelStats.push(row);
+  });
+ };
+ /* Events that have finished and have no confirmed social numbers yet. These
+    become a flag on Home — the decision comes to her, she does not hunt for it. */
+ window.mamSocialPending=function(){
+  const today=new Date().toISOString().slice(0,10),out=[];
+  brands().forEach(function(b){markets(b).forEach(function(d){
+   ((state.brands[b].markets[d]||{}).commitments||[]).forEach(function(c){
+    if(!c.anchor||/denied|archiv/i.test(c.state||''))return;
+    const endD=String(c.endDate||c.anchor).slice(0,10);
+    if(endD>today)return;                                   // not finished yet
+    const days=Math.round((new Date(today)-new Date(endD))/86400000);
+    if(days>45)return;                                      // stale: stop nagging
+    if((state.socialMatches||[]).some(function(m){return m.record===c.id}))return;
+    out.push({brand:b,dma:d,id:c.id,name:c.name,ended:endD,days:days});
+   });
+  })});
+  return out.sort(function(a,z){return String(a.ended).localeCompare(String(z.ended))});
+ };
+ window.mamSocialGo=function(b,d,id){
+  state.currentBrand=b;state.currentDMA=d;state.currentCommit=id;saveState();renderShell();
+  mamSocialMatch(id);
  };
 
 /* ---- B · event-level social: match posts to a record, human confirms ---- */
