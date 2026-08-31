@@ -2329,7 +2329,7 @@ window.addEventListener('DOMContentLoaded',function(){
  try{fetch('/api/db',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({collection:'appData',doc:'mayhemB7',action:'get'})}).then(function(r){return r.ok?r.json():null}).then(function(j){
   const remote=j&&j.data&&j.data.data&&j.data.data.brands?j.data.data:null;
   const rts=j&&j.data&&j.data.ts?j.data.ts:0;
-  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}try{applyDataTruthB7v7()}catch(e){}try{applyDataTruthB7v8()}catch(e){}try{applyDataTruthB7v9()}catch(e){}try{applyDataTruthB7v10()}catch(e){}try{applyDataTruthB7v11()}catch(e){}try{applyDataTruthB7v12()}catch(e){}try{state.tickets=(state.tickets||[]).filter(x=>x.id!=='tk-cal-brainstorm')}catch(e){}renderShell();renderPage()}
+  if(remote&&rts>((state&&state._savedTs)||0)){state=remote;try{applyDataTruthB7()}catch(e){}try{applyDataTruthB7v3()}catch(e){}try{applyDataTruthB7v4()}catch(e){}try{applyDataTruthB7v5()}catch(e){}try{applyDataTruthB7v6()}catch(e){}try{applyDataTruthB7v7()}catch(e){}try{applyDataTruthB7v8()}catch(e){}try{applyDataTruthB7v9()}catch(e){}try{applyDataTruthB7v10()}catch(e){}try{applyDataTruthB7v11()}catch(e){}try{applyDataTruthB7v12()}catch(e){}try{applyDataTruthB7v13()}catch(e){}try{state.tickets=(state.tickets||[]).filter(x=>x.id!=='tk-cal-brainstorm')}catch(e){}renderShell();renderPage()}
  }).catch(function(){})}catch(e){}
 });
 /* ===== END DATA TRUTH + DOOM MOUNT ===== */
@@ -3792,6 +3792,94 @@ window.addEventListener('DOMContentLoaded',function(){
 })();
 /* ===== END ONEUP DASHBOARD FACTS ===== */
 /* ===== END DEMO FOLLOW-THROUGH ===== */
+/* ===== FIRE ACTIVATION GUIDE — PARTNER-IMPOSED DEADLINES (Aug 31) =====
+   Source: Chicago Fire FC "Partnership Welcome Guide", forwarded by Hazel
+   Aug 31 on the "Lerner & Rowe | 9/9 Asset Specs" thread (to Arianna Hensley
+   + Jordan Moreno at L&R, cc Michelle Diaz).
+
+   These are the VENUE'S rules, not ours, and they carry their own clock
+   counted back from matchday (2026-09-09). Every ticket below is created as
+   a DRAFT — nothing sends until someone presses the send button on it. */
+;(function(){
+ window.applyDataTruthB7v13=function(){
+  if(state._dataTruthB7v13)return;
+  state.tickets=state.tickets||[];
+  state.sources=state.sources||[];
+  const REC='lr-chicago-fire',B='Lerner & Rowe',D='Chicago',MATCH='2026-09-09';
+  const SRC='Chicago Fire FC Partnership Welcome Guide (attached to "Re: Lerner & Rowe | 9/9 Asset Specs", Hazel Wolf, Aug 31 2026)';
+  function addTk(t){if(!state.tickets.some(function(x){return x.id===t.id}))state.tickets.push(Object.assign({history:[],returnData:null,notes:'',sent:'',status:'Draft',brand:B,dma:D,commit:REC,source:SRC},t))}
+
+  /* 1. OVERDUE. Two weeks before matchday = Aug 26. Today is Aug 31. */
+  addTk({id:'tk-fire-premiums',type:'Partner',
+   ask:'Soldier Field sign-off on every giveaway item for the 9/9 activation — item list, quantities and booth locations',
+   ownerRole:'Events',owner:'Hazel Wolf',to:'hazel.wolf@atticor.ai',
+   due:'2026-08-26',
+   protects:'Without written Soldier Field approval nothing can be handed out in the activation area on 9/9',
+   returnRequired:'Written Soldier Field approval covering the item list, the quantity of each, and where each is distributed',
+   notes:'VERBATIM FROM THE GUIDE: "all promotional items distributed within activation areas must be approved by Soldier Field at least two (2) weeks prior to matchday. All premium quantities and locations must also be approved by Soldier Field. No items deemed a possible projectile may be given away at Soldier Field... and Soldier Field is not responsible for any lost, stolen or damaged goods." Two weeks before 9/9 was Aug 26 — this window has already closed, so it needs an exception ask, not a normal request.',
+   subject:'Chicago Fire 9/9 — Soldier Field approval for activation giveaways (past the 2-week window)',
+   body:'The Partnership Welcome Guide requires Soldier Field to approve every promotional item, its quantity and its distribution location at least two weeks before matchday. For the Sep 9 match that date was Aug 26. Confirming what we intend to hand out so the Fire can walk it through late, or so we drop premiums from the booth.'});
+
+  /* 2. Five days before matchday = Sep 4. Hard cap of 8. */
+  addTk({id:'tk-fire-credentials',type:'Staffing',
+   ask:'Credential count for the 9/9 activation — maximum of 8, due to the Fire five days out',
+   ownerRole:'Events',owner:'Hazel Wolf',to:'hazel.wolf@atticor.ai',
+   due:'2026-09-04',
+   protects:'Staff without a credential can be denied entry at stadium inspection',
+   returnRequired:'Final credential quantity sent to the Fire (8 or fewer), and the named staff it covers',
+   notes:'VERBATIM: "All event staff and sponsor staff must be identifiable with event day credentials, which will be distributed on-site by the Chicago Fire FC Operations team. All are subject to stadium inspection prior to entry. Stadium personnel may deny entry to any event or sponsor staff at its own discretion. Please provide the quantity of credentials your team will need a minimum of five days prior to matchday. A maximum of eight (8) credentials will be distributed to your team." The cap of 8 is the real constraint on booth staffing — settle headcount before promising Hype anything.'});
+
+  /* 3. The banned list overlaps exactly with default giveaway choices. */
+  addTk({id:'tk-fire-merch-check',type:'Merch',
+   ask:'Check the 9/9 giveaway items against Soldier Field’s allowed list before anything is ordered or shipped',
+   ownerRole:'Merch',owner:'Jon Podschun',to:'jon.podschun@atticor.ai',
+   due:'2026-09-01',
+   protects:'Banned items cannot be distributed on site — ordering one wastes the spend and empties the booth',
+   returnRequired:'Confirmation that every item going to Soldier Field is on the recommended list, with anything banned swapped out',
+   notes:'ALLOWED (guide’s own list): rally towels, scarves, lip balm, pens, clear bags that meet the Soldier Field bag policy (not to exceed 12" x 6" x 12"), headbands, temporary tattoos, magnets, and anything fans cannot throw onto the field. NOT ALLOWED: stickers, water bottles, stress balls, noise makers, any bag that breaks the clear-bag policy, and anything that could be deemed a projectile. Note the overlap with default booth giveaways — stickers and water bottles are both banned.'});
+
+  /* 4. The Fire owes US this one — it just has to be chased. */
+  addTk({id:'tk-fire-loadin',type:'Partner',
+   ask:'Load-in / load-out detail for 9/9 from the Fire partnership marketing rep',
+   ownerRole:'Events',owner:'Hazel Wolf',to:'hazel.wolf@atticor.ai',
+   due:'2026-09-02',
+   protects:'Booth build has to fit the activation window — 2 hours before kickoff, ending at kickoff',
+   returnRequired:'Load-in time, load-out time, gate / dock and vehicle access for the booth',
+   notes:'VERBATIM: "Your Chicago Fire FC Partnership Marketing representative will communicate all load-in/load-out details with your team during the week prior to matchday." Also from the guide: "Activations will begin 2 hours prior to kickoff and end once the match kicks off." That window is the whole activation — everything has to be built, staffed and struck around it.'});
+
+  if(!state.sources.some(function(x){return x.id==='src-fire-guide'}))state.sources.push({
+   id:'src-fire-guide',brand:B,dma:D,commit:REC,type:'Partner Document',
+   name:'Chicago Fire FC — Partnership Welcome Guide (Aug 31)',status:'Applied',
+   detail:'Venue rules for the 9/9 Soldier Field activation, forwarded by Hazel on the 9/9 Asset Specs thread (to Arianna Hensley and Jordan Moreno at L&R, cc Michelle Diaz). Four dated obligations counted back from matchday: giveaway approval 2 weeks out (Aug 26 — already passed), credential count 5 days out (Sep 4, max 8), load-in detail the week prior, activation window 2 hours pre-kickoff to kickoff. Plus a binding merch list — rally towels, scarves, lip balm, pens, compliant clear bags, headbands, temporary tattoos and magnets are allowed; stickers, water bottles, stress balls, noise makers and anything projectile-like are not. All four tickets were raised as drafts; none has been sent.'});
+
+  state._dataTruthB7v13=true;state._savedTs=Date.now();saveState();
+ };
+ try{applyDataTruthB7v13()}catch(e){}
+})();
+/* ===== END FIRE ACTIVATION GUIDE ===== */
+
+/* An overdue draft looked exactly like one due next week. The Soldier Field
+   giveaway approval is already five days past its window, so the card has to
+   say so — it is the one ticket on the board that cannot wait. */
+;(function(){
+ if(typeof canonicalTicketCard!=='function')return;
+ const _ctc=canonicalTicketCard;
+ canonicalTicketCard=function(t){
+  let h=_ctc(t);
+  try{
+   if(t&&t.due&&t.status!=='Closed'&&!t.returnData){
+    const today=new Date().toISOString().slice(0,10);
+    if(t.due<today){
+     const days=Math.round((Date.parse(today)-Date.parse(t.due))/86400000);
+     h=h.replace('<b>Due back:</b>','<b style="color:#E85A7A">OVERDUE by '+days+' day'+(days===1?'':'s')+'</b> \u00b7 <b>Due back:</b>');
+    }
+   }
+  }catch(e){}
+  return h;
+ };
+})();
+
+
 ;(function(){
  function heal(){try{
   const bk=state.brands[state.currentBrand];
