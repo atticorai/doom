@@ -3321,6 +3321,7 @@ window.addEventListener('DOMContentLoaded',function(){
  window.mamOneUpPanel=function(){
   modal('OneUp — Social Metrics','OneUp is the social publishing tool. It can only ever know SOCIAL numbers — never radio, TV, OOH or paid media. Those stay with the vendors.',
    '<div class="fact"><div class="label">What this does</div><div>Asks OneUp directly what it is willing to hand over, and reports exactly what came back. Read-only: this can never post, schedule, or delete anything.</div></div>'+
+   '<div class="field c6" style="margin-top:8px"><label>Period</label><select id="oneupPeriod">'+mamOneUpPeriods().map(function(p){return '<option value="'+p.v+'">'+esc(p.label)+'</option>'}).join('')+'</select></div>'+
    '<div class="actions" style="margin-top:8px"><button class="btn" onclick="mamOneUpRollup()">Pull Social Numbers \u2014 All Brands</button><button class="btn secondary" onclick="mamOneUpProbe()">Test the Connection</button><button class="btn secondary" onclick="closeModal()">Close</button></div>'+
    '<div id="oneupOut"></div>');
  };
@@ -3363,17 +3364,72 @@ window.addEventListener('DOMContentLoaded',function(){
   }
   out.innerHTML=html;
  };
+ /* Monthly is what the brand updates actually report on, so offer whole
+    months as well as a rolling window. */
+ window.mamOneUpPeriods=function(){
+  const out=[{v:'preset:last_30_days',label:'Last 30 days'}];
+  const now=new Date();
+  for(let i=0;i<6;i++){
+   const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+   const y=d.getFullYear(),m=d.getMonth();
+   const start=y+'-'+String(m+1).padStart(2,'0')+'-01';
+   const endD=new Date(y,m+1,0);
+   const end=y+'-'+String(m+1).padStart(2,'0')+'-'+String(endD.getDate()).padStart(2,'0');
+   out.push({v:'range:'+start+':'+end,label:d.toLocaleString('en-US',{month:'long',year:'numeric'})});
+  }
+  return out;
+ };
+ function periodArgs(){
+  const v=(document.getElementById('oneupPeriod')||{}).value||'preset:last_30_days';
+  if(v.indexOf('range:')===0){const p=v.split(':');return {start_date:p[1],end_date:p[2],__label:p[1].slice(0,7)}}
+  return {preset:'last_30_days',__label:'last_30_days \u00b7 as of '+new Date().toISOString().slice(0,10)};
+ }
+ /* Save what came back as brand/market channel performance. Deliberately NOT
+    attached to an event record: an account's monthly total belongs to the
+    brand, not to any one event. Event-level numbers need per-post matching. */
+ window.mamOneUpSave=function(){
+  const j=window.__mamOneUpLast;
+  if(!j||!j.rows){toast('Pull the numbers first');return}
+  state.channelStats=state.channelStats||[];
+  let saved=0,skipped=0;
+  j.rows.forEach(function(r){
+   if(!r.ok){skipped++;return}                       // broken / plan-refused: never stored
+   if(!r.impressions&&!r.engagements&&!r.followers){skipped++;return}
+   const brand=mamOneUpBrand(r.name);
+   if(!brand){skipped++;return}                      // unmatched accounts stay out of brand numbers
+   const market=mamOneUpMarket(r.name,brand)||'';
+   const period=(j.periodLabel||'unknown');
+   const key=[brand,market,r.platform,r.name,period].join('|');
+   const row={id:'cs'+Date.now()+Math.random(),key,brand:brand,market:market,platform:r.platform,
+    account:r.name,period:period,
+    impressions:(r.impressions===0||r.impressions)?r.impressions:null,
+    reach:(r.reach===0||r.reach)?r.reach:null,
+    engagements:(r.engagements===0||r.engagements)?r.engagements:null,
+    followers:(r.followers===0||r.followers)?r.followers:null,
+    source:'OneUp',fetched:new Date().toISOString().slice(0,10),
+    confident:mamOneUpConfident(r.name)};
+   const hit=state.channelStats.find(function(x){return x.key===key});
+   if(hit)Object.assign(hit,row,{id:hit.id});else state.channelStats.push(row);
+   saved++;
+  });
+  (state.sources=state.sources||[]).push({id:Date.now(),type:'OneUp',name:'Social channel numbers saved \u00b7 '+(j.periodLabel||''),status:'Applied',detail:saved+' account rows stored at brand/market level from OneUp. '+skipped+' skipped (broken connection, no figures, or account not matched to a brand). Account totals are brand-level \u2014 they are not attributed to any event record.',brand:'',dma:''});
+  saveState();renderPage();toast(saved+' saved \u00b7 '+skipped+' skipped');
+ };
  window.mamOneUpRollup=async function(){
   const out=document.getElementById('oneupOut');
   if(out)out.innerHTML='<div class="detail" style="margin-top:10px">Reading every connected account \u2014 this takes up to a minute across all the platforms\u2026</div>';
   let j=null,code=0;
   try{
-   const r=await fetch('/api/oneup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'rollup',preset:'last_30_days'})});
+   const pa=periodArgs();
+   const r=await fetch('/api/oneup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({action:'rollup'},pa,{__label:undefined}))});
+   window.__mamOneUpPeriodLabel=pa.__label;
    code=r.status;j=await r.json().catch(function(){return null});
   }catch(e){}
   if(!out)return;
   if(!j){out.innerHTML='<div class="fact" style="margin-top:10px"><div class="label">\u2717 No answer</div><div>The service did not respond'+(code?' ('+code+')':'')+'. If the deploy just went out, give it a minute.</div></div>';return}
   if(j.error){out.innerHTML='<div class="fact" style="margin-top:10px"><div class="label">\u2717 '+esc(j.error)+'</div><div>'+esc(j.message||'')+'</div></div>';return}
+  j.periodLabel=window.__mamOneUpPeriodLabel||'';
+  window.__mamOneUpLast=j;
   const rows=j.rows||[];
   if(!rows.length){
    let d='<div class="fact" style="margin-top:10px"><div class="label">Couldn\u2019t read the account list</div><div>'+esc(j.note||'Nothing readable yet.')+'</div></div>';
@@ -3419,6 +3475,8 @@ window.addEventListener('DOMContentLoaded',function(){
      '</div>';
    });
   });
+  html+='<div class="actions" style="margin-top:12px"><button class="btn" onclick="mamOneUpSave()">Save These to the Book</button></div>'+
+   '<div class="detail" style="margin-top:4px">Saves at brand / market level for '+esc(j.periodLabel||'this period')+'. Broken accounts, blank figures and unmatched names are skipped, never stored as zeros \u2014 and nothing is attached to an event record, because an account\u2019s monthly total is not one event\u2019s number.</div>';
   html+='<div class="fact" style="margin-top:10px"><div class="label">Reading these honestly</div><div>Google Business Profile never returns interactions \u2014 a dash there means unavailable, not zero. An account marked \u201cneeds refresh?\u201d reported nothing at all; fix the connection in OneUp before quoting its month.</div></div>';
   out.innerHTML=html;
  };
@@ -3428,7 +3486,27 @@ window.addEventListener('DOMContentLoaded',function(){
   _rrsp(el);
   try{
    const page=el.querySelector('.page');if(!page||el.querySelector('#oneupPanel'))return;
-   page.insertAdjacentHTML('beforeend','<div class="panel" id="oneupPanel" style="margin-top:12px"><h3>Social Metrics \u2014 OneUp</h3><div class="tiny" style="margin-bottom:7px">Social numbers only \u2014 impressions and engagement on posts. Radio, TV, OOH and paid media never come from here. Read-only: Mayhem can never post through OneUp.</div><div class="actions"><button class="btn secondary" onclick="mamOneUpPanel()">Check the OneUp Connection</button></div></div>');
+   /* Saved channel performance, by brand and period. Brand-level on purpose. */
+   const cs=(state.channelStats||[]).filter(function(x){return x.brand===state.currentBrand});
+   const periods=[...new Set(cs.map(function(x){return x.period}))].sort().reverse();
+   let saved='';
+   if(periods.length){
+    saved='<div class="sectioncap" style="margin-top:10px">Saved channel performance \u00b7 '+esc(state.currentBrand)+'</div>';
+    periods.slice(0,3).forEach(function(p){
+     const rs=cs.filter(function(x){return x.period===p});
+     const sum=function(k){return rs.reduce(function(a,x){return a+(typeof x[k]==='number'?x[k]:0)},0)};
+     const has=function(k){return rs.some(function(x){return typeof x[k]==='number'})};
+     saved+='<div class="workline"><div class="top"><div class="name">'+esc(p)+'</div><span class="badge green">'+rs.length+' account'+(rs.length===1?'':'s')+'</span></div>'+
+      '<div class="detail">Impressions '+(has('impressions')?sum('impressions').toLocaleString():'\u2014')+
+      ' \u00b7 Reach '+(has('reach')?sum('reach').toLocaleString():'\u2014')+
+      ' \u00b7 Engagements '+(has('engagements')?sum('engagements').toLocaleString():'\u2014')+
+      ' \u00b7 Followers '+(has('followers')?sum('followers').toLocaleString():'\u2014')+'</div>'+
+      '<div class="detail" style="opacity:.75">'+esc(rs.map(function(x){return x.platform+(x.market?' ('+x.market+')':'')}).slice(0,8).join(' \u00b7 '))+(rs.length>8?' \u2026':'')+'</div>'+
+      (rs.some(function(x){return !x.confident})?'<div class="detail" style="color:#8f2438">Includes account(s) matched on a partial name \u2014 confirm before quoting.</div>':'')+
+      '</div>';
+    });
+   }
+   page.insertAdjacentHTML('beforeend','<div class="panel" id="oneupPanel" style="margin-top:12px"><h3>Social Metrics \u2014 OneUp</h3><div class="tiny" style="margin-bottom:7px">Social numbers only \u2014 impressions and engagement on posts. Radio, TV, OOH and paid media never come from here. Read-only: Mayhem can never post through OneUp. Account totals are brand-level; they are not one event\u2019s numbers.</div><div class="actions"><button class="btn secondary" onclick="mamOneUpPanel()">Check the OneUp Connection</button></div>'+saved+'</div>');
   }catch(e){}
  };
 })();
