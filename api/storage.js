@@ -94,23 +94,29 @@ module.exports = async function handler(req, res) {
 
       // upsert:true lets us re-issue a signed URL for a path that already
       // exists (re-runs after a partial upload), instead of erroring out.
-      const { data, error } = await supabase.storage
+      let { data, error } = await supabase.storage
         .from(bucket)
         .createSignedUploadUrl(path, { upsert: true });
 
       const { data: pub } = supabase.storage.from(bucket).getPublicUrl(path);
 
-      // Belt-and-suspenders: if the signed URL still can't be created because
-      // the object is already there, the file IS uploaded — just hand back its
-      // public URL so the client links it instead of failing. This recovers
-      // creative that landed in storage but lost its ISCI link to a crashed run.
+      // A re-upload to an existing path means REPLACE. If the signed URL is
+      // refused because the object is already there, delete it and retry so
+      // the new file actually lands — otherwise a user swapping out stale
+      // creative silently keeps the old file forever.
       if (error) {
         const msg = String(error.message || error).toLowerCase();
         const exists = msg.includes('exist') || msg.includes('duplicate') || error.statusCode === '409';
         if (exists) {
-          return res.status(200).json({ alreadyUploaded: true, publicUrl: pub.publicUrl, path, bucket });
+          await supabase.storage.from(bucket).remove([path]);
+          ({ data, error } = await supabase.storage.from(bucket).createSignedUploadUrl(path, { upsert: true }));
+          if (error) {
+            // Couldn't clear it — fall back to linking what's there rather than failing.
+            return res.status(200).json({ alreadyUploaded: true, publicUrl: pub.publicUrl, path, bucket });
+          }
+        } else {
+          throw error;
         }
-        throw error;
       }
 
       return res.status(200).json({

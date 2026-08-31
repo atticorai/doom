@@ -118,7 +118,10 @@
         };
         xhr.onload = function () {
           if (xhr.status >= 200 && xhr.status < 300) {
-            refInfo._cachedUrl = resp.publicUrl;
+            // Version-stamp the stored URL: a replaced file at the same path keeps
+            // the same public URL, and the CDN/browser would keep serving the OLD
+            // pixels from cache. The stamp makes every fresh upload a fresh URL.
+            refInfo._cachedUrl = resp.publicUrl + (resp.publicUrl.indexOf('?') < 0 ? '?v=' : '&v=') + Date.now();
             emitProgress(file.size, file.size);
             res();
           } else {

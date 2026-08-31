@@ -1483,9 +1483,13 @@ const App=()=>{
   // Idempotent: only writes when a link actually changes, so no save loop.
   // Files whose creative could not be parsed from the filename are SKIPPED:
   // size alone cannot tell two creatives apart when a market runs both at the
-  // same size (PDV OKC: Thunder + Pepper & Murry at 14x48, 11x44, 400x1400...),
-  // and a coin-flip relink would silently swap a board onto the wrong artwork.
-  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const _f=(oohCreativeFiles||[]).filter(f=>f&&f.u&&f.w&&f.h);if(!_f.length)return;setIscis(prev=>{let ch=false;const nx=prev.map(i=>{if(i.suffix!=="O")return i;if(i.crLock)return i;const bd=oohDims(i.dur);if(!bd)return i;const bp=oohPrefix(i.dma);const bc=String(i.title||"").split(" - ").pop().trim();const isCause=/Case Cause/.test(bc);const fam=_f.filter(f=>oohPrefix(f.dma)===bp&&(f.c||f.fam)&&((/Case Cause/.test(f.c||"")||f.fam==="cause")===isCause));if(!fam.length)return i;const u=fam.map(f=>({f,off:Math.abs(f.w-bd[0])+Math.abs(f.h-bd[1]),exact:(f.c===bc?0:1)})).sort((a,b)=>a.off-b.off||a.exact-b.exact)[0].f.u;if(u&&u!==i.fileUrl){ch=true;return{...i,fileUrl:u}}return i});return ch?nx:prev})},[oohCreativeFiles,dbLoaded]);
+  // same size, and a coin-flip relink would silently swap a board onto the
+  // wrong artwork. Two more guard rails (learned on the Nashville Preds
+  // digitals, where this effect kept re-attaching OLD It's Personal art by
+  // nearest-size match): (1) NEVER overwrite an ISCI that already has a file
+  // — per-ISCI uploads are the source of truth; (2) only attach a file whose
+  // creative name actually appears in the ISCI's title.
+  React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const _f=(oohCreativeFiles||[]).filter(f=>f&&f.u&&f.w&&f.h);if(!_f.length)return;setIscis(prev=>{let ch=false;const nx=prev.map(i=>{if(i.suffix!=="O")return i;if(i.crLock)return i;if(i.fileUrl)return i;const bd=oohDims(i.dur);if(!bd)return i;const bp=oohPrefix(i.dma);const bc=String(i.title||"").split(" - ").pop().trim();const isCause=/Case Cause/.test(bc);const fam=_f.filter(f=>oohPrefix(f.dma)===bp&&(f.c||f.fam)&&((/Case Cause/.test(f.c||"")||f.fam==="cause")===isCause)&&(!f.c||String(i.title||"").toLowerCase().includes(String(f.c).toLowerCase())));if(!fam.length)return i;const u=fam.map(f=>({f,off:Math.abs(f.w-bd[0])+Math.abs(f.h-bd[1]),exact:(f.c===bc?0:1)})).sort((a,b)=>a.off-b.off||a.exact-b.exact)[0].f.u;if(u&&u!==i.fileUrl){ch=true;return{...i,fileUrl:u}}return i});return ch?nx:prev})},[oohCreativeFiles,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;saveToDb("customTags",customFields)},[customFields,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const isciMap=Object.fromEntries(pops.filter(p=>p.isci).map(p=>[p.boardId,p.isci]));if(Object.keys(isciMap).length>0)saveToDb("wkOohIscis",isciMap)},[pops,dbLoaded]);
   React.useEffect(()=>{if(!dbLoaded)return;if(!saveRef.current)return;const designMap=Object.fromEntries(pops.filter(p=>Array.isArray(p.design)&&p.design.length).map(p=>[p.boardId,p.design]));if(Object.keys(designMap).length>0)saveToDb("wkOohDesigns",designMap)},[pops,dbLoaded]);
@@ -4833,6 +4837,22 @@ const App=()=>{
       w.document.write('</body></html>');w.document.close();
       log("Preds Traffic Instructions","Nashville · "+B.length+" boards");notify("Preds traffic instructions generated");
     };
+    // PREDS DIGITAL FILES — one-page PDF with live download links for JUST the
+    // three Predators digital creatives (the re-uploaded files). Links resolve
+    // by exact ISCI code at click time, so a re-upload is always what downloads.
+    const printPredsDigital=()=>{
+      const rows=[["NSHWK26DB009O","Partner Lockup","Digital Bulletin 400x1400"],["NSHWK26DB010O","We Always Show Up","Digital Bulletin 400x1400"],["NSHWK26DB011O","Bring the Fight","Digital Poster 400x840"]];
+      const lk=(code,label)=>{const m=iscis.find(i=>i.code===code);return(m&&m.fileUrl)?('<a href="'+escHtml(oohVendorDl(m.fileUrl,m.title||code))+'" target="_blank" style="color:#1a56db;font-weight:bold">'+escHtml(label||code)+'</a>'):('<b>'+escHtml(label||code)+'</b> <span style="color:#b00">⚠ no file linked</span>')};
+      const w=window.open("","","width=900,height=700");
+      w.document.write('<html><head><title>WK Preds — Digital Creative Files</title><style>body{font-family:Arial,sans-serif;color:#1a1a1a;margin:26px;font-size:12px}h2{margin:0;letter-spacing:2px;text-align:center}.tag{text-align:center;font-weight:bold;color:#555;margin-bottom:14px}table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #ccc;padding:6px 9px;font-size:11px;text-align:left}th{background:#f3f3f3}.mono{font-family:monospace;font-weight:700}.note{font-size:10.5px;color:#444;margin:8px 0;background:#fef3c7;padding:6px 9px;border-radius:4px}.dl{position:fixed;top:12px;right:12px;z-index:99999;background:#9b7bb0;color:#fff;border:none;border-radius:7px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer}@media print{body{margin:14px}.dl{display:none}}</style></head><body>');
+      w.document.write('<button class="dl" onclick="window.print()">⬇ Save as PDF</button>');
+      w.document.write('<h2>WETTERMARK KEITH</h2><div class="tag">NASHVILLE × PREDATORS — DIGITAL CREATIVE FILES</div>');
+      w.document.write('<table><tr><th style="width:150px">ISCI</th><th>Creative (click to download)</th><th style="width:200px">Format / Spec</th></tr>');
+      rows.forEach(r=>w.document.write('<tr><td class="mono">'+escHtml(r[0])+'</td><td>'+lk(r[0],r[1])+'</td><td>'+escHtml(r[2])+'</td></tr>'));
+      w.document.write('</table><div class="note">These are the current files in the system — links pull the live file for each ISCI, so what downloads is always the latest upload.</div>');
+      w.document.write('</body></html>');w.document.close();
+      log("Preds Digital Files","Nashville · 3 digital creative links");notify("Preds digital file links generated");
+    };
     // CARD TRAFFIC REPORT — read-only. Pulls each board's ALREADY-ASSIGNED creative
     // (design concepts or ISCI), filtered by start date + current filters, into the
     // same traffic PDF with clickable creative links. Never writes to any board.
@@ -5063,6 +5083,7 @@ const App=()=>{
           <Btn small color="#E85A7A" onClick={()=>printVendorTrafficSheet({resendOnly:true})}>📄 Revision Sheet</Btn>
           <Btn small color="#5BC4A0" onClick={()=>printCreativeSpecs()}>📐 Creative Specs</Btn>
           <Btn small color="#FFB81C" onClick={printPredsTraffic}>🏒 Preds Traffic</Btn>
+          <Btn small color="#4AC8E8" onClick={printPredsDigital}>🎬 Preds Digital Files</Btn>
           <Btn small onClick={()=>setViewMode("cards")} primary={viewMode==="cards"}>▦ Cards</Btn>
           <Btn small onClick={()=>setViewMode("table")} primary={viewMode==="table"}>☰ Table</Btn>
           <Btn small onClick={()=>setViewMode("map")} primary={viewMode==="map"}>📍 Map</Btn>
