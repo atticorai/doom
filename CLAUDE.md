@@ -98,6 +98,7 @@ Heading text:   #F0E8F8 (warm white)
 3. **Seed data** restores missing ISCIs and blank titles/fileUrls
 4. **Markets filter by brand** — no Chicago in WK dropdowns
 5. **ISCIs use code+dma composite key** — same code in different markets are different ISCIs
+5b. **OOH unit IDs are NOT unique across brands** — Postman Law and Lerner & Rowe buy the same View Chicago inventory (`3950-1`, `4640-1`, ...). Anything keyed by unit alone (`POP_PHOTOS`, `POP_TITLES`, `oohPhotos` uploads) will bleed one brand's proof onto the other's board. Brand-scoped proofs go in their own map — see `data-lr-view-chi-pops.js`
 6. **OOH ISCIs only in OOH Hub** — filtered out of main ISCI Registry
 7. **No abbreviations** — full brand names and market names everywhere except ISCI codes
 8. **Ownership group sends** — never send individual emails per station

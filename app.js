@@ -9171,6 +9171,16 @@ Rules:
     const plEditContract=lrOohEditContract,setPlEditContract=setLrOohEditContract;
     const plEditDates=lrOohEditDates,setPlEditDates=setLrOohEditDates;
     const viewChiFaces=lrPanels.filter(p=>/View/.test(p.vendor)&&(mktF?p.market==="CHI":true)).map(p=>p.unit).sort();
+    // View Chicago delivered face-level proofs; they live in their own map because the
+    // View Chicago unit IDs are shared with Postman Law (see data-lr-view-chi-pops.js).
+    const lrUnitPops=(unit)=>((typeof window!=="undefined"&&window.LR_VIEW_CHI_POPS&&window.LR_VIEW_CHI_POPS[unit])||[]);
+    // Postman Law buys the same View Chicago faces, and POP_PHOTOS/POP_TITLES are keyed by
+    // unit alone — so for a shared unit that map holds Postman's proof, not Lerner & Rowe's.
+    // Every shared-map photo this page used to show was a Postman board. Only trust it for
+    // units no other brand shares.
+    const lrSharedUnits=React.useMemo(()=>new Set((typeof PL_PANELS!=="undefined"?PL_PANELS:[]).map(p=>p.unit)),[]);
+    const lrSeedPop=(unit)=>(!lrSharedUnits.has(unit)&&POP_PHOTOS[unit])?POP_PHOTOS[unit]:null;
+    const lrSeedAlts=(unit)=>lrSharedUnits.has(unit)?[]:((typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[unit])||[]).map((u,i)=>({url:u,label:((typeof POP_TITLES_ALT!=='undefined'&&POP_TITLES_ALT[unit])||[])[i]||"PoP Photo (alt "+(i+1)+")",hardcoded:true}));
     // Faces are computed inline when building traffic lines instead of useEffect
     const plEditList=lrOohEditList,setPlEditList=setLrOohEditList,plEditPct=lrOohEditPct,setPlEditPct=setLrOohEditPct;
     // Rotating programs carry multiple creatives (like WK): digital boards, rotary poster
@@ -9248,8 +9258,10 @@ Rules:
     const CardGrid=()=><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
       {fl.map((p,i)=>{const c=mktColors[p.market]||"#64748b";const flightClean=p.flight.split('(')[0].trim();const pop=LR_POPS[p.unit];const exp=plArchived(p);
         const _popTitle=(typeof POP_TITLES!=='undefined'&&POP_TITLES[p.unit])||"PoP Photo";
-        const _popAlts=((typeof POP_PHOTOS_ALT!=='undefined'&&POP_PHOTOS_ALT[p.unit])||[]).map((u,i)=>({url:u,label:((typeof POP_TITLES_ALT!=='undefined'&&POP_TITLES_ALT[p.unit])||[])[i]||"PoP Photo (alt "+(i+1)+")",hardcoded:true}));
-        const allCardPhotos=POP_PHOTOS[p.unit]?[{url:POP_PHOTOS[p.unit],label:_popTitle,hardcoded:true},..._popAlts,...(oohPhotos[p.unit]||[])]:[..._popAlts,...(oohPhotos[p.unit]||[])];
+        const _popAlts=lrSeedAlts(p.unit);
+        const _vcPops=lrUnitPops(p.unit);
+        const _seed=lrSeedPop(p.unit);
+        const allCardPhotos=_seed?[{url:_seed,label:_popTitle,hardcoded:true},..._popAlts,..._vcPops,...(oohPhotos[p.unit]||[])]:[..._popAlts,..._vcPops,...(oohPhotos[p.unit]||[])];
         const openCardPop=(e)=>{
           // Skip if the click came from an interactive child (ISCI edit input,
           // upload button, individual photo with its own handler, etc).
@@ -9283,29 +9295,18 @@ Rules:
               {p.facing&&p.facing!=="N/A"&&p.facing!=="Various"&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>Facing</div><div><B l={p.facing} c="#6366f1"/></div></div>}
               {pop&&<div><div style={{fontSize:14,fontWeight:600,color:"#9B8EAD",textTransform:"uppercase"}}>PoP Date</div><div style={{fontSize:14,fontWeight:600,color:"#4AC8E8"}}>{pop.popDate}</div></div>}
             </div>
-            {POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
+            {allCardPhotos.length?<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                <div style={{fontSize:12,fontWeight:600,color:"#4AC8E8",textTransform:"uppercase"}}>📸 {1+(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length?"s":""}</div>
+                <div style={{fontSize:12,fontWeight:600,color:"#4AC8E8",textTransform:"uppercase"}}>📸 {allCardPhotos.length} Photo{allCardPhotos.length>1?"s":""}</div>
                 <OohPhotoUpload id={p.unit}/>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length?"1fr 1fr":"1fr",gap:4}}>
-                <img src={POP_PHOTOS[p.unit]} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:0})}}/>
-                {(oohPhotos[p.unit]||[]).slice(0,3).map((ph,pi)=>{const altCount=_popAlts.length;return<img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:1+altCount+pi})}}/>})}
+              <div style={{display:"grid",gridTemplateColumns:allCardPhotos.length>1?"1fr 1fr":"1fr",gap:4}}>
+                {allCardPhotos.slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} title={ph.label||""} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:allCardPhotos,startIdx:pi})}}/>)}
               </div>
-            </div>}
-            {!POP_PHOTOS[p.unit]&&<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6}}>
-              {(oohPhotos[p.unit]||[]).length?<div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                  <div style={{fontSize:12,fontWeight:600,color:"#4AC8E8",textTransform:"uppercase"}}>📸 {(oohPhotos[p.unit]||[]).length} Photo{(oohPhotos[p.unit]||[]).length>1?"s":""}</div>
-                  <OohPhotoUpload id={p.unit}/>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:(oohPhotos[p.unit]||[]).length>1?"1fr 1fr":"1fr",gap:4}}>
-                  {(oohPhotos[p.unit]||[]).slice(0,4).map((ph,pi)=><img key={pi} src={ph.url} style={{width:"100%",height:80,objectFit:"cover",borderRadius:4,border:"1px solid #4a3565",cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();setModal({type:"oohPhoto",id:p.unit,photos:oohPhotos[p.unit],startIdx:pi})}}/>)}
-                </div>
-              </div>:<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:12,color:"#64748b"}}>No PoP photos</span>
-                <OohPhotoUpload id={p.unit}/>
-              </div>}
+              {allCardPhotos.length>4&&<div style={{fontSize:11,color:"#6B5E80",textAlign:"center",marginTop:2}}>+{allCardPhotos.length-4} more</div>}
+            </div>:<div style={{marginTop:6,borderTop:"1px solid #4a3565",paddingTop:6,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontSize:12,color:"#64748b"}}>No PoP photos</span>
+              <OohPhotoUpload id={p.unit}/>
             </div>}
             {(()=>{const dl=(p.isciList&&p.isciList.length)?p.isciList:(p.isci?[p.isci]:[]);const rot=plRotates(p);const has=dl.length>0;return <div style={{marginTop:6,padding:"4px 6px",borderRadius:4,background:has?"#1f3530":"#fffbeb",border:`1px solid ${has?"#bbf7d0":"#fde68a"}`}}>
               {plEditId===p.unit?
@@ -9376,6 +9377,7 @@ Rules:
           <Btn small onClick={()=>setViewMode("traffic")} primary={viewMode==="traffic"} color="#2FBF71">📡 Traffic</Btn>
           <Btn small onClick={()=>setViewMode("calendar")} primary={viewMode==="calendar"} color="#E85A7A">📅 Creative Calendar</Btn>
           <Btn small onClick={()=>setViewMode("contracts")} primary={viewMode==="contracts"} color="#D4A040">📑 Contracts</Btn>
+          <Btn small onClick={()=>setViewMode("pops")} primary={viewMode==="pops"} color="#4AC8E8">📸 PoPs</Btn>
         </div>
       </div>
       <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
@@ -9635,6 +9637,67 @@ Rules:
             })}
           </div>
           {filtered.length===0&&<div style={{textAlign:"center",padding:24,color:"#9B8EAD",fontSize:14}}>No upcoming creative deadlines{calMktF?" for "+calMktF:""}</div>}
+        </Cd>;
+       })():
+      viewMode==="pops"?(()=>{
+        // PROOF-OF-POSTING GALLERY — every L&R proof in one place, honoring the
+        // market/vendor filters above. Two kinds of proof live side by side:
+        // panel-level (the vendor named the exact face) and contract-level (the
+        // vendor deck only got as far as market + vendor).
+        const unitGroups=fl.map(p=>{
+          const _s=lrSeedPop(p.unit);
+          const seed=_s?[{url:_s,label:(typeof POP_TITLES!=='undefined'&&POP_TITLES[p.unit])||"PoP Photo",hardcoded:true}]:[];
+          const alts=lrSeedAlts(p.unit);
+          const photos=[...seed,...alts,...lrUnitPops(p.unit),...(oohPhotos[p.unit]||[])];
+          return photos.length?{key:p.unit,kind:"panel",vendor:p.vendor,market:p.market,title:p.unit,sub:p.location,meta:(p.media||"")+(p.size?" · "+p.size:""),photos}:null;
+        }).filter(Boolean);
+        // Contract proofs follow the same market/vendor filter as the boards.
+        const cPops=(typeof window!=="undefined"&&window.LR_CONTRACT_POPS)||{};
+        const contractGroups=Object.keys(cPops).map(k=>{
+          const c=oohContracts[k]||((typeof LR_CONTRACTS!=="undefined"&&LR_CONTRACTS[k])||null);if(!c)return null;
+          if(c.brand&&c.brand!=="Lerner & Rowe")return null;
+          const dma=(c.dmas&&c.dmas[0])||"";
+          if(mktF&&dma!==mktF)return null;
+          if(vendF&&c.vendor!==vendF)return null;
+          const photos=cPops[k]||[];
+          return photos.length?{key:k,kind:"contract",vendor:c.vendor||"",market:dma,title:c.num||k,sub:(mktNames[dma]||dma)+(c.subMarket?" · "+c.subMarket:""),meta:c.mediaType||"",photos}:null;
+        }).filter(Boolean);
+        const groups=[...unitGroups,...contractGroups];
+        const shots=groups.reduce((a,g)=>a+g.photos.length,0);
+        const vendors=[...new Set(groups.map(g=>g.vendor))].sort();
+        const scope=(mktF?(mktNames[mktF]||mktF):"all markets")+(vendF?" · "+vendF:"");
+        return<Cd style={{padding:12}}>
+          <div style={{fontSize:14,fontWeight:800,marginBottom:2}}>📸 Proof of Posting — Lerner &amp; Rowe</div>
+          <div style={{fontSize:13,color:"#9B8EAD",marginBottom:10}}>{shots} photo{shots!==1?"s":""} across {groups.length} board{groups.length!==1?"s":""} and contract{groups.length!==1?"s":""} — {scope}. Panel proofs name the exact face; contract proofs only got as far as market and vendor.</div>
+          {!groups.length?<div style={{textAlign:"center",padding:28,color:"#9B8EAD",fontSize:14}}>No proof-of-posting photos{mktF||vendF?" match this filter":" yet"}. Meg would like a word with the vendor.</div>:
+          vendors.map(v=>{
+            const gs=groups.filter(g=>g.vendor===v);
+            const n=gs.reduce((a,g)=>a+g.photos.length,0);
+            return<div key={v} style={{marginBottom:14}}>
+              <div style={{display:"flex",gap:7,alignItems:"baseline",marginBottom:6,borderBottom:"1px solid #4a3565",paddingBottom:4}}>
+                <span style={{fontSize:13,fontWeight:800,color:"#F0E8F8"}}>{v||"Unattributed"}</span>
+                <span style={{fontSize:12,color:"#9B8EAD"}}>{n} photo{n!==1?"s":""} · {gs.length} board{gs.length!==1?"s":""}</span>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))",gap:10}}>
+                {gs.map(g=><div key={g.kind+":"+g.key} style={{border:"1px solid #4a3565",borderRadius:9,overflow:"hidden",background:"#1e1233"}}>
+                  <img src={g.photos[0].url} title={g.photos[0].label||""} onClick={()=>setModal({type:"oohPhoto",id:g.key,photos:g.photos,startIdx:0})} style={{width:"100%",height:150,objectFit:"cover",cursor:"pointer",display:"block"}}/>
+                  {g.photos.length>1&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(44px,1fr))",gap:3,padding:"3px 6px 0"}}>
+                    {g.photos.slice(1,5).map((ph,pi)=><img key={pi} src={ph.url} title={ph.label||""} onClick={()=>setModal({type:"oohPhoto",id:g.key,photos:g.photos,startIdx:pi+1})} style={{width:"100%",height:36,objectFit:"cover",borderRadius:3,border:"1px solid #4a3565",cursor:"pointer"}}/>)}
+                  </div>}
+                  <div style={{padding:"6px 9px 9px"}}>
+                    <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap"}}>
+                      <span style={{fontSize:13,fontWeight:800,fontFamily:"monospace",color:"#F0E8F8"}}>{g.title}</span>
+                      <B l={g.market} c={mktColors[g.market]||"#64748b"}/>
+                      <span style={{fontSize:11,padding:"1px 5px",borderRadius:8,fontWeight:700,background:g.kind==="panel"?"#4AC8E822":"#D4A04022",color:g.kind==="panel"?"#4AC8E8":"#D4A040"}}>{g.kind==="panel"?"FACE":"CONTRACT"}</span>
+                      <span style={{fontSize:11,color:"#6B5E80"}}>{g.photos.length} 📸</span>
+                    </div>
+                    {g.meta&&<div style={{fontSize:12,color:"#C4A0C8",marginTop:2}}>{g.meta}</div>}
+                    {g.sub&&<div style={{fontSize:12,color:"#9B8EAD",marginTop:2}}>{g.sub}</div>}
+                  </div>
+                </div>)}
+              </div>
+            </div>;
+          })}
         </Cd>;
        })():
       viewMode==="contracts"?(()=>{
@@ -12817,6 +12880,7 @@ Rules:
         <p style={{fontSize:11,opacity:.75}}>The Living Record — 08/26/2026: full functional audit of every Mayhem workflow (intake, tickets, AP, reports, exports, library, calendar, sync, persistence). Repaired the intake create chain and estimate picker, unblocked Weekly Monday Note sends, restored the CSV book export, and merged the Aug 26 Quick Questions email — Catches dates confirmed (draft 9/9, social 9/8), Stuff the Sleigh added, 98.5 tailgate logged as talks-only, headshot Studio Time and Google-profile access loops opened.</p>
         <p style={{fontSize:11,opacity:.75}}>The Living Record — 08/26/2026 (later): market-true disclaimers — state-bar-bound language never suggests across state lines (Alabama radio language now withheld in Tennessee markets with an Ethics flag), Postman's per-state TV blocks split to the market, and operating markets with no library row flag loudly instead of running blind. The Doom creative bridge went real: Mayhem pulls Doom's live ISCI registry, and ticket emails to vendors embed the latest active creative with file links, copy-ready. Tracking honesty: a real server-side pixel checker at /api/check-landing-page, and no more "Synced" stamps before a sync. L&amp;R Media Partnership Events email merged (On Target Media contacts, calendar sheets, Jordan's master-calendar loop).</p>
         <p style={{fontSize:11,opacity:.75}}>The Living Record — 08/26/2026 (night): Notion became push AND pull — Pull from Notion diffs both databases against the book and surfaces every conflict for a decision, nothing overwrites itself. Contracts are read for real: attach a PDF (clean or scanned — pages go to the AI as images), the extraction previews with unconfirmed facts flagged, and one click fills intake. The deadline engine derives dates that carry their why (creative −11, vendor package −7, weekend rollback, wrap dates armed after the event), collisions flag when one owner has three due-backs in a week, and budget check-ins track monthly "is this still accurate." Spreadsheets import repeatably (clean, flag, skip-existing). The Merch Desk stands in for MerchHub — needs logged, ticketed to Jon P with creative looped for designs, inventory and send-outs tracked, statuses mirroring MerchHub's model for a clean migration.</p>
+        <p style={{fontSize:11,opacity:.75}}>The Living Record — 09/01/2026: View Chicago sent face-level proof of posting for Lerner &amp; Rowe — seven shots across six boards (2101 S Canal, 2332 W Roosevelt, 3950 S Western, 4590 W Madison, 4640, 5646 W North), now living on their own board cards in the L&amp;R OOH Hub instead of a folder. Getting them in turned up a real one: Postman Law buys the same View Chicago faces, and the shared PoP photo map is keyed by unit number alone — so every proof the L&amp;R Hub was showing from it was actually a Postman board, fourteen of the fifteen titled "Call Postman." The L&amp;R Hub now ignores that shared map for any face another brand also buys, and the new photos live in their own map so the mix-up can't happen in reverse. New 📸 PoPs tab in the L&amp;R Hub gathers every proof in one place — face-level and contract-level side by side, grouped by vendor and obeying the market and vendor filters. Board cards now show every photo they have, not just the first one.</p>
         <BookMarginNote author="meg">Two kingdoms, one login. Try to keep up.</BookMarginNote>
       </div>},
     ];
