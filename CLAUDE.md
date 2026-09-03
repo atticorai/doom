@@ -104,7 +104,7 @@ Heading text:   #F0E8F8 (warm white)
 8. **Ownership group sends** — never send individual emails per station
 9. **HTML loader stays visible** until React's `dbLoaded` is true (React returns null while loading)
 10. **Loader animations CSS in `<head>`** — not inside `#R` where React would destroy them
-11. **Log every change** — any change to Doom gets a `DOOM_CHANGELOG` entry (in app.js, rendered live on the Guide page): `{d:"MM/DD/YYYY", t:"short title", x:"plain-language explanation"}`, newest first. The Guide is a live document — keep the brand/market/prefix data and changelog current with every change.
+11. **Log every change** — `DOOM_CHANGELOG` is retired (empty array). Every change to Doom gets a "The Living Record — MM/DD/YYYY: …" paragraph appended to the end of `BOOK_PAGES_3` in app.js (the Guide book, oldest first, `&amp;` for ampersands). The Guide is a live document — keep the brand/market/prefix data and the record current with every change.
 
 ## Outstanding Work
 - Pegasus SVG character for empty states, transitions, Help page
@@ -114,6 +114,39 @@ Heading text:   #F0E8F8 (warm white)
 - Deeper atmospheric design (card hover glows, breathing effects)
 - OOH Hub feature parity with removed pages
 - Olympus light mode needs tuning for new palette
+
+## The Buy Abyss (Lerner & Rowe media buying, 2027)
+A media buying system inside Doom: Overview → Research → Buy intake & check → Plan → Approve → Order & confirm → Schedules & revisions · Buy grid · Sponsorships · Reconcile & track · Reports. The prototype (`TheBuyAbyss.html` + `app.py`, kept outside this repo) is the behavioral spec: its calculations (`dpBucket`, `lineKey`, `mult`/BE15, `dpStats`, `planTotals`, `snapshotPlan`, `intakeChecks`, `qaChecks`, `stageOf`, `renderSchedules`, `docOrder`, `docChange`, `docGuidelines`, `docAvail`, `mediumOf`, `stationsFrom`, `OWN`/`OWN_RADIO`) are ported, never redesigned. If the prototype looks wrong, ask — don't fix silently. Do not rename its things.
+
+### Three states, one direction
+```
+Working Plan  (ba_working_plan, mutable, one per market/year)
+   │  ba_approve_plan()  — the ONLY writer of ba_approved_plan
+   ▼
+Approved Snapshot  (ba_approved_plan, insert-only JSON, one row per version, approved_plan_id = uuid)
+   │  station confirmation → ba_order_document; ba_apply_confirmation() — the ONLY writer of ba_schedule_of_record
+   ▼
+Schedule of Record  (ba_schedule_of_record, one current row per station, superseded never edited)
+```
+Invariants are enforced in Postgres (triggers + a transaction-local `ba.context` flag), not in the UI:
+1. Nothing writes to `ba_approved_plan` except approval. Rows can never be updated or deleted. Re-approval inserts v(n+1); v1 stays byte-identical.
+2. Accepting a confirmation changes the schedule of record and variance only. Any write to `ba_working_plan` inside that transaction is refused.
+3. Every downstream artifact (order document, revision, guidelines envelope, package, schedule-of-record row) carries `approved_plan_id`. A confirmation states which approved version it confirmed. Revisions reference the approved version they depart from AND the confirmation they modify, and link the re-confirmation.
+
+### Files
+- `supabase/buy_abyss.sql` — all `ba_*` tables, guards, `ba_approve_plan()`, `ba_apply_confirmation()`, `ba_variance`, seed for the 11 L&R 2027 market/years. Idempotent; run after `schema.sql`.
+- `scripts/buy-abyss-invariants.sql` — 12 acceptance checks on a live database (`psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f …`). Runs in one transaction and rolls back.
+- `api/buy-abyss.js` — the only door: whitelisted actions, identity from the `dd_session` cookie, approve/apply via the SQL functions. Listed in `middleware.js`.
+- `scripts/buy-abyss-import.js` + `scripts/buy-abyss-adapters/` — Phase 1 acceptance requirement: source workbook → normalized `ba_history_2026` rows → totals footed back to the source by market, medium, station/vendor, month, annual, booked vs actual. Raw source preserved in `ba_import_batch.raw`. `--self-test` proves it catches a $100 difference.
+
+### Rules that must survive
+- Finance sets the budget; Jessica enters it (`ba_budget.set_by` / `entered_by`). Budget grain (market-only, market × medium, or market total with allocations) is Finance's call — `ba_budget.media` NULL = market total, set = allocation, so all three fit. Plan starts at zero. 2026 (OTM) is `ba_history_2026`, labeled history, never a target.
+- Each bookend end is a spot (BE15) at half the pair rate. Paid vs bonus separated; rotators out of daypart %. Net CPM under $5 is a guardrail, not a KPI. Impressions come from a secondary source.
+- QA gate at approval (in `ba_approve_plan`): approver, demo, posting, an estimate per media in the plan, budget present, not over budget without a Finance override.
+- Plan-line contract for the JSON snapshot: each `plan.lines[]` element carries `station`, `media`, `gross`, `net` so the database can total by station/media. The prototype's arithmetic produces those numbers; the app writes them onto the line.
+- Statuses for Guidelines / order / confirmation live on the vendor group (one envelope per vendor group); invoices and posts live on the station. Notes are typed (`entity_type`, `entity_id`).
+- Integrations, and only these, all downstream of the approved snapshot: DocuSign, email (orders + change orders — build with DocuSign, "Send Orders" is one transaction), SharePoint filing, Claude web search for research/owner lookup. Sigma is a CSV export. RecNorm and Sigma never write to the plan.
+- One order reader (WideOrbit) until the historical schedules show which other document formats actually exist — inventory formats, not stations.
 
 ## Traffic Tracker
 New page (📡 in nav). Mission control + grid showing traffic status per market × buy type for the current month. Auto-populated from traffic history. Color-coded: green=sent, gold=built, rose=partial, dark=empty. Handles combined estimates and multi-market records. Meg commentary based on completion percentage.

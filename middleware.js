@@ -79,7 +79,8 @@ export default async function middleware(request) {
     pathname === '/api/db-inspect' ||
     pathname === '/api/legacy-assets-export' ||
     pathname === '/api/migrate-snapshot' ||
-    pathname === '/api/storage';
+    pathname === '/api/storage' ||
+    pathname === '/api/buy-abyss';
 
   if (isProtected) {
     const cookie = request.headers.get('cookie') || '';
