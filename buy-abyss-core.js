@@ -200,5 +200,33 @@ function bind(X) {
   return { GF, GN, stn, ownOf, groupsOf, marketView, GL, ESTS, assignEst, estNo, ordersFor, recordFor, recordNet, histFor, addRev, dpStats, initPlan, draftWeeks, flightOf, snapshotPlan, APPROVED, FLIGHTV, PLANV, planTotals, approve, intakeChecks, qaChecks, spotsByWeek, grpOf, dsOf, mergeSchedule, scheduleHistory, docAvail, docGuidelines, docOrder, docChange, stageOf, gridRows, finMonthly, cacMonthly, cacRows, medOf, paceRows, base26Rows, ownerBars, trackRows, isPkgStation };
 }
 
-return { CLIENT, YEAR, START, COMM, MONTHS, DP_TV, DP_RD, DP_ONE, DPS, MEDIA, CODE, OWN, OWN_RADIO, EST_TYPES, EST_SEQ_START, WEEKS, N, WMO, BANDS, sum, fmt, fmt2, callOf, stKey, isCall, ownerOfCall, mediumOf, stationsFrom, buildMarkets, emptyPlanRow, GL_DEFAULT, colSpec, lenOf, mult, dpBucket, isRT, lineKey, weeksNet, rollForward, estGrid, bind };
+/* ================= rows ↔ the prototype's M ================= */
+// Shared by api/buy-abyss.js (server) and abyss.html (browser) so both
+// hydrate a market identically from the same rows.
+const rows = {
+  // ba_order_document row → M.orders[i]
+  orderOf(r) { return { id: r.id, order: r.order_no, station: r.station_key, desc: r.description, flight: r.flight, file: r.file_name, metric: r.metric || 'Rtg',
+    gross: Number(r.printed_gross || 0), net: Number(r.printed_net || 0), lines: r.parsed_lines || [], demo: r.demo || undefined, ae: r.ae || undefined, rev: r.rev || undefined,
+    status: r.status === 'superseded' ? 'superseded' : r.kind === 'draft' ? 'draft' : (r.status === 'applied' ? 'applied' : 'new'),
+    kind: r.kind, doc_status: r.status, foot_ok: r.foot_ok, foot_checks: r.foot_checks || null, approved_plan_id: r.approved_plan_id, applied_at: r.applied_at, applied_by: r.applied_by, revision_id: r.revision_id, created_at: r.created_at }; },
+  // ba_station rows → M.stations
+  stationsOf(list) { const st = {}; (list || []).forEach(s => { st[s.call_sign] = { aff: s.aff || s.media, own: s.owner || '', medium: s.media, pkg: !!s.pkg, vendor: !!s.vendor, cable: !!s.cable, booked26: s.booked26 ? s.booked26.map(Number) : undefined, actual26: s.actual26 ? s.actual26.map(Number) : undefined, added: !!s.added, id: s.id, on_buy: s.on_buy !== false }; }); return st; },
+  // ba_estimate rows → M.estimates (per medium, EST_TYPES order)
+  estimatesOf(list) { const out = {}; (list || []).forEach(e => { (out[e.media] = out[e.media] || []).push({ type: e.type, covers: e.covers, no: e.no || '', active: !!e.active, medium: e.media, id: e.id }); }); Object.keys(out).forEach(k => out[k].sort((a, b) => EST_TYPES.findIndex(t => t[0] === a.type) - EST_TYPES.findIndex(t => t[0] === b.type))); return out; },
+  // the load payload → M (the prototype's market object)
+  marketOf(L) { const my = L.market_year, wp = L.working_plan || {}, st = (L.state && L.state.state) || {}; const budget = ((L.budgets || []).find(b => b.media === null && !b.superseded_at) || {}).amount;
+    const stations = rows.stationsOf(L.stations); const cnt = x => Object.values(stations).filter(y => y.medium === x).length; const bk = Object.values(stations).reduce((a, x) => a + sum((x.booked26 || []).slice(0, 8)), 0);
+    return { id: my.id, market: my.market, code: my.code, buyer: my.buyer, dma: my.dma, medium: MEDIA.filter(x => cnt(x)).join(" + ") || "Outdoor / digital only", base26: bk / 8 * 12,
+      stations, plan: wp.plan || {}, budget: budget ? Number(budget) : 0, demo: wp.demo || 'A25-54', goal: wp.goal || { cpm: 5, pts: 0 }, cac: wp.cac || { leads: '', cases: '' }, gl: wp.gl || null, reps: wp.reps || {},
+      approver: wp.approver || null, approveInc: wp.approve_inc || {}, overBudgetOk: !!wp.over_budget_ok, estimates: rows.estimatesOf(L.estimates), orders: (L.order_documents || []).map(o => o.parsed_lines !== undefined ? rows.orderOf(o) : o).filter(o => o.status !== 'superseded'),   // raw rows vs already-shaped; a superseded document (a draft the station confirmed, an earlier confirmation) leaves the prototype's list — it stays in ba_order_document and in ordersArchive
+      ordersArchive: (L.order_documents || []).map(o => o.parsed_lines !== undefined ? rows.orderOf(o) : o).filter(o => o.status === 'superseded'),
+      approvals: (L.versions || []).slice().reverse().map(v => ({ v: v.version, by: v.approver, date: v.approved_at, net: Number(v.plan_total_net || 0) })),
+      approved: !!L.current, approvedPlan: L.current ? L.current.snapshot : null, approvedId: L.current ? L.current.id : null, versions: L.versions || [], schedule_of_record: L.schedule_of_record || [], variance: L.variance || [],
+      status: L.current ? `Approved · plan v${L.current.version} locked` : (Object.keys(stations).length ? 'Planning' : 'No broadcast in 2026'),
+      rev: st.rev || [], mg: st.mg || [], spons: st.spons || [], ovr: st.ovr || {}, ovrRate: st.ovrRate || {}, hiatus: st.hiatus || {}, notes: st.notes || {}, meta: st.meta || {}, av: st.av || {}, ds: st.ds || {}, proposals: st.proposals || [], pkgs: st.pkgs || {}, research: st.research || null, rows26: L.rows26 || [] }; },
+  // M → the ba_market_state document
+  stateOf(M) { return { ovr: M.ovr || {}, ovrRate: M.ovrRate || {}, hiatus: M.hiatus || {}, notes: M.notes || {}, av: M.av || {}, meta: M.meta || {}, rev: M.rev || [], mg: M.mg || [], spons: M.spons || [], ds: M.ds || {}, pkgs: M.pkgs || {}, proposals: M.proposals || [], research: M.research || null }; },
+};
+
+return { CLIENT, YEAR, START, COMM, MONTHS, DP_TV, DP_RD, DP_ONE, DPS, MEDIA, CODE, OWN, OWN_RADIO, EST_TYPES, EST_SEQ_START, WEEKS, N, WMO, BANDS, sum, fmt, fmt2, callOf, stKey, isCall, ownerOfCall, mediumOf, stationsFrom, buildMarkets, emptyPlanRow, GL_DEFAULT, colSpec, lenOf, mult, dpBucket, isRT, lineKey, weeksNet, rollForward, estGrid, bind, rows };
 });

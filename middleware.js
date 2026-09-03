@@ -70,6 +70,7 @@ export default async function middleware(request) {
   const isProtected =
     (pathname.endsWith('.js') && !pathname.startsWith('/api/')) ||
     pathname === '/mayhem.html' ||
+    pathname === '/abyss.html' ||
     pathname === '/api/config' ||
     pathname === '/api/planner' ||
     pathname === '/api/send-traffic' ||

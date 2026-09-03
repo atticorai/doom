@@ -328,7 +328,7 @@ create table if not exists ba_order_document (
   metric              text check (metric is null or metric in ('Rtg','Imp')),
   demo                text,
   ae                  text,
-  rev                 int,
+  rev                 text,                        -- the station's revision stamp as printed ("12/23/25 / 12/23/25")
   status              text not null default 'received'
                       check (status in ('generated','sent','received','parsed','foot_failed','footed','applied','superseded','rejected')),
   reader              text,                      -- 'wideorbit-v1' — which reader parsed it
@@ -353,12 +353,17 @@ create table if not exists ba_order_document (
   ),
   constraint ba_order_document_draft_chk check (kind <> 'draft' or status in ('generated','received','parsed','superseded')),
   constraint ba_order_document_plan_chk check (
-    kind in ('invoice','post') or approved_plan_id is not null
+    kind in ('draft','invoice','post') or approved_plan_id is not null   -- drafts arrive before approval
   )
 );
 create index if not exists ba_order_document_my_idx on ba_order_document (market_year_id, kind, status);
 create index if not exists ba_order_document_station_idx on ba_order_document (station_id);
 create index if not exists ba_order_document_plan_idx on ba_order_document (approved_plan_id);
+
+-- (re-runs on a database created before drafts were exempted)
+alter table ba_order_document
+  drop constraint if exists ba_order_document_plan_chk,
+  add constraint ba_order_document_plan_chk check (kind in ('draft','invoice','post') or approved_plan_id is not null);
 
 alter table ba_rate_history
   drop constraint if exists ba_rate_history_order_fk,
@@ -837,18 +842,18 @@ left join ba_order_document od on od.id = sor.order_document_id;
 -- The prototype's ten markets in its order, with its document codes
 -- (the DMA stays Doom's). King/Bull is not in the 2026 sheet and so has
 -- nothing to buy; it is not seeded here.
-insert into ba_market_year (brand, market, dma, code, year, buyer) values
-  ('Lerner & Rowe', 'Phoenix',     'PHX', 'LR-PHX', 2027, 'Ken / Lynn'),
-  ('Lerner & Rowe', 'Flagstaff',   'FLG', 'LR-FLG', 2027, 'Ken / Lynn'),
-  ('Lerner & Rowe', 'Bullhead',    'BHD', 'LR-BHC', 2027, 'Ken / Lynn'),
-  ('Lerner & Rowe', 'Chicago',     'CHI', 'LR-CHI', 2027, 'Jessica Flynn'),
-  ('Lerner & Rowe', 'Tucson',      'TUC', 'LR-TUS', 2027, 'Ken / Lynn'),
-  ('Lerner & Rowe', 'Las Vegas',   'LVS', 'LR-LAS', 2027, 'Ken / Lynn'),
-  ('Lerner & Rowe', 'Albuquerque', 'ABQ', 'LR-ABQ', 2027, 'Ken / Lynn'),
-  ('Lerner & Rowe', 'Reno',        'RNO', 'LR-RNO', 2027, 'Ken / Lynn'),
-  ('Lerner & Rowe', 'Yuma',        'YMA', 'LR-YUM', 2027, 'Ken / Lynn'),
-  ('Lerner & Rowe', 'Seattle',     'SEA', 'LR-SEA', 2027, 'Ken / Lynn')
-on conflict (brand, market, year) do update set code = excluded.code;
+insert into ba_market_year (brand, market, dma, code, year, buyer, sort_order) values
+  ('Lerner & Rowe', 'Phoenix', 'PHX', 'LR-PHX', 2027, 'Ken / Lynn', 10),
+  ('Lerner & Rowe', 'Flagstaff', 'FLG', 'LR-FLG', 2027, 'Ken / Lynn', 20),
+  ('Lerner & Rowe', 'Bullhead', 'BHD', 'LR-BHC', 2027, 'Ken / Lynn', 30),
+  ('Lerner & Rowe', 'Chicago', 'CHI', 'LR-CHI', 2027, 'Jessica Flynn', 40),
+  ('Lerner & Rowe', 'Tucson', 'TUC', 'LR-TUS', 2027, 'Ken / Lynn', 50),
+  ('Lerner & Rowe', 'Las Vegas', 'LVS', 'LR-LAS', 2027, 'Ken / Lynn', 60),
+  ('Lerner & Rowe', 'Albuquerque', 'ABQ', 'LR-ABQ', 2027, 'Ken / Lynn', 70),
+  ('Lerner & Rowe', 'Reno', 'RNO', 'LR-RNO', 2027, 'Ken / Lynn', 80),
+  ('Lerner & Rowe', 'Yuma', 'YMA', 'LR-YUM', 2027, 'Ken / Lynn', 90),
+  ('Lerner & Rowe', 'Seattle', 'SEA', 'LR-SEA', 2027, 'Ken / Lynn', 100)
+on conflict (brand, market, year) do update set code = excluded.code, sort_order = excluded.sort_order;
 
 -- Every market/year gets an empty working plan: the plan starts at zero.
 insert into ba_working_plan (market_year_id)

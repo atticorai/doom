@@ -24,6 +24,8 @@
     { "source": "/index.html", "headers": [{ "key": "Cache-Control", "value": "no-store, must-revalidate" }] },
     { "source": "/app.js", "headers": [{ "key": "Cache-Control", "value": "no-store, must-revalidate" }] },
     { "source": "/mayhem.html", "headers": [{ "key": "Cache-Control", "value": "no-store, must-revalidate" }] },
+    { "source": "/abyss.html", "headers": [{ "key": "Cache-Control", "value": "no-store, must-revalidate" }] },
+    { "source": "/buy-abyss-core.js", "headers": [{ "key": "Cache-Control", "value": "no-store, must-revalidate" }] },
     { "source": "/config.js", "headers": [{ "key": "Cache-Control", "value": "no-store, must-revalidate" }] },
     { "source": "/library-ui.js", "headers": [{ "key": "Cache-Control", "value": "no-store, must-revalidate" }] },
     { "source": "/library-ui.css", "headers": [{ "key": "Cache-Control", "value": "no-store, must-revalidate" }] },

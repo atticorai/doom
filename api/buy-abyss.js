@@ -29,6 +29,8 @@
 //   applyConfirmation {order_document_id}      → ba_apply_confirmation()
 //   issueChangeOrder {market_year_id, station_key, order_document_id, rev_number, changes}
 //   addNote {entity_type, entity_id, text}
+//   research {market, medium}                 Claude + web search, server-side key (prototype RS_SYSTEM prompt)
+//   lookupOwners {market, stations[]}          Claude + web search: selling group per call letters
 // ═══════════════════════════════════════════════════════════════════
 
 const { getSupabase } = require('./_supabase');
@@ -67,18 +69,7 @@ function sqlStatus(e) {
   return 500;
 }
 
-// ── row ↔ prototype shape ──────────────────────────────────────────
-// ba_order_document row → the prototype's order object (M.orders[i])
-function orderOf(r) {
-  return { id: r.id, order: r.order_no, station: r.station_key, desc: r.description, flight: r.flight, file: r.file_name, metric: r.metric || 'Rtg',
-    gross: Number(r.printed_gross || 0), net: Number(r.printed_net || 0), lines: r.parsed_lines || [], demo: r.demo || undefined, ae: r.ae || undefined, rev: r.rev || undefined,
-    status: r.kind === 'draft' ? 'draft' : (r.status === 'applied' ? 'applied' : r.status === 'superseded' ? 'superseded' : 'new'),
-    kind: r.kind, doc_status: r.status, foot_ok: r.foot_ok, approved_plan_id: r.approved_plan_id, applied_at: r.applied_at, applied_by: r.applied_by, revision_id: r.revision_id };
-}
-// ba_station rows → M.stations
-function stationsOf(rows) { const st = {}; rows.forEach(s => { st[s.call_sign] = { aff: s.aff || s.media, own: s.owner || '', medium: s.media, pkg: !!s.pkg, vendor: !!s.vendor, cable: !!s.cable, booked26: s.booked26 ? s.booked26.map(Number) : undefined, actual26: s.actual26 ? s.actual26.map(Number) : undefined, added: !!s.added, id: s.id, on_buy: s.on_buy }; }); return st; }
-// ba_estimate rows → M.estimates (per medium, in EST_TYPES order)
-function estimatesOf(rows) { const out = {}; rows.forEach(e => { (out[e.media] = out[e.media] || []).push({ type: e.type, covers: e.covers, no: e.no || '', active: !!e.active, medium: e.media, id: e.id }); }); Object.keys(out).forEach(k => out[k].sort((a, b) => core.EST_TYPES.findIndex(t => t[0] === a.type) - core.EST_TYPES.findIndex(t => t[0] === b.type))); return out; }
+const { orderOf, stationsOf, estimatesOf } = core.rows;
 
 // Footing — what read_lines.py proves on upload: every line to its
 // printed amount, the order to its printed gross and net (15%).
@@ -87,6 +78,18 @@ function footOrder(o) {
   const lg = lines.reduce((a, l) => a + l.printed_gross, 0);
   const order_ok = Math.abs(lg - Number(o.gross || 0)) <= 0.005 && Math.abs(Number(o.gross || 0) * (1 - core.COMM) - Number(o.net || 0)) <= 0.01;
   return { lines_ok: lines.every(l => l.ok), order_ok, lines_gross: Math.round(lg * 100) / 100, printed_gross: Number(o.gross || 0), printed_net: Number(o.net || 0), commission: core.COMM, lines: lines.filter(l => !l.ok) };
+}
+
+// Claude Messages API with the web_search tool. ANTHROPIC_API_KEY lives in
+// Vercel env only (same as api/planner.js).
+async function claude(system, user, max_tokens) {
+  const key = (process.env.ANTHROPIC_API_KEY || '').trim();
+  if (!key) throw new Bad('Research needs ANTHROPIC_API_KEY on the server', 503);
+  const r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: 'claude-sonnet-5', max_tokens: max_tokens || 1000, system, tools: [{ type: 'web_search_20250305', name: 'web_search' }], messages: [{ role: 'user', content: user }] }) });
+  const data = await r.json();
+  if (data.error) throw new Bad('Research service: ' + (data.error.message || 'API error'), 502);
+  return (data.content || []).filter(x => x.type === 'text').map(x => x.text).join('\n');
 }
 
 async function loadMarket(sb, id) {
@@ -109,16 +112,7 @@ async function loadMarket(sb, id) {
   return { market_year, budgets, stations, estimates, working_plan, state, versions, current, order_documents, schedule_of_record, revisions, packages, variance };
 }
 
-// Assemble the prototype's M for a market from rows (the server-side twin
-// of what abyss.html does), for snapshotPlan at approval time.
-function marketOf(L) {
-  const my = L.market_year, wp = L.working_plan || {}, st = L.state ? L.state.state : {};
-  const budget = ((L.budgets || []).find(b => b.media === null && !b.superseded_at) || {}).amount;
-  return { id: my.id, market: my.market, code: my.code, buyer: my.buyer, stations: stationsOf(L.stations), plan: wp.plan || {}, budget: budget ? Number(budget) : 0, demo: wp.demo || 'A25-54',
-    goal: wp.goal || { cpm: 5, pts: 0 }, cac: wp.cac || { leads: '', cases: '' }, gl: wp.gl || null, reps: wp.reps || {}, approver: wp.approver || null, approveInc: wp.approve_inc || {}, overBudgetOk: !!wp.over_budget_ok,
-    estimates: estimatesOf(L.estimates || []), orders: (L.order_documents || []).map(orderOf), approvals: (L.versions || []).slice().reverse().map(v => ({ v: v.version, by: v.approver, date: v.approved_at, net: Number(v.plan_total_net || 0) })),
-    approved: !!L.current, approvedPlan: L.current ? L.current.snapshot : null, rev: st.rev || [], mg: st.mg || [], spons: st.spons || [], ovr: st.ovr || {}, ovrRate: st.ovrRate || {}, hiatus: st.hiatus || {}, notes: st.notes || {}, meta: st.meta || {}, av: st.av || {}, ds: st.ds || {}, proposals: st.proposals || [], pkgs: {} };
-}
+const marketOf = core.rows.marketOf;
 
 const handlers = {
   async overview(sb) {
@@ -268,7 +262,7 @@ const handlers = {
     const st = await q(sb.from('ba_station').select('id, vendor_group_id').eq('market_year_id', id).eq('call_sign', key).maybeSingle());
     const row = { market_year_id: id, approved_plan_id, station_id: st ? st.id : null, station_key: key, vendor_group_id: st ? st.vendor_group_id : null, kind,
       status: kind === 'draft' ? 'received' : (foot.lines_ok && foot.order_ok ? 'footed' : 'foot_failed'), reader: str(b.reader, 40) || (kind === 'confirmation' ? 'lines-v1' : null),
-      order_no: str(b.order, 60), description: str(b.desc, 200), flight: str(b.flight, 80), metric: b.metric === 'Imp' ? 'Imp' : 'Rtg', demo: str(b.demo, 40), ae: str(b.ae, 120), rev: num(b.rev, 'rev'),
+      order_no: str(b.order, 60), description: str(b.desc, 200), flight: str(b.flight, 80), metric: b.metric === 'Imp' ? 'Imp' : 'Rtg', demo: str(b.demo, 40), ae: str(b.ae, 120), rev: str(b.rev, 60),
       file_name: str(b.file, 300), file_url: str(b.file_url, 2000), file_sha256: str(b.file_sha256, 64), printed_gross: o.gross, printed_net: o.net, parsed_lines: lines,
       foot_checks: foot, foot_ok: foot ? (foot.lines_ok && foot.order_ok) : null, parsed_at: new Date().toISOString(), created_by: who };
     const saved = await q(sb.from('ba_order_document').insert(row).select().single());
@@ -319,6 +313,23 @@ const handlers = {
     const co = await q(sb.from('ba_order_document').insert({ market_year_id: id, approved_plan_id: cur.id, station_id: st.id, station_key: key, kind: 'change_order', status: 'generated', order_no: 'CO-' + rev_number, description: 'Change order · Rev ' + rev_number, created_by: who }).select().single());
     const row = await q(sb.from('ba_revision').insert({ market_year_id: id, approved_plan_id: cur.id, station_id: st.id, order_document_id: od, rev_number, kind: 'change_order', changes, status: 'issued', change_order_document_id: co.id, logged_by: who, issued_at: new Date().toISOString(), issued_by: who }).select().single());
     return { revision: row, change_order: orderOf(co) };
+  },
+
+
+  // ── Claude with web search, server-side key (the prototype called the
+  // API from the browser with a pasted key; Doom never ships the key).
+  async research(sb, b) {
+    const market = need(str(b.market, 80), 'market'); const medium = str(b.medium, 80) || 'TV';
+    const RS_SYSTEM = `You are a media buying researcher for a US ad agency that buys local TV and radio for personal-injury law firms. Research the market with web search and return ONLY a JSON object: {"date":"","ranker":"one sentence on TV/radio rankers; note if Cumulus is absent","tv":[["owner","call letters (affiliate) · sisters","sales note: sold together, SSA/LMA, affiliation changes"]],"spanish":[["owner","stations","note"]],"radio":[["cluster owner","call letters (format) …","note"]],"sports":[["property","outlet","note"]],"reps":[["name","office / firm"]],"sources":[["title","url"]]}. Group by the company that SELLS the stations. Include every full-power commercial English and Spanish TV station. Radio clusters by owner. Say "unverified" rather than guess.`;
+    const text = await claude(RS_SYSTEM, `Research the ${market} market for ${medium}. Client: ${core.CLIENT} (personal injury). JSON only.`, 1000);
+    const clean = text.replace(/```json|```/g, ''); const j = JSON.parse(clean.slice(clean.indexOf('{'), clean.lastIndexOf('}') + 1));
+    return { research: { date: j.date || new Date().toDateString(), ranker: j.ranker || '', tv: j.tv || [], spanish: j.spanish || [], radio: j.radio || [], sports: j.sports || [], reps: j.reps || [], sources: j.sources || [] } };
+  },
+  async lookupOwners(sb, b) {
+    const market = need(str(b.market, 80), 'market'); const stations = json(b.stations, 'stations'); if (!Array.isArray(stations) || !stations.length) throw new Bad('stations must be a non-empty array');
+    const text = await claude('You identify the company that owns or operates (SSA/LMA) US broadcast stations, using web search. Return ONLY a JSON object mapping call letters to the selling group name. Short group names. If unsure, "unverified".', `Market: ${market}. Stations: ${stations.slice(0, 60).join(', ')}. JSON only.`, 800);
+    const j = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
+    return { owners: j };
   },
 
   async addNote(sb, b, who) {
