@@ -34,17 +34,16 @@
 -- full names Doom uses everywhere (CLAUDE.md rule 7); the DMA code is an
 -- attribute for joins to the ISCI side.
 --
--- Plan line contract (what the JSON snapshot expects per line, so the
--- database can compute station/media totals without knowing the
--- prototype's arithmetic): every element of plan.lines[] carries
---   station  text     call sign, matches ba_station.call_sign
---   media    text     TV | Cable | Radio | Streaming Audio | Digital Video
---   gross    numeric  line total over its flight, before agency net
---   net      numeric  line total over its flight, net
--- The prototype's own functions (planTotals, dpStats, mult/BE15, …)
--- remain the source of those numbers; the app writes them onto the
--- line when it saves the working plan. If the prototype's field names
--- differ when it is ported, rename HERE — do not rename the prototype.
+-- Plan shape (the prototype's, unchanged): ba_working_plan.plan is
+--   { "<station key>": { "$": [9], "pts": [9], "imp": [9], "imp$": [9] } }
+-- one row per station, nine daypart buckets (dpBucket), net dollars in
+-- "$". The station key is the prototype's station name ("WBBM",
+-- "CHSN - White Sox TV", "Comcast") and matches ba_station.call_sign.
+-- The snapshot is built by buy-abyss-core.js snapshotPlan() (plan +
+-- flight + budget + demo + goal + estimates + stations) and handed to
+-- ba_approve_plan(), which runs the QA gate, assigns the version,
+-- fingerprints it and inserts it. The database totals by station from
+-- "$" and by medium through ba_station.media.
 -- ════════════════════════════════════════════════════════════════════
 
 create extension if not exists "uuid-ossp";
@@ -57,9 +56,11 @@ create table if not exists ba_market_year (
   market        text not null,                  -- 'Chicago'
   dma           text not null,                  -- 'CHI'
   year          int  not null,                  -- 2027
+  sort_order    int  not null default 0,
+  code          text,                          -- prototype doc ref, e.g. 'LR-CHI' (not the DMA)
   status        text not null default 'planning'
                 check (status in ('planning','approved','ordering','live','closed')),
-  buyer         text,                           -- 'Lynn Cortelezzi' / 'Ken Lazar'
+  buyer         text,                           -- 'Jessica Flynn' / 'Ken / Lynn'
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now(),
   unique (brand, market, year)
@@ -110,25 +111,36 @@ create table if not exists ba_vendor_group (
 );
 
 -- ── Stations ────────────────────────────────────────────────────────
+-- One row per line on the buy, keyed by the prototype's station name
+-- (call_sign holds "WBBM", "WLS-FM", "CHSN - White Sox TV", "Comcast").
+-- aff / own / medium / pkg / vendor / cable / booked26 / actual26 are
+-- exactly stationsFrom()'s fields; `added` marks a station research
+-- put on the buy.
 create table if not exists ba_station (
   id               uuid primary key default uuid_generate_v4(),
   market_year_id   uuid not null references ba_market_year(id) on delete cascade,
   vendor_group_id  uuid references ba_vendor_group(id) on delete set null,
-  call_sign        text not null,                -- 'WBBM-TV', 'WLS-FM'
+  call_sign        text not null,                -- prototype station key
   media            text not null
                    check (media in ('TV','Cable','Radio','Streaming Audio','Digital Video')),
-  owner            text,                         -- resolved owner name
-  owner_source     text                          -- 'OWN' | 'OWN_RADIO' | 'web' | 'manual'
+  aff              text,                         -- 'TV', 'sports / event package', …
+  owner            text,                         -- selling group; '' = unassigned
+  owner_source     text
                    check (owner_source is null or owner_source in ('OWN','OWN_RADIO','web','manual')),
-  on_buy           boolean not null default false,-- research finds stations NOT on the buy
-  on_avail_request boolean not null default false,-- adding one puts it on the avail request
+  pkg              boolean not null default false,
+  vendor           boolean not null default false,
+  cable            boolean not null default false,
+  booked26         numeric[] ,                   -- 12 months, from the 2026 sheet
+  actual26         numeric[] ,
+  added            boolean not null default false,-- added from Research (not on the 2026 buy)
+  on_buy           boolean not null default true,
+  on_avail_request boolean not null default false,
   added_from       text not null default 'history'
                    check (added_from in ('history','research','manual')),
-  format           text,                         -- radio format / network affiliation
   notes            text,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now(),
-  unique (market_year_id, call_sign, media)
+  unique (market_year_id, call_sign)
 );
 create index if not exists ba_station_vendor_idx on ba_station (vendor_group_id);
 
@@ -163,8 +175,9 @@ create table if not exists ba_history_2026 (
   import_batch_id  uuid not null references ba_import_batch(id) on delete cascade,
   brand            text not null default 'Lerner & Rowe',
   market           text not null,
-  media            text not null,
-  station          text,                         -- call sign or vendor name
+  section          text not null,                -- the sheet's section: 'Television', 'Radio', 'Outdoor Media', 'OTHER', 'Phoenix Radio'…
+  media            text,                         -- mediumOf(station, section); null for Outdoor / OTHER
+  station          text not null,                -- station or vendor name as written in the sheet
   vendor           text,
   year             int  not null default 2026,
   month            int  not null check (month between 1 and 12),
@@ -203,23 +216,45 @@ create table if not exists ba_rate_history (
 create index if not exists ba_rate_history_station_idx on ba_rate_history (market, station, year);
 
 -- ── Working plan (mutable) ──────────────────────────────────────────
--- Plan starts at zero. One working plan per market/year; edits log
--- was/now so the road to approval is auditable. Once v1 exists,
--- base_approved_plan_id says which approved version this working copy
--- departs from.
+-- Plan starts at zero. One working plan per market/year holding the
+-- prototype's editable market fields; edits log was/now. Once v1
+-- exists, base_approved_plan_id says which version this departs from.
 create table if not exists ba_working_plan (
   id                    uuid primary key default uuid_generate_v4(),
   market_year_id        uuid not null unique references ba_market_year(id) on delete cascade,
-  plan                  jsonb not null default '{"lines":[]}'::jsonb,
-  flighting             jsonb not null default '{}'::jsonb,
-  demo                  text,
-  goals                 jsonb not null default '{}'::jsonb,
-  posting               text,                    -- requested posting %, e.g. '100%'
+  plan                  jsonb not null default '{}'::jsonb,   -- { station: {$,pts,imp,imp$} }
+  demo                  text not null default 'A25-54',
+  goal                  jsonb not null default '{"cpm":5,"pts":0}'::jsonb,
+  cac                   jsonb not null default '{"leads":"","cases":""}'::jsonb,
+  gl                    jsonb,                                -- Guidelines terms; null = GL_DEFAULT
+  reps                  jsonb not null default '{}'::jsonb,
   approver              text,
-  base_approved_plan_id uuid,                    -- FK added below
+  approve_inc           jsonb not null default '{}'::jsonb,   -- stations held out of approval (false)
+  over_budget_ok        boolean not null default false,       -- Finance override
+  base_approved_plan_id uuid,                                  -- FK added below
   updated_by            text,
   updated_at            timestamptz not null default now()
 );
+
+-- Everything else the prototype keeps on the market that is neither
+-- the plan nor an authoritative record: schedule edits (ovr, ovrRate,
+-- hiatus), line notes, added value, station meta, the revision log and
+-- makegoods as the screens show them, sponsorship names, and the
+-- Guidelines/DocuSign status per vendor group (ds) until Phase 2 moves
+-- that onto ba_guidelines_envelope.
+create table if not exists ba_market_state (
+  market_year_id   uuid primary key references ba_market_year(id) on delete cascade,
+  state            jsonb not null default '{"ovr":{},"ovrRate":{},"hiatus":{},"notes":{},"av":{},"meta":{},"rev":[],"mg":[],"spons":[],"ds":{},"proposals":[]}'::jsonb,
+  updated_by       text,
+  updated_at       timestamptz not null default now()
+);
+
+-- Sequence continues across markets (prototype EST_SEQ, starts at 2700).
+create table if not exists ba_counter (
+  name    text primary key,
+  value   int  not null
+);
+insert into ba_counter (name, value) values ('est_seq', 2700) on conflict (name) do nothing;
 
 create table if not exists ba_working_plan_edit (
   id               bigserial primary key,
@@ -253,19 +288,25 @@ alter table ba_working_plan
   add constraint ba_working_plan_base_fk
     foreign key (base_approved_plan_id) references ba_approved_plan(id) on delete restrict;
 
--- ── Estimates (per market per media type) ──────────────────────────
+-- ── Estimates (per market, per medium, five types) ─────────────────
+-- Base buy · Sports · Sponsorships · No-cash · Heavy-up, as ESTS()
+-- creates them. `no` is blank until assigned (on Approve or typed).
 create table if not exists ba_estimate (
   id               uuid primary key default uuid_generate_v4(),
   market_year_id   uuid not null references ba_market_year(id) on delete cascade,
   media            text not null
                    check (media in ('TV','Cable','Radio','Streaming Audio','Digital Video')),
-  number           text not null,
-  label            text,
+  type             text not null
+                   check (type in ('Base buy','Sports','Sponsorships','No-cash','Heavy-up')),
+  covers           text,
+  no               text not null default '',
+  active           boolean not null default false,
   assigned_by      text,
   created_at       timestamptz not null default now(),
-  unique (market_year_id, media),
-  unique (market_year_id, number)
+  updated_at       timestamptz not null default now(),
+  unique (market_year_id, media, type)
 );
+create unique index if not exists ba_estimate_no_idx on ba_estimate (market_year_id, no) where no <> '';
 
 -- ── Order documents ────────────────────────────────────────────────
 -- kind: draft (our order out), confirmation (station's back),
@@ -277,9 +318,17 @@ create table if not exists ba_order_document (
   market_year_id      uuid not null references ba_market_year(id) on delete restrict,
   approved_plan_id    uuid references ba_approved_plan(id) on delete restrict,
   station_id          uuid references ba_station(id) on delete restrict,
+  station_key         text not null,               -- prototype station name ("WBBM")
   vendor_group_id     uuid references ba_vendor_group(id) on delete set null,
   kind                text not null
                       check (kind in ('draft','confirmation','change_order','invoice','post')),
+  order_no            text,                        -- station order number ("739795", "DRAFT-739795")
+  description         text,                        -- "Legal - Q1"
+  flight              text,                        -- "12/29/25 - 03/29/26"
+  metric              text check (metric is null or metric in ('Rtg','Imp')),
+  demo                text,
+  ae                  text,
+  rev                 int,
   status              text not null default 'received'
                       check (status in ('generated','sent','received','parsed','foot_failed','footed','applied','superseded','rejected')),
   reader              text,                      -- 'wideorbit-v1' — which reader parsed it
@@ -302,6 +351,7 @@ create table if not exists ba_order_document (
     status <> 'applied'
     or (kind = 'confirmation' and applied_at is not null and applied_by is not null and approved_plan_id is not null)
   ),
+  constraint ba_order_document_draft_chk check (kind <> 'draft' or status in ('generated','received','parsed','superseded')),
   constraint ba_order_document_plan_chk check (
     kind in ('invoice','post') or approved_plan_id is not null
   )
@@ -341,7 +391,7 @@ create table if not exists ba_revision (
   station_id                  uuid not null references ba_station(id) on delete restrict,
   order_document_id           uuid not null references ba_order_document(id) on delete restrict,  -- the confirmation it modifies
   rev_number                  int  not null,
-  kind                        text not null check (kind in ('spot','rate','hiatus','cancel','makegood')),
+  kind                        text not null check (kind in ('spot','rate','hiatus','cancel','makegood','change_order')),
   changes                     jsonb not null,    -- [{field, was, now, delta, line}]
   status                      text not null default 'logged'
                               check (status in ('logged','issued','reconfirmed')),
@@ -497,7 +547,7 @@ $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['ba_market_year','ba_vendor_group','ba_station','ba_working_plan','ba_package','ba_guidelines_envelope']
+  foreach t in array array['ba_market_year','ba_vendor_group','ba_station','ba_working_plan','ba_market_state','ba_estimate','ba_package','ba_guidelines_envelope']
   loop
     execute format('drop trigger if exists %I_updated_at on %I', t, t);
     execute format('create trigger %I_updated_at before update on %I for each row execute function set_updated_at()', t, t);
@@ -572,13 +622,13 @@ create trigger ba_sor_guard
 create or replace function ba_working_plan_log_edit()
 returns trigger language plpgsql as $$
 begin
-  if tg_op = 'UPDATE' and (old.plan is distinct from new.plan or old.flighting is distinct from new.flighting
-      or old.demo is distinct from new.demo or old.goals is distinct from new.goals
-      or old.posting is distinct from new.posting or old.approver is distinct from new.approver) then
+  if tg_op = 'UPDATE' and (old.plan is distinct from new.plan or old.demo is distinct from new.demo
+      or old.goal is distinct from new.goal or old.gl is distinct from new.gl or old.approver is distinct from new.approver
+      or old.approve_inc is distinct from new.approve_inc or old.over_budget_ok is distinct from new.over_budget_ok) then
     insert into ba_working_plan_edit (working_plan_id, edited_by, was, now)
     values (new.id, new.updated_by,
-      jsonb_build_object('plan', old.plan, 'flighting', old.flighting, 'demo', old.demo, 'goals', old.goals, 'posting', old.posting, 'approver', old.approver),
-      jsonb_build_object('plan', new.plan, 'flighting', new.flighting, 'demo', new.demo, 'goals', new.goals, 'posting', new.posting, 'approver', new.approver));
+      jsonb_build_object('plan', old.plan, 'demo', old.demo, 'goal', old.goal, 'gl', old.gl, 'approver', old.approver, 'approve_inc', old.approve_inc, 'over_budget_ok', old.over_budget_ok),
+      jsonb_build_object('plan', new.plan, 'demo', new.demo, 'goal', new.goal, 'gl', new.gl, 'approver', new.approver, 'approve_inc', new.approve_inc, 'over_budget_ok', new.over_budget_ok));
   end if;
   return new;
 end;
@@ -592,31 +642,36 @@ create trigger ba_working_plan_edit_log
 -- The two authoritative acts
 -- ════════════════════════════════════════════════════════════════════
 
--- Totals the database can derive from the plan-line contract above.
-create or replace function ba_plan_totals(p_plan jsonb)
-returns jsonb language sql immutable as $$
+-- Totals the database derives from the prototype's plan shape:
+-- net per station = sum of its nine "$" buckets; gross = net / (1 - 15%).
+create or replace function ba_plan_totals(p_plan jsonb, p_market_year_id uuid)
+returns jsonb language sql stable as $$
   with l as (
-    select x->>'station' as station, x->>'media' as media,
-           coalesce((x->>'gross')::numeric, 0) as gross,
-           coalesce((x->>'net')::numeric, 0)   as net
-    from jsonb_array_elements(coalesce(p_plan->'lines', '[]'::jsonb)) x
+    select p.key as station,
+           coalesce((select sum(x::numeric) from jsonb_array_elements_text(p.value->'$') x), 0) as net,
+           s.media
+    from jsonb_each(coalesce(p_plan, '{}'::jsonb)) p
+    left join ba_station s on s.market_year_id = p_market_year_id and s.call_sign = p.key
   )
   select jsonb_build_object(
-    'gross', coalesce((select sum(gross) from l), 0),
-    'net',   coalesce((select sum(net)   from l), 0),
-    'by_station', coalesce((select jsonb_object_agg(station, jsonb_build_object('gross', g, 'net', n))
-                            from (select station, sum(gross) g, sum(net) n from l where station is not null group by station) s), '{}'::jsonb),
-    'by_media',   coalesce((select jsonb_object_agg(media, jsonb_build_object('gross', g, 'net', n))
-                            from (select media, sum(gross) g, sum(net) n from l where media is not null group by media) m), '{}'::jsonb)
+    'net',   coalesce((select sum(net) from l), 0),
+    'gross', coalesce((select sum(net) from l), 0) / 0.85,
+    'by_station', coalesce((select jsonb_object_agg(station, jsonb_build_object('net', net, 'gross', net / 0.85)) from l where net <> 0), '{}'::jsonb),
+    'by_media',   coalesce((select jsonb_object_agg(media, jsonb_build_object('net', n, 'gross', n / 0.85))
+                            from (select media, sum(net) n from l where media is not null group by media) m), '{}'::jsonb)
   );
 $$;
 
--- Approve: freeze the working plan + flighting as version n+1.
--- QA gate (blocks): no approver · blank demo · blank posting · any media in
--- the plan without an estimate · over budget without a Finance override.
+-- Approve: freeze the snapshot the app built with snapshotPlan() as
+-- version n+1. QA gate — the prototype's qaChecks() blocking set:
+--   · an active estimate without a number
+--   · Guidelines posting % or demo blank
+--   · no approver
+--   · over budget without the Finance override
 -- Downstream documents read the snapshot only.
 create or replace function ba_approve_plan(
   p_market_year_id   uuid,
+  p_snapshot         jsonb,
   p_approver         text,
   p_approved_by      text,
   p_finance_override boolean default false,
@@ -629,6 +684,7 @@ declare
   v_totals  jsonb;
   v_budget  numeric(14,2);
   v_missing text[];
+  v_gl      jsonb;
   v_snap    jsonb;
   v_id      uuid;
   v_qa      jsonb;
@@ -637,59 +693,38 @@ begin
   if not found then raise exception 'market_year % not found', p_market_year_id; end if;
   select * into wp from ba_working_plan where market_year_id = p_market_year_id;
   if not found then raise exception 'no working plan for %/%', my.market, my.year; end if;
+  if p_snapshot is null or jsonb_typeof(p_snapshot->'plan') <> 'object' then raise exception 'snapshot must carry plan'; end if;
 
-  if coalesce(trim(p_approver), '') = '' then raise exception 'QA: no approver'; end if;
-  if coalesce(trim(wp.demo), '') = '' then raise exception 'QA: blank demo'; end if;
-  if coalesce(trim(wp.posting), '') = '' then raise exception 'QA: blank posting'; end if;
-
-  select array_agg(distinct m) into v_missing
-  from (select x->>'media' m from jsonb_array_elements(coalesce(wp.plan->'lines','[]'::jsonb)) x) q
-  where m is not null and not exists (select 1 from ba_estimate e where e.market_year_id = p_market_year_id and e.media = m);
-  if v_missing is not null then
-    raise exception 'QA: unassigned estimates for %', array_to_string(v_missing, ', ');
+  select array_agg(type order by type) into v_missing from ba_estimate
+    where market_year_id = p_market_year_id and active and no = '';
+  if v_missing is not null then raise exception 'QA: Estimates — % unassigned', array_to_string(v_missing, ', '); end if;
+  v_gl := coalesce(wp.gl, jsonb_build_object('post', 100, 'demo', wp.demo));
+  if coalesce(v_gl->>'post', '') in ('', '0') or coalesce(v_gl->>'demo', '') = '' then
+    raise exception 'QA: Terms — posting %% or demo blank — Guidelines can''t be generated';
   end if;
+  if coalesce(trim(p_approver), '') = '' then raise exception 'QA: Approver — no approver named'; end if;
 
-  v_totals := ba_plan_totals(wp.plan);
+  v_totals := ba_plan_totals(p_snapshot->'plan', p_market_year_id);
   select amount into v_budget from ba_budget
     where market_year_id = p_market_year_id and media is null and superseded_at is null;
-  if v_budget is null then raise exception 'QA: no budget set for %/%', my.market, my.year; end if;
-  if (v_totals->>'net')::numeric > v_budget and not p_finance_override then
-    raise exception 'QA: plan net % exceeds budget % — needs a Finance override', v_totals->>'net', v_budget;
+  if v_budget is not null and (v_totals->>'net')::numeric > v_budget and not (p_finance_override or wp.over_budget_ok) then
+    raise exception 'QA: Budget — % over budget — Finance override required', to_char((v_totals->>'net')::numeric - v_budget, 'FM999,999,990.00');
   end if;
 
   select coalesce(max(version), 0) + 1 into v_version from ba_approved_plan where market_year_id = p_market_year_id;
-
-  v_qa := jsonb_build_object('approver', true, 'demo', true, 'posting', true, 'estimates', true,
-                             'within_budget', (v_totals->>'net')::numeric <= v_budget,
-                             'finance_override', p_finance_override);
-
-  v_snap := jsonb_build_object(
-    'plan',       wp.plan,
-    'flighting',  wp.flighting,
-    'budget',     (select jsonb_agg(jsonb_build_object('media', media, 'amount', amount, 'set_by', set_by))
-                     from ba_budget where market_year_id = p_market_year_id and superseded_at is null),
-    'demo',       wp.demo,
-    'goals',      wp.goals,
-    'posting',    wp.posting,
-    'estimates',  (select jsonb_agg(jsonb_build_object('media', media, 'number', number, 'label', label) order by media)
-                     from ba_estimate where market_year_id = p_market_year_id),
-    'stations',   (select jsonb_agg(jsonb_build_object('id', s.id, 'call_sign', s.call_sign, 'media', s.media,
-                                    'owner', s.owner, 'vendor_group', vg.name, 'on_buy', s.on_buy) order by s.call_sign)
-                     from ba_station s left join ba_vendor_group vg on vg.id = s.vendor_group_id
-                     where s.market_year_id = p_market_year_id and s.on_buy),
-    'totals',     v_totals,
-    'market',     my.market,
-    'year',       my.year,
-    'version',    v_version,
-    'approver',   p_approver,
-    'date',       now()
-  );
+  v_qa := jsonb_build_object('estimates', true, 'terms', true, 'approver', true,
+                             'within_budget', v_budget is null or (v_totals->>'net')::numeric <= v_budget,
+                             'budget_set', v_budget is not null,
+                             'finance_override', p_finance_override or wp.over_budget_ok);
+  v_snap := p_snapshot || jsonb_build_object('v', v_version, 'by', p_approver, 'budget', coalesce(v_budget, 0),
+                                             'totals', v_totals, 'market', my.market, 'year', my.year,
+                                             'approved_plan_id', null);
 
   perform set_config('ba.context', 'approve', true);
   insert into ba_approved_plan (market_year_id, version, snapshot, snapshot_sha256, approver, approved_by,
                                 plan_total_net, budget_total, finance_override, qa, note)
   values (p_market_year_id, v_version, v_snap, encode(digest(v_snap::text, 'sha256'), 'hex'), p_approver, p_approved_by,
-          (v_totals->>'net')::numeric, v_budget, p_finance_override, v_qa, p_note)
+          (v_totals->>'net')::numeric, v_budget, p_finance_override or wp.over_budget_ok, v_qa, p_note)
   returning id into v_id;
   perform set_config('ba.context', '', true);
 
@@ -699,7 +734,7 @@ begin
   insert into ba_event (action, entity_type, entity_id, actor, detail)
   values ('approve', 'approved_plan', v_id, p_approved_by,
           jsonb_build_object('market_year_id', p_market_year_id, 'version', v_version, 'approver', p_approver,
-                             'plan_total_net', v_totals->>'net', 'budget', v_budget, 'finance_override', p_finance_override));
+                             'plan_total_net', v_totals->>'net', 'budget', v_budget, 'finance_override', p_finance_override or wp.over_budget_ok));
   return v_id;
 end;
 $$;
@@ -722,7 +757,11 @@ begin
   if od.kind <> 'confirmation' then raise exception 'only a confirmation can become the schedule of record (this is a %)', od.kind; end if;
   if od.status = 'applied' then raise exception 'confirmation % is already applied', od.id; end if;
   if od.approved_plan_id is null then raise exception 'confirmation must state which approved version it confirms'; end if;
-  if od.station_id is null then raise exception 'confirmation must belong to a station'; end if;
+  if od.station_id is null then
+    select id into od.station_id from ba_station where market_year_id = od.market_year_id and call_sign = od.station_key;
+    if od.station_id is null then raise exception 'confirmation must belong to a station on the buy (%)', od.station_key; end if;
+    update ba_order_document set station_id = od.station_id where id = od.id;
+  end if;
   if od.foot_ok is distinct from true then raise exception 'confirmation has not footed (foot_ok=%)', od.foot_ok; end if;
 
   perform set_config('ba.context', 'apply_confirmation', true);
@@ -795,24 +834,29 @@ left join ba_order_document od on od.id = sor.order_document_id;
 -- ════════════════════════════════════════════════════════════════════
 -- Seed: Lerner & Rowe 2027, every market (names from Doom's brand config)
 -- ════════════════════════════════════════════════════════════════════
-insert into ba_market_year (brand, market, dma, year) values
-  ('Lerner & Rowe', 'Albuquerque', 'ABQ', 2027),
-  ('Lerner & Rowe', 'Bullhead',    'BHD', 2027),
-  ('Lerner & Rowe', 'Chicago',     'CHI', 2027),
-  ('Lerner & Rowe', 'Flagstaff',   'FLG', 2027),
-  ('Lerner & Rowe', 'King/Bull',   'KBH', 2027),
-  ('Lerner & Rowe', 'Las Vegas',   'LVS', 2027),
-  ('Lerner & Rowe', 'Phoenix',     'PHX', 2027),
-  ('Lerner & Rowe', 'Reno',        'RNO', 2027),
-  ('Lerner & Rowe', 'Seattle',     'SEA', 2027),
-  ('Lerner & Rowe', 'Tucson',      'TUC', 2027),
-  ('Lerner & Rowe', 'Yuma',        'YMA', 2027)
-on conflict (brand, market, year) do nothing;
+-- The prototype's ten markets in its order, with its document codes
+-- (the DMA stays Doom's). King/Bull is not in the 2026 sheet and so has
+-- nothing to buy; it is not seeded here.
+insert into ba_market_year (brand, market, dma, code, year, buyer) values
+  ('Lerner & Rowe', 'Phoenix',     'PHX', 'LR-PHX', 2027, 'Ken / Lynn'),
+  ('Lerner & Rowe', 'Flagstaff',   'FLG', 'LR-FLG', 2027, 'Ken / Lynn'),
+  ('Lerner & Rowe', 'Bullhead',    'BHD', 'LR-BHC', 2027, 'Ken / Lynn'),
+  ('Lerner & Rowe', 'Chicago',     'CHI', 'LR-CHI', 2027, 'Jessica Flynn'),
+  ('Lerner & Rowe', 'Tucson',      'TUC', 'LR-TUS', 2027, 'Ken / Lynn'),
+  ('Lerner & Rowe', 'Las Vegas',   'LVS', 'LR-LAS', 2027, 'Ken / Lynn'),
+  ('Lerner & Rowe', 'Albuquerque', 'ABQ', 'LR-ABQ', 2027, 'Ken / Lynn'),
+  ('Lerner & Rowe', 'Reno',        'RNO', 'LR-RNO', 2027, 'Ken / Lynn'),
+  ('Lerner & Rowe', 'Yuma',        'YMA', 'LR-YUM', 2027, 'Ken / Lynn'),
+  ('Lerner & Rowe', 'Seattle',     'SEA', 'LR-SEA', 2027, 'Ken / Lynn')
+on conflict (brand, market, year) do update set code = excluded.code;
 
 -- Every market/year gets an empty working plan: the plan starts at zero.
 insert into ba_working_plan (market_year_id)
 select id from ba_market_year my
 where not exists (select 1 from ba_working_plan w where w.market_year_id = my.id);
+insert into ba_market_state (market_year_id)
+select id from ba_market_year my
+where not exists (select 1 from ba_market_state w where w.market_year_id = my.id);
 
 -- ════════════════════════════════════════════════════════════════════
 -- Row Level Security — default deny; all access via the service role
@@ -826,3 +870,20 @@ begin
     execute format('alter table %I enable row level security', t);
   end loop;
 end $$;
+
+-- ════════════════════════════════════════════════════════════════════
+-- Estimate numbers: "Assign next numbers" — sequence continues across
+-- markets (prototype EST_SEQ). Atomic on ba_counter.
+-- ════════════════════════════════════════════════════════════════════
+create or replace function ba_assign_estimates(p_market_year_id uuid, p_media text, p_by text)
+returns int language plpgsql as $$
+declare e record; v int; n int := 0;
+begin
+  for e in select id from ba_estimate where market_year_id = p_market_year_id and media = p_media and active and no = '' order by type loop
+    update ba_counter set value = value + 1 where name = 'est_seq' returning value into v;
+    update ba_estimate set no = v::text, assigned_by = p_by where id = e.id;
+    n := n + 1;
+  end loop;
+  return n;
+end;
+$$;
