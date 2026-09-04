@@ -1,0 +1,7261 @@
+{
+ "source": "proto_data.json — the parsed WBBM 2026 orders (rate history for Chicago), read by read_lines.py from the four WBBM Postman Law Chicago 2026 contracts",
+ "weeks": [
+  "2025-12-29",
+  "2026-01-05",
+  "2026-01-12",
+  "2026-01-19",
+  "2026-01-26",
+  "2026-02-02",
+  "2026-02-09",
+  "2026-02-16",
+  "2026-02-23",
+  "2026-03-02",
+  "2026-03-09",
+  "2026-03-16",
+  "2026-03-23",
+  "2026-03-30",
+  "2026-04-06",
+  "2026-04-13",
+  "2026-04-20",
+  "2026-04-27",
+  "2026-05-04",
+  "2026-05-11",
+  "2026-05-18",
+  "2026-05-25",
+  "2026-06-01",
+  "2026-06-08",
+  "2026-06-15",
+  "2026-06-22",
+  "2026-06-29",
+  "2026-07-06",
+  "2026-07-13",
+  "2026-07-20",
+  "2026-07-27",
+  "2026-08-03",
+  "2026-08-10",
+  "2026-08-17",
+  "2026-08-24",
+  "2026-08-31",
+  "2026-09-07",
+  "2026-09-14",
+  "2026-09-21",
+  "2026-09-28",
+  "2026-10-05",
+  "2026-10-12",
+  "2026-10-19",
+  "2026-10-26",
+  "2026-11-02",
+  "2026-11-09",
+  "2026-11-16",
+  "2026-11-23",
+  "2026-11-30",
+  "2026-12-07",
+  "2026-12-14",
+  "2026-12-21"
+ ],
+ "stations": {
+  "WBBM-TV": {
+   "aff": "CBS",
+   "own": "Paramount"
+  },
+  "WGN": {
+   "aff": "CW",
+   "own": "Nexstar"
+  },
+  "WLS": {
+   "aff": "ABC",
+   "own": "ABC"
+  },
+  "WFLD": {
+   "aff": "FOX",
+   "own": "FOX"
+  },
+  "WFLD - Sports": {
+   "aff": "FOX",
+   "own": "FOX"
+  },
+  "WFLD Sports (2025)": {
+   "aff": "FOX",
+   "own": "FOX"
+  },
+  "WPWR": {
+   "aff": "MyNet",
+   "own": "FOX"
+  },
+  "WMEU": {
+   "aff": "IND",
+   "own": "Weigel"
+  },
+  "WCIU": {
+   "aff": "MeTV",
+   "own": "Weigel"
+  },
+  "WMAQ": {
+   "aff": "NBC",
+   "own": "NBC"
+  },
+  "Bulls - CHSN": {
+   "aff": "CHSN",
+   "own": ""
+  },
+  "Cable": {
+   "aff": "Ampersand",
+   "own": ""
+  },
+  "Video Production": {
+   "aff": "",
+   "own": ""
+  }
+ },
+ "orders": [
+  {
+   "order": "739795",
+   "station": "WBBM-TV",
+   "desc": "Legal - Q1",
+   "flight": "12/29/25 - 03/29/26",
+   "file": "WBBM_Postman_Law_Chicago_Q1_Contract_2026.pdf",
+   "metric": "Rtg",
+   "gross": 212510,
+   "net": 180633.5,
+   "lines": [
+    {
+     "ln": 1,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "M-Su 4a-4a No Prime",
+     "days": "MTWTFSS",
+     "time": "4:30 AM-1:30 XM",
+     "len": ":30",
+     "spots_wk": 6,
+     "rate": 0,
+     "rtg": 0,
+     "type": "NM",
+     "pri": "BON",
+     "spots": 65,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-01-05": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-01-12": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-01-19": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-02-02": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-02-09": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-02-16": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-02-23": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-03-09": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-03-16": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-03-23": {
+       "spots": 5,
+       "rate": 0,
+       "rtg": 0
+      }
+     }
+    },
+    {
+     "ln": 2,
+     "daypart": "M-F 5a-9a News Rotator",
+     "program": "M-F 5a-9a News Rotator",
+     "days": "MTWTF--",
+     "time": "6:00 AM-9:00 AM",
+     "len": ":15",
+     "spots_wk": 11,
+     "rate": 50,
+     "rtg": 0.3,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 99,
+     "gross": 4950,
+     "net": 4207.5,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 11,
+       "rate": 50,
+       "rtg": 0.3
+      },
+      "2026-01-19": {
+       "spots": 11,
+       "rate": 50,
+       "rtg": 0.3
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.3
+      },
+      "2026-02-02": {
+       "spots": 11,
+       "rate": 50,
+       "rtg": 0.3
+      },
+      "2026-02-09": {
+       "spots": 11,
+       "rate": 50,
+       "rtg": 0.3
+      },
+      "2026-02-16": {
+       "spots": 11,
+       "rate": 50,
+       "rtg": 0.3
+      },
+      "2026-02-23": {
+       "spots": 11,
+       "rate": 50,
+       "rtg": 0.3
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.3
+      },
+      "2026-03-09": {
+       "spots": 11,
+       "rate": 50,
+       "rtg": 0.3
+      },
+      "2026-03-16": {
+       "spots": 11,
+       "rate": 50,
+       "rtg": 0.3
+      },
+      "2026-03-23": {
+       "spots": 11,
+       "rate": 50,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 3,
+     "daypart": "M-F 5a-9a News Rotator",
+     "program": "M-F 5a-9a News Rotator",
+     "days": "MTWTF--",
+     "time": "6:00 AM-9:00 AM",
+     "len": ":30",
+     "spots_wk": 3,
+     "rate": 100,
+     "rtg": 0.3,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 27,
+     "gross": 2700,
+     "net": 2295,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 3,
+       "rate": 100,
+       "rtg": 0.3
+      },
+      "2026-01-19": {
+       "spots": 3,
+       "rate": 100,
+       "rtg": 0.3
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.3
+      },
+      "2026-02-02": {
+       "spots": 3,
+       "rate": 100,
+       "rtg": 0.3
+      },
+      "2026-02-09": {
+       "spots": 3,
+       "rate": 100,
+       "rtg": 0.3
+      },
+      "2026-02-16": {
+       "spots": 3,
+       "rate": 100,
+       "rtg": 0.3
+      },
+      "2026-02-23": {
+       "spots": 3,
+       "rate": 100,
+       "rtg": 0.3
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.3
+      },
+      "2026-03-09": {
+       "spots": 3,
+       "rate": 100,
+       "rtg": 0.3
+      },
+      "2026-03-16": {
+       "spots": 3,
+       "rate": 100,
+       "rtg": 0.3
+      },
+      "2026-03-23": {
+       "spots": 3,
+       "rate": 100,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 4,
+     "daypart": "CBS Mornings",
+     "program": "CBS Mornings",
+     "days": "MTWTF--",
+     "time": "7a-9a",
+     "len": ":15/:15",
+     "spots_wk": 5,
+     "rate": 100,
+     "rtg": 0.6,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 44,
+     "gross": 4400,
+     "net": 3740,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-01-19": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.6
+      },
+      "2026-02-02": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-02-09": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-02-16": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-02-23": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.6
+      },
+      "2026-03-09": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-03-16": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-03-23": {
+       "spots": 4,
+       "rate": 100,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 5,
+     "daypart": "Sa 8a-9a News",
+     "program": "Sa Local 8a News",
+     "days": "-----S-",
+     "time": "758a-9a",
+     "len": ":15/:15",
+     "spots_wk": 2,
+     "rate": 80,
+     "rtg": 0.6,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 18,
+     "gross": 1440,
+     "net": 1224,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-01-19": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.6
+      },
+      "2026-02-02": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-02-09": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-02-16": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-02-23": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.6
+      },
+      "2026-03-09": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-03-16": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-03-23": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 6,
+     "daypart": "Su Morn News Rotator",
+     "program": "Su Morn News Rotator",
+     "days": "------S",
+     "time": "7:00 AM-8:00 AM",
+     "len": ":15",
+     "spots_wk": 4,
+     "rate": 40,
+     "rtg": 0.4,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 36,
+     "gross": 1440,
+     "net": 1224,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 4,
+       "rate": 40,
+       "rtg": 0.4
+      },
+      "2026-01-19": {
+       "spots": 4,
+       "rate": 40,
+       "rtg": 0.4
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.4
+      },
+      "2026-02-02": {
+       "spots": 4,
+       "rate": 40,
+       "rtg": 0.4
+      },
+      "2026-02-09": {
+       "spots": 4,
+       "rate": 40,
+       "rtg": 0.4
+      },
+      "2026-02-16": {
+       "spots": 4,
+       "rate": 40,
+       "rtg": 0.4
+      },
+      "2026-02-23": {
+       "spots": 4,
+       "rate": 40,
+       "rtg": 0.4
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.4
+      },
+      "2026-03-09": {
+       "spots": 4,
+       "rate": 40,
+       "rtg": 0.4
+      },
+      "2026-03-16": {
+       "spots": 4,
+       "rate": 40,
+       "rtg": 0.4
+      },
+      "2026-03-23": {
+       "spots": 4,
+       "rate": 40,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 7,
+     "daypart": "M-F Daytime Rotator",
+     "program": "Price/News",
+     "days": "MTWTF--",
+     "time": "10:00 AM-11:30 AM",
+     "len": ":15",
+     "spots_wk": 8,
+     "rate": 150,
+     "rtg": 0.8,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 66,
+     "gross": 9900,
+     "net": 8415,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 8,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-01-19": {
+       "spots": 8,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-02-02": {
+       "spots": 8,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-02-09": {
+       "spots": 7,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-02-16": {
+       "spots": 7,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-02-23": {
+       "spots": 7,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-03-09": {
+       "spots": 7,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-03-16": {
+       "spots": 7,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-03-23": {
+       "spots": 7,
+       "rate": 150,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 8,
+     "daypart": "M-F Daytime Rotator",
+     "program": "Price/News",
+     "days": "MTWTF--",
+     "time": "10:00 AM-11:30 AM",
+     "len": ":30",
+     "spots_wk": 3,
+     "rate": 300,
+     "rtg": 0.8,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 25,
+     "gross": 7500,
+     "net": 6375,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-01-19": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.8
+      },
+      "2026-02-02": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-02-09": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-02-16": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-02-23": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.8
+      },
+      "2026-03-09": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-03-16": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-03-23": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 9,
+     "daypart": "M-F Early Fringe Rotator",
+     "program": "Let's Make a Deal/News EF",
+     "days": "MTWTF--",
+     "time": "2:58 PM-5:00 PM",
+     "len": ":15/:15",
+     "spots_wk": 8,
+     "rate": 250,
+     "rtg": 0.8,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 72,
+     "gross": 18000,
+     "net": 15300,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 8,
+       "rate": 250,
+       "rtg": 0.8
+      },
+      "2026-01-19": {
+       "spots": 8,
+       "rate": 250,
+       "rtg": 0.8
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 250,
+       "rtg": 0.8
+      },
+      "2026-02-02": {
+       "spots": 8,
+       "rate": 250,
+       "rtg": 0.8
+      },
+      "2026-02-09": {
+       "spots": 8,
+       "rate": 250,
+       "rtg": 0.8
+      },
+      "2026-02-16": {
+       "spots": 8,
+       "rate": 250,
+       "rtg": 0.8
+      },
+      "2026-02-23": {
+       "spots": 8,
+       "rate": 250,
+       "rtg": 0.8
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 250,
+       "rtg": 0.8
+      },
+      "2026-03-09": {
+       "spots": 8,
+       "rate": 250,
+       "rtg": 0.8
+      },
+      "2026-03-16": {
+       "spots": 8,
+       "rate": 250,
+       "rtg": 0.8
+      },
+      "2026-03-23": {
+       "spots": 8,
+       "rate": 250,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 10,
+     "daypart": "M-F Early Fringe Rotator",
+     "program": "Let's Make a Deal/News EF",
+     "days": "MTWTF--",
+     "time": "2:58p-5p",
+     "len": ":30",
+     "spots_wk": 5,
+     "rate": 250,
+     "rtg": 0.4,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 45,
+     "gross": 11250,
+     "net": 9562.5,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 0.4
+      },
+      "2026-01-19": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 0.4
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 212.5,
+       "rtg": 0.4
+      },
+      "2026-02-02": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 0.4
+      },
+      "2026-02-09": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 0.4
+      },
+      "2026-02-16": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 0.4
+      },
+      "2026-02-23": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 0.4
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 212.5,
+       "rtg": 0.4
+      },
+      "2026-03-09": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 0.4
+      },
+      "2026-03-16": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 0.4
+      },
+      "2026-03-23": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 11,
+     "daypart": "M-F Prime Access 1b",
+     "program": "Entertainment Tonight",
+     "days": "MTWTF--",
+     "time": "627p-7p",
+     "len": ":15/:15",
+     "spots_wk": 3,
+     "rate": 300,
+     "rtg": 1,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 27,
+     "gross": 8100,
+     "net": 6885,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 1
+      },
+      "2026-01-19": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 1
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-02-02": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 1
+      },
+      "2026-02-09": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 1
+      },
+      "2026-02-16": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 1
+      },
+      "2026-02-23": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 1
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-03-09": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 1
+      },
+      "2026-03-16": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 1
+      },
+      "2026-03-23": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 1
+      }
+     }
+    },
+    {
+     "ln": 12,
+     "daypart": "M-F Prime Access 1b",
+     "program": "Entertainment Tonight",
+     "days": "MTWTF--",
+     "time": "627p-7p",
+     "len": ":30",
+     "spots_wk": 5,
+     "rate": 300,
+     "rtg": 0.5,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 45,
+     "gross": 13500,
+     "net": 11475,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 5,
+       "rate": 300,
+       "rtg": 0.5
+      },
+      "2026-01-19": {
+       "spots": 5,
+       "rate": 300,
+       "rtg": 0.5
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-02-02": {
+       "spots": 5,
+       "rate": 300,
+       "rtg": 0.5
+      },
+      "2026-02-09": {
+       "spots": 5,
+       "rate": 300,
+       "rtg": 0.5
+      },
+      "2026-02-16": {
+       "spots": 5,
+       "rate": 300,
+       "rtg": 0.5
+      },
+      "2026-02-23": {
+       "spots": 5,
+       "rate": 300,
+       "rtg": 0.5
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-03-09": {
+       "spots": 5,
+       "rate": 300,
+       "rtg": 0.5
+      },
+      "2026-03-16": {
+       "spots": 5,
+       "rate": 300,
+       "rtg": 0.5
+      },
+      "2026-03-23": {
+       "spots": 5,
+       "rate": 300,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 13,
+     "daypart": "M-Su Late Fringe Rotator",
+     "program": "Colber/Comics Unleashed",
+     "days": "MTWTF--",
+     "time": "10:35 PM-12:37 XM",
+     "len": ":15",
+     "spots_wk": 12,
+     "rate": 75,
+     "rtg": 0.5,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 110,
+     "gross": 8250,
+     "net": 7012.5,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 13,
+       "rate": 75,
+       "rtg": 0.5
+      },
+      "2026-01-19": {
+       "spots": 13,
+       "rate": 75,
+       "rtg": 0.5
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-02-02": {
+       "spots": 12,
+       "rate": 75,
+       "rtg": 0.5
+      },
+      "2026-02-09": {
+       "spots": 12,
+       "rate": 75,
+       "rtg": 0.5
+      },
+      "2026-02-16": {
+       "spots": 12,
+       "rate": 75,
+       "rtg": 0.5
+      },
+      "2026-02-23": {
+       "spots": 12,
+       "rate": 75,
+       "rtg": 0.5
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-03-09": {
+       "spots": 12,
+       "rate": 75,
+       "rtg": 0.5
+      },
+      "2026-03-16": {
+       "spots": 12,
+       "rate": 75,
+       "rtg": 0.5
+      },
+      "2026-03-23": {
+       "spots": 12,
+       "rate": 75,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 14,
+     "daypart": "M-Su Late Fringe Rotator",
+     "program": "Colber/Comics Unleashed",
+     "days": "MTWTF--",
+     "time": "10:35 PM-12:37 XM",
+     "len": "1:00",
+     "spots_wk": 6,
+     "rate": 150,
+     "rtg": 0.5,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 53,
+     "gross": 7950,
+     "net": 6757.5,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.5
+      },
+      "2026-01-19": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.5
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-02-02": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.5
+      },
+      "2026-02-09": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.5
+      },
+      "2026-02-16": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.5
+      },
+      "2026-02-23": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.5
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-03-09": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.5
+      },
+      "2026-03-16": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.5
+      },
+      "2026-03-23": {
+       "spots": 5,
+       "rate": 150,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 15,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Late News/Colbert",
+     "days": "MTWTF--",
+     "time": "10:00 PM-11:37 PM",
+     "len": ":15/:15",
+     "spots_wk": 4,
+     "rate": 380,
+     "rtg": 1.4,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 36,
+     "gross": 13680,
+     "net": 11628,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 4,
+       "rate": 380,
+       "rtg": 1.4
+      },
+      "2026-01-19": {
+       "spots": 4,
+       "rate": 380,
+       "rtg": 1.4
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 1.4
+      },
+      "2026-02-02": {
+       "spots": 4,
+       "rate": 380,
+       "rtg": 1.4
+      },
+      "2026-02-09": {
+       "spots": 4,
+       "rate": 380,
+       "rtg": 1.4
+      },
+      "2026-02-16": {
+       "spots": 4,
+       "rate": 380,
+       "rtg": 1.4
+      },
+      "2026-02-23": {
+       "spots": 4,
+       "rate": 380,
+       "rtg": 1.4
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 1.4
+      },
+      "2026-03-09": {
+       "spots": 4,
+       "rate": 380,
+       "rtg": 1.4
+      },
+      "2026-03-16": {
+       "spots": 4,
+       "rate": 380,
+       "rtg": 1.4
+      },
+      "2026-03-23": {
+       "spots": 4,
+       "rate": 380,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 16,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Late News/Colbert",
+     "days": "MTWTFSS",
+     "time": "",
+     "len": ":30",
+     "spots_wk": 6,
+     "rate": 375,
+     "rtg": 0.7,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 54,
+     "gross": 20250,
+     "net": 17212.5,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 6,
+       "rate": 375,
+       "rtg": 0.7
+      },
+      "2026-01-19": {
+       "spots": 6,
+       "rate": 375,
+       "rtg": 0.7
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 1
+      },
+      "2026-02-02": {
+       "spots": 6,
+       "rate": 375,
+       "rtg": 0.7
+      },
+      "2026-02-09": {
+       "spots": 6,
+       "rate": 375,
+       "rtg": 0.7
+      },
+      "2026-02-16": {
+       "spots": 6,
+       "rate": 375,
+       "rtg": 0.7
+      },
+      "2026-02-23": {
+       "spots": 6,
+       "rate": 375,
+       "rtg": 0.7
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 1
+      },
+      "2026-03-09": {
+       "spots": 6,
+       "rate": 375,
+       "rtg": 0.7
+      },
+      "2026-03-16": {
+       "spots": 6,
+       "rate": 375,
+       "rtg": 0.7
+      },
+      "2026-03-23": {
+       "spots": 6,
+       "rate": 375,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 17,
+     "daypart": "M-Su Prime Rotator",
+     "program": "Prime Rotator M-Su",
+     "days": "MTWTFS-",
+     "time": "7:00 PM-10:02 PM",
+     "len": ":15/:15",
+     "spots_wk": 4,
+     "rate": 1200,
+     "rtg": 2.6,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 36,
+     "gross": 43200,
+     "net": 36720,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 4,
+       "rate": 1200,
+       "rtg": 2.6
+      },
+      "2026-01-19": {
+       "spots": 4,
+       "rate": 1200,
+       "rtg": 2.6
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 2.6
+      },
+      "2026-02-02": {
+       "spots": 4,
+       "rate": 1200,
+       "rtg": 2.6
+      },
+      "2026-02-09": {
+       "spots": 4,
+       "rate": 1200,
+       "rtg": 2.6
+      },
+      "2026-02-16": {
+       "spots": 4,
+       "rate": 1200,
+       "rtg": 2.6
+      },
+      "2026-02-23": {
+       "spots": 4,
+       "rate": 1200,
+       "rtg": 2.6
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 2.6
+      },
+      "2026-03-09": {
+       "spots": 4,
+       "rate": 1200,
+       "rtg": 2.6
+      },
+      "2026-03-16": {
+       "spots": 4,
+       "rate": 1200,
+       "rtg": 2.6
+      },
+      "2026-03-23": {
+       "spots": 4,
+       "rate": 1200,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 18,
+     "daypart": "M-F 9a-4p",
+     "program": "M-F 9a-4p",
+     "days": "MTWTF--",
+     "time": "858a-4p",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 200,
+     "rtg": 1,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 54,
+     "gross": 10800,
+     "net": 9180,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 6,
+       "rate": 200,
+       "rtg": 1
+      },
+      "2026-01-19": {
+       "spots": 6,
+       "rate": 200,
+       "rtg": 1
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 2.6
+      },
+      "2026-02-02": {
+       "spots": 6,
+       "rate": 200,
+       "rtg": 1
+      },
+      "2026-02-09": {
+       "spots": 6,
+       "rate": 200,
+       "rtg": 1
+      },
+      "2026-02-16": {
+       "spots": 6,
+       "rate": 200,
+       "rtg": 1
+      },
+      "2026-02-23": {
+       "spots": 6,
+       "rate": 200,
+       "rtg": 1
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 2.6
+      },
+      "2026-03-09": {
+       "spots": 6,
+       "rate": 200,
+       "rtg": 1
+      },
+      "2026-03-16": {
+       "spots": 6,
+       "rate": 200,
+       "rtg": 1
+      },
+      "2026-03-23": {
+       "spots": 6,
+       "rate": 200,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 19,
+     "daypart": "M-F 9a-4p",
+     "program": "M-F 9a-4p",
+     "days": "MTWTF--",
+     "time": "858a-4p",
+     "len": ":30",
+     "spots_wk": 14,
+     "rate": 200,
+     "rtg": 0.5,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 126,
+     "gross": 25200,
+     "net": 21420,
+     "weeks": {
+      "2026-01-12": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.5
+      },
+      "2026-01-19": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.5
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 2.6
+      },
+      "2026-02-02": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.5
+      },
+      "2026-02-09": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.5
+      },
+      "2026-02-16": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.5
+      },
+      "2026-02-23": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.5
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 2.6
+      },
+      "2026-03-09": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.5
+      },
+      "2026-03-16": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.5
+      },
+      "2026-03-23": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.5
+      }
+     }
+    },
+    {
+     "ln": 20,
+     "daypart": "M-F 5a-9a News Rotator",
+     "program": "News/Weather Sponsorship",
+     "days": "MTWTF--",
+     "time": "6:00 AM-9:00 AM",
+     "len": ":05",
+     "spots_wk": 1,
+     "rate": 0,
+     "rtg": 0,
+     "type": "BB",
+     "pri": "BB",
+     "spots": 11,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 1,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-01-05": {
+       "spots": 1,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-01-12": {
+       "spots": 1,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-01-19": {
+       "spots": 1,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-02-02": {
+       "spots": 1,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-02-09": {
+       "spots": 1,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-02-16": {
+       "spots": 1,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-02-23": {
+       "spots": 1,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-03-09": {
+       "spots": 1,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-03-16": {
+       "spots": 1,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-03-23": {
+       "spots": 1,
+       "rate": 0,
+       "rtg": 0
+      }
+     }
+    },
+    {
+     "ln": 21,
+     "daypart": "M-F 5a-9a News Rotator",
+     "program": "M-F 5a-9a News Rotator",
+     "days": "MTWTF--",
+     "time": "6:00 AM-9:00 AM",
+     "len": ":15",
+     "spots_wk": 11,
+     "rate": 0,
+     "rtg": 0.3,
+     "type": "NM",
+     "pri": "PKG",
+     "spots": 22,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 11,
+       "rate": 0,
+       "rtg": 0.3
+      },
+      "2026-01-05": {
+       "spots": 11,
+       "rate": 0,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 22,
+     "daypart": "M-F 5a-9a News Rotator",
+     "program": "M-F 5a-9a News Rotator",
+     "days": "MTWTF--",
+     "time": "6:00 AM-9:00 AM",
+     "len": ":30",
+     "spots_wk": 3,
+     "rate": 0,
+     "rtg": 0.3,
+     "type": "NM",
+     "pri": "PKG",
+     "spots": 6,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 0.3
+      },
+      "2026-01-05": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 23,
+     "daypart": "CBS Mornings",
+     "program": "CBS Mornings",
+     "days": "MTWTF--",
+     "time": "7a-9a",
+     "len": ":15/:15",
+     "spots_wk": 5,
+     "rate": 0,
+     "rtg": 0.6,
+     "type": "BK",
+     "pri": "PKG",
+     "spots": 10,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 5,
+       "rate": 0,
+       "rtg": 0.6
+      },
+      "2026-01-05": {
+       "spots": 5,
+       "rate": 0,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 24,
+     "daypart": "Sa 8a-9a News",
+     "program": "Sa Local 8a News",
+     "days": "-----S-",
+     "time": "758a-9a",
+     "len": ":15/:15",
+     "spots_wk": 2,
+     "rate": 0,
+     "rtg": 0.6,
+     "type": "BK",
+     "pri": "PKG",
+     "spots": 4,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 2,
+       "rate": 0,
+       "rtg": 0.6
+      },
+      "2026-01-05": {
+       "spots": 2,
+       "rate": 0,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 25,
+     "daypart": "Su Morn News Rotator",
+     "program": "Su Morn News Rotator",
+     "days": "------S",
+     "time": "7:00 AM-8:00 AM",
+     "len": ":15",
+     "spots_wk": 4,
+     "rate": 0,
+     "rtg": 0.4,
+     "type": "NM",
+     "pri": "PKG",
+     "spots": 8,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 4,
+       "rate": 0,
+       "rtg": 0.4
+      },
+      "2026-01-05": {
+       "spots": 4,
+       "rate": 0,
+       "rtg": 0.4
+      }
+     }
+    },
+    {
+     "ln": 26,
+     "daypart": "M-F Daytime Rotator",
+     "program": "Price/News",
+     "days": "MTWTF--",
+     "time": "10:00 AM-11:30 AM",
+     "len": ":15",
+     "spots_wk": 8,
+     "rate": 0,
+     "rtg": 0.8,
+     "type": "NM",
+     "pri": "PKG",
+     "spots": 16,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 8,
+       "rate": 0,
+       "rtg": 0.8
+      },
+      "2026-01-05": {
+       "spots": 8,
+       "rate": 0,
+       "rtg": 0.8
+      }
+     }
+    },
+    {
+     "ln": 27,
+     "daypart": "M-F Daytime Rotator",
+     "program": "Price/News",
+     "days": "MTWTF--",
+     "time": "10:00 AM-11:30 AM",
+     "len": ":30",
+     "spots_wk": 3,
+     "rate": 0,
+     "rtg": 0.8,
+     "type": "NM",
+     "pri": "PKG",
+     "spots": 6,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 0.8
+      },
+      "2026-01-05": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 0.8
+      }
+     }
+    },
+    {
+     "ln": 28,
+     "daypart": "M-F Early Fringe Rotator",
+     "program": "Let's Make a Deal/News EF",
+     "days": "MTWTF--",
+     "time": "2:58 PM-5:00 PM",
+     "len": ":15/:15",
+     "spots_wk": 8,
+     "rate": 0,
+     "rtg": 0.8,
+     "type": "BK",
+     "pri": "PKG",
+     "spots": 16,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 8,
+       "rate": 0,
+       "rtg": 0.8
+      },
+      "2026-01-05": {
+       "spots": 8,
+       "rate": 0,
+       "rtg": 0.8
+      }
+     }
+    },
+    {
+     "ln": 29,
+     "daypart": "M-F Early Fringe Rotator",
+     "program": "Let's Make a Deal/News EF",
+     "days": "MTWTF--",
+     "time": "2:58p-5p",
+     "len": ":30",
+     "spots_wk": 5,
+     "rate": 0,
+     "rtg": 0.4,
+     "type": "NM",
+     "pri": "PKG",
+     "spots": 10,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 5,
+       "rate": 0,
+       "rtg": 0.4
+      },
+      "2026-01-05": {
+       "spots": 5,
+       "rate": 0,
+       "rtg": 0.4
+      }
+     }
+    },
+    {
+     "ln": 30,
+     "daypart": "M-F Prime Access 1b",
+     "program": "Entertainment Tonight",
+     "days": "MTWTF--",
+     "time": "627p-7p",
+     "len": ":15/:15",
+     "spots_wk": 3,
+     "rate": 0,
+     "rtg": 1,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 33,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 1
+      },
+      "2026-01-05": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 1
+      },
+      "2026-01-12": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 1
+      },
+      "2026-01-19": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 1
+      },
+      "2026-01-26": {
+       "spots": 0,
+       "rate": 150,
+       "rtg": 0.5
+      },
+      "2026-02-02": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 1
+      },
+      "2026-02-09": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 1
+      },
+      "2026-02-16": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 1
+      },
+      "2026-02-23": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 1
+      },
+      "2026-03-02": {
+       "spots": 0,
+       "rate": 150,
+       "rtg": 0.5
+      },
+      "2026-03-09": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 1
+      },
+      "2026-03-16": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 1
+      },
+      "2026-03-23": {
+       "spots": 3,
+       "rate": 0,
+       "rtg": 1
+      }
+     }
+    },
+    {
+     "ln": 31,
+     "daypart": "M-F Prime Access 1b",
+     "program": "Entertainment Tonight",
+     "days": "MTWTF--",
+     "time": "627p-7p",
+     "len": ":30",
+     "spots_wk": 5,
+     "rate": 0,
+     "rtg": 0.5,
+     "type": "NM",
+     "pri": "PKG",
+     "spots": 10,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 5,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-01-05": {
+       "spots": 5,
+       "rate": 0,
+       "rtg": 0.5
+      }
+     }
+    },
+    {
+     "ln": 32,
+     "daypart": "M-Su Late Fringe Rotator",
+     "program": "Colber/Comics Unleashed",
+     "days": "MTWTF--",
+     "time": "10:35 PM-12:37 XM",
+     "len": ":15",
+     "spots_wk": 12,
+     "rate": 0,
+     "rtg": 0.5,
+     "type": "NM",
+     "pri": "PKG",
+     "spots": 24,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 12,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-01-05": {
+       "spots": 12,
+       "rate": 0,
+       "rtg": 0.5
+      }
+     }
+    },
+    {
+     "ln": 34,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Late News/Colbert",
+     "days": "MTWTF--",
+     "time": "10:00 PM-11:37 PM",
+     "len": ":15/:15",
+     "spots_wk": 4,
+     "rate": 0,
+     "rtg": 1.4,
+     "type": "BK",
+     "pri": "PKG",
+     "spots": 8,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 4,
+       "rate": 0,
+       "rtg": 1.4
+      },
+      "2026-01-05": {
+       "spots": 4,
+       "rate": 0,
+       "rtg": 1.4
+      }
+     }
+    },
+    {
+     "ln": 35,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Late News/Colbert",
+     "days": "MTWTFSS",
+     "time": "10:00 PM-10:37 PM",
+     "len": ":30",
+     "spots_wk": 6,
+     "rate": 0,
+     "rtg": 0.7,
+     "type": "NM",
+     "pri": "PKG",
+     "spots": 12,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0.7
+      },
+      "2026-01-05": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0.7
+      }
+     }
+    },
+    {
+     "ln": 36,
+     "daypart": "M-Su Prime Rotator",
+     "program": "Prime Rotator M-Su",
+     "days": "MTWTFS-",
+     "time": "7:00 PM-10:02 PM",
+     "len": ":15/:15",
+     "spots_wk": 4,
+     "rate": 0,
+     "rtg": 2.6,
+     "type": "BK",
+     "pri": "PKG",
+     "spots": 8,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 4,
+       "rate": 0,
+       "rtg": 2.6
+      },
+      "2026-01-05": {
+       "spots": 4,
+       "rate": 0,
+       "rtg": 2.6
+      }
+     }
+    },
+    {
+     "ln": 37,
+     "daypart": "M-F 9a-4p",
+     "program": "M-F 9a-4p",
+     "days": "MTWTF--",
+     "time": "858a-4p",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 0,
+     "rtg": 1,
+     "type": "BK",
+     "pri": "PKG",
+     "spots": 12,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 1
+      },
+      "2026-01-05": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 1
+      }
+     }
+    },
+    {
+     "ln": 38,
+     "daypart": "M-F 9a-4p",
+     "program": "M-F 9a-4p",
+     "days": "MTWTF--",
+     "time": "858a-4p",
+     "len": ":30",
+     "spots_wk": 14,
+     "rate": 0,
+     "rtg": 0.5,
+     "type": "NM",
+     "pri": "PKG",
+     "spots": 28,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2025-12-29": {
+       "spots": 14,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-01-05": {
+       "spots": 14,
+       "rate": 0,
+       "rtg": 0.5
+      }
+     }
+    }
+   ],
+   "demo": "A35-64",
+   "ae": "Terrie Brown",
+   "rev": "12/23/25 / 12/23/25"
+  },
+  {
+   "order": "740257",
+   "station": "WBBM-TV",
+   "desc": "Legal - Q2",
+   "flight": "03/30/26 - 06/28/26",
+   "file": "WBBM_Postman_Law_Q2_Contract_2026.pdf",
+   "metric": "Rtg",
+   "gross": 222500,
+   "net": 189125,
+   "lines": [
+    {
+     "ln": 1,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "M-Su 4a-4a No Prime",
+     "days": "MTWTFSS",
+     "time": "4:30 AM-1:30 XM",
+     "len": ":30",
+     "spots_wk": 6,
+     "rate": 0,
+     "rtg": 0,
+     "type": "NM",
+     "pri": "BON",
+     "spots": 66,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-04-13": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-04-20": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-04-27": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-05-04": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-05-11": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-05-18": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-06-01": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-06-08": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-06-15": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-06-22": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      }
+     }
+    },
+    {
+     "ln": 2,
+     "daypart": "M-F 5a-9a News Rotator",
+     "program": "M-F 5a-9a News Rotator",
+     "days": "MTWTF--",
+     "time": "6:00 AM-9:00 AM",
+     "len": ":15/:15",
+     "spots_wk": 5,
+     "rate": 80,
+     "rtg": 0.6,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 55,
+     "gross": 4400,
+     "net": 3740,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 5,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 40,
+       "rtg": 0.6
+      },
+      "2026-04-13": {
+       "spots": 5,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-04-20": {
+       "spots": 5,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-04-27": {
+       "spots": 5,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-05-04": {
+       "spots": 5,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-05-11": {
+       "spots": 5,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-05-18": {
+       "spots": 5,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 40,
+       "rtg": 0.6
+      },
+      "2026-06-01": {
+       "spots": 5,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-06-08": {
+       "spots": 5,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-06-15": {
+       "spots": 5,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-06-22": {
+       "spots": 5,
+       "rate": 80,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 3,
+     "daypart": "M-F 5a-9a News Rotator",
+     "program": "M-F 5a-9a News Rotator",
+     "days": "MTWTF--",
+     "time": "6:00 AM-9:00 AM",
+     "len": ":30",
+     "spots_wk": 3,
+     "rate": 80,
+     "rtg": 0.3,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 30,
+     "gross": 2400,
+     "net": 2040,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.3
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.3
+      },
+      "2026-04-13": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.3
+      },
+      "2026-04-20": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.3
+      },
+      "2026-04-27": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.3
+      },
+      "2026-05-04": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.3
+      },
+      "2026-05-11": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.3
+      },
+      "2026-05-18": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.3
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.3
+      },
+      "2026-06-01": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.3
+      },
+      "2026-06-08": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.3
+      },
+      "2026-06-15": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.3
+      },
+      "2026-06-22": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 4,
+     "daypart": "CBS Mornings",
+     "program": "CBS Mornings",
+     "days": "MTWTF--",
+     "time": "7a-9a",
+     "len": ":15/:15",
+     "spots_wk": 5,
+     "rate": 100,
+     "rtg": 0.6,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 55,
+     "gross": 5500,
+     "net": 4675,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 50,
+       "rtg": 0.6
+      },
+      "2026-04-13": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-04-20": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-04-27": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-05-04": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-05-11": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-05-18": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 50,
+       "rtg": 0.6
+      },
+      "2026-06-01": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-06-08": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-06-15": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      },
+      "2026-06-22": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 5,
+     "daypart": "Sa 8a-9a News",
+     "program": "Sa Local 8a News",
+     "days": "-----S-",
+     "time": "758a-9a",
+     "len": ":15/:15",
+     "spots_wk": 2,
+     "rate": 80,
+     "rtg": 0.4,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 20,
+     "gross": 1600,
+     "net": 1360,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.6
+      },
+      "2026-04-13": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-04-20": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-04-27": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-05-04": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-05-11": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-05-18": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-06-01": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-06-08": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-06-15": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-06-22": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 0.4
+      }
+     }
+    },
+    {
+     "ln": 6,
+     "daypart": "Su 7a-8a News",
+     "program": "News",
+     "days": "------S",
+     "time": "7a-8a",
+     "len": ":15/:15",
+     "spots_wk": 2,
+     "rate": 80,
+     "rtg": 0.6,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 20,
+     "gross": 1600,
+     "net": 1360,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.4
+      },
+      "2026-04-13": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-04-20": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-04-27": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-05-04": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-05-11": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-05-18": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 40,
+       "rtg": 0.4
+      },
+      "2026-06-01": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-06-08": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-06-15": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-06-22": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 7,
+     "daypart": "M-F Daytime Rotator",
+     "program": "Price/News",
+     "days": "MTWTF--",
+     "time": "10:00 AM-11:30 AM",
+     "len": ":15/:15",
+     "spots_wk": 5,
+     "rate": 280,
+     "rtg": 1.4,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 55,
+     "gross": 15400,
+     "net": 13090,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 5,
+       "rate": 280,
+       "rtg": 1.4
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-04-13": {
+       "spots": 5,
+       "rate": 280,
+       "rtg": 1.4
+      },
+      "2026-04-20": {
+       "spots": 5,
+       "rate": 280,
+       "rtg": 1.4
+      },
+      "2026-04-27": {
+       "spots": 5,
+       "rate": 280,
+       "rtg": 1.4
+      },
+      "2026-05-04": {
+       "spots": 5,
+       "rate": 280,
+       "rtg": 1.4
+      },
+      "2026-05-11": {
+       "spots": 5,
+       "rate": 280,
+       "rtg": 1.4
+      },
+      "2026-05-18": {
+       "spots": 5,
+       "rate": 280,
+       "rtg": 1.4
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-06-01": {
+       "spots": 5,
+       "rate": 280,
+       "rtg": 1.4
+      },
+      "2026-06-08": {
+       "spots": 5,
+       "rate": 280,
+       "rtg": 1.4
+      },
+      "2026-06-15": {
+       "spots": 5,
+       "rate": 280,
+       "rtg": 1.4
+      },
+      "2026-06-22": {
+       "spots": 5,
+       "rate": 280,
+       "rtg": 1.4
+      }
+     }
+    },
+    {
+     "ln": 8,
+     "daypart": "M-F Daytime Rotator",
+     "program": "Price/News",
+     "days": "MTWTF--",
+     "time": "10:00 AM-11:30 AM",
+     "len": ":30",
+     "spots_wk": 3,
+     "rate": 275,
+     "rtg": 0.7,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 30,
+     "gross": 8250,
+     "net": 7012.5,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.7
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.8
+      },
+      "2026-04-13": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.7
+      },
+      "2026-04-20": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.7
+      },
+      "2026-04-27": {
+       "spots": 2,
+       "rate": 275,
+       "rtg": 0.7
+      },
+      "2026-05-04": {
+       "spots": 2,
+       "rate": 275,
+       "rtg": 0.7
+      },
+      "2026-05-11": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.7
+      },
+      "2026-05-18": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.7
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-06-01": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.7
+      },
+      "2026-06-08": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.7
+      },
+      "2026-06-15": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.7
+      },
+      "2026-06-22": {
+       "spots": 2,
+       "rate": 275,
+       "rtg": 0.7
+      }
+     }
+    },
+    {
+     "ln": 9,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Deal/News EF ROT",
+     "days": "MTWTF--",
+     "time": "3:00 PM-6:30 PM",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 220,
+     "rtg": 0.6,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 66,
+     "gross": 14520,
+     "net": 12342,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.8
+      },
+      "2026-04-13": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-04-20": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-04-27": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-05-04": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-05-11": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-05-18": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 250,
+       "rtg": 0.8
+      },
+      "2026-06-01": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-06-08": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-06-15": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-06-22": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 10,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Deal/News EF ROT",
+     "days": "MTWTF--",
+     "time": "3:00 PM-6:30 PM",
+     "len": ":30",
+     "spots_wk": 5,
+     "rate": 225,
+     "rtg": 0.3,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 55,
+     "gross": 12375,
+     "net": 10518.75,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 5,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.4
+      },
+      "2026-04-13": {
+       "spots": 5,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-04-20": {
+       "spots": 5,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-04-27": {
+       "spots": 5,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-05-04": {
+       "spots": 5,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-05-11": {
+       "spots": 5,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-05-18": {
+       "spots": 5,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 250,
+       "rtg": 0.4
+      },
+      "2026-06-01": {
+       "spots": 5,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-06-08": {
+       "spots": 5,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-06-15": {
+       "spots": 5,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-06-22": {
+       "spots": 5,
+       "rate": 225,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 11,
+     "daypart": "M-F Prime Access 1b",
+     "program": "Entertainment Tonight",
+     "days": "MTWTF--",
+     "time": "627p-7p",
+     "len": ":15/:15",
+     "spots_wk": 3,
+     "rate": 300,
+     "rtg": 0.8,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 31,
+     "gross": 9300,
+     "net": 7905,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 300,
+       "rtg": 1
+      },
+      "2026-04-13": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-04-20": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-04-27": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-05-04": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-05-11": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-05-18": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 300,
+       "rtg": 1
+      },
+      "2026-06-01": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-06-08": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-06-15": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 0.8
+      },
+      "2026-06-22": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 0.8
+      }
+     }
+    },
+    {
+     "ln": 12,
+     "daypart": "M-F Prime Access 1b",
+     "program": "Entertainment Tonight",
+     "days": "MTWTF--",
+     "time": "627p-7p",
+     "len": ":30",
+     "spots_wk": 4,
+     "rate": 300,
+     "rtg": 0.4,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 43,
+     "gross": 12900,
+     "net": 10965,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 0.4
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-04-13": {
+       "spots": 4,
+       "rate": 300,
+       "rtg": 0.4
+      },
+      "2026-04-20": {
+       "spots": 4,
+       "rate": 300,
+       "rtg": 0.4
+      },
+      "2026-04-27": {
+       "spots": 4,
+       "rate": 300,
+       "rtg": 0.4
+      },
+      "2026-05-04": {
+       "spots": 4,
+       "rate": 300,
+       "rtg": 0.4
+      },
+      "2026-05-11": {
+       "spots": 4,
+       "rate": 300,
+       "rtg": 0.4
+      },
+      "2026-05-18": {
+       "spots": 4,
+       "rate": 300,
+       "rtg": 0.4
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 300,
+       "rtg": 0.5
+      },
+      "2026-06-01": {
+       "spots": 4,
+       "rate": 300,
+       "rtg": 0.4
+      },
+      "2026-06-08": {
+       "spots": 4,
+       "rate": 300,
+       "rtg": 0.4
+      },
+      "2026-06-15": {
+       "spots": 4,
+       "rate": 300,
+       "rtg": 0.4
+      },
+      "2026-06-22": {
+       "spots": 4,
+       "rate": 300,
+       "rtg": 0.4
+      }
+     }
+    },
+    {
+     "ln": 13,
+     "daypart": "M-Su Late Fringe Rotator",
+     "program": "Colber/Comics Unleashed",
+     "days": "MTWTF--",
+     "time": "10:35 PM-12:37 XM",
+     "len": ":15/:15",
+     "spots_wk": 5,
+     "rate": 150,
+     "rtg": 0.8,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 55,
+     "gross": 8250,
+     "net": 7012.5,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 5,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-04-13": {
+       "spots": 5,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-04-20": {
+       "spots": 5,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-04-27": {
+       "spots": 5,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-05-04": {
+       "spots": 5,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-05-11": {
+       "spots": 5,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-05-18": {
+       "spots": 5,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 75,
+       "rtg": 0.5
+      },
+      "2026-06-01": {
+       "spots": 5,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-06-08": {
+       "spots": 5,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-06-15": {
+       "spots": 5,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-06-22": {
+       "spots": 5,
+       "rate": 150,
+       "rtg": 0.8
+      }
+     }
+    },
+    {
+     "ln": 14,
+     "daypart": "M-Su Late Fringe Rotator",
+     "program": "Colber/Comics Unleashed",
+     "days": "MTWTF--",
+     "time": "10:35 PM-12:37 XM",
+     "len": "1:00",
+     "spots_wk": 6,
+     "rate": 125,
+     "rtg": 0.4,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 66,
+     "gross": 8250,
+     "net": 7012.5,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 6,
+       "rate": 125,
+       "rtg": 0.4
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-04-13": {
+       "spots": 6,
+       "rate": 125,
+       "rtg": 0.4
+      },
+      "2026-04-20": {
+       "spots": 6,
+       "rate": 125,
+       "rtg": 0.4
+      },
+      "2026-04-27": {
+       "spots": 6,
+       "rate": 125,
+       "rtg": 0.4
+      },
+      "2026-05-04": {
+       "spots": 6,
+       "rate": 125,
+       "rtg": 0.4
+      },
+      "2026-05-11": {
+       "spots": 6,
+       "rate": 125,
+       "rtg": 0.4
+      },
+      "2026-05-18": {
+       "spots": 6,
+       "rate": 125,
+       "rtg": 0.4
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-06-01": {
+       "spots": 6,
+       "rate": 125,
+       "rtg": 0.5
+      },
+      "2026-06-08": {
+       "spots": 6,
+       "rate": 125,
+       "rtg": 0.4
+      },
+      "2026-06-15": {
+       "spots": 6,
+       "rate": 125,
+       "rtg": 0.4
+      },
+      "2026-06-22": {
+       "spots": 6,
+       "rate": 125,
+       "rtg": 0.4
+      }
+     }
+    },
+    {
+     "ln": 15,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Late News/Colbert",
+     "days": "MTWTF--",
+     "time": "10:00 PM-11:37 PM",
+     "len": ":15/:15",
+     "spots_wk": 5,
+     "rate": 350,
+     "rtg": 1.4,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 54,
+     "gross": 18900,
+     "net": 16065,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 5,
+       "rate": 350,
+       "rtg": 1.4
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 1.4
+      },
+      "2026-04-13": {
+       "spots": 5,
+       "rate": 350,
+       "rtg": 1.4
+      },
+      "2026-04-20": {
+       "spots": 5,
+       "rate": 350,
+       "rtg": 1.4
+      },
+      "2026-04-27": {
+       "spots": 5,
+       "rate": 350,
+       "rtg": 1.4
+      },
+      "2026-05-04": {
+       "spots": 5,
+       "rate": 350,
+       "rtg": 1.4
+      },
+      "2026-05-11": {
+       "spots": 5,
+       "rate": 350,
+       "rtg": 1.4
+      },
+      "2026-05-18": {
+       "spots": 5,
+       "rate": 350,
+       "rtg": 1.4
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 1.4
+      },
+      "2026-06-01": {
+       "spots": 5,
+       "rate": 350,
+       "rtg": 1.4
+      },
+      "2026-06-08": {
+       "spots": 5,
+       "rate": 350,
+       "rtg": 1.4
+      },
+      "2026-06-15": {
+       "spots": 4,
+       "rate": 350,
+       "rtg": 1.4
+      },
+      "2026-06-22": {
+       "spots": 5,
+       "rate": 350,
+       "rtg": 1.4
+      }
+     }
+    },
+    {
+     "ln": 16,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Late News/Colbert",
+     "days": "MTWTF--",
+     "time": "10:00 PM-10:37 PM",
+     "len": ":30",
+     "spots_wk": 6,
+     "rate": 350,
+     "rtg": 0.7,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 66,
+     "gross": 23100,
+     "net": 19635,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 0.7
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.7
+      },
+      "2026-04-13": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 0.7
+      },
+      "2026-04-20": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 0.7
+      },
+      "2026-04-27": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 0.7
+      },
+      "2026-05-04": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 0.7
+      },
+      "2026-05-11": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 0.7
+      },
+      "2026-05-18": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 0.7
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 375,
+       "rtg": 0.7
+      },
+      "2026-06-01": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 0.7
+      },
+      "2026-06-08": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 0.7
+      },
+      "2026-06-15": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 0.7
+      },
+      "2026-06-22": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 0.7
+      }
+     }
+    },
+    {
+     "ln": 17,
+     "daypart": "M-Su Prime Rotator",
+     "program": "Prime Rotator M-Su",
+     "days": "MTWTFS-",
+     "time": "7:00 PM-10:02 PM",
+     "len": ":15/:15",
+     "spots_wk": 3,
+     "rate": 1000,
+     "rtg": 3.4,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 33,
+     "gross": 33000,
+     "net": 28050,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 3.4
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 1200,
+       "rtg": 2.6
+      },
+      "2026-04-13": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 3.4
+      },
+      "2026-04-20": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 3.4
+      },
+      "2026-04-27": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 3.4
+      },
+      "2026-05-04": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 3.4
+      },
+      "2026-05-11": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 3.4
+      },
+      "2026-05-18": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 3.4
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 1200,
+       "rtg": 2.6
+      },
+      "2026-06-01": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 3.4
+      },
+      "2026-06-08": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 3.4
+      },
+      "2026-06-15": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 3.4
+      },
+      "2026-06-22": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 3.4
+      }
+     }
+    },
+    {
+     "ln": 18,
+     "daypart": "M-F 9a-4p",
+     "program": "M-F 9a-4p",
+     "days": "MTWTF--",
+     "time": "858a-4p",
+     "len": ":15/:15",
+     "spots_wk": 5,
+     "rate": 200,
+     "rtg": 0.6,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 55,
+     "gross": 11000,
+     "net": 9350,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 5,
+       "rate": 200,
+       "rtg": 0.6
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 200,
+       "rtg": 1
+      },
+      "2026-04-13": {
+       "spots": 5,
+       "rate": 200,
+       "rtg": 0.6
+      },
+      "2026-04-20": {
+       "spots": 5,
+       "rate": 200,
+       "rtg": 0.6
+      },
+      "2026-04-27": {
+       "spots": 5,
+       "rate": 200,
+       "rtg": 0.6
+      },
+      "2026-05-04": {
+       "spots": 5,
+       "rate": 200,
+       "rtg": 0.6
+      },
+      "2026-05-11": {
+       "spots": 5,
+       "rate": 200,
+       "rtg": 0.6
+      },
+      "2026-05-18": {
+       "spots": 5,
+       "rate": 200,
+       "rtg": 0.6
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 200,
+       "rtg": 1
+      },
+      "2026-06-01": {
+       "spots": 5,
+       "rate": 200,
+       "rtg": 0.6
+      },
+      "2026-06-08": {
+       "spots": 5,
+       "rate": 200,
+       "rtg": 0.6
+      },
+      "2026-06-15": {
+       "spots": 5,
+       "rate": 200,
+       "rtg": 0.6
+      },
+      "2026-06-22": {
+       "spots": 5,
+       "rate": 200,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 19,
+     "daypart": "M-F 9a-4p",
+     "program": "M-F 9a-4p",
+     "days": "MTWTF--",
+     "time": "858a-4p",
+     "len": ":30",
+     "spots_wk": 14,
+     "rate": 200,
+     "rtg": 0.3,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 150,
+     "gross": 30000,
+     "net": 25500,
+     "weeks": {
+      "2026-03-30": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.3
+      },
+      "2026-04-06": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0.5
+      },
+      "2026-04-13": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.3
+      },
+      "2026-04-20": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.3
+      },
+      "2026-04-27": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.3
+      },
+      "2026-05-04": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.3
+      },
+      "2026-05-11": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.3
+      },
+      "2026-05-18": {
+       "spots": 14,
+       "rate": 200,
+       "rtg": 0.3
+      },
+      "2026-05-25": {
+       "spots": 0,
+       "rate": 200,
+       "rtg": 0.5
+      },
+      "2026-06-01": {
+       "spots": 13,
+       "rate": 200,
+       "rtg": 0.3
+      },
+      "2026-06-08": {
+       "spots": 13,
+       "rate": 200,
+       "rtg": 0.3
+      },
+      "2026-06-15": {
+       "spots": 13,
+       "rate": 200,
+       "rtg": 0.3
+      },
+      "2026-06-22": {
+       "spots": 13,
+       "rate": 200,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 20,
+     "daypart": "Su 7a-8a News",
+     "program": "News",
+     "days": "------S",
+     "time": "7a-8a",
+     "len": ":15",
+     "spots_wk": 1,
+     "rate": 40,
+     "rtg": 0.3,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 1,
+     "gross": 40,
+     "net": 34,
+     "weeks": {
+      "2026-06-15": {
+       "spots": 1,
+       "rate": 40,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 21,
+     "daypart": "M-F Daytime Rotator",
+     "program": "Price/News",
+     "days": "MTWTF--",
+     "time": "10:00 AM-11:30 AM",
+     "len": ":15",
+     "spots_wk": 1,
+     "rate": 140,
+     "rtg": 0.7,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 2,
+     "gross": 280,
+     "net": 238,
+     "weeks": {
+      "2026-06-15": {
+       "spots": 1,
+       "rate": 140,
+       "rtg": 0.7
+      },
+      "2026-06-22": {
+       "spots": 1,
+       "rate": 140,
+       "rtg": 0.7
+      }
+     }
+    },
+    {
+     "ln": 22,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Deal/News EF ROT",
+     "days": "MTWTF--",
+     "time": "3:00 PM-6:30 PM",
+     "len": ":15",
+     "spots_wk": 1,
+     "rate": 110,
+     "rtg": 0.3,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 1,
+     "gross": 110,
+     "net": 93.5,
+     "weeks": {
+      "2026-06-15": {
+       "spots": 1,
+       "rate": 110,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 23,
+     "daypart": "M-F Prime Access 1b",
+     "program": "Entertainment Tonight",
+     "days": "MTWTF--",
+     "time": "627p-7p",
+     "len": ":15",
+     "spots_wk": 1,
+     "rate": 150,
+     "rtg": 0.4,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 2,
+     "gross": 300,
+     "net": 255,
+     "weeks": {
+      "2026-06-15": {
+       "spots": 1,
+       "rate": 150,
+       "rtg": 0.4
+      },
+      "2026-06-22": {
+       "spots": 1,
+       "rate": 150,
+       "rtg": 0.4
+      }
+     }
+    },
+    {
+     "ln": 24,
+     "daypart": "M-Su Late Fringe Rotator",
+     "program": "Colber/Comics Unleashed",
+     "days": "MTWTF--",
+     "time": "10:35 PM-12:37 XM",
+     "len": ":15",
+     "spots_wk": 1,
+     "rate": 75,
+     "rtg": 0.4,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 2,
+     "gross": 150,
+     "net": 127.5,
+     "weeks": {
+      "2026-06-15": {
+       "spots": 1,
+       "rate": 75,
+       "rtg": 0.4
+      },
+      "2026-06-22": {
+       "spots": 1,
+       "rate": 75,
+       "rtg": 0.4
+      }
+     }
+    },
+    {
+     "ln": 25,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Late News/Colbert",
+     "days": "MTWTF--",
+     "time": "10:00 PM-11:37 PM",
+     "len": ":15",
+     "spots_wk": 1,
+     "rate": 175,
+     "rtg": 0.7,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 1,
+     "gross": 175,
+     "net": 148.75,
+     "weeks": {
+      "2026-06-15": {
+       "spots": 1,
+       "rate": 175,
+       "rtg": 0.7
+      }
+     }
+    },
+    {
+     "ln": 26,
+     "daypart": "M-Su Prime Rotator",
+     "program": "Prime Rotator M-Su",
+     "days": "MTWTFS-",
+     "time": "7:00 PM-10:02 PM",
+     "len": ":15",
+     "spots_wk": 1,
+     "rate": 500,
+     "rtg": 1.7,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 1,
+     "gross": 500,
+     "net": 425,
+     "weeks": {
+      "2026-06-15": {
+       "spots": 1,
+       "rate": 500,
+       "rtg": 1.7
+      }
+     }
+    },
+    {
+     "ln": 27,
+     "daypart": "M-F 9a-4p",
+     "program": "M-F 9a-4p",
+     "days": "MTWTF--",
+     "time": "858a-4p",
+     "len": ":15",
+     "spots_wk": 1,
+     "rate": 100,
+     "rtg": 0.3,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 2,
+     "gross": 200,
+     "net": 170,
+     "weeks": {
+      "2026-06-15": {
+       "spots": 1,
+       "rate": 100,
+       "rtg": 0.3
+      },
+      "2026-06-22": {
+       "spots": 1,
+       "rate": 100,
+       "rtg": 0.3
+      }
+     }
+    }
+   ],
+   "demo": "A35-64",
+   "ae": "Terrie Brown",
+   "rev": "12/22/25 / 12/29/25"
+  },
+  {
+   "order": "742164",
+   "station": "WBBM-TV",
+   "desc": "Legal - Q3",
+   "flight": "07/06/26 - 09/27/26",
+   "file": "WBBM_Postman_Law_Q3_Contract_2026.pdf",
+   "metric": "Rtg",
+   "gross": 188200,
+   "net": 159970,
+   "lines": [
+    {
+     "ln": 1,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "M-Su 4a-4a No Prime",
+     "days": "MTWTFSS",
+     "time": "4:30 AM-1:30 XM",
+     "len": ":30",
+     "spots_wk": 6,
+     "rate": 0,
+     "rtg": 0,
+     "type": "NM",
+     "pri": "BON",
+     "spots": 60,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-07-13": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-07-20": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-07-27": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-17": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-24": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-31": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-21": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      }
+     }
+    },
+    {
+     "ln": 3,
+     "daypart": "M-F 5a-9a News Rotator",
+     "program": "M-F 5a-9a News Rotator",
+     "days": "MTWTF--",
+     "time": "6:00 AM-9:00 AM",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 80,
+     "rtg": 0.4,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 60,
+     "gross": 4800,
+     "net": 4080,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-07-13": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-07-20": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-07-27": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-08-17": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-08-24": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-08-31": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.4
+      },
+      "2026-09-21": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.4
+      }
+     }
+    },
+    {
+     "ln": 4,
+     "daypart": "M-F 5a-9a News Rotator",
+     "program": "M-F 5a-9a News Rotator",
+     "days": "MTWTF--",
+     "time": "6:00 AM-9:00 AM",
+     "len": ":30",
+     "spots_wk": 3,
+     "rate": 80,
+     "rtg": 0.2,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 30,
+     "gross": 2400,
+     "net": 2040,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.2
+      },
+      "2026-07-13": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.2
+      },
+      "2026-07-20": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.2
+      },
+      "2026-07-27": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.2
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.2
+      },
+      "2026-08-17": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.2
+      },
+      "2026-08-24": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.2
+      },
+      "2026-08-31": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.2
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.2
+      },
+      "2026-09-21": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.2
+      }
+     }
+    },
+    {
+     "ln": 5,
+     "daypart": "CBS Mornings",
+     "program": "CBS Mornings",
+     "days": "MTWTF--",
+     "time": "8:00 AM-9:00 AM",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 80,
+     "rtg": 0.6,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 60,
+     "gross": 4800,
+     "net": 4080,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-07-13": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-07-20": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-07-27": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-08-17": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-08-24": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-08-31": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-09-21": {
+       "spots": 6,
+       "rate": 80,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 6,
+     "daypart": "Sa 8a-9a News",
+     "program": "Sa Local 8a News",
+     "days": "-----S-",
+     "time": "758a-9a",
+     "len": ":15/:15",
+     "spots_wk": 3,
+     "rate": 80,
+     "rtg": 0.6,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 30,
+     "gross": 2400,
+     "net": 2040,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-07-13": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-07-20": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-07-27": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-08-17": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-08-24": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-08-31": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-09-21": {
+       "spots": 3,
+       "rate": 80,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 7,
+     "daypart": "Su 7a-8a News",
+     "program": "News",
+     "days": "------S",
+     "time": "7a-8a",
+     "len": ":15/:15",
+     "spots_wk": 2,
+     "rate": 80,
+     "rtg": 0.6,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 20,
+     "gross": 1600,
+     "net": 1360,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-07-13": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-07-20": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-07-27": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-08-17": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-08-24": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-08-31": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      },
+      "2026-09-21": {
+       "spots": 2,
+       "rate": 80,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 8,
+     "daypart": "M-F Daytime Rotator",
+     "program": "Price/News",
+     "days": "MTWTF--",
+     "time": "10:00 AM-11:30 AM",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 250,
+     "rtg": 1.2,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 60,
+     "gross": 15000,
+     "net": 12750,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 6,
+       "rate": 250,
+       "rtg": 1.2
+      },
+      "2026-07-13": {
+       "spots": 6,
+       "rate": 250,
+       "rtg": 1.2
+      },
+      "2026-07-20": {
+       "spots": 6,
+       "rate": 250,
+       "rtg": 1.2
+      },
+      "2026-07-27": {
+       "spots": 6,
+       "rate": 250,
+       "rtg": 1.2
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 6,
+       "rate": 250,
+       "rtg": 1.2
+      },
+      "2026-08-17": {
+       "spots": 6,
+       "rate": 250,
+       "rtg": 1.2
+      },
+      "2026-08-24": {
+       "spots": 6,
+       "rate": 250,
+       "rtg": 1.2
+      },
+      "2026-08-31": {
+       "spots": 6,
+       "rate": 250,
+       "rtg": 1.2
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 6,
+       "rate": 250,
+       "rtg": 1.2
+      },
+      "2026-09-21": {
+       "spots": 6,
+       "rate": 250,
+       "rtg": 1.2
+      }
+     }
+    },
+    {
+     "ln": 9,
+     "daypart": "M-F Daytime Rotator",
+     "program": "Price/News",
+     "days": "MTWTF--",
+     "time": "10:00 AM-11:30 AM",
+     "len": ":30",
+     "spots_wk": 3,
+     "rate": 250,
+     "rtg": 12,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 30,
+     "gross": 7500,
+     "net": 6375,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 3,
+       "rate": 250,
+       "rtg": 12
+      },
+      "2026-07-13": {
+       "spots": 3,
+       "rate": 250,
+       "rtg": 12
+      },
+      "2026-07-20": {
+       "spots": 3,
+       "rate": 250,
+       "rtg": 12
+      },
+      "2026-07-27": {
+       "spots": 3,
+       "rate": 250,
+       "rtg": 12
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 3,
+       "rate": 250,
+       "rtg": 12
+      },
+      "2026-08-17": {
+       "spots": 3,
+       "rate": 250,
+       "rtg": 12
+      },
+      "2026-08-24": {
+       "spots": 3,
+       "rate": 250,
+       "rtg": 12
+      },
+      "2026-08-31": {
+       "spots": 3,
+       "rate": 250,
+       "rtg": 12
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 3,
+       "rate": 250,
+       "rtg": 12
+      },
+      "2026-09-21": {
+       "spots": 3,
+       "rate": 250,
+       "rtg": 12
+      }
+     }
+    },
+    {
+     "ln": 10,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Deal/ EF ROT",
+     "days": "MTWTF--",
+     "time": "3:00 PM-5:00 PM",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 220,
+     "rtg": 0.6,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 60,
+     "gross": 13200,
+     "net": 11220,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-07-13": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-07-20": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-07-27": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-08-17": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-08-24": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-08-31": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      },
+      "2026-09-21": {
+       "spots": 6,
+       "rate": 220,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 11,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Deal/ EF ROT",
+     "days": "MTWTF--",
+     "time": "3:00 PM-5:00 PM",
+     "len": ":30",
+     "spots_wk": 3,
+     "rate": 225,
+     "rtg": 0.3,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 28,
+     "gross": 6300,
+     "net": 5355,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 3,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-07-13": {
+       "spots": 3,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-07-20": {
+       "spots": 2,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-07-27": {
+       "spots": 2,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 3,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-08-17": {
+       "spots": 3,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-08-24": {
+       "spots": 3,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-08-31": {
+       "spots": 3,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 3,
+       "rate": 225,
+       "rtg": 0.3
+      },
+      "2026-09-21": {
+       "spots": 3,
+       "rate": 225,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 12,
+     "daypart": "M-F Prime Access 1b",
+     "program": "ENT Tonight",
+     "days": "MTWTF--",
+     "time": "627p-7p",
+     "len": ":15/:15",
+     "spots_wk": 3,
+     "rate": 280,
+     "rtg": 0.8,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 30,
+     "gross": 8400,
+     "net": 7140,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 3,
+       "rate": 280,
+       "rtg": 0.8
+      },
+      "2026-07-13": {
+       "spots": 3,
+       "rate": 280,
+       "rtg": 0.8
+      },
+      "2026-07-20": {
+       "spots": 3,
+       "rate": 280,
+       "rtg": 0.8
+      },
+      "2026-07-27": {
+       "spots": 3,
+       "rate": 280,
+       "rtg": 0.8
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 3,
+       "rate": 280,
+       "rtg": 0.8
+      },
+      "2026-08-17": {
+       "spots": 3,
+       "rate": 280,
+       "rtg": 0.8
+      },
+      "2026-08-24": {
+       "spots": 3,
+       "rate": 280,
+       "rtg": 0.8
+      },
+      "2026-08-31": {
+       "spots": 3,
+       "rate": 280,
+       "rtg": 0.8
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 3,
+       "rate": 280,
+       "rtg": 0.8
+      },
+      "2026-09-21": {
+       "spots": 3,
+       "rate": 280,
+       "rtg": 0.8
+      }
+     }
+    },
+    {
+     "ln": 13,
+     "daypart": "M-F Prime Access 1b",
+     "program": "ENT Tonight",
+     "days": "MTWTF--",
+     "time": "627p-7p",
+     "len": ":30",
+     "spots_wk": 3,
+     "rate": 275,
+     "rtg": 0.4,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 30,
+     "gross": 8250,
+     "net": 7012.5,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.4
+      },
+      "2026-07-13": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.4
+      },
+      "2026-07-20": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.4
+      },
+      "2026-07-27": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.4
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.4
+      },
+      "2026-08-17": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.4
+      },
+      "2026-08-24": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.4
+      },
+      "2026-08-31": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.4
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.4
+      },
+      "2026-09-21": {
+       "spots": 3,
+       "rate": 275,
+       "rtg": 0.4
+      }
+     }
+    },
+    {
+     "ln": 14,
+     "daypart": "Sports Xtra",
+     "program": "Sports Xtra",
+     "days": "-----SS",
+     "time": "1035p-11p",
+     "len": ":30",
+     "spots_wk": 3,
+     "rate": 175,
+     "rtg": 0.3,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 30,
+     "gross": 5250,
+     "net": 4462.5,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 3,
+       "rate": 175,
+       "rtg": 0.3
+      },
+      "2026-07-13": {
+       "spots": 3,
+       "rate": 175,
+       "rtg": 0.3
+      },
+      "2026-07-20": {
+       "spots": 3,
+       "rate": 175,
+       "rtg": 0.3
+      },
+      "2026-07-27": {
+       "spots": 3,
+       "rate": 175,
+       "rtg": 0.3
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 3,
+       "rate": 175,
+       "rtg": 0.3
+      },
+      "2026-08-17": {
+       "spots": 3,
+       "rate": 175,
+       "rtg": 0.3
+      },
+      "2026-08-24": {
+       "spots": 3,
+       "rate": 175,
+       "rtg": 0.3
+      },
+      "2026-08-31": {
+       "spots": 3,
+       "rate": 175,
+       "rtg": 0.3
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 3,
+       "rate": 175,
+       "rtg": 0.3
+      },
+      "2026-09-21": {
+       "spots": 3,
+       "rate": 175,
+       "rtg": 0.3
+      }
+     }
+    },
+    {
+     "ln": 15,
+     "daypart": "M-Su Late Fringe Rotator",
+     "program": "Colbert/Comics Unleashed",
+     "days": "MTWTF--",
+     "time": "10:35 PM-12:37 XM",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 150,
+     "rtg": 0.8,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 60,
+     "gross": 9000,
+     "net": 7650,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-07-13": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-07-20": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-07-27": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-08-17": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-08-24": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-08-31": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.8
+      },
+      "2026-09-21": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.8
+      }
+     }
+    },
+    {
+     "ln": 16,
+     "daypart": "M-Su Late Fringe Rotator",
+     "program": "Colbert/Comics Unleashed",
+     "days": "MTWTF--",
+     "time": "10:35 PM-12:37 XM",
+     "len": "1:00",
+     "spots_wk": 6,
+     "rate": 100,
+     "rtg": 0.4,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 60,
+     "gross": 6000,
+     "net": 5100,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 0.4
+      },
+      "2026-07-13": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 0.4
+      },
+      "2026-07-20": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 0.4
+      },
+      "2026-07-27": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 0.4
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 0.4
+      },
+      "2026-08-17": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 0.4
+      },
+      "2026-08-24": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 0.4
+      },
+      "2026-08-31": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 0.4
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 0.4
+      },
+      "2026-09-21": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 0.4
+      }
+     }
+    },
+    {
+     "ln": 17,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Late News/Colbert",
+     "days": "MTWTF--",
+     "time": "10:00 PM-11:37 PM",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 280,
+     "rtg": 1.2,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 60,
+     "gross": 16800,
+     "net": 14280,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 6,
+       "rate": 280,
+       "rtg": 1.2
+      },
+      "2026-07-13": {
+       "spots": 6,
+       "rate": 280,
+       "rtg": 1.2
+      },
+      "2026-07-20": {
+       "spots": 6,
+       "rate": 280,
+       "rtg": 1.2
+      },
+      "2026-07-27": {
+       "spots": 6,
+       "rate": 280,
+       "rtg": 1.2
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 6,
+       "rate": 280,
+       "rtg": 1.2
+      },
+      "2026-08-17": {
+       "spots": 6,
+       "rate": 280,
+       "rtg": 1.2
+      },
+      "2026-08-24": {
+       "spots": 6,
+       "rate": 280,
+       "rtg": 1.2
+      },
+      "2026-08-31": {
+       "spots": 6,
+       "rate": 280,
+       "rtg": 1.2
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 6,
+       "rate": 280,
+       "rtg": 1.2
+      },
+      "2026-09-21": {
+       "spots": 6,
+       "rate": 280,
+       "rtg": 1.2
+      }
+     }
+    },
+    {
+     "ln": 18,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Late News/Colbert",
+     "days": "MTWTF--",
+     "time": "10:00 PM-11:37 PM",
+     "len": ":30",
+     "spots_wk": 6,
+     "rate": 275,
+     "rtg": 0.6,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 60,
+     "gross": 16500,
+     "net": 14025,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 6,
+       "rate": 275,
+       "rtg": 0.6
+      },
+      "2026-07-13": {
+       "spots": 6,
+       "rate": 275,
+       "rtg": 0.6
+      },
+      "2026-07-20": {
+       "spots": 6,
+       "rate": 275,
+       "rtg": 0.6
+      },
+      "2026-07-27": {
+       "spots": 6,
+       "rate": 275,
+       "rtg": 0.6
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 6,
+       "rate": 275,
+       "rtg": 0.6
+      },
+      "2026-08-17": {
+       "spots": 6,
+       "rate": 275,
+       "rtg": 0.6
+      },
+      "2026-08-24": {
+       "spots": 6,
+       "rate": 275,
+       "rtg": 0.6
+      },
+      "2026-08-31": {
+       "spots": 6,
+       "rate": 275,
+       "rtg": 0.6
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 6,
+       "rate": 275,
+       "rtg": 0.6
+      },
+      "2026-09-21": {
+       "spots": 6,
+       "rate": 275,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 19,
+     "daypart": "M-Su Prime Rotator",
+     "program": "Prime Rotator M-Su",
+     "days": "MTWTFS-",
+     "time": "7:00 PM-10:00 PM",
+     "len": ":15/:15",
+     "spots_wk": 3,
+     "rate": 1000,
+     "rtg": 1.2,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 30,
+     "gross": 30000,
+     "net": 25500,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 1.2
+      },
+      "2026-07-13": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 1.2
+      },
+      "2026-07-20": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 1.2
+      },
+      "2026-07-27": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 1.2
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 1.2
+      },
+      "2026-08-17": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 1.2
+      },
+      "2026-08-24": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 1.2
+      },
+      "2026-08-31": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 1.2
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 1.2
+      },
+      "2026-09-21": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 1.2
+      }
+     }
+    },
+    {
+     "ln": 20,
+     "daypart": "M-F 9a-4p",
+     "program": "M-F 9a-4p",
+     "days": "MTWTF--",
+     "time": "858a-4p",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 150,
+     "rtg": 0.6,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 60,
+     "gross": 9000,
+     "net": 7650,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.6
+      },
+      "2026-07-13": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.6
+      },
+      "2026-07-20": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.6
+      },
+      "2026-07-27": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.6
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.6
+      },
+      "2026-08-17": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.6
+      },
+      "2026-08-24": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.6
+      },
+      "2026-08-31": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.6
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.6
+      },
+      "2026-09-21": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 0.6
+      }
+     }
+    },
+    {
+     "ln": 21,
+     "daypart": "M-F 9a-4p",
+     "program": "M-F 9a-4p",
+     "days": "MTWTF--",
+     "time": "858a-4p",
+     "len": ":30",
+     "spots_wk": 14,
+     "rate": 150,
+     "rtg": 0.3,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 140,
+     "gross": 21000,
+     "net": 17850,
+     "weeks": {
+      "2026-07-06": {
+       "spots": 14,
+       "rate": 150,
+       "rtg": 0.3
+      },
+      "2026-07-13": {
+       "spots": 14,
+       "rate": 150,
+       "rtg": 0.3
+      },
+      "2026-07-20": {
+       "spots": 14,
+       "rate": 150,
+       "rtg": 0.3
+      },
+      "2026-07-27": {
+       "spots": 14,
+       "rate": 150,
+       "rtg": 0.3
+      },
+      "2026-08-03": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-08-10": {
+       "spots": 14,
+       "rate": 150,
+       "rtg": 0.3
+      },
+      "2026-08-17": {
+       "spots": 14,
+       "rate": 150,
+       "rtg": 0.3
+      },
+      "2026-08-24": {
+       "spots": 14,
+       "rate": 150,
+       "rtg": 0.3
+      },
+      "2026-08-31": {
+       "spots": 14,
+       "rate": 150,
+       "rtg": 0.3
+      },
+      "2026-09-07": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-09-14": {
+       "spots": 14,
+       "rate": 150,
+       "rtg": 0.3
+      },
+      "2026-09-21": {
+       "spots": 14,
+       "rate": 150,
+       "rtg": 0.3
+      }
+     }
+    }
+   ],
+   "demo": "A35-64",
+   "ae": "Terrie Brown",
+   "rev": "12/29/25 / 12/30/25"
+  },
+  {
+   "order": "742220",
+   "station": "WBBM-TV",
+   "desc": "Legal - Q4",
+   "flight": "09/28/26 - 12/27/26",
+   "file": "WBBM_Postman_Law_Contract_Q4_2026.pdf",
+   "metric": "Imp",
+   "gross": 225315,
+   "net": 191517.75,
+   "lines": [
+    {
+     "ln": 1,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "M-Su 4a-4a No Prime",
+     "days": "MTWTFSS",
+     "time": "4:30 AM-1:30 XM",
+     "len": ":30",
+     "spots_wk": 6,
+     "rate": 0,
+     "rtg": 0,
+     "type": "NM",
+     "pri": "BON",
+     "spots": 66,
+     "gross": 0,
+     "net": 0,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-05": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-26": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-02": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-09": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-30": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-12-07": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-12-14": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-12-21": {
+       "spots": 6,
+       "rate": 0,
+       "rtg": 0
+      }
+     }
+    },
+    {
+     "ln": 3,
+     "daypart": "M-F 5a-9a News Rotator",
+     "program": "M-F 5a-9a News Rotator",
+     "days": "MTWTF--",
+     "time": "6:00 AM-9:00 AM",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 100,
+     "rtg": 16.222,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 65,
+     "gross": 6500,
+     "net": 5525,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 16.222
+      },
+      "2026-10-05": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 16.222
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 16.222
+      },
+      "2026-10-26": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 16.222
+      },
+      "2026-11-02": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 16.222
+      },
+      "2026-11-09": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 16.222
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 16.222
+      },
+      "2026-11-30": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 16.222
+      },
+      "2026-12-07": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 16.222
+      },
+      "2026-12-14": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 16.222
+      },
+      "2026-12-21": {
+       "spots": 5,
+       "rate": 100,
+       "rtg": 16.222
+      }
+     }
+    },
+    {
+     "ln": 4,
+     "daypart": "M-F 5a-9a News Rotator",
+     "program": "M-F 5a-9a News Rotator",
+     "days": "MTWTF--",
+     "time": "6:00 AM-9:00 AM",
+     "len": ":30",
+     "spots_wk": 3,
+     "rate": 100,
+     "rtg": 8.111,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 26,
+     "gross": 2600,
+     "net": 2210,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 3,
+       "rate": 100,
+       "rtg": 8.111
+      },
+      "2026-10-05": {
+       "spots": 3,
+       "rate": 100,
+       "rtg": 8.111
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 2,
+       "rate": 100,
+       "rtg": 8.111
+      },
+      "2026-10-26": {
+       "spots": 2,
+       "rate": 100,
+       "rtg": 8.111
+      },
+      "2026-11-02": {
+       "spots": 2,
+       "rate": 100,
+       "rtg": 8.111
+      },
+      "2026-11-09": {
+       "spots": 2,
+       "rate": 100,
+       "rtg": 8.111
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 3,
+       "rate": 100,
+       "rtg": 8.111
+      },
+      "2026-11-30": {
+       "spots": 3,
+       "rate": 100,
+       "rtg": 8.111
+      },
+      "2026-12-07": {
+       "spots": 2,
+       "rate": 100,
+       "rtg": 8.111
+      },
+      "2026-12-14": {
+       "spots": 2,
+       "rate": 100,
+       "rtg": 8.111
+      },
+      "2026-12-21": {
+       "spots": 2,
+       "rate": 100,
+       "rtg": 8.111
+      }
+     }
+    },
+    {
+     "ln": 5,
+     "daypart": "CBS Mornings",
+     "program": "CBS Mornings",
+     "days": "MTWTF--",
+     "time": "8:00 AM-9:00 AM",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 100,
+     "rtg": 19.034,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 66,
+     "gross": 6600,
+     "net": 5610,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 19.034
+      },
+      "2026-10-05": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 19.034
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 19.034
+      },
+      "2026-10-26": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 19.034
+      },
+      "2026-11-02": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 19.034
+      },
+      "2026-11-09": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 19.034
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 19.034
+      },
+      "2026-11-30": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 19.034
+      },
+      "2026-12-07": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 19.034
+      },
+      "2026-12-14": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 19.034
+      },
+      "2026-12-21": {
+       "spots": 6,
+       "rate": 100,
+       "rtg": 19.034
+      }
+     }
+    },
+    {
+     "ln": 6,
+     "daypart": "Sa 8a-9a News",
+     "program": "Sa Local 8a News",
+     "days": "-----S-",
+     "time": "758a-9a",
+     "len": ":15/:15",
+     "spots_wk": 1,
+     "rate": 80,
+     "rtg": 21.55,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 11,
+     "gross": 880,
+     "net": 748,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 21.55
+      },
+      "2026-10-05": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 21.55
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 21.55
+      },
+      "2026-10-26": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 21.55
+      },
+      "2026-11-02": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 21.55
+      },
+      "2026-11-09": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 21.55
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 21.55
+      },
+      "2026-11-30": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 21.55
+      },
+      "2026-12-07": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 21.55
+      },
+      "2026-12-14": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 21.55
+      },
+      "2026-12-21": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 21.55
+      }
+     }
+    },
+    {
+     "ln": 7,
+     "daypart": "Su 7a-8a News",
+     "program": "News",
+     "days": "------S",
+     "time": "7a-8a",
+     "len": ":15/:15",
+     "spots_wk": 1,
+     "rate": 80,
+     "rtg": 20.404,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 11,
+     "gross": 880,
+     "net": 748,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 20.404
+      },
+      "2026-10-05": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 20.404
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 20.404
+      },
+      "2026-10-26": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 20.404
+      },
+      "2026-11-02": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 20.404
+      },
+      "2026-11-09": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 20.404
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 20.404
+      },
+      "2026-11-30": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 20.404
+      },
+      "2026-12-07": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 20.404
+      },
+      "2026-12-14": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 20.404
+      },
+      "2026-12-21": {
+       "spots": 1,
+       "rate": 80,
+       "rtg": 20.404
+      }
+     }
+    },
+    {
+     "ln": 8,
+     "daypart": "M-F Daytime Rotator",
+     "program": "Price/News",
+     "days": "MTWTF--",
+     "time": "10:00 AM-11:30 AM",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 300,
+     "rtg": 43.388,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 62,
+     "gross": 18600,
+     "net": 15810,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 6,
+       "rate": 300,
+       "rtg": 43.388
+      },
+      "2026-10-05": {
+       "spots": 6,
+       "rate": 300,
+       "rtg": 43.388
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 5,
+       "rate": 300,
+       "rtg": 43.388
+      },
+      "2026-10-26": {
+       "spots": 5,
+       "rate": 300,
+       "rtg": 43.388
+      },
+      "2026-11-02": {
+       "spots": 6,
+       "rate": 300,
+       "rtg": 43.388
+      },
+      "2026-11-09": {
+       "spots": 6,
+       "rate": 300,
+       "rtg": 43.388
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 5,
+       "rate": 300,
+       "rtg": 43.388
+      },
+      "2026-11-30": {
+       "spots": 5,
+       "rate": 300,
+       "rtg": 43.388
+      },
+      "2026-12-07": {
+       "spots": 6,
+       "rate": 300,
+       "rtg": 43.388
+      },
+      "2026-12-14": {
+       "spots": 6,
+       "rate": 300,
+       "rtg": 43.388
+      },
+      "2026-12-21": {
+       "spots": 6,
+       "rate": 300,
+       "rtg": 43.388
+      }
+     }
+    },
+    {
+     "ln": 9,
+     "daypart": "M-F Daytime Rotator",
+     "program": "Price/News",
+     "days": "MTWTF--",
+     "time": "10:00 AM-11:30 AM",
+     "len": ":30",
+     "spots_wk": 3,
+     "rate": 300,
+     "rtg": 21.694,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 33,
+     "gross": 9900,
+     "net": 8415,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 21.694
+      },
+      "2026-10-05": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 21.694
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 21.694
+      },
+      "2026-10-26": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 21.694
+      },
+      "2026-11-02": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 21.694
+      },
+      "2026-11-09": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 21.694
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 21.694
+      },
+      "2026-11-30": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 21.694
+      },
+      "2026-12-07": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 21.694
+      },
+      "2026-12-14": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 21.694
+      },
+      "2026-12-21": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 21.694
+      }
+     }
+    },
+    {
+     "ln": 10,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Deal/News EF ROT",
+     "days": "MTWTF--",
+     "time": "3:00 PM-5:00 PM",
+     "len": ":15/:15",
+     "spots_wk": 7,
+     "rate": 250,
+     "rtg": 23.568,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 77,
+     "gross": 19250,
+     "net": 16362.5,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 7,
+       "rate": 250,
+       "rtg": 23.568
+      },
+      "2026-10-05": {
+       "spots": 7,
+       "rate": 250,
+       "rtg": 23.568
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 7,
+       "rate": 250,
+       "rtg": 23.568
+      },
+      "2026-10-26": {
+       "spots": 7,
+       "rate": 250,
+       "rtg": 23.568
+      },
+      "2026-11-02": {
+       "spots": 7,
+       "rate": 250,
+       "rtg": 23.568
+      },
+      "2026-11-09": {
+       "spots": 7,
+       "rate": 250,
+       "rtg": 23.568
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 7,
+       "rate": 250,
+       "rtg": 23.568
+      },
+      "2026-11-30": {
+       "spots": 7,
+       "rate": 250,
+       "rtg": 23.568
+      },
+      "2026-12-07": {
+       "spots": 7,
+       "rate": 250,
+       "rtg": 23.568
+      },
+      "2026-12-14": {
+       "spots": 7,
+       "rate": 250,
+       "rtg": 23.568
+      },
+      "2026-12-21": {
+       "spots": 7,
+       "rate": 250,
+       "rtg": 23.568
+      }
+     }
+    },
+    {
+     "ln": 11,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Deal/News EF ROT",
+     "days": "MTWTF--",
+     "time": "3:00 PM-5:00 PM",
+     "len": ":30",
+     "spots_wk": 5,
+     "rate": 250,
+     "rtg": 11.784,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 53,
+     "gross": 13250,
+     "net": 11262.5,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 11.784
+      },
+      "2026-10-05": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 11.784
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 11.784
+      },
+      "2026-10-26": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 11.784
+      },
+      "2026-11-02": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 11.784
+      },
+      "2026-11-09": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 11.784
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 11.784
+      },
+      "2026-11-30": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 11.784
+      },
+      "2026-12-07": {
+       "spots": 5,
+       "rate": 250,
+       "rtg": 11.784
+      },
+      "2026-12-14": {
+       "spots": 4,
+       "rate": 250,
+       "rtg": 11.784
+      },
+      "2026-12-21": {
+       "spots": 4,
+       "rate": 250,
+       "rtg": 11.784
+      }
+     }
+    },
+    {
+     "ln": 12,
+     "daypart": "M-F Prime Access 1b",
+     "program": "ENT Tonight",
+     "days": "MTWTF--",
+     "time": "627p-7p",
+     "len": ":15/:15",
+     "spots_wk": 2,
+     "rate": 300,
+     "rtg": 33.2,
+     "type": "BK",
+     "pri": "GEN",
+     "spots": 22,
+     "gross": 6600,
+     "net": 5610,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 33.2
+      },
+      "2026-10-05": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 33.2
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 33.2
+      },
+      "2026-10-26": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 33.2
+      },
+      "2026-11-02": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 33.2
+      },
+      "2026-11-09": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 33.2
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 33.2
+      },
+      "2026-11-30": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 33.2
+      },
+      "2026-12-07": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 33.2
+      },
+      "2026-12-14": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 33.2
+      },
+      "2026-12-21": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 33.2
+      }
+     }
+    },
+    {
+     "ln": 13,
+     "daypart": "M-F Prime Access 1b",
+     "program": "ENT Tonight",
+     "days": "MTWTF--",
+     "time": "627p-7p",
+     "len": ":30",
+     "spots_wk": 3,
+     "rate": 300,
+     "rtg": 16.6,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 32,
+     "gross": 9600,
+     "net": 8160,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 2,
+       "rate": 300,
+       "rtg": 16.6
+      },
+      "2026-10-05": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 16.6
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 16.6
+      },
+      "2026-10-26": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 16.6
+      },
+      "2026-11-02": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 16.6
+      },
+      "2026-11-09": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 16.6
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 16.6
+      },
+      "2026-11-30": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 16.6
+      },
+      "2026-12-07": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 16.6
+      },
+      "2026-12-14": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 16.6
+      },
+      "2026-12-21": {
+       "spots": 3,
+       "rate": 300,
+       "rtg": 16.6
+      }
+     }
+    },
+    {
+     "ln": 14,
+     "daypart": "Sports Xtra",
+     "program": "Sports Xtra",
+     "days": "-----SS",
+     "time": "1035p-11p",
+     "len": ":30",
+     "spots_wk": 2,
+     "rate": 200,
+     "rtg": 18.699,
+     "type": "NM",
+     "pri": "GEN",
+     "spots": 22,
+     "gross": 4400,
+     "net": 3740,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 2,
+       "rate": 200,
+       "rtg": 18.699
+      },
+      "2026-10-05": {
+       "spots": 2,
+       "rate": 200,
+       "rtg": 18.699
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 2,
+       "rate": 200,
+       "rtg": 18.699
+      },
+      "2026-10-26": {
+       "spots": 2,
+       "rate": 200,
+       "rtg": 18.699
+      },
+      "2026-11-02": {
+       "spots": 2,
+       "rate": 200,
+       "rtg": 18.699
+      },
+      "2026-11-09": {
+       "spots": 2,
+       "rate": 200,
+       "rtg": 18.699
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 2,
+       "rate": 200,
+       "rtg": 18.699
+      },
+      "2026-11-30": {
+       "spots": 2,
+       "rate": 200,
+       "rtg": 18.699
+      },
+      "2026-12-07": {
+       "spots": 2,
+       "rate": 200,
+       "rtg": 18.699
+      },
+      "2026-12-14": {
+       "spots": 2,
+       "rate": 200,
+       "rtg": 18.699
+      },
+      "2026-12-21": {
+       "spots": 2,
+       "rate": 200,
+       "rtg": 18.699
+      }
+     }
+    },
+    {
+     "ln": 15,
+     "daypart": "M-Su Late Fringe Rotator",
+     "program": "Colbert/Comics Unleashed",
+     "days": "MTWTF--",
+     "time": "10:35 PM-12:37 XM",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 150,
+     "rtg": 33.694,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 66,
+     "gross": 9900,
+     "net": 8415,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 33.694
+      },
+      "2026-10-05": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 33.694
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 33.694
+      },
+      "2026-10-26": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 33.694
+      },
+      "2026-11-02": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 33.694
+      },
+      "2026-11-09": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 33.694
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 33.694
+      },
+      "2026-11-30": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 33.694
+      },
+      "2026-12-07": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 33.694
+      },
+      "2026-12-14": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 33.694
+      },
+      "2026-12-21": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 33.694
+      }
+     }
+    },
+    {
+     "ln": 16,
+     "daypart": "M-Su Late Fringe Rotator",
+     "program": "Colbert/Comics Unleashed",
+     "days": "MTWTF--",
+     "time": "10:35 PM-12:37 XM",
+     "len": "1:00",
+     "spots_wk": 6,
+     "rate": 150,
+     "rtg": 16.847,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 65,
+     "gross": 9750,
+     "net": 8287.5,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 5,
+       "rate": 150,
+       "rtg": 16.847
+      },
+      "2026-10-05": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 16.847
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 16.847
+      },
+      "2026-10-26": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 16.847
+      },
+      "2026-11-02": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 16.847
+      },
+      "2026-11-09": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 16.847
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 16.847
+      },
+      "2026-11-30": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 16.847
+      },
+      "2026-12-07": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 16.847
+      },
+      "2026-12-14": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 16.847
+      },
+      "2026-12-21": {
+       "spots": 6,
+       "rate": 150,
+       "rtg": 16.847
+      }
+     }
+    },
+    {
+     "ln": 17,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Late News/Colbert",
+     "days": "MTWTF--",
+     "time": "10:00 PM-11:37 PM",
+     "len": ":15/:15",
+     "spots_wk": 3,
+     "rate": 350,
+     "rtg": 49.554,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 33,
+     "gross": 11550,
+     "net": 9817.5,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 3,
+       "rate": 350,
+       "rtg": 49.554
+      },
+      "2026-10-05": {
+       "spots": 3,
+       "rate": 350,
+       "rtg": 49.554
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 3,
+       "rate": 350,
+       "rtg": 49.554
+      },
+      "2026-10-26": {
+       "spots": 3,
+       "rate": 350,
+       "rtg": 49.554
+      },
+      "2026-11-02": {
+       "spots": 3,
+       "rate": 350,
+       "rtg": 49.554
+      },
+      "2026-11-09": {
+       "spots": 3,
+       "rate": 350,
+       "rtg": 49.554
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 3,
+       "rate": 350,
+       "rtg": 49.554
+      },
+      "2026-11-30": {
+       "spots": 3,
+       "rate": 350,
+       "rtg": 49.554
+      },
+      "2026-12-07": {
+       "spots": 3,
+       "rate": 350,
+       "rtg": 49.554
+      },
+      "2026-12-14": {
+       "spots": 3,
+       "rate": 350,
+       "rtg": 49.554
+      },
+      "2026-12-21": {
+       "spots": 3,
+       "rate": 350,
+       "rtg": 49.554
+      }
+     }
+    },
+    {
+     "ln": 18,
+     "daypart": "M-Su 4a-4a No Prime",
+     "program": "Late News/Colbert",
+     "days": "MTWTF--",
+     "time": "10:00 PM-11:37 PM",
+     "len": ":30",
+     "spots_wk": 6,
+     "rate": 350,
+     "rtg": 24.777,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 65,
+     "gross": 22750,
+     "net": 19337.5,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 24.777
+      },
+      "2026-10-05": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 24.777
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 5,
+       "rate": 350,
+       "rtg": 24.777
+      },
+      "2026-10-26": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 24.777
+      },
+      "2026-11-02": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 24.777
+      },
+      "2026-11-09": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 24.777
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 24.777
+      },
+      "2026-11-30": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 24.777
+      },
+      "2026-12-07": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 24.777
+      },
+      "2026-12-14": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 24.777
+      },
+      "2026-12-21": {
+       "spots": 6,
+       "rate": 350,
+       "rtg": 24.777
+      }
+     }
+    },
+    {
+     "ln": 19,
+     "daypart": "M-Su Prime Rotator",
+     "program": "Prime Rotator M-Su",
+     "days": "MTWTFS-",
+     "time": "7:00 PM-10:00 PM",
+     "len": ":15/:15",
+     "spots_wk": 3,
+     "rate": 1000,
+     "rtg": 95.748,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 33,
+     "gross": 33000,
+     "net": 28050,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 95.748
+      },
+      "2026-10-05": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 95.748
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 95.748
+      },
+      "2026-10-26": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 95.748
+      },
+      "2026-11-02": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 95.748
+      },
+      "2026-11-09": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 95.748
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 95.748
+      },
+      "2026-11-30": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 95.748
+      },
+      "2026-12-07": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 95.748
+      },
+      "2026-12-14": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 95.748
+      },
+      "2026-12-21": {
+       "spots": 3,
+       "rate": 1000,
+       "rtg": 95.748
+      }
+     }
+    },
+    {
+     "ln": 20,
+     "daypart": "M-F 9a-4p",
+     "program": "M-F 9a-4p",
+     "days": "MTWTF--",
+     "time": "858a-4p",
+     "len": ":15/:15",
+     "spots_wk": 6,
+     "rate": 180,
+     "rtg": 33.654,
+     "type": "BK",
+     "pri": "ROT",
+     "spots": 66,
+     "gross": 11880,
+     "net": 10098,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 6,
+       "rate": 180,
+       "rtg": 33.654
+      },
+      "2026-10-05": {
+       "spots": 6,
+       "rate": 180,
+       "rtg": 33.654
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 6,
+       "rate": 180,
+       "rtg": 33.654
+      },
+      "2026-10-26": {
+       "spots": 6,
+       "rate": 180,
+       "rtg": 33.654
+      },
+      "2026-11-02": {
+       "spots": 6,
+       "rate": 180,
+       "rtg": 33.654
+      },
+      "2026-11-09": {
+       "spots": 6,
+       "rate": 180,
+       "rtg": 33.654
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 6,
+       "rate": 180,
+       "rtg": 33.654
+      },
+      "2026-11-30": {
+       "spots": 6,
+       "rate": 180,
+       "rtg": 33.654
+      },
+      "2026-12-07": {
+       "spots": 6,
+       "rate": 180,
+       "rtg": 33.654
+      },
+      "2026-12-14": {
+       "spots": 6,
+       "rate": 180,
+       "rtg": 33.654
+      },
+      "2026-12-21": {
+       "spots": 6,
+       "rate": 180,
+       "rtg": 33.654
+      }
+     }
+    },
+    {
+     "ln": 21,
+     "daypart": "M-F 9a-4p",
+     "program": "M-F 9a-4p",
+     "days": "MTWTF--",
+     "time": "858a-4p",
+     "len": ":30",
+     "spots_wk": 14,
+     "rate": 175,
+     "rtg": 16.827,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 153,
+     "gross": 26775,
+     "net": 22758.75,
+     "weeks": {
+      "2026-09-28": {
+       "spots": 13,
+       "rate": 175,
+       "rtg": 16.827
+      },
+      "2026-10-05": {
+       "spots": 14,
+       "rate": 175,
+       "rtg": 16.827
+      },
+      "2026-10-12": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-10-19": {
+       "spots": 14,
+       "rate": 175,
+       "rtg": 16.827
+      },
+      "2026-10-26": {
+       "spots": 14,
+       "rate": 175,
+       "rtg": 16.827
+      },
+      "2026-11-02": {
+       "spots": 14,
+       "rate": 175,
+       "rtg": 16.827
+      },
+      "2026-11-09": {
+       "spots": 14,
+       "rate": 175,
+       "rtg": 16.827
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 14,
+       "rate": 175,
+       "rtg": 16.827
+      },
+      "2026-11-30": {
+       "spots": 14,
+       "rate": 175,
+       "rtg": 16.827
+      },
+      "2026-12-07": {
+       "spots": 14,
+       "rate": 175,
+       "rtg": 16.827
+      },
+      "2026-12-14": {
+       "spots": 14,
+       "rate": 175,
+       "rtg": 16.827
+      },
+      "2026-12-21": {
+       "spots": 14,
+       "rate": 175,
+       "rtg": 16.827
+      }
+     }
+    },
+    {
+     "ln": 22,
+     "daypart": "M-F 5a-9a News Rotator",
+     "program": "M-F 5a-9a News Rotator",
+     "days": "MTWTF--",
+     "time": "6:00 AM-9:00 AM",
+     "len": ":15",
+     "spots_wk": 1,
+     "rate": 50,
+     "rtg": 8.111,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 1,
+     "gross": 50,
+     "net": 42.5,
+     "weeks": {
+      "2026-12-21": {
+       "spots": 1,
+       "rate": 50,
+       "rtg": 8.111
+      }
+     }
+    },
+    {
+     "ln": 23,
+     "daypart": "M-F Daytime Rotator",
+     "program": "Price/News",
+     "days": "MTWTF--",
+     "time": "10:00 AM-11:30 AM",
+     "len": ":15",
+     "spots_wk": 1,
+     "rate": 150,
+     "rtg": 21.694,
+     "type": "NM",
+     "pri": "ROT",
+     "spots": 4,
+     "gross": 600,
+     "net": 510,
+     "weeks": {
+      "2026-10-19": {
+       "spots": 1,
+       "rate": 150,
+       "rtg": 21.694
+      },
+      "2026-10-26": {
+       "spots": 1,
+       "rate": 150,
+       "rtg": 21.694
+      },
+      "2026-11-02": {
+       "spots": 0,
+       "rate": 300,
+       "rtg": 43.38
+      },
+      "2026-11-09": {
+       "spots": 0,
+       "rate": 300,
+       "rtg": 43.38
+      },
+      "2026-11-16": {
+       "spots": 0,
+       "rate": 0,
+       "rtg": 0
+      },
+      "2026-11-23": {
+       "spots": 1,
+       "rate": 150,
+       "rtg": 21.694
+      },
+      "2026-11-30": {
+       "spots": 1,
+       "rate": 150,
+       "rtg": 21.694
+      }
+     }
+    }
+   ],
+   "demo": "A35-64",
+   "ae": "Terrie Brown",
+   "rev": "02/02/26 / 02/02/26"
+  }
+ ]
+}

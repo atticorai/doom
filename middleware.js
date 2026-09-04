@@ -70,6 +70,7 @@ export default async function middleware(request) {
   const isProtected =
     (pathname.endsWith('.js') && !pathname.startsWith('/api/')) ||
     pathname === '/mayhem.html' ||
+    pathname === '/abyss.html' ||
     pathname === '/api/config' ||
     pathname === '/api/planner' ||
     pathname === '/api/send-traffic' ||
@@ -79,7 +80,8 @@ export default async function middleware(request) {
     pathname === '/api/db-inspect' ||
     pathname === '/api/legacy-assets-export' ||
     pathname === '/api/migrate-snapshot' ||
-    pathname === '/api/storage';
+    pathname === '/api/storage' ||
+    pathname === '/api/buy-abyss';
 
   if (isProtected) {
     const cookie = request.headers.get('cookie') || '';
